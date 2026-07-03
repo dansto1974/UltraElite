@@ -2239,7 +2239,7 @@
           data.target = DISO_INDEX;
         }
         Object.assign(game, data);
-        game.graphicsMode = game.graphicsMode === "solid" ? "solid" : "wire";
+        game.graphicsMode = ["wire", "solid", "both"].includes(game.graphicsMode) ? game.graphicsMode : "wire";
         game.docked = true;
         game.energy = 100;
         game.shields = 100;
@@ -2639,8 +2639,25 @@
       return norm(sub(sunCam, center));
     }
 
-    function collectSolidFaces(model, camVerts, points, baseColor, alpha = 1) {
-      if (game.graphicsMode !== "solid" || !model.faces) return [];
+    // Shared by collectSolidFaces (drawable polygon fills, indexed over the compact
+    // model.faces list) and collectWireFaceVisibility (a visible/hidden flag per raw
+    // normal index, including entries with no built face) — both need "is this face
+    // pointing at the camera", just keyed by different arrays, so only this inner test
+    // is factored out rather than the two loops themselves.
+    function faceFacing(verts, objectCenter) {
+      let n = faceNormal(verts[0], verts[1], verts[2]);
+      const center = scale(verts.reduce((sum, p) => add(sum, p), vec()), 1 / verts.length);
+      if (dot(n, sub(center, objectCenter)) < 0) n = scale(n, -1);
+      return { n, center, facing: -dot(n, norm(center)) };
+    }
+
+    // One engine for both graphics modes: wireframe is these same face polygons with a
+    // flat black fill (occluding whatever is behind, exactly like a solid fill would)
+    // instead of the lit/textured one, so "wire", "solid" and "both" (lit fill + edges
+    // on top) all share one fill path instead of wireframe keeping a separate bespoke
+    // black-occluder pass.
+    function collectSolidFaces(model, camVerts, points, baseColor, alpha = 1, flat = false) {
+      if (!model.faces) return [];
       const faces = [];
       const objectCenter = scale(camVerts.reduce((sum, p) => add(sum, p), vec()), 1 / camVerts.length);
       model.faces.forEach((face, faceIndex) => {
@@ -2648,11 +2665,12 @@
         if (projected.some((p) => !p)) return;
         const verts = face.map((i) => camVerts[i]);
         const avgZ = verts.reduce((sum, p) => sum + p.z, 0) / verts.length;
-        let n = faceNormal(verts[0], verts[1], verts[2]);
-        const center = scale(verts.reduce((sum, p) => add(sum, p), vec()), 1 / verts.length);
-        if (dot(n, sub(center, objectCenter)) < 0) n = scale(n, -1);
-        const cameraFacing = -dot(n, norm(center));
-        if (cameraFacing <= 0) return;
+        const { n, center, facing: cameraFacing } = faceFacing(verts, objectCenter);
+        if (cameraFacing <= -0.015) return;
+        if (flat) {
+          faces.push({ kind: "poly", projected, avgZ, fillStyle: "#000" });
+          return;
+        }
         const facing = clamp(cameraFacing, 0, 1);
         const lit = clamp(.18 + Math.max(0, dot(n, starLightDirection(center))) * .58 + facing * .18, .16, .92);
         const grain = Math.abs(Math.sin(center.x * .037 + center.y * .071 + center.z * .043 + face.length * 1.7));
@@ -2674,17 +2692,11 @@
       const objectCenter = scale(camVerts.reduce((sum, p) => add(sum, p), vec()), 1 / camVerts.length);
       return model.normals.map((normal, faceIndex) => {
         const face = model.faceByNormalIndex[faceIndex];
-        let n, center;
         if (face && face.length >= 3) {
-          const verts = face.map((i) => camVerts[i]);
-          n = faceNormal(verts[0], verts[1], verts[2]);
-          center = scale(verts.reduce((sum, p) => add(sum, p), vec()), 1 / verts.length);
-          if (dot(n, sub(center, objectCenter)) < 0) n = scale(n, -1);
-        } else {
-          n = norm(vec(normal[0], normal[1], normal[2]));
-          center = objectCenter;
+          return faceFacing(face.map((i) => camVerts[i]), objectCenter).facing > -0.015;
         }
-        return -dot(n, norm(center)) > -0.015;
+        const n = norm(vec(normal[0], normal[1], normal[2]));
+        return -dot(n, norm(objectCenter)) > -0.015;
       });
     }
 
@@ -2695,36 +2707,8 @@
       return !!faceVisible[faces[0]] || !!faceVisible[faces[1]];
     }
 
-    function collectWireOccluderFaces(model, camVerts, points, faceVisible) {
-      if (!faceVisible || !model.faceByNormalIndex) return [];
-      const faces = [];
-      model.faceByNormalIndex.forEach((face, faceIndex) => {
-        if (!faceVisible[faceIndex] || !face || face.length < 3) return;
-        const projected = face.map((i) => points[i]);
-        if (projected.some((p) => !p)) return;
-        const avgZ = face.reduce((sum, i) => sum + camVerts[i].z, 0) / face.length;
-        faces.push({ projected, avgZ });
-      });
-      return faces.sort((a, b) => b.avgZ - a.avgZ);
-    }
-
-    function drawWireOccluderFaces(targetCtx, faces) {
-      if (!faces.length) return;
-      targetCtx.save();
-      targetCtx.fillStyle = "#000";
-      for (const face of faces) {
-        const [first, ...rest] = face.projected;
-        targetCtx.beginPath();
-        targetCtx.moveTo(first.x, first.y);
-        for (const p of rest) targetCtx.lineTo(p.x, p.y);
-        targetCtx.closePath();
-        targetCtx.fill();
-      }
-      targetCtx.restore();
-    }
-
     function collectSolidDetails(model, o, camVerts, points, w, h, scaleFactor = 1) {
-      if (game.graphicsMode !== "solid" || !model.details) return [];
+      if (game.graphicsMode === "wire" || !model.details) return [];
       const roll = o.roll ?? (o.rot || 0) * .7;
       const details = [];
       for (const detail of model.details) {
@@ -3115,7 +3099,7 @@
       const r = baseR * shimmer;
       const hue = o.hue ?? 46;
 
-      if (game.graphicsMode !== "solid") {
+      if (game.graphicsMode === "wire") {
         ctx.strokeStyle = `hsl(${hue}, 100%, 82%)`;
         ctx.lineWidth = 1.6;
         ctx.beginPath();
@@ -3165,7 +3149,7 @@
       }
       const { u, v } = o._ringBasis;
       const viewDir = norm(sub(game.camera.pos, o.pos));
-      const solid = game.graphicsMode === "solid";
+      const solid = game.graphicsMode !== "wire";
       const bands = 3, segs = 96;
       for (let b = 0; b < bands; b++) {
         const t = b / (bands - 1);
@@ -3267,7 +3251,7 @@
       const hue = o.hue ?? 110, sat = o.sat ?? 45, light = o.light ?? 45;
       const meridianAngle = (o.rot || 0) * .2;
 
-      if (game.graphicsMode !== "solid") {
+      if (game.graphicsMode === "wire") {
         ctx.strokeStyle = `hsl(${hue}, 60%, 75%)`;
         ctx.lineWidth = 1.4;
         ctx.beginPath();
@@ -3355,14 +3339,17 @@
         return add(p, cam);
       });
       const points = camVerts.map((p) => project(p, w, h));
-      if (game.graphicsMode === "solid") {
+      const mode = game.graphicsMode;
+      if (mode === "wire") {
+        drawSolidItems(ctx, collectSolidFaces(model, camVerts, points, "#000", 1, true));
+      } else {
         drawSolidItems(ctx, collectSolidFaces(model, camVerts, points, o.color || "#e9f2e4"));
         drawSolidItems(ctx, collectSolidDetails(model, { ...o, cam }, camVerts, points, w, h));
-      } else {
+      }
+      if (mode !== "solid") {
         ctx.strokeStyle = o.color || "#e9f2e4";
         ctx.lineWidth = clamp(680 / Math.max(80, cam.z), .7, 2);
         const faceVisible = collectWireFaceVisibility(model, camVerts);
-        drawWireOccluderFaces(ctx, collectWireOccluderFaces(model, camVerts, points, faceVisible));
         ctx.beginPath();
         for (let edgeIndex = 0; edgeIndex < model.edges.length; edgeIndex++) {
           if (!wireEdgeVisible(model, edgeIndex, faceVisible)) continue;
@@ -3387,12 +3374,16 @@
       const model = o.model === "dodoStation" ? MODELS.dodoStation : STATION_MODEL;
       const camVerts = model.verts.map(([x, y, z]) => add(worldDirToCam(rotatePoint(vec(x, y, z), 0, 0, o.rot)), cam));
       const pts = camVerts.map((p) => project(p, w, h));
-      drawSolidFaces(model, camVerts, pts, "#d8ded4");
-      if (game.graphicsMode !== "solid") {
+      const mode = game.graphicsMode;
+      if (mode === "wire") {
+        drawSolidItems(ctx, collectSolidFaces(model, camVerts, pts, "#000", 1, true));
+      } else {
+        drawSolidFaces(model, camVerts, pts, "#d8ded4");
+      }
+      if (mode !== "solid") {
         ctx.strokeStyle = "#d8ded4";
         ctx.lineWidth = clamp(800 / Math.max(110, cam.z), .7, 2);
         const faceVisible = collectWireFaceVisibility(model, camVerts);
-        drawWireOccluderFaces(ctx, collectWireOccluderFaces(model, camVerts, pts, faceVisible));
         ctx.beginPath();
         for (let edgeIndex = 0; edgeIndex < model.edges.length; edgeIndex++) {
           if (!wireEdgeVisible(model, edgeIndex, faceVisible)) continue;
@@ -3620,10 +3611,11 @@
         Graphics mode
         <button class="btn mini ${game.graphicsMode === "wire" ? "primary" : ""}" data-graphics="wire">Wire</button>
         <button class="btn mini ${game.graphicsMode === "solid" ? "primary" : ""}" data-graphics="solid">Shaded</button>
+        <button class="btn mini ${game.graphicsMode === "both" ? "primary" : ""}" data-graphics="both">Both</button>
       </div>
       <div class="grid2">
         ${stat("Hull", "Cobra Mk III")}
-        ${stat("Mode", game.graphicsMode === "solid" ? "Solid Shaded" : "Wireframe")}
+        ${stat("Mode", graphicsModeLabel(game.graphicsMode))}
         ${stat("Cargo", `${usedCargo()}/${game.cargoCap}t`)}
         ${stat("Laser", laserPower().name)}
         ${stat("Missiles", game.missiles)}
@@ -3673,6 +3665,10 @@
       return `<div class="stat-line"><span class="label">${label}</span><span class="value">${value}</span></div>`;
     }
 
+    function graphicsModeLabel(mode) {
+      return mode === "solid" ? "Solid Shaded" : mode === "both" ? "Wire + Solid" : "Wireframe";
+    }
+
     function attachPanelEvents() {
       panelBody.querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => buyGood(b.dataset.buy)));
       panelBody.querySelectorAll("[data-sell]").forEach((b) => b.addEventListener("click", () => sellGood(b.dataset.sell)));
@@ -3688,7 +3684,7 @@
       panelBody.querySelectorAll("[data-equip]").forEach((b) => b.addEventListener("click", () => buyEquipment(b.dataset.equip)));
       panelBody.querySelectorAll("[data-graphics]").forEach((b) => b.addEventListener("click", () => {
         game.graphicsMode = b.dataset.graphics;
-        setMessage(`Graphics mode: ${game.graphicsMode === "solid" ? "solid shaded" : "wireframe"}.`);
+        setMessage(`Graphics mode: ${graphicsModeLabel(game.graphicsMode).toLowerCase()}.`);
         renderPanel();
       }));
       const fuel = panelBody.querySelector("[data-fuel]");
@@ -3761,7 +3757,7 @@
       });
       c.strokeStyle = "#e9f2e4";
       c.lineWidth = 1.4;
-      if (game.graphicsMode === "solid") {
+      if (game.graphicsMode !== "wire") {
         const detailProject = (p) => {
           const f = 320 / p.z;
           return { x: canvas.width / 2 + p.x * f, y: canvas.height / 2 - p.y * f };
@@ -3833,8 +3829,8 @@
         if (game.targetObject) setMessage(`Locked: ${game.targetObject.name}.`);
       }
       if (e.code === "KeyG") {
-        game.graphicsMode = game.graphicsMode === "solid" ? "wire" : "solid";
-        setMessage(`Graphics mode: ${game.graphicsMode === "solid" ? "solid shaded" : "wireframe"}.`);
+        game.graphicsMode = { wire: "solid", solid: "both", both: "wire" }[game.graphicsMode];
+        setMessage(`Graphics mode: ${graphicsModeLabel(game.graphicsMode).toLowerCase()}.`);
         if (game.panel === "ship") renderPanel();
       }
       if (e.code === "Digit1") { game.panel = "market"; renderPanel(); }
