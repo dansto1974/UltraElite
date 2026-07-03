@@ -881,8 +881,8 @@
     // same camera-conjugate rotation before that combination is valid — otherwise
     // every other object's rendered attitude stays screen-locked instead of
     // world-fixed, i.e. it visibly spins in lockstep whenever the player turns.
-    function worldDirToCam(dir) {
-      return quatRotate(quatConj(ensureCameraQuat(game.camera)), dir);
+    function worldDirToCam(dir, camera = game.camera) {
+      return quatRotate(quatConj(ensureCameraQuat(camera)), dir);
     }
 
     function forwardVector(camera) {
@@ -2783,17 +2783,17 @@
       return !!faceVisible[faces[0]] || !!faceVisible[faces[1]];
     }
 
-    function collectSolidDetails(model, o, camVerts, points, w, h, scaleFactor = 1) {
+    function collectSolidDetails(model, o, camVerts, points, w, h, scaleFactor = 1, camera = game.camera) {
       if (game.graphicsMode === "wire" || !model.details) return [];
       const roll = o.roll ?? (o.rot || 0) * .7;
       const details = [];
       for (const detail of model.details) {
         const normal = detail.normal
-          ? worldDirToCam(norm(rotateShipPoint(vec(detail.normal[0], detail.normal[1], detail.normal[2]), o.rot || 0, o.pitch || 0, roll)))
+          ? worldDirToCam(norm(rotateShipPoint(vec(detail.normal[0], detail.normal[1], detail.normal[2]), o.rot || 0, o.pitch || 0, roll)), camera)
           : null;
         const vertsOnSurface = detail.indices
           ? detail.indices.map((i) => camVerts[i])
-          : detail.points.map(([x, y, z]) => add(worldDirToCam(rotateShipPoint(vec(x * scaleFactor, y * scaleFactor, z * scaleFactor), o.rot || 0, o.pitch || 0, roll)), o.cam || vec()));
+          : detail.points.map(([x, y, z]) => add(worldDirToCam(rotateShipPoint(vec(x * scaleFactor, y * scaleFactor, z * scaleFactor), o.rot || 0, o.pitch || 0, roll), camera), o.cam || vec()));
         const isLineDetail = detail.type === "line" || detail.type === "polyline";
         if (vertsOnSurface.length < (isLineDetail ? 2 : 3)) continue;
         const surfaceCenter = scale(vertsOnSurface.reduce((sum, p) => add(sum, p), vec()), 1 / vertsOnSurface.length);
@@ -3867,19 +3867,31 @@
         return { x: canvas.width / 2 + p.x * f, y: canvas.height / 2 - p.y * f };
       });
       const hullColor = shipColor(modelName, POLICE_MODELS.includes(modelName));
-      c.strokeStyle = hullColor;
-      c.lineWidth = 1.4;
-      if (game.graphicsMode !== "wire") {
+      const mode = game.graphicsMode;
+      // Details (windows/engine glow/trim) are culled via worldDirToCam, which reads the
+      // real player camera's orientation -- correct for the main flight view, but this
+      // widget is a self-contained turntable with no relation to game.camera at all, so
+      // without an identity override here, detail visibility would flip randomly with
+      // whichever way the player actually happens to be flying.
+      const identityCamera = makeCamera(0);
+      if (mode === "wire") {
+        drawSolidItems(c, collectSolidFaces(model, camVerts, pts, "#000", 1, true));
+      } else {
         const detailProject = (p) => {
           const f = 320 / p.z;
           return { x: canvas.width / 2 + p.x * f, y: canvas.height / 2 - p.y * f };
         };
         drawSolidItems(c, collectSolidFaces(model, camVerts, pts, hullColor));
-        drawSolidItems(c, collectSolidDetails(model, { rot: yaw, pitch, roll, cam: tempCam, project: detailProject }, camVerts, pts, canvas.width, canvas.height, scaleFactor));
+        drawSolidItems(c, collectSolidDetails(model, { rot: yaw, pitch, roll, cam: tempCam, project: detailProject }, camVerts, pts, canvas.width, canvas.height, scaleFactor, identityCamera));
       }
-      if (game.graphicsMode !== "solid") {
+      if (mode !== "solid") {
+        c.strokeStyle = hullColor;
+        c.lineWidth = 1.4;
+        const faceVisible = collectWireFaceVisibility(model, camVerts);
         c.beginPath();
-        for (const [a,b] of model.edges) {
+        for (let edgeIndex = 0; edgeIndex < model.edges.length; edgeIndex++) {
+          if (!wireEdgeVisible(model, edgeIndex, faceVisible)) continue;
+          const [a, b] = model.edges[edgeIndex];
           c.moveTo(pts[a].x, pts[a].y);
           c.lineTo(pts[b].x, pts[b].y);
         }
