@@ -2335,9 +2335,9 @@
     }
 
     function updatePlayerControls(dt) {
-      const rollInput = (keys.has("KeyD") ? 1 : 0) - (keys.has("KeyA") ? 1 : 0);
+      const rollInput = (keys.has("KeyA") ? 1 : 0) - (keys.has("KeyD") ? 1 : 0);
       const pitchInput = (keys.has("KeyW") ? 1 : 0) - (keys.has("KeyS") ? 1 : 0);
-      const yawInput = (keys.has("KeyQ") ? 1 : 0) - (keys.has("KeyE") ? 1 : 0);
+      const yawInput = (keys.has("KeyE") ? 1 : 0) - (keys.has("KeyQ") ? 1 : 0);
       game.rollRate = updateAxisRate(game.rollRate || 0, rollInput, dt, 4.8, 2.05);
       game.pitchRate = updateAxisRate(game.pitchRate || 0, pitchInput, dt, 3.5, 1.42);
       game.yawRate = updateAxisRate(game.yawRate || 0, yawInput, dt, 3.2, 1.24);
