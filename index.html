@@ -1,0 +1,3708 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vector Elite - Browser Experiment</title>
+  <style>
+    :root {
+      --bg: #020403;
+      --panel: #060906;
+      --panel2: #0a100a;
+      --line: #889084;
+      --soft-line: #344033;
+      --green: #65ff47;
+      --green-dim: #2bb934;
+      --amber: #ffd33d;
+      --cyan: #46dfff;
+      --red: #ff4848;
+      --white: #e9f2e4;
+      --muted: #91a78d;
+      --shadow: rgba(101, 255, 71, .18);
+      color-scheme: dark;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+      color: var(--green);
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    #app {
+      width: 100vw;
+      height: 100vh;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) 104px 36px;
+      padding: 8px;
+      gap: 8px;
+      background:
+        radial-gradient(circle at 50% 40%, rgba(33, 64, 41, .18), transparent 48%),
+        linear-gradient(180deg, #020403, #000);
+      overflow: hidden;
+    }
+
+    .main {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(310px, 31vw);
+      gap: 8px;
+    }
+
+    .view-wrap,
+    .panel,
+    .dashboard,
+    .message-line {
+      border: 1px solid var(--line);
+      background: rgba(0, 0, 0, .74);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .03), 0 0 18px rgba(50, 255, 80, .05);
+    }
+
+    .view-wrap {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+    }
+
+    .top-readout {
+      position: absolute;
+      inset: 10px 12px auto 12px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: start;
+      pointer-events: none;
+      text-shadow: 0 0 8px var(--shadow);
+      font-size: clamp(10px, 1.3vw, 15px);
+      line-height: 1.45;
+    }
+
+    .top-readout .center {
+      text-align: center;
+    }
+
+    .top-readout .right {
+      text-align: right;
+    }
+
+    .crosshair {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 34px;
+      height: 34px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      opacity: .9;
+    }
+
+    .crosshair::before,
+    .crosshair::after {
+      content: "";
+      position: absolute;
+      background: var(--white);
+      box-shadow: 0 0 8px rgba(255, 255, 255, .25);
+    }
+
+    .crosshair::before {
+      left: 0;
+      right: 0;
+      top: 16px;
+      height: 1px;
+    }
+
+    .crosshair::after {
+      top: 0;
+      bottom: 0;
+      left: 16px;
+      width: 1px;
+    }
+
+    .side {
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 8px;
+    }
+
+    .tabs {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 4px;
+    }
+
+    .btn {
+      min-height: 34px;
+      border: 1px solid #5b6e28;
+      background: #030603;
+      color: var(--green);
+      padding: 6px 8px;
+      cursor: pointer;
+      text-transform: uppercase;
+      text-align: center;
+      transition: background .12s ease, color .12s ease, border-color .12s ease;
+    }
+
+    .btn:hover,
+    .btn:focus-visible {
+      outline: none;
+      background: #112011;
+      border-color: var(--green);
+    }
+
+    .btn.active,
+    .btn.primary {
+      color: #071006;
+      background: var(--green);
+      border-color: var(--green);
+    }
+
+    .btn.warn {
+      color: var(--amber);
+      border-color: #7e681e;
+    }
+
+    .btn.danger {
+      color: var(--red);
+      border-color: #702929;
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      color: #526152;
+      border-color: #293129;
+      background: #030503;
+    }
+
+    .panel {
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    .panel-head {
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--soft-line);
+      color: var(--green);
+      text-transform: uppercase;
+      font-size: 15px;
+    }
+
+    .panel-head span:last-child {
+      color: var(--muted);
+      font-size: 12px;
+      text-align: right;
+    }
+
+    .panel-body {
+      min-width: 0;
+      min-height: 0;
+      overflow: auto;
+      padding: 10px 12px 12px;
+      scrollbar-color: var(--green-dim) #030603;
+    }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 16px;
+    }
+
+    .stat-line,
+    .row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(80, 100, 78, .22);
+      min-width: 0;
+    }
+
+    .label {
+      color: var(--muted);
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .value {
+      color: var(--green);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .value.warn {
+      color: var(--amber);
+    }
+
+    .value.danger {
+      color: var(--red);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      table-layout: fixed;
+    }
+
+    th,
+    td {
+      padding: 5px 4px;
+      border-bottom: 1px solid rgba(80, 100, 78, .22);
+      text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    th:first-child,
+    td:first-child {
+      text-align: left;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #030603;
+      color: var(--amber);
+      font-weight: 400;
+      text-transform: uppercase;
+    }
+
+    td.illegal,
+    .illegal {
+      color: var(--amber);
+    }
+
+    .mini {
+      min-height: 24px;
+      padding: 2px 6px;
+      font-size: 11px;
+    }
+
+    .dashboard {
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 250px minmax(250px, 1fr) 250px;
+      gap: 8px;
+      padding: 8px;
+    }
+
+    .dash-section {
+      min-width: 0;
+      border: 1px solid var(--soft-line);
+      padding: 8px;
+      background: rgba(0, 0, 0, .5);
+      overflow: hidden;
+    }
+
+    .dash-title {
+      margin: 0 0 6px;
+      color: var(--amber);
+      text-transform: uppercase;
+      font-size: 12px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 70px minmax(70px, 1fr) 42px;
+      gap: 8px;
+      align-items: center;
+      margin: 5px 0;
+      font-size: 12px;
+    }
+
+    .bar {
+      height: 16px;
+      border: 1px solid #204620;
+      background: #031003;
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      background: repeating-linear-gradient(90deg, var(--green) 0 9px, #061406 9px 11px);
+    }
+
+    .fill.cyan {
+      background: repeating-linear-gradient(90deg, var(--cyan) 0 9px, #061014 9px 11px);
+    }
+
+    .fill.red {
+      background: repeating-linear-gradient(90deg, var(--red) 0 9px, #140606 9px 11px);
+    }
+
+    .scanner-wrap {
+      position: relative;
+      height: 86px;
+      min-width: 0;
+    }
+
+    #scanner {
+      position: absolute;
+      inset: 0;
+    }
+
+    .message-line {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 14px;
+      padding: 6px 10px;
+      min-height: 0;
+      font-size: 13px;
+      overflow: hidden;
+    }
+
+    #message {
+      color: var(--green);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cmds {
+      display: flex;
+      gap: 4px;
+      flex-wrap: nowrap;
+    }
+
+    .screen-flash {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      background: rgba(255, 255, 255, .9);
+      mix-blend-mode: screen;
+    }
+
+    .screen-flash.on {
+      animation: flash .22s ease-out;
+    }
+
+    @keyframes flash {
+      from { opacity: .78; }
+      to { opacity: 0; }
+    }
+
+    .ship-diagram {
+      width: 100%;
+      height: 130px;
+      border: 1px solid var(--soft-line);
+      margin: 8px 0 10px;
+      background: #010201;
+    }
+
+    .notice {
+      border: 1px solid #354635;
+      padding: 8px;
+      color: var(--muted);
+      line-height: 1.45;
+      margin-bottom: 10px;
+    }
+
+    .star-map {
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--soft-line);
+      background: #010401;
+    }
+
+    .star-map .range-ring {
+      fill: none;
+      stroke: var(--soft-line);
+      stroke-width: 1;
+    }
+
+    .star-map .jump-range {
+      stroke: var(--amber);
+      stroke-dasharray: 3 3;
+      opacity: .7;
+    }
+
+    .star-map .map-dot {
+      cursor: pointer;
+    }
+
+    .star-map .map-label {
+      fill: var(--muted);
+      font-size: 7px;
+      font-family: inherit;
+      pointer-events: none;
+    }
+
+    .kbd {
+      color: #071006;
+      background: var(--green);
+      padding: 1px 4px;
+    }
+
+    @media (max-width: 860px) {
+      #app {
+        grid-template-rows: minmax(0, 1fr) 128px 42px;
+        padding: 6px;
+        gap: 6px;
+      }
+
+      .main {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(0, 48%) minmax(0, 52%);
+      }
+
+      .dashboard {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+      }
+
+      .dashboard .dash-section:last-child {
+        display: none;
+      }
+
+      .tabs {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 520px) {
+      #app {
+        grid-template-rows: minmax(0, 1fr) 126px 42px;
+      }
+
+      .top-readout {
+        grid-template-columns: minmax(0, 1fr) auto;
+        font-size: 10px;
+      }
+
+      .top-readout .center {
+        overflow: hidden;
+        text-align: right;
+      }
+
+      .top-readout .right {
+        display: none;
+      }
+
+      #pitchTape {
+        display: none;
+      }
+
+      .panel-head {
+        font-size: 13px;
+        padding: 8px 10px;
+      }
+
+      .panel-head span:last-child {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .panel-body {
+        padding: 8px 10px 10px;
+      }
+
+      .tabs .btn {
+        min-height: 36px;
+        font-size: 14px;
+        padding: 5px 4px;
+      }
+
+      table {
+        font-size: 10px;
+      }
+
+      th:nth-child(1),
+      td:nth-child(1) {
+        width: 31%;
+      }
+
+      th:nth-child(2),
+      td:nth-child(2),
+      th:nth-child(3),
+      td:nth-child(3),
+      th:nth-child(4),
+      td:nth-child(4) {
+        width: 15%;
+      }
+
+      th:nth-child(5),
+      td:nth-child(5),
+      th:nth-child(6),
+      td:nth-child(6) {
+        width: 12%;
+      }
+
+      th,
+      td {
+        padding: 4px 2px;
+      }
+
+      .mini {
+        min-height: 22px;
+        padding: 2px 4px;
+        font-size: 10px;
+      }
+
+      .dashboard {
+        gap: 6px;
+        padding: 6px;
+      }
+
+      .dash-section {
+        padding: 7px;
+      }
+
+      .bar-row {
+        grid-template-columns: 46px minmax(42px, 1fr) 30px;
+        gap: 5px;
+        font-size: 10px;
+      }
+
+      .message-line {
+        grid-template-columns: auto minmax(0, 1fr) 112px;
+        gap: 7px;
+        font-size: 11px;
+      }
+
+      .cmds {
+        min-width: 0;
+        overflow: hidden;
+      }
+
+      .cmds .btn {
+        width: 52px;
+        min-width: 0;
+        padding: 2px 5px;
+      }
+
+      .cmds .btn:nth-child(2),
+      .cmds .btn:nth-child(3),
+      .cmds .btn:nth-child(4),
+      .cmds .btn:nth-child(6) {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <main class="main">
+      <section class="view-wrap" aria-label="Flight view">
+        <canvas id="space" width="1280" height="720"></canvas>
+        <div class="top-readout">
+          <div>
+            <div>COMMANDER <span id="roCommander">JAMESON</span></div>
+            <div>CREDITS <span id="roCredits">100.0</span></div>
+            <div>LEGAL <span id="roLegal">CLEAN</span></div>
+          </div>
+          <div class="center">
+            <div id="roView">DOCKED</div>
+            <div id="pitchTape">-40 &nbsp;&nbsp; -20 &nbsp;&nbsp; 0 &nbsp;&nbsp; +20 &nbsp;&nbsp; +40</div>
+          </div>
+          <div class="right">
+            <div>TARGET <span id="roTarget">NONE</span></div>
+            <div>SYSTEM <span id="roSystem">LAVE</span></div>
+            <div>DIST <span id="roDistance">--</span></div>
+          </div>
+        </div>
+        <div class="crosshair" aria-hidden="true"></div>
+        <div class="screen-flash" id="flash"></div>
+      </section>
+
+      <aside class="side">
+        <nav class="tabs" aria-label="Panels">
+          <button class="btn active" data-panel="market">Market</button>
+          <button class="btn" data-panel="chart">Chart</button>
+          <button class="btn" data-panel="equip">Equip</button>
+          <button class="btn" data-panel="status">Status</button>
+          <button class="btn" data-panel="ship">Ship</button>
+          <button class="btn" data-panel="help">Help</button>
+        </nav>
+        <section class="panel">
+          <div class="panel-head">
+            <span id="panelTitle">Market</span>
+            <span id="panelSub">Docked at Lave Station</span>
+          </div>
+          <div class="panel-body" id="panelBody"></div>
+        </section>
+      </aside>
+    </main>
+
+    <section class="dashboard" aria-label="Ship dashboard">
+      <div class="dash-section">
+        <h2 class="dash-title">Condition</h2>
+        <div class="bar-row"><span>Energy</span><div class="bar"><div class="fill" id="barEnergy"></div></div><span id="txtEnergy">100%</span></div>
+        <div class="bar-row"><span>Shields</span><div class="bar"><div class="fill cyan" id="barShields"></div></div><span id="txtShields">100%</span></div>
+        <div class="bar-row"><span>Fuel</span><div class="bar"><div class="fill" id="barFuel"></div></div><span id="txtFuel">7.0</span></div>
+        <div class="row"><span class="label">Speed</span><span class="value" id="txtSpeed">0</span></div>
+      </div>
+      <div class="dash-section">
+        <h2 class="dash-title">3D Scanner</h2>
+        <div class="scanner-wrap"><canvas id="scanner" width="520" height="104"></canvas></div>
+      </div>
+      <div class="dash-section">
+        <h2 class="dash-title">Weapons</h2>
+        <div class="row"><span class="label">Laser</span><span class="value" id="txtLaser">Pulse</span></div>
+        <div class="row"><span class="label">Missiles</span><span class="value" id="txtMissiles">1</span></div>
+        <div class="row"><span class="label">ECM</span><span class="value" id="txtEcm">No</span></div>
+        <div class="row"><span class="label">Cargo</span><span class="value" id="txtCargo">0/20</span></div>
+      </div>
+    </section>
+
+    <footer class="message-line">
+      <span>&gt;</span>
+      <div id="message">Welcome, Commander. Trade, launch, fight, dock, and try not to become expensive wreckage.</div>
+      <div class="cmds">
+        <button class="btn mini primary" id="launchBtn">Launch</button>
+        <button class="btn mini" id="jumpBtn">Jump</button>
+        <button class="btn mini" id="dockBtn">Dock</button>
+        <button class="btn mini warn" id="laserBtn">Laser</button>
+        <button class="btn mini" id="armadaBtn">Armada</button>
+        <button class="btn mini" id="saveBtn">Save</button>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    "use strict";
+
+    const TAU = Math.PI * 2;
+    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const fmt = (n, d = 1) => Number(n).toFixed(d);
+    const byId = (id) => document.getElementById(id);
+
+    function hash32(str) {
+      let h = 2166136261 >>> 0;
+      for (let i = 0; i < str.length; i++) {
+        h ^= str.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return h >>> 0;
+    }
+
+    function mulberry(seed) {
+      let a = seed >>> 0;
+      return () => {
+        a += 0x6D2B79F5;
+        let t = a;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function vec(x = 0, y = 0, z = 0) {
+      return { x, y, z };
+    }
+
+    function add(a, b) {
+      return vec(a.x + b.x, a.y + b.y, a.z + b.z);
+    }
+
+    function sub(a, b) {
+      return vec(a.x - b.x, a.y - b.y, a.z - b.z);
+    }
+
+    function scale(a, n) {
+      return vec(a.x * n, a.y * n, a.z * n);
+    }
+
+    function len(a) {
+      return Math.hypot(a.x, a.y, a.z);
+    }
+
+    function norm(a) {
+      const l = len(a) || 1;
+      return scale(a, 1 / l);
+    }
+
+    function rotatePoint(p, yaw, pitch, roll) {
+      let x = p.x, y = p.y, z = p.z;
+      let cy = Math.cos(yaw), sy = Math.sin(yaw);
+      let x1 = x * cy - z * sy;
+      let z1 = x * sy + z * cy;
+      x = x1; z = z1;
+      let cp = Math.cos(pitch), sp = Math.sin(pitch);
+      let y1 = y * cp - z * sp;
+      z1 = y * sp + z * cp;
+      y = y1; z = z1;
+      let cr = Math.cos(roll), sr = Math.sin(roll);
+      x1 = x * cr - y * sr;
+      y1 = x * sr + y * cr;
+      return vec(x1, y1, z);
+    }
+
+    function quat(w = 1, x = 0, y = 0, z = 0) {
+      return { w, x, y, z };
+    }
+
+    function quatNorm(q) {
+      const l = Math.hypot(q.w, q.x, q.y, q.z) || 1;
+      return quat(q.w / l, q.x / l, q.y / l, q.z / l);
+    }
+
+    function quatMul(a, b) {
+      return quat(
+        a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z,
+        a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y,
+        a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x,
+        a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w
+      );
+    }
+
+    function quatConj(q) {
+      return quat(q.w, -q.x, -q.y, -q.z);
+    }
+
+    function quatFromAxisAngle(axis, angle) {
+      const n = norm(axis);
+      const s = Math.sin(angle / 2);
+      return quat(Math.cos(angle / 2), n.x * s, n.y * s, n.z * s);
+    }
+
+    function quatRotate(q, p) {
+      const r = quatMul(quatMul(q, quat(0, p.x, p.y, p.z)), quatConj(q));
+      return vec(r.x, r.y, r.z);
+    }
+
+    function cross(a, b) {
+      return vec(
+        a.y * b.z - a.z * b.y,
+        a.z * b.x - a.x * b.z,
+        a.x * b.y - a.y * b.x
+      );
+    }
+
+    function dot(a, b) {
+      return a.x * b.x + a.y * b.y + a.z * b.z;
+    }
+
+    function quatFromBasis(right, up, forward) {
+      const m00 = right.x, m01 = up.x, m02 = forward.x;
+      const m10 = right.y, m11 = up.y, m12 = forward.y;
+      const m20 = right.z, m21 = up.z, m22 = forward.z;
+      const tr = m00 + m11 + m22;
+      if (tr > 0) {
+        const s = Math.sqrt(tr + 1) * 2;
+        return quatNorm(quat(.25 * s, (m21 - m12) / s, (m02 - m20) / s, (m10 - m01) / s));
+      }
+      if (m00 > m11 && m00 > m22) {
+        const s = Math.sqrt(1 + m00 - m11 - m22) * 2;
+        return quatNorm(quat((m21 - m12) / s, .25 * s, (m01 + m10) / s, (m02 + m20) / s));
+      }
+      if (m11 > m22) {
+        const s = Math.sqrt(1 + m11 - m00 - m22) * 2;
+        return quatNorm(quat((m02 - m20) / s, (m01 + m10) / s, .25 * s, (m12 + m21) / s));
+      }
+      const s = Math.sqrt(1 + m22 - m00 - m11) * 2;
+      return quatNorm(quat((m10 - m01) / s, (m02 + m20) / s, (m12 + m21) / s, .25 * s));
+    }
+
+    function quatLookRotation(forward, upHint = vec(0, 1, 0)) {
+      const f = norm(forward);
+      let r = cross(upHint, f);
+      if (len(r) < .001) r = cross(vec(1, 0, 0), f);
+      r = norm(r);
+      const u = norm(cross(f, r));
+      return quatFromBasis(r, u, f);
+    }
+
+    function ensureCameraQuat(camera) {
+      if (!camera.q) camera.q = quat();
+      camera.q = quatNorm(camera.q);
+      return camera.q;
+    }
+
+    function makeCamera(z) {
+      return { pos: vec(0, 0, z), q: quat() };
+    }
+
+    function rotateCameraLocal(camera, axis, angle) {
+      camera.q = quatNorm(quatMul(ensureCameraQuat(camera), quatFromAxisAngle(axis, angle)));
+    }
+
+    function cameraTransform(world, camera) {
+      const p = sub(world, camera.pos);
+      return quatRotate(quatConj(ensureCameraQuat(camera)), p);
+    }
+
+    function forwardVector(camera) {
+      return quatRotate(ensureCameraQuat(camera), vec(0, 0, 1));
+    }
+
+    function cameraLocalToWorld(camera, local) {
+      return add(camera.pos, quatRotate(ensureCameraQuat(camera), local));
+    }
+
+    const ECONOMIES = [
+      "Rich Industrial", "Average Industrial", "Poor Industrial", "Mainly Industrial",
+      "Mainly Agricultural", "Rich Agricultural", "Average Agricultural", "Poor Agricultural"
+    ];
+    const GOVS = ["Anarchy", "Feudal", "Multi-Government", "Dictatorship", "Communist", "Confederacy", "Democracy", "Corporate State"];
+    const RANKS = [
+      ["Harmless", 0], ["Mostly Harmless", 8], ["Poor", 16], ["Average", 32],
+      ["Above Average", 64], ["Competent", 128], ["Dangerous", 512],
+      ["Deadly", 2560], ["Elite", 6400]
+    ];
+    const NAME_PAIRS = ["AL", "LE", "XE", "GE", "ZA", "CE", "BI", "SO", "US", "ES", "AR", "MA", "IN", "DI", "RE", "A?", "ER", "AT", "EN", "BE", "RA", "LA", "VE", "TI", "ED", "OR", "QU", "AN", "TE", "IS", "RI", "ON"];
+    const GOODS = [
+      ["Food", 19, -2, 6, 0x01, "t", false],
+      ["Textiles", 20, -1, 10, 0x03, "t", false],
+      ["Radioactives", 65, -3, 2, 0x07, "t", false],
+      ["Slaves", 40, -5, 226, 0x1F, "t", true],
+      ["Liquor/Wines", 83, -5, 251, 0x0F, "t", false],
+      ["Luxuries", 196, 8, 54, 0x03, "t", false],
+      ["Narcotics", 235, 29, 8, 0x78, "t", true],
+      ["Computers", 154, 14, 56, 0x03, "t", false],
+      ["Machinery", 117, 6, 40, 0x07, "t", false],
+      ["Alloys", 78, 1, 17, 0x1F, "t", false],
+      ["Firearms", 124, 13, 29, 0x07, "t", true],
+      ["Furs", 176, -9, 220, 0x3F, "t", false],
+      ["Minerals", 32, -1, 53, 0x03, "t", false],
+      ["Gold", 97, -1, 66, 0x07, "kg", false],
+      ["Platinum", 171, -2, 55, 0x1F, "kg", false],
+      ["Gem-Stones", 45, -1, 250, 0x0F, "g", false],
+      ["Alien Items", 53, 15, 192, 0x07, "t", true]
+    ];
+
+    const EQUIPMENT = [
+      { id: "fuelScoop", name: "Fuel Scoop", cost: 525, tech: 5, desc: "Collect solar fuel and loose cargo canisters." },
+      { id: "ecm", name: "E.C.M. System", cost: 600, tech: 2, desc: "Disrupt incoming missiles." },
+      { id: "beamLaser", name: "Beam Laser", cost: 1000, tech: 4, desc: "A stronger forward laser." },
+      { id: "cargoBay", name: "Large Cargo Bay", cost: 400, tech: 1, desc: "Expands capacity to 35 tonnes." },
+      { id: "extraEnergy", name: "Extra Energy Unit", cost: 1500, tech: 8, desc: "Improves energy recharge and survivability." },
+      { id: "dockingComputer", name: "Docking Computer", cost: 1500, tech: 9, desc: "Automates final station approach." },
+      { id: "militaryLaser", name: "Military Laser", cost: 6000, tech: 10, desc: "The classic iron-ass indulgence." },
+      { id: "galacticHyperdrive", name: "Galactic Hyperdrive", cost: 5000, tech: 10, desc: "One-use jump to the next galaxy." },
+      { id: "miningLaser", name: "Mining Laser", cost: 800, tech: 3, desc: "Doubles damage against asteroids and rock debris." },
+      { id: "escapeCapsule", name: "Escape Capsule", cost: 1000, tech: 6, desc: "Auto-ejects you to safety if your ship is destroyed." },
+      { id: "energyBomb", name: "Energy Bomb", cost: 900, tech: 12, desc: "One-shot device that cripples every nearby hostile. Illegal to carry." }
+    ];
+
+    // Small original-shape authoring helpers for simple debris/hazard objects (missile,
+    // escape pod, alloy plate, asteroid family) — an n-gon prism (two end-cap rings
+    // joined by n side quads) covers all of these with just a ring of points at each
+    // end. Verified against the existing hand-authored canister/station models: side
+    // face k borders ring-A edge k, ring-B edge k, and the two connector edges either
+    // side of it, which is exactly what this generates.
+    function polyRing(n, r, z, phase = 0) {
+      return Array.from({ length: n }, (_, i) => {
+        const a = phase + (i * TAU) / n;
+        return [Math.cos(a) * r, Math.sin(a) * r, z];
+      });
+    }
+
+    function jitterRing(n, rBase, z, seed) {
+      const rng = mulberry(seed);
+      return Array.from({ length: n }, (_, i) => {
+        const a = (i * TAU) / n;
+        const r = rBase * (0.7 + rng() * 0.6);
+        return [Math.cos(a) * r, Math.sin(a) * r, z + (rng() - 0.5) * rBase * 0.3];
+      });
+    }
+
+    function prismModel(ringA, ringB, axisNormal = [0, 0, 1]) {
+      const n = ringA.length;
+      const verts = [...ringA, ...ringB];
+      const edges = [];
+      const edgeFaces = [];
+      for (let i = 0; i < n; i++) {
+        edges.push([i, (i + 1) % n]);
+        edgeFaces.push([0, 1 + i]);
+      }
+      for (let i = 0; i < n; i++) {
+        edges.push([n + i, n + ((i + 1) % n)]);
+        edgeFaces.push([n + 1, 1 + i]);
+      }
+      for (let i = 0; i < n; i++) {
+        edges.push([i, n + i]);
+        edgeFaces.push([1 + i, 1 + ((i - 1 + n) % n)]);
+      }
+      const sideNormal = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, 0];
+      const normals = [
+        axisNormal.map((v) => -v),
+        ...ringA.map((v, i) => sideNormal(v, ringA[(i + 1) % n])),
+        axisNormal
+      ];
+      return buildBlueprint({ verts, edges, edgeFaces, normals });
+    }
+
+    function buildBlueprint(data) {
+      const model = { ...data };
+      const entries = model.normals.map((normal, faceIndex) => {
+        const ids = new Set();
+        model.edges.forEach((edge, edgeIndex) => {
+          const ef = model.edgeFaces[edgeIndex];
+          if (ef[0] === ef[1]) return;
+          if (model.edgeVisibility && model.edgeVisibility[edgeIndex] < (model.hullVisibility || 29)) return;
+          if (ef.includes(faceIndex)) {
+            ids.add(edge[0]);
+            ids.add(edge[1]);
+          }
+        });
+        if (ids.size < 3) return null;
+        const n = norm(vec(normal[0], normal[1], normal[2]));
+        const center = [...ids].reduce((sum, i) => add(sum, vec(...model.verts[i])), vec());
+        const c = scale(center, 1 / ids.size);
+        let axis = cross(n, Math.abs(n.y) < .9 ? vec(0, 1, 0) : vec(1, 0, 0));
+        if (len(axis) < .0001) axis = cross(n, vec(0, 0, 1));
+        const u = norm(axis);
+        const v = norm(cross(n, u));
+        const face = [...ids].sort((a, b) => {
+          const pa = sub(vec(...model.verts[a]), c);
+          const pb = sub(vec(...model.verts[b]), c);
+          return Math.atan2(dot(pa, v), dot(pa, u)) - Math.atan2(dot(pb, v), dot(pb, u));
+        });
+        if (face.length >= 3) {
+          const calc = faceNormal(vec(...model.verts[face[0]]), vec(...model.verts[face[1]]), vec(...model.verts[face[2]]));
+          if (dot(calc, n) < 0) face.reverse();
+        }
+        // UV is derived from the object-local (unrotated) vertex positions, so it's
+        // fixed per face and stays glued to the surface as the object rotates on screen.
+        const uv = face.map((i) => {
+          const p = sub(vec(...model.verts[i]), c);
+          return [dot(p, u), dot(p, v)];
+        });
+        return { face, uv };
+      }).filter(Boolean);
+      model.faces = entries.map((e) => e.face);
+      model.faceUV = entries.map((e) => e.uv);
+      return model;
+    }
+
+    const MODELS = {
+      cobra: buildBlueprint({
+        verts: [[32,0,76],[-32,0,76],[0,26,24],[-120,-3,-8],[120,-3,-8],[-88,16,-40],[88,16,-40],[128,-8,-40],[-128,-8,-40],[0,26,-40],[-32,-24,-40],[32,-24,-40],[-36,8,-40],[-8,12,-40],[8,12,-40],[36,8,-40],[36,-12,-40],[8,-16,-40],[-8,-16,-40],[-36,-12,-40],[0,0,76],[0,0,90],[-80,-6,-40],[-80,6,-40],[-88,0,-40],[80,6,-40],[88,0,-40],[80,-6,-40]],
+        edges: [[0,1],[0,4],[1,3],[3,8],[4,7],[6,7],[6,9],[5,9],[5,8],[2,5],[2,6],[3,5],[4,6],[1,2],[0,2],[8,10],[10,11],[7,11],[1,10],[0,11],[1,5],[0,6],[20,21],[12,13],[18,19],[14,15],[16,17],[15,16],[14,17],[13,18],[12,19],[2,9],[22,24],[23,24],[22,23],[25,26],[26,27],[25,27]],
+        edgeFaces: [[0,11],[4,12],[3,10],[7,10],[8,12],[8,9],[6,9],[5,9],[7,9],[1,5],[2,6],[3,7],[4,8],[0,1],[0,2],[9,10],[9,11],[9,12],[10,11],[11,12],[1,3],[2,4],[0,11],[9,9],[9,9],[9,9],[9,9],[9,9],[9,9],[9,9],[9,9],[5,6],[9,9],[9,9],[9,9],[9,9],[9,9],[9,9]],
+        edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,29,29,6,20,20,20,20,19,17,19,19,30,6,6,8,6,6,8],
+        normals: [[0,62,31],[-18,55,16],[18,55,16],[-16,52,14],[16,52,14],[-14,47,0],[14,47,0],[-61,102,0],[61,102,0],[0,0,-80],[-7,-42,9],[0,-30,6],[7,-42,9]],
+        details: [
+          { type: "window", points: [[-28,8,34],[-12,18,-18],[12,18,-18],[28,8,34]], color: "#101915", normal: [0,1,.3], lift: 3 },
+          { type: "line", indices: [20,21], color: "#ffd33d", normal: [0,1,.35], width: 1.2, lift: 3 },
+          { type: "polyline", indices: [12,13,18,19,12], color: "#0b120f", normal: [0,0,-1], width: 1.4, lift: 4 },
+          { type: "polyline", indices: [14,15,16,17,14], color: "#0b120f", normal: [0,0,-1], width: 1.4, lift: 4 },
+          { type: "engine", indices: [22,24,23], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 5 },
+          { type: "engine", indices: [25,26,27], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 5 }
+        ]
+      }),
+      krait: buildBlueprint({
+        verts: [[0,0,96],[0,18,-48],[0,-18,-48],[90,0,-3],[-90,0,-3],[90,0,87],[-90,0,87],[0,5,53],[0,7,38],[-18,7,19],[18,7,19],[18,11,-39],[18,-11,-39],[36,0,-30],[-18,11,-39],[-18,-11,-39],[-36,0,-30]],
+        edges: [[0,1],[0,2],[0,3],[0,4],[1,4],[4,2],[2,3],[3,1],[3,5],[4,6],[1,2],[7,10],[8,10],[7,9],[8,9],[11,13],[13,12],[12,11],[14,15],[15,16],[16,14]],
+        edgeFaces: [[3,0],[2,1],[1,0],[3,2],[5,3],[5,2],[4,1],[4,0],[1,0],[3,2],[5,4],[0,0],[0,0],[3,3],[3,3],[4,4],[4,4],[4,4],[5,5],[5,5],[5,5]],
+        edgeVisibility: [31,31,31,31,31,31,31,31,30,30,8,9,6,9,6,8,8,7,7,8,8],
+        hullVisibility: 31,
+        normals: [[3,24,3],[3,-24,3],[-3,-24,3],[-3,24,3],[38,0,-77],[-38,0,-77]],
+        details: [
+          { type: "window", points: [[-16,7,42],[-8,12,-10],[8,12,-10],[16,7,42]], color: "#101915", normal: [0,1,.25], lift: 3 },
+          { type: "line", indices: [3,5], color: "#eef7ed", normal: [1,0,.25], width: 1.6, lift: 3, cull: false },
+          { type: "line", indices: [4,6], color: "#eef7ed", normal: [-1,0,.25], width: 1.6, lift: 3, cull: false },
+          { type: "engine", indices: [11,13,12], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 5 },
+          { type: "engine", indices: [14,15,16], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 5 }
+        ]
+      }),
+      viper: buildBlueprint({
+        verts: [[0,0,72],[0,16,24],[0,-16,24],[48,0,-24],[-48,0,-24],[24,-16,-24],[-24,-16,-24],[24,16,-24],[-24,16,-24],[-32,0,-24],[32,0,-24],[8,8,-24],[-8,8,-24],[-8,-8,-24],[8,-8,-24]],
+        edges: [[0,3],[0,1],[0,2],[0,4],[1,7],[1,8],[2,5],[2,6],[7,8],[5,6],[4,8],[4,6],[3,7],[3,5],[9,12],[9,13],[10,11],[10,14],[11,14],[12,13]],
+        edgeFaces: [[2,4],[1,2],[3,4],[1,3],[0,2],[0,1],[4,5],[3,5],[0,6],[5,6],[1,6],[3,6],[2,6],[6,4],[6,6],[6,6],[6,6],[6,6],[6,6],[6,6]],
+        edgeVisibility: [31,30,30,31,30,30,30,30,31,30,31,30,31,30,19,18,19,18,16,16],
+        normals: [[0,32,0],[-22,33,11],[22,33,11],[-22,-33,11],[22,-33,11],[0,-32,0],[0,0,-48]],
+        details: [
+          { type: "window", points: [[-12,6,28],[-8,12,-8],[8,12,-8],[12,6,28]], color: "#101915", normal: [0,1,.25], lift: 3 },
+          { type: "engine", indices: [9,12,13], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 5 },
+          { type: "engine", indices: [10,14,11], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 5 }
+        ]
+      }),
+      adder: buildBlueprint({
+        verts: [[-18,0,40],[18,0,40],[30,0,-24],[30,0,-40],[18,-7,-40],[-18,-7,-40],[-30,0,-40],[-30,0,-24],[-18,7,-40],[18,7,-40],[-18,7,13],[18,7,13],[-18,-7,13],[18,-7,13],[-11,3,29],[11,3,29],[11,4,24],[-11,4,24]],
+        edges: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,0],[3,9],[9,8],[8,6],[0,10],[7,10],[1,11],[2,11],[0,12],[7,12],[1,13],[2,13],[10,11],[12,13],[8,10],[9,11],[5,12],[4,13],[14,15],[15,16],[16,17],[17,14]],
+        edgeFaces: [[1,0],[3,2],[5,4],[6,5],[14,7],[10,8],[10,9],[12,11],[6,4],[13,7],[9,8],[11,0],[11,9],[2,0],[4,2],[12,1],[12,10],[3,1],[5,3],[13,0],[14,1],[13,9],[13,4],[14,10],[14,5],[0,0],[0,0],[0,0],[0,0]],
+        edgeVisibility: [31,7,31,31,31,31,31,7,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,5,3,4,3],
+        normals: [[0,39,10],[0,-39,10],[69,50,13],[69,-50,13],[30,52,0],[30,-52,0],[0,0,-160],[0,0,-160],[0,0,-160],[-30,52,0],[-30,-52,0],[-69,50,13],[-69,-50,13],[0,28,0],[0,-28,0]]
+      }),
+      gecko: buildBlueprint({
+        verts: [[-10,-4,47],[10,-4,47],[-16,8,-23],[16,8,-23],[-66,0,-3],[66,0,-3],[-20,-14,-23],[20,-14,-23],[-8,-6,33],[8,-6,33],[-8,-13,-16],[8,-13,-16]],
+        edges: [[0,1],[1,5],[5,3],[3,2],[2,4],[4,0],[5,7],[7,6],[6,4],[0,2],[1,3],[0,6],[1,7],[2,6],[3,7],[8,10],[9,11]],
+        edgeFaces: [[3,0],[2,1],[8,1],[7,0],[6,5],[5,4],[8,2],[7,3],[6,4],[5,0],[1,0],[4,3],[3,2],[7,6],[8,7],[3,3],[3,3]],
+        edgeVisibility: [31,31,31,31,31,31,31,31,31,29,30,29,30,20,20,16,17],
+        normals: [[0,31,5],[4,45,8],[25,-108,19],[0,-84,12],[-25,-108,19],[-4,45,8],[-88,16,-214],[0,0,-187],[88,16,-214]]
+      }),
+      mamba: buildBlueprint({
+        verts: [[0,0,64],[-64,-8,-32],[-32,8,-32],[32,8,-32],[64,-8,-32],[-4,4,16],[4,4,16],[8,3,28],[-8,3,28],[-20,-4,16],[20,-4,16],[-24,-7,-20],[-16,-7,-20],[16,-7,-20],[24,-7,-20],[-8,4,-32],[8,4,-32],[8,-4,-32],[-8,-4,-32],[-32,4,-32],[32,4,-32],[36,-4,-32],[-36,-4,-32],[-38,0,-32],[38,0,-32]],
+        edges: [[0,1],[0,4],[1,4],[1,2],[2,3],[3,4],[5,6],[6,7],[7,8],[5,8],[9,11],[9,12],[10,13],[10,14],[13,14],[11,12],[15,16],[17,18],[15,18],[16,17],[20,21],[20,24],[21,24],[19,22],[19,23],[22,23],[0,2],[0,3]],
+        edgeFaces: [[0,2],[0,3],[0,4],[2,4],[1,4],[3,4],[1,1],[1,1],[1,1],[1,1],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[4,4],[4,4],[4,4],[4,4],[4,4],[4,4],[4,4],[4,4],[4,4],[4,4],[1,2],[1,3]],
+        edgeVisibility: [31,31,31,30,30,30,14,12,13,12,20,16,16,20,14,14,13,14,12,12,7,5,5,7,5,5,30,30],
+        normals: [[0,-24,2],[0,24,2],[-32,64,16],[32,64,16],[0,0,-127]]
+      }),
+      sidewinder: buildBlueprint({
+        verts: [[-32,0,36],[32,0,36],[64,0,-28],[-64,0,-28],[0,16,-28],[0,-16,-28],[-12,6,-28],[12,6,-28],[12,-6,-28],[-12,-6,-28]],
+        edges: [[0,1],[1,2],[1,4],[0,4],[0,3],[3,4],[2,4],[3,5],[2,5],[1,5],[0,5],[6,7],[7,8],[6,9],[8,9]],
+        edgeFaces: [[0,5],[2,6],[0,2],[0,1],[1,4],[1,3],[2,3],[3,4],[3,6],[5,6],[4,5],[3,3],[3,3],[3,3],[3,3]],
+        edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,15,12,12,12],
+        normals: [[0,32,8],[-12,47,6],[12,47,6],[0,0,-112],[-12,-47,6],[0,-32,8],[12,-47,6]]
+      }),
+      worm: buildBlueprint({
+        verts: [[10,-10,35],[-10,-10,35],[5,6,15],[-5,6,15],[15,-10,25],[-15,-10,25],[26,-10,-25],[-26,-10,-25],[8,14,-25],[-8,14,-25]],
+        edges: [[0,1],[1,5],[5,7],[7,6],[6,4],[4,0],[0,2],[1,3],[4,2],[5,3],[2,8],[8,6],[3,9],[9,7],[2,3],[8,9]],
+        edgeFaces: [[7,0],[7,3],[7,5],[7,6],[7,4],[7,2],[2,0],[3,0],[4,2],[5,3],[4,1],[6,4],[5,1],[6,5],[1,0],[6,1]],
+        edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31],
+        normals: [[0,88,70],[0,69,14],[70,66,35],[-70,66,35],[64,49,14],[-64,49,14],[0,0,-200],[0,-80,0]]
+      }),
+      moray: buildBlueprint({
+        verts: [[15,0,65],[-15,0,65],[0,18,-40],[-60,0,0],[60,0,0],[30,-27,-10],[-30,-27,-10],[-9,-4,-25],[9,-4,-25],[0,-18,-16],[13,3,49],[6,0,65],[-13,3,49],[-6,0,65]],
+        edges: [[0,1],[1,3],[3,6],[5,6],[4,5],[0,4],[1,6],[0,5],[0,2],[1,2],[2,3],[2,4],[2,5],[2,6],[7,8],[7,9],[8,9],[10,11],[12,13]],
+        edgeFaces: [[7,0],[6,1],[6,3],[7,4],[8,5],[8,2],[7,6],[8,7],[2,0],[1,0],[3,1],[5,2],[5,4],[4,3],[4,4],[4,4],[4,4],[0,0],[0,0]],
+        edgeVisibility: [31,31,24,24,24,31,15,15,15,15,17,17,13,13,5,7,7,5,5],
+        hullVisibility: 24,
+        normals: [[0,43,7],[-10,49,7],[10,49,7],[-59,-28,-101],[0,-52,-78],[59,-28,-101],[-72,-99,50],[0,-83,30],[72,-99,50]]
+      }),
+      asp: buildBlueprint({
+        verts: [[0,-18,0],[0,-9,-45],[43,0,-45],[69,-3,0],[43,-14,28],[-43,0,-45],[-69,-3,0],[-43,-14,28],[26,-7,73],[-26,-7,73],[43,14,28],[-43,14,28],[0,9,-45],[-17,0,-45],[17,0,-45],[0,-4,-45],[0,4,-45],[0,-7,73],[0,-7,83]],
+        edges: [[0,1],[0,4],[0,7],[1,2],[2,3],[3,8],[8,9],[6,9],[5,6],[1,5],[3,4],[4,8],[6,7],[7,9],[2,12],[5,12],[10,12],[11,12],[10,11],[6,11],[9,11],[3,10],[8,10],[13,15],[15,14],[14,16],[16,13],[18,17]],
+        edgeFaces: [[2,1],[1,0],[2,0],[11,1],[6,1],[9,7],[4,0],[10,8],[5,2],[11,2],[7,1],[7,0],[8,2],[8,0],[11,6],[11,5],[6,3],[5,3],[4,3],[10,5],[10,4],[9,6],[9,4],[11,11],[11,11],[11,11],[11,11],[4,0]],
+        edgeVisibility: [22,22,22,31,31,16,31,16,31,31,31,31,31,31,31,31,22,22,22,31,31,31,31,10,9,8,8,10],
+        normals: [[0,-35,5],[8,-38,-7],[-8,-38,-7],[0,24,-1],[0,43,19],[-6,28,-2],[6,28,-2],[59,-64,31],[-59,-64,31],[80,46,50],[-80,46,50],[0,0,-90]]
+      }),
+      ferdelance: buildBlueprint({
+        verts: [[0,-14,108],[-40,-14,-4],[-12,-14,-52],[12,-14,-52],[40,-14,-4],[-40,14,-4],[-12,2,-52],[12,2,-52],[40,14,-4],[0,18,-20],[-3,-11,97],[-26,8,18],[-16,14,-4],[3,-11,97],[26,8,18],[16,14,-4],[0,-14,-20],[-14,-14,44],[14,-14,44]],
+        edges: [[0,1],[1,2],[2,3],[3,4],[0,4],[0,5],[5,6],[6,7],[7,8],[0,8],[5,9],[6,9],[7,9],[8,9],[1,5],[2,6],[3,7],[4,8],[10,11],[11,12],[10,12],[13,14],[14,15],[13,15],[16,17],[16,18],[17,18]],
+        edgeFaces: [[9,1],[9,2],[9,3],[9,4],[9,5],[1,0],[6,2],[7,3],[8,4],[5,0],[6,0],[7,6],[8,7],[8,0],[2,1],[3,2],[4,3],[5,4],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[9,9],[9,9],[9,9]],
+        edgeVisibility: [31,31,31,31,31,28,28,28,28,28,15,11,11,15,14,14,14,14,8,9,11,8,9,11,12,12,8],
+        normals: [[0,24,6],[-68,0,24],[-63,0,-37],[0,0,-104],[63,0,-37],[68,0,24],[-12,46,-19],[0,45,-22],[12,46,-19],[0,-28,0]]
+      }),
+      python: buildBlueprint({
+        verts: [[0,0,224],[0,48,48],[96,0,-16],[-96,0,-16],[0,48,-32],[0,24,-112],[-48,0,-112],[48,0,-112],[0,-48,48],[0,-48,-32],[0,-24,-112]],
+        edges: [[0,8],[0,3],[0,2],[0,1],[2,4],[1,2],[2,8],[1,3],[3,8],[2,9],[3,4],[3,9],[3,5],[3,10],[2,5],[2,10],[2,7],[3,6],[5,6],[5,7],[7,10],[6,10],[4,5],[9,10],[1,4],[8,9]],
+        edgeFaces: [[2,3],[0,2],[1,3],[0,1],[9,5],[1,5],[7,3],[0,4],[2,6],[7,10],[4,8],[6,11],[8,8],[11,11],[9,9],[10,10],[9,10],[8,11],[8,12],[9,12],[12,10],[11,12],[8,9],[10,11],[4,5],[6,7]],
+        edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,31,7,7,7,7,31,31,31,31,31,31,31,31,31,31],
+        normals: [[-27,40,11],[27,40,11],[-27,-40,11],[27,-40,11],[-19,38,0],[19,38,0],[-19,-38,0],[19,-38,0],[-25,37,-11],[25,37,-11],[25,-37,-11],[-25,-37,-11],[0,0,-112]]
+      }),
+      boa: buildBlueprint({
+        verts: [[0,0,93],[0,40,-87],[38,-25,-99],[-38,-25,-99],[-38,40,-59],[38,40,-59],[62,0,-67],[24,-65,-79],[-24,-65,-79],[-62,0,-67],[0,7,-107],[13,-9,-107],[-13,-9,-107]],
+        edges: [[0,5],[0,7],[0,9],[0,4],[0,6],[0,8],[4,5],[5,6],[6,7],[7,8],[8,9],[4,9],[1,4],[1,5],[3,9],[3,8],[2,6],[2,7],[1,10],[2,11],[3,12],[10,11],[11,12],[12,10]],
+        edgeFaces: [[11,6],[10,8],[9,7],[9,6],[11,8],[10,7],[6,3],[11,0],[8,4],[10,1],[7,5],[9,2],[3,2],[3,0],[5,2],[5,1],[4,0],[4,1],[2,0],[1,0],[2,1],[12,0],[12,1],[12,2]],
+        edgeVisibility: [31,31,31,29,29,29,31,31,31,31,31,31,24,24,24,24,24,24,22,22,22,14,14,14],
+        normals: [[43,37,-60],[0,-45,-89],[-43,37,-60],[0,40,0],[62,-32,-20],[-62,-32,-20],[0,23,6],[-23,-15,9],[23,-15,9],[-26,13,10],[0,-31,12],[26,13,10],[0,0,-107]]
+      }),
+      anaconda: buildBlueprint({
+        verts: [[0,7,-58],[-43,-13,-37],[-26,-47,-3],[26,-47,-3],[43,-13,-37],[0,48,-49],[-69,15,-15],[-43,-39,40],[43,-39,40],[69,15,-15],[-43,53,-23],[-69,-1,32],[0,0,254],[69,-1,32],[43,53,-23]],
+        edges: [[0,1],[1,2],[2,3],[3,4],[0,4],[0,5],[1,6],[2,7],[3,8],[4,9],[5,10],[6,10],[6,11],[7,11],[7,12],[8,12],[8,13],[9,13],[9,14],[5,14],[10,14],[10,12],[11,12],[12,13],[12,14]],
+        edgeFaces: [[1,0],[2,0],[3,0],[4,0],[5,0],[5,1],[2,1],[3,2],[4,3],[5,4],[6,1],[7,1],[7,2],[8,2],[8,3],[9,3],[9,4],[10,4],[10,5],[6,5],[11,6],[11,7],[8,7],[10,9],[11,10]],
+        edgeVisibility: [30,30,30,30,30,29,29,29,29,29,30,30,30,30,31,31,30,30,30,30,30,31,31,31,31],
+        normals: [[0,-51,-49],[-51,18,-87],[-77,-57,-19],[0,-90,16],[77,-57,-19],[51,18,-87],[0,111,-20],[-97,72,24],[-108,-68,34],[108,-68,34],[97,72,24],[0,94,18]]
+      }),
+      cobra1: buildBlueprint({
+        verts: [[-18,-1,50],[18,-1,50],[-66,0,7],[66,0,7],[-32,12,-38],[32,12,-38],[-54,-12,-38],[54,-12,-38],[0,12,-6],[0,-1,50],[0,-1,60]],
+        edges: [[1,0],[0,2],[2,6],[6,7],[7,3],[3,1],[2,4],[4,5],[5,3],[0,8],[8,1],[4,8],[8,5],[4,6],[5,7],[0,6],[1,7],[10,9]],
+        edgeFaces: [[1,0],[3,2],[8,3],[7,1],[9,5],[5,4],[8,2],[7,6],[9,4],[2,0],[4,0],[6,2],[6,4],[8,7],[9,7],[3,1],[5,1],[1,0]],
+        edgeVisibility: [31,31,31,31,31,31,31,31,31,20,20,16,16,31,31,20,20,2],
+        normals: [[0,41,10],[0,-27,3],[-8,46,8],[-12,-57,12],[8,46,8],[12,-57,12],[0,49,0],[0,0,-154],[-121,111,-62],[121,111,-62]]
+      }),
+      shuttle: buildBlueprint({
+        verts: [[0,-17,23],[-17,0,23],[0,18,23],[18,0,23],[-20,-20,-27],[-20,20,-27],[20,20,-27],[20,-20,-27],[5,0,-27],[0,-2,-27],[-5,0,-27],[0,3,-27],[0,-9,35],[3,-1,31],[4,11,25],[11,4,25],[-3,-1,31],[-3,11,25],[-10,4,25]],
+        edges: [[0,1],[1,2],[2,3],[0,3],[0,7],[0,4],[1,4],[1,5],[2,5],[2,6],[3,6],[3,7],[4,5],[5,6],[6,7],[4,7],[0,12],[1,12],[2,12],[3,12],[8,9],[9,10],[10,11],[8,11],[13,14],[14,15],[13,15],[16,17],[17,18],[16,18]],
+        edgeFaces: [[2,0],[10,4],[11,6],[12,8],[8,1],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7],[9,3],[9,5],[9,7],[9,1],[12,0],[10,0],[11,10],[12,11],[9,9],[9,9],[9,9],[9,9],[11,11],[11,11],[11,11],[10,10],[10,10],[10,10]],
+        edgeVisibility: [31,31,31,31,31,24,31,24,31,12,31,24,31,31,31,31,16,16,16,16,16,7,9,7,5,8,7,5,8,7],
+        normals: [[-55,-55,40],[0,-74,4],[-51,-51,23],[-74,0,4],[-51,51,23],[0,74,4],[51,51,23],[74,0,4],[51,-51,23],[0,0,-107],[-41,41,90],[41,41,90],[55,-55,40]]
+      }),
+      transporter: buildBlueprint({
+        verts: [[0,10,-26],[-25,4,-26],[-28,-3,-26],[-25,-8,-26],[26,-8,-26],[29,-3,-26],[26,4,-26],[0,6,12],[-30,-1,12],[-33,-8,12],[33,-8,12],[30,-1,12],[-11,-2,30],[-13,-8,30],[14,-8,30],[11,-2,30],[-5,6,2],[-18,3,2],[-5,7,-7],[-18,4,-7],[-11,6,-14],[-11,5,-7],[5,7,-14],[18,4,-14],[11,5,-7],[5,6,-3],[18,3,-3],[11,4,8],[11,5,-3],[-16,-8,-13],[-16,-8,16],[17,-8,-13],[17,-8,16],[-13,-3,-26],[13,-3,-26],[9,3,-26],[-8,3,-26]],
+        edges: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[0,6],[0,7],[1,8],[2,9],[3,9],[4,10],[5,10],[6,11],[7,8],[8,9],[10,11],[7,11],[7,15],[7,12],[8,12],[9,13],[10,14],[11,15],[12,13],[13,14],[14,15],[12,15],[16,17],[18,19],[19,20],[18,20],[20,21],[22,23],[23,24],[24,22],[25,26],[26,27],[25,27],[27,28],[29,30],[31,32],[33,34],[34,35],[35,36],[36,33]],
+        edgeFaces: [[7,0],[1,0],[2,0],[3,0],[4,0],[5,0],[6,0],[7,6],[7,1],[2,1],[3,2],[4,3],[5,4],[6,5],[8,7],[9,1],[10,5],[11,6],[12,11],[12,8],[9,8],[9,3],[10,3],[11,10],[13,9],[13,3],[13,10],[13,12],[7,7],[7,7],[7,7],[7,7],[7,7],[6,6],[6,6],[6,6],[6,6],[6,6],[6,6],[6,6],[3,3],[3,3],[0,0],[0,0],[0,0],[0,0]],
+        edgeVisibility: [31,31,31,31,31,31,31,16,31,11,31,31,11,31,17,17,17,17,19,19,16,31,31,16,31,31,31,31,7,7,7,7,7,7,7,7,7,7,7,7,6,6,8,5,5,5],
+        normals: [[0,0,-103],[-111,48,-7],[-105,-63,-21],[0,-34,0],[105,-63,-21],[111,48,-7],[8,32,3],[-8,32,3],[-8,34,11],[-75,32,79],[75,32,79],[8,34,11],[0,38,17],[0,0,121]]
+      }),
+      constrictor: buildBlueprint({
+        verts: [[20,-7,80],[-20,-7,80],[-54,-7,40],[-54,-7,-40],[-20,13,-40],[20,13,-40],[54,-7,-40],[54,-7,40],[20,13,5],[-20,13,5],[20,-7,62],[-20,-7,62],[25,-7,-25],[-25,-7,-25],[15,-7,-15],[-15,-7,-15],[0,-7,0]],
+        edges: [[0,1],[1,2],[1,9],[0,8],[0,7],[7,8],[2,9],[2,3],[6,7],[6,8],[5,8],[4,9],[3,9],[3,4],[4,5],[5,6],[3,6],[8,9],[10,12],[12,14],[14,10],[11,15],[13,15],[11,13]],
+        edgeFaces: [[9,0],[9,1],[1,0],[2,0],[9,2],[3,2],[4,1],[9,4],[9,3],[7,3],[7,6],[6,5],[5,4],[8,5],[8,6],[8,7],[9,8],[6,0],[9,9],[9,9],[9,9],[9,9],[9,9],[9,9]],
+        edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,18,5,10,10,5,18],
+        normals: [[0,55,15],[-24,75,20],[24,75,20],[44,75,0],[-44,75,0],[-44,75,0],[0,53,0],[44,75,0],[0,0,-160],[0,-27,0]]
+      }),
+      cougar: buildBlueprint({
+        verts: [[0,5,67],[-20,0,40],[-40,0,-40],[0,14,-40],[0,-14,-40],[20,0,40],[40,0,-40],[-36,0,56],[-60,0,-20],[36,0,56],[60,0,-20],[0,7,35],[0,8,25],[-12,2,45],[12,2,45],[-10,6,-40],[-10,-6,-40],[10,-6,-40],[10,6,-40]],
+        edges: [[0,1],[1,7],[7,8],[8,2],[2,3],[3,6],[2,4],[4,6],[6,10],[10,9],[9,5],[5,0],[0,3],[1,4],[5,4],[1,2],[5,6],[12,13],[13,11],[11,14],[14,12],[15,16],[16,18],[18,17],[17,15]],
+        edgeFaces: [[2,0],[1,0],[1,0],[1,0],[5,0],[5,4],[5,1],[5,3],[4,3],[4,3],[4,3],[4,2],[4,0],[2,1],[3,2],[1,0],[4,3],[0,0],[0,0],[4,4],[4,4],[5,5],[5,5],[5,5],[5,5]],
+        edgeVisibility: [31,31,31,31,30,30,30,30,31,31,31,31,27,27,27,26,26,20,18,18,20,18,20,18,20],
+        normals: [[-16,46,4],[-16,-46,4],[0,-27,5],[16,-46,4],[16,46,4],[0,0,-160]]
+      }),
+      thargoid: buildBlueprint({
+        verts: [[32,-48,48],[32,-68,0],[32,-48,-48],[32,0,-68],[32,48,-48],[32,68,0],[32,48,48],[32,0,68],[-24,-116,116],[-24,-164,0],[-24,-116,-116],[-24,0,-164],[-24,116,-116],[-24,164,0],[-24,116,116],[-24,0,164],[-24,64,80],[-24,64,-80],[-24,-64,-80],[-24,-64,80]],
+        edges: [[0,7],[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[0,8],[1,9],[2,10],[3,11],[4,12],[5,13],[6,14],[7,15],[8,15],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[16,17],[18,19]],
+        edgeFaces: [[4,8],[0,4],[1,4],[2,4],[3,4],[4,5],[4,6],[4,7],[0,8],[0,1],[1,2],[2,3],[3,5],[5,6],[6,7],[7,8],[8,9],[0,9],[1,9],[2,9],[3,9],[5,9],[6,9],[7,9],[9,9],[9,9]],
+        normals: [[103,-60,25],[103,-60,-25],[103,-25,-60],[103,25,-60],[64,0,0],[103,60,-25],[103,60,25],[103,25,60],[103,-25,60],[-48,0,0]]
+      }),
+      thargon: buildBlueprint({
+        verts: [[-9,0,40],[-9,-38,12],[-9,-24,-32],[-9,24,-32],[-9,38,12],[9,0,-8],[9,-10,-15],[9,-6,-26],[9,6,-26],[9,10,-15]],
+        edges: [[0,1],[1,2],[2,3],[3,4],[0,4],[0,5],[1,6],[2,7],[3,8],[4,9],[5,6],[6,7],[7,8],[8,9],[9,5]],
+        edgeFaces: [[0,1],[0,2],[0,3],[0,4],[0,5],[1,5],[1,2],[2,3],[3,4],[4,5],[1,6],[2,6],[3,6],[4,6],[5,6]],
+        edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,31,31,31,31],
+        normals: [[-36,0,0],[20,-5,7],[46,-42,-14],[36,0,-104],[46,42,-14],[20,5,7],[36,0,0]]
+      }),
+      canister: buildBlueprint({
+        verts: [[24,16,0],[24,5,15],[24,-13,9],[24,-13,-9],[24,5,-15],[-24,16,0],[-24,5,15],[-24,-13,9],[-24,-13,-9],[-24,5,-15]],
+        edges: [[0,1],[1,2],[2,3],[3,4],[0,4],[0,5],[1,6],[2,7],[3,8],[4,9],[5,6],[6,7],[7,8],[8,9],[9,5]],
+        edgeFaces: [[0,1],[0,2],[0,3],[0,4],[0,5],[1,5],[1,2],[2,3],[3,4],[4,5],[1,6],[2,6],[3,6],[4,6],[5,6]],
+        edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,31,31,31,31],
+        normals: [[96,0,0],[0,41,30],[0,-18,48],[0,-51,0],[0,-18,-48],[0,41,-30],[-96,0,0]]
+      }),
+      // Original shapes for debris/hazard objects, built from the prism helpers above
+      // rather than any external source data.
+      missile: prismModel(polyRing(3, 7, -22), polyRing(3, 2, 20)),
+      escapePod: prismModel(polyRing(6, 10, -14), polyRing(6, 8, 14)),
+      plate: prismModel(polyRing(4, 20, -3, TAU / 8), polyRing(4, 20, 3, TAU / 8)),
+      asteroid: prismModel(jitterRing(7, 26, -20, 101), jitterRing(7, 24, 22, 102)),
+      boulder: prismModel(jitterRing(6, 40, -30, 201), jitterRing(6, 38, 32, 202)),
+      splinter: prismModel(jitterRing(5, 10, -14, 301), jitterRing(5, 6, 15, 302)),
+      hermit: prismModel(jitterRing(8, 90, -70, 401), jitterRing(8, 85, 75, 402)),
+      dodoStation: prismModel(polyRing(6, 110, -220), polyRing(6, 110, 220))
+    };
+
+    // The Coriolis station's octagonal-prism hull, on the same buildBlueprint pipeline
+    // as every ship (verts baked to real hull scale so the shared UV/texture code works
+    // unmodified) instead of the bespoke inline verts/edges/faceUV it used to carry.
+    // edgeFaces here is authored directly rather than inferred, since the prism's 10
+    // faces (2 octagon caps + 8 side quads) are simple enough to hand-map: the 8 "ring"
+    // edges on each cap border that cap plus one side face, and the 8 "connecting"
+    // edges between the rings border two adjacent side faces.
+    const STATION_SIZE = 160;
+    const STATION_MODEL = buildBlueprint({
+      verts: [
+        [0, -1, -1], [.72, -.72, -1], [1, 0, -1], [.72, .72, -1], [0, 1, -1], [-.72, .72, -1], [-1, 0, -1], [-.72, -.72, -1],
+        [0, -1, 1], [.72, -.72, 1], [1, 0, 1], [.72, .72, 1], [0, 1, 1], [-.72, .72, 1], [-1, 0, 1], [-.72, -.72, 1]
+      ].map(([x, y, z]) => [x * STATION_SIZE, y * STATION_SIZE, z * STATION_SIZE]),
+      edges: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,0],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,8],[0,8],[1,9],[2,10],[3,11],[4,12],[5,13],[6,14],[7,15]],
+      edgeFaces: [[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[0,9],[1,2],[1,3],[1,4],[1,5],[1,6],[1,7],[1,8],[1,9],[2,9],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9]],
+      normals: [[0,0,-1],[0,0,1],[.36,-.86,0],[.86,-.36,0],[.86,.36,0],[.36,.86,0],[-.36,.86,0],[-.86,.36,0],[-.86,-.36,0],[-.36,-.86,0]]
+    });
+
+    const SHIP_NAMES = {
+      cobra: "COBRA MK III",
+      cobra1: "COBRA MK I",
+      krait: "KRAIT",
+      viper: "VIPER",
+      adder: "ADDER",
+      gecko: "GECKO",
+      mamba: "MAMBA",
+      sidewinder: "SIDEWINDER",
+      worm: "WORM",
+      moray: "MORAY",
+      asp: "ASP MK II",
+      ferdelance: "FER-DE-LANCE",
+      python: "PYTHON",
+      boa: "BOA",
+      anaconda: "ANACONDA",
+      shuttle: "SHUTTLE",
+      transporter: "TRANSPORTER",
+      thargoid: "THARGOID",
+      thargon: "THARGON",
+      constrictor: "CONSTRICTOR",
+      cougar: "COUGAR"
+    };
+
+    const TRADER_MODELS = ["cobra", "cobra1", "adder", "gecko", "moray", "python", "boa", "anaconda", "shuttle", "transporter", "worm"];
+    const PIRATE_MODELS = ["krait", "mamba", "sidewinder", "asp", "ferdelance", "gecko", "adder", "cobra", "constrictor", "cougar"];
+    const POLICE_MODELS = ["viper"];
+    const ALIEN_MODELS = ["thargoid", "thargon"];
+    const ARMADA_MODELS = ["cobra", "cobra1", "krait", "viper", "adder", "gecko", "mamba", "sidewinder", "worm", "moray", "asp", "ferdelance", "python", "boa", "anaconda", "shuttle", "transporter", "constrictor", "cougar", "thargoid", "thargon"];
+
+    // speed is a multiplier on the AI combat speed cap, relative to a Cobra Mk III (1.0) —
+    // loosely follows the original's maximum-speed table (e.g. Sidewinder 37 vs Cobra 28
+    // vs Anaconda 14), so small fighters are genuinely faster than the player's ship and
+    // big haulers are genuinely slower, rather than every hostile sharing one speed cap.
+    const SHIP_STATS = {
+      cobra1: { hp: 38, speed: 1 },
+      adder: { hp: 34, speed: .9 },
+      gecko: { hp: 36, speed: .95 },
+      mamba: { hp: 42, speed: 1.15 },
+      sidewinder: { hp: 34, speed: 1.3 },
+      worm: { hp: 26, speed: 1 },
+      moray: { hp: 42, speed: .95 },
+      asp: { hp: 64, speed: 1.05 },
+      ferdelance: { hp: 74, speed: 1.1 },
+      python: { hp: 100, speed: .75 },
+      boa: { hp: 94, speed: .7 },
+      anaconda: { hp: 118, speed: .55 },
+      shuttle: { hp: 30, speed: .8 },
+      transporter: { hp: 44, speed: .7 },
+      thargoid: { hp: 96, speed: 1.2 },
+      thargon: { hp: 22, speed: 1.3 },
+      constrictor: { hp: 78, speed: 1.05 },
+      cougar: { hp: 72, speed: 1 }
+    };
+
+    function shipName(model) {
+      return SHIP_NAMES[model] || model.toUpperCase();
+    }
+
+    // The MODELS vertex data is already a faithful port of the original's own coordinate
+    // units (verified: our Cobra/Adder/Viper/Anaconda z-extents exactly match the source's
+    // documented depth dimensions), so the correct scale for each ship is sitting right
+    // there in its mesh — it just wasn't being used. The old SHIP_STATS.r values were
+    // hand-guessed independently of the geometry (e.g. "cobra" wasn't even in the table,
+    // defaulting to r:54 despite its own mesh spanning +-128 in X), which flattened the
+    // size range between small fighters and capital-ish ships far more than the original.
+    function modelBoundingRadius(model) {
+      let maxR = 0;
+      for (const v of model.verts) {
+        const r = Math.hypot(v[0], v[1], v[2]);
+        if (r > maxR) maxR = r;
+      }
+      return maxR;
+    }
+
+    function shipStats(model) {
+      const stats = SHIP_STATS[model] || { hp: 52, speed: 1 };
+      const m = MODELS[model];
+      return { ...stats, r: m ? modelBoundingRadius(m) : (stats.r || 54) };
+    }
+
+    function shipColor(model, police = false) {
+      if (police) return "#46dfff";
+      if (ALIEN_MODELS.includes(model)) return "#c46bff";
+      return "#e9f2e4";
+    }
+
+    class GalaxyFactory {
+      constructor() {
+        this.base = [0x5A4A, 0x0248, 0xB753];
+      }
+
+      makeGalaxy(index) {
+        let seed = this.base.slice();
+        for (let i = 0; i < index; i++) seed = seed.map((w) => this.rotateSeedBytes(w));
+        const systems = [];
+        for (let i = 0; i < 256; i++) {
+          const s = this.makeSystem(seed.slice(), index, i);
+          systems.push(s);
+          for (let t = 0; t < 4; t++) seed = this.twist(seed);
+        }
+        return systems;
+      }
+
+      rotateSeedBytes(word) {
+        const lo = word & 255;
+        const hi = word >> 8;
+        return (((hi << 1) | (hi >> 7)) & 255) << 8 | (((lo << 1) | (lo >> 7)) & 255);
+      }
+
+      twist(seed) {
+        const sum = (seed[0] + seed[1] + seed[2]) & 0xffff;
+        return [seed[1], seed[2], sum];
+      }
+
+      makeName(seed) {
+        let nameSeed = seed.slice();
+        const parts = (seed[0] & 64) ? 4 : 3;
+        let name = "";
+        for (let n = 0; n < parts; n++) {
+          const pair = (nameSeed[2] >> 8) & 31;
+          if (pair) name += NAME_PAIRS[pair];
+          nameSeed = this.twist(nameSeed);
+        }
+        return name.replace(/\?/g, "").slice(0, 9) || "ANON";
+      }
+
+      makeSystem(seed, galaxy, index) {
+        const s0h = seed[0] >> 8, s1h = seed[1] >> 8, s1l = seed[1] & 255, s2h = seed[2] >> 8, s2l = seed[2] & 255;
+        let economy = s0h & 7;
+        const government = (s1l >> 3) & 7;
+        if (government < 2) economy |= 2;
+        const tech = (economy ^ 7) + (s1h & 3) + Math.ceil(government / 2);
+        const population = tech * 4 + economy + government + 1;
+        const productivity = ((economy ^ 7) + 3) * (government + 4) * population * 8;
+        const radius = ((s2h & 15) + 11) * 256 + s1h;
+        const rng = mulberry((galaxy + 1) * 99991 + index * 101 + seed[2]);
+        const species = (s2l & 128) ? this.makeSpecies(seed) : "Human Colonials";
+        const descBits = [
+          ["notable", "fabled", "tedious", "ancient", "unstable", "remote", "busy", "bleak"],
+          ["mountains", "oceans", "forests", "shipyards", "casinos", "ice fields", "temples", "dust plains"],
+          ["traders", "pirates", "scholars", "miners", "lobster poets", "monks", "terraformers", "tax inspectors"]
+        ];
+        return {
+          galaxy,
+          index,
+          seed,
+          name: this.makeName(seed),
+          x: s1h,
+          y: s0h >> 1,
+          economy,
+          government,
+          tech: clamp(tech, 0, 14),
+          population,
+          productivity,
+          radius,
+          species,
+          law: government,
+          marketRand: Math.floor(rng() * 256),
+          description: `${descBits[0][s0h & 7]} for its ${descBits[1][s1h & 7]} and ${descBits[2][s2h & 7]}`
+        };
+      }
+
+      makeSpecies(seed) {
+        const sizes = ["Large", "Fierce", "Small", "", "", "", "", ""];
+        const colors = ["Green", "Red", "Yellow", "Blue", "Black", "Harmless", "", ""];
+        const traits = ["Slimy", "Bug-Eyed", "Horned", "Bony", "Fat", "Furry", "", ""];
+        const types = ["Rodents", "Frogs", "Lizards", "Lobsters", "Birds", "Humanoids", "Felines", "Insects"];
+        const s0h = seed[0] >> 8, s1h = seed[1] >> 8, s2h = seed[2] >> 8;
+        const a = sizes[(s2h >> 2) & 7];
+        const b = colors[(s2h >> 5) & 7];
+        const cidx = (s0h ^ s1h) & 7;
+        const c = traits[cidx];
+        const d = types[(cidx + (s2h & 3)) & 7];
+        return [a, b, c, d].filter(Boolean).join(" ");
+      }
+
+    }
+
+    const factory = new GalaxyFactory();
+    const galaxies = Array.from({ length: 8 }, (_, i) => factory.makeGalaxy(i));
+    const findSystemIndex = (galaxy, name) => Math.max(0, galaxy.findIndex((s) => s.name === name));
+    const LAVE_INDEX = findSystemIndex(galaxies[0], "LAVE");
+    const DISO_INDEX = findSystemIndex(galaxies[0], "DISO");
+
+    const game = {
+      commander: "JAMESON",
+      galaxy: 0,
+      current: LAVE_INDEX,
+      target: DISO_INDEX,
+      docked: true,
+      dockedAt: null,
+      credits: 100,
+      fuel: 7,
+      kills: 0,
+      legal: 0,
+      energy: 100,
+      shields: 100,
+      speed: 0,
+      maxSpeed: 220,
+      cargoCap: 20,
+      cargo: Object.fromEntries(GOODS.map((g) => [g[0], 0])),
+      equipment: {
+        fuelScoop: false,
+        ecm: false,
+        beamLaser: false,
+        cargoBay: false,
+        extraEnergy: false,
+        dockingComputer: false,
+        militaryLaser: false,
+        galacticHyperdrive: false,
+        miningLaser: false,
+        escapeCapsule: false,
+        energyBomb: false
+      },
+      missiles: 1,
+      laserHeat: 0,
+      view: "front",
+      panel: "market",
+      mapMode: "galaxy",
+      graphicsMode: "wire",
+      camera: makeCamera(-850),
+      objects: [],
+      stars: [],
+      explosions: [],
+      enemyShots: [],
+      playerShot: null,
+      targetObject: null,
+      lastShot: 0,
+      autoDock: false,
+      witchspace: false,
+      messageTimer: 0
+    };
+
+    const space = byId("space");
+    const ctx = space.getContext("2d");
+    const scanner = byId("scanner");
+    const sctx = scanner.getContext("2d");
+    const panelBody = byId("panelBody");
+    const keys = new Set();
+    let last = performance.now();
+
+    function currentSystem() {
+      return galaxies[game.galaxy][game.current];
+    }
+
+    function targetSystem() {
+      return galaxies[game.galaxy][game.target];
+    }
+
+    function distance(a, b) {
+      return Math.hypot(a.x - b.x, a.y - b.y) / 4;
+    }
+
+    function usedCargo() {
+      return Object.values(game.cargo).reduce((a, b) => a + b, 0);
+    }
+
+    function rankName() {
+      let r = RANKS[0][0];
+      for (const [name, min] of RANKS) if (game.kills >= min) r = name;
+      return r;
+    }
+
+    function legalStatus() {
+      if (game.legal <= 0) return "CLEAN";
+      if (game.legal < 16) return "OFFENDER";
+      return "FUGITIVE";
+    }
+
+    function laserPower() {
+      if (game.equipment.militaryLaser) return { name: "Military", damage: 46, heat: 34, range: 1100, color: "#8fe8ff" };
+      if (game.equipment.beamLaser) return { name: "Beam", damage: 28, heat: 25, range: 900, color: "#ffd33d" };
+      return { name: "Pulse", damage: 16, heat: 18, range: 720, color: "#ff6a55" };
+    }
+
+    function marketFor(system) {
+      return GOODS.map(([name, basePrice, factor, baseQty, mask, unit, illegal]) => {
+        const swing = system.marketRand & mask;
+        const price = Math.max(1, (basePrice + swing + system.economy * factor) * 0.4);
+        const raw = baseQty + swing - system.economy * factor;
+        const qty = clamp(raw & 63, 0, 63);
+        return { name, price, qty, unit, illegal };
+      });
+    }
+
+    function setMessage(msg, important = false) {
+      byId("message").textContent = msg;
+      game.messageTimer = important ? 4 : 2;
+    }
+
+    function flash() {
+      const el = byId("flash");
+      el.classList.remove("on");
+      void el.offsetWidth;
+      el.classList.add("on");
+    }
+
+    function resizeCanvases() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      for (const canvas of [space, scanner]) {
+        const r = canvas.getBoundingClientRect();
+        canvas.width = Math.max(320, Math.floor(r.width * dpr));
+        canvas.height = Math.max(120, Math.floor(r.height * dpr));
+      }
+    }
+
+    function buildSystemBodies(sys) {
+      // Positions/sizes are seeded from the system itself (not the visit), so a system
+      // always looks the same when you return to it — matching the original's approach
+      // of deriving planet/sun placement from the system seed rather than randomising
+      // it per arrival. Station-to-body distance scales with body radius so apparent
+      // size stays roughly consistent, echoing the original's fixed radius-to-distance
+      // ratio (the planet is always ~2.67 planet-radii from the station).
+      const rng = mulberry(hash32(`${sys.name}:bodies`));
+      // Biome drives both the palette and the surface-feature rendering (see
+      // drawPlanetFeatures): heavy industrial economies get a dark, city-lit world,
+      // the industrial/agricultural crossover gets a sandy desert world, and
+      // agricultural economies get oceans + continents.
+      const biome = sys.economy <= 2 ? "industrial" : sys.economy === 3 ? "desert" : "ocean";
+      const planetR = lerp(900, 1900, clamp((sys.radius - 2816) / (6912 - 2816), 0, 1));
+      const planetDir = norm(vec((rng() - .5) * 2, (rng() - .5) * 1.1, 1.4 + rng() * 1.2));
+      const planetDist = planetR * (7.5 + rng() * 3.5);
+      const hasRing = rng() < .4;
+      const palette = {
+        industrial: { hue: lerp(15, 45, rng()), sat: lerp(8, 22, rng()), light: lerp(10, 20, rng()) },
+        desert: { hue: lerp(25, 42, rng()), sat: lerp(45, 62, rng()), light: lerp(46, 60, rng()) },
+        ocean: { hue: lerp(196, 214, rng()), sat: lerp(52, 70, rng()), light: lerp(28, 40, rng()) }
+      }[biome];
+      const planet = {
+        type: "planet", name: sys.name, pos: scale(planetDir, planetDist), r: planetR,
+        biome,
+        hue: palette.hue,
+        sat: palette.sat,
+        light: palette.light,
+        textureSeed: hash32(sys.name + ":surface"),
+        rotAxis: norm(vec((rng() - .5) * .7, 1, (rng() - .5) * .7)),
+        rotSpeed: (rng() > .5 ? 1 : -1) * (.05 + rng() * .07),
+        rot: rng() * TAU,
+        hasRing,
+        ringInner: 1.35 + rng() * 0.2,
+        ringOuter: 1.75 + rng() * 0.55,
+        ringFlatten: .22 + rng() * .16,
+        ringTilt: (rng() - .5) * 1.1,
+        hp: 9999, hostile: false
+      };
+      const sunR = planetR * lerp(.65, 1.05, rng());
+      const sunDir = norm(vec((rng() - .5) * 2, (rng() - .5) * 1.1, -(1.2 + rng() * 1)));
+      const sunDist = sunR * lerp(9, 14, rng());
+      const sun = {
+        type: "sun", name: "SUN", pos: scale(sunDir, sunDist), r: sunR,
+        hue: lerp(38, 54, rng()),
+        hp: 9999, hostile: false
+      };
+      return { planet, sun };
+    }
+
+    function resetFlightScene(arrival = false) {
+      const sys = currentSystem();
+      game.camera = makeCamera(arrival ? -1200 : -850);
+      game.speed = 0;
+      game.autoDock = false;
+      const rng = mulberry(hash32(`${game.galaxy}:${game.current}:${game.kills}:${Date.now() >> 12}`));
+      const { planet, sun } = buildSystemBodies(sys);
+      const isDodo = sys.government < 2;
+      game.objects = [
+        {
+          type: "station", model: isDodo ? "dodoStation" : "coriolis",
+          name: `${sys.name} ${isDodo ? "DODO STATION" : "STATION"}`,
+          pos: vec(0, 0, 900), basePos: vec(0, 0, 900), rot: 0, rotSpeed: .34, driftPhase: rng() * TAU,
+          r: isDodo ? shipStats("dodoStation").r : 150, color: "#d8ded4", hp: 9999, hostile: false
+        },
+        planet,
+        sun
+      ];
+      const hermitRng = mulberry(hash32(`${sys.name}:hermit`));
+      if (hermitRng() < .3) {
+        const hermitStats = shipStats("hermit");
+        game.objects.push({
+          type: "hermit", model: "hermit", name: `${sys.name} ROCK HERMIT`,
+          pos: vec(-950 + hermitRng() * 200, 380 + hermitRng() * 160, 1500 + hermitRng() * 400),
+          basePos: null, rot: hermitRng() * TAU, rotSpeed: .07, driftPhase: hermitRng() * TAU,
+          r: hermitStats.r, color: "#b9a888", hp: 9999, hostile: false
+        });
+      }
+      const count = arrival ? 3 + Math.floor(rng() * 4) : 2 + Math.floor(rng() * 3);
+      for (let i = 0; i < count; i++) spawnShip(rng, i === 0 && (game.legal > 15 || rng() > .55));
+      const rockCount = Math.floor(rng() * 3);
+      for (let i = 0; i < rockCount; i++) spawnAsteroid(rng, vec(0, 0, 0));
+      game.stars = Array.from({ length: 220 }, () => {
+        const z = rng() * 3600 - 1300;
+        const star = vec((rng() - .5) * 3200, (rng() - .5) * 1800, z);
+        const tint = rng();
+        star.hue = tint < .15 ? 210 + rng() * 30 : tint < .3 ? 28 + rng() * 20 : 0;
+        star.sat = star.hue ? 45 + rng() * 30 : 0;
+        star.tw = rng() * TAU;
+        star.size = .8 + rng() * 1.1;
+        return star;
+      });
+      game.targetObject = game.objects.find((o) => o.type === "station");
+    }
+
+    function spawnShip(rng = Math.random, hostile = false) {
+      const police = game.legal > 15 && rng() > .45;
+      const types = police ? POLICE_MODELS : hostile ? PIRATE_MODELS : TRADER_MODELS;
+      const model = types[Math.floor(rng() * types.length)];
+      const stats = shipStats(model);
+      const dist = 900 + rng() * 1500;
+      const orbitCenter = vec((rng() - .5) * 420, (rng() - .5) * 260, 850 + rng() * 900);
+      const orbitRadius = 220 + rng() * 520;
+      const orbitAngle = rng() * TAU;
+      const o = {
+        type: "ship",
+        model,
+        name: police ? "VIPER POLICE" : `${hostile ? "PIRATE" : "TRADER"} ${shipName(model)}`,
+        pos: vec((rng() - .5) * 1200, (rng() - .5) * 700, dist),
+        vel: vec((rng() - .5) * 36, (rng() - .5) * 24, -18 - rng() * 34),
+        rot: rng() * TAU,
+        pitch: rng() * TAU,
+        roll: rng() * TAU,
+        r: stats.r,
+        color: shipColor(model, police),
+        hp: Math.round(stats.hp * (police ? 1.2 : hostile ? 1.08 : .9)),
+        maxHp: Math.round(stats.hp * (police ? 1.2 : hostile ? 1.08 : .9)),
+        hostile: hostile || police,
+        police,
+        role: police ? "police" : hostile ? "pirate" : "trader",
+        bounty: police ? 0 : hostile ? 75 + Math.floor(rng() * 100) : 0,
+        aiMode: police || hostile ? "attack" : (rng() > .55 ? "orbit" : "cruise"),
+        orbitCenter,
+        orbitRadius,
+        orbitAngle,
+        orbitSpeed: (rng() > .5 ? 1 : -1) * (.18 + rng() * .28),
+        attackClock: rng() * 2,
+        wobble: rng() * TAU
+      };
+      game.objects.push(o);
+      return o;
+    }
+
+    function spawnArmada() {
+      if (game.docked) launch();
+      game.objects = game.objects.filter((o) => o.type !== "ship" && o.type !== "canister");
+      const center = cameraLocalToWorld(game.camera, vec(0, 0, 3800));
+      for (let i = 0; i < ARMADA_MODELS.length; i++) {
+        const ring = Math.floor(i / 7);
+        const slot = i % 7;
+        const angle = slot / 7 * TAU + ring * .34;
+        const radius = 230 + ring * 245;
+        const local = vec(Math.cos(angle) * radius, Math.sin(angle) * (145 + ring * 70), 3800 + ring * 340 + (slot % 2) * 80);
+        const model = ARMADA_MODELS[i];
+        const stats = shipStats(model);
+        const hostile = ALIEN_MODELS.includes(model) || PIRATE_MODELS.includes(model);
+        const pos = cameraLocalToWorld(game.camera, local);
+        const o = {
+          type: "ship",
+          model,
+          name: `${hostile ? "PIRATE" : "ARMADA"} ${shipName(model)} ${i + 1}`,
+          pos,
+          vel: scale(norm(sub(pos, center)), 18 + (i % 4) * 7),
+          rot: angle + Math.PI,
+          pitch: 0,
+          roll: angle * .5,
+          r: stats.r,
+          color: shipColor(model),
+          hp: stats.hp,
+          maxHp: stats.hp,
+          hostile,
+          role: hostile ? "pirate" : "trader",
+          bounty: hostile ? 90 + i * 8 : 0,
+          aiMode: "formation",
+          orbitCenter: center,
+          orbitRadius: radius,
+          orbitAngle: angle,
+          orbitSpeed: (i % 2 ? -1 : 1) * (.16 + ring * .04),
+          attackClock: 1 + (i % 5) * .35,
+          wobble: i * .73,
+          formationY: local.y,
+          formationZ: local.z
+        };
+        game.objects.push(o);
+      }
+      game.targetObject = game.objects.find((o) => o.type === "ship") || game.targetObject;
+      setMessage("Test armada deployed.", true);
+      renderPanel();
+    }
+
+    function launch() {
+      if (!game.docked) return;
+      game.docked = false;
+      resetFlightScene(false);
+      game.camera.pos.z = -980;
+      game.speed = 40;
+      setMessage(`Launch clearance granted from ${currentSystem().name}.`, true);
+      renderPanel();
+    }
+
+    function dockableTarget() {
+      const candidates = game.objects.filter((o) => o.type === "station" || o.type === "hermit");
+      if (!candidates.length) return null;
+      return candidates.reduce((a, b) => len(sub(b.pos, game.camera.pos)) < len(sub(a.pos, game.camera.pos)) ? b : a);
+    }
+
+    function dock(auto = false) {
+      if (game.docked) return;
+      const st = dockableTarget();
+      if (!st) return;
+      const rel = cameraTransform(st.pos, game.camera);
+      const dist = len(sub(st.pos, game.camera.pos));
+      const centered = Math.hypot(rel.x, rel.y) < 55;
+      const slotOk = st.type !== "station" || Math.abs(Math.sin(st.rot)) < .38;
+      const slow = game.speed < 55;
+      if (auto || (dist < 210 && centered && slotOk && slow)) {
+        game.docked = true;
+        game.dockedAt = st.name;
+        game.speed = 0;
+        game.shields = 100;
+        game.energy = 100;
+        game.fuel = clamp(game.fuel + 0.2, 0, 7);
+        game.autoDock = false;
+        game.legal = Math.max(0, game.legal - 2);
+        setMessage(`Docking complete at ${st.name}.`, true);
+        renderPanel();
+      } else {
+        const reason = !slow ? "TOO FAST" : !centered ? "BAD APPROACH" : !slotOk ? "SLOT ROTATION" : "TOO FAR";
+        game.shields -= 12;
+        setMessage(`Docking denied: ${reason}.`, true);
+        if (game.shields <= 0) destroyPlayer("docking collision");
+      }
+    }
+
+    function startAutoDock() {
+      if (game.docked) return;
+      if (!game.equipment.dockingComputer) {
+        setMessage("No docking computer fitted.");
+        return;
+      }
+      game.autoDock = !game.autoDock;
+      setMessage(game.autoDock ? "Docking computer engaged." : "Docking computer disengaged.");
+    }
+
+    function hyperspace() {
+      if (game.docked) {
+        setMessage("Launch before engaging hyperspace.");
+        return;
+      }
+      const from = currentSystem();
+      const to = targetSystem();
+      const d = distance(from, to);
+      if (d > 7) {
+        setMessage("Target is outside the 7.0 light year jump range.", true);
+        return;
+      }
+      if (game.fuel + 0.0001 < d) {
+        setMessage("Insufficient fuel for hyperspace.", true);
+        return;
+      }
+      game.fuel -= d;
+      const witchChance = 0.05 + (game.legal > 15 ? 0.08 : 0);
+      if (Math.random() < witchChance) {
+        game.witchspace = true;
+        game.objects = [];
+        game.stars = Array.from({ length: 220 }, (_, i) => vec((Math.random() - .5) * 2600, (Math.random() - .5) * 1600, Math.random() * 2600 - 900));
+        for (let i = 0; i < 4; i++) {
+          game.objects.push({
+            type: "ship", model: "thargoid", name: "THARGOID", pos: vec((Math.random() - .5) * 900, (Math.random() - .5) * 500, 700 + Math.random() * 900),
+            vel: vec(0, 0, -35), rot: Math.random() * TAU, pitch: 0, r: 70, color: shipColor("thargoid"), hp: 92, maxHp: 92, hostile: true, bounty: 250, thargoid: true
+          });
+        }
+        game.docked = false;
+        game.speed = 50;
+        setMessage("Witch-space malfunction. Thargoids detected.", true);
+      } else {
+        game.current = game.target;
+        game.witchspace = false;
+        resetFlightScene(true);
+        setMessage(`Hyperspace complete. Arrived at ${currentSystem().name}.`, true);
+      }
+      flash();
+      renderPanel();
+    }
+
+    function galacticJump() {
+      if (!game.equipment.galacticHyperdrive) {
+        setMessage("No Galactic Hyperdrive fitted.");
+        return;
+      }
+      game.galaxy = (game.galaxy + 1) % 8;
+      game.current = 0;
+      game.target = 1;
+      game.equipment.galacticHyperdrive = false;
+      game.docked = false;
+      game.witchspace = false;
+      resetFlightScene(true);
+      flash();
+      setMessage(`Galactic hyperspace complete. Galaxy ${game.galaxy + 1}.`, true);
+      renderPanel();
+    }
+
+    function nearStationSafeZone() {
+      const st = game.objects.find((o) => o.type === "station" || o.type === "hermit");
+      return !!st && len(sub(st.pos, game.camera.pos)) < 900;
+    }
+
+    function spawnPoliceResponse() {
+      const stats = shipStats("viper");
+      const dist = 500 + Math.random() * 400;
+      const dir = norm(vec(Math.random() - .5, Math.random() - .5, Math.random() - .5));
+      const o = {
+        type: "ship", model: "viper", name: "VIPER POLICE",
+        pos: add(game.camera.pos, scale(dir, dist)),
+        vel: vec(0, 0, 0), rot: Math.random() * TAU, pitch: 0, roll: 0,
+        r: stats.r, color: shipColor("viper", true),
+        hp: Math.round(stats.hp * 1.2), maxHp: Math.round(stats.hp * 1.2),
+        hostile: true, police: true, role: "police", bounty: 0,
+        aiMode: "attack", orbitCenter: vec(), orbitRadius: 300, orbitAngle: Math.random() * TAU,
+        orbitSpeed: .2, attackClock: 1, wobble: Math.random() * TAU
+      };
+      game.objects.push(o);
+      return o;
+    }
+
+    function provokeStationPolice() {
+      game.legal = Math.min(60, game.legal + 2);
+      const policeNearby = game.objects.filter((o) => o.type === "ship" && o.police).length;
+      if (policeNearby < 2 && Math.random() < .55) spawnPoliceResponse();
+      setMessage("Weapons fire near the station! Police scrambled.", true);
+    }
+
+    function fireLaser() {
+      if (game.docked) {
+        setMessage("Lasers are safed while docked.");
+        return;
+      }
+      const now = performance.now();
+      if (now - game.lastShot < 170 || game.laserHeat > 95) return;
+      if (nearStationSafeZone() && Math.random() < .35) provokeStationPolice();
+      const laser = laserPower();
+      game.lastShot = now;
+      game.laserHeat = clamp(game.laserHeat + laser.heat, 0, 100);
+      flash();
+      let best = null;
+      let score = Infinity;
+      for (const o of game.objects) {
+        const isRock = o.type === "asteroid" || o.type === "boulder" || o.type === "splinter";
+        if (o.type !== "ship" && o.type !== "canister" && o.type !== "plate" && !isRock && !(o.type === "missile" && o.hostile)) continue;
+        const rel = cameraTransform(o.pos, game.camera);
+        if (rel.z < 30 || rel.z > laser.range) continue;
+        const aim = Math.hypot(rel.x, rel.y) / rel.z;
+        if (aim < .06 && aim < score) {
+          best = o;
+          score = aim;
+        }
+      }
+      game.playerShot = { to: best ? { ...best.pos } : null, color: laser.color };
+      if (!best) {
+        setMessage("Laser fired.");
+        return;
+      }
+      const isRockTarget = best.type === "asteroid" || best.type === "boulder" || best.type === "splinter";
+      best.hp -= isRockTarget && game.equipment.miningLaser ? laser.damage * 2 : laser.damage;
+      setMessage(`${best.name} hit.`);
+      if (best.hp <= 0) destroyObject(best);
+    }
+
+    function spawnMissile({ pos, target, source, hostile }) {
+      game.objects.push({
+        type: "missile", model: "missile", name: source ? `${source.name} MISSILE` : "MISSILE",
+        pos: { ...pos }, vel: vec(0, 0, 0), rot: 0, pitch: 0, roll: 0,
+        r: 15, color: hostile ? "#ff6a55" : "#ffd33d", hp: 1, maxHp: 1, hostile,
+        target: target || null, source: source || null, t: 0, dur: 5
+      });
+    }
+
+    function updateMissile(o, dt) {
+      o.t += dt;
+      const targetPos = o.target ? o.target.pos : game.camera.pos;
+      const toTarget = sub(targetPos, o.pos);
+      const dist = len(toTarget);
+      if (dist > 1) o.vel = scale(norm(toTarget), 340);
+      o.pos = add(o.pos, scale(o.vel, dt));
+      orientShipToVelocity(o, dt);
+      if (dist < 40) {
+        game.objects = game.objects.filter((x) => x !== o);
+        detonateMissile(o);
+      } else if (o.t > o.dur) {
+        game.objects = game.objects.filter((x) => x !== o);
+      }
+    }
+
+    function detonateMissile(o) {
+      spawnExplosion(o.pos, .6);
+      if (o.target) {
+        o.target.hp -= 120;
+        setMessage(`${o.target.name} missile hit.`, true);
+        if (o.target.hp <= 0) destroyObject(o.target, !o.hostile);
+      } else {
+        game.shields -= 22;
+        setMessage(`${o.source ? o.source.name + " missile" : "Missile"} impact!`, true);
+        if (game.shields <= 0) {
+          game.energy += game.shields;
+          game.shields = 0;
+        }
+        if (game.energy <= 0) destroyPlayer(o.source ? o.source.name : "missile");
+      }
+    }
+
+    function fireMissile() {
+      if (game.docked || game.missiles <= 0) return;
+      if (nearStationSafeZone() && Math.random() < .35) provokeStationPolice();
+      const target = nearestTarget(true);
+      if (!target) {
+        setMessage("No missile lock.");
+        return;
+      }
+      game.missiles--;
+      spawnMissile({ pos: add(game.camera.pos, scale(forwardVector(game.camera), 40)), target, hostile: false });
+      setMessage(`Missile away: ${target.name}.`, true);
+    }
+
+    function spawnExplosion(pos, magnitude = 1) {
+      const shards = Array.from({ length: 10 + Math.floor(Math.random() * 8) }, () => ({
+        dir: norm(vec(Math.random() - .5, Math.random() - .5, Math.random() - .5)),
+        len: (18 + Math.random() * 30) * magnitude,
+        speed: (140 + Math.random() * 220) * magnitude
+      }));
+      game.explosions.push({ pos: { ...pos }, t: 0, dur: .55 + Math.random() * .25, shards, magnitude });
+    }
+
+    function spawnAsteroid(rng = Math.random, near = game.camera.pos) {
+      const isBoulder = rng() < .3;
+      const model = isBoulder ? "boulder" : "asteroid";
+      const stats = shipStats(model);
+      const dist = 1200 + rng() * 2000;
+      const dir = norm(vec((rng() - .5) * 2, (rng() - .5) * 1.2, (rng() - .5) * 2));
+      game.objects.push({
+        type: isBoulder ? "boulder" : "asteroid", model, name: isBoulder ? "BOULDER" : "ASTEROID",
+        pos: add(near, scale(dir, dist)),
+        vel: scale(norm(vec(rng() - .5, rng() - .5, rng() - .5)), 8 + rng() * 12),
+        rot: rng() * TAU, pitch: rng() * TAU, roll: 0,
+        tumbleRot: (rng() - .5) * .5, tumblePitch: (rng() - .5) * .4,
+        r: stats.r, color: isBoulder ? "#7a7268" : "#8a8276",
+        hp: isBoulder ? 60 : 30, maxHp: isBoulder ? 60 : 30, hostile: false
+      });
+    }
+
+    function spawnSplinter(pos, parentVel) {
+      const stats = shipStats("splinter");
+      const dir = norm(vec(Math.random() - .5, Math.random() - .5, Math.random() - .5));
+      game.objects.push({
+        type: "splinter", model: "splinter", name: "SPLINTER",
+        pos: { ...pos }, vel: add(scale(dir, 30 + Math.random() * 30), scale(parentVel || vec(), .3)),
+        rot: Math.random() * TAU, pitch: Math.random() * TAU, roll: 0,
+        tumbleRot: (Math.random() - .5) * 1.6, tumblePitch: (Math.random() - .5) * 1.4,
+        r: stats.r, color: "#8a8276", hp: 8, maxHp: 8, hostile: false
+      });
+    }
+
+    function spawnMineralCanister(pos, parentVel, small) {
+      const good = ["Minerals", "Gold", "Platinum", "Gem-Stones"][Math.floor(Math.random() * 4)];
+      game.objects.push({
+        type: "canister", model: "canister", name: `${good.toUpperCase()} CANISTER`, forcedGood: good,
+        pos: add(pos, vec(0, 0, small ? 10 : 20)), vel: scale(parentVel || vec(), .5),
+        rot: 0, pitch: 0, r: small ? 14 : 18, color: "#ffd33d", hp: small ? 6 : 8, hostile: false
+      });
+    }
+
+    function spawnEscapePod(pos) {
+      const stats = shipStats("escapePod");
+      game.objects.push({
+        type: "ship", model: "escapePod", name: "ESCAPE POD",
+        pos: { ...pos }, vel: scale(norm(vec(Math.random() - .5, Math.random() - .5, Math.random() - .5)), 50),
+        rot: 0, pitch: 0, roll: 0, r: stats.r, color: "#e9f2e4", hp: 8, maxHp: 8,
+        hostile: false, role: "pod", bounty: 15, aiMode: "cruise", wobble: Math.random() * TAU
+      });
+    }
+
+    function destroyObject(o, byPlayer = true) {
+      game.objects = game.objects.filter((x) => x !== o);
+      if (o.type === "ship") {
+        // A destroyed pirate/trader sometimes ejects instead of the ship (and any bounty)
+        // just vanishing outright — the pod itself can still be shot down for a small
+        // consolation bounty, or left to drift away.
+        const canEject = byPlayer && !o.thargoid && o.role !== "police" && o.role !== "pod";
+        if (canEject && Math.random() < .2) {
+          spawnEscapePod(o.pos);
+          spawnExplosion(o.pos, clamp(o.r / 46, .6, 2.2) * .6);
+          setMessage(`${o.name} pilot ejects!`, true);
+          return;
+        }
+        spawnExplosion(o.pos, clamp(o.r / 46, .6, 2.2));
+        if (Math.random() > .5) {
+          const isPlate = Math.random() < .35;
+          game.objects.push(isPlate
+            ? { type: "plate", model: "plate", name: "ALLOY PLATE", pos: add(o.pos, vec(0, 0, 30)), vel: vec(0, 0, -12), rot: .3, pitch: .2, roll: 0, r: 20, color: "#9aa79a", hp: 10, hostile: false }
+            : { type: "canister", model: "canister", name: "CARGO CANISTER", pos: add(o.pos, vec(0, 0, 30)), vel: vec(0, 0, -12), rot: 0, pitch: 0, r: 22, color: "#ffd33d", hp: 10, hostile: false });
+        }
+        if (!byPlayer) {
+          setMessage(`${o.name} destroyed.`, true);
+          return;
+        }
+        game.kills++;
+        game.credits += o.bounty || 0;
+        if (o.police || !o.hostile) game.legal += o.police ? 24 : 8;
+        else game.legal = Math.max(0, game.legal - 1);
+        setMessage(`${o.name} destroyed. ${o.bounty ? `Bounty ${o.bounty} CR.` : "Debris detected."}`, true);
+      } else if (o.type === "canister" || o.type === "plate") {
+        scoopCargo(o);
+      } else if (o.type === "asteroid") {
+        spawnExplosion(o.pos, .8);
+        const count = 2 + Math.floor(Math.random() * 2);
+        for (let i = 0; i < count; i++) spawnSplinter(o.pos, o.vel);
+        if (Math.random() < .5) spawnMineralCanister(o.pos, o.vel, false);
+        setMessage("Asteroid breaks apart.");
+      } else if (o.type === "boulder") {
+        spawnExplosion(o.pos, 1.1);
+        setMessage("Boulder shattered.");
+      } else if (o.type === "splinter") {
+        spawnExplosion(o.pos, .4);
+        if (Math.random() < .7) spawnMineralCanister(o.pos, o.vel, true);
+      }
+    }
+
+    function scoopCargo(o) {
+      if (usedCargo() >= game.cargoCap) {
+        setMessage("Cargo bay full.");
+        return;
+      }
+      const good = o.forcedGood || (o.type === "plate" ? "Alloys" : GOODS[Math.floor(Math.random() * (GOODS.length - 1))][0]);
+      game.cargo[good]++;
+      game.objects = game.objects.filter((x) => x !== o);
+      setMessage(`Scooped ${o.type === "plate" ? "alloy plate" : "cargo canister"}: ${good}.`);
+    }
+
+    function nearestTarget(shipsOnly = false) {
+      let best = null, bd = Infinity;
+      for (const o of game.objects) {
+        if (shipsOnly && o.type !== "ship") continue;
+        if (!shipsOnly && !["ship", "station", "canister"].includes(o.type)) continue;
+        const d = len(sub(o.pos, game.camera.pos));
+        if (d < bd) { best = o; bd = d; }
+      }
+      return best;
+    }
+
+    function destroyPlayer(reason) {
+      const hadCapsule = game.equipment.escapeCapsule;
+      if (hadCapsule) {
+        game.equipment.escapeCapsule = false;
+        setMessage(`Escape capsule fired! Ship lost to ${reason}, but you're alive. Picked up and returned to Lave.`, true);
+      } else {
+        setMessage(`Ship destroyed by ${reason}. Rebuilt at Lave with a replacement Cobra.`, true);
+      }
+      game.galaxy = 0;
+      game.current = LAVE_INDEX;
+      game.target = DISO_INDEX;
+      game.docked = true;
+      game.credits = Math.max(10, Math.floor(game.credits * (hadCapsule ? .7 : .35)));
+      game.fuel = 7;
+      game.energy = 100;
+      game.shields = 100;
+      game.speed = 0;
+      game.legal = hadCapsule ? Math.max(0, game.legal - 6) : 0;
+      game.cargo = Object.fromEntries(GOODS.map((g) => [g[0], 0]));
+      resetFlightScene(false);
+      renderPanel();
+    }
+
+    function useEnergyBomb() {
+      if (game.docked) {
+        setMessage("Energy bomb is safed while docked.");
+        return;
+      }
+      if (!game.equipment.energyBomb) {
+        setMessage("No energy bomb fitted.");
+        return;
+      }
+      game.equipment.energyBomb = false;
+      flash();
+      let hits = 0;
+      for (const o of game.objects) {
+        if (o.type !== "ship" || !o.hostile) continue;
+        if (len(sub(o.pos, game.camera.pos)) > 1400) continue;
+        o.hp -= 999;
+        hits++;
+      }
+      for (const o of [...game.objects]) {
+        if (o.type === "ship" && o.hp <= 0) destroyObject(o);
+      }
+      game.legal = Math.min(60, game.legal + 15);
+      setMessage(hits ? `Energy bomb detonated. ${hits} hostile${hits === 1 ? "" : "s"} vaporized.` : "Energy bomb detonated. No targets in range.", true);
+      renderPanel();
+    }
+
+    function buyGood(name) {
+      if (!game.docked) return;
+      const item = marketFor(currentSystem()).find((g) => g.name === name);
+      if (!item || item.qty <= 0) return;
+      if (usedCargo() >= game.cargoCap) {
+        setMessage("Cargo bay full.");
+        return;
+      }
+      if (game.credits < item.price) {
+        setMessage("Insufficient credits.");
+        return;
+      }
+      game.credits -= item.price;
+      game.cargo[name]++;
+      if (item.illegal && Math.random() > .92) game.legal += 2;
+      renderPanel();
+    }
+
+    function sellGood(name) {
+      if (!game.docked || game.cargo[name] <= 0) return;
+      const item = marketFor(currentSystem()).find((g) => g.name === name);
+      game.cargo[name]--;
+      game.credits += item.price;
+      if (item.illegal && Math.random() > .8) game.legal += 1;
+      renderPanel();
+    }
+
+    function buyFuel() {
+      if (!game.docked) return;
+      const need = 7 - game.fuel;
+      if (need <= .01) {
+        setMessage("Fuel tanks already full.");
+        return;
+      }
+      const amount = Math.min(need, Math.floor(game.credits / 0.2) / 10 || need);
+      const cost = amount * 2;
+      if (game.credits < cost) {
+        setMessage("Insufficient credits for fuel.");
+        return;
+      }
+      game.credits -= cost;
+      game.fuel = clamp(game.fuel + amount, 0, 7);
+      setMessage(`Fuel loaded: ${fmt(amount)} LY.`);
+      renderPanel();
+    }
+
+    function buyEquipment(id) {
+      const item = EQUIPMENT.find((e) => e.id === id);
+      if (!item || !game.docked) return;
+      const sys = currentSystem();
+      if (game.equipment[id]) {
+        setMessage("Already fitted.");
+        return;
+      }
+      if (sys.tech + 1 < item.tech) {
+        setMessage("Local tech level too low.");
+        return;
+      }
+      if (game.credits < item.cost) {
+        setMessage("Insufficient credits.");
+        return;
+      }
+      game.credits -= item.cost;
+      game.equipment[id] = true;
+      if (id === "cargoBay") game.cargoCap = 35;
+      if (id === "beamLaser" || id === "militaryLaser") {
+        if (id === "militaryLaser") game.equipment.beamLaser = true;
+      }
+      setMessage(`${item.name} fitted.`);
+      renderPanel();
+    }
+
+    function saveGame() {
+      localStorage.setItem("vectorEliteSave", JSON.stringify({
+        galaxySeedVersion: 2,
+        commander: game.commander, galaxy: game.galaxy, current: game.current, target: game.target,
+        credits: game.credits, fuel: game.fuel, kills: game.kills, legal: game.legal, cargoCap: game.cargoCap,
+        cargo: game.cargo, equipment: game.equipment, missiles: game.missiles, graphicsMode: game.graphicsMode
+      }));
+      setMessage("Commander saved to browser storage.", true);
+    }
+
+    function loadGame() {
+      const raw = localStorage.getItem("vectorEliteSave");
+      if (!raw) {
+        setMessage("No saved commander found.");
+        return;
+      }
+      try {
+        const data = JSON.parse(raw);
+        if (!data.galaxySeedVersion && data.galaxy === 0 && data.current === 0 && data.target === 1) {
+          data.current = LAVE_INDEX;
+          data.target = DISO_INDEX;
+        }
+        Object.assign(game, data);
+        game.graphicsMode = game.graphicsMode === "solid" ? "solid" : "wire";
+        game.docked = true;
+        game.energy = 100;
+        game.shields = 100;
+        game.speed = 0;
+        setMessage("Commander loaded.", true);
+        renderPanel();
+      } catch {
+        setMessage("Commander file corrupted.");
+      }
+    }
+
+    function update(dt) {
+      if (!game.docked) {
+        const turn = dt * 1.8;
+        if (keys.has("KeyA")) rotateCameraLocal(game.camera, vec(0, 0, 1), -turn);
+        if (keys.has("KeyD")) rotateCameraLocal(game.camera, vec(0, 0, 1), turn);
+        if (keys.has("KeyW")) rotateCameraLocal(game.camera, vec(1, 0, 0), turn * .72);
+        if (keys.has("KeyS")) rotateCameraLocal(game.camera, vec(1, 0, 0), -turn * .72);
+        if (keys.has("KeyQ")) rotateCameraLocal(game.camera, vec(0, 1, 0), turn * .72);
+        if (keys.has("KeyE")) rotateCameraLocal(game.camera, vec(0, 1, 0), -turn * .72);
+        if (keys.has("Equal") || keys.has("NumpadAdd")) game.speed += dt * 120;
+        if (keys.has("Minus") || keys.has("NumpadSubtract")) game.speed -= dt * 120;
+        game.speed = clamp(game.speed, 0, game.maxSpeed);
+
+        if (game.autoDock) updateAutoDock(dt);
+        const fwd = forwardVector(game.camera);
+        game.camera.pos = add(game.camera.pos, scale(fwd, game.speed * dt));
+        for (const star of game.stars) {
+          const rel = cameraTransform(star, game.camera);
+          if (rel.z < -1200 || rel.z > 3000 || Math.abs(rel.x) > 2600 || Math.abs(rel.y) > 1500) {
+            star.x = game.camera.pos.x + (Math.random() - .5) * 3200;
+            star.y = game.camera.pos.y + (Math.random() - .5) * 1800;
+            star.z = game.camera.pos.z + 2400 + Math.random() * 1400;
+          }
+        }
+        for (const o of game.objects) {
+          if (o.type === "station" || o.type === "hermit") updateStation(o, dt);
+          else if (o.type === "ship") updateShipAI(o, dt);
+          else if (o.type === "planet") o.rot = (o.rot || 0) + dt * (o.rotSpeed || .06);
+          else if (o.type === "missile") updateMissile(o, dt);
+          else if (o.type === "asteroid" || o.type === "boulder" || o.type === "splinter") {
+            o.rot = (o.rot || 0) + dt * (o.tumbleRot || .3);
+            o.pitch = (o.pitch || 0) + dt * (o.tumblePitch || .2);
+            if (o.vel) o.pos = add(o.pos, scale(o.vel, dt));
+          }
+          else if (o.vel) o.pos = add(o.pos, scale(o.vel, dt));
+          if ((o.type === "canister" || o.type === "plate") && game.equipment.fuelScoop && len(sub(o.pos, game.camera.pos)) < 38) scoopCargo(o);
+          if (o.type === "sun" && game.equipment.fuelScoop && len(sub(o.pos, game.camera.pos)) < o.r + 220) {
+            game.fuel = clamp(game.fuel + dt * .18, 0, 7);
+            game.energy = clamp(game.energy - dt * 4, 0, 100);
+          }
+        }
+        game.objects = game.objects.filter((o) => {
+          const d = len(sub(o.pos, game.camera.pos));
+          return o.type !== "ship" || d < 6500;
+        });
+        if (Math.random() < dt * .035 && game.objects.filter((o) => o.type === "ship").length < 7) {
+          spawnShip(Math.random, Math.random() > (currentSystem().government / 9 + .25));
+        }
+        if (Math.random() < dt * .012 && game.objects.filter((o) => o.type === "asteroid" || o.type === "boulder").length < 4) {
+          spawnAsteroid(Math.random, game.camera.pos);
+        }
+        game.shields = clamp(game.shields + dt * (game.equipment.extraEnergy ? 5 : 3), 0, 100);
+        game.energy = clamp(game.energy + dt * (game.equipment.extraEnergy ? 4 : 2.5), 0, 100);
+        game.laserHeat = clamp(game.laserHeat - dt * 38, 0, 100);
+        game.legal = Math.max(0, game.legal - dt * 0.025);
+      }
+      game.explosions = game.explosions.filter((e) => (e.t += dt) < e.dur);
+      game.enemyShots = game.enemyShots.filter((s) => (s.t += dt) < s.dur);
+      if (game.messageTimer > 0) game.messageTimer -= dt;
+      if (game.panel === "ship") {
+        const diagram = byId("shipDiagram");
+        if (diagram) drawShipDiagram(diagram, dt);
+      }
+      updateReadouts();
+      drawSpace();
+      drawScanner();
+    }
+
+    function updateAutoDock(dt) {
+      const st = dockableTarget();
+      if (!st) return;
+      const to = sub(st.pos, game.camera.pos);
+      const d = len(to);
+      const desired = norm(to);
+      game.camera.q = quatLookRotation(desired);
+      game.speed = lerp(game.speed, d > 260 ? 90 : 24, dt * 1.3);
+      if (d < 165) dock(true);
+    }
+
+    function lerpAngle(a, b, t) {
+      const d = Math.atan2(Math.sin(b - a), Math.cos(b - a));
+      return a + d * clamp(t, 0, 1);
+    }
+
+    function updateStation(o, dt) {
+      o.rot = (o.rot || 0) + dt * (o.rotSpeed || .34);
+      if (!o.basePos) o.basePos = { ...o.pos };
+      const p = performance.now() / 1000 + (o.driftPhase || 0);
+      o.pos = add(o.basePos, vec(Math.sin(p * .31) * 14, Math.cos(p * .27) * 9, Math.sin(p * .19) * 18));
+    }
+
+    function steerVelocity(o, desired, dt, accel = 95, maxSpeed = 120) {
+      const current = o.vel || vec();
+      // Guard against near-zero desired vectors: normalizing one amplifies tiny
+      // floating-point noise into an essentially random direction every frame (visible
+      // as ships rotating/wobbling in place instead of accelerating off), which happens
+      // whenever a ship starts out already close to its steering target — e.g. armada
+      // ships spawn right at their own orbit position.
+      const desiredLen = len(desired);
+      const dir = desiredLen > 1 ? scale(desired, 1 / desiredLen) : vec();
+      const next = add(scale(current, Math.pow(.18, dt)), scale(dir, accel * dt));
+      const sp = len(next);
+      o.vel = sp > maxSpeed ? scale(norm(next), maxSpeed) : next;
+      o.pos = add(o.pos, scale(o.vel, dt));
+      orientShipToVelocity(o, dt);
+    }
+
+    function orientShipToVelocity(o, dt) {
+      const v = o.vel || vec();
+      if (len(v) < .01) return;
+      // rotatePoint applies yaw (around Y) then pitch (around X) to the model's local
+      // +Z nose vector, giving forward' = (-sin(yaw), -cos(yaw)*sin(pitch), cos(yaw)*cos(pitch)).
+      // Solving that for forward' == normalize(v) gives these two formulas — grouping
+      // vx with hypot(vy,vz) for yaw and using plain vz (not hypot(vx,vz)) for pitch.
+      // A first attempt at this (atan2(-v.x,-v.z) / atan2(-v.y,hypot(v.x,v.z))) matched
+      // normalize(v) for the X- and Z-aligned test vectors but silently flipped the
+      // nose for general 3D velocity — always verify Euler-angle fixes against a vector
+      // with all three components nonzero, axis-aligned cases can pass by coincidence.
+      const yaw = Math.atan2(-v.x, Math.hypot(v.y, v.z));
+      const pitch = Math.atan2(-v.y, v.z);
+      o.rot = lerpAngle(o.rot || 0, yaw, dt * 3.4);
+      o.pitch = lerpAngle(o.pitch || 0, pitch, dt * 3.1);
+      o.roll = lerpAngle(o.roll || 0, clamp(-v.x / 90, -0.65, 0.65), dt * 2.2);
+    }
+
+    // Hostiles no longer only ever fight the player: pirates/aliens sometimes pick a
+    // nearby trader as prey instead, and police prefer to hunt down a nearby pirate.
+    // o.target is either null (meaning the player) or a live reference to another ship.
+    function pickPreyFor(o) {
+      let best = null, bestD = Infinity;
+      for (const x of game.objects) {
+        if (x.type !== "ship" || x === o || x.hostile || x.aiMode === "flee") continue;
+        const d = len(sub(x.pos, o.pos));
+        if (d < 1400 && d < bestD) { best = x; bestD = d; }
+      }
+      return best;
+    }
+
+    function pickHostileFor(o) {
+      let best = null, bestD = Infinity;
+      for (const x of game.objects) {
+        if (x.type !== "ship" || x === o || !x.hostile || x.role === "police") continue;
+        const d = len(sub(x.pos, o.pos));
+        if (d < 1800 && d < bestD) { best = x; bestD = d; }
+      }
+      return best;
+    }
+
+    function assignHostileTarget(o) {
+      if (o.role === "police") {
+        o.target = pickHostileFor(o);
+        return;
+      }
+      if (!o.thargoid && Math.random() < .55) {
+        const prey = pickPreyFor(o);
+        o.target = prey;
+        if (prey) prey.huntedBy = o;
+      } else {
+        o.target = null;
+      }
+    }
+
+    function hostileTargetPos(o) {
+      return o.target ? o.target.pos : game.camera.pos;
+    }
+
+    function fireAtShip(attacker, target) {
+      const dmg = attacker.thargoid ? 16 : attacker.role === "police" ? 13 : 10;
+      game.enemyShots.push({ from: { ...attacker.pos }, to: { ...target.pos }, t: 0, dur: .18, missile: false });
+      target.hp -= dmg;
+      if (target.hp <= 0) destroyObject(target, false);
+      else setMessage(`${attacker.name} attacks ${target.name}.`);
+    }
+
+    function fireAtPlayer(o) {
+      const missile = !o.thargoid && Math.random() < .3;
+      if (missile) {
+        if (game.equipment.ecm && Math.random() < .75) {
+          setMessage(`${o.name} missile jammed by ECM.`, true);
+          flash();
+          return;
+        }
+        spawnMissile({ pos: o.pos, target: null, source: o, hostile: true });
+        setMessage(`${o.name} launches a missile!`, true);
+        return;
+      }
+      game.enemyShots.push({ from: { ...o.pos }, to: null, t: 0, dur: .18, missile: false });
+      game.shields -= o.thargoid ? 14 : 8;
+      setMessage(`${o.name} laser strike.`);
+      if (game.shields <= 0) {
+        game.energy += game.shields;
+        game.shields = 0;
+      }
+      if (game.energy <= 0) destroyPlayer(o.name);
+    }
+
+    function updateShipAI(o, dt) {
+      if (o.hostile) {
+        const stale = o.target && (o.target.hp <= 0 || !game.objects.includes(o.target) || len(sub(o.target.pos, o.pos)) > 2200);
+        if (o.target === undefined || stale) assignHostileTarget(o);
+      }
+      const targetPos = o.hostile ? hostileTargetPos(o) : game.camera.pos;
+      const d = len(sub(targetPos, o.pos));
+
+      if (o.hostile && o.role !== "police" && !o.thargoid && o.maxHp && o.hp < o.maxHp * .32 && o.aiMode !== "flee") {
+        o.aiMode = "flee";
+        o.fleeFrom = { ...targetPos };
+        setMessage(`${o.name} breaks off and flees.`);
+      }
+
+      if (o.aiMode === "flee") {
+        const from = o.fleeFrom || game.camera.pos;
+        const away = norm(sub(o.pos, from));
+        const jink = vec(Math.sin(performance.now() / 650 + (o.wobble || 0)) * 90, Math.cos(performance.now() / 800 + (o.wobble || 0)) * 60, 0);
+        const speedMul = shipStats(o.model).speed || 1;
+        steerVelocity(o, add(scale(away, 300), jink), dt, 135, 150 * speedMul);
+        if (len(sub(o.pos, from)) > 2600) game.objects = game.objects.filter((x) => x !== o);
+        return;
+      }
+
+      if (o.hostile) {
+        // Distance-banded tactics, echoing the source's tactics routine ("ships that are
+        // too close turn away" / appropriately-ranged aggressive ships close in): without
+        // this, ships always steered toward a point near the player's nose regardless of
+        // range, so they flew straight through the player on a collision course instead of
+        // dogfighting — and sat at point-blank range where the laser hit-test excludes them.
+        // targetPos is either the player or another ship (see assignHostileTarget) — pirates
+        // and aliens don't only ever fight the player now.
+        const away = norm(sub(o.pos, targetPos));
+        const lateral = norm(cross(away, vec(0, 1, 0)));
+        const orbitDir = len(lateral) > .01 ? lateral : vec(1, 0, 0);
+        const jink = Math.sin(performance.now() / 900 + (o.wobble || 0));
+        let desired;
+        if (d < 260) {
+          desired = add(scale(away, 260), scale(orbitDir, 120 * jink));
+        } else if (d < 900) {
+          // orbitSign is fixed per ship so the orbit always circles the same way; jink
+          // only breathes the radius in and out. Previously jink (peak +-130) directly
+          // scaled orbitDir with no fixed sign, which is *larger* than the 30-unit inward
+          // pull, so the ship's entire tangential heading flipped every time the sine
+          // term crossed zero (~every 2.8s) instead of circling smoothly one direction —
+          // exactly the "flips and only moves a little before flipping again" symptom.
+          if (o.orbitSign === undefined) o.orbitSign = Math.random() > .5 ? 1 : -1;
+          desired = add(add(scale(scale(away, -1), 30), scale(orbitDir, 140 * o.orbitSign)), scale(away, 40 * jink));
+        } else if (o.target) {
+          desired = sub(targetPos, o.pos);
+        } else {
+          const lead = add(game.camera.pos, scale(forwardVector(game.camera), Math.max(80, game.speed * .8)));
+          desired = sub(lead, o.pos);
+        }
+        const speedMul = shipStats(o.model).speed || 1;
+        steerVelocity(o, desired, dt, o.thargoid ? 150 : 115, (o.thargoid ? 150 : 128) * speedMul);
+        o.attackClock -= dt;
+        if (o.attackClock <= 0 && d > 130 && d < 900) {
+          o.attackClock = 1.3 + Math.random() * 1.5;
+          if (o.target) fireAtShip(o, o.target);
+          else fireAtPlayer(o);
+        }
+      } else if (o.huntedBy && game.objects.includes(o.huntedBy) && o.huntedBy.target === o) {
+        o.aiMode = "flee";
+        o.fleeFrom = { ...o.huntedBy.pos };
+        setMessage(`${o.name} is under attack and flees.`);
+      } else if (d < 460 && Math.random() < dt * .5) {
+        o.aiMode = "flee";
+        o.fleeFrom = { ...game.camera.pos };
+        setMessage(`${o.name} panics and flees.`);
+      } else if (o.aiMode === "formation") {
+        o.orbitAngle += (o.orbitSpeed || .18) * dt;
+        const center = o.orbitCenter || cameraLocalToWorld(game.camera, vec(0, 0, 900));
+        const target = add(center, vec(
+          Math.cos(o.orbitAngle) * (o.orbitRadius || 300),
+          Math.sin(o.orbitAngle * .9) * ((o.orbitRadius || 300) * .42) + (o.formationY || 0) * .2,
+          Math.sin(o.orbitAngle) * (o.orbitRadius || 300) * .45 + ((o.formationZ || 900) - 900) * .25
+        ));
+        steerVelocity(o, sub(target, o.pos), dt, 110, 115);
+      } else if (o.aiMode === "orbit") {
+        o.orbitAngle += (o.orbitSpeed || .18) * dt;
+        const center = o.orbitCenter || vec();
+        const target = add(center, vec(
+          Math.cos(o.orbitAngle) * (o.orbitRadius || 360),
+          Math.sin(o.orbitAngle * 1.3 + (o.wobble || 0)) * 90,
+          Math.sin(o.orbitAngle) * (o.orbitRadius || 360) * .7
+        ));
+        steerVelocity(o, sub(target, o.pos), dt, 85, 95);
+      } else {
+        const station = game.objects.find((x) => x.type === "station");
+        const center = station ? station.pos : vec();
+        const away = d < 360 ? scale(norm(sub(o.pos, game.camera.pos)), 360 - d) : vec();
+        const cruise = add(sub(center, o.pos), add(away, vec(Math.sin(performance.now() / 900 + (o.wobble || 0)) * 160, 0, 220)));
+        steerVelocity(o, cruise, dt, 55, 82);
+      }
+    }
+
+    function project(p, w, h) {
+      if (p.z <= 8) return null;
+      const f = Math.min(w, h) * .82;
+      return { x: w / 2 + (p.x / p.z) * f, y: h / 2 - (p.y / p.z) * f, s: f / p.z };
+    }
+
+    function hexToRgb(hex) {
+      const clean = String(hex || "#e9f2e4").replace("#", "");
+      const n = parseInt(clean.length === 3 ? clean.replace(/(.)/g, "$1$1") : clean, 16);
+      return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+    }
+
+    function shadedColor(hex, shade, alpha = 1) {
+      const c = hexToRgb(hex);
+      const floor = 10;
+      return `rgba(${Math.round(c.r * shade + floor)}, ${Math.round(c.g * shade + floor)}, ${Math.round(c.b * shade + floor)}, ${alpha})`;
+    }
+
+    function faceNormal(a, b, c) {
+      const u = sub(b, a);
+      const v = sub(c, a);
+      return norm(vec(
+        u.y * v.z - u.z * v.y,
+        u.z * v.x - u.x * v.z,
+        u.x * v.y - u.y * v.x
+      ));
+    }
+
+    function starLightDirection(center) {
+      const sun = game.objects.find((o) => o.type === "sun");
+      if (!sun) return norm(vec(-.45, .6, -1));
+      const sunCam = cameraTransform(sun.pos, game.camera);
+      return norm(sub(sunCam, center));
+    }
+
+    function collectSolidFaces(model, camVerts, points, baseColor, alpha = 1) {
+      if (game.graphicsMode !== "solid" || !model.faces) return [];
+      const faces = [];
+      const objectCenter = scale(camVerts.reduce((sum, p) => add(sum, p), vec()), 1 / camVerts.length);
+      model.faces.forEach((face, faceIndex) => {
+        const projected = face.map((i) => points[i]);
+        if (projected.some((p) => !p)) return;
+        const verts = face.map((i) => camVerts[i]);
+        const avgZ = verts.reduce((sum, p) => sum + p.z, 0) / verts.length;
+        let n = faceNormal(verts[0], verts[1], verts[2]);
+        const center = scale(verts.reduce((sum, p) => add(sum, p), vec()), 1 / verts.length);
+        if (dot(n, sub(center, objectCenter)) < 0) n = scale(n, -1);
+        const cameraFacing = -dot(n, norm(center));
+        if (cameraFacing <= 0) return;
+        const facing = clamp(cameraFacing, 0, 1);
+        const lit = clamp(.18 + Math.max(0, dot(n, starLightDirection(center))) * .58 + facing * .18, .16, .92);
+        const grain = Math.abs(Math.sin(center.x * .037 + center.y * .071 + center.z * .043 + face.length * 1.7));
+        faces.push({
+          kind: "poly",
+          projected,
+          uv: model.faceUV && model.faceUV[faceIndex],
+          avgZ,
+          fillStyle: shadedColor(baseColor, lit * (.92 + grain * .12), alpha),
+          metal: true,
+          metalAlpha: clamp(.34 + facing * .34, .3, .68)
+        });
+      });
+      return faces;
+    }
+
+    function collectSolidDetails(model, o, camVerts, points, w, h, scaleFactor = 1) {
+      if (game.graphicsMode !== "solid" || !model.details) return [];
+      const roll = o.roll ?? (o.rot || 0) * .7;
+      const details = [];
+      for (const detail of model.details) {
+        const normal = detail.normal
+          ? norm(rotatePoint(vec(detail.normal[0], detail.normal[1], detail.normal[2]), o.rot || 0, o.pitch || 0, roll))
+          : null;
+        const vertsOnSurface = detail.indices
+          ? detail.indices.map((i) => camVerts[i])
+          : detail.points.map(([x, y, z]) => add(rotatePoint(vec(x * scaleFactor, y * scaleFactor, z * scaleFactor), o.rot || 0, o.pitch || 0, roll), o.cam || vec()));
+        const isLineDetail = detail.type === "line" || detail.type === "polyline";
+        if (vertsOnSurface.length < (isLineDetail ? 2 : 3)) continue;
+        const surfaceCenter = scale(vertsOnSurface.reduce((sum, p) => add(sum, p), vec()), 1 / vertsOnSurface.length);
+        if (normal && detail.cull !== false && -dot(normal, norm(surfaceCenter)) <= (detail.cullEpsilon ?? -.08)) continue;
+        const lift = normal ? (detail.lift ?? (detail.type === "engine" ? 5 : 3)) * scaleFactor : 0;
+        const verts = normal && lift
+          ? vertsOnSurface.map((p) => add(p, scale(normal, lift)))
+          : vertsOnSurface;
+        const projected = verts.map((p) => o.project ? o.project(p) : project(p, w, h));
+        if (projected.some((p) => !p) || verts.length < (isLineDetail ? 2 : 3)) continue;
+        if (isLineDetail) {
+          details.push({
+            kind: "line",
+            projected,
+            avgZ: verts.reduce((sum, p) => sum + p.z, 0) / verts.length,
+            strokeStyle: detail.color || "#eef7ed",
+            lineWidth: detail.width || 1.2
+          });
+          continue;
+        }
+        details.push({
+          kind: "poly",
+          projected,
+          avgZ: verts.reduce((sum, p) => sum + p.z, 0) / verts.length,
+          fillStyle: detail.color || (detail.type === "engine" ? "#f7fff7" : "#101915"),
+          strokeStyle: detail.stroke || (detail.type === "engine" ? "#ffffff" : null),
+          lineWidth: detail.width || 1.2,
+          glow: detail.type === "engine"
+        });
+      }
+      return details;
+    }
+
+    function polygonBounds(points) {
+      return points.reduce((b, p) => ({
+        minX: Math.min(b.minX, p.x),
+        maxX: Math.max(b.maxX, p.x),
+        minY: Math.min(b.minY, p.y),
+        maxY: Math.max(b.maxY, p.y)
+      }), { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity });
+    }
+
+    let hullTextureCanvas = null;
+
+    function buildHullTexture() {
+      const size = 400;
+      const c = document.createElement("canvas");
+      c.width = size;
+      c.height = size;
+      const tc = c.getContext("2d");
+      const rng = mulberry(hash32("hull-metal-texture"));
+
+      const base = tc.createLinearGradient(0, 0, size, size);
+      base.addColorStop(0, "#dfe6df");
+      base.addColorStop(.5, "#aab4ac");
+      base.addColorStop(1, "#c7cfc8");
+      tc.fillStyle = base;
+      tc.fillRect(0, 0, size, size);
+
+      tc.globalAlpha = .7;
+      for (let i = 0; i < 320; i++) {
+        const y = rng() * size;
+        const x = rng() * size;
+        const streak = 40 + rng() * 160;
+        const shade = 110 + Math.floor(rng() * 100);
+        tc.strokeStyle = `rgba(${shade},${shade + 4},${shade},${.25 + rng() * .45})`;
+        tc.lineWidth = .8 + rng() * 1.6;
+        tc.beginPath();
+        tc.moveTo(x, y);
+        tc.lineTo(x + streak, y + (rng() - .5) * 6);
+        tc.stroke();
+      }
+
+      tc.globalAlpha = .9;
+      for (let i = 0; i < 1100; i++) {
+        const x = rng() * size, y = rng() * size;
+        const shade = rng() > .5 ? 15 + rng() * 35 : 220 + rng() * 35;
+        tc.fillStyle = `rgba(${shade},${shade},${shade},${.15 + rng() * .3})`;
+        const s = rng() > .7 ? 2 : 1;
+        tc.fillRect(x, y, s, s);
+      }
+
+      tc.globalAlpha = 1;
+      tc.strokeStyle = "rgba(30,40,32,.42)";
+      tc.lineWidth = 1.6;
+      const panels = 5;
+      for (let i = 1; i < panels; i++) {
+        const p = (size / panels) * i;
+        tc.beginPath(); tc.moveTo(p, 0); tc.lineTo(p, size); tc.stroke();
+        tc.beginPath(); tc.moveTo(0, p); tc.lineTo(size, p); tc.stroke();
+      }
+
+      const sheen = tc.createLinearGradient(0, 0, size, size * .6);
+      sheen.addColorStop(0, "rgba(255,255,255,.22)");
+      sheen.addColorStop(.35, "rgba(255,255,255,0)");
+      sheen.addColorStop(.7, "rgba(255,255,255,0)");
+      sheen.addColorStop(1, "rgba(255,255,255,.12)");
+      tc.fillStyle = sheen;
+      tc.fillRect(0, 0, size, size);
+
+      return c;
+    }
+
+    function getHullTexture() {
+      if (!hullTextureCanvas) hullTextureCanvas = buildHullTexture();
+      return hullTextureCanvas;
+    }
+
+    function drawTexturedTriangle(targetCtx, img, x0, y0, x1, y1, x2, y2, u0, v0, u1, v1, u2, v2) {
+      targetCtx.save();
+      targetCtx.beginPath();
+      targetCtx.moveTo(x0, y0);
+      targetCtx.lineTo(x1, y1);
+      targetCtx.lineTo(x2, y2);
+      targetCtx.closePath();
+      targetCtx.clip();
+
+      u1 -= u0; v1 -= v0;
+      u2 -= u0; v2 -= v0;
+      x1 -= x0; y1 -= y0;
+      x2 -= x0; y2 -= y0;
+
+      const det = u1 * v2 - u2 * v1;
+      if (Math.abs(det) < 1e-6) {
+        targetCtx.restore();
+        return;
+      }
+      const idet = 1 / det;
+      const a = (v2 * x1 - v1 * x2) * idet;
+      const b = (v2 * y1 - v1 * y2) * idet;
+      const c = (u1 * x2 - u2 * x1) * idet;
+      const d = (u1 * y2 - u2 * y1) * idet;
+      const e = x0 - a * u0 - c * v0;
+      const f = y0 - b * u0 - d * v0;
+
+      targetCtx.transform(a, b, c, d, e, f);
+      targetCtx.drawImage(img, 0, 0);
+      targetCtx.restore();
+    }
+
+    function drawFaceTexture(targetCtx, item) {
+      const pts = item.projected;
+      const b = polygonBounds(pts);
+      if ((b.maxX - b.minX) * (b.maxY - b.minY) < 500) return;
+      const img = getHullTexture();
+      const offset = img.width / 2;
+      const uv = item.uv;
+      targetCtx.save();
+      targetCtx.globalCompositeOperation = "multiply";
+      targetCtx.globalAlpha = item.metalAlpha ?? .3;
+      for (let i = 1; i + 1 < pts.length; i++) {
+        drawTexturedTriangle(
+          targetCtx, img,
+          pts[0].x, pts[0].y, pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y,
+          uv[0][0] + offset, uv[0][1] + offset, uv[i][0] + offset, uv[i][1] + offset, uv[i + 1][0] + offset, uv[i + 1][1] + offset
+        );
+      }
+      targetCtx.restore();
+    }
+
+    function drawEngineGlow(targetCtx, points) {
+      const b = polygonBounds(points);
+      const cx = (b.minX + b.maxX) / 2;
+      const cy = (b.minY + b.maxY) / 2;
+      const r = clamp(Math.max(b.maxX - b.minX, b.maxY - b.minY) * 2.8, 6, 42);
+      const g = targetCtx.createRadialGradient(cx, cy, 0, cx, cy, r);
+      g.addColorStop(0, "rgba(255,255,235,.9)");
+      g.addColorStop(.28, "rgba(255,226,116,.32)");
+      g.addColorStop(1, "rgba(255,126,40,0)");
+      targetCtx.save();
+      targetCtx.globalCompositeOperation = "lighter";
+      targetCtx.fillStyle = g;
+      targetCtx.beginPath();
+      targetCtx.arc(cx, cy, r, 0, TAU);
+      targetCtx.fill();
+      targetCtx.restore();
+    }
+
+    function drawSolidItems(targetCtx, items) {
+      items.sort((a, b) => b.avgZ - a.avgZ);
+      for (const item of items) {
+        if (item.glow) drawEngineGlow(targetCtx, item.projected);
+        targetCtx.beginPath();
+        targetCtx.moveTo(item.projected[0].x, item.projected[0].y);
+        for (let i = 1; i < item.projected.length; i++) targetCtx.lineTo(item.projected[i].x, item.projected[i].y);
+        if (item.kind === "line") {
+          targetCtx.strokeStyle = item.strokeStyle;
+          targetCtx.lineWidth = item.lineWidth || 1;
+          targetCtx.lineCap = "round";
+          targetCtx.lineJoin = "round";
+          targetCtx.stroke();
+          continue;
+        }
+        targetCtx.closePath();
+        if (item.fillStyle) {
+          targetCtx.fillStyle = item.fillStyle;
+          targetCtx.fill();
+          if (item.metal && item.uv) drawFaceTexture(targetCtx, item);
+        }
+        if (item.strokeStyle) {
+          targetCtx.strokeStyle = item.strokeStyle;
+          targetCtx.lineWidth = item.lineWidth || 1;
+          targetCtx.stroke();
+        }
+      }
+    }
+
+    function drawSolidFaces(model, camVerts, points, baseColor, alpha = 1) {
+      drawSolidItems(ctx, collectSolidFaces(model, camVerts, points, baseColor, alpha));
+    }
+
+    function drawSolidDetails(model, o, camVerts, points, w, h, targetCtx = ctx, scaleFactor = 1) {
+      drawSolidItems(targetCtx, collectSolidDetails(model, o, camVerts, points, w, h, scaleFactor));
+    }
+
+    function shipStatus(o) {
+      if (o.aiMode === "flee") return { text: "FLEEING", color: "#91a78d" };
+      if (o.hostile) return o.police ? { text: "PURSUING", color: "#46dfff" } : { text: "HOSTILE", color: "#ff6a55" };
+      if (o.police) return { text: "PATROL", color: "#46dfff" };
+      return { text: "CRUISING", color: "#65ff47" };
+    }
+
+    function drawShipLabels(w, h) {
+      ctx.font = "11px monospace";
+      ctx.textAlign = "center";
+      for (const o of game.objects) {
+        if (o.type !== "ship") continue;
+        const rel = cameraTransform(o.pos, game.camera);
+        if (rel.z < 40) continue;
+        const pr = project(rel, w, h);
+        if (!pr) continue;
+        const apparentR = Math.abs(o.r * pr.s);
+        if (apparentR < 16 || pr.x < -60 || pr.x > w + 60 || pr.y < -30 || pr.y > h + 30) continue;
+
+        const status = shipStatus(o);
+        const labelY = pr.y - apparentR - 10;
+        const barW = 46;
+        ctx.font = "11px monospace";
+        const nameW = ctx.measureText(o.name).width;
+        ctx.font = "9px monospace";
+        const statusW = ctx.measureText(status.text).width;
+        const boxW = Math.max(nameW, statusW, barW) + 10;
+
+        ctx.fillStyle = "rgba(3,8,3,.55)";
+        ctx.fillRect(pr.x - boxW / 2, labelY - 30, boxW, 34);
+        ctx.strokeStyle = "rgba(101,255,71,.25)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(pr.x - boxW / 2, labelY - 30, boxW, 34);
+
+        ctx.fillStyle = "#cfe9c8";
+        ctx.font = "11px monospace";
+        ctx.fillText(o.name, pr.x, labelY - 17);
+        ctx.fillStyle = status.color;
+        ctx.font = "9px monospace";
+        ctx.fillText(status.text, pr.x, labelY - 5);
+
+        const hpFrac = clamp((o.hp ?? 1) / (o.maxHp || o.hp || 1), 0, 1);
+        const hpColor = hpFrac > .5 ? "#65ff47" : hpFrac > .22 ? "#ffd33d" : "#ff6a55";
+        const barX = pr.x - barW / 2, barY = labelY;
+        ctx.fillStyle = "rgba(255,255,255,.12)";
+        ctx.fillRect(barX, barY, barW, 4);
+        ctx.fillStyle = hpColor;
+        ctx.fillRect(barX, barY, barW * hpFrac, 4);
+        ctx.strokeStyle = "rgba(255,255,255,.3)";
+        ctx.lineWidth = .75;
+        ctx.strokeRect(barX, barY, barW, 4);
+      }
+      ctx.textAlign = "left";
+    }
+
+    function drawSpace() {
+      const w = space.width, h = space.height;
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, w, h);
+      ctx.save();
+      ctx.lineCap = "round";
+      drawStars(w, h);
+      const visible = game.objects
+        .map((o) => ({ o, p: cameraTransform(o.pos, game.camera), d: len(sub(o.pos, game.camera.pos)) }))
+        .sort((a, b) => b.d - a.d);
+      for (const item of visible) drawObject(item.o, item.p, w, h);
+      drawExplosions(w, h);
+      drawEnemyShots(w, h);
+      drawShipLabels(w, h);
+      if (!game.docked && game.playerShot && performance.now() - game.lastShot < 85) {
+        let endX = w / 2, endY = h / 2;
+        if (game.playerShot.to) {
+          const p = project(cameraTransform(game.playerShot.to, game.camera), w, h);
+          if (p) { endX = p.x; endY = p.y; }
+        }
+        ctx.strokeStyle = game.playerShot.color || "#ffd33d";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(w / 2, h * .96);
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
+      }
+      if (game.docked) drawDockedBackdrop(w, h);
+      ctx.restore();
+    }
+
+    function drawStars(w, h) {
+      for (const star of game.stars) {
+        const p = cameraTransform(star, game.camera);
+        const pr = project(p, w, h);
+        if (!pr || pr.x < 0 || pr.y < 0 || pr.x > w || pr.y > h) continue;
+        const r = clamp((star.size || 1.3) - p.z / 3200, .4, 1.9);
+        const twinkle = .82 + Math.sin(performance.now() / 260 + (star.tw || 0)) * .18;
+        ctx.fillStyle = game.witchspace ? "#8d5cff" : star.sat ? `hsl(${star.hue}, ${star.sat}%, 88%)` : "#e9f2e4";
+        ctx.globalAlpha = clamp(1.4 - p.z / 3000, .25, 1) * twinkle;
+        ctx.fillRect(pr.x, pr.y, r, r);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawEnemyShots(w, h) {
+      for (const s of game.enemyShots) {
+        const fromP = project(cameraTransform(s.from, game.camera), w, h);
+        if (!fromP) continue;
+        // to === null means the target is the player, who has no visible ship in this
+        // first-person view — aim at the crosshair. Otherwise aim at the actual target
+        // ship's position, so ship-vs-ship fire visibly hits the ship being shot at.
+        let toP = { x: w / 2, y: h / 2 };
+        if (s.to) {
+          const p = project(cameraTransform(s.to, game.camera), w, h);
+          if (!p) continue;
+          toP = p;
+        }
+        const alpha = clamp(1 - s.t / s.dur, 0, 1);
+        ctx.strokeStyle = s.missile ? `rgba(255,130,60,${alpha})` : `rgba(255,70,60,${alpha})`;
+        ctx.lineWidth = s.missile ? 2.6 : 1.6;
+        ctx.beginPath();
+        ctx.moveTo(fromP.x, fromP.y);
+        ctx.lineTo(toP.x, toP.y);
+        ctx.stroke();
+      }
+    }
+
+    function drawExplosions(w, h) {
+      for (const e of game.explosions) {
+        const rel = cameraTransform(e.pos, game.camera);
+        const pr = project(rel, w, h);
+        if (!pr) continue;
+        const t = clamp(e.t / e.dur, 0, 1);
+        const flashA = clamp(1 - t * 4, 0, 1);
+        if (flashA > 0) {
+          const r = 46 * pr.s * e.magnitude + 4;
+          const g = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, r);
+          g.addColorStop(0, `rgba(255,255,235,${.85 * flashA})`);
+          g.addColorStop(.4, `rgba(255,196,90,${.4 * flashA})`);
+          g.addColorStop(1, "rgba(255,120,40,0)");
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(pr.x, pr.y, r, 0, TAU);
+          ctx.fill();
+        }
+        ctx.strokeStyle = `rgba(255,${170 - Math.floor(t * 90)},60,${clamp(1 - t, 0, 1) * .9})`;
+        ctx.lineWidth = clamp(2.2 * pr.s, .6, 3);
+        ctx.beginPath();
+        for (const s of e.shards) {
+          const end = add(rel, scale(s.dir, s.len + s.speed * e.t));
+          const pe = project(end, w, h);
+          if (!pe) continue;
+          ctx.moveTo(pr.x, pr.y);
+          ctx.lineTo(pe.x, pe.y);
+        }
+        ctx.stroke();
+      }
+    }
+
+    function drawSunBody(o, cam, w, h) {
+      const pr = project(cam, w, h);
+      if (!pr) return;
+      const baseR = Math.abs(o.r * pr.s);
+      const glowR = baseR * 1.55;
+      if (baseR < 2 || pr.x + glowR < 0 || pr.x - glowR > w || pr.y + glowR < 0 || pr.y - glowR > h) return;
+      // shimmering edge, echoing the original's randomised-half-width sun-line technique
+      const shimmer = 1 + Math.sin(performance.now() / 90 + pr.x * .013) * .02 + (Math.random() - .5) * .015;
+      const r = baseR * shimmer;
+      const hue = o.hue ?? 46;
+
+      if (game.graphicsMode !== "solid") {
+        ctx.strokeStyle = `hsl(${hue}, 100%, 82%)`;
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.arc(pr.x, pr.y, r, 0, TAU);
+        ctx.stroke();
+        ctx.globalAlpha = .3;
+        ctx.beginPath();
+        ctx.arc(pr.x, pr.y, r * 1.28, 0, TAU);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        return;
+      }
+
+      const g = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, glowR);
+      g.addColorStop(0, `hsl(${hue}, 100%, 93%)`);
+      g.addColorStop(.32, `hsl(${hue}, 100%, 74%)`);
+      g.addColorStop(.6, `hsl(${hue - 8}, 100%, 56%)`);
+      g.addColorStop(1, `hsla(${hue - 15}, 100%, 45%, 0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(pr.x, pr.y, glowR, 0, TAU);
+      ctx.fill();
+      ctx.strokeStyle = `hsla(${hue}, 100%, 92%, .55)`;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(pr.x, pr.y, r, 0, TAU);
+      ctx.stroke();
+    }
+
+    // A ring is a real 3D circle lying in a plane fixed to the planet (via rotAxis +
+    // ringTilt), not a 2D canvas ellipse rotation — ctx.ellipse's rotation angle is a
+    // flat screen-space twist that ignores the camera's own orientation entirely, so a
+    // fixed ringTilt used that way visibly rotates along with the *camera* (e.g. when
+    // the player rolls) instead of staying anchored to the planet. Projecting real
+    // per-point 3D positions through the normal cameraTransform/project pipeline (like
+    // every other object) fixes that, and lets front/back occlusion be a genuine depth
+    // test instead of a guessed screen-space angle range.
+    function drawPlanetRing(o, r, hue, w, h, front) {
+      if (!o._ringBasis) {
+        const axis = o.rotAxis || vec(0, 1, 0);
+        const tiltAxis = len(cross(axis, vec(0, 0, 1))) > .0001 ? norm(cross(axis, vec(0, 0, 1))) : vec(1, 0, 0);
+        const normal = norm(quatRotate(quatFromAxisAngle(tiltAxis, o.ringTilt || 0), axis));
+        let u = cross(normal, Math.abs(normal.y) < .9 ? vec(0, 1, 0) : vec(1, 0, 0));
+        if (len(u) < .0001) u = cross(normal, vec(0, 0, 1));
+        u = norm(u);
+        o._ringBasis = { u, v: norm(cross(normal, u)) };
+      }
+      const { u, v } = o._ringBasis;
+      const viewDir = norm(sub(game.camera.pos, o.pos));
+      const solid = game.graphicsMode === "solid";
+      const bands = 3, segs = 96;
+      for (let b = 0; b < bands; b++) {
+        const t = b / (bands - 1);
+        const rr = lerp(o.r * o.ringInner, o.r * o.ringOuter, t);
+        ctx.strokeStyle = `hsla(${hue - 15}, 30%, ${70 - t * 20}%, ${solid ? .5 : .3})`;
+        ctx.lineWidth = Math.max(1, r * .045);
+        ctx.beginPath();
+        let drawing = false;
+        for (let i = 0; i <= segs; i++) {
+          const a = (i / segs) * TAU;
+          const offset = add(scale(u, Math.cos(a) * rr), scale(v, Math.sin(a) * rr));
+          const isFront = dot(offset, viewDir) >= 0;
+          const p = (front === null || isFront === front)
+            ? project(cameraTransform(add(o.pos, offset), game.camera), w, h)
+            : null;
+          if (!p) { drawing = false; continue; }
+          if (drawing) ctx.lineTo(p.x, p.y);
+          else { ctx.moveTo(p.x, p.y); drawing = true; }
+        }
+        ctx.stroke();
+      }
+    }
+
+    // Surface features are real points on the sphere (seeded unit-sphere directions,
+    // rotated by the planet's own rotAxis/rot each frame) rather than a screen-space
+    // billboard, so they correctly rotate with the planet and self-occlude on the far
+    // side — the same fix pattern used for the ship hull texture UVs.
+    // Per-biome feature colour/shape, sampled at a seeded sphere point already rotated
+    // into world space. sunFacing (-1 night .. 1 day) lets features react to actual
+    // sunlight — city lights glow in the dark, cloud/land brightness softens by phase —
+    // distinct from `facing` (camera visibility) which only controls culling/size.
+    function planetFeatureStyle(biome, hue, sat, light, sunFacing, rolls) {
+      const { kindRoll, squashRoll } = rolls;
+      if (biome === "ocean") {
+        if (kindRoll > .8) {
+          const a = .3 * clamp(sunFacing * .6 + .5, .15, 1);
+          return { h: 0, s: 0, l: 97, a, squash: .35 + squashRoll * .35 };
+        }
+        const land = kindRoll > .42;
+        const h = land ? lerp(85, 122, kindRoll) : lerp(192, 206, kindRoll);
+        const l = clamp((land ? light + 10 : light - 6) + sunFacing * 14, 4, 92);
+        return { h, s: sat, l, a: .62, squash: .5 + squashRoll * .3 };
+      }
+      if (biome === "desert") {
+        const h = hue + (kindRoll - .5) * 16;
+        const l = clamp(light - 12 + sunFacing * 16, 4, 88);
+        return { h, s: sat * .85, l, a: .55, squash: .18 + squashRoll * .16 };
+      }
+      // industrial
+      if (kindRoll > .58 && sunFacing < .3) {
+        const a = clamp(.5 - sunFacing * 1.1, 0, .65);
+        return { h: 46, s: 80, l: 78, a, squash: .75 + squashRoll * .25 };
+      }
+      const l = clamp(light - 4 + sunFacing * 12, 2, 45);
+      return { h: hue, s: sat, l, a: .55, squash: .55 + squashRoll * .3 };
+    }
+
+    function drawPlanetFeatures(o, pr, r, w, h) {
+      const rng = mulberry(o.textureSeed || 1);
+      const axis = o.rotAxis || vec(0, 1, 0);
+      const q = quatFromAxisAngle(axis, o.rot || 0);
+      const viewDir = norm(sub(game.camera.pos, o.pos));
+      const sun = game.objects.find((s) => s.type === "sun");
+      const sunDir = sun ? norm(sub(sun.pos, o.pos)) : viewDir;
+      const hue = o.hue ?? 110, sat = o.sat ?? 45, light = o.light ?? 45;
+      const biome = o.biome || "ocean";
+      const count = biome === "desert" ? 20 : 28;
+      for (let i = 0; i < count; i++) {
+        const theta = rng() * TAU;
+        const phi = Math.acos(2 * rng() - 1);
+        const localDir = vec(Math.sin(phi) * Math.cos(theta), Math.cos(phi), Math.sin(phi) * Math.sin(theta));
+        const worldDir = quatRotate(q, localDir);
+        const facing = dot(worldDir, viewDir);
+        const sizeRoll = rng(), kindRoll = rng(), squashRoll = rng(), angleRoll = rng();
+        if (facing < .05) continue;
+        const fp = project(cameraTransform(add(o.pos, scale(worldDir, o.r)), game.camera), w, h);
+        if (!fp) continue;
+        const size = r * (.08 + sizeRoll * .2) * facing;
+        if (size < .6) continue;
+        const sunFacing = dot(worldDir, sunDir);
+        const c = planetFeatureStyle(biome, hue, sat, light, sunFacing, { kindRoll, squashRoll });
+        if (c.a <= 0) continue;
+        const grad = ctx.createRadialGradient(fp.x, fp.y, 0, fp.x, fp.y, size);
+        grad.addColorStop(0, `hsla(${c.h}, ${c.s}%, ${c.l}%, ${c.a})`);
+        grad.addColorStop(1, `hsla(${c.h}, ${c.s}%, ${c.l}%, 0)`);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.ellipse(fp.x, fp.y, size, size * c.squash, angleRoll * TAU, 0, TAU);
+        ctx.fill();
+      }
+    }
+
+    function drawPlanetBody(o, cam, w, h) {
+      const pr = project(cam, w, h);
+      if (!pr) return;
+      const r = Math.abs(o.r * pr.s);
+      if (r < 2 || pr.x + r < 0 || pr.x - r > w || pr.y + r < 0 || pr.y - r > h) return;
+
+      const hue = o.hue ?? 110, sat = o.sat ?? 45, light = o.light ?? 45;
+      const meridianAngle = (o.rot || 0) * .2;
+
+      if (game.graphicsMode !== "solid") {
+        ctx.strokeStyle = `hsl(${hue}, 60%, 75%)`;
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.arc(pr.x, pr.y, r, 0, TAU);
+        ctx.stroke();
+        ctx.globalAlpha = .8;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.ellipse(pr.x, pr.y, r * .72, r * .16, .25 + meridianAngle, 0, TAU);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.ellipse(pr.x, pr.y, r * .2, r, -.2 + meridianAngle, 0, TAU);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        if (o.hasRing) drawPlanetRing(o, r, hue, w, h, null);
+        return;
+      }
+
+      const sun = game.objects.find((s) => s.type === "sun");
+      let lightAngle = -.6;
+      if (sun) {
+        const sunP = project(cameraTransform(sun.pos, game.camera), w, h);
+        if (sunP) lightAngle = Math.atan2(sunP.y - pr.y, sunP.x - pr.x);
+      }
+
+      if (o.hasRing) drawPlanetRing(o, r, hue, w, h, false);
+
+      const lx = Math.cos(lightAngle), ly = Math.sin(lightAngle);
+      const g = ctx.createRadialGradient(pr.x + lx * r * .35, pr.y + ly * r * .35, r * .05, pr.x, pr.y, r * 1.05);
+      g.addColorStop(0, `hsl(${hue}, ${sat}%, ${clamp(light + 22, 0, 90)}%)`);
+      g.addColorStop(.55, `hsl(${hue}, ${sat}%, ${light}%)`);
+      g.addColorStop(1, `hsl(${hue + 8}, ${sat * .8}%, ${clamp(light - 26, 4, 90)}%)`);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(pr.x, pr.y, r, 0, TAU);
+      ctx.clip();
+      ctx.fillStyle = g;
+      ctx.fillRect(pr.x - r, pr.y - r, r * 2, r * 2);
+
+      // Night-side shadow, centred opposite the sun, drawn under the surface features so
+      // city lights (industrial biome) still glow clearly against the dark side.
+      const shadowCx = pr.x - lx * r * .55, shadowCy = pr.y - ly * r * .55;
+      const shadow = ctx.createRadialGradient(shadowCx, shadowCy, r * .15, shadowCx, shadowCy, r * 1.5);
+      shadow.addColorStop(0, "rgba(0,4,10,.68)");
+      shadow.addColorStop(.55, "rgba(0,4,10,.32)");
+      shadow.addColorStop(1, "rgba(0,4,10,0)");
+      ctx.fillStyle = shadow;
+      ctx.fillRect(pr.x - r, pr.y - r, r * 2, r * 2);
+
+      drawPlanetFeatures(o, pr, r, w, h);
+      ctx.restore();
+
+      ctx.strokeStyle = `hsla(${hue}, 80%, 75%, .3)`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(pr.x, pr.y, r, 0, TAU);
+      ctx.stroke();
+
+      if (o.hasRing) drawPlanetRing(o, r, hue, w, h, true);
+    }
+
+    function drawObject(o, cam, w, h) {
+      if (o.type === "sun") {
+        drawSunBody(o, cam, w, h);
+        return;
+      }
+      if (o.type === "planet") {
+        drawPlanetBody(o, cam, w, h);
+        return;
+      }
+      if (o.type === "station") {
+        drawStation(o, cam, w, h);
+        return;
+      }
+      const model = MODELS[o.model || "cobra"];
+      if (!model) return;
+      drawWireModel(model, o, cam, w, h);
+    }
+
+    function drawWireModel(model, o, cam, w, h) {
+      const roll = o.roll ?? (o.rot || 0) * .7;
+      const camVerts = model.verts.map(([x, y, z]) => {
+        let p = rotatePoint(vec(x, y, z), o.rot || 0, o.pitch || 0, roll);
+        return add(p, cam);
+      });
+      const points = camVerts.map((p) => project(p, w, h));
+      if (game.graphicsMode === "solid") {
+        drawSolidItems(ctx, collectSolidFaces(model, camVerts, points, o.color || "#e9f2e4"));
+        drawSolidItems(ctx, collectSolidDetails(model, { ...o, cam }, camVerts, points, w, h));
+      } else {
+        ctx.strokeStyle = o.color || "#e9f2e4";
+        ctx.lineWidth = clamp(680 / Math.max(80, cam.z), .7, 2);
+        ctx.beginPath();
+        for (const [a, b] of model.edges) {
+          const pa = points[a], pb = points[b];
+          if (!pa || !pb) continue;
+          ctx.moveTo(pa.x, pa.y);
+          ctx.lineTo(pb.x, pb.y);
+        }
+        ctx.stroke();
+      }
+      if (o === game.targetObject) {
+        const c = project(cam, w, h);
+        if (c) {
+          ctx.strokeStyle = "#ffd33d";
+          ctx.strokeRect(c.x - 18, c.y - 18, 36, 36);
+        }
+      }
+    }
+
+    function drawStation(o, cam, w, h) {
+      const model = o.model === "dodoStation" ? MODELS.dodoStation : STATION_MODEL;
+      const camVerts = model.verts.map(([x, y, z]) => add(rotatePoint(vec(x, y, z), 0, 0, o.rot), cam));
+      const pts = camVerts.map((p) => project(p, w, h));
+      drawSolidFaces(model, camVerts, pts, "#d8ded4");
+      if (game.graphicsMode !== "solid") {
+        ctx.strokeStyle = "#d8ded4";
+        ctx.lineWidth = clamp(800 / Math.max(110, cam.z), .7, 2);
+        ctx.beginPath();
+        for (const [a, b] of model.edges) {
+          if (!pts[a] || !pts[b]) continue;
+          ctx.moveTo(pts[a].x, pts[a].y);
+          ctx.lineTo(pts[b].x, pts[b].y);
+        }
+        ctx.stroke();
+      }
+      const slotZ = -STATION_SIZE - 1;
+      const slotA = project(add(rotatePoint(vec(-56, -12, slotZ), 0, 0, o.rot), cam), w, h);
+      const slotB = project(add(rotatePoint(vec(56, -12, slotZ), 0, 0, o.rot), cam), w, h);
+      const slotC = project(add(rotatePoint(vec(56, 12, slotZ), 0, 0, o.rot), cam), w, h);
+      const slotD = project(add(rotatePoint(vec(-56, 12, slotZ), 0, 0, o.rot), cam), w, h);
+      if (slotA && slotB && slotC && slotD) {
+        ctx.strokeStyle = "#ffd33d";
+        ctx.beginPath();
+        ctx.moveTo(slotA.x, slotA.y);
+        ctx.lineTo(slotB.x, slotB.y);
+        ctx.lineTo(slotC.x, slotC.y);
+        ctx.lineTo(slotD.x, slotD.y);
+        ctx.closePath();
+        ctx.stroke();
+      }
+    }
+
+    function drawDockedBackdrop(w, h) {
+      ctx.fillStyle = "rgba(0,0,0,.66)";
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = "#65ff47";
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = .65;
+      for (let i = 0; i < 9; i++) {
+        const y = h * .2 + i * h * .07;
+        ctx.beginPath();
+        ctx.moveTo(w * .24 - i * 18, y);
+        ctx.lineTo(w * .76 + i * 18, y);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "#65ff47";
+      ctx.textAlign = "center";
+      ctx.font = `${Math.max(16, Math.floor(w / 42))}px monospace`;
+      ctx.fillText(`DOCKED AT ${game.dockedAt || currentSystem().name + " STATION"}`, w / 2, h * .48);
+      ctx.font = `${Math.max(11, Math.floor(w / 76))}px monospace`;
+      ctx.fillStyle = "#91a78d";
+      ctx.fillText("MARKET, EQUIPMENT, CHARTS AND COMMANDER STATUS AVAILABLE", w / 2, h * .55);
+    }
+
+    function drawScanner() {
+      const w = scanner.width, h = scanner.height;
+      sctx.clearRect(0, 0, w, h);
+      const cx = w / 2, cy = h / 2 + 8, rx = w * .42, ry = h * .34;
+      sctx.strokeStyle = "#2bb934";
+      sctx.lineWidth = 1;
+      sctx.beginPath();
+      sctx.ellipse(cx, cy, rx, ry, 0, 0, TAU);
+      sctx.stroke();
+      sctx.globalAlpha = .55;
+      for (let i = -2; i <= 2; i++) {
+        sctx.beginPath();
+        sctx.moveTo(cx - rx, cy + i * ry / 2);
+        sctx.lineTo(cx + rx, cy + i * ry / 2);
+        sctx.stroke();
+      }
+      sctx.beginPath();
+      sctx.moveTo(cx, cy - ry);
+      sctx.lineTo(cx, cy + ry);
+      sctx.stroke();
+      sctx.globalAlpha = 1;
+      sctx.fillStyle = "#65ff47";
+      sctx.beginPath();
+      sctx.moveTo(cx, cy - 8);
+      sctx.lineTo(cx + 12, cy + 8);
+      sctx.lineTo(cx - 12, cy + 8);
+      sctx.closePath();
+      sctx.fill();
+      for (const o of game.objects) {
+        if (o.type === "planet" || o.type === "sun") continue;
+        const p = cameraTransform(o.pos, game.camera);
+        const sx = cx + clamp(p.x / 1400, -1, 1) * rx;
+        const baseY = cy + clamp(p.z / 1600, -1, 1) * ry;
+        const stick = clamp(-p.y / 900, -1, 1) * ry * .8;
+        sctx.strokeStyle = o.hostile ? "#ff4848" : (o.type === "station" || o.type === "hermit") ? "#ffd33d" : "#46dfff";
+        sctx.fillStyle = sctx.strokeStyle;
+        sctx.beginPath();
+        sctx.moveTo(sx, baseY);
+        sctx.lineTo(sx, baseY + stick);
+        sctx.stroke();
+        sctx.fillRect(sx - 3, baseY + stick - 3, 6, 6);
+      }
+    }
+
+    function renderPanel() {
+      document.querySelectorAll(".tabs .btn").forEach((b) => b.classList.toggle("active", b.dataset.panel === game.panel));
+      const title = game.panel[0].toUpperCase() + game.panel.slice(1);
+      byId("panelTitle").textContent = title;
+      byId("panelSub").textContent = game.docked ? `Docked at ${game.dockedAt || currentSystem().name + " Station"}` : "In flight";
+      const map = { market: renderMarket, chart: renderChart, equip: renderEquip, status: renderStatus, ship: renderShip, help: renderHelp };
+      panelBody.innerHTML = map[game.panel]();
+      attachPanelEvents();
+      updateReadouts();
+    }
+
+    function renderMarket() {
+      const disabled = game.docked ? "" : "disabled";
+      let rows = marketFor(currentSystem()).map((item) => {
+        const cargo = game.cargo[item.name] || 0;
+        return `<tr>
+          <td class="${item.illegal ? "illegal" : ""}">${item.name}</td>
+          <td>${fmt(item.price)}</td>
+          <td>${item.qty}${item.unit}</td>
+          <td>${cargo}</td>
+          <td><button class="btn mini" data-buy="${item.name}" ${disabled}>Buy</button></td>
+          <td><button class="btn mini" data-sell="${item.name}" ${disabled || cargo <= 0 ? "disabled" : ""}>Sell</button></td>
+        </tr>`;
+      }).join("");
+      return `<div class="notice">Credits ${fmt(game.credits)} CR &nbsp; Cargo ${usedCargo()}/${game.cargoCap}t &nbsp; Fuel ${fmt(game.fuel)} LY</div>
+        <button class="btn primary" data-fuel ${disabled}>Buy Fuel (0.2 CR per 0.1 LY)</button>
+        <table><thead><tr><th>Goods</th><th>Price</th><th>Avail</th><th>Cargo</th><th></th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    function renderGalaxyMap() {
+      const w = 480, h = 300, pad = 16;
+      const sys = galaxies[game.galaxy];
+      const xs = sys.map((s) => s.x), ys = sys.map((s) => s.y);
+      const minX = Math.min(...xs), maxX = Math.max(...xs);
+      const minY = Math.min(...ys), maxY = Math.max(...ys);
+      const sx = (x) => pad + (x - minX) / (maxX - minX || 1) * (w - pad * 2);
+      const sy = (y) => pad + (y - minY) / (maxY - minY || 1) * (h - pad * 2);
+      const dots = sys.map((s) => {
+        const isCur = s.index === game.current;
+        const isTgt = s.index === game.target;
+        const r = isCur || isTgt ? 3.6 : 1.5;
+        const fill = isCur ? "var(--cyan)" : isTgt ? "var(--amber)" : "var(--green-dim)";
+        return `<circle cx="${sx(s.x).toFixed(1)}" cy="${sy(s.y).toFixed(1)}" r="${r}" fill="${fill}" data-sys="${s.index}" class="map-dot"><title>${s.name}</title></circle>`;
+      }).join("");
+      return `<svg viewBox="0 0 ${w} ${h}" class="star-map" data-map="galaxy">${dots}</svg>`;
+    }
+
+    function renderLocalMap() {
+      const w = 480, h = 300, cx = w / 2, cy = h / 2;
+      const cur = currentSystem();
+      const maxLy = 24;
+      const scalePx = (Math.min(w, h) / 2 - 10) / maxLy;
+      const nearby = galaxies[game.galaxy]
+        .map((s) => ({ s, d: distance(cur, s) }))
+        .filter((x) => x.s.index !== game.current && x.d <= maxLy);
+      const rings = [4, 8, 12, 16, 20, 24].map((ly) =>
+        `<circle cx="${cx}" cy="${cy}" r="${(ly * scalePx).toFixed(1)}" class="range-ring"></circle>`
+      ).join("") + `<circle cx="${cx}" cy="${cy}" r="${(7 * scalePx).toFixed(1)}" class="range-ring jump-range"></circle>`;
+      // labelling every system within range gets unreadable in dense clusters (Lave has
+      // 100+ neighbours inside 24 LY), so only the closest handful get a name label
+      const labelLy = 8;
+      const dots = nearby.map(({ s, d }) => {
+        const dx = (s.x - cur.x) / 4 * scalePx;
+        const dy = (s.y - cur.y) / 4 * scalePx;
+        const isTgt = s.index === game.target;
+        const label = d <= labelLy ? `<text x="${(cx + dx + 5).toFixed(1)}" y="${(cy + dy + 3).toFixed(1)}" class="map-label">${s.name}</text>` : "";
+        return `<g class="map-dot" data-sys="${s.index}">
+          <circle cx="${(cx + dx).toFixed(1)}" cy="${(cy + dy).toFixed(1)}" r="${isTgt ? 3.4 : 2}" fill="${isTgt ? "var(--amber)" : "var(--green)"}"></circle>
+          ${label}
+        </g>`;
+      }).join("");
+      return `<svg viewBox="0 0 ${w} ${h}" class="star-map" data-map="local">
+        ${rings}
+        ${dots}
+        <circle cx="${cx}" cy="${cy}" r="3.4" fill="var(--cyan)"></circle>
+      </svg>`;
+    }
+
+    function renderChart() {
+      const from = currentSystem();
+      const tgt = targetSystem();
+      const mode = game.mapMode === "local" ? "local" : "galaxy";
+      return `<div class="notice">Galaxy ${game.galaxy + 1}. Hyperdrive range is 7.0 LY (dashed ring on local map). Target: ${tgt.name}, ${fmt(distance(from, tgt))} LY — ${ECONOMIES[tgt.economy]}, ${GOVS[tgt.government]}, TL ${tgt.tech + 1}.</div>
+        <div class="notice">
+          <button class="btn mini ${mode === "galaxy" ? "primary" : ""}" data-mapmode="galaxy">Galaxy Map</button>
+          <button class="btn mini ${mode === "local" ? "primary" : ""}" data-mapmode="local">Local Map</button>
+        </div>
+        ${mode === "galaxy" ? renderGalaxyMap() : renderLocalMap()}`;
+    }
+
+    function renderEquip() {
+      const sys = currentSystem();
+      const rows = EQUIPMENT.map((e) => {
+        const fitted = game.equipment[e.id];
+        const okTech = sys.tech + 1 >= e.tech;
+        const can = game.docked && !fitted && okTech && game.credits >= e.cost;
+        return `<div class="row">
+          <span class="label">${e.name}<br><span style="color:var(--muted);font-size:11px">${e.desc} TL ${e.tech}</span></span>
+          <span class="value">${fitted ? "FITTED" : `${e.cost} CR`} <button class="btn mini" data-equip="${e.id}" ${can ? "" : "disabled"}>Buy</button></span>
+        </div>`;
+      }).join("");
+      return `<div class="notice">Local tech level ${sys.tech + 1}. Missiles cost 30 CR each and refill one rack slot.</div>
+        <button class="btn" data-missile ${game.docked && game.credits >= 30 && game.missiles < 4 ? "" : "disabled"}>Buy Missile</button>
+        <button class="btn warn" data-galjump ${game.equipment.galacticHyperdrive ? "" : "disabled"}>Use Galactic Hyperdrive</button>
+        ${rows}`;
+    }
+
+    function renderStatus() {
+      const s = currentSystem();
+      return `<div class="grid2">
+        ${stat("Commander", game.commander)}
+        ${stat("Rating", rankName())}
+        ${stat("Cash", `${fmt(game.credits)} CR`)}
+        ${stat("Kills", game.kills)}
+        ${stat("Legal", legalStatus())}
+        ${stat("Galaxy", game.galaxy + 1)}
+        ${stat("System", s.name)}
+        ${stat("Economy", ECONOMIES[s.economy])}
+        ${stat("Gov.", GOVS[s.government])}
+        ${stat("Tech", s.tech + 1)}
+        ${stat("Pop.", `${fmt(s.population / 10)} Billion`)}
+        ${stat("Prod.", `${s.productivity} M CR`)}
+        ${stat("Radius", `${s.radius} km`)}
+        ${stat("Species", s.species)}
+      </div>
+      <div class="notice" style="margin-top:10px">${s.name} is ${s.description}.</div>
+      <button class="btn" data-load>Load Commander</button>`;
+    }
+
+    function renderShip() {
+      return `<canvas class="ship-diagram" id="shipDiagram" width="500" height="160"></canvas>
+      <div class="notice">
+        Graphics mode
+        <button class="btn mini ${game.graphicsMode === "wire" ? "primary" : ""}" data-graphics="wire">Wire</button>
+        <button class="btn mini ${game.graphicsMode === "solid" ? "primary" : ""}" data-graphics="solid">Shaded</button>
+      </div>
+      <div class="grid2">
+        ${stat("Hull", "Cobra Mk III")}
+        ${stat("Mode", game.graphicsMode === "solid" ? "Solid Shaded" : "Wireframe")}
+        ${stat("Cargo", `${usedCargo()}/${game.cargoCap}t`)}
+        ${stat("Laser", laserPower().name)}
+        ${stat("Missiles", game.missiles)}
+        ${stat("Fuel Scoop", game.equipment.fuelScoop ? "Yes" : "No")}
+        ${stat("Docking Computer", game.equipment.dockingComputer ? "Yes" : "No")}
+        ${stat("ECM", game.equipment.ecm ? "Yes" : "No")}
+        ${stat("Extra Energy", game.equipment.extraEnergy ? "Yes" : "No")}
+        ${stat("Escape Capsule", game.equipment.escapeCapsule ? "Yes" : "No")}
+        ${stat("Energy Bomb", game.equipment.energyBomb ? "Fitted" : "No")}
+      </div>`;
+    }
+
+    function renderHelp() {
+      return `<div style="text-align:center;margin-bottom:10px;">
+        <svg width="220" height="46" viewBox="0 0 220 46" aria-hidden="true">
+          <line x1="4" y1="4" x2="20" y2="4" stroke="var(--green)" stroke-width="1.4"></line>
+          <line x1="4" y1="4" x2="4" y2="20" stroke="var(--green)" stroke-width="1.4"></line>
+          <line x1="216" y1="4" x2="200" y2="4" stroke="var(--green)" stroke-width="1.4"></line>
+          <line x1="216" y1="4" x2="216" y2="20" stroke="var(--green)" stroke-width="1.4"></line>
+          <line x1="4" y1="42" x2="20" y2="42" stroke="var(--green)" stroke-width="1.4"></line>
+          <line x1="4" y1="42" x2="4" y2="26" stroke="var(--green)" stroke-width="1.4"></line>
+          <line x1="216" y1="42" x2="200" y2="42" stroke="var(--green)" stroke-width="1.4"></line>
+          <line x1="216" y1="42" x2="216" y2="26" stroke="var(--green)" stroke-width="1.4"></line>
+          <text x="110" y="28" text-anchor="middle" font-family="monospace" font-size="18" letter-spacing="5" fill="var(--amber)">VECTOR ELITE</text>
+        </svg>
+      </div>
+      <div class="notice">
+        This is a compact browser experiment inspired by the 1984 space trading classic: deterministic galaxies, economy-driven markets, wireframe combat, docking, equipment, ranks, police attention, cargo scooping and witch-space encounters.
+      </div>
+      <div class="row"><span class="label"><span class="kbd">Launch</span></span><span class="value">Leave station</span></div>
+      <div class="row"><span class="label"><span class="kbd">W/S</span></span><span class="value">Pitch</span></div>
+      <div class="row"><span class="label"><span class="kbd">A/D</span></span><span class="value">Roll</span></div>
+      <div class="row"><span class="label"><span class="kbd">Q/E</span></span><span class="value">Yaw</span></div>
+      <div class="row"><span class="label"><span class="kbd">+/-</span></span><span class="value">Speed</span></div>
+      <div class="row"><span class="label"><span class="kbd">Space</span></span><span class="value">Fire laser</span></div>
+      <div class="row"><span class="label"><span class="kbd">M</span></span><span class="value">Missile</span></div>
+      <div class="row"><span class="label"><span class="kbd">B</span></span><span class="value">Energy bomb</span></div>
+      <div class="row"><span class="label"><span class="kbd">T</span></span><span class="value">Target nearest</span></div>
+      <div class="row"><span class="label"><span class="kbd">G</span></span><span class="value">Graphics mode</span></div>
+      <div class="row"><span class="label"><span class="kbd">R</span></span><span class="value">Deploy test armada</span></div>
+      <div class="row"><span class="label"><span class="kbd">J</span></span><span class="value">Hyperspace</span></div>
+      <div class="row"><span class="label"><span class="kbd">O</span></span><span class="value">Dock attempt</span></div>
+      <div class="row"><span class="label"><span class="kbd">C</span></span><span class="value">Docking computer</span></div>`;
+    }
+
+    function stat(label, value) {
+      return `<div class="stat-line"><span class="label">${label}</span><span class="value">${value}</span></div>`;
+    }
+
+    function attachPanelEvents() {
+      panelBody.querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => buyGood(b.dataset.buy)));
+      panelBody.querySelectorAll("[data-sell]").forEach((b) => b.addEventListener("click", () => sellGood(b.dataset.sell)));
+      panelBody.querySelectorAll(".map-dot").forEach((b) => b.addEventListener("click", () => {
+        game.target = Number(b.dataset.sys);
+        setMessage(`Target system: ${targetSystem().name}.`);
+        renderPanel();
+      }));
+      panelBody.querySelectorAll("[data-mapmode]").forEach((b) => b.addEventListener("click", () => {
+        game.mapMode = b.dataset.mapmode;
+        renderPanel();
+      }));
+      panelBody.querySelectorAll("[data-equip]").forEach((b) => b.addEventListener("click", () => buyEquipment(b.dataset.equip)));
+      panelBody.querySelectorAll("[data-graphics]").forEach((b) => b.addEventListener("click", () => {
+        game.graphicsMode = b.dataset.graphics;
+        setMessage(`Graphics mode: ${game.graphicsMode === "solid" ? "solid shaded" : "wireframe"}.`);
+        renderPanel();
+      }));
+      const fuel = panelBody.querySelector("[data-fuel]");
+      if (fuel) fuel.addEventListener("click", buyFuel);
+      const missile = panelBody.querySelector("[data-missile]");
+      if (missile) missile.addEventListener("click", () => {
+        if (game.credits >= 30 && game.missiles < 4) {
+          game.credits -= 30;
+          game.missiles++;
+          renderPanel();
+        }
+      });
+      const gal = panelBody.querySelector("[data-galjump]");
+      if (gal) gal.addEventListener("click", galacticJump);
+      const load = panelBody.querySelector("[data-load]");
+      if (load) load.addEventListener("click", loadGame);
+      const diagram = byId("shipDiagram");
+      if (diagram) {
+        drawShipDiagram(diagram);
+        attachShipDiagramDrag(diagram);
+      }
+    }
+
+    const shipDiagramState = { yaw: .6, pitch: .4, roll: .2, dragging: false, lastX: 0, lastY: 0, idleSpeed: .22 };
+
+    function attachShipDiagramDrag(canvas) {
+      const st = shipDiagramState;
+      const start = (e) => {
+        st.dragging = true;
+        st.lastX = e.clientX;
+        st.lastY = e.clientY;
+        canvas.setPointerCapture(e.pointerId);
+        canvas.style.cursor = "grabbing";
+      };
+      const move = (e) => {
+        if (!st.dragging) return;
+        st.yaw += (e.clientX - st.lastX) * .012;
+        st.pitch = clamp(st.pitch - (e.clientY - st.lastY) * .012, -1.4, 1.4);
+        st.lastX = e.clientX;
+        st.lastY = e.clientY;
+      };
+      const end = () => {
+        st.dragging = false;
+        canvas.style.cursor = "grab";
+      };
+      canvas.style.cursor = "grab";
+      canvas.style.touchAction = "none";
+      canvas.addEventListener("pointerdown", start);
+      canvas.addEventListener("pointermove", move);
+      canvas.addEventListener("pointerup", end);
+      canvas.addEventListener("pointerleave", end);
+      canvas.addEventListener("pointercancel", end);
+    }
+
+    function drawShipDiagram(canvas, dt = 0) {
+      if (!shipDiagramState.dragging) shipDiagramState.yaw += dt * shipDiagramState.idleSpeed;
+      const c = canvas.getContext("2d");
+      c.fillStyle = "#010201";
+      c.fillRect(0, 0, canvas.width, canvas.height);
+      const tempCam = vec(0, 0, 360);
+      const model = MODELS.cobra;
+      const { yaw, pitch, roll } = shipDiagramState;
+      const camVerts = model.verts.map(([x,y,z]) => {
+        const p = rotatePoint(vec(x * 1.5, y * 1.5, z * 1.5), yaw, pitch, roll);
+        return add(p, tempCam);
+      });
+      const pts = camVerts.map((p) => {
+        const f = 320 / p.z;
+        return { x: canvas.width / 2 + p.x * f, y: canvas.height / 2 - p.y * f };
+      });
+      c.strokeStyle = "#e9f2e4";
+      c.lineWidth = 1.4;
+      if (game.graphicsMode === "solid") {
+        const detailProject = (p) => {
+          const f = 320 / p.z;
+          return { x: canvas.width / 2 + p.x * f, y: canvas.height / 2 - p.y * f };
+        };
+        drawSolidItems(c, collectSolidFaces(model, camVerts, pts, "#e9f2e4"));
+        drawSolidItems(c, collectSolidDetails(model, { rot: yaw, pitch, roll, cam: tempCam, project: detailProject }, camVerts, pts, canvas.width, canvas.height, 1.5));
+      }
+      if (game.graphicsMode !== "solid") {
+        c.beginPath();
+        for (const [a,b] of model.edges) {
+          c.moveTo(pts[a].x, pts[a].y);
+          c.lineTo(pts[b].x, pts[b].y);
+        }
+        c.stroke();
+      }
+      c.fillStyle = "#65ff47";
+      c.font = "13px monospace";
+      c.fillText("COBRA MK III", 14, 22);
+    }
+
+    function updateReadouts() {
+      const sys = currentSystem();
+      const target = targetSystem();
+      byId("roCommander").textContent = game.commander;
+      byId("roCredits").textContent = fmt(game.credits);
+      byId("roLegal").textContent = legalStatus();
+      byId("roTarget").textContent = target.name;
+      byId("roSystem").textContent = sys.name;
+      byId("roDistance").textContent = `${fmt(distance(sys, target))} LY`;
+      byId("roView").textContent = game.docked ? "DOCKED" : game.witchspace ? "WITCH-SPACE" : "FRONT VIEW";
+      byId("barEnergy").style.width = `${clamp(game.energy, 0, 100)}%`;
+      byId("barShields").style.width = `${clamp(game.shields, 0, 100)}%`;
+      byId("barFuel").style.width = `${game.fuel / 7 * 100}%`;
+      byId("txtEnergy").textContent = `${Math.round(game.energy)}%`;
+      byId("txtShields").textContent = `${Math.round(game.shields)}%`;
+      byId("txtFuel").textContent = fmt(game.fuel);
+      byId("txtSpeed").textContent = Math.round(game.speed);
+      byId("txtLaser").textContent = laserPower().name;
+      byId("txtMissiles").textContent = game.missiles;
+      byId("txtEcm").textContent = game.equipment.ecm ? "Yes" : "No";
+      byId("txtCargo").textContent = `${usedCargo()}/${game.cargoCap}`;
+      byId("launchBtn").disabled = !game.docked;
+      byId("jumpBtn").disabled = game.docked;
+      byId("dockBtn").disabled = game.docked;
+      byId("laserBtn").disabled = game.docked;
+      byId("armadaBtn").disabled = false;
+    }
+
+    function loop(now) {
+      const dt = Math.min(.05, (now - last) / 1000);
+      last = now;
+      update(dt);
+      requestAnimationFrame(loop);
+    }
+
+    window.addEventListener("resize", resizeCanvases);
+    window.addEventListener("keydown", (e) => {
+      keys.add(e.code);
+      if (["Space", "KeyW", "KeyA", "KeyS", "KeyD", "KeyQ", "KeyE"].includes(e.code)) e.preventDefault();
+      if (e.code === "Space") fireLaser();
+      if (e.code === "KeyJ") hyperspace();
+      if (e.code === "KeyO") dock(false);
+      if (e.code === "KeyC") startAutoDock();
+      if (e.code === "KeyM") fireMissile();
+      if (e.code === "KeyB") useEnergyBomb();
+      if (e.code === "KeyR") spawnArmada();
+      if (e.code === "KeyT") {
+        game.targetObject = nearestTarget(false);
+        if (game.targetObject) setMessage(`Locked: ${game.targetObject.name}.`);
+      }
+      if (e.code === "KeyG") {
+        game.graphicsMode = game.graphicsMode === "solid" ? "wire" : "solid";
+        setMessage(`Graphics mode: ${game.graphicsMode === "solid" ? "solid shaded" : "wireframe"}.`);
+        if (game.panel === "ship") renderPanel();
+      }
+      if (e.code === "Digit1") { game.panel = "market"; renderPanel(); }
+      if (e.code === "Digit2") { game.panel = "chart"; renderPanel(); }
+      if (e.code === "Digit3") { game.panel = "equip"; renderPanel(); }
+      if (e.code === "Digit4") { game.panel = "status"; renderPanel(); }
+    });
+    window.addEventListener("keyup", (e) => keys.delete(e.code));
+
+    document.querySelectorAll(".tabs .btn").forEach((b) => b.addEventListener("click", () => {
+      game.panel = b.dataset.panel;
+      renderPanel();
+    }));
+    byId("launchBtn").addEventListener("click", launch);
+    byId("jumpBtn").addEventListener("click", hyperspace);
+    byId("dockBtn").addEventListener("click", () => dock(false));
+    byId("laserBtn").addEventListener("click", fireLaser);
+    byId("armadaBtn").addEventListener("click", spawnArmada);
+    byId("saveBtn").addEventListener("click", saveGame);
+
+    resizeCanvases();
+    resetFlightScene(false);
+    renderPanel();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
