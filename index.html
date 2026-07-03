@@ -1314,6 +1314,127 @@
       return maxR;
     }
 
+    // --- OBJ export/import, so ship hulls can round-trip through a real 3D editor ---
+    // instead of hand-massaging edgeFaces adjacency tables in JS. Export gives you the
+    // model's already-computed faces (so what you see in-game is exactly what you get in
+    // the editor); import derives edges/adjacency/normals straight from whatever faces
+    // come back, which sidesteps the whole "reconstruct faces from edge data" class of
+    // bugs entirely, since there's no reconstruction — the faces just *are* the faces.
+    function modelToObjText(model, name) {
+      const lines = [`o ${name}`];
+      for (const v of model.verts) lines.push(`v ${v[0]} ${v[1]} ${v[2]}`);
+      for (const face of model.faces) lines.push(`f ${face.map((i) => i + 1).join(" ")}`);
+      return lines.join("\n") + "\n";
+    }
+
+    function downloadText(filename, text) {
+      const blob = new Blob([text], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportShipObj(modelName) {
+      const model = MODELS[modelName];
+      if (!model) return;
+      downloadText(`${modelName}.obj`, modelToObjText(model, modelName));
+      setMessage(`Exported ${modelName}.obj — drop it in ship_models/ next to index.html to use it.`, true);
+    }
+
+    // Bulk export, meant to be called from the browser console rather than the UI —
+    // staggered so the browser doesn't choke on 20-odd simultaneous downloads.
+    function exportAllShipObjs() {
+      SHIP_MODEL_LIST.forEach((name, i) => setTimeout(() => exportShipObj(name), i * 200));
+    }
+
+    function parseObjText(text) {
+      const verts = [];
+      const faces = [];
+      for (const raw of text.split("\n")) {
+        const line = raw.trim();
+        if (line.startsWith("v ")) {
+          const [, x, y, z] = line.split(/\s+/);
+          verts.push([parseFloat(x), parseFloat(y), parseFloat(z)]);
+        } else if (line.startsWith("f ")) {
+          faces.push(line.split(/\s+/).slice(1).map((tok) => parseInt(tok.split("/")[0], 10) - 1));
+        }
+      }
+      return { verts, faces };
+    }
+
+    function faceUVBasis(n) {
+      let axis = cross(n, Math.abs(n.y) < .9 ? vec(0, 1, 0) : vec(1, 0, 0));
+      if (len(axis) < .0001) axis = cross(n, vec(0, 0, 1));
+      const u = norm(axis);
+      return { u, v: norm(cross(n, u)) };
+    }
+
+    function buildBlueprintFromFaces({ verts, faces }) {
+      const edgeKey = (a, b) => (a < b ? `${a}_${b}` : `${b}_${a}`);
+      const edgeMap = new Map();
+      faces.forEach((face, faceIndex) => {
+        for (let i = 0; i < face.length; i++) {
+          const a = face[i], b = face[(i + 1) % face.length];
+          const key = edgeKey(a, b);
+          if (!edgeMap.has(key)) edgeMap.set(key, { edge: [a, b], faces: [] });
+          edgeMap.get(key).faces.push(faceIndex);
+        }
+      });
+      const edges = [], edgeFaces = [];
+      for (const { edge, faces: fs } of edgeMap.values()) {
+        edges.push(edge);
+        // A naked (single-face) edge is self-paired so it's always treated as visible in
+        // hidden-line mode, the same convention used everywhere else in this codebase.
+        edgeFaces.push(fs.length >= 2 ? [fs[0], fs[1]] : [fs[0], fs[0]]);
+      }
+      const normals = faces.map((face) => {
+        const n = faceNormal(vec(...verts[face[0]]), vec(...verts[face[1]]), vec(...verts[face[2]]));
+        return [n.x, n.y, n.z];
+      });
+      const faceUV = faces.map((face, faceIndex) => {
+        const n = norm(vec(...normals[faceIndex]));
+        const { u, v } = faceUVBasis(n);
+        const verts3 = face.map((i) => vec(...verts[i]));
+        const c = scale(verts3.reduce((sum, p) => add(sum, p), vec()), 1 / verts3.length);
+        return face.map((i) => {
+          const p = sub(vec(...verts[i]), c);
+          return [dot(p, u), dot(p, v)];
+        });
+      });
+      return {
+        verts, edges, edgeFaces, normals,
+        faces: faces.map((f) => f.slice()),
+        faceUV,
+        faceByNormalIndex: faces.map((f) => f.slice()),
+        faceUVByNormalIndex: faceUV
+      };
+    }
+
+    // Loads ship_models/<name>.obj for every ship that has one, replacing the built-in
+    // hull with whatever faces the file contains. Missing files are expected (nothing has
+    // been exported/edited yet) and just silently keep the existing hardcoded geometry —
+    // this is meant to be incremental, ship by ship, not all-or-nothing. The existing
+    // hand-authored `details` (windows/engine glow/trim) are preserved across the swap,
+    // since OBJ has no concept of them, but note they're vertex-index based: a heavily
+    // reworked mesh (added/removed/reordered verts) may need its details re-pointed.
+    async function loadShipModelsFromObj() {
+      const results = await Promise.allSettled(SHIP_MODEL_LIST.map(async (name) => {
+        const res = await fetch(`ship_models/${name}.obj`);
+        if (!res.ok) throw new Error(`${name}.obj not found`);
+        const parsed = parseObjText(await res.text());
+        if (!parsed.faces.length) throw new Error(`${name}.obj has no faces`);
+        MODELS[name] = { ...buildBlueprintFromFaces(parsed), details: MODELS[name].details };
+        return name;
+      }));
+      const loaded = results.filter((r) => r.status === "fulfilled").map((r) => r.value);
+      if (loaded.length) setMessage(`Loaded custom ship models: ${loaded.join(", ")}.`, true);
+    }
+
     function shipStats(model) {
       const stats = SHIP_STATS[model] || { hp: 52, speed: 1 };
       const m = MODELS[model];
@@ -3698,6 +3819,7 @@
         <button class="btn mini" data-ship-nav="-1">&lt; Prev</button>
         <strong>${SHIP_NAMES[browsed]}</strong>
         <button class="btn mini" data-ship-nav="1">Next &gt;</button>
+        <button class="btn mini" data-export-obj>Export OBJ</button>
       </div>
       <div class="grid2">
         ${stat("Role", shipRoleLabel(browsed))}
@@ -3786,6 +3908,8 @@
         renderPanel();
       }));
       panelBody.querySelectorAll("[data-ship-nav]").forEach((b) => b.addEventListener("click", () => cycleShipDiagram(Number(b.dataset.shipNav))));
+      const exportBtn = panelBody.querySelector("[data-export-obj]");
+      if (exportBtn) exportBtn.addEventListener("click", () => exportShipObj(shipDiagramState.model));
       const fuel = panelBody.querySelector("[data-fuel]");
       if (fuel) fuel.addEventListener("click", buyFuel);
       const missile = panelBody.querySelector("[data-missile]");
@@ -3979,9 +4103,12 @@
     byId("saveBtn").addEventListener("click", saveGame);
 
     resizeCanvases();
-    resetFlightScene(false);
-    renderPanel();
-    requestAnimationFrame(loop);
+    (async function boot() {
+      await loadShipModelsFromObj();
+      resetFlightScene(false);
+      renderPanel();
+      requestAnimationFrame(loop);
+    })();
   </script>
 </body>
 </html>
