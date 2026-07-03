@@ -770,6 +770,16 @@
       return vec(x1, y1, z);
     }
 
+    function rotateShipPoint(p, yaw, pitch, roll = 0) {
+      const right = rotatePoint(vec(1, 0, 0), yaw, pitch, 0);
+      const up = rotatePoint(vec(0, 1, 0), yaw, pitch, 0);
+      const forward = rotatePoint(vec(0, 0, 1), yaw, pitch, 0);
+      const cr = Math.cos(roll), sr = Math.sin(roll);
+      const rolledRight = add(scale(right, cr), scale(up, sr));
+      const rolledUp = add(scale(up, cr), scale(right, -sr));
+      return add(add(scale(rolledRight, p.x), scale(rolledUp, p.y)), scale(forward, p.z));
+    }
+
     function quat(w = 1, x = 0, y = 0, z = 0) {
       return { w, x, y, z };
     }
@@ -917,57 +927,9 @@
       { id: "energyBomb", name: "Energy Bomb", cost: 900, tech: 12, desc: "One-shot device that cripples every nearby hostile. Illegal to carry." }
     ];
 
-    // Small original-shape authoring helpers for simple debris/hazard objects (missile,
-    // escape pod, alloy plate, asteroid family) — an n-gon prism (two end-cap rings
-    // joined by n side quads) covers all of these with just a ring of points at each
-    // end. Verified against the existing hand-authored canister/station models: side
-    // face k borders ring-A edge k, ring-B edge k, and the two connector edges either
-    // side of it, which is exactly what this generates.
-    function polyRing(n, r, z, phase = 0) {
-      return Array.from({ length: n }, (_, i) => {
-        const a = phase + (i * TAU) / n;
-        return [Math.cos(a) * r, Math.sin(a) * r, z];
-      });
-    }
-
-    function jitterRing(n, rBase, z, seed) {
-      const rng = mulberry(seed);
-      return Array.from({ length: n }, (_, i) => {
-        const a = (i * TAU) / n;
-        const r = rBase * (0.7 + rng() * 0.6);
-        return [Math.cos(a) * r, Math.sin(a) * r, z + (rng() - 0.5) * rBase * 0.3];
-      });
-    }
-
-    function prismModel(ringA, ringB, axisNormal = [0, 0, 1]) {
-      const n = ringA.length;
-      const verts = [...ringA, ...ringB];
-      const edges = [];
-      const edgeFaces = [];
-      for (let i = 0; i < n; i++) {
-        edges.push([i, (i + 1) % n]);
-        edgeFaces.push([0, 1 + i]);
-      }
-      for (let i = 0; i < n; i++) {
-        edges.push([n + i, n + ((i + 1) % n)]);
-        edgeFaces.push([n + 1, 1 + i]);
-      }
-      for (let i = 0; i < n; i++) {
-        edges.push([i, n + i]);
-        edgeFaces.push([1 + i, 1 + ((i - 1 + n) % n)]);
-      }
-      const sideNormal = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, 0];
-      const normals = [
-        axisNormal.map((v) => -v),
-        ...ringA.map((v, i) => sideNormal(v, ringA[(i + 1) % n])),
-        axisNormal
-      ];
-      return buildBlueprint({ verts, edges, edgeFaces, normals });
-    }
-
     function buildBlueprint(data) {
       const model = { ...data };
-      const entries = model.normals.map((normal, faceIndex) => {
+      const faceEntries = model.normals.map((normal, faceIndex) => {
         const ids = new Set();
         model.edges.forEach((edge, edgeIndex) => {
           const ef = model.edgeFaces[edgeIndex];
@@ -1002,7 +964,10 @@
           return [dot(p, u), dot(p, v)];
         });
         return { face, uv };
-      }).filter(Boolean);
+      });
+      const entries = faceEntries.filter(Boolean);
+      model.faceByNormalIndex = faceEntries.map((entry) => entry ? entry.face : null);
+      model.faceUVByNormalIndex = faceEntries.map((entry) => entry ? entry.uv : null);
       model.faces = entries.map((e) => e.face);
       model.faceUV = entries.map((e) => e.uv);
       return model;
@@ -1184,35 +1149,73 @@
         edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,31,31,31,31],
         normals: [[96,0,0],[0,41,30],[0,-18,48],[0,-51,0],[0,-18,-48],[0,41,-30],[-96,0,0]]
       }),
-      // Original shapes for debris/hazard objects, built from the prism helpers above
-      // rather than any external source data.
-      missile: prismModel(polyRing(3, 7, -22), polyRing(3, 2, 20)),
-      escapePod: prismModel(polyRing(6, 10, -14), polyRing(6, 8, 14)),
-      plate: prismModel(polyRing(4, 20, -3, TAU / 8), polyRing(4, 20, 3, TAU / 8)),
-      asteroid: prismModel(jitterRing(7, 26, -20, 101), jitterRing(7, 24, 22, 102)),
-      boulder: prismModel(jitterRing(6, 40, -30, 201), jitterRing(6, 38, 32, 202)),
-      splinter: prismModel(jitterRing(5, 10, -14, 301), jitterRing(5, 6, 15, 302)),
-      hermit: prismModel(jitterRing(8, 90, -70, 401), jitterRing(8, 85, 75, 402)),
-      dodoStation: prismModel(polyRing(6, 110, -220), polyRing(6, 110, 220))
+      // Object/station geometry below uses the OBJ folder's vertex/line data, with the
+      // original BBC face metadata attached so solid shading and culling still work.
+      missile: buildBlueprint({
+        verts: [[0,0,68],[8,-8,36],[8,8,36],[-8,8,36],[-8,-8,36],[8,8,-44],[8,-8,-44],[-8,-8,-44],[-8,8,-44],[12,12,-44],[12,-12,-44],[-12,-12,-44],[-12,12,-44],[-8,8,-12],[-8,-8,-12],[8,8,-12],[8,-8,-12]],
+        edges: [[0,1],[0,2],[0,3],[0,4],[1,2],[1,4],[3,4],[2,3],[2,5],[1,6],[4,7],[3,8],[7,8],[5,8],[5,6],[6,7],[6,10],[5,9],[8,12],[7,11],[9,15],[10,16],[12,13],[11,14]],
+        edgeFaces: [[1,2],[2,3],[0,3],[0,1],[4,2],[1,5],[0,6],[3,7],[4,7],[4,5],[5,6],[6,7],[6,8],[7,8],[4,8],[5,8],[5,8],[7,8],[7,8],[5,8],[4,7],[4,5],[6,7],[5,6]],
+        edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,8,8,8,8,8,8,8,8],
+        normals: [[-64,0,16],[0,-64,16],[64,0,16],[0,64,16],[32,0,0],[0,-32,0],[-32,0,0],[0,32,0],[0,0,-176]]
+      }),
+      escapePod: buildBlueprint({
+        verts: [[-7,0,36],[-7,-14,-12],[-7,14,-12],[21,0,0]],
+        edges: [[0,1],[1,2],[2,3],[3,0],[0,2],[3,1]],
+        edgeFaces: [[3,2],[3,0],[1,0],[2,1],[3,1],[2,0]],
+        edgeVisibility: [31,31,31,31,31,31],
+        normals: [[52,0,-122],[39,103,30],[39,-103,30],[-112,0,0]]
+      }),
+      plate: {
+        verts: [[-15,-22,-9],[-15,38,-9],[19,32,11],[10,-46,6]],
+        edges: [[0,1],[1,2],[2,3],[3,0]],
+        edgeVisibility: [31,16,20,16],
+        faces: [[0,1,2,3],[3,2,1,0]]
+      },
+      asteroid: buildBlueprint({
+        verts: [[0,80,0],[-80,-10,0],[0,-80,0],[70,-40,0],[60,50,0],[50,0,60],[-40,0,70],[0,30,-75],[0,-50,-60]],
+        edges: [[0,1],[0,4],[3,4],[2,3],[1,2],[1,6],[2,6],[2,5],[5,6],[0,5],[3,5],[0,6],[4,5],[1,8],[1,7],[0,7],[4,7],[3,7],[3,8],[2,8],[7,8]],
+        edgeFaces: [[2,7],[6,13],[5,12],[4,11],[3,10],[2,3],[1,3],[1,4],[0,1],[0,6],[4,5],[0,2],[5,6],[8,10],[7,8],[7,13],[12,13],[9,12],[9,11],[10,11],[8,9]],
+        edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31],
+        normals: [[9,66,81],[9,-66,81],[-72,64,31],[-64,-73,47],[45,-79,65],[135,15,35],[38,76,70],[-66,59,-39],[-67,-15,-80],[66,-14,-75],[-70,-80,-40],[58,-102,-51],[81,9,-67],[47,94,-63]]
+      }),
+      boulder: buildBlueprint({
+        verts: [[-18,37,-11],[30,7,12],[28,-7,-12],[2,0,-39],[-28,34,-30],[5,-10,13],[20,17,-30]],
+        edges: [[0,1],[1,2],[2,3],[3,4],[4,0],[0,5],[1,5],[2,5],[3,5],[4,5],[0,6],[1,6],[2,6],[3,6],[4,6]],
+        edgeFaces: [[5,1],[6,2],[7,3],[8,4],[9,0],[1,0],[2,1],[3,2],[4,3],[4,0],[9,5],[6,5],[7,6],[8,7],[9,8]],
+        edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,31,31,31,31],
+        normals: [[-15,-3,8],[-7,12,30],[32,-47,24],[-3,-39,-7],[-5,-4,-1],[49,84,8],[112,21,-21],[76,-35,-82],[22,56,-137],[40,110,-38]]
+      }),
+      splinter: buildBlueprint({
+        verts: [[-24,-25,16],[0,12,-10],[11,-6,2],[12,42,7]],
+        edges: [[0,1],[1,2],[2,3],[3,0],[0,2],[3,1]],
+        edgeFaces: [[3,2],[3,0],[1,0],[2,1],[3,1],[2,0]],
+        edgeVisibility: [31,31,31,31,31,31],
+        normals: [[35,0,4],[3,4,8],[1,8,12],[18,12,0]]
+      }),
+      hermit: buildBlueprint({
+        verts: [[0,80,0],[-80,-10,0],[0,-80,0],[70,-40,0],[60,50,0],[50,0,60],[-40,0,70],[0,30,-75],[0,-50,-60]],
+        edges: [[0,1],[0,4],[3,4],[2,3],[1,2],[1,6],[2,6],[2,5],[5,6],[0,5],[3,5],[0,6],[4,5],[1,8],[1,7],[0,7],[4,7],[3,7],[3,8],[2,8],[7,8]],
+        edgeFaces: [[2,7],[6,13],[5,12],[4,11],[3,10],[2,3],[1,3],[1,4],[0,1],[0,6],[4,5],[0,2],[5,6],[8,10],[7,8],[7,13],[12,13],[9,12],[9,11],[10,11],[8,9]],
+        edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31],
+        normals: [[9,66,81],[9,-66,81],[-72,64,31],[-64,-73,47],[45,-79,65],[135,15,35],[38,76,70],[-66,59,-39],[-67,-15,-80],[66,-14,-75],[-70,-80,-40],[58,-102,-51],[81,9,-67],[47,94,-63]]
+      }),
+      dodoStation: buildBlueprint({
+        verts: [[0,150,196],[143,46,196],[88,-121,196],[-88,-121,196],[-143,46,196],[0,243,46],[231,75,46],[143,-196,46],[-143,-196,46],[-231,75,46],[143,196,-46],[231,-75,-46],[0,-243,-46],[-231,-75,-46],[-143,196,-46],[88,121,-196],[143,-46,-196],[0,-150,-196],[-143,-46,-196],[-88,121,-196],[-16,32,196],[-16,-32,196],[16,32,196],[16,-32,196]],
+        edges: [[0,1],[1,2],[2,3],[3,4],[4,0],[5,10],[10,6],[6,11],[11,7],[7,12],[12,8],[8,13],[13,9],[9,14],[14,5],[15,16],[16,17],[17,18],[18,19],[19,15],[0,5],[1,6],[2,7],[3,8],[4,9],[10,15],[11,16],[12,17],[13,18],[14,19],[20,21],[21,23],[23,22],[22,20]],
+        edgeFaces: [[1,0],[2,0],[3,0],[4,0],[5,0],[6,1],[7,1],[7,2],[8,2],[8,3],[9,3],[9,4],[10,4],[10,5],[6,5],[11,7],[11,8],[11,9],[11,10],[11,6],[5,1],[2,1],[3,2],[4,3],[5,4],[7,6],[8,7],[9,8],[10,9],[10,6],[0,0],[0,0],[0,0],[0,0]],
+        edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,30,20,23,20],
+        normals: [[0,0,196],[103,142,88],[169,-55,89],[0,-176,88],[-169,-55,89],[-103,142,88],[0,176,-88],[169,55,-89],[103,-142,-88],[-103,-142,-88],[-169,55,-89],[0,0,-196]]
+      }),
+      coriolis: buildBlueprint({
+        verts: [[160,0,160],[0,160,160],[-160,0,160],[0,-160,160],[160,-160,0],[160,160,0],[-160,160,0],[-160,-160,0],[160,0,-160],[0,160,-160],[-160,0,-160],[0,-160,-160],[10,-30,160],[10,30,160],[-10,30,160],[-10,-30,160]],
+        edges: [[0,3],[0,1],[1,2],[2,3],[3,4],[0,4],[0,5],[5,1],[1,6],[2,6],[2,7],[3,7],[8,11],[8,9],[9,10],[10,11],[4,11],[4,8],[5,8],[5,9],[6,9],[6,10],[7,10],[7,11],[12,13],[13,14],[14,15],[15,12]],
+        edgeFaces: [[0,1],[0,2],[0,3],[0,4],[1,5],[1,6],[2,6],[2,8],[3,8],[3,7],[4,7],[4,5],[10,13],[11,13],[12,13],[9,13],[5,10],[6,10],[6,11],[8,11],[8,12],[7,12],[7,9],[5,9],[0,0],[0,0],[0,0],[0,0]],
+        edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,30,30,30,30],
+        normals: [[0,0,160],[107,-107,107],[107,107,107],[-107,107,107],[-107,-107,107],[0,-160,0],[160,0,0],[-160,0,0],[0,160,0],[-107,-107,-107],[107,-107,-107],[107,107,-107],[-107,107,-107],[0,0,-160]]
+      })
     };
 
-    // The Coriolis station's octagonal-prism hull, on the same buildBlueprint pipeline
-    // as every ship (verts baked to real hull scale so the shared UV/texture code works
-    // unmodified) instead of the bespoke inline verts/edges/faceUV it used to carry.
-    // edgeFaces here is authored directly rather than inferred, since the prism's 10
-    // faces (2 octagon caps + 8 side quads) are simple enough to hand-map: the 8 "ring"
-    // edges on each cap border that cap plus one side face, and the 8 "connecting"
-    // edges between the rings border two adjacent side faces.
-    const STATION_SIZE = 160;
-    const STATION_MODEL = buildBlueprint({
-      verts: [
-        [0, -1, -1], [.72, -.72, -1], [1, 0, -1], [.72, .72, -1], [0, 1, -1], [-.72, .72, -1], [-1, 0, -1], [-.72, -.72, -1],
-        [0, -1, 1], [.72, -.72, 1], [1, 0, 1], [.72, .72, 1], [0, 1, 1], [-.72, .72, 1], [-1, 0, 1], [-.72, -.72, 1]
-      ].map(([x, y, z]) => [x * STATION_SIZE, y * STATION_SIZE, z * STATION_SIZE]),
-      edges: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,0],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,8],[0,8],[1,9],[2,10],[3,11],[4,12],[5,13],[6,14],[7,15]],
-      edgeFaces: [[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[0,9],[1,2],[1,3],[1,4],[1,5],[1,6],[1,7],[1,8],[1,9],[2,9],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9]],
-      normals: [[0,0,-1],[0,0,1],[.36,-.86,0],[.86,-.36,0],[.86,.36,0],[.36,.86,0],[-.36,.86,0],[-.86,.36,0],[-.86,-.36,0],[-.36,-.86,0]]
-    });
+    const STATION_MODEL = MODELS.coriolis;
 
     const SHIP_NAMES = {
       cobra: "COBRA MK III",
@@ -1244,42 +1247,48 @@
     const ALIEN_MODELS = ["thargoid", "thargon"];
     const ARMADA_MODELS = ["cobra", "cobra1", "krait", "viper", "adder", "gecko", "mamba", "sidewinder", "worm", "moray", "asp", "ferdelance", "python", "boa", "anaconda", "shuttle", "transporter", "constrictor", "cougar", "thargoid", "thargon"];
 
-    // speed is a multiplier on the AI combat speed cap, relative to a Cobra Mk III (1.0) —
-    // loosely follows the original's maximum-speed table (e.g. Sidewinder 37 vs Cobra 28
-    // vs Anaconda 14), so small fighters are genuinely faster than the player's ship and
-    // big haulers are genuinely slower, rather than every hostile sharing one speed cap.
+    // Source-derived target radius, energy and speed. The speed multiplier is the BBC
+    // max-speed byte divided by the Cobra Mk III's 28, so class differences track the
+    // original instead of hand-tuned guesses. r is the source "targetable area" radius;
+    // the visual mesh still draws at its raw OBJ/source coordinate scale.
     const SHIP_STATS = {
-      cobra1: { hp: 38, speed: 1 },
-      adder: { hp: 34, speed: .9 },
-      gecko: { hp: 36, speed: .95 },
-      mamba: { hp: 42, speed: 1.15 },
-      sidewinder: { hp: 34, speed: 1.3 },
-      worm: { hp: 26, speed: 1 },
-      moray: { hp: 42, speed: .95 },
-      asp: { hp: 64, speed: 1.05 },
-      ferdelance: { hp: 74, speed: 1.1 },
-      python: { hp: 100, speed: .75 },
-      boa: { hp: 94, speed: .7 },
-      anaconda: { hp: 118, speed: .55 },
-      shuttle: { hp: 30, speed: .8 },
-      transporter: { hp: 44, speed: .7 },
-      thargoid: { hp: 96, speed: 1.2 },
-      thargon: { hp: 22, speed: 1.3 },
-      constrictor: { hp: 78, speed: 1.05 },
-      cougar: { hp: 72, speed: 1 }
+      cobra: { r: 95, hp: 150, speed: 1 },
+      cobra1: { r: 99, hp: 90, speed: .929 },
+      krait: { r: 60, hp: 80, speed: 1.071 },
+      viper: { r: 75, hp: 140, speed: 1.143 },
+      adder: { r: 50, hp: 85, speed: .857 },
+      gecko: { r: 99, hp: 70, speed: 1.071 },
+      mamba: { r: 70, hp: 90, speed: 1.071 },
+      sidewinder: { r: 65, hp: 70, speed: 1.321 },
+      worm: { r: 99, hp: 30, speed: .821 },
+      moray: { r: 30, hp: 100, speed: .893 },
+      asp: { r: 60, hp: 150, speed: 1.429 },
+      ferdelance: { r: 40, hp: 160, speed: 1.071 },
+      python: { r: 80, hp: 250, speed: .714 },
+      boa: { r: 70, hp: 250, speed: .857 },
+      anaconda: { r: 100, hp: 252, speed: .5 },
+      shuttle: { r: 50, hp: 32, speed: .286 },
+      transporter: { r: 50, hp: 32, speed: .357 },
+      thargoid: { r: 99, hp: 240, speed: 1.393 },
+      thargon: { r: 40, hp: 20, speed: 1.071 },
+      constrictor: { r: 65, hp: 252, speed: 1.286 },
+      cougar: { r: 70, hp: 252, speed: 1.429 },
+      missile: { r: 40, hp: 2, speed: 1.571 },
+      escapePod: { r: 16, hp: 17, speed: .286 },
+      plate: { r: 10, hp: 16, speed: .571 },
+      canister: { r: 20, hp: 17, speed: .536 },
+      asteroid: { r: 80, hp: 60, speed: 1.071 },
+      boulder: { r: 30, hp: 20, speed: 1.071 },
+      splinter: { r: 16, hp: 20, speed: .357 },
+      hermit: { r: 80, hp: 180, speed: 1.071 },
+      dodoStation: { r: 180, hp: 240, speed: 0 },
+      coriolis: { r: 160, hp: 240, speed: 0 }
     };
 
     function shipName(model) {
       return SHIP_NAMES[model] || model.toUpperCase();
     }
 
-    // The MODELS vertex data is already a faithful port of the original's own coordinate
-    // units (verified: our Cobra/Adder/Viper/Anaconda z-extents exactly match the source's
-    // documented depth dimensions), so the correct scale for each ship is sitting right
-    // there in its mesh — it just wasn't being used. The old SHIP_STATS.r values were
-    // hand-guessed independently of the geometry (e.g. "cobra" wasn't even in the table,
-    // defaulting to r:54 despite its own mesh spanning +-128 in X), which flattened the
-    // size range between small fighters and capital-ish ships far more than the original.
     function modelBoundingRadius(model) {
       let maxR = 0;
       for (const v of model.verts) {
@@ -1292,7 +1301,7 @@
     function shipStats(model) {
       const stats = SHIP_STATS[model] || { hp: 52, speed: 1 };
       const m = MODELS[model];
-      return { ...stats, r: m ? modelBoundingRadius(m) : (stats.r || 54) };
+      return { ...stats, r: stats.r || (m ? modelBoundingRadius(m) : 54) };
     }
 
     function shipColor(model, police = false) {
@@ -1414,6 +1423,9 @@
       shields: 100,
       speed: 0,
       maxSpeed: 220,
+      rollRate: 0,
+      pitchRate: 0,
+      yawRate: 0,
       cargoCap: 20,
       cargo: Object.fromEntries(GOODS.map((g) => [g[0], 0])),
       equipment: {
@@ -1584,7 +1596,7 @@
           type: "station", model: isDodo ? "dodoStation" : "coriolis",
           name: `${sys.name} ${isDodo ? "DODO STATION" : "STATION"}`,
           pos: vec(0, 0, 900), basePos: vec(0, 0, 900), rot: 0, rotSpeed: .34, driftPhase: rng() * TAU,
-          r: isDodo ? shipStats("dodoStation").r : 150, color: "#d8ded4", hp: 9999, hostile: false
+          r: shipStats(isDodo ? "dodoStation" : "coriolis").r, color: "#d8ded4", hp: 9999, hostile: false
         },
         planet,
         sun
@@ -1650,6 +1662,7 @@
         attackClock: rng() * 2,
         wobble: rng() * TAU
       };
+      setNoseDirection(o, o.vel, o.roll);
       game.objects.push(o);
       return o;
     }
@@ -1683,6 +1696,7 @@
           maxHp: stats.hp,
           hostile,
           role: hostile ? "pirate" : "trader",
+          thargoid: model === "thargoid",
           bounty: hostile ? 90 + i * 8 : 0,
           aiMode: "formation",
           orbitCenter: center,
@@ -1694,6 +1708,7 @@
           formationY: local.y,
           formationZ: local.z
         };
+        setNoseDirection(o, o.vel, o.roll);
         game.objects.push(o);
       }
       game.targetObject = game.objects.find((o) => o.type === "ship") || game.targetObject;
@@ -1780,7 +1795,7 @@
         for (let i = 0; i < 4; i++) {
           game.objects.push({
             type: "ship", model: "thargoid", name: "THARGOID", pos: vec((Math.random() - .5) * 900, (Math.random() - .5) * 500, 700 + Math.random() * 900),
-            vel: vec(0, 0, -35), rot: Math.random() * TAU, pitch: 0, r: 70, color: shipColor("thargoid"), hp: 92, maxHp: 92, hostile: true, bounty: 250, thargoid: true
+            vel: vec(0, 0, -35), rot: Math.random() * TAU, pitch: 0, r: shipStats("thargoid").r, color: shipColor("thargoid"), hp: shipStats("thargoid").hp, maxHp: shipStats("thargoid").hp, hostile: true, bounty: 250, thargoid: true
           });
         }
         game.docked = false;
@@ -1880,11 +1895,14 @@
     }
 
     function spawnMissile({ pos, target, source, hostile }) {
+      const launchDir = norm(source ? shipForward(source) : forwardVector(game.camera));
+      const attitude = yawPitchForDirection(launchDir);
+      const startSpeed = 260;
       game.objects.push({
         type: "missile", model: "missile", name: source ? `${source.name} MISSILE` : "MISSILE",
-        pos: { ...pos }, vel: vec(0, 0, 0), rot: 0, pitch: 0, roll: 0,
-        r: 15, color: hostile ? "#ff6a55" : "#ffd33d", hp: 1, maxHp: 1, hostile,
-        target: target || null, source: source || null, t: 0, dur: 5
+        pos: { ...pos }, vel: scale(launchDir, startSpeed), rot: attitude.yaw, pitch: attitude.pitch, roll: source ? (source.roll || 0) : 0,
+        r: shipStats("missile").r, color: hostile ? "#ff6a55" : "#ffd33d", hp: shipStats("missile").hp, maxHp: shipStats("missile").hp, hostile,
+        target: target || null, source: source || null, speed: startSpeed, t: 0, dur: 5
       });
     }
 
@@ -1893,10 +1911,18 @@
       const targetPos = o.target ? o.target.pos : game.camera.pos;
       const toTarget = sub(targetPos, o.pos);
       const dist = len(toTarget);
-      if (dist > 1) o.vel = scale(norm(toTarget), 340);
+      if (dist > 1) {
+        const desired = norm(toTarget);
+        const { yaw, pitch } = yawPitchForDirection(desired);
+        o.rot = lerpAngle(o.rot || 0, yaw, dt * 7.5);
+        o.pitch = lerpAngle(o.pitch || 0, pitch, dt * 7.5);
+      }
+      o.roll = lerpAngle(o.roll || 0, 0, dt * 5);
+      o.speed = clamp((o.speed || len(o.vel) || 260) + dt * 420, 260, 360);
+      o.vel = scale(shipForward(o), o.speed);
       o.pos = add(o.pos, scale(o.vel, dt));
-      orientShipToVelocity(o, dt);
-      if (dist < 40) {
+      const nextDist = len(sub(targetPos, o.pos));
+      if (nextDist < 40) {
         game.objects = game.objects.filter((x) => x !== o);
         detonateMissile(o);
       } else if (o.t > o.dur) {
@@ -1956,7 +1982,7 @@
         rot: rng() * TAU, pitch: rng() * TAU, roll: 0,
         tumbleRot: (rng() - .5) * .5, tumblePitch: (rng() - .5) * .4,
         r: stats.r, color: isBoulder ? "#7a7268" : "#8a8276",
-        hp: isBoulder ? 60 : 30, maxHp: isBoulder ? 60 : 30, hostile: false
+        hp: stats.hp, maxHp: stats.hp, hostile: false
       });
     }
 
@@ -1968,7 +1994,7 @@
         pos: { ...pos }, vel: add(scale(dir, 30 + Math.random() * 30), scale(parentVel || vec(), .3)),
         rot: Math.random() * TAU, pitch: Math.random() * TAU, roll: 0,
         tumbleRot: (Math.random() - .5) * 1.6, tumblePitch: (Math.random() - .5) * 1.4,
-        r: stats.r, color: "#8a8276", hp: 8, maxHp: 8, hostile: false
+        r: stats.r, color: "#8a8276", hp: stats.hp, maxHp: stats.hp, hostile: false
       });
     }
 
@@ -1986,7 +2012,7 @@
       game.objects.push({
         type: "ship", model: "escapePod", name: "ESCAPE POD",
         pos: { ...pos }, vel: scale(norm(vec(Math.random() - .5, Math.random() - .5, Math.random() - .5)), 50),
-        rot: 0, pitch: 0, roll: 0, r: stats.r, color: "#e9f2e4", hp: 8, maxHp: 8,
+        rot: 0, pitch: 0, roll: 0, r: stats.r, color: "#e9f2e4", hp: stats.hp, maxHp: stats.hp,
         hostile: false, role: "pod", bounty: 15, aiMode: "cruise", wobble: Math.random() * TAU
       });
     }
@@ -2007,9 +2033,10 @@
         spawnExplosion(o.pos, clamp(o.r / 46, .6, 2.2));
         if (Math.random() > .5) {
           const isPlate = Math.random() < .35;
+          const stats = shipStats(isPlate ? "plate" : "canister");
           game.objects.push(isPlate
-            ? { type: "plate", model: "plate", name: "ALLOY PLATE", pos: add(o.pos, vec(0, 0, 30)), vel: vec(0, 0, -12), rot: .3, pitch: .2, roll: 0, r: 20, color: "#9aa79a", hp: 10, hostile: false }
-            : { type: "canister", model: "canister", name: "CARGO CANISTER", pos: add(o.pos, vec(0, 0, 30)), vel: vec(0, 0, -12), rot: 0, pitch: 0, r: 22, color: "#ffd33d", hp: 10, hostile: false });
+            ? { type: "plate", model: "plate", name: "ALLOY PLATE", pos: add(o.pos, vec(0, 0, 30)), vel: vec(0, 0, -12), rot: .3, pitch: .2, roll: 0, r: stats.r, color: "#9aa79a", hp: stats.hp, hostile: false }
+            : { type: "canister", model: "canister", name: "CARGO CANISTER", pos: add(o.pos, vec(0, 0, 30)), vel: vec(0, 0, -12), rot: 0, pitch: 0, r: stats.r, color: "#ffd33d", hp: stats.hp, hostile: false });
         }
         if (!byPlayer) {
           setMessage(`${o.name} destroyed.`, true);
@@ -2217,13 +2244,7 @@
 
     function update(dt) {
       if (!game.docked) {
-        const turn = dt * 1.8;
-        if (keys.has("KeyA")) rotateCameraLocal(game.camera, vec(0, 0, 1), -turn);
-        if (keys.has("KeyD")) rotateCameraLocal(game.camera, vec(0, 0, 1), turn);
-        if (keys.has("KeyW")) rotateCameraLocal(game.camera, vec(1, 0, 0), turn * .72);
-        if (keys.has("KeyS")) rotateCameraLocal(game.camera, vec(1, 0, 0), -turn * .72);
-        if (keys.has("KeyQ")) rotateCameraLocal(game.camera, vec(0, 1, 0), turn * .72);
-        if (keys.has("KeyE")) rotateCameraLocal(game.camera, vec(0, 1, 0), -turn * .72);
+        updatePlayerControls(dt);
         if (keys.has("Equal") || keys.has("NumpadAdd")) game.speed += dt * 120;
         if (keys.has("Minus") || keys.has("NumpadSubtract")) game.speed -= dt * 120;
         game.speed = clamp(game.speed, 0, game.maxSpeed);
@@ -2271,6 +2292,9 @@
         game.laserHeat = clamp(game.laserHeat - dt * 38, 0, 100);
         game.legal = Math.max(0, game.legal - dt * 0.025);
       }
+      else {
+        game.rollRate = game.pitchRate = game.yawRate = 0;
+      }
       game.explosions = game.explosions.filter((e) => (e.t += dt) < e.dur);
       game.enemyShots = game.enemyShots.filter((s) => (s.t += dt) < s.dur);
       if (game.messageTimer > 0) game.messageTimer -= dt;
@@ -2294,6 +2318,24 @@
       if (d < 165) dock(true);
     }
 
+    function updateAxisRate(rate, input, dt, accel, maxRate, damping = .055) {
+      if (input) rate += input * accel * dt;
+      else rate *= Math.pow(damping, dt);
+      return clamp(rate, -maxRate, maxRate);
+    }
+
+    function updatePlayerControls(dt) {
+      const rollInput = (keys.has("KeyD") ? 1 : 0) - (keys.has("KeyA") ? 1 : 0);
+      const pitchInput = (keys.has("KeyW") ? 1 : 0) - (keys.has("KeyS") ? 1 : 0);
+      const yawInput = (keys.has("KeyQ") ? 1 : 0) - (keys.has("KeyE") ? 1 : 0);
+      game.rollRate = updateAxisRate(game.rollRate || 0, rollInput, dt, 4.8, 2.05);
+      game.pitchRate = updateAxisRate(game.pitchRate || 0, pitchInput, dt, 3.5, 1.42);
+      game.yawRate = updateAxisRate(game.yawRate || 0, yawInput, dt, 3.2, 1.24);
+      if (Math.abs(game.rollRate) > .001) rotateCameraLocal(game.camera, vec(0, 0, 1), game.rollRate * dt);
+      if (Math.abs(game.pitchRate) > .001) rotateCameraLocal(game.camera, vec(1, 0, 0), game.pitchRate * dt);
+      if (Math.abs(game.yawRate) > .001) rotateCameraLocal(game.camera, vec(0, 1, 0), game.yawRate * dt);
+    }
+
     function lerpAngle(a, b, t) {
       const d = Math.atan2(Math.sin(b - a), Math.cos(b - a));
       return a + d * clamp(t, 0, 1);
@@ -2302,24 +2344,66 @@
     function updateStation(o, dt) {
       o.rot = (o.rot || 0) + dt * (o.rotSpeed || .34);
       if (!o.basePos) o.basePos = { ...o.pos };
-      const p = performance.now() / 1000 + (o.driftPhase || 0);
-      o.pos = add(o.basePos, vec(Math.sin(p * .31) * 14, Math.cos(p * .27) * 9, Math.sin(p * .19) * 18));
+      o.pos = { ...o.basePos };
+    }
+
+    function shipForward(o) {
+      return norm(rotateShipPoint(vec(0, 0, 1), o.rot || 0, o.pitch || 0, o.roll || 0));
+    }
+
+    function shipRight(o) {
+      return norm(rotateShipPoint(vec(1, 0, 0), o.rot || 0, o.pitch || 0, 0));
+    }
+
+    function yawPitchForDirection(dir) {
+      return {
+        yaw: Math.atan2(-dir.x, Math.hypot(dir.y, dir.z)),
+        pitch: Math.atan2(-dir.y, dir.z)
+      };
+    }
+
+    function setNoseDirection(o, dir, roll = o.roll || 0) {
+      if (len(dir) < .001) return;
+      const { yaw, pitch } = yawPitchForDirection(norm(dir));
+      o.rot = yaw;
+      o.pitch = pitch;
+      o.roll = roll;
     }
 
     function steerVelocity(o, desired, dt, accel = 95, maxSpeed = 120) {
-      const current = o.vel || vec();
-      // Guard against near-zero desired vectors: normalizing one amplifies tiny
-      // floating-point noise into an essentially random direction every frame (visible
-      // as ships rotating/wobbling in place instead of accelerating off), which happens
-      // whenever a ship starts out already close to its steering target — e.g. armada
-      // ships spawn right at their own orbit position.
+      // Elite's ships are nose-led: tactics set pitch/roll/acceleration, and the ship
+      // moves along its current nose vector. The previous browser model changed velocity
+      // directly and then rotated the mesh to follow it, which made ships slide around
+      // like drones. Keep the desired-vector callers, but convert that into turn inputs
+      // and scalar speed here.
       const desiredLen = len(desired);
-      const dir = desiredLen > 1 ? scale(desired, 1 / desiredLen) : vec();
-      const next = add(scale(current, Math.pow(.18, dt)), scale(dir, accel * dt));
-      const sp = len(next);
-      o.vel = sp > maxSpeed ? scale(norm(next), maxSpeed) : next;
+      if (o.speed === undefined) {
+        const initialSpeed = len(o.vel || vec());
+        o.speed = clamp(initialSpeed || maxSpeed * .38, maxSpeed * .18, maxSpeed);
+        if (initialSpeed > 1) orientShipToVelocity(o, 1);
+      }
+      const currentForward = shipForward(o);
+      const dir = desiredLen > 1 ? scale(desired, 1 / desiredLen) : currentForward;
+      const beforeTurnAlignment = dot(currentForward, dir);
+      const { yaw, pitch } = yawPitchForDirection(dir);
+      const speedRatio = clamp(o.speed / Math.max(1, maxSpeed), 0, 1);
+      const turnRate = lerp(2.35, 1.05, speedRatio);
+      o.rot = lerpAngle(o.rot || 0, yaw, dt * turnRate);
+      o.pitch = lerpAngle(o.pitch || 0, pitch, dt * turnRate * .82);
+
+      const sideError = dot(shipRight(o), dir);
+      const bankTarget = clamp(-sideError * .58, -.62, .62);
+      o.roll = lerpAngle(o.roll || 0, bankTarget, dt * 2.8);
+
+      const alignment = dot(shipForward(o), dir);
+      const targetSpeed = maxSpeed * (alignment > .78 ? 1 : alignment > .32 ? .76 : .42);
+      const speedStep = accel * (targetSpeed > o.speed ? .72 : 1.15) * dt;
+      if (Math.abs(targetSpeed - o.speed) <= speedStep) o.speed = targetSpeed;
+      else o.speed += Math.sign(targetSpeed - o.speed) * speedStep;
+      if (beforeTurnAlignment < -.35) o.speed = Math.max(o.speed - accel * .22 * dt, maxSpeed * .22);
+      o.speed = clamp(o.speed, maxSpeed * .16, maxSpeed);
+      o.vel = scale(shipForward(o), o.speed);
       o.pos = add(o.pos, scale(o.vel, dt));
-      orientShipToVelocity(o, dt);
     }
 
     function orientShipToVelocity(o, dt) {
@@ -2397,7 +2481,7 @@
           flash();
           return;
         }
-        spawnMissile({ pos: o.pos, target: null, source: o, hostile: true });
+        spawnMissile({ pos: add(o.pos, scale(shipForward(o), Math.max(28, o.r * .35))), target: null, source: o, hostile: true });
         setMessage(`${o.name} launches a missile!`, true);
         return;
       }
@@ -2483,28 +2567,31 @@
         setMessage(`${o.name} panics and flees.`);
       } else if (o.aiMode === "formation") {
         o.orbitAngle += (o.orbitSpeed || .18) * dt;
+        const speedMul = shipStats(o.model).speed || 1;
         const center = o.orbitCenter || cameraLocalToWorld(game.camera, vec(0, 0, 900));
         const target = add(center, vec(
           Math.cos(o.orbitAngle) * (o.orbitRadius || 300),
           Math.sin(o.orbitAngle * .9) * ((o.orbitRadius || 300) * .42) + (o.formationY || 0) * .2,
           Math.sin(o.orbitAngle) * (o.orbitRadius || 300) * .45 + ((o.formationZ || 900) - 900) * .25
         ));
-        steerVelocity(o, sub(target, o.pos), dt, 110, 115);
+        steerVelocity(o, sub(target, o.pos), dt, 110, 115 * speedMul);
       } else if (o.aiMode === "orbit") {
         o.orbitAngle += (o.orbitSpeed || .18) * dt;
+        const speedMul = shipStats(o.model).speed || 1;
         const center = o.orbitCenter || vec();
         const target = add(center, vec(
           Math.cos(o.orbitAngle) * (o.orbitRadius || 360),
           Math.sin(o.orbitAngle * 1.3 + (o.wobble || 0)) * 90,
           Math.sin(o.orbitAngle) * (o.orbitRadius || 360) * .7
         ));
-        steerVelocity(o, sub(target, o.pos), dt, 85, 95);
+        steerVelocity(o, sub(target, o.pos), dt, 85, 95 * speedMul);
       } else {
+        const speedMul = shipStats(o.model).speed || 1;
         const station = game.objects.find((x) => x.type === "station");
         const center = station ? station.pos : vec();
         const away = d < 360 ? scale(norm(sub(o.pos, game.camera.pos)), 360 - d) : vec();
         const cruise = add(sub(center, o.pos), add(away, vec(Math.sin(performance.now() / 900 + (o.wobble || 0)) * 160, 0, 220)));
-        steerVelocity(o, cruise, dt, 55, 82);
+        steerVelocity(o, cruise, dt, 55, 82 * speedMul);
       }
     }
 
@@ -2573,17 +2660,71 @@
       return faces;
     }
 
+    function collectWireFaceVisibility(model, camVerts) {
+      if (!model.normals || !model.faceByNormalIndex) return null;
+      const objectCenter = scale(camVerts.reduce((sum, p) => add(sum, p), vec()), 1 / camVerts.length);
+      return model.normals.map((normal, faceIndex) => {
+        const face = model.faceByNormalIndex[faceIndex];
+        let n, center;
+        if (face && face.length >= 3) {
+          const verts = face.map((i) => camVerts[i]);
+          n = faceNormal(verts[0], verts[1], verts[2]);
+          center = scale(verts.reduce((sum, p) => add(sum, p), vec()), 1 / verts.length);
+          if (dot(n, sub(center, objectCenter)) < 0) n = scale(n, -1);
+        } else {
+          n = norm(vec(normal[0], normal[1], normal[2]));
+          center = objectCenter;
+        }
+        return -dot(n, norm(center)) > -0.015;
+      });
+    }
+
+    function wireEdgeVisible(model, edgeIndex, faceVisible) {
+      if (!faceVisible || !model.edgeFaces) return true;
+      const faces = model.edgeFaces[edgeIndex];
+      if (!faces) return true;
+      return !!faceVisible[faces[0]] || !!faceVisible[faces[1]];
+    }
+
+    function collectWireOccluderFaces(model, camVerts, points, faceVisible) {
+      if (!faceVisible || !model.faceByNormalIndex) return [];
+      const faces = [];
+      model.faceByNormalIndex.forEach((face, faceIndex) => {
+        if (!faceVisible[faceIndex] || !face || face.length < 3) return;
+        const projected = face.map((i) => points[i]);
+        if (projected.some((p) => !p)) return;
+        const avgZ = face.reduce((sum, i) => sum + camVerts[i].z, 0) / face.length;
+        faces.push({ projected, avgZ });
+      });
+      return faces.sort((a, b) => b.avgZ - a.avgZ);
+    }
+
+    function drawWireOccluderFaces(targetCtx, faces) {
+      if (!faces.length) return;
+      targetCtx.save();
+      targetCtx.fillStyle = "#000";
+      for (const face of faces) {
+        const [first, ...rest] = face.projected;
+        targetCtx.beginPath();
+        targetCtx.moveTo(first.x, first.y);
+        for (const p of rest) targetCtx.lineTo(p.x, p.y);
+        targetCtx.closePath();
+        targetCtx.fill();
+      }
+      targetCtx.restore();
+    }
+
     function collectSolidDetails(model, o, camVerts, points, w, h, scaleFactor = 1) {
       if (game.graphicsMode !== "solid" || !model.details) return [];
       const roll = o.roll ?? (o.rot || 0) * .7;
       const details = [];
       for (const detail of model.details) {
         const normal = detail.normal
-          ? norm(rotatePoint(vec(detail.normal[0], detail.normal[1], detail.normal[2]), o.rot || 0, o.pitch || 0, roll))
+          ? norm(rotateShipPoint(vec(detail.normal[0], detail.normal[1], detail.normal[2]), o.rot || 0, o.pitch || 0, roll))
           : null;
         const vertsOnSurface = detail.indices
           ? detail.indices.map((i) => camVerts[i])
-          : detail.points.map(([x, y, z]) => add(rotatePoint(vec(x * scaleFactor, y * scaleFactor, z * scaleFactor), o.rot || 0, o.pitch || 0, roll), o.cam || vec()));
+          : detail.points.map(([x, y, z]) => add(rotateShipPoint(vec(x * scaleFactor, y * scaleFactor, z * scaleFactor), o.rot || 0, o.pitch || 0, roll), o.cam || vec()));
         const isLineDetail = detail.type === "line" || detail.type === "polyline";
         if (vertsOnSurface.length < (isLineDetail ? 2 : 3)) continue;
         const surfaceCenter = scale(vertsOnSurface.reduce((sum, p) => add(sum, p), vec()), 1 / vertsOnSurface.length);
@@ -3201,7 +3342,7 @@
     function drawWireModel(model, o, cam, w, h) {
       const roll = o.roll ?? (o.rot || 0) * .7;
       const camVerts = model.verts.map(([x, y, z]) => {
-        let p = rotatePoint(vec(x, y, z), o.rot || 0, o.pitch || 0, roll);
+        let p = rotateShipPoint(vec(x, y, z), o.rot || 0, o.pitch || 0, roll);
         return add(p, cam);
       });
       const points = camVerts.map((p) => project(p, w, h));
@@ -3211,8 +3352,12 @@
       } else {
         ctx.strokeStyle = o.color || "#e9f2e4";
         ctx.lineWidth = clamp(680 / Math.max(80, cam.z), .7, 2);
+        const faceVisible = collectWireFaceVisibility(model, camVerts);
+        drawWireOccluderFaces(ctx, collectWireOccluderFaces(model, camVerts, points, faceVisible));
         ctx.beginPath();
-        for (const [a, b] of model.edges) {
+        for (let edgeIndex = 0; edgeIndex < model.edges.length; edgeIndex++) {
+          if (!wireEdgeVisible(model, edgeIndex, faceVisible)) continue;
+          const [a, b] = model.edges[edgeIndex];
           const pa = points[a], pb = points[b];
           if (!pa || !pb) continue;
           ctx.moveTo(pa.x, pa.y);
@@ -3237,19 +3382,20 @@
       if (game.graphicsMode !== "solid") {
         ctx.strokeStyle = "#d8ded4";
         ctx.lineWidth = clamp(800 / Math.max(110, cam.z), .7, 2);
+        const faceVisible = collectWireFaceVisibility(model, camVerts);
+        drawWireOccluderFaces(ctx, collectWireOccluderFaces(model, camVerts, pts, faceVisible));
         ctx.beginPath();
-        for (const [a, b] of model.edges) {
+        for (let edgeIndex = 0; edgeIndex < model.edges.length; edgeIndex++) {
+          if (!wireEdgeVisible(model, edgeIndex, faceVisible)) continue;
+          const [a, b] = model.edges[edgeIndex];
           if (!pts[a] || !pts[b]) continue;
           ctx.moveTo(pts[a].x, pts[a].y);
           ctx.lineTo(pts[b].x, pts[b].y);
         }
         ctx.stroke();
       }
-      const slotZ = -STATION_SIZE - 1;
-      const slotA = project(add(rotatePoint(vec(-56, -12, slotZ), 0, 0, o.rot), cam), w, h);
-      const slotB = project(add(rotatePoint(vec(56, -12, slotZ), 0, 0, o.rot), cam), w, h);
-      const slotC = project(add(rotatePoint(vec(56, 12, slotZ), 0, 0, o.rot), cam), w, h);
-      const slotD = project(add(rotatePoint(vec(-56, 12, slotZ), 0, 0, o.rot), cam), w, h);
+      const slotVerts = model.verts.slice(-4).map(([x, y, z]) => add(rotatePoint(vec(x, y, z), 0, 0, o.rot), cam));
+      const [slotA, slotB, slotC, slotD] = slotVerts.map((p) => project(p, w, h));
       if (slotA && slotB && slotC && slotD) {
         ctx.strokeStyle = "#ffd33d";
         ctx.beginPath();
@@ -3317,7 +3463,8 @@
         if (o.type === "planet" || o.type === "sun") continue;
         const p = cameraTransform(o.pos, game.camera);
         const sx = cx + clamp(p.x / 1400, -1, 1) * rx;
-        const baseY = cy + clamp(p.z / 1600, -1, 1) * ry;
+        // Camera +Z is forward; the scanner nose points upward, while canvas Y grows down.
+        const baseY = cy - clamp(p.z / 1600, -1, 1) * ry;
         const stick = clamp(-p.y / 900, -1, 1) * ry * .8;
         sctx.strokeStyle = o.hostile ? "#ff4848" : (o.type === "station" || o.type === "hermit") ? "#ffd33d" : "#46dfff";
         sctx.fillStyle = sctx.strokeStyle;
@@ -3596,7 +3743,7 @@
       const model = MODELS.cobra;
       const { yaw, pitch, roll } = shipDiagramState;
       const camVerts = model.verts.map(([x,y,z]) => {
-        const p = rotatePoint(vec(x * 1.5, y * 1.5, z * 1.5), yaw, pitch, roll);
+        const p = rotateShipPoint(vec(x * 1.5, y * 1.5, z * 1.5), yaw, pitch, roll);
         return add(p, tempCam);
       });
       const pts = camVerts.map((p) => {
