@@ -1142,7 +1142,11 @@
         verts: [[32,-48,48],[32,-68,0],[32,-48,-48],[32,0,-68],[32,48,-48],[32,68,0],[32,48,48],[32,0,68],[-24,-116,116],[-24,-164,0],[-24,-116,-116],[-24,0,-164],[-24,116,-116],[-24,164,0],[-24,116,116],[-24,0,164],[-24,64,80],[-24,64,-80],[-24,-64,-80],[-24,-64,80]],
         edges: [[0,7],[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[0,8],[1,9],[2,10],[3,11],[4,12],[5,13],[6,14],[7,15],[8,15],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[16,17],[18,19]],
         edgeFaces: [[4,8],[0,4],[1,4],[2,4],[3,4],[4,5],[4,6],[4,7],[0,8],[0,1],[1,2],[2,3],[3,5],[5,6],[6,7],[7,8],[8,9],[0,9],[1,9],[2,9],[3,9],[5,9],[6,9],[7,9],[9,9],[9,9]],
-        normals: [[103,-60,25],[103,-60,-25],[103,-25,-60],[103,25,-60],[64,0,0],[103,60,-25],[103,60,25],[103,25,60],[103,-25,60],[-48,0,0]]
+        normals: [[103,-60,25],[103,-60,-25],[103,-25,-60],[103,25,-60],[64,0,0],[103,60,-25],[103,60,25],[103,25,60],[103,-25,60],[-48,0,0]],
+        details: [
+          { type: "line", indices: [16,17], color: "#d8ceea", normal: [-1,0,0], width: 1.4, lift: 4 },
+          { type: "line", indices: [18,19], color: "#d8ceea", normal: [-1,0,0], width: 1.4, lift: 4 }
+        ]
       }),
       thargon: buildBlueprint({
         verts: [[-9,0,40],[-9,-38,12],[-9,-24,-32],[-9,24,-32],[-9,38,12],[9,0,-8],[9,-10,-15],[9,-6,-26],[9,6,-26],[9,10,-15]],
@@ -1249,6 +1253,8 @@
       constrictor: "CONSTRICTOR",
       cougar: "COUGAR"
     };
+
+    const SHIP_MODEL_LIST = Object.keys(SHIP_NAMES);
 
     const TRADER_MODELS = ["cobra", "cobra1", "adder", "gecko", "moray", "python", "boa", "anaconda", "shuttle", "transporter", "worm"];
     const PIRATE_MODELS = ["krait", "mamba", "sidewinder", "asp", "ferdelance", "gecko", "adder", "cobra", "constrictor", "cougar"];
@@ -3605,8 +3611,30 @@
       <button class="btn" data-load>Load Commander</button>`;
     }
 
+    function shipRoleLabel(model) {
+      if (POLICE_MODELS.includes(model)) return "Police";
+      if (ALIEN_MODELS.includes(model)) return "Alien";
+      const roles = [];
+      if (TRADER_MODELS.includes(model)) roles.push("Trader");
+      if (PIRATE_MODELS.includes(model)) roles.push("Pirate");
+      return roles.length ? roles.join(" / ") : "—";
+    }
+
     function renderShip() {
+      const browsed = shipDiagramState.model;
+      const stats = shipStats(browsed);
       return `<canvas class="ship-diagram" id="shipDiagram" width="500" height="160"></canvas>
+      <div class="notice" style="display:flex;align-items:center;justify-content:center;gap:12px">
+        <button class="btn mini" data-ship-nav="-1">&lt; Prev</button>
+        <strong>${SHIP_NAMES[browsed]}</strong>
+        <button class="btn mini" data-ship-nav="1">Next &gt;</button>
+      </div>
+      <div class="grid2">
+        ${stat("Role", shipRoleLabel(browsed))}
+        ${stat("Hull HP", Math.round(stats.hp))}
+        ${stat("Speed", `${stats.speed.toFixed(2)}x Cobra`)}
+        ${stat("Radius", Math.round(stats.r))}
+      </div>
       <div class="notice">
         Graphics mode
         <button class="btn mini ${game.graphicsMode === "wire" ? "primary" : ""}" data-graphics="wire">Wire</button>
@@ -3614,7 +3642,7 @@
         <button class="btn mini ${game.graphicsMode === "both" ? "primary" : ""}" data-graphics="both">Both</button>
       </div>
       <div class="grid2">
-        ${stat("Hull", "Cobra Mk III")}
+        ${stat("Your Ship", "Cobra Mk III")}
         ${stat("Mode", graphicsModeLabel(game.graphicsMode))}
         ${stat("Cargo", `${usedCargo()}/${game.cargoCap}t`)}
         ${stat("Laser", laserPower().name)}
@@ -3687,6 +3715,7 @@
         setMessage(`Graphics mode: ${graphicsModeLabel(game.graphicsMode).toLowerCase()}.`);
         renderPanel();
       }));
+      panelBody.querySelectorAll("[data-ship-nav]").forEach((b) => b.addEventListener("click", () => cycleShipDiagram(Number(b.dataset.shipNav))));
       const fuel = panelBody.querySelector("[data-fuel]");
       if (fuel) fuel.addEventListener("click", buyFuel);
       const missile = panelBody.querySelector("[data-missile]");
@@ -3708,7 +3737,13 @@
       }
     }
 
-    const shipDiagramState = { yaw: .6, pitch: .4, roll: .2, dragging: false, lastX: 0, lastY: 0, idleSpeed: .22 };
+    const shipDiagramState = { yaw: .6, pitch: .4, roll: .2, dragging: false, lastX: 0, lastY: 0, idleSpeed: .22, model: "cobra" };
+
+    function cycleShipDiagram(dir) {
+      const i = SHIP_MODEL_LIST.indexOf(shipDiagramState.model);
+      shipDiagramState.model = SHIP_MODEL_LIST[(i + dir + SHIP_MODEL_LIST.length) % SHIP_MODEL_LIST.length];
+      renderPanel();
+    }
 
     function attachShipDiagramDrag(canvas) {
       const st = shipDiagramState;
@@ -3745,25 +3780,32 @@
       c.fillStyle = "#010201";
       c.fillRect(0, 0, canvas.width, canvas.height);
       const tempCam = vec(0, 0, 360);
-      const model = MODELS.cobra;
+      const modelName = shipDiagramState.model;
+      const model = MODELS[modelName];
+      // Ships range from ~38 (worm) to ~254 (anaconda) bounding radius, so every hull is
+      // rescaled to the same apparent size instead of small ships looking like specks and
+      // big ones overflowing the canvas. 201.5 = the Cobra's own radius * the old fixed
+      // 1.5 scale, kept as the calibration target so the Cobra's look is unchanged.
+      const scaleFactor = 201.5 / modelBoundingRadius(model);
       const { yaw, pitch, roll } = shipDiagramState;
       const camVerts = model.verts.map(([x,y,z]) => {
-        const p = rotateShipPoint(vec(x * 1.5, y * 1.5, z * 1.5), yaw, pitch, roll);
+        const p = rotateShipPoint(vec(x * scaleFactor, y * scaleFactor, z * scaleFactor), yaw, pitch, roll);
         return add(p, tempCam);
       });
       const pts = camVerts.map((p) => {
         const f = 320 / p.z;
         return { x: canvas.width / 2 + p.x * f, y: canvas.height / 2 - p.y * f };
       });
-      c.strokeStyle = "#e9f2e4";
+      const hullColor = shipColor(modelName, POLICE_MODELS.includes(modelName));
+      c.strokeStyle = hullColor;
       c.lineWidth = 1.4;
       if (game.graphicsMode !== "wire") {
         const detailProject = (p) => {
           const f = 320 / p.z;
           return { x: canvas.width / 2 + p.x * f, y: canvas.height / 2 - p.y * f };
         };
-        drawSolidItems(c, collectSolidFaces(model, camVerts, pts, "#e9f2e4"));
-        drawSolidItems(c, collectSolidDetails(model, { rot: yaw, pitch, roll, cam: tempCam, project: detailProject }, camVerts, pts, canvas.width, canvas.height, 1.5));
+        drawSolidItems(c, collectSolidFaces(model, camVerts, pts, hullColor));
+        drawSolidItems(c, collectSolidDetails(model, { rot: yaw, pitch, roll, cam: tempCam, project: detailProject }, camVerts, pts, canvas.width, canvas.height, scaleFactor));
       }
       if (game.graphicsMode !== "solid") {
         c.beginPath();
@@ -3773,9 +3815,9 @@
         }
         c.stroke();
       }
-      c.fillStyle = "#65ff47";
+      c.fillStyle = hullColor;
       c.font = "13px monospace";
-      c.fillText("COBRA MK III", 14, 22);
+      c.fillText(SHIP_NAMES[modelName], 14, 22);
     }
 
     function updateReadouts() {
