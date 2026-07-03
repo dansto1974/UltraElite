@@ -944,7 +944,6 @@
         model.edges.forEach((edge, edgeIndex) => {
           const ef = model.edgeFaces[edgeIndex];
           if (ef[0] === ef[1]) return;
-          if (model.edgeVisibility && model.edgeVisibility[edgeIndex] < (model.hullVisibility || 29)) return;
           if (ef.includes(faceIndex)) {
             ids.add(edge[0]);
             ids.add(edge[1]);
