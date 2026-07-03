@@ -874,6 +874,16 @@
       return quatRotate(quatConj(ensureCameraQuat(camera)), p);
     }
 
+    // A ship's own rot/pitch/roll is a world-frame orientation (unaffected by the
+    // player's own turning), but rendering combines its rotated model verts with a
+    // camera-space position. Any world-frame direction has to pass through this
+    // same camera-conjugate rotation before that combination is valid — otherwise
+    // every other object's rendered attitude stays screen-locked instead of
+    // world-fixed, i.e. it visibly spins in lockstep whenever the player turns.
+    function worldDirToCam(dir) {
+      return quatRotate(quatConj(ensureCameraQuat(game.camera)), dir);
+    }
+
     function forwardVector(camera) {
       return quatRotate(ensureCameraQuat(camera), vec(0, 0, 1));
     }
@@ -2720,11 +2730,11 @@
       const details = [];
       for (const detail of model.details) {
         const normal = detail.normal
-          ? norm(rotateShipPoint(vec(detail.normal[0], detail.normal[1], detail.normal[2]), o.rot || 0, o.pitch || 0, roll))
+          ? worldDirToCam(norm(rotateShipPoint(vec(detail.normal[0], detail.normal[1], detail.normal[2]), o.rot || 0, o.pitch || 0, roll)))
           : null;
         const vertsOnSurface = detail.indices
           ? detail.indices.map((i) => camVerts[i])
-          : detail.points.map(([x, y, z]) => add(rotateShipPoint(vec(x * scaleFactor, y * scaleFactor, z * scaleFactor), o.rot || 0, o.pitch || 0, roll), o.cam || vec()));
+          : detail.points.map(([x, y, z]) => add(worldDirToCam(rotateShipPoint(vec(x * scaleFactor, y * scaleFactor, z * scaleFactor), o.rot || 0, o.pitch || 0, roll)), o.cam || vec()));
         const isLineDetail = detail.type === "line" || detail.type === "polyline";
         if (vertsOnSurface.length < (isLineDetail ? 2 : 3)) continue;
         const surfaceCenter = scale(vertsOnSurface.reduce((sum, p) => add(sum, p), vec()), 1 / vertsOnSurface.length);
@@ -3342,7 +3352,7 @@
     function drawWireModel(model, o, cam, w, h) {
       const roll = o.roll ?? (o.rot || 0) * .7;
       const camVerts = model.verts.map(([x, y, z]) => {
-        let p = rotateShipPoint(vec(x, y, z), o.rot || 0, o.pitch || 0, roll);
+        let p = worldDirToCam(rotateShipPoint(vec(x, y, z), o.rot || 0, o.pitch || 0, roll));
         return add(p, cam);
       });
       const points = camVerts.map((p) => project(p, w, h));
@@ -3376,7 +3386,7 @@
 
     function drawStation(o, cam, w, h) {
       const model = o.model === "dodoStation" ? MODELS.dodoStation : STATION_MODEL;
-      const camVerts = model.verts.map(([x, y, z]) => add(rotatePoint(vec(x, y, z), 0, 0, o.rot), cam));
+      const camVerts = model.verts.map(([x, y, z]) => add(worldDirToCam(rotatePoint(vec(x, y, z), 0, 0, o.rot)), cam));
       const pts = camVerts.map((p) => project(p, w, h));
       drawSolidFaces(model, camVerts, pts, "#d8ded4");
       if (game.graphicsMode !== "solid") {
@@ -3394,7 +3404,7 @@
         }
         ctx.stroke();
       }
-      const slotVerts = model.verts.slice(-4).map(([x, y, z]) => add(rotatePoint(vec(x, y, z), 0, 0, o.rot), cam));
+      const slotVerts = model.verts.slice(-4).map(([x, y, z]) => add(worldDirToCam(rotatePoint(vec(x, y, z), 0, 0, o.rot)), cam));
       const [slotA, slotB, slotC, slotD] = slotVerts.map((p) => project(p, w, h));
       if (slotA && slotB && slotC && slotD) {
         ctx.strokeStyle = "#ffd33d";
