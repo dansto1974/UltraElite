@@ -635,6 +635,7 @@
           <div class="center">
             <div id="roView">DOCKED</div>
             <div id="pitchTape">-40 &nbsp;&nbsp; -20 &nbsp;&nbsp; 0 &nbsp;&nbsp; +20 &nbsp;&nbsp; +40</div>
+            <div id="roLockDist">LOCK --</div>
           </div>
           <div class="right">
             <div>TARGET <span id="roTarget">NONE</span></div>
@@ -1648,15 +1649,14 @@
       const types = police ? POLICE_MODELS : hostile ? PIRATE_MODELS : TRADER_MODELS;
       const model = types[Math.floor(rng() * types.length)];
       const stats = shipStats(model);
-      const dist = 900 + rng() * 1500;
-      const orbitCenter = vec((rng() - .5) * 420, (rng() - .5) * 260, 850 + rng() * 900);
       const orbitRadius = 220 + rng() * 520;
+      const orbitCenter = randomPointClearOfStation(rng, orbitRadius + stats.r + 320, 500);
       const orbitAngle = rng() * TAU;
       const o = {
         type: "ship",
         model,
         name: police ? "VIPER POLICE" : `${hostile ? "PIRATE" : "TRADER"} ${shipName(model)}`,
-        pos: vec((rng() - .5) * 1200, (rng() - .5) * 700, dist),
+        pos: randomPointClearOfStation(rng, stats.r + 300, 1800),
         vel: vec((rng() - .5) * 36, (rng() - .5) * 24, -18 - rng() * 34),
         rot: rng() * TAU,
         pitch: rng() * TAU,
@@ -1846,6 +1846,27 @@
     function nearStationSafeZone() {
       const st = game.objects.find((o) => o.type === "station" || o.type === "hermit");
       return !!st && len(sub(st.pos, game.camera.pos)) < 900;
+    }
+
+    // The station's own true visual size (~226-247, see modelBoundingRadius) is
+    // considerably bigger than ambient traffic's spawn/orbit/cruise distances were ever
+    // tuned for, so anything steering toward or orbiting "the station" needs to reason
+    // about its actual bulk, not just its point position, or ships fly straight through
+    // the hull. Falls back to the Coriolis radius if no station is in the scene yet.
+    function stationClearanceRadius() {
+      const st = game.objects.find((o) => o.type === "station");
+      const model = st && st.model === "dodoStation" ? MODELS.dodoStation : STATION_MODEL;
+      return modelBoundingRadius(model);
+    }
+
+    // A random point at least minDist clear of the station's hull (plus a further random
+    // spread), used so ambient ship spawn/orbit positions can never land inside it.
+    function randomPointClearOfStation(rng, minDist, spread) {
+      const station = game.objects.find((o) => o.type === "station");
+      const stationPos = station ? station.pos : vec(0, 0, 900);
+      const dir = norm(vec(rng() - .5, (rng() - .5) * .6, rng() - .5));
+      const dist = stationClearanceRadius() + minDist + rng() * spread;
+      return add(stationPos, scale(dir, dist));
     }
 
     function spawnPoliceResponse() {
@@ -2277,7 +2298,7 @@
         }
         for (const o of game.objects) {
           if (o.type === "station" || o.type === "hermit") updateStation(o, dt);
-          else if (o.type === "ship") updateShipAI(o, dt);
+          else if (o.type === "ship") { updateShipAI(o, dt); clampOutsideStation(o); }
           else if (o.type === "planet") o.rot = (o.rot || 0) + dt * (o.rotSpeed || .06);
           else if (o.type === "missile") updateMissile(o, dt);
           else if (o.type === "asteroid" || o.type === "boulder" || o.type === "splinter") {
@@ -2294,7 +2315,11 @@
         }
         game.objects = game.objects.filter((o) => {
           const d = len(sub(o.pos, game.camera.pos));
-          return o.type !== "ship" || d < 6500;
+          // A typical ship (r ~70-90) still projects to several px on screen well past
+          // 6500 units at this engine's FOV/projection scale, so the old cull distance
+          // made ships vanish while still clearly visible rather than fading into the
+          // distance. 12000 keeps them around until they're a small, unobtrusive dot.
+          return o.type !== "ship" || d < 12000;
         });
         if (Math.random() < dt * .035 && game.objects.filter((o) => o.type === "ship").length < 7) {
           spawnShip(Math.random, Math.random() > (currentSystem().government / 9 + .25));
@@ -2510,7 +2535,41 @@
       if (game.energy <= 0) destroyPlayer(o.name);
     }
 
+    // A hard override on top of whatever a ship's aiMode steering wants: other terms
+    // (fleeing the player, dogfighting a target, even the cruise/orbit standoff logic
+    // itself under some geometries) can still add up to point a ship at the station, so
+    // this pushes back the moment any ship gets within its hull + a margin, regardless
+    // of mode. Zero outside that zone, so it's a no-op for the vast majority of frames.
+    function stationAvoidance(pos, shipR) {
+      const station = game.objects.find((x) => x.type === "station");
+      if (!station) return vec();
+      const toShip = sub(pos, station.pos);
+      const dist = len(toShip);
+      const safeDist = stationClearanceRadius() + shipR + 200;
+      if (dist >= safeDist) return vec();
+      const away = dist > 1 ? scale(toShip, 1 / dist) : vec(0, 1, 0);
+      return scale(away, (safeDist - dist) * 3);
+    }
+
+    // stationAvoidance steers a ship away from the station, but turn-rate/momentum limits
+    // mean a fast ship already aimed at the station when it enters the safe zone can't
+    // always turn away before its next few frames of forward motion would carry it inside
+    // the hull. This is the hard guarantee: after movement, snap the position back out to
+    // the hull + margin if it ended up closer, so no ship ever visually renders inside the
+    // station regardless of how its steering got there.
+    function clampOutsideStation(o) {
+      const station = game.objects.find((x) => x.type === "station");
+      if (!station) return;
+      const toShip = sub(o.pos, station.pos);
+      const dist = len(toShip);
+      const minDist = stationClearanceRadius() + (o.r || 60);
+      if (dist >= minDist) return;
+      const away = dist > 1 ? scale(toShip, 1 / dist) : vec(0, 1, 0);
+      o.pos = add(station.pos, scale(away, minDist));
+    }
+
     function updateShipAI(o, dt) {
+      const avoidStation = stationAvoidance(o.pos, o.r || 60);
       if (o.hostile) {
         const stale = o.target && (o.target.hp <= 0 || !game.objects.includes(o.target) || len(sub(o.target.pos, o.pos)) > 2200);
         if (o.target === undefined || stale) assignHostileTarget(o);
@@ -2529,7 +2588,7 @@
         const away = norm(sub(o.pos, from));
         const jink = vec(Math.sin(performance.now() / 650 + (o.wobble || 0)) * 90, Math.cos(performance.now() / 800 + (o.wobble || 0)) * 60, 0);
         const speedMul = shipStats(o.model).speed || 1;
-        steerVelocity(o, add(scale(away, 300), jink), dt, 135, 150 * speedMul);
+        steerVelocity(o, add(add(scale(away, 300), jink), avoidStation), dt, 135, 150 * speedMul);
         if (len(sub(o.pos, from)) > 2600) game.objects = game.objects.filter((x) => x !== o);
         return;
       }
@@ -2565,7 +2624,7 @@
           desired = sub(lead, o.pos);
         }
         const speedMul = shipStats(o.model).speed || 1;
-        steerVelocity(o, desired, dt, o.thargoid ? 150 : 115, (o.thargoid ? 150 : 128) * speedMul);
+        steerVelocity(o, add(desired, avoidStation), dt, o.thargoid ? 150 : 115, (o.thargoid ? 150 : 128) * speedMul);
         o.attackClock -= dt;
         if (o.attackClock <= 0 && d > 130 && d < 900) {
           o.attackClock = 1.3 + Math.random() * 1.5;
@@ -2589,7 +2648,7 @@
           Math.sin(o.orbitAngle * .9) * ((o.orbitRadius || 300) * .42) + (o.formationY || 0) * .2,
           Math.sin(o.orbitAngle) * (o.orbitRadius || 300) * .45 + ((o.formationZ || 900) - 900) * .25
         ));
-        steerVelocity(o, sub(target, o.pos), dt, 110, 115 * speedMul);
+        steerVelocity(o, add(sub(target, o.pos), avoidStation), dt, 110, 115 * speedMul);
       } else if (o.aiMode === "orbit") {
         o.orbitAngle += (o.orbitSpeed || .18) * dt;
         const speedMul = shipStats(o.model).speed || 1;
@@ -2599,13 +2658,24 @@
           Math.sin(o.orbitAngle * 1.3 + (o.wobble || 0)) * 90,
           Math.sin(o.orbitAngle) * (o.orbitRadius || 360) * .7
         ));
-        steerVelocity(o, sub(target, o.pos), dt, 85, 95 * speedMul);
+        steerVelocity(o, add(sub(target, o.pos), avoidStation), dt, 85, 95 * speedMul);
       } else {
         const speedMul = shipStats(o.model).speed || 1;
         const station = game.objects.find((x) => x.type === "station");
         const center = station ? station.pos : vec();
+        // Cruising ships used to steer straight at the station's exact position with only
+        // a small +-160/220 wobble, which lands well inside its real ~226-247 unit hull, so
+        // they flew straight through it. Loiter around a slowly-drifting point on a safe
+        // standoff ring clear of the hull instead.
+        const standoff = stationClearanceRadius() + 420;
+        const loiterAngle = performance.now() / 5000 + (o.wobble || 0);
+        const loiterPoint = add(center, vec(
+          Math.cos(loiterAngle) * standoff,
+          Math.sin(loiterAngle * .7) * standoff * .3,
+          Math.sin(loiterAngle) * standoff
+        ));
         const away = d < 360 ? scale(norm(sub(o.pos, game.camera.pos)), 360 - d) : vec();
-        const cruise = add(sub(center, o.pos), add(away, vec(Math.sin(performance.now() / 900 + (o.wobble || 0)) * 160, 0, 220)));
+        const cruise = add(add(sub(loiterPoint, o.pos), away), avoidStation);
         steerVelocity(o, cruise, dt, 55, 82 * speedMul);
       }
     }
@@ -3830,6 +3900,9 @@
       byId("roSystem").textContent = sys.name;
       byId("roDistance").textContent = `${fmt(distance(sys, target))} LY`;
       byId("roView").textContent = game.docked ? "DOCKED" : game.witchspace ? "WITCH-SPACE" : "FRONT VIEW";
+      byId("roLockDist").textContent = (game.targetObject && game.objects.includes(game.targetObject))
+        ? `LOCK ${game.targetObject.name} ${Math.round(len(sub(game.targetObject.pos, game.camera.pos)))}m`
+        : "LOCK --";
       byId("barEnergy").style.width = `${clamp(game.energy, 0, 100)}%`;
       byId("barShields").style.width = `${clamp(game.shields, 0, 100)}%`;
       byId("barFuel").style.width = `${game.fuel / 7 * 100}%`;
