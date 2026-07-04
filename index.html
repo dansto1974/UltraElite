@@ -1142,8 +1142,8 @@
         edgeFaces: [[4,8],[0,4],[1,4],[2,4],[3,4],[4,5],[4,6],[4,7],[0,8],[0,1],[1,2],[2,3],[3,5],[5,6],[6,7],[7,8],[8,9],[0,9],[1,9],[2,9],[3,9],[5,9],[6,9],[7,9],[9,9],[9,9]],
         normals: [[103,-60,25],[103,-60,-25],[103,-25,-60],[103,25,-60],[64,0,0],[103,60,-25],[103,60,25],[103,25,60],[103,-25,60],[-48,0,0]],
         details: [
-          { type: "line", indices: [16,17], color: "#d8ceea", normal: [-1,0,0], width: 1.4, lift: 4 },
-          { type: "line", indices: [18,19], color: "#d8ceea", normal: [-1,0,0], width: 1.4, lift: 4 }
+          { type: "line", indices: [16,17], color: "#f7fff7", normal: [-1,0,0], width: 2, lift: 4 },
+          { type: "line", indices: [18,19], color: "#f7fff7", normal: [-1,0,0], width: 2, lift: 4 }
         ]
       }),
       thargon: buildBlueprint({
@@ -3546,7 +3546,10 @@
         drawSolidItems(ctx, collectSolidDetails(model, { ...o, cam }, camVerts, points, w, h));
       }
       if (mode !== "solid") {
-        ctx.strokeStyle = o.color || "#e9f2e4";
+        // In "both" mode the fill already carries the ship's colour/lighting, so the
+        // edge overlay reads as construction lines rather than a second bright outline —
+        // dark grey instead of the hull colour used in pure wire mode.
+        ctx.strokeStyle = mode === "both" ? "#3d3d3d" : (o.color || "#e9f2e4");
         ctx.lineWidth = clamp(680 / Math.max(80, cam.z), .7, 2);
         const faceVisible = collectWireFaceVisibility(model, camVerts);
         ctx.beginPath();
@@ -3580,7 +3583,7 @@
         drawSolidFaces(model, camVerts, pts, "#d8ded4");
       }
       if (mode !== "solid") {
-        ctx.strokeStyle = "#d8ded4";
+        ctx.strokeStyle = mode === "both" ? "#3d3d3d" : "#d8ded4";
         ctx.lineWidth = clamp(800 / Math.max(110, cam.z), .7, 2);
         const faceVisible = collectWireFaceVisibility(model, camVerts);
         ctx.beginPath();
@@ -4012,7 +4015,7 @@
         drawSolidItems(c, collectSolidDetails(model, { rot: yaw, pitch, roll, cam: tempCam, project: detailProject }, camVerts, pts, canvas.width, canvas.height, scaleFactor, identityCamera));
       }
       if (mode !== "solid") {
-        c.strokeStyle = hullColor;
+        c.strokeStyle = mode === "both" ? "#3d3d3d" : hullColor;
         c.lineWidth = 1.4;
         const faceVisible = collectWireFaceVisibility(model, camVerts);
         c.beginPath();
