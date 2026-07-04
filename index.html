@@ -2495,9 +2495,14 @@
         for (const star of game.stars) {
           const rel = cameraTransform(star, game.camera);
           if (rel.z < -1200 || rel.z > 3000 || Math.abs(rel.x) > 2600 || Math.abs(rel.y) > 1500) {
-            star.x = game.camera.pos.x + (Math.random() - .5) * 3200;
-            star.y = game.camera.pos.y + (Math.random() - .5) * 1800;
-            star.z = game.camera.pos.z + 2400 + Math.random() * 1400;
+            // Recycle relative to where the camera is actually facing (camera-local +Z),
+            // not a fixed world-space +Z offset - otherwise turning away from the initial
+            // orientation places new stars outside the view frustum and the field thins
+            // out over time instead of replenishing ahead of the ship.
+            const p = cameraLocalToWorld(game.camera, vec((Math.random() - .5) * 3200, (Math.random() - .5) * 1800, 2400 + Math.random() * 1400));
+            star.x = p.x;
+            star.y = p.y;
+            star.z = p.z;
           }
         }
         for (const o of game.objects) {
@@ -3350,7 +3355,12 @@
         if (!pr || pr.x < 0 || pr.y < 0 || pr.x > w || pr.y > h) continue;
         const r = clamp((star.size || 1.3) - p.z / 3200, .4, 1.9);
         const twinkle = .82 + Math.sin(performance.now() / 260 + (star.tw || 0)) * .18;
-        const color = game.witchspace ? "#8d5cff" : star.sat ? `hsl(${star.hue}, ${star.sat}%, 92%)` : "#e9f2e4";
+        const colorAt = game.witchspace
+          ? (a) => `rgba(141,92,255,${a})`
+          : star.sat
+            ? (a) => `hsla(${star.hue}, ${star.sat}%, 92%, ${a})`
+            : (a) => `rgba(233,242,228,${a})`;
+        const alpha = clamp(1.68 - p.z / 3000, .3, 1) * twinkle;
         const closeness = clamp(1 - p.z / 2600, .15, 1);
         // Streaks radiate from the screen's vanishing point (where the camera is heading), so
         // near/central dust appears to rush past fastest - the classic "sensation of movement"
@@ -3359,14 +3369,18 @@
         const dx = pr.x - cx, dy = pr.y - cy;
         const dist = Math.hypot(dx, dy) || 1;
         const dirX = dx / dist, dirY = dy / dist;
-        ctx.strokeStyle = color;
-        ctx.fillStyle = color;
-        ctx.shadowColor = color;
+        const tailX = pr.x - dirX * streak, tailY = pr.y - dirY * streak;
+        // The tail fades to fully transparent rather than stroking a flat-alpha line, so a
+        // streaking dust mote reads as trailing off behind it instead of a hard-edged rod.
+        const grad = ctx.createLinearGradient(tailX, tailY, pr.x, pr.y);
+        grad.addColorStop(0, colorAt(0));
+        grad.addColorStop(1, colorAt(alpha));
+        ctx.strokeStyle = grad;
+        ctx.shadowColor = colorAt(alpha);
         ctx.shadowBlur = r * 2.2;
-        ctx.globalAlpha = clamp(1.68 - p.z / 3000, .3, 1) * twinkle;
         ctx.lineWidth = r;
         ctx.beginPath();
-        ctx.moveTo(pr.x - dirX * streak, pr.y - dirY * streak);
+        ctx.moveTo(tailX, tailY);
         ctx.lineTo(pr.x, pr.y);
         ctx.stroke();
       }
