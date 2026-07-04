@@ -668,18 +668,15 @@
 
     <section class="dashboard" aria-label="Ship dashboard">
       <div class="dash-section">
-        <h2 class="dash-title">Condition</h2>
         <div class="bar-row"><span>Energy</span><div class="bar"><div class="fill" id="barEnergy"></div></div><span id="txtEnergy">100%</span></div>
         <div class="bar-row"><span>Shields</span><div class="bar"><div class="fill cyan" id="barShields"></div></div><span id="txtShields">100%</span></div>
         <div class="bar-row"><span>Fuel</span><div class="bar"><div class="fill" id="barFuel"></div></div><span id="txtFuel">7.0</span></div>
-        <div class="row"><span class="label">Speed</span><span class="value" id="txtSpeed">0</span></div>
+        <div class="bar-row"><span>Speed</span><div class="bar"><div class="fill" id="barSpeed"></div></div><span id="txtSpeed">0</span></div>
       </div>
       <div class="dash-section">
-        <h2 class="dash-title">3D Scanner</h2>
         <div class="scanner-wrap"><canvas id="scanner" width="520" height="104"></canvas></div>
       </div>
       <div class="dash-section">
-        <h2 class="dash-title">Weapons</h2>
         <div class="row"><span class="label">Laser</span><span class="value" id="txtLaser">Pulse</span></div>
         <div class="row"><span class="label">Missiles</span><span class="value" id="txtMissiles">1</span></div>
         <div class="row"><span class="label">ECM</span><span class="value" id="txtEcm">No</span></div>
@@ -3150,26 +3147,30 @@
         if (apparentR < 16 || pr.x < -60 || pr.x > w + 60 || pr.y < -30 || pr.y > h + 30) continue;
 
         const status = shipStatus(o);
+        const distText = `${Math.round(len(sub(o.pos, game.camera.pos)))}m`;
         const labelY = pr.y - apparentR - 10;
         const barW = 46;
         ctx.font = "11px monospace";
         const nameW = ctx.measureText(o.name).width;
         ctx.font = "9px monospace";
         const statusW = ctx.measureText(status.text).width;
-        const boxW = Math.max(nameW, statusW, barW) + 10;
+        const distW = ctx.measureText(distText).width;
+        const boxW = Math.max(nameW, statusW, distW, barW) + 10;
 
         ctx.fillStyle = "rgba(3,8,3,.55)";
-        ctx.fillRect(pr.x - boxW / 2, labelY - 30, boxW, 34);
+        ctx.fillRect(pr.x - boxW / 2, labelY - 40, boxW, 44);
         ctx.strokeStyle = "rgba(101,255,71,.25)";
         ctx.lineWidth = 1;
-        ctx.strokeRect(pr.x - boxW / 2, labelY - 30, boxW, 34);
+        ctx.strokeRect(pr.x - boxW / 2, labelY - 40, boxW, 44);
 
         ctx.fillStyle = "#cfe9c8";
         ctx.font = "11px monospace";
-        ctx.fillText(o.name, pr.x, labelY - 17);
+        ctx.fillText(o.name, pr.x, labelY - 27);
         ctx.fillStyle = status.color;
         ctx.font = "9px monospace";
-        ctx.fillText(status.text, pr.x, labelY - 5);
+        ctx.fillText(status.text, pr.x, labelY - 16);
+        ctx.fillStyle = "#91a78d";
+        ctx.fillText(distText, pr.x, labelY - 5);
 
         const hpFrac = clamp((o.hp ?? 1) / (o.maxHp || o.hp || 1), 0, 1);
         const hpColor = hpFrac > .5 ? "#65ff47" : hpFrac > .22 ? "#ffd33d" : "#ff6a55";
@@ -4042,6 +4043,7 @@
       byId("barEnergy").style.width = `${clamp(game.energy, 0, 100)}%`;
       byId("barShields").style.width = `${clamp(game.shields, 0, 100)}%`;
       byId("barFuel").style.width = `${game.fuel / 7 * 100}%`;
+      byId("barSpeed").style.width = `${clamp(game.speed / game.maxSpeed, 0, 1) * 100}%`;
       byId("txtEnergy").textContent = `${Math.round(game.energy)}%`;
       byId("txtShields").textContent = `${Math.round(game.shields)}%`;
       byId("txtFuel").textContent = fmt(game.fuel);
