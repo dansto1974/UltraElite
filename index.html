@@ -1581,6 +1581,7 @@
       panel: "market",
       mapMode: "galaxy",
       graphicsMode: "wire",
+      showShipLabels: true,
       camera: makeCamera(-850),
       objects: [],
       stars: [],
@@ -3199,7 +3200,7 @@
       for (const item of visible) drawObject(item.o, item.p, w, h);
       drawExplosions(w, h);
       drawEnemyShots(w, h);
-      drawShipLabels(w, h);
+      if (game.showShipLabels) drawShipLabels(w, h);
       if (!game.docked && game.playerShot && performance.now() - game.lastShot < 85) {
         let endX = w / 2, endY = h / 2;
         if (game.playerShot.to) {
@@ -3876,6 +3877,7 @@
       <div class="row"><span class="label"><span class="kbd">B</span></span><span class="value">Energy bomb</span></div>
       <div class="row"><span class="label"><span class="kbd">T</span></span><span class="value">Target nearest</span></div>
       <div class="row"><span class="label"><span class="kbd">G</span></span><span class="value">Graphics mode</span></div>
+      <div class="row"><span class="label"><span class="kbd">L</span></span><span class="value">Toggle ship labels</span></div>
       <div class="row"><span class="label"><span class="kbd">R</span></span><span class="value">Deploy test armada</span></div>
       <div class="row"><span class="label"><span class="kbd">J</span></span><span class="value">Hyperspace</span></div>
       <div class="row"><span class="label"><span class="kbd">O</span></span><span class="value">Dock attempt</span></div>
@@ -4085,6 +4087,10 @@
         game.graphicsMode = { wire: "solid", solid: "both", both: "wire" }[game.graphicsMode];
         setMessage(`Graphics mode: ${graphicsModeLabel(game.graphicsMode).toLowerCase()}.`);
         if (game.panel === "ship") renderPanel();
+      }
+      if (e.code === "KeyL") {
+        game.showShipLabels = !game.showShipLabels;
+        setMessage(`Ship labels: ${game.showShipLabels ? "on" : "off"}.`);
       }
       if (e.code === "Digit1") { game.panel = "market"; renderPanel(); }
       if (e.code === "Digit2") { game.panel = "chart"; renderPanel(); }
