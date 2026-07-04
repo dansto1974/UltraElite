@@ -2838,6 +2838,7 @@
       applyPlayerShipStats();
       game.shields = 100;
       game.energy = 100;
+      shipDiagramState.model = model;
       setMessage(`Cheat: ship changed to ${shipName(model)}.`);
       renderPanel();
     }
@@ -2905,6 +2906,7 @@
       game.transition = null;
       game.autoDock = false;
       game.witchspace = false;
+      shipDiagramState.model = playerShipModel();
     }
 
     function saveGame() {
