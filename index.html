@@ -4202,11 +4202,16 @@
           return;
         }
         const facing = clamp(cameraFacing, 0, 1);
-        const lit = clamp(.18 + Math.max(0, dot(n, starLightDirection(center))) * .58 + facing * .18, .16, .92);
+        // Strongly sun-driven so every object has a distinct dark side: a low ambient
+        // floor plus a wide Lambert term, and only a whisper of camera-facing fill so
+        // the shadow terminator isn't washed out on faces pointing at the viewer.
+        const lit = clamp(.12 + Math.max(0, dot(n, starLightDirection(center))) * .82 + facing * .05, .1, .95);
         const grain = Math.abs(Math.sin(center.x * .037 + center.y * .071 + center.z * .043 + face.length * 1.7));
         faces.push({
           kind: "poly",
           projected,
+          camVerts: verts,
+          project: options.project || null,
           uv: model.faceUV && model.faceUV[faceIndex],
           decalUV: model.decalUV && model.decalUV[faceIndex],
           avgZ,
@@ -5018,11 +5023,74 @@
       targetCtx.restore();
     }
 
+    // Canvas can only affine-map (linear) a texture across a triangle, which can't
+    // represent perspective foreshortening — on a large near face (esp. the station)
+    // the linear stretch visibly shifts as the face rotates, reading as the texture
+    // "swimming" / staying locked to the viewer's turn. Fix: subdivide each fan
+    // triangle in camera space until every sub-triangle is small on screen, so its
+    // affine error is negligible. UV is affine in object space and object->camera is
+    // rigid, so UV interpolates linearly right alongside the camera-space midpoints.
+    const TEX_SUBDIV_PX = 48;
+    function texEdgeLen(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+    function texMid(a, b, projectFn) {
+      const cam = scale(add(a.cam, b.cam), .5);
+      const p = projectFn(cam);
+      return p ? { cam, u: (a.u + b.u) / 2, v: (a.v + b.v) / 2, x: p.x, y: p.y } : null;
+    }
+    function subdivideTexTri(targetCtx, img, A, B, C, projectFn, depth) {
+      const ab = texEdgeLen(A, B), bc = texEdgeLen(B, C), ca = texEdgeLen(C, A);
+      const longest = Math.max(ab, bc, ca);
+      if (depth >= 5 || longest < TEX_SUBDIV_PX) {
+        drawTexturedTriangle(targetCtx, img, A.x, A.y, B.x, B.y, C.x, C.y, A.u, A.v, B.u, B.v, C.u, C.v);
+        return;
+      }
+      let m;
+      if (ab >= bc && ab >= ca) {
+        m = texMid(A, B, projectFn);
+        if (!m) return drawTexturedTriangle(targetCtx, img, A.x, A.y, B.x, B.y, C.x, C.y, A.u, A.v, B.u, B.v, C.u, C.v);
+        subdivideTexTri(targetCtx, img, A, m, C, projectFn, depth + 1);
+        subdivideTexTri(targetCtx, img, m, B, C, projectFn, depth + 1);
+      } else if (bc >= ab && bc >= ca) {
+        m = texMid(B, C, projectFn);
+        if (!m) return drawTexturedTriangle(targetCtx, img, A.x, A.y, B.x, B.y, C.x, C.y, A.u, A.v, B.u, B.v, C.u, C.v);
+        subdivideTexTri(targetCtx, img, A, B, m, projectFn, depth + 1);
+        subdivideTexTri(targetCtx, img, A, m, C, projectFn, depth + 1);
+      } else {
+        m = texMid(C, A, projectFn);
+        if (!m) return drawTexturedTriangle(targetCtx, img, A.x, A.y, B.x, B.y, C.x, C.y, A.u, A.v, B.u, B.v, C.u, C.v);
+        subdivideTexTri(targetCtx, img, A, B, m, projectFn, depth + 1);
+        subdivideTexTri(targetCtx, img, B, C, m, projectFn, depth + 1);
+      }
+    }
+    function drawUVLayerPersp(targetCtx, item, img, alpha) {
+      const projectFn = item.project, camV = item.camVerts, uv = item.uv;
+      const off = img.width / 2;
+      targetCtx.save();
+      targetCtx.globalCompositeOperation = "multiply";
+      targetCtx.globalAlpha = alpha;
+      const mk = (i) => {
+        const p = projectFn(camV[i]);
+        return p ? { cam: camV[i], u: uv[i][0] + off, v: uv[i][1] + off, x: p.x, y: p.y } : null;
+      };
+      for (let i = 1; i + 1 < camV.length; i++) {
+        const A = mk(0), B = mk(i), C = mk(i + 1);
+        if (A && B && C) subdivideTexTri(targetCtx, img, A, B, C, projectFn, 0);
+      }
+      targetCtx.restore();
+    }
+
     function drawFaceTexture(targetCtx, item) {
       if (game.fxLevel === "classic") return;
       const b = polygonBounds(item.projected);
       if ((b.maxX - b.minX) * (b.maxY - b.minY) < 500) return;
-      drawUVLayer(targetCtx, item, item.texture || getHullTexture(), item.metalAlpha ?? .3);
+      const img = item.texture || getHullTexture();
+      // Perspective-correct subdivided path when the projector + camera-space verts are
+      // available (main flight view); otherwise the plain affine fan (ship diagram etc).
+      if (item.project && item.camVerts && item.uv) {
+        drawUVLayerPersp(targetCtx, item, img, item.metalAlpha ?? .3);
+      } else {
+        drawUVLayer(targetCtx, item, img, item.metalAlpha ?? .3);
+      }
       // Decal stripes use continuous object-space UVs, while metal keeps local face UVs.
       if (item.decal) drawUVLayer(targetCtx, item, item.decal, .86, item.decalUV, false);
     }
@@ -5892,6 +5960,17 @@
     // per-point 3D positions through the normal cameraTransform/project pipeline (like
     // every other object) fixes that, and lets front/back occlusion be a genuine depth
     // test instead of a guessed screen-space angle range.
+    // A ring point is eclipsed when it sits on the anti-sun side of the planet AND within
+    // the planet's shadow cylinder (perpendicular distance from the planet-sun axis under
+    // the planet radius) — the same geometry that casts a real shadow band across a ring.
+    function ringPointInPlanetShadow(offset, sunDir, planetR) {
+      if (!sunDir) return false;
+      const along = dot(offset, sunDir);
+      if (along >= 0) return false;
+      const perp = sub(offset, scale(sunDir, along));
+      return len(perp) < planetR;
+    }
+
     function drawPlanetRing(o, r, hue, w, h, front) {
       if (!o._ringBasis) {
         const axis = o.rotAxis || vec(0, 1, 0);
@@ -5904,6 +5983,8 @@
       }
       const { u, v } = o._ringBasis;
       const viewDir = norm(sub(game.camera.pos, o.pos));
+      const sun = game.objects.find((s) => s.type === "sun");
+      const sunDir = sun ? norm(sub(sun.pos, o.pos)) : null;
       const solid = game.graphicsMode !== "wire";
       const rng = mulberry((o.textureSeed || 1) ^ 0x51f15e);
       const debris = !!o.debrisRing;
@@ -5919,10 +6000,15 @@
         const bandHue = debris ? 34 + rng() * 18 : hue - 18 + rng() * 14;
         const bandSat = debris ? 8 + rng() * 14 : (solid ? 26 + rng() * 18 : 38);
         const bandLight = debris ? 22 + rng() * 22 : light;
-        ctx.strokeStyle = `hsla(${bandHue}, ${bandSat}%, ${bandLight}%, ${(solid ? (debris ? .42 : .34) : .26) * dusty})`;
+        const baseAlpha = (solid ? (debris ? .42 : .34) : .26) * dusty;
+        const litStyle = `hsla(${bandHue}, ${bandSat}%, ${bandLight}%, ${baseAlpha})`;
+        // Eclipsed arc: desaturated, much darker version of the same band colour.
+        const shadowStyle = `hsla(${bandHue}, ${Math.round(bandSat * .5)}%, ${Math.round(bandLight * .24)}%, ${baseAlpha})`;
         ctx.lineWidth = Math.max(1, r * (solid ? (debris ? (.008 + rng() * .024) : (.012 + rng() * .018)) : .028));
-        ctx.beginPath();
-        let drawing = false;
+        // The band is one path per lit/shadowed run: strokeStyle can't vary within a
+        // stroke, so the current run is flushed whenever it's clipped by a gap, the
+        // front/back split, or the sun-shadow boundary.
+        let drawing = false, curShadow = false;
         for (let i = 0; i <= segs; i++) {
           const a = (i / segs) * TAU;
           const gap =
@@ -5935,11 +6021,24 @@
           const p = (front === null || isFront === front)
             ? project(cameraTransform(add(o.pos, offset), game.camera), w, h)
             : null;
-          if (!p || gap) { drawing = false; continue; }
-          if (drawing) ctx.lineTo(p.x, p.y);
-          else { ctx.moveTo(p.x, p.y); drawing = true; }
+          if (!p || gap) { if (drawing) { ctx.stroke(); drawing = false; } continue; }
+          const inShadow = ringPointInPlanetShadow(offset, sunDir, o.r);
+          if (drawing && inShadow !== curShadow) {
+            ctx.lineTo(p.x, p.y);
+            ctx.stroke();
+            drawing = false;
+          }
+          if (!drawing) {
+            curShadow = inShadow;
+            ctx.strokeStyle = inShadow ? shadowStyle : litStyle;
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            drawing = true;
+          } else {
+            ctx.lineTo(p.x, p.y);
+          }
         }
-        ctx.stroke();
+        if (drawing) ctx.stroke();
       }
       if (debris && solid) drawPlanetDebris(o, r, w, h, front, u, v);
       if (solid && front === false) {
@@ -5967,6 +6066,8 @@
       if (!o.debrisField) return;
       const rng = mulberry((o.textureSeed || 1) ^ 0xdebb15);
       const viewDir = norm(sub(game.camera.pos, o.pos));
+      const sun = game.objects.find((s) => s.type === "sun");
+      const sunDir = sun ? norm(sub(sun.pos, o.pos)) : null;
       const count = 46;
       for (let i = 0; i < count; i++) {
         const a = rng() * TAU + (o.rot || 0) * (.08 + (i % 5) * .006);
@@ -5979,9 +6080,14 @@
         if (front !== null && isFront !== front) continue;
         const p = project(cameraTransform(add(o.pos, offset), game.camera), w, h);
         if (!p) continue;
+        const shadeMul = ringPointInPlanetShadow(offset, sunDir, o.r) ? .34 : 1;
         const size = clamp(r * (.006 + rng() * .014), .7, Math.max(1.4, r * .035));
         const alpha = clamp(.16 + rng() * .45, .12, .58) * (isFront ? 1 : .72);
-        ctx.fillStyle = rng() < .18 ? `rgba(180,155,105,${alpha})` : `rgba(125,130,124,${alpha})`;
+        const gold = rng() < .18;
+        const cr = Math.round((gold ? 180 : 125) * shadeMul);
+        const cg = Math.round((gold ? 155 : 130) * shadeMul);
+        const cb = Math.round((gold ? 105 : 124) * shadeMul);
+        ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha})`;
         ctx.beginPath();
         if (rng() < .55) {
           ctx.rect(p.x - size * .7, p.y - size * .35, size * 1.4, size * .7);
@@ -6318,12 +6424,15 @@
       ctx.fillRect(pr.x - r, pr.y - r, r * 2, r * 2);
 
       // Night-side shadow, centred opposite the sun, drawn under the surface features so
-      // city lights (industrial biome) still glow clearly against the dark side.
-      const shadowCx = pr.x - lx * r * .55, shadowCy = pr.y - ly * r * .55;
-      const shadow = ctx.createRadialGradient(shadowCx, shadowCy, r * .15, shadowCx, shadowCy, r * 1.5);
-      shadow.addColorStop(0, "rgba(0,4,10,.68)");
-      shadow.addColorStop(.55, "rgba(0,4,10,.32)");
-      shadow.addColorStop(1, "rgba(0,4,10,0)");
+      // city lights (industrial biome) still glow clearly against the dark side. Kept
+      // strong and fairly tight so the terminator is a distinct day/night divide rather
+      // than a gentle fade.
+      const shadowCx = pr.x - lx * r * .48, shadowCy = pr.y - ly * r * .48;
+      const shadow = ctx.createRadialGradient(shadowCx, shadowCy, r * .12, shadowCx, shadowCy, r * 1.42);
+      shadow.addColorStop(0, "rgba(0,2,6,.95)");
+      shadow.addColorStop(.5, "rgba(0,2,6,.82)");
+      shadow.addColorStop(.78, "rgba(0,2,6,.32)");
+      shadow.addColorStop(1, "rgba(0,2,6,0)");
       ctx.fillStyle = shadow;
       ctx.fillRect(pr.x - r, pr.y - r, r * 2, r * 2);
 
@@ -6448,7 +6557,7 @@
       if (mode === "wire") {
         drawSolidItems(ctx, collectSolidFaces(model, camVerts, points, "#000", 1, true));
       } else {
-        drawSolidItems(ctx, collectSolidFaces(model, camVerts, points, o.color || "#e9f2e4", 1, false, getShipDecal(o)));
+        drawSolidItems(ctx, collectSolidFaces(model, camVerts, points, o.color || "#e9f2e4", 1, false, getShipDecal(o), { project: (p) => project(p, w, h) }));
         drawSolidItems(ctx, collectSolidDetails(model, { ...o, cam }, camVerts, points, w, h));
         if (o.police && ultraFxEnabled()) drawPoliceStrobes(ctx, points);
       }
@@ -6489,7 +6598,8 @@
       } else {
         drawSolidItems(ctx, collectSolidFaces(model, camVerts, pts, o.color || "#d8ded4", 1, false, null, {
           texture: getStationTexture(o.stationStyle || stationStyleForSystem(currentSystem())),
-          metalAlphaMul: o.stationStyle?.wealth > .72 ? 1.05 : o.stationStyle?.wealth < .32 ? .82 : .95
+          metalAlphaMul: o.stationStyle?.wealth > .72 ? 1.05 : o.stationStyle?.wealth < .32 ? .82 : .95,
+          project: (p) => project(p, w, h)
         }));
       }
       if (mode !== "solid") {
