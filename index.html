@@ -151,7 +151,7 @@
     .tabs {
       min-width: 0;
       display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 4px;
     }
 
@@ -655,6 +655,7 @@
           <button class="btn" data-panel="status">Status</button>
           <button class="btn" data-panel="ship">Ship</button>
           <button class="btn" data-panel="help">Help</button>
+          <button class="btn" data-panel="cheats">Cheats</button>
         </nav>
         <section class="panel">
           <div class="panel-head">
@@ -1582,6 +1583,7 @@
       mapMode: "galaxy",
       graphicsMode: "wire",
       showShipLabels: true,
+      transition: null,
       camera: makeCamera(-850),
       objects: [],
       stars: [],
@@ -1657,6 +1659,16 @@
       el.classList.remove("on");
       void el.offsetWidth;
       el.classList.add("on");
+    }
+
+    // A brief, non-interactive animated beat for launch/dock/hyperspace/galactic jump,
+    // instead of those all being an instant state snap. update() freezes normal flight
+    // control/AI while game.transition is set and advances its timer instead; drawSpace()
+    // overlays a warp-streak effect keyed on kind/progress. onComplete runs the actual
+    // state change (what each of these functions used to do immediately) once the timer
+    // finishes, so save data / game state is never in a "half-jumped" condition.
+    function startTransition(kind, dur, onComplete, extra = {}) {
+      game.transition = { kind, t: 0, dur, onComplete, ...extra };
     }
 
     function resizeCanvases() {
@@ -1802,6 +1814,7 @@
     }
 
     function spawnArmada() {
+      if (game.transition) return;
       if (game.docked) launch();
       game.objects = game.objects.filter((o) => o.type !== "ship" && o.type !== "canister");
       const center = cameraLocalToWorld(game.camera, vec(0, 0, 3800));
@@ -1851,12 +1864,18 @@
     }
 
     function launch() {
-      if (!game.docked) return;
+      if (!game.docked || game.transition) return;
       game.docked = false;
       resetFlightScene(false);
-      game.camera.pos.z = -980;
-      game.speed = 40;
-      setMessage(`Launch clearance granted from ${currentSystem().name}.`, true);
+      game.camera.pos.z = -560;
+      game.speed = 0;
+      const sys = currentSystem();
+      startTransition("launch", .9, () => {
+        game.camera.pos.z = -980;
+        game.speed = 40;
+        setMessage(`Launch clearance granted from ${sys.name}.`, true);
+        renderPanel();
+      }, { fromZ: -560, toZ: -980, fromSpeed: 0, toSpeed: 40 });
       renderPanel();
     }
 
@@ -1867,7 +1886,7 @@
     }
 
     function dock(auto = false) {
-      if (game.docked) return;
+      if (game.docked || game.transition) return;
       const st = dockableTarget();
       if (!st) return;
       const rel = cameraTransform(st.pos, game.camera);
@@ -1876,16 +1895,18 @@
       const slotOk = st.type !== "station" || Math.abs(Math.sin(st.rot)) < .38;
       const slow = game.speed < 55;
       if (auto || (dist < 210 && centered && slotOk && slow)) {
-        game.docked = true;
-        game.dockedAt = st.name;
         game.speed = 0;
-        game.shields = 100;
-        game.energy = 100;
-        game.fuel = clamp(game.fuel + 0.2, 0, 7);
         game.autoDock = false;
-        game.legal = Math.max(0, game.legal - 2);
-        setMessage(`Docking complete at ${st.name}.`, true);
-        renderPanel();
+        startTransition("dock", .7, () => {
+          game.docked = true;
+          game.dockedAt = st.name;
+          game.shields = 100;
+          game.energy = 100;
+          game.fuel = clamp(game.fuel + 0.2, 0, 7);
+          game.legal = Math.max(0, game.legal - 2);
+          setMessage(`Docking complete at ${st.name}.`, true);
+          renderPanel();
+        });
       } else {
         const reason = !slow ? "TOO FAST" : !centered ? "BAD APPROACH" : !slotOk ? "SLOT ROTATION" : "TOO FAR";
         game.shields -= 12;
@@ -1895,7 +1916,7 @@
     }
 
     function startAutoDock() {
-      if (game.docked) return;
+      if (game.docked || game.transition) return;
       if (!game.equipment.dockingComputer) {
         setMessage("No docking computer fitted.");
         return;
@@ -1905,6 +1926,7 @@
     }
 
     function hyperspace() {
+      if (game.transition) return;
       if (game.docked) {
         setMessage("Launch before engaging hyperspace.");
         return;
@@ -1921,45 +1943,50 @@
         return;
       }
       game.fuel -= d;
-      const witchChance = 0.05 + (game.legal > 15 ? 0.08 : 0);
-      if (Math.random() < witchChance) {
-        game.witchspace = true;
-        game.objects = [];
-        game.stars = Array.from({ length: 220 }, (_, i) => vec((Math.random() - .5) * 2600, (Math.random() - .5) * 1600, Math.random() * 2600 - 900));
-        for (let i = 0; i < 4; i++) {
-          game.objects.push({
-            type: "ship", model: "thargoid", name: "THARGOID", pos: vec((Math.random() - .5) * 900, (Math.random() - .5) * 500, 700 + Math.random() * 900),
-            vel: vec(0, 0, -35), rot: Math.random() * TAU, pitch: 0, r: shipStats("thargoid").r, color: shipColor("thargoid"), hp: shipStats("thargoid").hp, maxHp: shipStats("thargoid").hp, hostile: true, bounty: 250, thargoid: true
-          });
+      const toWitch = Math.random() < 0.05 + (game.legal > 15 ? 0.08 : 0);
+      startTransition("hyperspace", 1.1, () => {
+        if (toWitch) {
+          game.witchspace = true;
+          game.objects = [];
+          game.stars = Array.from({ length: 220 }, (_, i) => vec((Math.random() - .5) * 2600, (Math.random() - .5) * 1600, Math.random() * 2600 - 900));
+          for (let i = 0; i < 4; i++) {
+            game.objects.push({
+              type: "ship", model: "thargoid", name: "THARGOID", pos: vec((Math.random() - .5) * 900, (Math.random() - .5) * 500, 700 + Math.random() * 900),
+              vel: vec(0, 0, -35), rot: Math.random() * TAU, pitch: 0, r: shipStats("thargoid").r, color: shipColor("thargoid"), hp: shipStats("thargoid").hp, maxHp: shipStats("thargoid").hp, hostile: true, bounty: 250, thargoid: true
+            });
+          }
+          game.docked = false;
+          game.speed = 50;
+          setMessage("Witch-space malfunction. Thargoids detected.", true);
+        } else {
+          game.current = game.target;
+          game.witchspace = false;
+          resetFlightScene(true);
+          setMessage(`Hyperspace complete. Arrived at ${currentSystem().name}.`, true);
         }
-        game.docked = false;
-        game.speed = 50;
-        setMessage("Witch-space malfunction. Thargoids detected.", true);
-      } else {
-        game.current = game.target;
-        game.witchspace = false;
-        resetFlightScene(true);
-        setMessage(`Hyperspace complete. Arrived at ${currentSystem().name}.`, true);
-      }
-      flash();
-      renderPanel();
+        flash();
+        renderPanel();
+      });
     }
 
     function galacticJump() {
+      if (game.transition) return;
       if (!game.equipment.galacticHyperdrive) {
         setMessage("No Galactic Hyperdrive fitted.");
         return;
       }
-      game.galaxy = (game.galaxy + 1) % 8;
-      game.current = 0;
-      game.target = 1;
-      game.equipment.galacticHyperdrive = false;
-      game.docked = false;
-      game.witchspace = false;
-      resetFlightScene(true);
-      flash();
-      setMessage(`Galactic hyperspace complete. Galaxy ${game.galaxy + 1}.`, true);
-      renderPanel();
+      startTransition("galactic", 1.4, () => {
+        game.galaxy = (game.galaxy + 1) % 8;
+        game.current = 0;
+        game.target = 1;
+        game.equipment.galacticHyperdrive = false;
+        game.docked = false;
+        game.witchspace = false;
+        resetFlightScene(true);
+        flash();
+        setMessage(`Galactic hyperspace complete. Galaxy ${game.galaxy + 1}.`, true);
+        renderPanel();
+      });
     }
 
     function nearStationSafeZone() {
@@ -2014,6 +2041,7 @@
     }
 
     function fireLaser() {
+      if (game.transition) return;
       if (game.docked) {
         setMessage("Lasers are safed while docked.");
         return;
@@ -2362,6 +2390,46 @@
       renderPanel();
     }
 
+    // Testing helpers only — bypass cost/tech-level/docked gating entirely, unlike
+    // buyFuel/buyEquipment above. Not tied to any key/hotkey; reachable only via the
+    // Cheats panel tab, so there's no risk of an accidental keypress granting free stuff.
+    function cheatAddCredits(amount) {
+      game.credits += amount;
+      setMessage(`Cheat: +${fmt(amount)} CR.`);
+      renderPanel();
+    }
+
+    function cheatUnlockAllEquipment() {
+      for (const e of EQUIPMENT) {
+        game.equipment[e.id] = true;
+        if (e.id === "cargoBay") game.cargoCap = 35;
+      }
+      setMessage("Cheat: all equipment fitted.");
+      renderPanel();
+    }
+
+    function cheatRefillShip() {
+      game.fuel = 7;
+      game.shields = 100;
+      game.energy = 100;
+      game.missiles = 4;
+      setMessage("Cheat: ship fully refuelled and repaired.");
+      renderPanel();
+    }
+
+    function cheatClearLegalStatus() {
+      game.legal = 0;
+      setMessage("Cheat: legal status cleared.");
+      renderPanel();
+    }
+
+    function cheatFillCargo() {
+      for (const g of GOODS) game.cargo[g[0]] = 0;
+      game.cargo[GOODS[0][0]] = game.cargoCap;
+      setMessage("Cheat: cargo hold filled.");
+      renderPanel();
+    }
+
     function saveGame() {
       localStorage.setItem("vectorEliteSave", JSON.stringify({
         galaxySeedVersion: 2,
@@ -2398,7 +2466,19 @@
     }
 
     function update(dt) {
-      if (!game.docked) {
+      if (game.transition) {
+        const tr = game.transition;
+        tr.t += dt;
+        if (tr.kind === "launch") {
+          const p = clamp(tr.t / tr.dur, 0, 1);
+          game.camera.pos.z = lerp(tr.fromZ, tr.toZ, p);
+          game.speed = lerp(tr.fromSpeed, tr.toSpeed, p);
+        }
+        if (tr.t >= tr.dur) {
+          game.transition = null;
+          tr.onComplete();
+        }
+      } else if (!game.docked) {
         updatePlayerControls(dt);
         if (keys.has("Equal") || keys.has("NumpadAdd")) game.speed += dt * 120;
         if (keys.has("Minus") || keys.has("NumpadSubtract")) game.speed -= dt * 120;
@@ -3214,7 +3294,44 @@
         ctx.lineTo(endX, endY);
         ctx.stroke();
       }
+      if (game.transition) drawTransitionEffect(w, h, game.transition);
       if (game.docked) drawDockedBackdrop(w, h);
+      ctx.restore();
+    }
+
+    // One shared warp-streak effect for all four transition kinds, reusing the existing
+    // star field so there's no separate particle system to maintain. progress runs 0->1
+    // for dock/hyperspace/galactic (streaks build as you approach/jump) and 1->0 for
+    // launch (streaks ease off as you clear the bay); colour differs per kind so each
+    // still reads as a distinct moment rather than one generic effect.
+    function drawTransitionEffect(w, h, tr) {
+      const p = clamp(tr.t / tr.dur, 0, 1);
+      const cx = w / 2, cy = h / 2;
+      const isLaunch = tr.kind === "launch";
+      const progress = isLaunch ? 1 - p : p;
+      const color = tr.kind === "galactic" ? "141,92,255" : tr.kind === "hyperspace" ? "101,255,71" : "255,211,61";
+      ctx.save();
+      ctx.lineCap = "round";
+      for (const star of game.stars) {
+        const rel = cameraTransform(star, game.camera);
+        const pr = project(rel, w, h);
+        if (!pr) continue;
+        const dx = pr.x - cx, dy = pr.y - cy;
+        const dist = Math.hypot(dx, dy) || 1;
+        const dirX = dx / dist, dirY = dy / dist;
+        const streak = progress * progress * 320;
+        ctx.strokeStyle = `rgba(${color},${clamp(.35 + progress * .65, 0, 1)})`;
+        ctx.lineWidth = .8 + progress * 1.8;
+        ctx.beginPath();
+        ctx.moveTo(pr.x, pr.y);
+        ctx.lineTo(pr.x + dirX * streak, pr.y + dirY * streak);
+        ctx.stroke();
+      }
+      const vignette = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h) * .6);
+      vignette.addColorStop(0, `rgba(${color},0)`);
+      vignette.addColorStop(1, `rgba(${color},${clamp(progress * .35, 0, .35)})`);
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, w, h);
       ctx.restore();
     }
 
@@ -3683,7 +3800,7 @@
       const title = game.panel[0].toUpperCase() + game.panel.slice(1);
       byId("panelTitle").textContent = title;
       byId("panelSub").textContent = game.docked ? `Docked at ${game.dockedAt || currentSystem().name + " Station"}` : "In flight";
-      const map = { market: renderMarket, chart: renderChart, equip: renderEquip, status: renderStatus, ship: renderShip, help: renderHelp };
+      const map = { market: renderMarket, chart: renderChart, equip: renderEquip, status: renderStatus, ship: renderShip, help: renderHelp, cheats: renderCheats };
       panelBody.innerHTML = map[game.panel]();
       attachPanelEvents();
       updateReadouts();
@@ -3853,6 +3970,24 @@
       </div>`;
     }
 
+    function renderCheats() {
+      return `<div class="notice">Testing helpers only — free, no legal or economic side effects, work whether docked or in flight.</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0">
+        <button class="btn mini" data-cheat="credits1000">+1,000 CR</button>
+        <button class="btn mini" data-cheat="credits10000">+10,000 CR</button>
+        <button class="btn mini" data-cheat="unlockEquip">Unlock All Equipment</button>
+        <button class="btn mini" data-cheat="refillShip">Refill Ship</button>
+        <button class="btn mini" data-cheat="fillCargo">Fill Cargo Hold</button>
+        <button class="btn mini" data-cheat="cleanLegal">Clear Legal Status</button>
+      </div>
+      <div class="grid2">
+        ${stat("Credits", `${fmt(game.credits)} CR`)}
+        ${stat("Cargo", `${usedCargo()}/${game.cargoCap}t`)}
+        ${stat("Missiles", game.missiles)}
+        ${stat("Legal", legalStatus())}
+      </div>`;
+    }
+
     function renderHelp() {
       return `<div style="text-align:center;margin-bottom:10px;">
         <svg width="220" height="46" viewBox="0 0 220 46" aria-hidden="true">
@@ -3916,6 +4051,15 @@
       panelBody.querySelectorAll("[data-ship-nav]").forEach((b) => b.addEventListener("click", () => cycleShipDiagram(Number(b.dataset.shipNav))));
       const exportBtn = panelBody.querySelector("[data-export-obj]");
       if (exportBtn) exportBtn.addEventListener("click", () => exportShipObj(shipDiagramState.model));
+      panelBody.querySelectorAll("[data-cheat]").forEach((b) => b.addEventListener("click", () => {
+        const action = b.dataset.cheat;
+        if (action === "credits1000") cheatAddCredits(1000);
+        else if (action === "credits10000") cheatAddCredits(10000);
+        else if (action === "unlockEquip") cheatUnlockAllEquipment();
+        else if (action === "refillShip") cheatRefillShip();
+        else if (action === "fillCargo") cheatFillCargo();
+        else if (action === "cleanLegal") cheatClearLegalStatus();
+      }));
       const fuel = panelBody.querySelector("[data-fuel]");
       if (fuel) fuel.addEventListener("click", buyFuel);
       const missile = panelBody.querySelector("[data-missile]");
@@ -4057,11 +4201,11 @@
       byId("txtMissiles").textContent = game.missiles;
       byId("txtEcm").textContent = game.equipment.ecm ? "Yes" : "No";
       byId("txtCargo").textContent = `${usedCargo()}/${game.cargoCap}`;
-      byId("launchBtn").disabled = !game.docked;
-      byId("jumpBtn").disabled = game.docked;
-      byId("dockBtn").disabled = game.docked;
-      byId("laserBtn").disabled = game.docked;
-      byId("armadaBtn").disabled = false;
+      byId("launchBtn").disabled = !game.docked || !!game.transition;
+      byId("jumpBtn").disabled = game.docked || !!game.transition;
+      byId("dockBtn").disabled = game.docked || !!game.transition;
+      byId("laserBtn").disabled = game.docked || !!game.transition;
+      byId("armadaBtn").disabled = !!game.transition;
     }
 
     function loop(now) {
