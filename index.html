@@ -6618,7 +6618,10 @@
       }
       const slotVerts = model.verts.slice(-4).map(([x, y, z]) => add(worldDirToCam(rotatePoint(vec(x, y, z), 0, 0, o.rot)), cam));
       const [slotA, slotB, slotC, slotD] = slotVerts.map((p) => project(p, w, h));
-      if (slotA && slotB && slotC && slotD) {
+      // The portal is painted on top of the hull (no depth buffer), so gate it on the
+      // slot face actually pointing at the camera — otherwise it shows through the
+      // station from the back and sides.
+      if (slotA && slotB && slotC && slotD && faceFacing(slotVerts).facing > .02) {
         drawDockPortal([slotA, slotB, slotC, slotD], o);
         ctx.strokeStyle = "#ffd33d";
         ctx.beginPath();
