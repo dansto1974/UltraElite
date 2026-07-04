@@ -1614,6 +1614,40 @@
       return { ...stats, r: stats.r || (m ? modelBoundingRadius(m) : 54) };
     }
 
+    const PLAYER_CARGO_CAPACITY = {
+      cobra: 20, cobra1: 10, krait: 10, viper: 0, adder: 15, gecko: 5,
+      mamba: 10, sidewinder: 5, worm: 0, moray: 8, asp: 0, ferdelance: 2,
+      python: 100, boa: 125, anaconda: 750, shuttle: 60, transporter: 60,
+      thargoid: 0, thargon: 0, constrictor: 20, cougar: 20
+    };
+
+    function playerShipModel() {
+      return SHIP_MODEL_LIST.includes(game.playerShip) ? game.playerShip : "cobra";
+    }
+
+    function playerBaseCargoCap(model = playerShipModel()) {
+      return PLAYER_CARGO_CAPACITY[model] ?? 20;
+    }
+
+    function trimCargoToCap() {
+      let overflow = Math.max(0, usedCargo() - game.cargoCap);
+      for (const g of GOODS.slice().reverse()) {
+        if (overflow <= 0) break;
+        const take = Math.min(game.cargo[g[0]] || 0, overflow);
+        game.cargo[g[0]] -= take;
+        overflow -= take;
+      }
+    }
+
+    function applyPlayerShipStats({ trimCargo = true } = {}) {
+      game.playerShip = playerShipModel();
+      const stats = shipStats(game.playerShip);
+      game.maxSpeed = Math.round(220 * (stats.speed || 1));
+      game.cargoCap = playerBaseCargoCap(game.playerShip) + (game.equipment.cargoBay ? 15 : 0);
+      if (trimCargo) trimCargoToCap();
+      game.speed = clamp(game.speed, 0, game.maxSpeed);
+    }
+
     function shipColor(model, police = false) {
       if (police) return "#46dfff";
       if (ALIEN_MODELS.includes(model)) return "#c46bff";
@@ -1729,6 +1763,7 @@
       fuel: 7,
       kills: 0,
       legal: 0,
+      playerShip: "cobra",
       energy: 100,
       shields: 100,
       speed: 0,
@@ -1761,6 +1796,7 @@
       localMapPanY: 0,
       graphicsMode: "wire",
       showShipLabels: true,
+      soundEnabled: true,
       developerMode: false,
       transition: null,
       camera: makeCamera(-850),
@@ -1849,6 +1885,153 @@
       game.messageTimer = important ? 4 : 2;
     }
 
+    // BBC Master Elite drives an SN76489 sound chip through a tiny buffered
+    // sound table: beeps, two-part laser/hyperspace effects, launch/missile,
+    // ECM, hit and explosion noise. This Web Audio synth follows those sound
+    // categories procedurally rather than shipping sampled audio assets.
+    const eliteAudio = (() => {
+      let ctx = null;
+      let master = null;
+      let noiseBuffer = null;
+      const pitchScale = .62;
+      const filterScale = .68;
+
+      function ensure() {
+        if (!game.soundEnabled) return null;
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return null;
+        if (!ctx) {
+          ctx = new AudioCtx();
+          master = ctx.createGain();
+          master.gain.value = .24;
+          master.connect(ctx.destination);
+          noiseBuffer = makeNoiseBuffer();
+        }
+        if (ctx.state === "suspended") ctx.resume().catch(() => {});
+        return ctx;
+      }
+
+      function makeNoiseBuffer() {
+        const length = Math.max(1, Math.floor(ctx.sampleRate * 1.2));
+        const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < length; i++) data[i] = Math.random() * 2 - 1;
+        return buffer;
+      }
+
+      function envelope(gain, t, dur, level, attack = .006, release = .035) {
+        gain.gain.cancelScheduledValues(t);
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(Math.max(.0001, level), t + attack);
+        gain.gain.exponentialRampToValueAtTime(.0001, t + Math.max(attack + release, dur));
+      }
+
+      function tone({ delay = 0, freq = 440, endFreq = null, dur = .12, gain = .08, type = "square", attack = .004 }) {
+        const c = ensure();
+        if (!c) return;
+        const t = c.currentTime + delay;
+        const osc = c.createOscillator();
+        const amp = c.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(Math.max(24, freq * pitchScale), t);
+        if (endFreq) osc.frequency.exponentialRampToValueAtTime(Math.max(24, endFreq * pitchScale), t + Math.max(.01, dur));
+        envelope(amp, t, dur, gain, attack);
+        osc.connect(amp).connect(master);
+        osc.start(t);
+        osc.stop(t + dur + .05);
+      }
+
+      function noise({ delay = 0, dur = .16, gain = .08, highpass = 80, lowpass = 6000, attack = .004 }) {
+        const c = ensure();
+        if (!c || !noiseBuffer) return;
+        const t = c.currentTime + delay;
+        const src = c.createBufferSource();
+        const hp = c.createBiquadFilter();
+        const lp = c.createBiquadFilter();
+        const amp = c.createGain();
+        src.buffer = noiseBuffer;
+        src.loop = true;
+        hp.type = "highpass";
+        hp.frequency.setValueAtTime(Math.max(20, highpass * filterScale), t);
+        lp.type = "lowpass";
+        lp.frequency.setValueAtTime(Math.max(120, lowpass * filterScale), t);
+        envelope(amp, t, dur, gain, attack);
+        src.connect(hp).connect(lp).connect(amp).connect(master);
+        src.start(t);
+        src.stop(t + dur + .05);
+      }
+
+      function play(name) {
+        if (!game.soundEnabled) return;
+        switch (name) {
+          case "boop":
+            tone({ freq: 150, endFreq: 120, dur: .32, gain: .07 });
+            break;
+          case "beep":
+            tone({ freq: 920, endFreq: 780, dur: .09, gain: .07 });
+            break;
+          case "laser":
+            tone({ freq: 1180, endFreq: 260, dur: .16, gain: .075 });
+            tone({ delay: .035, freq: 540, endFreq: 180, dur: .13, gain: .045, type: "sawtooth" });
+            noise({ dur: .09, gain: .035, highpass: 900, lowpass: 9000 });
+            break;
+          case "enemyLaser":
+            tone({ freq: 740, endFreq: 190, dur: .13, gain: .055 });
+            noise({ dur: .07, gain: .025, highpass: 700, lowpass: 7000 });
+            break;
+          case "hit":
+            noise({ dur: .2, gain: .085, highpass: 220, lowpass: 4200 });
+            tone({ freq: 210, endFreq: 95, dur: .16, gain: .04, type: "triangle" });
+            break;
+          case "explosion":
+            noise({ dur: .62, gain: .13, highpass: 45, lowpass: 2600, attack: .002 });
+            tone({ freq: 130, endFreq: 48, dur: .55, gain: .06, type: "sawtooth" });
+            break;
+          case "death":
+            noise({ dur: .95, gain: .16, highpass: 35, lowpass: 1800, attack: .002 });
+            tone({ freq: 180, endFreq: 35, dur: .9, gain: .075, type: "sawtooth" });
+            break;
+          case "missile":
+            tone({ freq: 380, endFreq: 1200, dur: .24, gain: .07 });
+            noise({ dur: .2, gain: .035, highpass: 1000, lowpass: 8500 });
+            break;
+          case "launch":
+            tone({ freq: 105, endFreq: 390, dur: .75, gain: .08, type: "sawtooth", attack: .015 });
+            noise({ dur: .7, gain: .06, highpass: 65, lowpass: 3200, attack: .02 });
+            break;
+          case "hyperspace":
+            tone({ freq: 120, endFreq: 1180, dur: .85, gain: .075, type: "sawtooth", attack: .02 });
+            tone({ delay: .18, freq: 260, endFreq: 1620, dur: .72, gain: .055 });
+            noise({ delay: .06, dur: .9, gain: .055, highpass: 500, lowpass: 10000, attack: .02 });
+            break;
+          case "ecm":
+            for (let i = 0; i < 7; i++) tone({ delay: i * .08, freq: i % 2 ? 1220 : 740, endFreq: i % 2 ? 760 : 1400, dur: .07, gain: .045 });
+            noise({ dur: .58, gain: .035, highpass: 1300, lowpass: 9000 });
+            break;
+          case "bomb":
+            noise({ dur: .78, gain: .16, highpass: 120, lowpass: 10000, attack: .001 });
+            tone({ freq: 70, endFreq: 34, dur: .72, gain: .08, type: "sawtooth" });
+            for (let i = 0; i < 4; i++) tone({ delay: i * .06, freq: 480 + i * 220, dur: .055, gain: .045 });
+            break;
+          case "scoop":
+            tone({ freq: 420, endFreq: 620, dur: .09, gain: .05 });
+            tone({ delay: .08, freq: 780, endFreq: 640, dur: .08, gain: .045 });
+            break;
+        }
+      }
+
+      return {
+        play,
+        resume: () => { ensure(); },
+        toggle: () => {
+          game.soundEnabled = !game.soundEnabled;
+          if (game.soundEnabled) play("beep");
+          else if (ctx) ctx.suspend().catch(() => {});
+          setMessage(`Sound: ${game.soundEnabled ? "on" : "off"}.`);
+        }
+      };
+    })();
+
     function flash() {
       const el = byId("flash");
       el.classList.remove("on");
@@ -1859,7 +2042,7 @@
     // A brief, non-interactive animated beat for launch/dock/hyperspace/galactic jump,
     // instead of those all being an instant state snap. update() freezes normal flight
     // control/AI while game.transition is set and advances its timer instead; drawSpace()
-    // overlays a warp-streak effect keyed on kind/progress. onComplete runs the actual
+    // overlays a transition effect keyed on kind/progress. onComplete runs the actual
     // state change (what each of these functions used to do immediately) once the timer
     // finishes, so save data / game state is never in a "half-jumped" condition.
     function startTransition(kind, dur, onComplete, extra = {}) {
@@ -2060,12 +2243,13 @@
 
     function launch() {
       if (!game.docked || game.transition) return;
+      eliteAudio.play("launch");
       game.docked = false;
       resetFlightScene(false);
       game.camera.pos.z = -560;
       game.speed = 0;
       const sys = currentSystem();
-      startTransition("launch", .9, () => {
+      startTransition("launch", 1.25, () => {
         game.camera.pos.z = -980;
         game.speed = 40;
         setMessage(`Launch clearance granted from ${sys.name}.`, true);
@@ -2090,9 +2274,10 @@
       const slotOk = st.type !== "station" || Math.abs(Math.sin(st.rot)) < .38;
       const slow = game.speed < 55;
       if (auto || (dist < 210 && centered && slotOk && slow)) {
+        eliteAudio.play("beep");
         game.speed = 0;
         game.autoDock = false;
-        startTransition("dock", .7, () => {
+        startTransition("dock", 1.25, () => {
           game.docked = true;
           game.dockedAt = st.name;
           game.shields = 100;
@@ -2104,6 +2289,7 @@
         });
       } else {
         const reason = !slow ? "TOO FAST" : !centered ? "BAD APPROACH" : !slotOk ? "SLOT ROTATION" : "TOO FAR";
+        eliteAudio.play("boop");
         game.shields -= 12;
         setMessage(`Docking denied: ${reason}.`, true);
         if (game.shields <= 0) destroyPlayer("docking collision");
@@ -2123,6 +2309,7 @@
     function hyperspace() {
       if (game.transition) return;
       if (game.docked) {
+        eliteAudio.play("boop");
         setMessage("Launch before engaging hyperspace.");
         return;
       }
@@ -2130,14 +2317,17 @@
       const to = targetSystem();
       const d = distance(from, to);
       if (!game.developerMode && d > 7) {
+        eliteAudio.play("boop");
         setMessage("Target is outside the 7.0 light year jump range.", true);
         return;
       }
       if (!game.developerMode && game.fuel + 0.0001 < d) {
+        eliteAudio.play("boop");
         setMessage("Insufficient fuel for hyperspace.", true);
         return;
       }
       if (!game.developerMode) game.fuel -= d;
+      eliteAudio.play("hyperspace");
       const toWitch = Math.random() < 0.05 + (game.legal > 15 ? 0.08 : 0);
       startTransition("hyperspace", 1.1, () => {
         if (toWitch) {
@@ -2167,10 +2357,12 @@
     function galacticJump() {
       if (game.transition) return;
       if (!game.equipment.galacticHyperdrive) {
+        eliteAudio.play("boop");
         setMessage("No Galactic Hyperdrive fitted.");
         return;
       }
-      startTransition("galactic", 1.4, () => {
+      eliteAudio.play("hyperspace");
+      startTransition("galactic", 2.8, () => {
         game.galaxy = (game.galaxy + 1) % 8;
         game.current = 0;
         game.target = 1;
@@ -2238,6 +2430,7 @@
     function fireLaser() {
       if (game.transition) return;
       if (game.docked) {
+        eliteAudio.play("boop");
         setMessage("Lasers are safed while docked.");
         return;
       }
@@ -2248,26 +2441,34 @@
       game.lastShot = now;
       game.laserHeat = clamp(game.laserHeat + laser.heat, 0, 100);
       flash();
+      eliteAudio.play("laser");
       let best = null;
       let score = Infinity;
+      let hitDepth = null;
+      const w = space.width, h = space.height;
       for (const o of game.objects) {
         const isRock = o.type === "asteroid" || o.type === "boulder" || o.type === "splinter";
         if (o.type !== "ship" && o.type !== "canister" && o.type !== "plate" && !isRock && !(o.type === "missile" && o.hostile)) continue;
         const rel = cameraTransform(o.pos, game.camera);
         if (rel.z < 30 || rel.z > laser.range) continue;
-        const aim = Math.hypot(rel.x, rel.y) / rel.z;
-        if (aim < .06 && aim < score) {
+        const hit = laserFootprintHit(o, rel, w, h);
+        if (!hit) continue;
+        const aim = Math.hypot(rel.x, rel.y) / Math.max(1, rel.z);
+        const depthScore = hit.depth + aim * 18 + hit.screenDist * .05;
+        if (depthScore < score) {
           best = o;
-          score = aim;
+          score = depthScore;
+          hitDepth = hit.depth;
         }
       }
-      game.playerShot = { to: best ? { ...best.pos } : null, color: laser.color };
+      game.playerShot = { to: best ? cameraLocalToWorld(game.camera, vec(0, 0, hitDepth || cameraTransform(best.pos, game.camera).z)) : null, color: laser.color };
       if (!best) {
         setMessage("Laser fired.");
         return;
       }
       const isRockTarget = best.type === "asteroid" || best.type === "boulder" || best.type === "splinter";
       best.hp -= isRockTarget && game.equipment.miningLaser ? laser.damage * 2 : laser.damage;
+      eliteAudio.play("hit");
       setMessage(`${best.name} hit.`);
       if (best.hp <= 0) destroyObject(best);
     }
@@ -2309,6 +2510,7 @@
     }
 
     function detonateMissile(o) {
+      eliteAudio.play("explosion");
       spawnExplosion(o.pos, .6);
       if (o.target) {
         o.target.hp -= 120;
@@ -2330,10 +2532,12 @@
       if (nearStationSafeZone() && Math.random() < .35) provokeStationPolice();
       const target = nearestTarget(true);
       if (!target) {
+        eliteAudio.play("boop");
         setMessage("No missile lock.");
         return;
       }
       game.missiles--;
+      eliteAudio.play("missile");
       spawnMissile({ pos: add(game.camera.pos, scale(forwardVector(game.camera), 40)), target, hostile: false });
       setMessage(`Missile away: ${target.name}.`, true);
     }
@@ -2398,6 +2602,7 @@
     function destroyObject(o, byPlayer = true) {
       game.objects = game.objects.filter((x) => x !== o);
       if (o.type === "ship") {
+        eliteAudio.play("explosion");
         // A destroyed pirate/trader sometimes ejects instead of the ship (and any bounty)
         // just vanishing outright — the pod itself can still be shot down for a small
         // consolation bounty, or left to drift away.
@@ -2428,15 +2633,18 @@
       } else if (o.type === "canister" || o.type === "plate") {
         scoopCargo(o);
       } else if (o.type === "asteroid") {
+        eliteAudio.play("explosion");
         spawnExplosion(o.pos, .8);
         const count = 2 + Math.floor(Math.random() * 2);
         for (let i = 0; i < count; i++) spawnSplinter(o.pos, o.vel);
         if (Math.random() < .5) spawnMineralCanister(o.pos, o.vel, false);
         setMessage("Asteroid breaks apart.");
       } else if (o.type === "boulder") {
+        eliteAudio.play("hit");
         spawnExplosion(o.pos, 1.1);
         setMessage("Boulder shattered.");
       } else if (o.type === "splinter") {
+        eliteAudio.play("hit");
         spawnExplosion(o.pos, .4);
         if (Math.random() < .7) spawnMineralCanister(o.pos, o.vel, true);
       }
@@ -2450,6 +2658,7 @@
       const good = o.forcedGood || (o.type === "plate" ? "Alloys" : GOODS[Math.floor(Math.random() * (GOODS.length - 1))][0]);
       game.cargo[good]++;
       game.objects = game.objects.filter((x) => x !== o);
+      eliteAudio.play("scoop");
       setMessage(`Scooped ${o.type === "plate" ? "alloy plate" : "cargo canister"}: ${good}.`);
     }
 
@@ -2465,6 +2674,7 @@
     }
 
     function destroyPlayer(reason) {
+      eliteAudio.play("death");
       const hadCapsule = game.equipment.escapeCapsule;
       if (hadCapsule) {
         game.equipment.escapeCapsule = false;
@@ -2489,14 +2699,17 @@
 
     function useEnergyBomb() {
       if (game.docked) {
+        eliteAudio.play("boop");
         setMessage("Energy bomb is safed while docked.");
         return;
       }
       if (!game.equipment.energyBomb) {
+        eliteAudio.play("boop");
         setMessage("No energy bomb fitted.");
         return;
       }
       game.equipment.energyBomb = false;
+      eliteAudio.play("bomb");
       flash();
       let hits = 0;
       for (const o of game.objects) {
@@ -2518,15 +2731,18 @@
       const item = marketFor(currentSystem()).find((g) => g.name === name);
       if (!item || item.qty <= 0) return;
       if (usedCargo() >= game.cargoCap) {
+        eliteAudio.play("boop");
         setMessage("Cargo bay full.");
         return;
       }
       if (game.credits < item.price) {
+        eliteAudio.play("boop");
         setMessage("Insufficient credits.");
         return;
       }
       game.credits -= item.price;
       game.cargo[name]++;
+      eliteAudio.play("beep");
       if (item.illegal && Math.random() > .92) game.legal += 2;
       renderPanel();
     }
@@ -2536,6 +2752,7 @@
       const item = marketFor(currentSystem()).find((g) => g.name === name);
       game.cargo[name]--;
       game.credits += item.price;
+      eliteAudio.play("beep");
       if (item.illegal && Math.random() > .8) game.legal += 1;
       renderPanel();
     }
@@ -2544,17 +2761,20 @@
       if (!game.docked) return;
       const need = 7 - game.fuel;
       if (need <= .01) {
+        eliteAudio.play("boop");
         setMessage("Fuel tanks already full.");
         return;
       }
       const amount = Math.min(need, Math.floor(game.credits / 0.2) / 10 || need);
       const cost = amount * 2;
       if (game.credits < cost) {
+        eliteAudio.play("boop");
         setMessage("Insufficient credits for fuel.");
         return;
       }
       game.credits -= cost;
       game.fuel = clamp(game.fuel + amount, 0, 7);
+      eliteAudio.play("scoop");
       setMessage(`Fuel loaded: ${fmt(amount)} LY.`);
       renderPanel();
     }
@@ -2564,21 +2784,25 @@
       if (!item || !game.docked) return;
       const sys = currentSystem();
       if (game.equipment[id]) {
+        eliteAudio.play("boop");
         setMessage("Already fitted.");
         return;
       }
       if (sys.tech + 1 < item.tech) {
+        eliteAudio.play("boop");
         setMessage("Local tech level too low.");
         return;
       }
       if (game.credits < item.cost) {
+        eliteAudio.play("boop");
         setMessage("Insufficient credits.");
         return;
       }
       game.credits -= item.cost;
       if (isLaserEquipment(id)) fitLaser(id);
       else game.equipment[id] = true;
-      if (id === "cargoBay") game.cargoCap = 35;
+      if (id === "cargoBay") applyPlayerShipStats({ trimCargo: false });
+      eliteAudio.play("beep");
       setMessage(`${item.name} fitted.`);
       renderPanel();
     }
@@ -2603,19 +2827,18 @@
       if (!item) return;
       if (isLaserEquipment(id) && fitted) fitLaser(id);
       else game.equipment[id] = fitted;
-      if (id === "cargoBay") {
-        game.cargoCap = fitted ? 35 : 20;
-        if (!fitted) {
-          let overflow = Math.max(0, usedCargo() - game.cargoCap);
-          for (const g of GOODS.slice().reverse()) {
-            if (overflow <= 0) break;
-            const take = Math.min(game.cargo[g[0]] || 0, overflow);
-            game.cargo[g[0]] -= take;
-            overflow -= take;
-          }
-        }
-      }
+      if (id === "cargoBay") applyPlayerShipStats();
       setMessage(`Cheat: ${item.name} ${fitted ? "fitted" : "removed"}.`);
+      renderPanel();
+    }
+
+    function cheatChangePlayerShip(model) {
+      if (!SHIP_MODEL_LIST.includes(model)) return;
+      game.playerShip = model;
+      applyPlayerShipStats();
+      game.shields = 100;
+      game.energy = 100;
+      setMessage(`Cheat: ship changed to ${shipName(model)}.`);
       renderPanel();
     }
 
@@ -2642,14 +2865,14 @@
     }
 
     const SAVE_KEY = "vectorEliteSave";
-    const SAVE_FIELDS = ["commander", "galaxy", "current", "target", "credits", "fuel", "kills", "legal", "cargoCap", "missiles", "graphicsMode"];
+    const SAVE_FIELDS = ["commander", "galaxy", "current", "target", "credits", "fuel", "kills", "legal", "playerShip", "cargoCap", "missiles", "graphicsMode"];
 
     function commanderSaveData() {
       return {
         format: "vector-elite-commander",
         galaxySeedVersion: 2,
         commander: game.commander, galaxy: game.galaxy, current: game.current, target: game.target,
-        credits: game.credits, fuel: game.fuel, kills: game.kills, legal: game.legal, cargoCap: game.cargoCap,
+        credits: game.credits, fuel: game.fuel, kills: game.kills, legal: game.legal, playerShip: playerShipModel(), cargoCap: game.cargoCap,
         cargo: game.cargo, equipment: game.equipment, missiles: game.missiles, graphicsMode: game.graphicsMode
       };
     }
@@ -2671,6 +2894,7 @@
       game.cargo = { ...Object.fromEntries(GOODS.map((g) => [g[0], 0])), ...(data.cargo || {}) };
       game.equipment = { ...Object.fromEntries(Object.keys(game.equipment).map((k) => [k, false])), ...(data.equipment || {}) };
       normalizeLaserFit();
+      applyPlayerShipStats();
       game.graphicsMode = ["wire", "solid", "both"].includes(game.graphicsMode) ? game.graphicsMode : "wire";
       game.docked = true;
       game.dockedAt = null;
@@ -2734,7 +2958,8 @@
     function update(dt) {
       if (game.transition) {
         const tr = game.transition;
-        tr.t += dt;
+        const step = Math.min(dt, 1 / 30);
+        tr.t += step;
         if (tr.kind === "launch") {
           const p = clamp(tr.t / tr.dur, 0, 1);
           game.camera.pos.z = lerp(tr.fromZ, tr.toZ, p);
@@ -2978,6 +3203,7 @@
     function fireAtShip(attacker, target) {
       const dmg = attacker.thargoid ? 16 : attacker.role === "police" ? 13 : 10;
       game.enemyShots.push({ from: { ...attacker.pos }, to: { ...target.pos }, t: 0, dur: .18, missile: false });
+      eliteAudio.play("enemyLaser");
       target.hp -= dmg;
       if (target.hp <= 0) destroyObject(target, false);
       else setMessage(`${attacker.name} attacks ${target.name}.`);
@@ -2987,15 +3213,18 @@
       const missile = !o.thargoid && Math.random() < .3;
       if (missile) {
         if (game.equipment.ecm && Math.random() < .75) {
+          eliteAudio.play("ecm");
           setMessage(`${o.name} missile jammed by ECM.`, true);
           flash();
           return;
         }
         spawnMissile({ pos: add(o.pos, scale(shipForward(o), Math.max(28, o.r * .35))), target: null, source: o, hostile: true });
+        eliteAudio.play("missile");
         setMessage(`${o.name} launches a missile!`, true);
         return;
       }
       game.enemyShots.push({ from: { ...o.pos }, to: null, t: 0, dur: .18, missile: false });
+      eliteAudio.play("enemyLaser");
       game.shields -= o.thargoid ? 14 : 8;
       setMessage(`${o.name} laser strike.`);
       if (game.shields <= 0) {
@@ -3311,6 +3540,59 @@
       }), { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity });
     }
 
+    function pointInPolygon(x, y, points) {
+      let inside = false;
+      for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+        const a = points[i], b = points[j];
+        const crosses = (a.y > y) !== (b.y > y);
+        if (crosses && x < (b.x - a.x) * (y - a.y) / ((b.y - a.y) || 1e-6) + a.x) inside = !inside;
+      }
+      return inside;
+    }
+
+    function distanceToSegment(px, py, a, b) {
+      const vx = b.x - a.x, vy = b.y - a.y;
+      const wx = px - a.x, wy = py - a.y;
+      const len2 = vx * vx + vy * vy || 1;
+      const t = clamp((wx * vx + wy * vy) / len2, 0, 1);
+      const dx = px - (a.x + vx * t), dy = py - (a.y + vy * t);
+      return Math.hypot(dx, dy);
+    }
+
+    function laserFootprintHit(o, rel, w, h) {
+      const model = MODELS[o.model || "cobra"];
+      if (!model?.verts?.length) return null;
+      const cx = w / 2, cy = h / 2;
+      const rect = space.getBoundingClientRect();
+      const dpr = rect.width ? w / rect.width : 1;
+      const edgeTolerance = clamp(5.5 * dpr, 4, 13);
+      const roll = o.roll ?? (o.rot || 0) * .7;
+      const camVerts = model.verts.map(([x, y, z]) => add(worldDirToCam(rotateShipPoint(vec(x, y, z), o.rot || 0, o.pitch || 0, roll)), rel));
+      const points = camVerts.map((p) => project(p, w, h));
+      const faceItems = collectSolidFaces(model, camVerts, points, "#000", 1, true);
+      let nearestEdge = Infinity;
+      for (const item of faceItems) {
+        const bounds = polygonBounds(item.projected);
+        if (cx >= bounds.minX - edgeTolerance && cx <= bounds.maxX + edgeTolerance && cy >= bounds.minY - edgeTolerance && cy <= bounds.maxY + edgeTolerance) {
+          if (pointInPolygon(cx, cy, item.projected)) return { depth: item.avgZ, screenDist: 0 };
+          for (let i = 0; i < item.projected.length; i++) {
+            const d = distanceToSegment(cx, cy, item.projected[i], item.projected[(i + 1) % item.projected.length]);
+            nearestEdge = Math.min(nearestEdge, d);
+          }
+        }
+      }
+
+      if (!faceItems.length && points.some(Boolean)) {
+        const projectedRadius = Math.max(edgeTolerance, (modelBoundingRadius(model) / Math.max(1, rel.z)) * Math.min(w, h) * .82);
+        const center = project(rel, w, h);
+        const dist = center ? Math.hypot(center.x - cx, center.y - cy) : Infinity;
+        if (dist <= projectedRadius * .55 + edgeTolerance) return { depth: rel.z, screenDist: dist };
+      }
+
+      if (nearestEdge <= edgeTolerance) return { depth: rel.z, screenDist: nearestEdge };
+      return null;
+    }
+
     let hullTextureCanvas = null;
 
     function buildHullTexture() {
@@ -3589,17 +3871,106 @@
       ctx.restore();
     }
 
-    // One shared warp-streak effect for all four transition kinds, reusing the existing
-    // star field so there's no separate particle system to maintain. progress runs 0->1
-    // for dock/hyperspace/galactic (streaks build as you approach/jump) and 1->0 for
-    // launch (streaks ease off as you clear the bay); colour differs per kind so each
-    // still reads as a distinct moment rather than one generic effect.
     function drawTransitionEffect(w, h, tr) {
+      if (tr.kind === "launch" || tr.kind === "dock") {
+        drawDockingTunnel(w, h, tr);
+      } else if (tr.kind === "galactic") {
+        drawGalacticTunnel(w, h, tr);
+      } else {
+        drawHyperspaceTunnel(w, h, tr);
+      }
+    }
+
+    function easeInOut(t) {
+      t = clamp(t, 0, 1);
+      return t * t * (3 - 2 * t);
+    }
+
+    function drawSlotRing(cx, cy, halfW, halfH, skew, color, alpha, lineWidth) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lineWidth;
+      ctx.lineJoin = "miter";
+      ctx.beginPath();
+      ctx.moveTo(cx - halfW + skew, cy - halfH);
+      ctx.lineTo(cx + halfW + skew, cy - halfH);
+      ctx.lineTo(cx + halfW - skew, cy + halfH);
+      ctx.lineTo(cx - halfW - skew, cy + halfH);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawDockingTunnel(w, h, tr) {
       const p = clamp(tr.t / tr.dur, 0, 1);
       const cx = w / 2, cy = h / 2;
-      const isLaunch = tr.kind === "launch";
-      const progress = isLaunch ? 1 - p : p;
-      const color = tr.kind === "galactic" ? "141,92,255" : tr.kind === "hyperspace" ? "101,255,71" : "255,211,61";
+      const phase = tr.kind === "launch" ? 1 - p : p;
+      const travel = easeInOut(p);
+      const maxHalfW = w * .66;
+      const color = tr.kind === "dock" ? "#64ff47" : "#ffd33d";
+      ctx.save();
+      ctx.fillStyle = "rgba(0,0,0,.76)";
+      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = "rgba(0,0,0,.92)";
+      ctx.fillRect(0, 0, w, h * .17);
+      ctx.fillRect(0, h * .83, w, h * .17);
+      ctx.strokeStyle = "rgba(120,150,118,.45)";
+      ctx.lineWidth = 1.2;
+      ctx.strokeRect(w * .035, h * .17, w * .93, h * .66);
+
+      const wall = ctx.createLinearGradient(cx, h * .18, cx, h * .82);
+      wall.addColorStop(0, "rgba(160,160,145,.28)");
+      wall.addColorStop(.5, "rgba(70,78,68,.04)");
+      wall.addColorStop(1, "rgba(160,160,145,.22)");
+      ctx.fillStyle = wall;
+      ctx.beginPath();
+      ctx.moveTo(0, h * .17);
+      ctx.lineTo(w, h * .17);
+      ctx.lineTo(cx + w * .16, cy - h * .035);
+      ctx.lineTo(cx - w * .16, cy - h * .035);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(0, h * .83);
+      ctx.lineTo(w, h * .83);
+      ctx.lineTo(cx + w * .16, cy + h * .035);
+      ctx.lineTo(cx - w * .16, cy + h * .035);
+      ctx.closePath();
+      ctx.fill();
+
+      for (let i = 0; i < 12; i++) {
+        const z = ((i / 12 + phase * 1.65) % 1);
+        const shaped = z * z;
+        const halfW = lerp(w * .055, maxHalfW, shaped);
+        const halfH = halfW * lerp(.17, .24, z);
+        const skew = Math.sin((z + travel) * TAU) * halfW * .035;
+        const alpha = clamp(1.1 - z * .9, .16, .86);
+        drawSlotRing(cx, cy, halfW, halfH, skew, color, alpha, 1 + z * 3.4);
+      }
+
+      const doorW = lerp(w * .34, w * .16, tr.kind === "dock" ? travel : 1 - travel);
+      const doorH = doorW * .17;
+      ctx.fillStyle = "rgba(0,0,0,.9)";
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(cx - doorW / 2, cy - doorH / 2, doorW, doorH);
+      ctx.fillRect(cx - doorW / 2 + 3, cy - doorH / 2 + 3, doorW - 6, doorH - 6);
+
+      ctx.globalAlpha = .55;
+      ctx.strokeStyle = "rgba(255,255,255,.34)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx - w * .48, cy);
+      ctx.lineTo(cx - doorW / 2, cy);
+      ctx.moveTo(cx + doorW / 2, cy);
+      ctx.lineTo(cx + w * .48, cy);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawWarpStars(w, h, color, progress, lengthMul = 1) {
+      const cx = w / 2, cy = h / 2;
       ctx.save();
       ctx.lineCap = "round";
       for (const star of game.stars) {
@@ -3609,18 +3980,82 @@
         const dx = pr.x - cx, dy = pr.y - cy;
         const dist = Math.hypot(dx, dy) || 1;
         const dirX = dx / dist, dirY = dy / dist;
-        const streak = progress * progress * 320;
-        ctx.strokeStyle = `rgba(${color},${clamp(.35 + progress * .65, 0, 1)})`;
-        ctx.lineWidth = .8 + progress * 1.8;
+        const streak = progress * progress * 260 * lengthMul;
+        ctx.strokeStyle = `rgba(${color},${clamp(.18 + progress * .58, 0, .88)})`;
+        ctx.lineWidth = .7 + progress * 1.5;
         ctx.beginPath();
-        ctx.moveTo(pr.x, pr.y);
+        ctx.moveTo(pr.x - dirX * streak * .18, pr.y - dirY * streak * .18);
         ctx.lineTo(pr.x + dirX * streak, pr.y + dirY * streak);
         ctx.stroke();
       }
+      ctx.restore();
+    }
+
+    function drawHyperspaceTunnel(w, h, tr) {
+      const p = clamp(tr.t / tr.dur, 0, 1);
+      const cx = w / 2, cy = h / 2;
+      const progress = easeInOut(p);
+      ctx.save();
+      ctx.fillStyle = `rgba(0,0,0,${.22 + progress * .26})`;
+      ctx.fillRect(0, 0, w, h);
+      drawWarpStars(w, h, "101,255,71", progress, .9);
+      ctx.lineCap = "round";
+      const maxR = Math.max(w, h) * .72;
+      for (let i = 0; i < 10; i++) {
+        const z = ((i / 10 + progress * 1.55) % 1);
+        const r = lerp(12, maxR, z * z);
+        const alpha = clamp(.95 - z * .8, .1, .78);
+        ctx.strokeStyle = `rgba(101,255,71,${alpha})`;
+        ctx.lineWidth = 1 + z * 2.4;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, r, r * .72, 0, 0, TAU);
+        ctx.stroke();
+      }
       const vignette = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h) * .6);
-      vignette.addColorStop(0, `rgba(${color},0)`);
-      vignette.addColorStop(1, `rgba(${color},${clamp(progress * .35, 0, .35)})`);
+      vignette.addColorStop(0, "rgba(101,255,71,0)");
+      vignette.addColorStop(1, `rgba(101,255,71,${clamp(progress * .28, 0, .28)})`);
       ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, w, h);
+      ctx.restore();
+    }
+
+    function drawGalacticTunnel(w, h, tr) {
+      const p = clamp(tr.t / tr.dur, 0, 1);
+      const cx = w / 2, cy = h / 2;
+      const progress = easeInOut(p);
+      const pulse = .5 + .5 * Math.sin(p * TAU * 5);
+      ctx.save();
+      ctx.fillStyle = `rgba(0,0,0,${.34 + progress * .4})`;
+      ctx.fillRect(0, 0, w, h);
+      drawWarpStars(w, h, "180,120,255", progress, 1.55);
+      drawWarpStars(w, h, "110,235,255", clamp(progress * 1.15, 0, 1), 1.05);
+
+      const maxR = Math.max(w, h) * .86;
+      for (let i = 0; i < 16; i++) {
+        const z = ((i / 16 + p * 1.95) % 1);
+        const r = lerp(10, maxR, z * z);
+        const twist = p * TAU * 1.2 + i * .23;
+        const alpha = clamp(.92 - z * .72 + pulse * .08, .12, .88);
+        ctx.strokeStyle = i % 2 ? `rgba(111,242,255,${alpha})` : `rgba(164,92,255,${alpha})`;
+        ctx.lineWidth = 1.1 + z * 3.2;
+        ctx.beginPath();
+        const segments = 40;
+        for (let s = 0; s <= segments; s++) {
+          const a = s / segments * TAU;
+          const wobble = 1 + Math.sin(a * 6 + twist) * .025;
+          const x = cx + Math.cos(a + twist * .08) * r * wobble;
+          const y = cy + Math.sin(a) * r * .68 * wobble;
+          if (s === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+
+      const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(w, h) * .45);
+      core.addColorStop(0, `rgba(255,255,255,${.06 + pulse * .06})`);
+      core.addColorStop(.45, `rgba(141,92,255,${.08 + progress * .12})`);
+      core.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = core;
       ctx.fillRect(0, 0, w, h);
       ctx.restore();
     }
@@ -4286,7 +4721,7 @@
         <button class="btn mini" data-ship-nav="-1">&lt; Prev</button>
         <strong>${modelDisplayName(browsed)}</strong>
         <button class="btn mini" data-ship-nav="1">Next &gt;</button>
-        <button class="btn mini" data-export-obj>Export OBJ</button>
+        ${game.developerMode ? `<button class="btn mini" data-export-obj>Export OBJ</button>` : ""}
       </div>
       <div class="grid2">
         ${stat("Role", shipRoleLabel(browsed))}
@@ -4301,7 +4736,7 @@
         <button class="btn mini ${game.graphicsMode === "both" ? "primary" : ""}" data-graphics="both">Both</button>
       </div>
       <div class="grid2">
-        ${stat("Your Ship", "Cobra Mk III")}
+        ${stat("Your Ship", shipName(playerShipModel()))}
         ${stat("Mode", graphicsModeLabel(game.graphicsMode))}
         ${stat("Cargo", `${usedCargo()}/${game.cargoCap}t`)}
         ${stat("Laser", laserPower().name)}
@@ -4316,6 +4751,10 @@
     }
 
     function renderCheats() {
+      const currentShip = playerShipModel();
+      const shipOptions = SHIP_MODEL_LIST.map((model) =>
+        `<option value="${model}" ${model === currentShip ? "selected" : ""}>${shipName(model)}</option>`
+      ).join("");
       const equipmentRows = EQUIPMENT.map((e) => {
         const fitted = !!game.equipment[e.id];
         return `<div class="row">
@@ -4335,10 +4774,16 @@
         <button class="btn mini" data-cheat="cleanLegal">Clear Legal Status</button>
       </div>
       <div class="grid2">
+        ${stat("Ship", shipName(currentShip))}
+        ${stat("Max Speed", Math.round(game.maxSpeed))}
         ${stat("Credits", `${fmt(game.credits)} CR`)}
         ${stat("Cargo", `${usedCargo()}/${game.cargoCap}t`)}
         ${stat("Missiles", game.missiles)}
         ${stat("Legal", legalStatus())}
+      </div>
+      <div class="notice">
+        Player ship
+        <select class="btn mini" data-cheat-ship>${shipOptions}</select>
       </div>
       <div class="notice">
         Equipment
@@ -4374,6 +4819,7 @@
       <div class="row"><span class="label"><span class="kbd">T</span></span><span class="value">Target nearest</span></div>
       <div class="row"><span class="label"><span class="kbd">G</span></span><span class="value">Graphics mode</span></div>
       <div class="row"><span class="label"><span class="kbd">L</span></span><span class="value">Toggle ship labels</span></div>
+      <div class="row"><span class="label"><span class="kbd">N</span></span><span class="value">Toggle sound</span></div>
       <div class="row"><span class="label"><span class="kbd">R</span></span><span class="value">Deploy test armada</span></div>
       <div class="row"><span class="label"><span class="kbd">J</span></span><span class="value">Hyperspace</span></div>
       <div class="row"><span class="label"><span class="kbd">O</span></span><span class="value">Dock attempt</span></div>
@@ -4439,6 +4885,8 @@
       panelBody.querySelectorAll("[data-cheat-equip]").forEach((b) => b.addEventListener("click", () => {
         cheatSetEquipment(b.dataset.cheatEquip, b.dataset.cheatEquipState === "add");
       }));
+      const cheatShip = panelBody.querySelector("[data-cheat-ship]");
+      if (cheatShip) cheatShip.addEventListener("change", () => cheatChangePlayerShip(cheatShip.value));
       const fuel = panelBody.querySelector("[data-fuel]");
       if (fuel) fuel.addEventListener("click", buyFuel);
       const missile = panelBody.querySelector("[data-missile]");
@@ -4613,7 +5061,9 @@
     }
 
     window.addEventListener("resize", resizeCanvases);
+    window.addEventListener("pointerdown", () => eliteAudio.resume(), { capture: true });
     window.addEventListener("keydown", (e) => {
+      eliteAudio.resume();
       keys.add(e.code);
       if (["Space", "KeyW", "KeyA", "KeyS", "KeyD", "KeyQ", "KeyE"].includes(e.code)) e.preventDefault();
       if (e.code === "Space") fireLaser();
@@ -4636,6 +5086,7 @@
         game.showShipLabels = !game.showShipLabels;
         setMessage(`Ship labels: ${game.showShipLabels ? "on" : "off"}.`);
       }
+      if (e.code === "KeyN") eliteAudio.toggle();
       if (e.code === "Digit1") { game.panel = "market"; renderPanel(); }
       if (e.code === "Digit2") { game.panel = "chart"; renderPanel(); }
       if (e.code === "Digit3") { game.panel = "equip"; renderPanel(); }
