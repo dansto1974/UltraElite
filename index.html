@@ -6472,15 +6472,22 @@
 
       const sun = game.objects.find((s) => s.type === "sun");
       const sunDir = sun ? norm(sub(sun.pos, o.pos)) : null;
-      let lightAngle = -.6;
-      if (sun) {
-        const sunP = project(cameraTransform(sun.pos, game.camera), w, h);
-        if (sunP) lightAngle = Math.atan2(sunP.y - pr.y, sunP.x - pr.x);
+      // Screen direction of the day side, from the 3D sun direction rotated into camera
+      // space — NOT from projected screen positions: project() returns null whenever the
+      // sun is off-screen/behind, and the old fallback angle was screen-locked, which
+      // made the shadow rotate with the player's roll instead of staying sun-anchored.
+      let lx = Math.cos(-.6), ly = Math.sin(-.6);
+      if (sunDir) {
+        const sc = worldDirToCam(sunDir);
+        const sl = Math.hypot(sc.x, sc.y);
+        if (sl > .0001) { lx = sc.x / sl; ly = -sc.y / sl; } // project() flips y
       }
+      // Phase: how much of the visible disc is lit (sun behind camera = full, sun behind
+      // planet = new). Positions the terminator along the sun axis instead of always
+      // splitting the disc at a fixed spot.
+      const cosPhase = sunDir ? dot(sunDir, norm(sub(game.camera.pos, o.pos))) : .2;
 
       if (o.hasRing) drawPlanetRing(o, r, hue, w, h, false);
-
-      const lx = Math.cos(lightAngle), ly = Math.sin(lightAngle);
       const g = ctx.createRadialGradient(pr.x + lx * r * .35, pr.y + ly * r * .35, r * .05, pr.x, pr.y, r * 1.05);
       const base = planetBaseStops(o);
       g.addColorStop(0, base[0]);
@@ -6501,10 +6508,15 @@
       // A linear gradient along the sun->anti-sun axis gives the crisp divide the radial
       // fade couldn't; drawn over the surface so the night hemisphere reads as true black.
       const termGrad = ctx.createLinearGradient(pr.x + lx * r * 1.05, pr.y + ly * r * 1.05, pr.x - lx * r * 1.05, pr.y - ly * r * 1.05);
+      // Terminator sits at the phase point along the day->night axis: sun behind the
+      // camera pushes it to the far limb (full disc), sun behind the planet pulls it to
+      // the near limb (new/dark disc), side-on splits the disc at the middle.
+      const termP = clamp((1 + cosPhase) / 2, 0, 1);
+      const soft = .09;
       termGrad.addColorStop(0, "rgba(0,1,4,0)");
-      termGrad.addColorStop(.46, "rgba(0,1,4,0)");
-      termGrad.addColorStop(.55, "rgba(0,1,4,.55)");
-      termGrad.addColorStop(.64, "rgba(0,1,4,.99)");
+      termGrad.addColorStop(clamp(termP - soft, 0, 1), "rgba(0,1,4,0)");
+      termGrad.addColorStop(termP, "rgba(0,1,4,.55)");
+      termGrad.addColorStop(clamp(termP + soft, 0, 1), "rgba(0,1,4,.99)");
       termGrad.addColorStop(1, "rgba(0,1,4,1)");
       ctx.fillStyle = termGrad;
       ctx.fillRect(pr.x - r, pr.y - r, r * 2, r * 2);
