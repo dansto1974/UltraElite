@@ -6002,8 +6002,9 @@
         const bandLight = debris ? 22 + rng() * 22 : light;
         const baseAlpha = (solid ? (debris ? .42 : .34) : .26) * dusty;
         const litStyle = `hsla(${bandHue}, ${bandSat}%, ${bandLight}%, ${baseAlpha})`;
-        // Eclipsed arc: desaturated, much darker version of the same band colour.
-        const shadowStyle = `hsla(${bandHue}, ${Math.round(bandSat * .5)}%, ${Math.round(bandLight * .24)}%, ${baseAlpha})`;
+        // Eclipsed arc: a hard, near-black shadow (the planet blocking the sun), not just
+        // a dimmer band — matches the crisp planet terminator.
+        const shadowStyle = `hsla(${bandHue}, ${Math.round(bandSat * .3)}%, ${Math.max(3, Math.round(bandLight * .1))}%, ${baseAlpha})`;
         ctx.lineWidth = Math.max(1, r * (solid ? (debris ? (.008 + rng() * .024) : (.012 + rng() * .018)) : .028));
         // The band is one path per lit/shadowed run: strokeStyle can't vary within a
         // stroke, so the current run is flushed whenever it's clipped by a gap, the
@@ -6181,7 +6182,15 @@
           });
         }
       }
-      o._geography = { continents, islands, clouds, craters, industry, stormPhase: rng() * TAU };
+      // Night-side population centres, density by biome (gas giants get none).
+      const cities = [];
+      const cityCount = biome === "industrial" ? 64 : biome === "ocean" ? 30 : biome === "desert" ? 16 : biome === "rocky" ? 7 : 0;
+      for (let i = 0; i < cityCount; i++) {
+        const theta = rng() * TAU;
+        const lat = (rng() - .5) * 1.9;
+        cities.push({ dir: norm(vec(Math.cos(lat) * Math.cos(theta), Math.sin(lat), Math.cos(lat) * Math.sin(theta))), s: .45 + rng() * .55 });
+      }
+      o._geography = { continents, islands, clouds, craters, industry, cities, stormPhase: rng() * TAU };
       return o._geography;
     }
 
@@ -6249,19 +6258,14 @@
       for (const zone of geo.industry) {
         const zp = projectSurfacePoint(o, q, zone.center, viewDir, w, h);
         if (!zp) continue;
-        const sunFacing = dot(zp.worldDir, sunDir);
         const zw = r * zone.width * zp.facing;
         const zh = Math.max(1, r * zone.height * zp.facing);
         ctx.fillStyle = `rgba(8,10,9,${.54 * zp.facing})`;
         ctx.beginPath();
         ctx.ellipse(zp.x, zp.y, zw, zh, zone.angle + (o.rot || 0) * .08, 0, TAU);
         ctx.fill();
-        if (sunFacing < .25) {
-          ctx.fillStyle = `rgba(255,178,66,${clamp(.34 - sunFacing * .7, .04, .42) * zp.facing})`;
-          ctx.beginPath();
-          ctx.ellipse(zp.x, zp.y, zw * .55, zh * .5, zone.angle, 0, TAU);
-          ctx.fill();
-        }
+        // Night-side city glow is handled separately (drawPlanetNightLights), drawn on
+        // top of the terminator shadow so it reads against the dark side.
       }
       for (const pole of [vec(0, 1, 0), vec(0, -1, 0)]) {
         const pp = projectSurfacePoint(o, q, pole, viewDir, w, h);
@@ -6372,6 +6376,72 @@
       }
     }
 
+    // Population centres glowing on the night hemisphere, drawn over the terminator
+    // shadow. Density/colour come from the biome (industrial = dense amber sprawl,
+    // ocean = scattered coastal white-blue, rocky = a few sparse outposts).
+    function drawPlanetNightLights(o, r, w, h, sunDir) {
+      if (!sunDir || !ultraFxEnabled()) return;
+      const biome = o.biome || "ocean";
+      if (biome === "gas") return;
+      const geo = planetGeography(o);
+      if (!geo.cities.length) return;
+      const q = quatFromAxisAngle(o.rotAxis || vec(0, 1, 0), o.rot || 0);
+      const viewDir = norm(sub(game.camera.pos, o.pos));
+      const warm = biome === "industrial" ? "255,196,92" : biome === "ocean" ? "186,214,255" : biome === "rocky" ? "255,222,150" : "255,206,120";
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      for (const city of geo.cities) {
+        const wd = quatRotate(q, city.dir);
+        const camFacing = dot(wd, viewDir);
+        if (camFacing <= .04) continue;
+        const night = -dot(wd, sunDir);      // >0 on the night side
+        if (night <= .05) continue;
+        const p = project(cameraTransform(add(o.pos, scale(wd, o.r)), game.camera), w, h);
+        if (!p) continue;
+        const intensity = clamp(night * 1.5, 0, 1) * clamp(camFacing * 1.6, 0, 1) * city.s;
+        if (intensity < .03) continue;
+        const rad = Math.max(.8, r * (biome === "industrial" ? .02 : .014)) * (.6 + intensity);
+        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, rad * 3);
+        g.addColorStop(0, `rgba(${warm},${.55 * intensity})`);
+        g.addColorStop(.4, `rgba(${warm},${.22 * intensity})`);
+        g.addColorStop(1, `rgba(${warm},0)`);
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, rad * 3, 0, TAU);
+        ctx.fill();
+        ctx.fillStyle = `rgba(${warm},${.72 * intensity})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, Math.max(.6, rad * .5), 0, TAU);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    // Atmospheric limb glow, coloured by planet type (industrial = yellow smog, ocean =
+    // blue/white, desert = pale gold, gas = its own hue, rocky = thin dusty haze).
+    function drawPlanetAtmosphere(o, pr, r) {
+      if (!ultraFxEnabled()) return;
+      const atm = {
+        industrial: { h: 46, s: 92, l: 58, str: .55 },
+        ocean: { h: 208, s: 82, l: 68, str: .62 },
+        desert: { h: 44, s: 62, l: 72, str: .4 },
+        rocky: { h: 30, s: 30, l: 60, str: .22 },
+        gas: { h: o.hue ?? 32, s: 70, l: 64, str: .58 }
+      }[o.biome || "ocean"] || { h: 208, s: 74, l: 68, str: .48 };
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      const glow = ctx.createRadialGradient(pr.x, pr.y, r * .8, pr.x, pr.y, r * 1.17);
+      glow.addColorStop(0, `hsla(${atm.h}, ${atm.s}%, ${atm.l}%, 0)`);
+      glow.addColorStop(.6, `hsla(${atm.h}, ${atm.s}%, ${atm.l}%, ${.12 * atm.str})`);
+      glow.addColorStop(.83, `hsla(${atm.h}, ${atm.s}%, ${atm.l}%, ${.5 * atm.str})`);
+      glow.addColorStop(1, `hsla(${atm.h}, ${atm.s}%, ${atm.l}%, 0)`);
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(pr.x, pr.y, r * 1.17, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+    }
+
     function drawPlanetBody(o, cam, w, h) {
       const pr = project(cam, w, h);
       if (!pr) return;
@@ -6401,6 +6471,7 @@
       }
 
       const sun = game.objects.find((s) => s.type === "sun");
+      const sunDir = sun ? norm(sub(sun.pos, o.pos)) : null;
       let lightAngle = -.6;
       if (sun) {
         const sunP = project(cameraTransform(sun.pos, game.camera), w, h);
@@ -6423,27 +6494,27 @@
       ctx.fillStyle = g;
       ctx.fillRect(pr.x - r, pr.y - r, r * 2, r * 2);
 
-      // Night-side shadow, centred opposite the sun, drawn under the surface features so
-      // city lights (industrial biome) still glow clearly against the dark side. Kept
-      // strong and fairly tight so the terminator is a distinct day/night divide rather
-      // than a gentle fade.
-      const shadowCx = pr.x - lx * r * .48, shadowCy = pr.y - ly * r * .48;
-      const shadow = ctx.createRadialGradient(shadowCx, shadowCy, r * .12, shadowCx, shadowCy, r * 1.42);
-      shadow.addColorStop(0, "rgba(0,2,6,.95)");
-      shadow.addColorStop(.5, "rgba(0,2,6,.82)");
-      shadow.addColorStop(.78, "rgba(0,2,6,.32)");
-      shadow.addColorStop(1, "rgba(0,2,6,0)");
-      ctx.fillStyle = shadow;
+      // Day-side surface features first, so the terminator shadow below darkens them.
+      drawPlanetSurface(o, pr, r, w, h);
+
+      // Terminator: a short soft ramp from the day side into a HARD black night side.
+      // A linear gradient along the sun->anti-sun axis gives the crisp divide the radial
+      // fade couldn't; drawn over the surface so the night hemisphere reads as true black.
+      const termGrad = ctx.createLinearGradient(pr.x + lx * r * 1.05, pr.y + ly * r * 1.05, pr.x - lx * r * 1.05, pr.y - ly * r * 1.05);
+      termGrad.addColorStop(0, "rgba(0,1,4,0)");
+      termGrad.addColorStop(.46, "rgba(0,1,4,0)");
+      termGrad.addColorStop(.55, "rgba(0,1,4,.55)");
+      termGrad.addColorStop(.64, "rgba(0,1,4,.99)");
+      termGrad.addColorStop(1, "rgba(0,1,4,1)");
+      ctx.fillStyle = termGrad;
       ctx.fillRect(pr.x - r, pr.y - r, r * 2, r * 2);
 
-      drawPlanetSurface(o, pr, r, w, h);
+      // Population centres glowing on the now-dark night side.
+      drawPlanetNightLights(o, r, w, h, sunDir);
       ctx.restore();
 
-      ctx.strokeStyle = `hsla(${hue}, 80%, 75%, .3)`;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(pr.x, pr.y, r, 0, TAU);
-      ctx.stroke();
+      // Atmospheric limb glow (coloured by type), outside the disc clip so it haloes.
+      drawPlanetAtmosphere(o, pr, r);
 
       if (o.hasRing) drawPlanetRing(o, r, hue, w, h, true);
     }
@@ -6469,81 +6540,93 @@
     function drawDockPortal(points, station) {
       if (points.some((p) => !p)) return;
       const [a, b, c, d] = points;
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
-      ctx.lineTo(c.x, c.y);
-      ctx.lineTo(d.x, d.y);
-      ctx.closePath();
-      ctx.clip();
-
       const bounds = polygonBounds(points);
-      const cx = (bounds.minX + bounds.maxX) / 2;
-      const cy = (bounds.minY + bounds.maxY) / 2;
-      const radius = Math.max(8, Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY) * .72);
-      const dark = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
-      dark.addColorStop(0, "rgba(0,0,0,.98)");
-      dark.addColorStop(.58, "rgba(2,5,4,.94)");
-      dark.addColorStop(1, "rgba(15,18,14,.82)");
-      ctx.fillStyle = dark;
-      ctx.fillRect(bounds.minX - 4, bounds.minY - 4, bounds.maxX - bounds.minX + 8, bounds.maxY - bounds.minY + 8);
-
-      const stripeW = Math.max(5, (bounds.maxX - bounds.minX) / 11);
-      ctx.globalAlpha = .72;
-      for (let x = bounds.minX - stripeW * 2; x < bounds.maxX + stripeW * 2; x += stripeW * 1.4) {
-        ctx.fillStyle = "#ffd33d";
+      const cx = (bounds.minX + bounds.maxX) / 2, cy = (bounds.minY + bounds.maxY) / 2;
+      const span = Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY);
+      const quadPath = () => {
         ctx.beginPath();
-        ctx.moveTo(x, bounds.minY - 8);
-        ctx.lineTo(x + stripeW * .62, bounds.minY - 8);
-        ctx.lineTo(x + stripeW * 2.2, bounds.maxY + 8);
-        ctx.lineTo(x + stripeW * 1.58, bounds.maxY + 8);
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.lineTo(c.x, c.y);
+        ctx.lineTo(d.x, d.y);
         ctx.closePath();
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-      ctx.restore();
+      };
 
+      // The opening itself: solid black slot with a faint blue force-field "seal".
       ctx.save();
-      ctx.lineJoin = "miter";
-      ctx.lineWidth = Math.max(2, Math.min(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY) * .06);
-      ctx.strokeStyle = "rgba(0,0,0,.86)";
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
-      ctx.lineTo(c.x, c.y);
-      ctx.lineTo(d.x, d.y);
-      ctx.closePath();
-      ctx.stroke();
-
-      ctx.lineWidth = Math.max(1.2, ctx.lineWidth * .34);
-      ctx.strokeStyle = "rgba(255,211,61,.92)";
-      ctx.setLineDash([Math.max(5, stripeW * .65), Math.max(4, stripeW * .45)]);
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
-      ctx.lineTo(c.x, c.y);
-      ctx.lineTo(d.x, d.y);
-      ctx.closePath();
-      ctx.stroke();
+      quadPath();
+      ctx.clip();
+      ctx.fillStyle = "#000";
+      ctx.fillRect(bounds.minX - 6, bounds.minY - 6, bounds.maxX - bounds.minX + 12, bounds.maxY - bounds.minY + 12);
+      if (ultraFxEnabled()) {
+        const shimmer = .32 + Math.max(0, Math.sin(performance.now() / 430)) * .4;
+        const seal = ctx.createRadialGradient(cx, cy, 0, cx, cy, span * .62);
+        seal.addColorStop(0, `rgba(74,144,255,${.06 + .10 * shimmer})`);
+        seal.addColorStop(.55, `rgba(46,104,224,${.05 + .09 * shimmer})`);
+        seal.addColorStop(1, "rgba(20,60,170,0)");
+        ctx.fillStyle = seal;
+        ctx.fillRect(bounds.minX - 6, bounds.minY - 6, bounds.maxX - bounds.minX + 12, bounds.maxY - bounds.minY + 12);
+        ctx.globalCompositeOperation = "lighter";
+        ctx.strokeStyle = `rgba(120,180,255,${.10 * shimmer})`;
+        ctx.lineWidth = Math.max(1, span * .012);
+        for (let i = 1; i < 4; i++) {
+          const yy = bounds.minY + (bounds.maxY - bounds.minY) * (i / 4) + Math.sin(performance.now() / 260 + i) * span * .01;
+          ctx.beginPath();
+          ctx.moveTo(bounds.minX, yy);
+          ctx.lineTo(bounds.maxX, yy);
+          ctx.stroke();
+        }
+      }
       ctx.restore();
 
+      // Hazard chevron strip around the OUTSIDE of the slot. Ticks are built from the
+      // actual projected quad edges (not screen-axis-aligned), so the strip stays glued
+      // to the slot and rotates with the station instead of swimming like the old fill.
+      const bandW = Math.max(3, span * .07);
+      const centroid = { x: (a.x + b.x + c.x + d.x) / 4, y: (a.y + b.y + c.y + d.y) / 4 };
+      ctx.save();
+      ctx.lineCap = "butt";
+      for (const [p, q] of [[a, b], [b, c], [c, d], [d, a]]) {
+        const dx = q.x - p.x, dy = q.y - p.y, elen = Math.hypot(dx, dy) || 1;
+        const ux = dx / elen, uy = dy / elen;
+        let nx = -uy, ny = ux;
+        const mx = (p.x + q.x) / 2, my = (p.y + q.y) / 2;
+        if ((mx - centroid.x) * nx + (my - centroid.y) * ny < 0) { nx = -nx; ny = -ny; }
+        // Chevron tick direction: diagonal (along-edge + outward), consistent per edge.
+        let tx = ux * .8 + nx, ty = uy * .8 + ny;
+        const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
+        const step = bandW * 1.5;
+        const n = Math.max(2, Math.round(elen / step));
+        for (let i = 0; i < n; i++) {
+          const t = (i + .5) / n * elen;
+          const bx = p.x + ux * t, by = p.y + uy * t;
+          ctx.strokeStyle = "#0c0f0c";
+          ctx.lineWidth = step * .74;
+          ctx.beginPath();
+          ctx.moveTo(bx - tx * bandW, by - ty * bandW);
+          ctx.lineTo(bx + tx * bandW, by + ty * bandW);
+          ctx.stroke();
+          ctx.strokeStyle = "#ffd33d";
+          ctx.lineWidth = step * .46;
+          ctx.beginPath();
+          ctx.moveTo(bx - tx * bandW, by - ty * bandW);
+          ctx.lineTo(bx + tx * bandW, by + ty * bandW);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+
+      // Blue force-field edge glow around the opening.
       if (ultraFxEnabled()) {
-        const pulse = .35 + Math.max(0, Math.sin(performance.now() / 115)) * .65;
+        const pulse = .4 + Math.max(0, Math.sin(performance.now() / 240)) * .6;
         ctx.save();
         ctx.globalCompositeOperation = "lighter";
-        for (const [i, p] of points.entries()) {
-          const alt = i % 2 ? .65 : 1;
-          const glowR = Math.max(8, radius * .11) * (1 + pulse * .75);
-          const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowR);
-          g.addColorStop(0, `rgba(255,234,120,${.38 * pulse * alt})`);
-          g.addColorStop(.32, `rgba(255,78,46,${.45 * pulse * alt})`);
-          g.addColorStop(1, "rgba(255,78,46,0)");
-          ctx.fillStyle = g;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, glowR, 0, TAU);
-          ctx.fill();
-        }
+        ctx.strokeStyle = `rgba(90,160,255,${.24 * pulse})`;
+        ctx.lineWidth = Math.max(1.5, span * .018);
+        ctx.shadowColor = "rgba(90,160,255,.9)";
+        ctx.shadowBlur = span * .1;
+        quadPath();
+        ctx.stroke();
         ctx.restore();
       }
     }
