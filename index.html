@@ -3342,6 +3342,8 @@
 
     function drawStars(w, h) {
       ctx.save();
+      const cx = w / 2, cy = h / 2;
+      const speedFrac = clamp((game.speed || 0) / (game.maxSpeed || 220), 0, 1);
       for (const star of game.stars) {
         const p = cameraTransform(star, game.camera);
         const pr = project(p, w, h);
@@ -3349,11 +3351,24 @@
         const r = clamp((star.size || 1.3) - p.z / 3200, .4, 1.9);
         const twinkle = .82 + Math.sin(performance.now() / 260 + (star.tw || 0)) * .18;
         const color = game.witchspace ? "#8d5cff" : star.sat ? `hsl(${star.hue}, ${star.sat}%, 92%)` : "#e9f2e4";
+        const closeness = clamp(1 - p.z / 2600, .15, 1);
+        // Streaks radiate from the screen's vanishing point (where the camera is heading), so
+        // near/central dust appears to rush past fastest - the classic "sensation of movement"
+        // cue - while distant/off-axis stars barely stretch, matching real forward-motion parallax.
+        const streak = speedFrac * closeness * 30;
+        const dx = pr.x - cx, dy = pr.y - cy;
+        const dist = Math.hypot(dx, dy) || 1;
+        const dirX = dx / dist, dirY = dy / dist;
+        ctx.strokeStyle = color;
         ctx.fillStyle = color;
         ctx.shadowColor = color;
         ctx.shadowBlur = r * 2.2;
         ctx.globalAlpha = clamp(1.68 - p.z / 3000, .3, 1) * twinkle;
-        ctx.fillRect(pr.x, pr.y, r, r);
+        ctx.lineWidth = r;
+        ctx.beginPath();
+        ctx.moveTo(pr.x - dirX * streak, pr.y - dirY * streak);
+        ctx.lineTo(pr.x, pr.y);
+        ctx.stroke();
       }
       ctx.restore();
     }
