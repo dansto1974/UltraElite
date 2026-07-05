@@ -1059,6 +1059,15 @@
       return quatRotate(quatConj(ensureCameraQuat(camera)), p);
     }
 
+    // Rendering-space framework:
+    // - World/object geometry: transform 3D points through cameraTransform/worldDirToCam,
+    //   then project(). This is the default for ships, stations, rings, planet surfaces,
+    //   planet shadows, and any detail that should stay attached while the player rolls.
+    // - Screen-space drawing: only for UI, transition tunnels, particles, glows, and
+    //   intentional billboards. If a thing is painted on a hull/planet/station surface,
+    //   do not draw it with raw ctx.ellipse()/gradients in screen coordinates.
+    // - Planet surface details have their own helpers near drawPlanetSurface
+    //   (surfaceEllipseDirs/projectedSurfacePatch) to make the safe path easy.
     // A ship's own rot/pitch/roll is a world-frame orientation (unaffected by the
     // player's own turning), but rendering combines its rotated model verts with a
     // camera-space position. Any world-frame direction has to pass through this
@@ -1067,6 +1076,10 @@
     // world-fixed, i.e. it visibly spins in lockstep whenever the player turns.
     function worldDirToCam(dir, camera = game.camera) {
       return quatRotate(quatConj(ensureCameraQuat(camera)), dir);
+    }
+
+    function projectWorldPoint(world, w, h, camera = game.camera) {
+      return project(cameraTransform(world, camera), w, h);
     }
 
     function forwardVector(camera) {
@@ -2468,13 +2481,13 @@
         light: palette.light,
         textureSeed: hash32(sys.name + ":surface"),
         rotAxis: norm(vec((rng() - .5) * .7, 1, (rng() - .5) * .7)),
-        rotSpeed: (rng() > .5 ? 1 : -1) * (.05 + rng() * .07),
+        rotSpeed: (rng() > .5 ? 1 : -1) * (.003 + rng() * .005),
         rot: rng() * TAU,
         hasRing,
         debrisRing,
         debrisField: debrisRing && rng() < .68,
-        ringInner: 1.35 + rng() * 0.2,
-        ringOuter: 1.75 + rng() * 0.55,
+        ringInner: 1.75 + rng() * 0.25,
+        ringOuter: 2.55 + rng() * 0.85,
         ringFlatten: .22 + rng() * .16,
         ringTilt: (rng() - .5) * 1.1,
         hp: 9999, hostile: false
@@ -5995,25 +6008,26 @@
       const solid = game.graphicsMode !== "wire";
       const rng = mulberry((o.textureSeed || 1) ^ 0x51f15e);
       const debris = !!o.debrisRing;
-      const bands = debris ? (solid ? 11 : 5) : (solid ? 8 : 4), segs = debris ? 160 : 128;
+      const bands = debris ? (solid ? 34 : 12) : (solid ? 26 : 10), segs = debris ? 208 : 176;
       const gapA = rng() * TAU;
       const gapB = rng() * TAU;
       const gapC = rng() * TAU;
       for (let b = 0; b < bands; b++) {
         const t = bands === 1 ? 0 : b / (bands - 1);
         const rr = lerp(o.r * o.ringInner, o.r * o.ringOuter, t);
-        const dusty = .75 + rng() * .25;
-        const light = 72 - t * 25 + Math.sin(t * TAU * 2.3) * 7;
+        const laneNoise = rng();
+        const dusty = .52 + rng() * .38;
+        const light = 74 - t * 22 + Math.sin(t * TAU * 5.1) * 8 + (laneNoise - .5) * 9;
         const bandHue = debris ? 34 + rng() * 18 : hue - 18 + rng() * 14;
         const bandSat = debris ? 8 + rng() * 14 : (solid ? 26 + rng() * 18 : 38);
         const bandLight = debris ? 22 + rng() * 22 : light;
-        const baseAlpha = (solid ? (debris ? .42 : .34) : .26) * dusty;
+        const baseAlpha = (solid ? (debris ? .13 : .105) : .18) * dusty * (laneNoise < .18 ? 1.65 : 1);
         // Shade-graded band colour: full colour lit, desaturating and darkening toward
         // near-black in the umbra core.
         const styleFor = (shade) => shade >= .99
           ? `hsla(${bandHue}, ${bandSat}%, ${bandLight}%, ${baseAlpha})`
           : `hsla(${bandHue}, ${Math.round(bandSat * (.35 + .65 * shade))}%, ${Math.max(3, Math.round(bandLight * shade))}%, ${baseAlpha})`;
-        ctx.lineWidth = Math.max(1, r * (solid ? (debris ? (.008 + rng() * .024) : (.012 + rng() * .018)) : .028));
+        ctx.lineWidth = clamp(r * (solid ? (debris ? (.0022 + rng() * .0042) : (.0018 + rng() * .0034)) : .011), .65, solid ? 2.3 : 2.8);
         // strokeStyle can't vary within one stroke, so the shade is quantised into a few
         // levels and the current run is flushed whenever the level changes (as well as at
         // gaps and the front/back split).
@@ -6051,8 +6065,8 @@
       }
       if (debris && solid) drawPlanetDebris(o, r, w, h, front, u, v);
       if (solid && front === false) {
-        ctx.strokeStyle = "rgba(0,0,0,.16)";
-        ctx.lineWidth = Math.max(1, r * .035);
+        ctx.strokeStyle = "rgba(0,0,0,.08)";
+        ctx.lineWidth = clamp(r * .008, .6, 2);
         ctx.beginPath();
         let drawing = false;
         for (let i = 0; i <= segs; i++) {
@@ -6163,7 +6177,10 @@
           width: .18 + rng() * .28,
           height: .025 + rng() * .045,
           angle: rng() * TAU,
-          alpha: .18 + rng() * .22
+          alpha: .18 + rng() * .22,
+          arms: 2 + Math.floor(rng() * 2),
+          twist: (rng() > .5 ? 1 : -1) * (1.1 + rng() * 1.1),
+          seed: Math.floor(rng() * 0xfffffff)
         });
       }
       const craters = [];
@@ -6196,7 +6213,20 @@
       for (let i = 0; i < cityCount; i++) {
         const theta = rng() * TAU;
         const lat = (rng() - .5) * 1.9;
-        cities.push({ dir: norm(vec(Math.cos(lat) * Math.cos(theta), Math.sin(lat), Math.cos(lat) * Math.sin(theta))), s: .45 + rng() * .55 });
+        const dir = norm(vec(Math.cos(lat) * Math.cos(theta), Math.sin(lat), Math.cos(lat) * Math.sin(theta)));
+        const { u, v } = tangentBasisFor(dir);
+        const dotCount = biome === "industrial" ? 9 + Math.floor(rng() * 18) : biome === "ocean" ? 5 + Math.floor(rng() * 11) : 3 + Math.floor(rng() * 7);
+        const spread = biome === "industrial" ? .018 + rng() * .038 : .012 + rng() * .026;
+        const dots = [];
+        for (let d = 0; d < dotCount; d++) {
+          const a = rng() * TAU;
+          const rr = Math.pow(rng(), .65) * spread;
+          dots.push({
+            dir: norm(add(dir, add(scale(u, Math.cos(a) * rr), scale(v, Math.sin(a) * rr)))),
+            s: .45 + rng() * .85
+          });
+        }
+        cities.push({ dir, s: .45 + rng() * .55, dots });
       }
       o._geography = { continents, islands, clouds, craters, industry, cities, stormPhase: rng() * TAU };
       return o._geography;
@@ -6220,6 +6250,88 @@
       ctx.fill();
     }
 
+    // Planet surface rule: every cloud, crater, band, cap, city, or painted detail must
+    // be stored as local sphere directions and then projected. Do not draw surface
+    // features with screen-space ctx.ellipse/linear bands; those rotate with ship roll
+    // and drift away from the planet's real 3D orientation.
+    function surfaceEllipseDirs(center, rx, ry, angle = 0, segments = 18) {
+      const { u, v } = tangentBasisFor(center);
+      const ca = Math.cos(angle), sa = Math.sin(angle);
+      const dirs = [];
+      for (let i = 0; i < segments; i++) {
+        const a = i / segments * TAU;
+        const ex = Math.cos(a) * rx;
+        const ey = Math.sin(a) * ry;
+        dirs.push(norm(add(center, add(
+          scale(u, ex * ca - ey * sa),
+          scale(v, ex * sa + ey * ca)
+        ))));
+      }
+      return dirs;
+    }
+
+    function projectedSurfacePatch(o, q, dirs, viewDir, w, h, minVisible = .55) {
+      const pts = dirs.map((d) => projectSurfacePoint(o, q, d, viewDir, w, h)).filter(Boolean);
+      return pts.length >= dirs.length * minVisible ? pts : null;
+    }
+
+    function strokeProjectedPatch(points, strokeStyle, lineWidth) {
+      if (!points || points.length < 3) return;
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = lineWidth;
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+      ctx.closePath();
+      ctx.stroke();
+    }
+
+    function drawProjectedCloud(o, q, cloud, cp, viewDir, sunDir, w, h, r) {
+      const rng = mulberry((cloud.seed || 1) ^ 0xc10dd);
+      const { u, v } = tangentBasisFor(cloud.center);
+      const sunFacing = dot(cp.worldDir, sunDir);
+      const baseAlpha = cloud.alpha * clamp(.45 + sunFacing * .45, .15, 1) * cp.facing;
+      if (baseAlpha <= .01 || r * cloud.width * cp.facing < 2) return;
+      const arms = cloud.arms || 2;
+      const steps = 9;
+
+      for (let arm = 0; arm < arms; arm++) {
+        for (let i = 0; i < steps; i++) {
+          const t = i / (steps - 1);
+          const curl = cloud.angle + arm / arms * TAU + t * cloud.twist * TAU;
+          const radial = cloud.width * (.08 + t * .45) * (.82 + rng() * .28);
+          const lateral = cloud.height * (1.2 + t * 1.7);
+          const puffCenter = norm(add(cloud.center, add(
+            scale(u, Math.cos(curl) * radial),
+            scale(v, Math.sin(curl) * lateral)
+          )));
+          const puff = projectedSurfacePatch(o, q, surfaceEllipseDirs(
+            puffCenter,
+            cloud.width * (.08 + (1 - t) * .055) * (1 + rng() * .35),
+            cloud.height * (.7 + (1 - t) * .55) * (1 + rng() * .35),
+            curl + Math.PI / 2,
+            12
+          ), viewDir, w, h, .38);
+          if (!puff) continue;
+          drawProjectedPatch(puff, `rgba(255,255,255,${baseAlpha * (.18 + (1 - t) * .18)})`);
+        }
+      }
+
+      for (let i = 0; i < 6; i++) {
+        const a = rng() * TAU;
+        const d = Math.pow(rng(), .7) * cloud.width * .18;
+        const coreCenter = norm(add(cloud.center, add(scale(u, Math.cos(a) * d), scale(v, Math.sin(a) * d * .65))));
+        const core = projectedSurfacePatch(o, q, surfaceEllipseDirs(
+          coreCenter,
+          cloud.width * (.07 + rng() * .05),
+          cloud.height * (.8 + rng() * .8),
+          cloud.angle + rng() * .7,
+          12
+        ), viewDir, w, h, .4);
+        if (core) drawProjectedPatch(core, `rgba(255,255,255,${baseAlpha * (.28 + rng() * .18)})`);
+      }
+    }
+
     function drawPlanetSurface(o, pr, r, w, h) {
       const rng = mulberry(o.textureSeed || 1);
       const axis = o.rotAxis || vec(0, 1, 0);
@@ -6230,7 +6342,7 @@
       const biome = o.biome || "ocean";
       const geo = planetGeography(o);
       if (biome === "gas") {
-        drawGasGiantSurface(o, pr, r, geo);
+        drawGasGiantSurface(o, pr, r, geo, q, viewDir, w, h);
         return;
       }
       const landHue = biome === "desert" ? 38 : biome === "industrial" ? 42 : 105;
@@ -6253,25 +6365,17 @@
         if (!cp) continue;
         const cr = r * crater.radius * cp.facing;
         if (cr < .7) continue;
-        ctx.strokeStyle = `rgba(32,28,24,${crater.alpha * cp.facing})`;
-        ctx.lineWidth = Math.max(.7, cr * .18);
-        ctx.beginPath();
-        ctx.ellipse(cp.x, cp.y, cr * 1.25, cr * .72, (o.rot || 0) * .15, 0, TAU);
-        ctx.stroke();
-        ctx.fillStyle = `rgba(255,245,220,${.08 * cp.facing})`;
-        ctx.beginPath();
-        ctx.ellipse(cp.x - cr * .24, cp.y - cr * .2, cr * .45, cr * .22, 0, 0, TAU);
-        ctx.fill();
+        const rim = projectedSurfacePatch(o, q, surfaceEllipseDirs(crater.center, crater.radius * 1.25, crater.radius * .72, crater.angle || 0, 18), viewDir, w, h, .45);
+        strokeProjectedPatch(rim, `rgba(32,28,24,${crater.alpha * cp.facing})`, Math.max(.7, cr * .18));
+        const glintCenter = norm(add(crater.center, vec(-crater.radius * .22, crater.radius * .18, 0)));
+        const glint = projectedSurfacePatch(o, q, surfaceEllipseDirs(glintCenter, crater.radius * .42, crater.radius * .2, crater.angle || 0, 12), viewDir, w, h, .45);
+        if (glint) drawProjectedPatch(glint, `rgba(255,245,220,${.08 * cp.facing})`);
       }
       for (const zone of geo.industry) {
         const zp = projectSurfacePoint(o, q, zone.center, viewDir, w, h);
         if (!zp) continue;
-        const zw = r * zone.width * zp.facing;
-        const zh = Math.max(1, r * zone.height * zp.facing);
-        ctx.fillStyle = `rgba(8,10,9,${.54 * zp.facing})`;
-        ctx.beginPath();
-        ctx.ellipse(zp.x, zp.y, zw, zh, zone.angle + (o.rot || 0) * .08, 0, TAU);
-        ctx.fill();
+        const patch = projectedSurfacePatch(o, q, surfaceEllipseDirs(zone.center, zone.width, zone.height, zone.angle, 14), viewDir, w, h, .5);
+        if (patch) drawProjectedPatch(patch, `rgba(8,10,9,${.54 * zp.facing})`);
         // Night-side city glow is handled separately (drawPlanetNightLights), drawn on
         // top of the terminator shadow so it reads against the dark side.
       }
@@ -6280,71 +6384,50 @@
         if (!pp) continue;
         const capR = r * (.2 + Math.abs(pp.worldDir.y) * .08) * pp.facing;
         if (capR < 1) continue;
-        ctx.fillStyle = `rgba(242,250,248,${.62 * pp.facing})`;
-        ctx.beginPath();
-        ctx.ellipse(pp.x, pp.y, capR * 1.15, capR * .45, (o.rot || 0) * .2, 0, TAU);
-        ctx.fill();
+        const cap = projectedSurfacePatch(o, q, surfaceEllipseDirs(pole, .22, .07, 0, 22), viewDir, w, h, .38);
+        if (cap) drawProjectedPatch(cap, `rgba(242,250,248,${.62 * pp.facing})`);
       }
       for (const cloud of geo.clouds) {
         const cp = projectSurfacePoint(o, q, cloud.center, viewDir, w, h);
         if (!cp) continue;
-        const sunFacing = dot(cp.worldDir, sunDir);
-        const a = cloud.alpha * clamp(.45 + sunFacing * .45, .15, 1) * cp.facing;
-        const width = r * cloud.width * cp.facing;
-        const height = Math.max(1, r * cloud.height * (.5 + cp.facing));
-        if (width < 2) continue;
-        const swirl = ctx.createRadialGradient(cp.x, cp.y, 0, cp.x, cp.y, width);
-        swirl.addColorStop(0, `rgba(255,255,255,${a})`);
-        swirl.addColorStop(.45, `rgba(255,255,255,${a * .45})`);
-        swirl.addColorStop(1, "rgba(255,255,255,0)");
-        ctx.fillStyle = swirl;
-        ctx.beginPath();
-        ctx.ellipse(cp.x, cp.y, width, height, cloud.angle + (o.rot || 0) * .12, 0, TAU);
-        ctx.fill();
+        drawProjectedCloud(o, q, cloud, cp, viewDir, sunDir, w, h, r);
       }
     }
 
-    function drawGasGiantSurface(o, pr, r, geo) {
+    function gasBandDirs(lat0, lat1, phase, segments = 72) {
+      const upper = [], lower = [];
+      for (let i = 0; i <= segments; i++) {
+        const lon = i / segments * TAU;
+        const wobble = Math.sin(lon * 2.4 + phase) * .018 + Math.sin(lon * 5.1 + phase * .7) * .006;
+        const make = (lat) => vec(Math.cos(lat) * Math.cos(lon), Math.sin(lat), Math.cos(lat) * Math.sin(lon));
+        upper.push(norm(make(lat0 + wobble)));
+        lower.unshift(norm(make(lat1 + wobble * .8)));
+      }
+      return upper.concat(lower);
+    }
+
+    function drawGasGiantSurface(o, pr, r, geo, q, viewDir, w, h) {
       const rng = mulberry((o.textureSeed || 1) ^ 0x9e3779b9);
       const hue = o.hue ?? 32;
       const bands = 10;
       for (let i = 0; i < bands; i++) {
-        const y0 = pr.y - r + i * (2 * r / bands);
-        const y1 = pr.y - r + (i + 1) * (2 * r / bands);
-        const cy = (y0 + y1) / 2;
-        const half = Math.sqrt(Math.max(0, r * r - (cy - pr.y) * (cy - pr.y)));
-        const wobble = Math.sin(i * 1.7 + (o.rot || 0) * 1.3 + geo.stormPhase) * r * .025;
+        const lat0 = Math.asin(1 - i * 2 / bands);
+        const lat1 = Math.asin(1 - (i + 1) * 2 / bands);
         const sat = clamp((o.sat || 50) + (i % 2 ? 10 : -8), 18, 80);
         const light = clamp((o.light || 54) + (i % 3 - 1) * 9 + rng() * 8, 18, 82);
-        ctx.fillStyle = `hsla(${hue + (i % 2 ? 10 : -8)}, ${sat}%, ${light}%, .92)`;
-        ctx.beginPath();
-        ctx.ellipse(pr.x + wobble, cy, half, Math.max(2, (y1 - y0) * .62), 0, 0, TAU);
-        ctx.fill();
+        const patch = projectedSurfacePatch(o, q, gasBandDirs(lat0, lat1, geo.stormPhase + i * 1.7 + (o.rot || 0) * .22), viewDir, w, h, .28);
+        if (patch) drawProjectedPatch(patch, `hsla(${hue + (i % 2 ? 10 : -8)}, ${sat}%, ${light}%, .92)`);
       }
       for (let i = 0; i < 6; i++) {
-        const y = pr.y - r * .72 + i * r * .28;
-        const half = Math.sqrt(Math.max(0, r * r - (y - pr.y) * (y - pr.y)));
-        ctx.strokeStyle = `rgba(255,255,255,${.12 + rng() * .12})`;
-        ctx.lineWidth = Math.max(1, r * (.012 + rng() * .01));
-        ctx.beginPath();
-        ctx.moveTo(pr.x - half, y);
-        for (let s = 0; s <= 10; s++) {
-          const x = pr.x - half + s / 10 * half * 2;
-          ctx.lineTo(x, y + Math.sin(s * 1.8 + (o.rot || 0) * 2 + i) * r * .018);
-        }
-        ctx.stroke();
+        const lat = lerp(.72, -.68, i / 5);
+        const line = projectedSurfacePatch(o, q, gasBandDirs(lat + .008, lat - .008, geo.stormPhase + i), viewDir, w, h, .25);
+        if (line) drawProjectedPatch(line, `rgba(255,255,255,${.12 + rng() * .12})`);
       }
-      const sx = pr.x + Math.sin((o.rot || 0) * .65 + geo.stormPhase) * r * .34;
-      const sy = pr.y + Math.cos(geo.stormPhase) * r * .18;
-      ctx.fillStyle = "rgba(160,65,42,.58)";
-      ctx.beginPath();
-      ctx.ellipse(sx, sy, r * .2, r * .095, -.18, 0, TAU);
-      ctx.fill();
-      ctx.strokeStyle = "rgba(255,218,180,.42)";
-      ctx.lineWidth = Math.max(1, r * .015);
-      ctx.beginPath();
-      ctx.ellipse(sx, sy, r * .24, r * .12, -.18, 0, TAU);
-      ctx.stroke();
+      const stormCenter = norm(vec(Math.cos(.18) * Math.cos(geo.stormPhase + .9), Math.sin(.18), Math.cos(.18) * Math.sin(geo.stormPhase + .9)));
+      const storm = projectedSurfacePatch(o, q, surfaceEllipseDirs(stormCenter, .2, .095, -.18, 22), viewDir, w, h, .35);
+      if (storm) drawProjectedPatch(storm, "rgba(160,65,42,.58)");
+      const stormRim = projectedSurfacePatch(o, q, surfaceEllipseDirs(stormCenter, .24, .12, -.18, 26), viewDir, w, h, .35);
+      strokeProjectedPatch(stormRim, "rgba(255,218,180,.42)", Math.max(1, r * .015));
     }
 
     function planetBaseStops(o) {
@@ -6408,19 +6491,31 @@
         if (!p) continue;
         const intensity = clamp(night * 1.5, 0, 1) * clamp(camFacing * 1.6, 0, 1) * city.s;
         if (intensity < .03) continue;
-        const rad = Math.max(.8, r * (biome === "industrial" ? .02 : .014)) * (.6 + intensity);
-        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, rad * 3);
-        g.addColorStop(0, `rgba(${warm},${.55 * intensity})`);
-        g.addColorStop(.4, `rgba(${warm},${.22 * intensity})`);
+        const haloR = Math.max(1.8, r * (biome === "industrial" ? .018 : .012)) * (.55 + intensity);
+        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, haloR);
+        g.addColorStop(0, `rgba(${warm},${.09 * intensity})`);
+        g.addColorStop(.55, `rgba(${warm},${.035 * intensity})`);
         g.addColorStop(1, `rgba(${warm},0)`);
         ctx.fillStyle = g;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, rad * 3, 0, TAU);
+        ctx.arc(p.x, p.y, haloR, 0, TAU);
         ctx.fill();
-        ctx.fillStyle = `rgba(${warm},${.72 * intensity})`;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, Math.max(.6, rad * .5), 0, TAU);
-        ctx.fill();
+        for (const dotInfo of city.dots || [{ dir: city.dir, s: 1 }]) {
+          const dw = quatRotate(q, dotInfo.dir);
+          const dotFacing = dot(dw, viewDir);
+          if (dotFacing <= .04) continue;
+          const dotNight = -dot(dw, sunDir);
+          if (dotNight <= .05) continue;
+          const dp = project(cameraTransform(add(o.pos, scale(dw, o.r)), game.camera), w, h);
+          if (!dp) continue;
+          const dotI = clamp(dotNight * 1.55, 0, 1) * clamp(dotFacing * 1.9, 0, 1) * dotInfo.s * city.s;
+          if (dotI < .04) continue;
+          const dotR = clamp(r * (biome === "industrial" ? .0024 : .0019) * (.8 + dotInfo.s), .45, 2.2);
+          ctx.fillStyle = `rgba(${warm},${clamp(.38 + dotI * .5, .25, .88)})`;
+          ctx.beginPath();
+          ctx.arc(dp.x, dp.y, dotR, 0, TAU);
+          ctx.fill();
+        }
       }
       ctx.restore();
     }
@@ -6430,23 +6525,65 @@
     function drawPlanetAtmosphere(o, pr, r) {
       if (!ultraFxEnabled()) return;
       const atm = {
-        industrial: { h: 46, s: 92, l: 58, str: .55 },
-        ocean: { h: 208, s: 82, l: 68, str: .62 },
-        desert: { h: 44, s: 62, l: 72, str: .4 },
-        rocky: { h: 30, s: 30, l: 60, str: .22 },
-        gas: { h: o.hue ?? 32, s: 70, l: 64, str: .58 }
-      }[o.biome || "ocean"] || { h: 208, s: 74, l: 68, str: .48 };
+        industrial: { h: 46, s: 72, l: 54, str: .28 },
+        ocean: { h: 208, s: 64, l: 64, str: .3 },
+        desert: { h: 44, s: 48, l: 68, str: .2 },
+        rocky: { h: 30, s: 22, l: 58, str: .1 },
+        gas: { h: o.hue ?? 32, s: 54, l: 60, str: .26 }
+      }[o.biome || "ocean"] || { h: 208, s: 55, l: 64, str: .24 };
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
-      const glow = ctx.createRadialGradient(pr.x, pr.y, r * .8, pr.x, pr.y, r * 1.17);
+      const glow = ctx.createRadialGradient(pr.x, pr.y, r * .93, pr.x, pr.y, r * 1.08);
       glow.addColorStop(0, `hsla(${atm.h}, ${atm.s}%, ${atm.l}%, 0)`);
-      glow.addColorStop(.6, `hsla(${atm.h}, ${atm.s}%, ${atm.l}%, ${.12 * atm.str})`);
-      glow.addColorStop(.83, `hsla(${atm.h}, ${atm.s}%, ${atm.l}%, ${.5 * atm.str})`);
+      glow.addColorStop(.7, `hsla(${atm.h}, ${atm.s}%, ${atm.l}%, ${.035 * atm.str})`);
+      glow.addColorStop(.88, `hsla(${atm.h}, ${atm.s}%, ${atm.l}%, ${.2 * atm.str})`);
       glow.addColorStop(1, `hsla(${atm.h}, ${atm.s}%, ${atm.l}%, 0)`);
       ctx.fillStyle = glow;
       ctx.beginPath();
-      ctx.arc(pr.x, pr.y, r * 1.17, 0, TAU);
+      ctx.arc(pr.x, pr.y, r * 1.08, 0, TAU);
       ctx.fill();
+      ctx.restore();
+    }
+
+    function drawPlanetTerminatorShadow(o, cam, pr, r, sunDir, w, h) {
+      if (!sunDir) return;
+      const f = Math.min(w, h) * .82;
+      const camQ = ensureCameraQuat(game.camera);
+      const step = clamp(Math.ceil(r / 92), 2, 8);
+      const halfStep = step * .5;
+      const sphereRadius = o.r;
+      const centerD2 = dot(cam, cam);
+      const minX = Math.max(0, Math.floor(pr.x - r));
+      const maxX = Math.min(w, Math.ceil(pr.x + r));
+      const minY = Math.max(0, Math.floor(pr.y - r));
+      const maxY = Math.min(h, Math.ceil(pr.y + r));
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(pr.x, pr.y, r, 0, TAU);
+      ctx.clip();
+
+      for (let sy = minY + halfStep; sy < maxY; sy += step) {
+        const rayY = -(sy - h / 2) / f;
+        for (let sx = minX + halfStep; sx < maxX; sx += step) {
+          const ray = norm(vec((sx - w / 2) / f, rayY, 1));
+          const b = dot(ray, cam);
+          const disc = b * b - (centerD2 - sphereRadius * sphereRadius);
+          if (disc <= 0) continue;
+          const t = b - Math.sqrt(disc);
+          if (t <= 0) continue;
+
+          const surfaceCamDir = norm(sub(scale(ray, t), cam));
+          const surfaceWorldDir = norm(quatRotate(camQ, surfaceCamDir));
+          const night = clamp((-dot(surfaceWorldDir, sunDir) + .012) / .055, 0, 1);
+          if (night <= .015) continue;
+
+          const alpha = Math.pow(night, .5) * .98;
+          const level = Math.ceil(alpha * 18) / 18;
+          ctx.fillStyle = `rgba(0,1,4,${level})`;
+          ctx.fillRect(sx - halfStep - .5, sy - halfStep - .5, step + 1, step + 1);
+        }
+      }
       ctx.restore();
     }
 
@@ -6454,7 +6591,8 @@
       const pr = project(cam, w, h);
       if (!pr) return;
       const r = Math.abs(o.r * pr.s);
-      if (r < 2 || pr.x + r < 0 || pr.x - r > w || pr.y + r < 0 || pr.y - r > h) return;
+      const cullR = o.hasRing ? r * (o.ringOuter || 1) * 1.08 : r;
+      if (r < 2 || pr.x + cullR < 0 || pr.x - cullR > w || pr.y + cullR < 0 || pr.y - cullR > h) return;
 
       const hue = o.hue ?? 110, sat = o.sat ?? 45, light = o.light ?? 45;
       const meridianAngle = (o.rot || 0) * .2;
@@ -6480,20 +6618,15 @@
 
       const sun = game.objects.find((s) => s.type === "sun");
       const sunDir = sun ? norm(sub(sun.pos, o.pos)) : null;
-      // Screen direction of the day side, from the 3D sun direction rotated into camera
-      // space — NOT from projected screen positions: project() returns null whenever the
-      // sun is off-screen/behind, and the old fallback angle was screen-locked, which
-      // made the shadow rotate with the player's roll instead of staying sun-anchored.
+      // Gentle day-side tint only. The hard terminator is drawn below by sampling the
+      // visible sphere against the real world-space star direction; keeping it out of a
+      // flat canvas gradient stops the dark side behaving like a screen-space sticker.
       let lx = Math.cos(-.6), ly = Math.sin(-.6);
       if (sunDir) {
         const sc = worldDirToCam(sunDir);
         const sl = Math.hypot(sc.x, sc.y);
         if (sl > .0001) { lx = sc.x / sl; ly = -sc.y / sl; } // project() flips y
       }
-      // Phase: how much of the visible disc is lit (sun behind camera = full, sun behind
-      // planet = new). Positions the terminator along the sun axis instead of always
-      // splitting the disc at a fixed spot.
-      const cosPhase = sunDir ? dot(sunDir, norm(sub(game.camera.pos, o.pos))) : .2;
 
       if (o.hasRing) drawPlanetRing(o, r, hue, w, h, false);
       const g = ctx.createRadialGradient(pr.x + lx * r * .35, pr.y + ly * r * .35, r * .05, pr.x, pr.y, r * 1.05);
@@ -6512,22 +6645,7 @@
       // Day-side surface features first, so the terminator shadow below darkens them.
       drawPlanetSurface(o, pr, r, w, h);
 
-      // Terminator: a short soft ramp from the day side into a HARD black night side.
-      // A linear gradient along the sun->anti-sun axis gives the crisp divide the radial
-      // fade couldn't; drawn over the surface so the night hemisphere reads as true black.
-      const termGrad = ctx.createLinearGradient(pr.x + lx * r * 1.05, pr.y + ly * r * 1.05, pr.x - lx * r * 1.05, pr.y - ly * r * 1.05);
-      // Terminator sits at the phase point along the day->night axis: sun behind the
-      // camera pushes it to the far limb (full disc), sun behind the planet pulls it to
-      // the near limb (new/dark disc), side-on splits the disc at the middle.
-      const termP = clamp((1 + cosPhase) / 2, 0, 1);
-      const soft = .09;
-      termGrad.addColorStop(0, "rgba(0,1,4,0)");
-      termGrad.addColorStop(clamp(termP - soft, 0, 1), "rgba(0,1,4,0)");
-      termGrad.addColorStop(termP, "rgba(0,1,4,.55)");
-      termGrad.addColorStop(clamp(termP + soft, 0, 1), "rgba(0,1,4,.99)");
-      termGrad.addColorStop(1, "rgba(0,1,4,1)");
-      ctx.fillStyle = termGrad;
-      ctx.fillRect(pr.x - r, pr.y - r, r * 2, r * 2);
+      drawPlanetTerminatorShadow(o, cam, pr, r, sunDir, w, h);
 
       // Population centres glowing on the now-dark night side.
       drawPlanetNightLights(o, r, w, h, sunDir);
