@@ -239,6 +239,30 @@
       color: var(--amber);
     }
 
+    .comms-line.comms-station,
+    .comms-line.comms-station .comms-from {
+      color: var(--amber);
+      text-shadow: 0 0 7px rgba(255, 211, 61, .4);
+    }
+
+    .comms-line.comms-police,
+    .comms-line.comms-police .comms-from {
+      color: #46dfff;
+      text-shadow: 0 0 7px rgba(70, 223, 255, .42);
+    }
+
+    .comms-line.comms-hostile,
+    .comms-line.comms-hostile .comms-from {
+      color: #ff6a55;
+      text-shadow: 0 0 7px rgba(255, 72, 72, .4);
+    }
+
+    .comms-line.comms-trader,
+    .comms-line.comms-trader .comms-from {
+      color: #65ff47;
+      text-shadow: 0 0 6px rgba(101, 255, 71, .35);
+    }
+
     .comms-line.alien-comms {
       color: #77fff0;
       text-shadow: 0 0 8px rgba(90, 255, 235, .45);
@@ -1945,6 +1969,7 @@
       fxLevel: "ultra",
       comms: [],
       commsClock: 10,
+      trafficClock: 6,
       messageTimer: 0
     };
 
@@ -2025,8 +2050,20 @@
     const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
     const alienGlyphCache = new Map();
 
-    function commsMessage(from, text, alien = false) {
-      game.comms.push({ from, text, alien, until: performance.now() + 9500 });
+    function inferCommsKind(from, alien = false) {
+      const name = String(from || "").toUpperCase();
+      if (alien) return "alien";
+      if (name.includes("CONTROL") || name.includes("TRAFFIC")) return "station";
+      if (name.includes("POLICE") || name.includes("VIPER") || name.includes("PATROL")) return "police";
+      if (name.includes("PIRATE")) return "hostile";
+      if (name.includes("TRADER") || name.includes("ARMADA")) return "trader";
+      return "trader";
+    }
+
+    function commsMessage(from, text, alienOrKind = false) {
+      const alien = alienOrKind === true || alienOrKind === "alien";
+      const kind = typeof alienOrKind === "string" ? alienOrKind : inferCommsKind(from, alien);
+      game.comms.push({ from, text, alien, kind, until: performance.now() + 9500 });
       if (game.comms.length > 4) game.comms.splice(0, game.comms.length - 4);
       renderComms();
     }
@@ -2087,7 +2124,8 @@
       if (live.length !== game.comms.length) game.comms = live;
       el.innerHTML = live.map((m) => {
         const body = m.alien ? alienGlyphMarkup(m.text) : escapeHtml(m.text);
-        return `<div class="comms-line ${m.alien ? "alien-comms" : ""}"><span class="comms-from">${escapeHtml(m.from)}:</span> ${body}</div>`;
+        const kindClass = m.alien ? "alien-comms" : `comms-${escapeAttr(m.kind || "trader")}`;
+        return `<div class="comms-line ${kindClass}"><span class="comms-from">${escapeHtml(m.from)}:</span> ${body}</div>`;
       }).join("");
     }
     setInterval(renderComms, 1200);
@@ -2129,7 +2167,25 @@
       return text + pick(["", "", "", "!", "…"]);
     }
 
-    const hail = (o, text) => commsMessage(o.name || "UNKNOWN", text, isAlienShip(o));
+    const hail = (o, text) => commsMessage(o.name || "UNKNOWN", text, isAlienShip(o) ? "alien" : o.police ? "police" : o.hostile ? "hostile" : "trader");
+    const stationCommsName = () => `${currentSystem().name.toUpperCase()} CONTROL`;
+
+    function governmentCommsTone() {
+      const gov = currentSystem().government;
+      if (gov === 0) return "anarchy";
+      if (gov === 1) return "feudal";
+      if (gov === 2) return "multi";
+      if (gov === 3) return "dictatorship";
+      if (gov === 4) return "communist";
+      if (gov === 5) return "confederacy";
+      if (gov === 6) return "democracy";
+      if (gov === 7) return "corporate";
+      return "neutral";
+    }
+
+    function toneLines(map) {
+      return (map[governmentCommsTone()] || map.neutral || []).concat(map.any || []);
+    }
 
     function hostileThreatLine(o) {
       const sys = currentSystem();
@@ -2139,23 +2195,73 @@
         `Fresh meat on the ${sys.name} lanes!`,
         `That ${shipName(playerShipModel())} will strip for parts nicely.`,
         "Nothing personal. Scrap prices are up.",
-        `${GOVS[sys.government]} law can't save you out here.`
+        `${GOVS[sys.government]} law can't save you out here.`,
+        "Your transponder just became negotiable.",
+        "Power down and dump the hold. Try anything clever and burn.",
+        `I know a fence at ${sys.name} who'll pay for your hull plates.`,
+        "Nice cargo profile. Shame about the escort.",
+        "Running only makes the salvage colder."
       ]);
     }
 
     function fleeLine(o) {
       if (isAlienShip(o)) return alienChatterLine(o, "flee");
       return o.hostile
-        ? pick(["This isn't over, pilot!", "Breaking off — that one's a demon!", "Not worth the paint. I'm gone."])
-        : pick(["Mayday! Mayday! Under fire!", `Any police in ${currentSystem().name} sector?! Help!`, "I'm just a hauler! Hold your fire!"]);
+        ? pick([
+          "This isn't over, pilot!",
+          "Breaking off — that one's a demon!",
+          "Not worth the paint. I'm gone.",
+          "Engines redlining. Disengaging.",
+          "Keep the cargo, keep the curse.",
+          "Next time I bring friends."
+        ])
+        : pick([
+          "Mayday! Mayday! Under fire!",
+          `Any police in ${currentSystem().name} sector?! Help!`,
+          "I'm just a hauler! Hold your fire!",
+          "Ceasing manoeuvres! Don't shoot!",
+          "My insurer is going to love this.",
+          "Control, logging hostile contact now!"
+        ]);
     }
 
     function policeScrambleLine() {
-      return pick([
-        `${currentSystem().name} patrol: weapons fire detected. Responding.`,
-        "Station control reports shots fired. Vipers scrambled.",
-        "This is the law. Power down and heave to."
-      ]);
+      return pick(toneLines({
+        dictatorship: [
+          "Weapons violation. Submit immediately or be destroyed.",
+          "Authorised force deployed. Civilian traffic will disperse.",
+          "Station command has marked you non-compliant."
+        ],
+        corporate: [
+          "Security incident logged. Viper response billed to offender.",
+          "Compliance breach detected. Enforcement assets dispatched.",
+          "Insurance risk elevated. Security response in progress."
+        ],
+        anarchy: [
+          "Local patrol responding... if the transponder holds.",
+          "Station guns are awake. Everyone else, good luck.",
+          "Shots fired near the slot. Vipers launching, probably."
+        ],
+        democracy: [
+          "Weapons fire reported. Patrol responding under station authority.",
+          "All vessels, clear the enforcement lane.",
+          "Suspect contact marked. Please reduce speed and hold course."
+        ],
+        communist: [
+          "Collective traffic safety breach. Patrol responding.",
+          "Citizen vessels, clear space for enforcement action.",
+          "Unauthorised weapons discharge logged by station committee."
+        ],
+        neutral: [
+          `${currentSystem().name} patrol: weapons fire detected. Responding.`,
+          "Station control reports shots fired. Vipers scrambled.",
+          "This is the law. Power down and heave to."
+        ],
+        any: [
+          "Suspect contact marked. Interceptors released.",
+          "Weapons violation logged. Pursuit authorised."
+        ]
+      }));
     }
 
     function witnessLine(victimName) {
@@ -2163,8 +2269,192 @@
         `Control, ${victimName} just went up!`,
         "Debris field ahead... someone's having a bad day.",
         "Did you see that kill? Staying well clear.",
-        `${victimName}'s beacon just went dark.`
+        `${victimName}'s beacon just went dark.`,
+        "I'm recording this. Nobody shoot the recorder.",
+        "That was a clean hit. Too clean.",
+        `May ${victimName}'s escape pod be luckier than the hull.`
       ]);
+    }
+
+    function stationChatterLine() {
+      const sys = currentSystem();
+      const dest = galaxies[game.galaxy][game.target].name;
+      const good = GOODS[Math.floor(Math.random() * GOODS.length)][0];
+      return pick(toneLines({
+        dictatorship: [
+          "All ships will maintain assigned vector. Deviations are violations.",
+          "Docking queue is mandatory. Unauthorised approach will be punished.",
+          "Transmit cargo manifest before entering the control perimeter.",
+          "Station command reminds traffic: silence on non-essential channels."
+        ],
+        corporate: [
+          `Traffic advisory: priority lane open for ${dest} departures.`,
+          "Docking fees are recalculated on final approach. Have credit ready.",
+          "Security scan consent is implied by station proximity.",
+          `Market bulletin: ${ECONOMIES[sys.economy].toLowerCase()} exchange prices updated.`
+        ],
+        anarchy: [
+          "Docking queue is advisory. Survival remains at pilot discretion.",
+          "Beacon three is unreliable. Approach by eye if you must.",
+          "Station guns report partial coverage. Keep your shields warm.",
+          "Traffic control accepts no liability for pirate activity."
+        ],
+        democracy: [
+          "Civilian traffic, please hold vector until patrol clears the slot.",
+          "Docking bay strobes cycling. Watch the slot rotation.",
+          "Outer marker active. Reduce speed before requesting clearance.",
+          "Control thanks pilots for maintaining scanner separation."
+        ],
+        communist: [
+          "Collective traffic lane open. Queue discipline preserves safety.",
+          "Cargo declarations support fair distribution. Transmit manifest.",
+          "Public dock crews are ready for scheduled arrivals.",
+          "Fuel ration bulletin updated for all registered commanders."
+        ],
+        feudal: [
+          "By station charter, yield to vessels under house protection.",
+          "Harbour-master requests tribute manifests before docking.",
+          "Keep weapons sheathed in the approach lane.",
+          "Noble convoy has priority through the slot."
+        ],
+        multi: [
+          "Control advisory: local traffic rules may vary by beacon.",
+          "Docking authority is shared today. Expect contradictory instructions.",
+          "Maintain scanner separation while committees argue about lanes.",
+          "Approach queue revised again. Check beacon before final."
+        ],
+        neutral: [
+          `Inbound freighters, declare ${good} tonnage before final approach.`,
+          `${sys.name} control to all ships: maintain scanner separation.`,
+          "Automated tug traffic crossing the mail slot.",
+          "Navigation buoy three reports minor debris drift."
+        ],
+        any: [
+          `Registered departures for ${dest}, confirm jump fuel before launch.`,
+          `Commodity watch: ${good} traffic higher than usual.`
+        ]
+      }));
+    }
+
+    function stationControllerLine(kind, detail = "") {
+      const sys = currentSystem();
+      const base = {
+        launch: {
+          dictatorship: [
+            `${game.commander}, departure authorised. Maintain vector zero-seven-one until released.`,
+            "Launch window assigned. No deviation from outbound corridor.",
+            `Commander ${game.commander}, transponder locked. Proceed under station command.`
+          ],
+          corporate: [
+            `${game.commander}, launch clearance approved. Departure slot billed and open.`,
+            "Outbound vector clear. Insurance beacon verified.",
+            "Departure lane green. Keep to filed traffic profile."
+          ],
+          anarchy: [
+            `${game.commander}, slot looks clear. Punch it before that changes.`,
+            "Launch when ready. Beacon coverage is patchy past the marker.",
+            "Outbound corridor is mostly clear. Watch your own six."
+          ],
+          democracy: [
+            `${game.commander}, launch clearance granted. Safe flight.`,
+            "Departure vector clear. Maintain traffic separation.",
+            `Welcome to ${sys.name} space. Contact control beyond outer marker.`
+          ],
+          neutral: [
+            `${game.commander}, launch clearance granted. Safe flight.`,
+            "Departure vector clear. Mind outbound traffic.",
+            `Slot is yours, commander. Welcome to ${sys.name} space.`,
+            "Transponder logged. You are clear of the bay."
+          ]
+        },
+        dockClear: {
+          dictatorship: [
+            "Approach authorised. Hold assigned vector and speed.",
+            "Docking clearance issued. Do not improvise final approach.",
+            "Slot control has you. Comply with strobe sequence."
+          ],
+          corporate: [
+            "Approach accepted. Docking fee reserved.",
+            "Bay assigned. Traffic liability window begins now.",
+            "Docking lock confirmed. Services account active on touchdown."
+          ],
+          anarchy: [
+            "Bay looks open. If the strobes fail, follow the scorch marks.",
+            "Approach accepted. No promises about loose traffic.",
+            "Slot timing is good enough. Bring it in clean."
+          ],
+          democracy: [
+            "Clearance granted. Welcome home, commander.",
+            "Bay assigned. Mind the rotation on approach.",
+            "Docking lock confirmed. Cutting you in."
+          ],
+          neutral: [
+            "Approach accepted. Follow the strobes.",
+            "Slot timing green. Reduce thrust on final.",
+            "Traffic has you painted. Bring it in clean."
+          ]
+        },
+        dockComplete: {
+          dictatorship: [
+            "Docking complete. Engines will remain safed until release.",
+            "Mag clamps locked. Await station inspection.",
+            "Touchdown confirmed. Disembark only when authorised."
+          ],
+          corporate: [
+            "Docking complete. Account services are online.",
+            "Mag clamps locked. Hangar fees now accruing.",
+            "Touchdown confirmed. Refuel and repair options posted."
+          ],
+          anarchy: [
+            "You're down. Lock your canopy.",
+            "Mag clamps caught you. Welcome aboard, more or less.",
+            "Touchdown confirmed. Ignore anyone selling permits."
+          ],
+          neutral: [
+            "Docking complete. Bay pressure normal.",
+            "Mag clamps locked. Welcome aboard.",
+            "Touchdown confirmed. Services are online.",
+            "Hangar crew has you. Power down engines."
+          ]
+        },
+        dockDeny: {
+          dictatorship: [`Docking denied: ${detail}. Correct immediately.`],
+          corporate: [`Docking denied: ${detail}. Re-queue after compliance.`],
+          anarchy: [`Docking denied: ${detail}. Try not to decorate the slot.`],
+          neutral: [`Docking denied: ${detail}.`]
+        },
+        autoOn: {
+          dictatorship: [
+            "Auto-dock command accepted. Manual input is now discouraged.",
+            "Computer vector locked. Hold still and comply.",
+            "Beacon captured. Station has authority over final approach."
+          ],
+          corporate: [
+            "Auto-dock vector received. Premium approach profile engaged.",
+            "Computer lock accepted. Liability transfers on touchdown.",
+            "Beacon captured. Approach automation active."
+          ],
+          anarchy: [
+            "Auto-dock sees the slot. Let it argue with physics.",
+            "Computer has a vector. Keep a hand near override.",
+            "Beacon captured, mostly. Hold steady."
+          ],
+          neutral: [
+            "Auto-dock vector received. Hold steady.",
+            "Computer lock accepted. Hands off the stick.",
+            "Beacon captured. Approach profile loading.",
+            "Autopilot has the slot. Monitor speed only."
+          ]
+        },
+        autoOff: {
+          neutral: [
+            "Auto-dock cancelled. Manual control returned.",
+            "Computer lock released. You have the ship.",
+            "Approach automation standing down."
+          ]
+        }
+      }[kind] || {};
+      return pick(toneLines(base));
     }
 
     function ambientChatterLine(o) {
@@ -2175,19 +2465,39 @@
       if (o.police) return pick([
         "Routine sweep. Keep your transponder on.",
         `Scan complete: ${game.legal > 30 ? "fugitive-class vessel in sector." : "all clean."}`,
-        `${sys.name} patrol, sector clear.`
+        `${sys.name} patrol, sector clear.`,
+        "Viper wing two, rolling to station shadow.",
+        "Contraband scan net is live.",
+        "Hold your lane and keep your heat signature tidy.",
+        `Patrol notes pirate chatter on the ${dest} vector.`,
+        "Civilian contact confirmed. No action.",
+        "Traffic control, patrol sweep entering outer marker."
       ]);
       if (o.hostile) return pick([
         "Any fat traders on this lane today?",
         "Heard the Vipers run thin out here.",
-        "Keep your scanner dark and follow my lead."
+        "Keep your scanner dark and follow my lead.",
+        "Don't touch the clean ships until they clear the slot.",
+        `Fence says ${good} is hot at ${dest}.`,
+        "I count two escorts and one easy mark.",
+        "Station patrol is looking sunward. Move now.",
+        "Paint your beacon clean and they'll never know.",
+        "Leave the escape pods. They slow us down."
       ]);
       return pick([
         `Word is ${good} pays double at ${dest}.`,
         `${ECONOMIES[sys.economy]} markets... you haul what you can.`,
         `Three jumps out of ${sys.name} and the ${GOVS[sys.government].toLowerCase()} paperwork still follows me.`,
         "Coffee's cold, cargo's warm. Onward.",
-        `Anyone else getting scanner ghosts near ${sys.name}?`
+        `Anyone else getting scanner ghosts near ${sys.name}?`,
+        `If the price holds, I'm buying fuel and sleeping at ${dest}.`,
+        "Remind me never to take textiles through an anarchy again.",
+        "My aft shield has sounded wrong since the last jump.",
+        `Control, requesting queue number for ${sys.name} station.`,
+        "Canister recovery crews are getting bold today.",
+        `Running ${good} on a thin margin, same as always.`,
+        "If you see a Python with red trim, turn the other way.",
+        "Docking computer sings better than my co-pilot."
       ]);
     }
 
@@ -2580,6 +2890,7 @@
       }
       const count = arrival ? 3 + Math.floor(rng() * 4) : 2 + Math.floor(rng() * 3);
       for (let i = 0; i < count; i++) spawnShip(rng, i === 0 && (game.legal > 15 || rng() > .55));
+      game.trafficClock = 4 + rng() * 7;
       const rockCount = Math.floor(rng() * 3);
       for (let i = 0; i < rockCount; i++) spawnAsteroid(rng, vec(0, 0, 0));
       game.stars = Array.from({ length: 264 }, () => {
@@ -2632,6 +2943,68 @@
         decalSeed: hash32(`${game.galaxy}:${game.current}:${model}:${role}`)
       };
       setNoseDirection(o, o.vel, o.roll);
+      game.objects.push(o);
+      return o;
+    }
+
+    function stationTrafficModels() {
+      return ["shuttle", "transporter", "worm", "adder", "gecko", "cobra1", "python"];
+    }
+
+    function stationSlotAxes(st) {
+      const slot = stationSlotFrame(st);
+      let right = cross(slot.up, slot.outward);
+      if (len(right) < .01) right = vec(1, 0, 0);
+      return { ...slot, right: norm(right) };
+    }
+
+    function spawnStationTraffic(kind = "launch", rng = Math.random) {
+      const st = game.objects.find((o) => o.type === "station");
+      if (!st) return null;
+      const shipCount = game.objects.filter((o) => o.type === "ship").length;
+      if (shipCount >= 9) return null;
+      const { center, outward, up, right } = stationSlotAxes(st);
+      const types = stationTrafficModels();
+      const model = types[Math.floor(rng() * types.length)];
+      const stats = shipStats(model);
+      const role = "trader";
+      const name = `TRADER ${shipName(model)}`;
+      const slotOffset = add(scale(right, (rng() - .5) * 42), scale(up, (rng() - .5) * 28));
+      const launch = kind === "launch";
+      const approach = 760 + rng() * 520;
+      const pos = launch
+        ? add(center, add(slotOffset, scale(outward, 34)))
+        : add(center, add(slotOffset, scale(outward, approach)));
+      const dir = launch ? outward : scale(outward, -1);
+      const speed = launch ? 34 : 78;
+      const o = {
+        type: "ship",
+        model,
+        name,
+        pos,
+        vel: scale(dir, speed),
+        speed,
+        rot: 0,
+        pitch: 0,
+        roll: rng() * .4 - .2,
+        r: stats.r,
+        color: shipColor(model, false),
+        hp: Math.round(stats.hp * .88),
+        maxHp: Math.round(stats.hp * .88),
+        hostile: false,
+        police: false,
+        role,
+        bounty: 0,
+        aiMode: launch ? "stationLaunch" : "stationDock",
+        trafficStation: st,
+        trafficAge: 0,
+        trafficSlotOffset: slotOffset,
+        attackClock: rng() * 2,
+        wobble: rng() * TAU,
+        npcMissiles: 0,
+        decalSeed: hash32(`${game.galaxy}:${game.current}:${model}:station-traffic:${Math.floor(rng() * 99999)}`)
+      };
+      setNoseDirection(o, dir, o.roll);
       game.objects.push(o);
       return o;
     }
@@ -2701,12 +3074,12 @@
       game.camera.pos = { ...fromPos };
       game.camera.q = slot ? quatLookRotation(slot.outward, slot.up) : quat();
       game.speed = 0;
-      const sys = currentSystem();
       startTransition("launch", 1.25, () => {
         game.camera.pos = { ...toPos };
         game.camera.q = slot ? quatLookRotation(slot.outward, slot.up) : quat();
         game.speed = 40;
-        setMessage(`Launch clearance granted from ${sys.name}.`, true);
+        commsMessage(stationCommsName(), stationControllerLine("launch"), "station");
+        setMessage("Launch complete.", true);
         renderPanel();
       }, { fromPos, toPos, fromSpeed: 0, toSpeed: 40 });
       renderPanel();
@@ -2731,7 +3104,7 @@
         eliteAudio.play("beep");
         game.speed = 0;
         game.autoDock = false;
-        commsMessage(`${st.name.toUpperCase()} CONTROL`, pick(["Clearance granted. Welcome home, commander.", "Bay assigned. Mind the rotation on approach.", "Docking lock confirmed. Cutting you in."]));
+        commsMessage(`${st.name.toUpperCase()} CONTROL`, stationControllerLine("dockClear"), "station");
         startTransition("dock", 1.25, () => {
           game.docked = true;
           setViewMode("fwd");
@@ -2740,14 +3113,16 @@
           game.energy = 100;
           game.fuel = clamp(game.fuel + 0.2, 0, 7);
           game.legal = Math.max(0, game.legal - 2);
-          setMessage(`Docking complete at ${st.name}.`, true);
+          commsMessage(`${st.name.toUpperCase()} CONTROL`, stationControllerLine("dockComplete"), "station");
+          setMessage(`Docked at ${st.name}.`, true);
           renderPanel();
         });
       } else {
         const reason = !slow ? "TOO FAST" : !centered ? "BAD APPROACH" : !slotOk ? "SLOT ROTATION" : "TOO FAR";
         eliteAudio.play("boop");
         game.shields -= 12;
-        setMessage(`Docking denied: ${reason}.`, true);
+        commsMessage(`${st.name.toUpperCase()} CONTROL`, stationControllerLine("dockDeny", reason), "station");
+        setMessage("Docking denied.", true);
         if (game.shields <= 0) destroyPlayer("docking collision");
       }
     }
@@ -2760,7 +3135,7 @@
       }
       game.autoDock = !game.autoDock;
       setMessage(game.autoDock ? "Docking computer engaged." : "Docking computer disengaged.");
-      if (game.autoDock) commsMessage("TRAFFIC CONTROL", "Auto-dock vector received. Hold steady.");
+      commsMessage("TRAFFIC CONTROL", stationControllerLine(game.autoDock ? "autoOn" : "autoOff"), "station");
     }
 
     function hyperspace() {
@@ -2880,11 +3255,24 @@
       return o;
     }
 
-    function provokeStationPolice() {
+    function stationProtectedTarget(o) {
+      if (!o) return false;
+      if (o.type === "ship") return o.police || !o.hostile;
+      return o.type === "canister" || o.type === "plate";
+    }
+
+    function provokeStationPolice(reason = "Weapons fire near the station") {
       game.legal = Math.min(60, game.legal + 2);
       const policeNearby = game.objects.filter((o) => o.type === "ship" && o.police).length;
       if (policeNearby < 2 && Math.random() < .55) spawnPoliceResponse();
-      setMessage("Weapons fire near the station! Police scrambled.", true);
+      setMessage(`${reason}! Police scrambled.`, true);
+    }
+
+    function reportStationWeaponOffence(target) {
+      if (!nearStationSafeZone() || !stationProtectedTarget(target)) return false;
+      const label = target.police ? "Police vessel attacked near the station" : "Innocent ship hit near the station";
+      provokeStationPolice(label);
+      return true;
     }
 
     function fireLaser() {
@@ -2901,7 +3289,6 @@
       }
       const now = performance.now();
       if (now - game.lastShot < 170 || game.laserHeat > 95) return;
-      if (nearStationSafeZone() && Math.random() < .35) provokeStationPolice();
       const laser = laserPower();
       game.lastShot = now;
       game.laserHeat = clamp(game.laserHeat + laser.heat, 0, 100);
@@ -2951,6 +3338,7 @@
       best.hp -= isRockTarget && game.equipment.miningLaser ? laser.damage * 2 : laser.damage;
       eliteAudio.play("hit");
       setMessage(`${best.name} hit.`);
+      reportStationWeaponOffence(best);
       if (best.hp <= 0) destroyObject(best);
     }
 
@@ -3012,13 +3400,13 @@
 
     function fireMissile() {
       if (game.docked || game.missiles <= 0) return;
-      if (nearStationSafeZone() && Math.random() < .35) provokeStationPolice();
       const target = nearestTarget(true);
       if (!target) {
         eliteAudio.play("boop");
         setMessage("No missile lock.");
         return;
       }
+      reportStationWeaponOffence(target);
       game.missiles--;
       eliteAudio.play("missile");
       spawnMissile({ pos: add(game.camera.pos, scale(forwardVector(game.camera), 40)), target, hostile: false });
@@ -3324,6 +3712,7 @@
         if (o.hostile) return o.police ? 2 : 1;
         if (o.role === "pirate" || o.thargoid) return 1;
         if (o.role === "pod") return 6;
+        if (o.aiMode === "stationLaunch" || o.aiMode === "stationDock") return 5;
         return 4;
       }
       if (shipsOnly) return 99;
@@ -3587,8 +3976,9 @@
       renderPanel();
     }
 
-    const GAME_VERSION = "0.2.0";
+    const GAME_VERSION = "0.2.1";
     const UPDATE_LOG = [
+      ["0.2.1", "Added colour-coded comms, government-biased station controller chatter and visible NPC station launch/docking traffic."],
       ["0.2.0", "Procedural planet biomes now match chart descriptions; added gas giants, rocky worlds, industrial planets, debris rings and varied stellar classes."],
       ["0.1.9", "Added richer explosions, smoke puffs, engine haze, alien glyph comms, lower-pitched sound effects and close-range explosion rumble."],
       ["0.1.8", "Improved combat hitboxes, laser range feedback, finite NPC missiles, target prioritisation and rear-facing damage/decals."],
@@ -3721,11 +4111,15 @@
         if (game.commsClock <= 0) {
           game.commsClock = 16 + Math.random() * 26;
           const talkers = game.objects.filter((s) => s.type === "ship" && s.role && s.role !== "pod");
-          if (talkers.length) {
+          const station = game.objects.find((s) => s.type === "station" || s.type === "hermit");
+          if (station && (Math.random() < .32 || !talkers.length)) {
+            commsMessage(`${station.name.toUpperCase()} CONTROL`, stationChatterLine(), "station");
+          } else if (talkers.length) {
             const t = pick(talkers);
             hail(t, ambientChatterLine(t));
           }
         }
+        updateStationTraffic(dt);
         if (keys.has("Equal") || keys.has("NumpadAdd")) game.speed += dt * 120;
         if (keys.has("Minus") || keys.has("NumpadSubtract")) game.speed -= dt * 120;
         game.speed = clamp(game.speed, 0, game.maxSpeed);
@@ -3748,7 +4142,11 @@
         }
         for (const o of game.objects) {
           if (o.type === "station" || o.type === "hermit") updateStation(o, dt);
-          else if (o.type === "ship") { updateShipAI(o, dt); clampOutsideStation(o); updateEngineTrails(o, dt); }
+          else if (o.type === "ship") {
+            if (o.aiMode === "stationLaunch" || o.aiMode === "stationDock") updateStationTrafficShip(o, dt);
+            else { updateShipAI(o, dt); clampOutsideStation(o); }
+            updateEngineTrails(o, dt);
+          }
           else if (o.type === "planet" || o.type === "sun") o.rot = (o.rot || 0) + dt * (o.rotSpeed || .06);
           else if (o.type === "missile") updateMissile(o, dt);
           else if (o.type === "asteroid" || o.type === "boulder" || o.type === "splinter") {
@@ -3764,9 +4162,11 @@
           }
         }
         game.objects = game.objects.filter((o) => {
+          if (o._remove) return false;
           const d = len(sub(o.pos, game.camera.pos));
           return shouldKeepShip(o, d);
         });
+        if (game.targetObject && !game.objects.includes(game.targetObject)) game.targetObject = nearestTarget(false);
         if (Math.random() < dt * .035 && game.objects.filter((o) => o.type === "ship").length < 7) {
           spawnShip(Math.random, Math.random() > (currentSystem().government / 9 + .25));
         }
@@ -4025,6 +4425,56 @@
       if (dist >= minDist) return;
       const away = dist > 1 ? scale(toShip, 1 / dist) : vec(0, 1, 0);
       o.pos = add(station.pos, scale(away, minDist));
+    }
+
+    function updateStationTraffic(dt) {
+      const station = game.objects.find((o) => o.type === "station");
+      if (!station || len(sub(station.pos, game.camera.pos)) > 5200) return;
+      game.trafficClock -= dt;
+      if (game.trafficClock > 0) return;
+      game.trafficClock = 8 + Math.random() * 15;
+      const activeTraffic = game.objects.filter((o) => o.type === "ship" && (o.aiMode === "stationLaunch" || o.aiMode === "stationDock")).length;
+      if (activeTraffic >= 3) return;
+      const kind = Math.random() < .54 ? "launch" : "dock";
+      spawnStationTraffic(kind, Math.random);
+    }
+
+    function updateStationTrafficShip(o, dt) {
+      const station = o.trafficStation && game.objects.includes(o.trafficStation)
+        ? o.trafficStation
+        : game.objects.find((x) => x.type === "station");
+      if (!station) {
+        o.aiMode = "cruise";
+        return;
+      }
+      o.trafficAge = (o.trafficAge || 0) + dt;
+      const { center, outward } = stationSlotAxes(station);
+      const offset = o.trafficSlotOffset || vec();
+      const speedMul = shipStats(o.model).speed || 1;
+      if (o.aiMode === "stationLaunch") {
+        const target = add(center, add(offset, scale(outward, 1100)));
+        steerVelocity(o, sub(target, o.pos), dt, 70, 96 * speedMul);
+        if (dot(sub(o.pos, center), outward) > 920 || o.trafficAge > 12) {
+          o.aiMode = "cruise";
+          o.trafficStation = null;
+          o.orbitCenter = add(station.pos, scale(outward, stationClearanceRadius() + 520));
+          o.orbitRadius = 360 + Math.random() * 360;
+          o.orbitAngle = Math.random() * TAU;
+          o.orbitSpeed = (Math.random() > .5 ? 1 : -1) * (.16 + Math.random() * .22);
+        }
+        return;
+      }
+
+      const toShip = sub(o.pos, center);
+      const along = dot(toShip, outward);
+      const lateral = sub(toShip, scale(outward, along));
+      const gateOffset = scale(offset, clamp(along / 700, 0, 1));
+      const target = add(center, add(gateOffset, scale(outward, -80)));
+      steerVelocity(o, sub(target, o.pos), dt, 78, 90 * speedMul);
+      if ((along < -35 && len(lateral) < 120) || o.trafficAge > 18) {
+        o._remove = true;
+        if (o === game.targetObject) game.targetObject = game.objects.find((x) => x.type === "station") || null;
+      }
     }
 
     function updateShipAI(o, dt) {
@@ -6009,9 +6459,10 @@
       const rng = mulberry((o.textureSeed || 1) ^ 0x51f15e);
       const debris = !!o.debrisRing;
       const bands = debris ? (solid ? 34 : 12) : (solid ? 26 : 10), segs = debris ? 208 : 176;
-      const gapA = rng() * TAU;
-      const gapB = rng() * TAU;
       const gapC = rng() * TAU;
+      ctx.save();
+      ctx.lineCap = "butt";
+      ctx.lineJoin = "round";
       for (let b = 0; b < bands; b++) {
         const t = bands === 1 ? 0 : b / (bands - 1);
         const rr = lerp(o.r * o.ringInner, o.r * o.ringOuter, t);
@@ -6034,10 +6485,7 @@
         let drawing = false, curLevel = -1;
         for (let i = 0; i <= segs; i++) {
           const a = (i / segs) * TAU;
-          const gap =
-            Math.abs(Math.atan2(Math.sin(a - gapA), Math.cos(a - gapA))) < .035 + t * .018 ||
-            Math.abs(Math.atan2(Math.sin(a - gapB), Math.cos(a - gapB))) < .02 ||
-            (debris && Math.abs(Math.atan2(Math.sin(a - gapC), Math.cos(a - gapC))) < .075 + rng() * .018);
+          const gap = debris && Math.abs(Math.atan2(Math.sin(a - gapC), Math.cos(a - gapC))) < .018 + rng() * .01;
           const ragged = debris ? 1 + Math.sin(a * (7 + b) + t * 11) * .018 + Math.sin(a * 19 + b) * .012 : 1;
           const offset = add(scale(u, Math.cos(a) * rr * ragged), scale(v, Math.sin(a) * rr * ragged));
           const isFront = dot(offset, viewDir) >= 0;
@@ -6045,7 +6493,7 @@
             ? project(cameraTransform(add(o.pos, offset), game.camera), w, h)
             : null;
           if (!p || gap) { if (drawing) { ctx.stroke(); drawing = false; } continue; }
-          const level = Math.round((solid ? ringShade(offset, sunDir, o.r) : 1) * 7);
+          const level = Math.round((solid ? ringShade(offset, sunDir, o.r) : 1) * 15);
           if (drawing && level !== curLevel) {
             ctx.lineTo(p.x, p.y);
             ctx.stroke();
@@ -6053,7 +6501,7 @@
           }
           if (!drawing) {
             curLevel = level;
-            ctx.strokeStyle = styleFor(level / 7);
+            ctx.strokeStyle = styleFor(level / 15);
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             drawing = true;
@@ -6063,6 +6511,7 @@
         }
         if (drawing) ctx.stroke();
       }
+      ctx.restore();
       if (debris && solid) drawPlanetDebris(o, r, w, h, front, u, v);
       if (solid && front === false) {
         ctx.strokeStyle = "rgba(0,0,0,.08)";
@@ -6878,10 +7327,66 @@
       ctx.fillText("MARKET, EQUIPMENT, CHARTS AND COMMANDER STATUS AVAILABLE", w / 2, h * .55);
     }
 
+    function scannerStyleFor(o) {
+      if (o === game.targetObject) return { color: "#ffd33d", size: 5, shape: "target" };
+      if (o.type === "planet") return { color: "#58a6ff", size: 5, shape: "circle" };
+      if (o.type === "sun") return { color: "#ffd36a", size: 6, shape: "sun" };
+      if (o.type === "station") return { color: "#ffd33d", size: 5, shape: "square" };
+      if (o.type === "hermit") return { color: "#b7a070", size: 4, shape: "diamond" };
+      if (o.type === "missile") return { color: "#ff4848", size: 4, shape: "triangle" };
+      if (o.type === "asteroid" || o.type === "boulder" || o.type === "splinter") return { color: "#9aa39a", size: 3, shape: "diamond" };
+      if (o.type === "canister" || o.type === "plate") return { color: "#cfe9c8", size: 3, shape: "square" };
+      if (o.hostile) return { color: "#ff4848", size: 4, shape: "square" };
+      if (o.police) return { color: "#46dfff", size: 4, shape: "square" };
+      return { color: "#65ff47", size: 3, shape: "square" };
+    }
+
+    function drawScannerMarker(x, y, style) {
+      const s = style.size || 3;
+      sctx.fillStyle = style.color;
+      sctx.strokeStyle = style.color;
+      sctx.beginPath();
+      if (style.shape === "circle" || style.shape === "sun") {
+        sctx.arc(x, y, s, 0, TAU);
+        sctx.fill();
+        if (style.shape === "sun") {
+          sctx.globalAlpha = .35;
+          sctx.beginPath();
+          sctx.arc(x, y, s * 1.8, 0, TAU);
+          sctx.stroke();
+          sctx.globalAlpha = 1;
+        }
+      } else if (style.shape === "diamond") {
+        sctx.moveTo(x, y - s);
+        sctx.lineTo(x + s, y);
+        sctx.lineTo(x, y + s);
+        sctx.lineTo(x - s, y);
+        sctx.closePath();
+        sctx.fill();
+      } else if (style.shape === "triangle") {
+        sctx.moveTo(x, y - s);
+        sctx.lineTo(x + s, y + s);
+        sctx.lineTo(x - s, y + s);
+        sctx.closePath();
+        sctx.fill();
+      } else if (style.shape === "target") {
+        sctx.strokeRect(x - s, y - s, s * 2, s * 2);
+        sctx.beginPath();
+        sctx.moveTo(x - s * 1.5, y);
+        sctx.lineTo(x + s * 1.5, y);
+        sctx.moveTo(x, y - s * 1.5);
+        sctx.lineTo(x, y + s * 1.5);
+        sctx.stroke();
+      } else {
+        sctx.fillRect(x - s, y - s, s * 2, s * 2);
+      }
+    }
+
     function drawScanner() {
       const w = scanner.width, h = scanner.height;
       sctx.clearRect(0, 0, w, h);
       const cx = w / 2, cy = h / 2 + 8, rx = w * .42, ry = h * .34;
+      const rangeX = 9000, rangeZ = 12000, rangeY = 6000;
       sctx.strokeStyle = "#2bb934";
       sctx.lineWidth = 1;
       sctx.beginPath();
@@ -6907,19 +7412,19 @@
       sctx.closePath();
       sctx.fill();
       for (const o of game.objects) {
-        if (o.type === "planet" || o.type === "sun") continue;
         const p = cameraTransform(o.pos, game.camera);
-        const sx = cx + clamp(p.x / 1400, -1, 1) * rx;
+        const sx = cx + clamp(p.x / rangeX, -1, 1) * rx;
         // Camera +Z is forward; the scanner nose points upward, while canvas Y grows down.
-        const baseY = cy - clamp(p.z / 1600, -1, 1) * ry;
-        const stick = clamp(-p.y / 900, -1, 1) * ry * .8;
-        sctx.strokeStyle = o.hostile ? "#ff4848" : (o.type === "station" || o.type === "hermit") ? "#ffd33d" : "#46dfff";
+        const baseY = cy - clamp(p.z / rangeZ, -1, 1) * ry;
+        const stick = clamp(-p.y / rangeY, -1, 1) * ry * .8;
+        const style = scannerStyleFor(o);
+        sctx.strokeStyle = style.color;
         sctx.fillStyle = sctx.strokeStyle;
         sctx.beginPath();
         sctx.moveTo(sx, baseY);
         sctx.lineTo(sx, baseY + stick);
         sctx.stroke();
-        sctx.fillRect(sx - 3, baseY + stick - 3, 6, 6);
+        drawScannerMarker(sx, baseY + stick, style);
       }
     }
 
