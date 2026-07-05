@@ -513,6 +513,15 @@
       overflow: hidden;
     }
 
+    .bar-row.heat-row {
+      margin-top: 1px;
+      font-size: 11px;
+    }
+
+    .bar.heat-bar {
+      height: 9px;
+    }
+
     .fill {
       height: 100%;
       background: repeating-linear-gradient(90deg, var(--green) 0 9px, #061406 9px 11px);
@@ -523,6 +532,18 @@
     }
 
     .fill.red {
+      background: repeating-linear-gradient(90deg, var(--red) 0 9px, #140606 9px 11px);
+    }
+
+    .fill.heat {
+      background: repeating-linear-gradient(90deg, var(--green) 0 9px, #061406 9px 11px);
+    }
+
+    .fill.heat.warm {
+      background: repeating-linear-gradient(90deg, var(--amber) 0 9px, #151204 9px 11px);
+    }
+
+    .fill.heat.hot {
       background: repeating-linear-gradient(90deg, var(--red) 0 9px, #140606 9px 11px);
     }
 
@@ -882,6 +903,7 @@
         <div class="bar-row"><span>Shields</span><div class="bar"><div class="fill cyan" id="barShields"></div></div><span id="txtShields">100%</span></div>
         <div class="bar-row"><span>Fuel</span><div class="bar"><div class="fill" id="barFuel"></div></div><span id="txtFuel">7.0</span></div>
         <div class="bar-row"><span>Speed</span><div class="bar"><div class="fill" id="barSpeed"></div></div><span id="txtSpeed">0</span></div>
+        <div class="bar-row heat-row"><span>Laser Temp</span><div class="bar heat-bar"><div class="fill heat" id="barLaserHeat"></div></div><span id="txtLaserHeat">0%</span></div>
       </div>
       <div class="dash-section">
         <div class="scanner-wrap"><canvas id="scanner" width="520" height="104"></canvas></div>
@@ -1090,8 +1112,10 @@
     // - Screen-space drawing: only for UI, transition tunnels, particles, glows, and
     //   intentional billboards. If a thing is painted on a hull/planet/station surface,
     //   do not draw it with raw ctx.ellipse()/gradients in screen coordinates.
-    // - Planet surface details have their own helpers near drawPlanetSurface
-    //   (surfaceEllipseDirs/projectedSurfacePatch) to make the safe path easy.
+    // - Planet/star surface details have their own helpers near drawPlanetSurface /
+    //   drawSunBody. Cracks, clouds, rings and similar marks must be projected from
+    //   world/object directions, not clipped onto the canvas, or they will rotate with
+    //   the player's view.
     // A ship's own rot/pitch/roll is a world-frame orientation (unaffected by the
     // player's own turning), but rendering combines its rotated model verts with a
     // camera-space position. Any world-frame direction has to pass through this
@@ -1185,13 +1209,13 @@
     const EQUIPMENT = [
       { id: "fuelScoop", name: "Fuel Scoop", cost: 525, tech: 5, desc: "Collect solar fuel and loose cargo canisters." },
       { id: "ecm", name: "E.C.M. System", cost: 600, tech: 2, desc: "Disrupt incoming missiles." },
-      { id: "beamLaser", name: "Beam Laser", cost: 1000, tech: 4, desc: "A stronger forward laser." },
+      { id: "beamLaser", name: "Beam Laser", cost: 1000, tech: 4, desc: "Rapid sustained fire with moderate heat." },
       { id: "cargoBay", name: "Large Cargo Bay", cost: 400, tech: 1, desc: "Expands capacity to 35 tonnes." },
       { id: "extraEnergy", name: "Extra Energy Unit", cost: 1500, tech: 8, desc: "Improves energy recharge and survivability." },
       { id: "dockingComputer", name: "Docking Computer", cost: 1500, tech: 9, desc: "Automates final station approach." },
-      { id: "militaryLaser", name: "Military Laser", cost: 6000, tech: 10, desc: "The classic iron-ass indulgence." },
+      { id: "militaryLaser", name: "Military Laser", cost: 6000, tech: 10, desc: "High-power, long-range combat laser with serious heat." },
       { id: "galacticHyperdrive", name: "Galactic Hyperdrive", cost: 5000, tech: 10, desc: "One-use jump to the next galaxy." },
-      { id: "miningLaser", name: "Mining Laser", cost: 800, tech: 3, desc: "Doubles damage against asteroids and rock debris." },
+      { id: "miningLaser", name: "Mining Laser", cost: 800, tech: 3, desc: "Slow thermal cutter that tears through asteroids." },
       { id: "escapeCapsule", name: "Escape Capsule", cost: 1000, tech: 6, desc: "Auto-ejects you to safety if your ship is destroyed." },
       { id: "energyBomb", name: "Energy Bomb", cost: 900, tech: 12, desc: "One-shot device that cripples every nearby hostile. Illegal to carry." }
     ];
@@ -2011,10 +2035,23 @@
     }
 
     function laserPower() {
-      if (game.equipment.militaryLaser) return { name: "Military", damage: 46, heat: 34, range: 3200, color: "#8fe8ff" };
-      if (game.equipment.beamLaser) return { name: "Beam", damage: 28, heat: 25, range: 2400, color: "#ffd33d" };
-      if (game.equipment.miningLaser) return { name: "Mining", damage: 12, heat: 22, range: 1400, color: "#e8f2e4" };
-      return { name: "Pulse", damage: 16, heat: 18, range: 1800, color: "#ff6a55" };
+      const shotHeat = 8; // BBC Elite's LASLI adds the same gun heat per actual firing event.
+      if (game.equipment.militaryLaser) return {
+        id: "military", name: "Military", damage: 14, heat: shotHeat, range: 3400,
+        cooldown: 72, duration: 95, width: 2.8, color: "#8fe8ff", sound: "laserMilitary"
+      };
+      if (game.equipment.beamLaser) return {
+        id: "beam", name: "Beam", damage: 9, heat: shotHeat, range: 2600,
+        cooldown: 72, duration: 135, width: 2.1, color: "#ffd33d", sound: "laserBeam"
+      };
+      if (game.equipment.miningLaser) return {
+        id: "mining", name: "Mining", damage: 18, rockMul: 3, heat: shotHeat, range: 1300,
+        cooldown: 1000, duration: 230, width: 4.6, color: "#e8f2e4", sound: "laserMining"
+      };
+      return {
+        id: "pulse", name: "Pulse", damage: 16, heat: shotHeat, range: 1900,
+        cooldown: 200, duration: 125, width: 2.4, color: "#ff6a55", sound: "laserPulse"
+      };
     }
 
     const LASER_EQUIPMENT_IDS = ["beamLaser", "militaryLaser", "miningLaser"];
@@ -2164,6 +2201,7 @@
       let text = Array.from({ length: words }, (_, i) => alienWord(rng, alphabet, i === 0 ? 3 : 2, mood === "threat" ? 7 : 6)).join(" ");
       if (mood === "threat") text = `${alienWord(rng, alphabet, 5, 8)} // ${text}`;
       if (mood === "flee") text = `${text} ? ${alienWord(rng, alphabet, 3, 5)}`;
+      if (mood === "mercy") text = `${alienWord(rng, alphabet, 4, 7)} ? ${text} ? ${alienWord(rng, alphabet, 3, 5)}`;
       return text + pick(["", "", "", "!", "…"]);
     }
 
@@ -2223,6 +2261,45 @@
           "My insurer is going to love this.",
           "Control, logging hostile contact now!"
         ]);
+    }
+
+    function mercyLine(o, attackerName = game.commander) {
+      if (isAlienShip(o)) return alienChatterLine(o, "mercy");
+      if (o.role === "police" || o.police) {
+        return pick([
+          "Mayday! Viper hull breach, losing control!",
+          "Officer down! Request emergency recovery!",
+          "Patrol unit crippled. Any friendly contact, respond!",
+          `${attackerName}, cease fire! Pilot survival priority!`,
+          "Command, shields gone. I need cover now!"
+        ]);
+      }
+      if (o.hostile) {
+        return pick([
+          "Wait! Wait! I can pay!",
+          "Hold fire, commander! Cargo is yours!",
+          "Engines are gone! Let me drift!",
+          "No more shots! I'll dump the hold!",
+          "Mercy! I yield, I yield!",
+          "Take the bounty if you must, just leave the pod!"
+        ]);
+      }
+      return pick([
+        "Please, hold fire! I'm venting atmosphere!",
+        "I surrender! Cargo, credits, anything!",
+        "My reactor is cracking! Let me eject!",
+        "Ceasing thrust! Please don't finish this!",
+        "I'm just a trader! Please, no more!",
+        `${attackerName}, I have crew aboard! Hold fire!`
+      ]);
+    }
+
+    function maybeHailMercy(o, attackerName = game.commander, chance = 1) {
+      if (!o || o.type !== "ship" || !o.maxHp || o.hp <= 0 || o._mercyHailed) return;
+      const hullFrac = o.hp / o.maxHp;
+      if (hullFrac > .16 || Math.random() > chance) return;
+      o._mercyHailed = true;
+      hail(o, mercyLine(o, attackerName));
     }
 
     function policeScrambleLine() {
@@ -2588,6 +2665,7 @@
         const t = c.currentTime + delay;
         const level = clamp(strength, 0, 1.8);
         const sub = c.createOscillator();
+        const sub2 = c.createOscillator();
         const body = c.createOscillator();
         const amp = c.createGain();
         const shaper = c.createWaveShaper();
@@ -2598,29 +2676,35 @@
         }
         shaper.curve = curve;
         sub.type = "sine";
+        sub2.type = "sine";
         body.type = "triangle";
-        sub.frequency.setValueAtTime(42, t);
-        sub.frequency.exponentialRampToValueAtTime(24, t + dur);
-        body.frequency.setValueAtTime(58, t);
-        body.frequency.exponentialRampToValueAtTime(31, t + dur * .82);
-        envelope(amp, t, dur, .04 * level, .018, .16);
+        sub.frequency.setValueAtTime(28, t);
+        sub.frequency.exponentialRampToValueAtTime(14, t + dur * 1.12);
+        sub2.frequency.setValueAtTime(20, t + .08);
+        sub2.frequency.exponentialRampToValueAtTime(11.5, t + dur * 1.18);
+        body.frequency.setValueAtTime(42, t);
+        body.frequency.exponentialRampToValueAtTime(20, t + dur);
+        envelope(amp, t, dur * 1.32, .064 * level, .03, .42);
         sub.connect(shaper);
+        sub2.connect(shaper);
         body.connect(shaper);
         shaper.connect(amp).connect(master);
         sub.start(t);
+        sub2.start(t + .08);
         body.start(t + .015);
-        sub.stop(t + dur + .08);
-        body.stop(t + dur + .08);
-        noise({ delay: delay + .03, dur: dur * .9, gain: .045 * level, highpass: 18, lowpass: 145, attack: .035 });
+        sub.stop(t + dur * 1.32 + .12);
+        sub2.stop(t + dur * 1.36 + .12);
+        body.stop(t + dur * 1.28 + .12);
+        noise({ delay: delay + .035, dur: dur * 1.28, gain: .066 * level, highpass: 10, lowpass: 92, attack: .045 });
       }
 
       function explosionRumble(pos, magnitude = 1) {
         const d = len(sub(pos, game.camera.pos));
         const near = clamp(1 - d / 2300, 0, 1);
         const through = clamp(1 - d / 650, 0, 1);
-        const strength = clamp(magnitude * (.18 + near * near * .75 + through * through * 1.05), 0, 1.8);
+        const strength = clamp(magnitude * (.24 + near * near * .9 + through * through * 1.28), 0, 1.8);
         if (strength < .08) return;
-        rumble({ strength, dur: .55 + strength * .55 });
+        rumble({ strength, dur: .9 + strength * .82 });
       }
 
       function play(name) {
@@ -2637,6 +2721,25 @@
             tone({ delay: .035, freq: 540, endFreq: 180, dur: .13, gain: .045, type: "sawtooth" });
             noise({ dur: .09, gain: .035, highpass: 900, lowpass: 9000 });
             break;
+          case "laserPulse":
+            tone({ freq: 920, endFreq: 210, dur: .15, gain: .07 });
+            noise({ dur: .07, gain: .028, highpass: 850, lowpass: 7800 });
+            break;
+          case "laserBeam":
+            tone({ freq: 680, endFreq: 520, dur: .11, gain: .045, type: "sawtooth" });
+            tone({ delay: .025, freq: 1040, endFreq: 860, dur: .08, gain: .03 });
+            noise({ dur: .09, gain: .024, highpass: 1000, lowpass: 9500 });
+            break;
+          case "laserMilitary":
+            tone({ freq: 1280, endFreq: 180, dur: .18, gain: .082, type: "sawtooth" });
+            tone({ delay: .035, freq: 420, endFreq: 92, dur: .18, gain: .05, type: "triangle" });
+            noise({ dur: .12, gain: .04, highpass: 650, lowpass: 8200 });
+            break;
+          case "laserMining":
+            tone({ freq: 260, endFreq: 95, dur: .36, gain: .078, type: "sawtooth", attack: .018 });
+            tone({ delay: .05, freq: 130, endFreq: 72, dur: .31, gain: .044, type: "triangle", attack: .025 });
+            noise({ dur: .28, gain: .048, highpass: 80, lowpass: 2400, attack: .016 });
+            break;
           case "enemyLaser":
             tone({ freq: 740, endFreq: 190, dur: .13, gain: .055 });
             noise({ dur: .07, gain: .025, highpass: 700, lowpass: 7000 });
@@ -2646,12 +2749,12 @@
             tone({ freq: 210, endFreq: 95, dur: .16, gain: .04, type: "triangle" });
             break;
           case "explosion":
-            noise({ dur: .62, gain: .13, highpass: 45, lowpass: 2600, attack: .002 });
-            tone({ freq: 130, endFreq: 48, dur: .55, gain: .06, type: "sawtooth" });
+            noise({ dur: .95, gain: .14, highpass: 24, lowpass: 1850, attack: .002 });
+            tone({ freq: 82, endFreq: 28, dur: .92, gain: .066, type: "sawtooth" });
             break;
           case "death":
-            noise({ dur: .95, gain: .16, highpass: 35, lowpass: 1800, attack: .002 });
-            tone({ freq: 180, endFreq: 35, dur: .9, gain: .075, type: "sawtooth" });
+            noise({ dur: 1.38, gain: .17, highpass: 20, lowpass: 1320, attack: .002 });
+            tone({ freq: 108, endFreq: 22, dur: 1.28, gain: .084, type: "sawtooth" });
             break;
           case "missile":
             tone({ freq: 380, endFreq: 1200, dur: .24, gain: .07 });
@@ -2754,7 +2857,7 @@
         yellowDwarf: { label: "Yellow Dwarf", hue: 43 + rng() * 10, sat: 100, coreLight: 93, midLight: 74, rimLight: 48, sizeMul: .9 + rng() * .22, glowMul: 1.55, corona: .4, flare: .14, spots: .06 },
         blueWhite: { label: "Blue-White Star", hue: 212 + rng() * 18, sat: 68, coreLight: 98, midLight: 84, rimLight: 58, sizeMul: 1.08 + rng() * .28, glowMul: 1.95, corona: .62, flare: .32, spots: .02 },
         whiteDwarf: { label: "White Dwarf", hue: 205 + rng() * 20, sat: 34, coreLight: 99, midLight: 90, rimLight: 66, sizeMul: .34 + rng() * .12, glowMul: 2.45, corona: .5, flare: .08, spots: 0 },
-        redGiant: { label: "Red Giant", hue: 3 + rng() * 16, sat: 90, coreLight: 84, midLight: 56, rimLight: 28, sizeMul: 1.72 + rng() * .48, glowMul: 1.72, corona: .72, flare: .28, spots: .22 }
+        redGiant: { label: "Red Giant", hue: 3 + rng() * 16, sat: 90, coreLight: 82, midLight: 48, rimLight: 22, sizeMul: 6.4 + rng() * 2.2, glowMul: 1.08, corona: .16, flare: .5, spots: 0 }
       };
       return { kind, ...profiles[kind], seed: hash32(`${sys.name}:stellar-surface`) };
     }
@@ -2805,7 +2908,7 @@
       const stellar = stellarProfileForSystem(sys);
       const sunR = planetR * lerp(.65, 1.05, rng()) * stellar.sizeMul;
       const sunDir = norm(vec((rng() - .5) * 2, (rng() - .5) * 1.1, -(1.2 + rng() * 1)));
-      const sunDist = sunR * lerp(stellar.kind === "whiteDwarf" ? 14 : stellar.kind === "redGiant" ? 7.4 : 9, stellar.kind === "whiteDwarf" ? 20 : stellar.kind === "redGiant" ? 11 : 14, rng());
+      const sunDist = sunR * lerp(stellar.kind === "whiteDwarf" ? 14 : stellar.kind === "redGiant" ? 1.85 : 9, stellar.kind === "whiteDwarf" ? 20 : stellar.kind === "redGiant" ? 2.65 : 14, rng());
       const sun = {
         type: "sun", name: stellar.label.toUpperCase(), pos: scale(sunDir, sunDist), r: sunR,
         stellarClass: stellar.kind,
@@ -2912,14 +3015,14 @@
       const model = types[Math.floor(rng() * types.length)];
       const role = police ? "police" : hostile ? "pirate" : "trader";
       const stats = shipStats(model);
-      const orbitRadius = 220 + rng() * 520;
-      const orbitCenter = randomPointClearOfStation(rng, orbitRadius + stats.r + 320, 500);
+      const orbitRadius = 560 + rng() * 820;
+      const orbitCenter = randomPointClearOfStation(rng, orbitRadius + stats.r + 680, 900);
       const orbitAngle = rng() * TAU;
       const o = {
         type: "ship",
         model,
         name: police ? "VIPER POLICE" : `${hostile ? "PIRATE" : "TRADER"} ${shipName(model)}`,
-        pos: randomPointClearOfStation(rng, stats.r + 300, 1800),
+        pos: randomPointClearOfStation(rng, stats.r + 700, 2300),
         vel: vec((rng() - .5) * 36, (rng() - .5) * 24, -18 - rng() * 34),
         rot: rng() * TAU,
         pitch: rng() * TAU,
@@ -2971,12 +3074,12 @@
       const name = `TRADER ${shipName(model)}`;
       const slotOffset = add(scale(right, (rng() - .5) * 42), scale(up, (rng() - .5) * 28));
       const launch = kind === "launch";
-      const approach = 760 + rng() * 520;
+      const approach = 1300 + rng() * 760;
       const pos = launch
         ? add(center, add(slotOffset, scale(outward, 34)))
         : add(center, add(slotOffset, scale(outward, approach)));
       const dir = launch ? outward : scale(outward, -1);
-      const speed = launch ? 34 : 78;
+      const speed = launch ? 42 : 88;
       const o = {
         type: "ship",
         model,
@@ -3288,12 +3391,18 @@
         return;
       }
       const now = performance.now();
-      if (now - game.lastShot < 170 || game.laserHeat > 95) return;
       const laser = laserPower();
+      if (game.laserHeat >= 95) {
+        if (now - (game.lastHeatWarning || 0) > 900) {
+          game.lastHeatWarning = now;
+          setMessage("Laser temperature critical.");
+        }
+        return;
+      }
+      if (now - game.lastShot < laser.cooldown) return;
       game.lastShot = now;
       game.laserHeat = clamp(game.laserHeat + laser.heat, 0, 100);
-      flash();
-      eliteAudio.play("laser");
+      eliteAudio.play(laser.sound || "laser");
       let best = null;
       let score = Infinity;
       let hitDepth = null;
@@ -3327,7 +3436,7 @@
         }
       }
       const hitPos = best ? cameraLocalToWorld(game.camera, vec(0, 0, hitDepth || cameraTransform(best.pos, game.camera).z)) : null;
-      game.playerShot = { to: hitPos, color: laser.color };
+      game.playerShot = { to: hitPos, color: laser.color, width: laser.width, duration: laser.duration, kind: laser.id, t: now };
       if (!best) {
         if (outOfRange) setMessage(`${outOfRange.o.name} out of ${laser.name.toLowerCase()} laser range (${Math.round(outOfRange.dist)}m / ${laser.range}m).`);
         else setMessage("Laser fired.");
@@ -3335,10 +3444,11 @@
       }
       if (hitPos) spawnSmokePuffs(hitPos, best.r ? clamp(best.r / 70, .45, 1.8) : .7, best.type === "ship" ? 4 : 3);
       const isRockTarget = best.type === "asteroid" || best.type === "boulder" || best.type === "splinter";
-      best.hp -= isRockTarget && game.equipment.miningLaser ? laser.damage * 2 : laser.damage;
+      best.hp -= isRockTarget && game.equipment.miningLaser ? laser.damage * (laser.rockMul || 2) : laser.damage;
       eliteAudio.play("hit");
       setMessage(`${best.name} hit.`);
       reportStationWeaponOffence(best);
+      maybeHailMercy(best, game.commander, 1);
       if (best.hp <= 0) destroyObject(best);
     }
 
@@ -3367,7 +3477,9 @@
       }
       o.roll = lerpAngle(o.roll || 0, 0, dt * 5);
       o.speed = clamp((o.speed || len(o.vel) || 260) + dt * 420, 260, 360);
-      o.vel = scale(shipForward(o), o.speed);
+      const fwd = shipForward(o);
+      o.vel = scale(fwd, o.speed);
+      spawnMissileTrail(add(o.pos, scale(fwd, -Math.max(10, o.r * .35))), scale(fwd, -1), clamp(o.speed / 260, .8, 1.5));
       o.pos = add(o.pos, scale(o.vel, dt));
       const nextDist = len(sub(targetPos, o.pos));
       if (nextDist < 40) {
@@ -3430,7 +3542,7 @@
 
     function spawnExplosionCloud(pos, magnitude = 1) {
       if (!ultraFxEnabled()) return;
-      const mag = clamp(magnitude, .35, 3);
+      const mag = clamp(magnitude, .35, 5.2);
       const count = Math.round(7 + mag * 9 + Math.random() * 5);
       for (let i = 0; i < count; i++) {
         const dir = randomBurstDir(.72);
@@ -3450,7 +3562,7 @@
     }
 
     function spawnExplosion(pos, magnitude = 1) {
-      const mag = clamp(magnitude, .35, 3);
+      const mag = clamp(magnitude, .35, 5.2);
       const shardCount = Math.round(16 + mag * 10 + Math.random() * 8);
       const sparkCount = Math.round(20 + mag * 14 + Math.random() * 10);
       const fragmentCount = Math.round(4 + mag * 5);
@@ -3490,6 +3602,13 @@
       if (game.explosions.length > 28) game.explosions.splice(0, game.explosions.length - 28);
     }
 
+    function shipExplosionMagnitude(o) {
+      const radius = o.r || shipStats(o.model).r || 50;
+      const size = clamp(radius / 46, .45, 5.4);
+      const heavyHull = clamp(((o.maxHp || o.hp || 40) - 45) / 220, 0, 1.6);
+      return clamp(.55 + Math.pow(size, 1.18) * .72 + heavyHull * .65, .65, 5.2);
+    }
+
     function spawnSmokePuffs(pos, magnitude = 1, count = 4) {
       if (!ultraFxEnabled()) return;
       const mag = clamp(magnitude, .35, 2.8);
@@ -3523,7 +3642,7 @@
       if (game.smokePuffs.length > 130) game.smokePuffs.splice(0, game.smokePuffs.length - 130);
     }
 
-    function spawnEnginePlasma(pos, aftDir, magnitude = 1) {
+    function spawnEnginePlasma(pos, aftDir, magnitude = 1, alien = false) {
       if (!ultraFxEnabled()) return;
       const mag = clamp(magnitude, .45, 2.2);
       const jitter = scale(randomBurstDir(.7), 4.5 * mag);
@@ -3535,11 +3654,50 @@
         t: 0,
         dur: 2.35 + Math.random() * .45,
         radius: (7 + Math.random() * 8) * mag,
-        alpha: .13 + Math.random() * .07,
+        alpha: alien ? .16 + Math.random() * .09 : .13 + Math.random() * .07,
         tailTime: .42 + Math.random() * .18,
-        hue: 190 + Math.random() * 26
+        hue: alien ? 266 + Math.random() * 28 : 190 + Math.random() * 26,
+        alien
       });
       if (game.smokePuffs.length > 260) game.smokePuffs.splice(0, game.smokePuffs.length - 260);
+    }
+
+    function spawnDamagedEngineSmoke(pos, aftDir, magnitude = 1, alien = false) {
+      if (!ultraFxEnabled()) return;
+      const mag = clamp(magnitude, .55, 3.6);
+      const burst = clamp((mag - .9) / 2.7, 0, 1);
+      const jitter = scale(randomBurstDir(.75), (12 + burst * 22) * mag);
+      game.smokePuffs.push({
+        kind: "smoke",
+        pos: add(pos, scale(randomBurstDir(.85), Math.random() * (5 + burst * 9) * mag)),
+        drift: add(scale(aftDir, 30 + Math.random() * (54 + burst * 58)), jitter),
+        t: 0,
+        dur: 1.85 + Math.random() * 1.25 + burst * .65,
+        radius: (9 + Math.random() * 16 + burst * 18) * mag,
+        alpha: (alien ? .2 : .15) + Math.random() * .13 + burst * .12,
+        shade: alien ? 96 + Math.random() * 48 : 74 + Math.random() * 58,
+        burst,
+        smokeTint: alien ? [80, 255, 125] : null
+      });
+      if (game.smokePuffs.length > 320) game.smokePuffs.splice(0, game.smokePuffs.length - 320);
+    }
+
+    function spawnMissileTrail(pos, aftDir, magnitude = 1) {
+      if (!ultraFxEnabled()) return;
+      const mag = clamp(magnitude, .55, 1.8);
+      const jitter = scale(randomBurstDir(.55), 3.2 * mag);
+      game.smokePuffs.push({
+        kind: "missileTrail",
+        pos: add(pos, scale(randomBurstDir(.65), Math.random() * 1.8 * mag)),
+        drift: add(scale(aftDir, 210 + Math.random() * 95), jitter),
+        t: 0,
+        dur: .82 + Math.random() * .34,
+        radius: (4 + Math.random() * 5) * mag,
+        alpha: .38 + Math.random() * .22,
+        tailTime: .5 + Math.random() * .16,
+        hue: 4 + Math.random() * 12
+      });
+      if (game.smokePuffs.length > 280) game.smokePuffs.splice(0, game.smokePuffs.length - 280);
     }
 
     function engineWorldCenters(o) {
@@ -3570,8 +3728,28 @@
       const aft = scale(shipForward(o), -1);
       const centers = engineWorldCenters(o);
       const engineMul = centers.length > 3 ? .82 : 1;
+      const alienTrail = isAlienShip(o);
       for (let i = 0; i < centers.length; i++) {
-        spawnEnginePlasma(centers[i], aft, clamp(speed / 105, .6, 2.2) * engineMul);
+        spawnEnginePlasma(centers[i], aft, clamp(speed / 105, .6, 2.2) * engineMul, alienTrail);
+      }
+      const hullFrac = o.maxHp ? (o.hp ?? o.maxHp) / o.maxHp : 1;
+      const smokeThreshold = .28;
+      if (hullFrac < smokeThreshold && centers.length) {
+        o.damageSmokeClock = (o.damageSmokeClock || 0) - dt;
+        if (o.damageSmokeClock <= 0) {
+          const severity = clamp((smokeThreshold - hullFrac) / smokeThreshold, .15, 1);
+          const critical = hullFrac < .18;
+          o.damageSmokeClock = critical
+            ? .045 + Math.random() * .12
+            : .13 + Math.random() * .2 - severity * .06;
+          const smokeCount = critical
+            ? 2 + Math.floor(Math.random() * 4)
+            : 1 + (severity > .55 && Math.random() < .65 ? 1 : 0);
+          for (let i = 0; i < smokeCount; i++) {
+            const center = centers[Math.floor(Math.random() * centers.length)];
+            spawnDamagedEngineSmoke(center, aft, clamp(speed / 95, .55, 2.1) * (.85 + severity * (critical ? 1.95 : 1.1)), alienTrail);
+          }
+        }
       }
     }
 
@@ -3643,15 +3821,27 @@
         // consolation bounty, or left to drift away.
         const canEject = byPlayer && !o.thargoid && o.role !== "police" && o.role !== "pod";
         if (canEject && Math.random() < .2) {
+          const mag = shipExplosionMagnitude(o);
           spawnEscapePod(o.pos);
           spawnEjectFlash(o.pos);
-          spawnExplosion(o.pos, clamp(o.r / 46, .6, 2.2) * .6);
-          spawnSmokePuffs(o.pos, clamp(o.r / 70, .7, 2), 6);
+          spawnExplosion(o.pos, mag * .58);
+          spawnSmokePuffs(o.pos, clamp(mag * .62, .7, 3.6), 6 + Math.floor(mag * 1.5));
           setMessage(`${o.name} pilot ejects!`, true);
           return;
         }
-        spawnExplosion(o.pos, clamp(o.r / 46, .6, 2.2));
-        spawnSmokePuffs(o.pos, clamp(o.r / 70, .7, 2.8), 7);
+        const mag = shipExplosionMagnitude(o);
+        spawnExplosion(o.pos, mag);
+        spawnSmokePuffs(o.pos, clamp(mag * .74, .8, 4.4), 7 + Math.floor(mag * 2));
+        if (mag > 2.6) {
+          const blasts = Math.min(3, Math.floor((mag - 1.7) / 1.1) + 1);
+          for (let i = 0; i < blasts; i++) {
+            const offset = scale(randomBurstDir(.75), (18 + Math.random() * 42) * mag);
+            setTimeout(() => {
+              spawnExplosion(add(o.pos, offset), mag * (.38 + Math.random() * .18));
+              spawnSmokePuffs(add(o.pos, offset), clamp(mag * .38, .9, 3.2), 4 + Math.floor(mag));
+            }, 90 + i * 135 + Math.random() * 120);
+          }
+        }
         if (Math.random() > .5) {
           const isPlate = Math.random() < .35;
           const stats = shipStats(isPlate ? "plate" : "canister");
@@ -3978,7 +4168,7 @@
 
     const GAME_VERSION = "0.2.1";
     const UPDATE_LOG = [
-      ["0.2.1", "Added colour-coded comms, government-biased station controller chatter and visible NPC station launch/docking traffic."],
+      ["0.2.1", "Added colour-coded comms, government-biased station controller chatter, visible NPC station traffic and differentiated laser behaviour/sounds."],
       ["0.2.0", "Procedural planet biomes now match chart descriptions; added gas giants, rocky worlds, industrial planets, debris rings and varied stellar classes."],
       ["0.1.9", "Added richer explosions, smoke puffs, engine haze, alien glyph comms, lower-pitched sound effects and close-range explosion rumble."],
       ["0.1.8", "Improved combat hitboxes, laser range feedback, finite NPC missiles, target prioritisation and rear-facing damage/decals."],
@@ -4123,6 +4313,7 @@
         if (keys.has("Equal") || keys.has("NumpadAdd")) game.speed += dt * 120;
         if (keys.has("Minus") || keys.has("NumpadSubtract")) game.speed -= dt * 120;
         game.speed = clamp(game.speed, 0, game.maxSpeed);
+        if (keys.has("Space")) fireLaser();
 
         if (game.autoDock) updateAutoDock(dt);
         const fwd = forwardVector(game.camera);
@@ -4175,7 +4366,7 @@
         }
         game.shields = clamp(game.shields + dt * (game.equipment.extraEnergy ? 5 : 3), 0, 100);
         game.energy = clamp(game.energy + dt * (game.equipment.extraEnergy ? 4 : 2.5), 0, 100);
-        game.laserHeat = clamp(game.laserHeat - dt * 38, 0, 100);
+        game.laserHeat = clamp(game.laserHeat - dt * 18, 0, 100);
         game.legal = Math.max(0, game.legal - dt * 0.025);
       }
       else {
@@ -4354,14 +4545,58 @@
       return o.target ? o.target.pos : game.camera.pos;
     }
 
+    function enemyLaserVisual(attacker) {
+      if (attacker.thargoid || isAlienShip(attacker)) {
+        return { color: "#74ffba", core: "#e7fff2", width: 2.6, glow: 18, forks: 3, jitter: 120, dur: .24 };
+      }
+      if (attacker.role === "police") {
+        return { color: "#42dfff", core: "#effcff", width: 2.2, glow: 15, forks: 1, jitter: 62, dur: .18 };
+      }
+      if (attacker.role === "pirate") {
+        return { color: "#ff4b35", core: "#ffe2b8", width: 2.5, glow: 17, forks: 2, jitter: 95, dur: .2 };
+      }
+      return { color: "#ff9b45", core: "#fff0c8", width: 2, glow: 12, forks: 1, jitter: 72, dur: .18 };
+    }
+
+    function pushEnemyLaserShot(attacker, targetPos = null, targetRadius = 0) {
+      const visual = enemyLaserVisual(attacker);
+      const side = shipRight(attacker);
+      const hardpoint = (attacker.r || 50) * .18 * (Math.random() < .5 ? -1 : 1);
+      const nose = Math.max(24, (attacker.r || 50) * .42);
+      const from = add(attacker.pos, add(scale(shipForward(attacker), nose), scale(side, hardpoint)));
+      const miss = targetPos
+        ? scale(shipRight(attacker), (Math.random() - .5) * Math.max(10, targetRadius * .18))
+        : null;
+      game.enemyShots.push({
+        from,
+        to: targetPos ? add(targetPos, miss) : null,
+        t: 0,
+        dur: visual.dur,
+        missile: false,
+        color: visual.color,
+        core: visual.core,
+        width: visual.width,
+        glow: visual.glow,
+        forks: visual.forks,
+        screenOffset: targetPos ? null : {
+          x: (Math.random() - .5) * visual.jitter,
+          y: (Math.random() - .5) * visual.jitter * .72
+        },
+        flare: !targetPos
+      });
+    }
+
     function fireAtShip(attacker, target) {
       const dmg = attacker.thargoid ? 16 : attacker.role === "police" ? 13 : 10;
-      game.enemyShots.push({ from: { ...attacker.pos }, to: { ...target.pos }, t: 0, dur: .18, missile: false });
+      pushEnemyLaserShot(attacker, target.pos, target.r || 50);
       eliteAudio.play("enemyLaser");
       target.hp -= dmg;
       spawnSmokePuffs(target.pos, clamp((target.r || 50) / 80, .45, 1.7), 2);
       if (target.hp <= 0) destroyObject(target, false);
-      else setMessage(`${attacker.name} attacks ${target.name}.`);
+      else {
+        maybeHailMercy(target, attacker.name, .9);
+        setMessage(`${attacker.name} attacks ${target.name}.`);
+      }
     }
 
     function fireAtPlayer(o) {
@@ -4383,7 +4618,7 @@
         setMessage(`${o.name} launches a missile!`, true);
         return;
       }
-      game.enemyShots.push({ from: { ...o.pos }, to: null, t: 0, dur: .18, missile: false });
+      pushEnemyLaserShot(o);
       eliteAudio.play("enemyLaser");
       game.shields -= o.thargoid ? 14 : 8;
       setMessage(`${o.name} laser strike.`);
@@ -4404,7 +4639,7 @@
       if (!station) return vec();
       const toShip = sub(pos, station.pos);
       const dist = len(toShip);
-      const safeDist = stationClearanceRadius() + shipR + 200;
+      const safeDist = stationClearanceRadius() + shipR + 340;
       if (dist >= safeDist) return vec();
       const away = dist > 1 ? scale(toShip, 1 / dist) : vec(0, 1, 0);
       return scale(away, (safeDist - dist) * 3);
@@ -4434,7 +4669,7 @@
       if (game.trafficClock > 0) return;
       game.trafficClock = 8 + Math.random() * 15;
       const activeTraffic = game.objects.filter((o) => o.type === "ship" && (o.aiMode === "stationLaunch" || o.aiMode === "stationDock")).length;
-      if (activeTraffic >= 3) return;
+      if (activeTraffic >= 2) return;
       const kind = Math.random() < .54 ? "launch" : "dock";
       spawnStationTraffic(kind, Math.random);
     }
@@ -4452,13 +4687,13 @@
       const offset = o.trafficSlotOffset || vec();
       const speedMul = shipStats(o.model).speed || 1;
       if (o.aiMode === "stationLaunch") {
-        const target = add(center, add(offset, scale(outward, 1100)));
+        const target = add(center, add(offset, scale(outward, 1800)));
         steerVelocity(o, sub(target, o.pos), dt, 70, 96 * speedMul);
-        if (dot(sub(o.pos, center), outward) > 920 || o.trafficAge > 12) {
+        if (dot(sub(o.pos, center), outward) > 1500 || o.trafficAge > 16) {
           o.aiMode = "cruise";
           o.trafficStation = null;
-          o.orbitCenter = add(station.pos, scale(outward, stationClearanceRadius() + 520));
-          o.orbitRadius = 360 + Math.random() * 360;
+          o.orbitCenter = add(station.pos, scale(outward, stationClearanceRadius() + 980));
+          o.orbitRadius = 720 + Math.random() * 760;
           o.orbitAngle = Math.random() * TAU;
           o.orbitSpeed = (Math.random() > .5 ? 1 : -1) * (.16 + Math.random() * .22);
         }
@@ -4468,7 +4703,7 @@
       const toShip = sub(o.pos, center);
       const along = dot(toShip, outward);
       const lateral = sub(toShip, scale(outward, along));
-      const gateOffset = scale(offset, clamp(along / 700, 0, 1));
+      const gateOffset = scale(offset, clamp(along / 1200, 0, 1));
       const target = add(center, add(gateOffset, scale(outward, -80)));
       steerVelocity(o, sub(target, o.pos), dt, 78, 90 * speedMul);
       if ((along < -35 && len(lateral) < 120) || o.trafficAge > 18) {
@@ -4580,11 +4815,11 @@
         // a small +-160/220 wobble, which lands well inside its real ~226-247 unit hull, so
         // they flew straight through it. Loiter around a slowly-drifting point on a safe
         // standoff ring clear of the hull instead.
-        const standoff = stationClearanceRadius() + 420;
+        const standoff = stationClearanceRadius() + 1050;
         const loiterAngle = performance.now() / 5000 + (o.wobble || 0);
         const loiterPoint = add(center, vec(
           Math.cos(loiterAngle) * standoff,
-          Math.sin(loiterAngle * .7) * standoff * .3,
+          Math.sin(loiterAngle * .7) * standoff * .24,
           Math.sin(loiterAngle) * standoff
         ));
         const away = d < 360 ? scale(norm(sub(o.pos, game.camera.pos)), 360 - d) : vec();
@@ -5746,18 +5981,97 @@
         ctx.fillText(VIEW_LABELS[game.viewMode], w / 2, 20);
         ctx.textAlign = "left";
       }
-      if (!game.docked && game.viewMode === "fwd" && game.playerShot && performance.now() - game.lastShot < 85) {
+      if (!game.docked && game.viewMode === "fwd" && game.playerShot && performance.now() - (game.playerShot.t || game.lastShot) < (game.playerShot.duration || 85)) {
+        const age = clamp((performance.now() - (game.playerShot.t || game.lastShot)) / (game.playerShot.duration || 85), 0, 1);
         let endX = w / 2, endY = h / 2;
         if (game.playerShot.to) {
           const p = project(cameraTransform(game.playerShot.to, game.camera), w, h);
           if (p) { endX = p.x; endY = p.y; }
         }
-        ctx.strokeStyle = game.playerShot.color || "#ffd33d";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(w / 2, h * .96);
-        ctx.lineTo(endX, endY);
-        ctx.stroke();
+        const wobble = game.playerShot.kind === "beam" ? Math.sin(performance.now() / 18) * 1.6 : 0;
+        const muzzleY = h * 1.08;
+        const spread = w * .62;
+        const muzzles = [
+          { x: w / 2 - spread + wobble, y: muzzleY },
+          { x: w / 2 + spread + wobble, y: muzzleY }
+        ];
+        const width = (game.playerShot.width || 2) * (game.playerShot.kind === "mining" ? (1.15 - age * .25) : 1);
+        const fadeRate = game.playerShot.kind === "beam" ? .45 : game.playerShot.kind === "pulse" ? .52 : .68;
+        const alpha = clamp(1 - age * fadeRate, .08, 1);
+        const glowMul = game.playerShot.kind === "pulse" ? 4.2 : game.playerShot.kind === "mining" ? 3.6 : 3;
+        const ultraLaser = ultraFxEnabled();
+        const drawBeam = (from) => {
+          const color = game.playerShot.color || "#ffd33d";
+          const dx = endX - from.x, dy = endY - from.y;
+          const len2d = Math.hypot(dx, dy) || 1;
+          const nx = -dy / len2d, ny = dx / len2d;
+          if (ultraLaser) {
+            const near = { x: from.x + dx * .09, y: from.y + dy * .09 };
+            const far = { x: from.x + dx * .88, y: from.y + dy * .88 };
+            const wedgeBase = Math.max(42, width * 18);
+            const wedgeTip = Math.max(3, width * 2.8);
+            const wedgeGrad = ctx.createLinearGradient(from.x, from.y, endX, endY);
+            wedgeGrad.addColorStop(0, color);
+            wedgeGrad.addColorStop(.16, color);
+            wedgeGrad.addColorStop(.72, color);
+            wedgeGrad.addColorStop(1, "rgba(255,255,255,0)");
+            ctx.fillStyle = wedgeGrad;
+            ctx.globalAlpha = alpha * .2;
+            ctx.beginPath();
+            ctx.moveTo(near.x + nx * wedgeBase, near.y + ny * wedgeBase);
+            ctx.lineTo(near.x - nx * wedgeBase, near.y - ny * wedgeBase);
+            ctx.lineTo(far.x - nx * wedgeTip, far.y - ny * wedgeTip);
+            ctx.lineTo(far.x + nx * wedgeTip, far.y + ny * wedgeTip);
+            ctx.closePath();
+            ctx.fill();
+            const grad = ctx.createLinearGradient(from.x, from.y, endX, endY);
+            grad.addColorStop(0, color);
+            grad.addColorStop(.18, color);
+            grad.addColorStop(.72, color);
+            grad.addColorStop(1, "rgba(255,255,255,0)");
+            ctx.strokeStyle = grad;
+            ctx.globalAlpha = alpha * .34;
+            ctx.lineWidth = width * glowMul;
+            ctx.beginPath();
+            ctx.moveTo(from.x, from.y);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+          } else {
+            ctx.strokeStyle = color;
+          }
+          ctx.globalAlpha = alpha * (game.playerShot.kind === "pulse" ? 1 : .92);
+          ctx.lineWidth = ultraLaser ? width : 1.2;
+          ctx.beginPath();
+          ctx.moveTo(from.x, from.y);
+          ctx.lineTo(endX, endY);
+          ctx.stroke();
+          if (ultraLaser && (game.playerShot.kind === "mining" || game.playerShot.kind === "military")) {
+            ctx.globalAlpha = alpha * .2;
+            ctx.lineWidth = width * 2.4;
+            ctx.beginPath();
+            ctx.moveTo(from.x, from.y);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+          }
+          if (!ultraLaser) return;
+          const bloomCenter = { x: from.x + dx * .06, y: from.y + dy * .06 };
+          const bloomRadius = Math.max(70, width * 34);
+          const bloom = ctx.createRadialGradient(bloomCenter.x, bloomCenter.y, 0, bloomCenter.x, bloomCenter.y, bloomRadius);
+          bloom.addColorStop(0, color);
+          bloom.addColorStop(.1, color);
+          bloom.addColorStop(.34, `${color}88`);
+          bloom.addColorStop(1, "rgba(255,255,255,0)");
+          ctx.globalAlpha = alpha * .62;
+          ctx.fillStyle = bloom;
+          ctx.beginPath();
+          ctx.arc(bloomCenter.x, bloomCenter.y, bloomRadius, 0, TAU);
+          ctx.fill();
+        };
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        ctx.lineCap = "round";
+        muzzles.forEach(drawBeam);
+        ctx.restore();
       }
       if (game.transition) drawTransitionEffect(w, h, game.transition);
       if (game.docked) drawDockedBackdrop(w, h);
@@ -6042,26 +6356,244 @@
       ctx.restore();
     }
 
+    function drawLensFlare(pr, r, hue, sat, light, strength, w, h) {
+      if (!ultraFxEnabled() || strength <= 0) return;
+      if (pr.x + r < 0 || pr.x - r > w || pr.y + r < 0 || pr.y - r > h) return;
+      const cx = w / 2, cy = h / 2;
+      const dx = cx - pr.x, dy = cy - pr.y;
+      const dist = Math.hypot(dx, dy);
+      const screenDiag = Math.hypot(w, h);
+      const visible = clamp(1 - dist / (screenDiag * .8), 0, 1);
+      const a = clamp((.18 + strength * .82) * (.42 + visible * .48), .045, .48);
+      if (a <= .015) return;
+      const axisLen = Math.hypot(dx, dy) || 1;
+      const ax = dx / axisLen, ay = dy / axisLen;
+      const px = -ay, py = ax;
+      const drawOrb = (x, y, radius, alpha, hueShift = 0, stretch = 1) => {
+        const g = ctx.createRadialGradient(x, y, 0, x, y, radius);
+        g.addColorStop(0, `hsla(${hue + hueShift}, ${sat}%, ${light}%, ${alpha * .72})`);
+        g.addColorStop(.28, `hsla(${hue + hueShift}, ${sat}%, ${Math.max(42, light - 10)}%, ${alpha * .28})`);
+        g.addColorStop(.66, `hsla(${hue + hueShift}, ${Math.round(sat * .75)}%, ${Math.max(34, light - 22)}%, ${alpha * .1})`);
+        g.addColorStop(1, `hsla(${hue + hueShift}, ${sat}%, ${Math.max(28, light - 28)}%, 0)`);
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(stretch, 1);
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, TAU);
+        ctx.fill();
+        ctx.restore();
+      };
+      const drawAperture = (x, y, radius, alpha, hueShift = 0, sides = 6) => {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(Math.atan2(dy, dx) + .26);
+        ctx.strokeStyle = `hsla(${hue + hueShift}, ${Math.round(sat * .85)}%, ${light}%, ${alpha})`;
+        ctx.lineWidth = clamp(radius * .034, .45, 1.5);
+        ctx.beginPath();
+        for (let i = 0; i <= sides; i++) {
+          const a0 = i / sides * TAU;
+          const px = Math.cos(a0) * radius;
+          const py = Math.sin(a0) * radius;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+        ctx.restore();
+      };
+      const drawRingArtifact = (x, y, radius, alpha, hueShift = 0, stretch = 1) => {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(stretch, 1);
+        ctx.strokeStyle = `hsla(${hue + hueShift}, ${Math.round(sat * .82)}%, ${light}%, ${alpha})`;
+        ctx.lineWidth = clamp(radius * .026, .45, 1.45);
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, TAU);
+        ctx.stroke();
+        ctx.strokeStyle = `hsla(${hue + hueShift + 80}, ${Math.round(sat * .65)}%, ${Math.max(42, light - 10)}%, ${alpha * .24})`;
+        ctx.lineWidth = clamp(radius * .012, .35, .8);
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * .68, 0, TAU);
+        ctx.stroke();
+        ctx.restore();
+      };
+
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      const haloR = clamp(r * (3.1 + strength * 4.2), 34, screenDiag * .52);
+      drawOrb(pr.x, pr.y, haloR, a * .16, 0, 1.18);
+
+      // Anamorphic-style streak from the source, plus a softer vertical diffraction
+      // spike. The ghost chain below carries the actual lens-reflection read.
+      const streak = clamp(screenDiag * (.22 + strength * .34), 140, 780);
+      const streakGrad = ctx.createLinearGradient(pr.x - streak, pr.y, pr.x + streak, pr.y);
+      streakGrad.addColorStop(0, `hsla(${hue}, ${sat}%, ${light}%, 0)`);
+      streakGrad.addColorStop(.5, `hsla(${hue}, ${sat}%, ${light}%, ${a * .2})`);
+      streakGrad.addColorStop(1, `hsla(${hue}, ${sat}%, ${light}%, 0)`);
+      ctx.strokeStyle = streakGrad;
+      ctx.lineWidth = clamp(r * .018, .55, 2.4);
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(pr.x - streak, pr.y);
+      ctx.lineTo(pr.x + streak, pr.y);
+      ctx.stroke();
+      ctx.strokeStyle = `hsla(${hue + 20}, ${Math.round(sat * .75)}%, ${light}%, ${a * .08})`;
+      ctx.lineWidth = clamp(r * .01, .35, 1.3);
+      ctx.beginPath();
+      ctx.moveTo(pr.x, pr.y - streak * .32);
+      ctx.lineTo(pr.x, pr.y + streak * .32);
+      ctx.stroke();
+
+      const ghosts = [
+        { t: -.72, s: .095, a: .24, h: -70, stretch: 1.05, aperture: true, ring: true, off: -.018 },
+        { t: -.32, s: .15, a: .3, h: -28, stretch: 1.28, ring: true, off: .014 },
+        { t: .26, s: .26, a: .42, h: 28, stretch: 1.55, ring: true, off: -.02 },
+        { t: .58, s: .12, a: .34, h: -8, stretch: 1, aperture: true, ring: true, off: .018 },
+        { t: .92, s: .2, a: .25, h: 72, stretch: 1.22, ring: true, off: -.012 },
+        { t: 1.22, s: .09, a: .2, h: -55, stretch: 1, aperture: true, off: .02 },
+        { t: 1.58, s: .16, a: .16, h: 112, stretch: 1.36, ring: true, off: -.016 },
+        { t: 2.02, s: .07, a: .12, h: 170, stretch: 1.1, ring: true, off: .012 }
+      ];
+      for (const g of ghosts) {
+        const gx = pr.x + dx * g.t + px * screenDiag * g.off;
+        const gy = pr.y + dy * g.t + py * screenDiag * g.off;
+        const edgeFade = clamp(1 - Math.max(Math.abs(gx - cx) / (w * .64), Math.abs(gy - cy) / (h * .72)), .08, 1);
+        const gr = clamp(screenDiag * g.s * (.34 + strength * .42), 13, 118);
+        const ga = a * g.a * edgeFade;
+        drawOrb(gx, gy, gr, ga * .62, g.h, g.stretch);
+        if (g.ring) drawRingArtifact(gx, gy, gr * .92, ga * .58, g.h, g.stretch);
+        if (g.aperture) drawAperture(gx, gy, gr * 1.08, ga * .46, g.h);
+        ctx.fillStyle = `hsla(${hue + g.h}, ${sat}%, ${light}%, ${ga * .38})`;
+        ctx.beginPath();
+        ctx.arc(gx, gy, clamp(gr * .12, 1.4, 5.5), 0, TAU);
+        ctx.fill();
+      }
+
+      // A faint veiling glare near the sun reduces local contrast, matching the broad
+      // wash caused by scatter in real optics without covering the whole cockpit.
+      const veil = ctx.createRadialGradient(pr.x, pr.y, r * .7, pr.x, pr.y, clamp(screenDiag * .42, 180, 620));
+      veil.addColorStop(0, `hsla(${hue}, ${sat}%, ${light}%, ${a * .035})`);
+      veil.addColorStop(1, `hsla(${hue}, ${sat}%, ${light}%, 0)`);
+      ctx.fillStyle = veil;
+      ctx.fillRect(0, 0, w, h);
+      ctx.restore();
+    }
+
     function drawEnemyShots(w, h) {
       for (const s of game.enemyShots) {
         const fromP = project(cameraTransform(s.from, game.camera), w, h);
         if (!fromP) continue;
         // to === null means the target is the player, who has no visible ship in this
-        // first-person view — aim at the crosshair. Otherwise aim at the actual target
-        // ship's position, so ship-vs-ship fire visibly hits the ship being shot at.
-        let toP = { x: w / 2, y: h / 2 };
+        // first-person view. Aim around the cockpit instead of stapling every hostile
+        // beam to the crosshair; damage is handled in the combat routine, so this is
+        // allowed to show near-misses and glancing fire.
+        let toP = {
+          x: w / 2 + (s.screenOffset?.x || 0),
+          y: h / 2 + (s.screenOffset?.y || 0)
+        };
         if (s.to) {
           const p = project(cameraTransform(s.to, game.camera), w, h);
           if (!p) continue;
           toP = p;
         }
         const alpha = clamp(1 - s.t / s.dur, 0, 1);
-        ctx.strokeStyle = s.missile ? `rgba(255,130,60,${alpha})` : `rgba(255,70,60,${alpha})`;
-        ctx.lineWidth = s.missile ? 2.6 : 1.6;
+        const dx = toP.x - fromP.x, dy = toP.y - fromP.y;
+        const dist = Math.max(1, Math.hypot(dx, dy));
+        const nx = -dy / dist, ny = dx / dist;
+        const color = s.color || (s.missile ? "#ff8240" : "#ff463c");
+        const core = s.core || "#fff0d0";
+        const beam = hexToRgb(color);
+        const coreRgb = hexToRgb(core);
+        const simple = !ultraFxEnabled();
+
+        ctx.save();
+        ctx.lineCap = "round";
+        if (simple) {
+          ctx.strokeStyle = `rgba(${beam.r},${beam.g},${beam.b},${alpha})`;
+          ctx.lineWidth = s.missile ? 2.6 : 1.8;
+          ctx.beginPath();
+          ctx.moveTo(fromP.x, fromP.y);
+          ctx.lineTo(toP.x, toP.y);
+          ctx.stroke();
+          ctx.restore();
+          continue;
+        }
+
+        ctx.globalCompositeOperation = "lighter";
+        const muzzle = Math.min(60, 12 + dist * .035);
+        const tail = {
+          x: fromP.x + dx * .16,
+          y: fromP.y + dy * .16
+        };
+        const grad = ctx.createLinearGradient(fromP.x, fromP.y, toP.x, toP.y);
+        grad.addColorStop(0, `rgba(${coreRgb.r},${coreRgb.g},${coreRgb.b},${alpha * .92})`);
+        grad.addColorStop(.28, `rgba(${beam.r},${beam.g},${beam.b},${alpha * .72})`);
+        grad.addColorStop(1, `rgba(${beam.r},${beam.g},${beam.b},${alpha * .18})`);
+        ctx.shadowColor = `rgba(${beam.r},${beam.g},${beam.b},${alpha})`;
+        ctx.shadowBlur = (s.glow || 12) * alpha;
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = (s.width || 2) * 5.2;
         ctx.beginPath();
         ctx.moveTo(fromP.x, fromP.y);
         ctx.lineTo(toP.x, toP.y);
         ctx.stroke();
+
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = `rgba(${coreRgb.r},${coreRgb.g},${coreRgb.b},${alpha * .85})`;
+        ctx.lineWidth = Math.max(1, s.width || 2);
+        ctx.beginPath();
+        ctx.moveTo(fromP.x, fromP.y);
+        ctx.lineTo(toP.x, toP.y);
+        ctx.stroke();
+
+        const forks = s.forks || 0;
+        for (let i = 0; i < forks; i++) {
+          const sign = i % 2 ? -1 : 1;
+          const startT = .18 + i * .09;
+          const endT = .82 - i * .04;
+          const bend = sign * (10 + i * 7) * alpha;
+          ctx.strokeStyle = `rgba(${beam.r},${beam.g},${beam.b},${alpha * (.32 - i * .05)})`;
+          ctx.lineWidth = Math.max(.8, (s.width || 2) * .72);
+          ctx.beginPath();
+          ctx.moveTo(fromP.x + dx * startT, fromP.y + dy * startT);
+          ctx.quadraticCurveTo(
+            fromP.x + dx * .5 + nx * bend,
+            fromP.y + dy * .5 + ny * bend,
+            fromP.x + dx * endT + nx * bend * .45,
+            fromP.y + dy * endT + ny * bend * .45
+          );
+          ctx.stroke();
+        }
+
+        const muzzleGlow = ctx.createRadialGradient(fromP.x, fromP.y, 0, fromP.x, fromP.y, muzzle);
+        muzzleGlow.addColorStop(0, `rgba(${coreRgb.r},${coreRgb.g},${coreRgb.b},${alpha * .56})`);
+        muzzleGlow.addColorStop(.35, `rgba(${beam.r},${beam.g},${beam.b},${alpha * .32})`);
+        muzzleGlow.addColorStop(1, `rgba(${beam.r},${beam.g},${beam.b},0)`);
+        ctx.fillStyle = muzzleGlow;
+        ctx.beginPath();
+        ctx.arc(fromP.x, fromP.y, muzzle, 0, TAU);
+        ctx.fill();
+
+        if (s.flare) {
+          const impact = ctx.createRadialGradient(toP.x, toP.y, 0, toP.x, toP.y, 24);
+          impact.addColorStop(0, `rgba(${coreRgb.r},${coreRgb.g},${coreRgb.b},${alpha * .32})`);
+          impact.addColorStop(.45, `rgba(${beam.r},${beam.g},${beam.b},${alpha * .18})`);
+          impact.addColorStop(1, `rgba(${beam.r},${beam.g},${beam.b},0)`);
+          ctx.fillStyle = impact;
+          ctx.beginPath();
+          ctx.arc(toP.x, toP.y, 24, 0, TAU);
+          ctx.fill();
+        }
+        ctx.globalCompositeOperation = "source-over";
+        ctx.strokeStyle = `rgba(${beam.r},${beam.g},${beam.b},${alpha * .22})`;
+        ctx.lineWidth = Math.max(1, (s.width || 2) * 1.1);
+        ctx.beginPath();
+        ctx.moveTo(fromP.x, fromP.y);
+        ctx.lineTo(tail.x + nx * 4, tail.y + ny * 4);
+        ctx.moveTo(fromP.x, fromP.y);
+        ctx.lineTo(tail.x - nx * 4, tail.y - ny * 4);
+        ctx.stroke();
+        ctx.restore();
       }
     }
 
@@ -6103,12 +6635,43 @@
           ctx.fill();
           continue;
         }
-        if (p.kind === "plasma" || p.kind === "enginePlasma") {
+        if (p.kind === "plasma" || p.kind === "enginePlasma" || p.kind === "missileTrail") {
           const isEngine = p.kind === "enginePlasma";
-          const tailWorld = sub(worldPos, scale(p.drift, Math.min(p.t, isEngine ? (p.tailTime || .45) : .18) + (isEngine ? .2 : .08)));
+          const isMissile = p.kind === "missileTrail";
+          const tailHold = isMissile ? (p.tailTime || .55) : isEngine ? (p.tailTime || .45) : .18;
+          const tailWorld = sub(worldPos, scale(p.drift, Math.min(p.t, tailHold) + (isMissile ? .26 : isEngine ? .2 : .08)));
           const tailRel = cameraTransform(tailWorld, game.camera);
           const tailPr = project(tailRel, w, h);
           const hue = p.hue || 204;
+          if (isMissile) {
+            const fade = Math.pow(1 - age, .7);
+            const alpha = p.alpha * fade;
+            const r = clamp(p.radius * pr.s * (1 + age * 2.7), 1.2, 24);
+            ctx.globalCompositeOperation = "lighter";
+            if (tailPr) {
+              const grad = ctx.createLinearGradient(tailPr.x, tailPr.y, pr.x, pr.y);
+              grad.addColorStop(0, `hsla(${hue},100%,38%,0)`);
+              grad.addColorStop(.28, `hsla(${hue},100%,44%,${alpha * .28})`);
+              grad.addColorStop(.72, `hsla(${hue + 8},100%,56%,${alpha * .62})`);
+              grad.addColorStop(1, `hsla(${hue + 22},100%,78%,${alpha})`);
+              ctx.strokeStyle = grad;
+              ctx.lineWidth = clamp(r * .7, 1.1, 8);
+              ctx.lineCap = "round";
+              ctx.beginPath();
+              ctx.moveTo(tailPr.x, tailPr.y);
+              ctx.lineTo(pr.x, pr.y);
+              ctx.stroke();
+            }
+            const g = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, r * 2.8);
+            g.addColorStop(0, `hsla(${hue + 28},100%,86%,${alpha * .78})`);
+            g.addColorStop(.32, `hsla(${hue + 6},100%,52%,${alpha * .34})`);
+            g.addColorStop(1, `hsla(${hue},100%,36%,0)`);
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.arc(pr.x, pr.y, r * 2.8, 0, TAU);
+            ctx.fill();
+            continue;
+          }
           if (isEngine) {
             const solid = clamp(1 - age / .18, 0, 1);
             const fade = Math.pow(1 - age, .85);
@@ -6165,13 +6728,19 @@
           continue;
         }
         ctx.globalCompositeOperation = "screen";
-        const r = clamp(p.radius * (1 + age * 2.2) * pr.s, 1.5, 70);
-        const alpha = p.alpha * Math.sin(age * Math.PI) * (1 - age * .25);
+        const burst = p.burst || 0;
+        const r = clamp(p.radius * (1 + age * (2.2 + burst * 1.35)) * pr.s, 1.5, 70 + burst * 85);
+        const alpha = p.alpha * Math.sin(age * Math.PI) * (1 - age * (.2 - burst * .08));
         const shade = Math.round(p.shade);
+        const tint = p.smokeTint;
+        const c0 = tint ? tint.map((c) => Math.round(c * .72 + shade * .28)) : [shade + 32, shade + 32, shade + 28];
+        const c1 = tint ? tint.map((c) => Math.round(c * .5 + shade * .5)) : [shade, shade, shade - 6];
+        const c2 = tint ? tint.map((c) => Math.round(c * .25 + (shade - 18) * .75)) : [shade - 18, shade - 18, shade - 20];
         const g = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, r);
-        g.addColorStop(0, `rgba(${shade + 35},${shade + 35},${shade + 30},${alpha})`);
-        g.addColorStop(.38, `rgba(${shade},${shade},${shade - 5},${alpha * .55})`);
-        g.addColorStop(1, `rgba(${shade},${shade},${shade},0)`);
+        g.addColorStop(0, `rgba(${c0[0]},${c0[1]},${c0[2]},${alpha * (1 + burst * .18)})`);
+        g.addColorStop(.3, `rgba(${c1[0]},${c1[1]},${c1[2]},${alpha * (.62 + burst * .18)})`);
+        g.addColorStop(.68, `rgba(${c2[0]},${c2[1]},${c2[2]},${alpha * (.2 + burst * .18)})`);
+        g.addColorStop(1, `rgba(${c1[0]},${c1[1]},${c1[2]},0)`);
         ctx.fillStyle = g;
         ctx.beginPath();
         ctx.arc(pr.x, pr.y, r, 0, TAU);
@@ -6313,21 +6882,89 @@
       }
     }
 
+    function drawRedGiantCracks(o, pr, r, hue, sat, w, h) {
+      if (o.stellarClass !== "redGiant" || r < 12) return;
+      const rng = mulberry((o.textureSeed || 1) ^ 0xc0a1c);
+      const axis = norm(vec(.18, 1, .08));
+      const q = quatFromAxisAngle(axis, o.rot || 0);
+      const viewDir = norm(sub(game.camera.pos, o.pos));
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(pr.x, pr.y, r * .998, 0, TAU);
+      ctx.clip();
+
+      const lava = ctx.createRadialGradient(pr.x - r * .18, pr.y - r * .2, r * .05, pr.x, pr.y, r);
+      lava.addColorStop(0, `hsla(${hue + 6}, ${sat}%, 34%, .18)`);
+      lava.addColorStop(.52, `hsla(${hue - 2}, ${sat}%, 22%, .25)`);
+      lava.addColorStop(1, `hsla(${hue - 8}, ${sat}%, 10%, .38)`);
+      ctx.fillStyle = lava;
+      ctx.beginPath();
+      ctx.arc(pr.x, pr.y, r, 0, TAU);
+      ctx.fill();
+
+      ctx.globalCompositeOperation = "lighter";
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      const count = clamp(Math.round(r / 9), 42, 110);
+      for (let i = 0; i < count; i++) {
+        const theta = rng() * TAU;
+        const lat = Math.asin((rng() - .5) * 1.72);
+        let dir = norm(vec(Math.cos(lat) * Math.cos(theta), Math.sin(lat), Math.cos(lat) * Math.sin(theta)));
+        if (dot(quatRotate(q, dir), viewDir) <= .18) continue;
+        let tangent = norm(add(scale(cross(dir, axis), .72 + rng() * .6), scale(cross(dir, vec(0, 1, 0)), (rng() - .5) * .8)));
+        if (len(tangent) < .001) tangent = norm(cross(dir, vec(1, 0, 0)));
+        const steps = 4 + Math.floor(rng() * 7);
+        const width = clamp(r * (.0025 + rng() * .0048), .7, 4.8);
+        const alpha = .22 + rng() * .36;
+        const runs = [];
+        let pts = [];
+        for (let j = 0; j < steps; j++) {
+          const worldDir = quatRotate(q, dir);
+          if (dot(worldDir, viewDir) <= .12) {
+            if (pts.length > 1) runs.push(pts);
+            pts = [];
+          } else {
+            const p = project(cameraTransform(add(o.pos, scale(worldDir, o.r * 1.006)), game.camera), w, h);
+            if (p) pts.push(p);
+            else {
+              if (pts.length > 1) runs.push(pts);
+              pts = [];
+            }
+          }
+          const curl = norm(add(tangent, scale(cross(dir, tangent), (rng() - .5) * .9)));
+          dir = norm(add(dir, scale(curl, .024 + rng() * .04)));
+          tangent = norm(add(tangent, scale(cross(dir, tangent), (rng() - .5) * .55)));
+        }
+        if (pts.length > 1) runs.push(pts);
+        for (const run of runs) {
+          if (run.length < 2) continue;
+          const path = new Path2D();
+          path.moveTo(run[0].x, run[0].y);
+          for (let j = 1; j < run.length; j++) path.lineTo(run[j].x, run[j].y);
+          ctx.strokeStyle = `hsla(${hue + 24 + rng() * 14}, 100%, ${58 + rng() * 18}%, ${alpha * .34})`;
+          ctx.lineWidth = width * (3.4 + rng() * 2.2);
+          ctx.stroke(path);
+          ctx.strokeStyle = `hsla(${hue + 34 + rng() * 10}, 100%, ${74 + rng() * 12}%, ${alpha})`;
+          ctx.lineWidth = width;
+          ctx.stroke(path);
+        }
+      }
+      ctx.restore();
+    }
+
     function drawSunBody(o, cam, w, h) {
       const pr = project(cam, w, h);
       if (!pr) return;
       const baseR = Math.abs(o.r * pr.s);
       const glowR = baseR * (o.glowMul || 1.55);
       if (baseR < 2 || pr.x + glowR < 0 || pr.x - glowR > w || pr.y + glowR < 0 || pr.y - glowR > h) return;
-      // shimmering edge, echoing the original's randomised-half-width sun-line technique
-      const active = o.stellarClass === "blueWhite" || o.stellarClass === "redGiant";
-      const shimmer = 1 + Math.sin(performance.now() / (active ? 62 : 90) + pr.x * .013) * (active ? .032 : .02) + (Math.random() - .5) * (active ? .02 : .015);
-      const r = baseR * shimmer;
+      const r = baseR;
       const hue = o.hue ?? 46;
       const sat = o.sat ?? 100;
       const coreLight = o.coreLight ?? 93;
       const midLight = o.midLight ?? 74;
       const rimLight = o.rimLight ?? 48;
+      const flareStrength = (o.flare || .1) * clamp(r / 36, .35, 1.45);
 
       if (game.graphicsMode === "wire") {
         ctx.strokeStyle = `hsl(${hue}, ${sat}%, ${Math.max(76, midLight)}%)`;
@@ -6340,8 +6977,11 @@
         ctx.arc(pr.x, pr.y, r * (1.24 + (o.corona || .4) * .25), 0, TAU);
         ctx.stroke();
         ctx.globalAlpha = 1;
+        drawLensFlare(pr, r, hue, sat, coreLight, flareStrength * .38, w, h);
         return;
       }
+
+      drawLensFlare(pr, r, hue, sat, coreLight, flareStrength, w, h);
 
       const coronaR = glowR * (1.08 + (o.corona || .4) * .35);
       const corona = ctx.createRadialGradient(pr.x, pr.y, r * .35, pr.x, pr.y, coronaR);
@@ -6392,21 +7032,7 @@
       ctx.arc(pr.x, pr.y, r, 0, TAU);
       ctx.fill();
 
-      if ((o.spots || 0) > 0 && r > 18) {
-        const rng = mulberry((o.textureSeed || 1) ^ 0x57075);
-        const count = Math.max(1, Math.floor((o.spots || 0) * 14));
-        for (let i = 0; i < count; i++) {
-          const a = rng() * TAU + (o.rot || 0) * .4;
-          const dist = r * (.15 + rng() * .58);
-          const sx = pr.x + Math.cos(a) * dist;
-          const sy = pr.y + Math.sin(a) * dist * (.65 + rng() * .25);
-          const sr = r * (.025 + rng() * .045);
-          ctx.fillStyle = `rgba(35,10,5,${.08 + (o.spots || 0) * .22})`;
-          ctx.beginPath();
-          ctx.ellipse(sx, sy, sr * (1.4 + rng()), sr * (.55 + rng() * .5), a, 0, TAU);
-          ctx.fill();
-        }
-      }
+      drawRedGiantCracks(o, pr, r, hue, sat, w, h);
 
       ctx.strokeStyle = `hsla(${hue}, ${sat}%, ${Math.max(80, coreLight - 2)}%, .55)`;
       ctx.lineWidth = 1.2;
@@ -6436,9 +7062,9 @@
       const along = dot(offset, sunDir);
       if (along >= 0) return 1;
       const perp = len(sub(offset, scale(sunDir, along)));
-      if (perp < planetR) return .1;
+      if (perp < planetR) return .14;
       const t = -along / d; // 0 at the terminator plane -> 1 fully anti-sun
-      return lerp(.95, .3, Math.pow(t, .75));
+      return lerp(.98, .38, Math.pow(t, .75));
     }
 
     function drawPlanetRing(o, r, hue, w, h, front) {
@@ -6472,13 +7098,13 @@
         const bandHue = debris ? 34 + rng() * 18 : hue - 18 + rng() * 14;
         const bandSat = debris ? 8 + rng() * 14 : (solid ? 26 + rng() * 18 : 38);
         const bandLight = debris ? 22 + rng() * 22 : light;
-        const baseAlpha = (solid ? (debris ? .13 : .105) : .18) * dusty * (laneNoise < .18 ? 1.65 : 1);
+        const baseAlpha = (solid ? (debris ? .2 : .17) : .24) * dusty * (laneNoise < .18 ? 1.65 : 1);
         // Shade-graded band colour: full colour lit, desaturating and darkening toward
         // near-black in the umbra core.
         const styleFor = (shade) => shade >= .99
           ? `hsla(${bandHue}, ${bandSat}%, ${bandLight}%, ${baseAlpha})`
           : `hsla(${bandHue}, ${Math.round(bandSat * (.35 + .65 * shade))}%, ${Math.max(3, Math.round(bandLight * shade))}%, ${baseAlpha})`;
-        ctx.lineWidth = clamp(r * (solid ? (debris ? (.0022 + rng() * .0042) : (.0018 + rng() * .0034)) : .011), .65, solid ? 2.3 : 2.8);
+        ctx.lineWidth = clamp(r * (solid ? (debris ? (.003 + rng() * .0052) : (.0024 + rng() * .0042)) : .012), .8, solid ? 3 : 3.2);
         // strokeStyle can't vary within one stroke, so the shade is quantised into a few
         // levels and the current run is flushed whenever the level changes (as well as at
         // gaps and the front/back split).
@@ -6637,9 +7263,15 @@
       for (let i = 0; i < craterCount; i++) {
         const theta = rng() * TAU;
         const lat = (rng() - .5) * 2.4;
+        const radius = .025 + rng() * (biome === "rocky" ? .085 : .055);
         craters.push({
           center: norm(vec(Math.cos(lat) * Math.cos(theta), Math.sin(lat), Math.cos(lat) * Math.sin(theta))),
-          radius: .025 + rng() * .07,
+          radius,
+          angle: rng() * TAU,
+          squash: .62 + rng() * .3,
+          rimLight: .1 + rng() * .13,
+          floorShade: .12 + rng() * .18,
+          ejecta: rng() < (biome === "rocky" ? .58 : .32),
           alpha: .22 + rng() * .32
         });
       }
@@ -6781,6 +7413,75 @@
       }
     }
 
+    function drawProjectedCrater(o, q, crater, cp, viewDir, sunDir, w, h, r) {
+      const cr = r * crater.radius * cp.facing;
+      if (cr < .7) return;
+      const angle = crater.angle || 0;
+      const squash = crater.squash || .72;
+      const sunFacing = clamp(dot(cp.worldDir, sunDir) * .5 + .5, 0, 1);
+      const alpha = crater.alpha * cp.facing;
+      const { u, v } = tangentBasisFor(crater.center);
+
+      if (crater.ejecta && cr > 2.2) {
+        for (let i = 0; i < 7; i++) {
+          const a = angle + i / 7 * TAU;
+          const streakCenter = norm(add(crater.center, add(
+            scale(u, Math.cos(a) * crater.radius * .72),
+            scale(v, Math.sin(a) * crater.radius * .48)
+          )));
+          const streak = projectedSurfacePatch(o, q, surfaceEllipseDirs(
+            streakCenter,
+            crater.radius * (.8 + (i % 3) * .18),
+            crater.radius * .055,
+            a,
+            10
+          ), viewDir, w, h, .32);
+          if (streak) drawProjectedPatch(streak, `rgba(214,204,186,${alpha * .055})`);
+        }
+      }
+
+      const outer = projectedSurfacePatch(o, q, surfaceEllipseDirs(
+        crater.center,
+        crater.radius * 1.34,
+        crater.radius * squash * 1.02,
+        angle,
+        24
+      ), viewDir, w, h, .42);
+      if (outer) drawProjectedPatch(outer, `rgba(235,224,202,${alpha * crater.rimLight * (.45 + sunFacing * .65)})`);
+
+      const floor = projectedSurfacePatch(o, q, surfaceEllipseDirs(
+        crater.center,
+        crater.radius * .98,
+        crater.radius * squash * .72,
+        angle,
+        24
+      ), viewDir, w, h, .42);
+      if (floor) drawProjectedPatch(floor, `rgba(18,17,16,${alpha * crater.floorShade * (1.05 - sunFacing * .35)})`);
+
+      const shadowCenter = norm(add(crater.center, add(
+        scale(u, Math.cos(angle + .18) * crater.radius * .2),
+        scale(v, Math.sin(angle + .18) * crater.radius * .12)
+      )));
+      const shadow = projectedSurfacePatch(o, q, surfaceEllipseDirs(
+        shadowCenter,
+        crater.radius * .74,
+        crater.radius * squash * .36,
+        angle + .12,
+        18
+      ), viewDir, w, h, .38);
+      if (shadow) drawProjectedPatch(shadow, `rgba(4,4,5,${alpha * .22 * (1.08 - sunFacing * .45)})`);
+
+      const rim = projectedSurfacePatch(o, q, surfaceEllipseDirs(
+        crater.center,
+        crater.radius * 1.16,
+        crater.radius * squash * .88,
+        angle,
+        26
+      ), viewDir, w, h, .42);
+      strokeProjectedPatch(rim, `rgba(35,31,27,${alpha * .74})`, Math.max(.55, cr * .11));
+      strokeProjectedPatch(rim, `rgba(236,226,205,${alpha * .2 * sunFacing})`, Math.max(.35, cr * .035));
+    }
+
     function drawPlanetSurface(o, pr, r, w, h) {
       const rng = mulberry(o.textureSeed || 1);
       const axis = o.rotAxis || vec(0, 1, 0);
@@ -6812,13 +7513,7 @@
       for (const crater of geo.craters) {
         const cp = projectSurfacePoint(o, q, crater.center, viewDir, w, h);
         if (!cp) continue;
-        const cr = r * crater.radius * cp.facing;
-        if (cr < .7) continue;
-        const rim = projectedSurfacePatch(o, q, surfaceEllipseDirs(crater.center, crater.radius * 1.25, crater.radius * .72, crater.angle || 0, 18), viewDir, w, h, .45);
-        strokeProjectedPatch(rim, `rgba(32,28,24,${crater.alpha * cp.facing})`, Math.max(.7, cr * .18));
-        const glintCenter = norm(add(crater.center, vec(-crater.radius * .22, crater.radius * .18, 0)));
-        const glint = projectedSurfacePatch(o, q, surfaceEllipseDirs(glintCenter, crater.radius * .42, crater.radius * .2, crater.angle || 0, 12), viewDir, w, h, .45);
-        if (glint) drawProjectedPatch(glint, `rgba(255,245,220,${.08 * cp.facing})`);
+        drawProjectedCrater(o, q, crater, cp, viewDir, sunDir, w, h, r);
       }
       for (const zone of geo.industry) {
         const zp = projectSurfacePoint(o, q, zone.center, viewDir, w, h);
@@ -7128,8 +7823,12 @@
       if (points.some((p) => !p)) return;
       const [a, b, c, d] = points;
       const bounds = polygonBounds(points);
-      const cx = (bounds.minX + bounds.maxX) / 2, cy = (bounds.minY + bounds.maxY) / 2;
       const span = Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY);
+      const centroid = { x: (a.x + b.x + c.x + d.x) / 4, y: (a.y + b.y + c.y + d.y) / 4 };
+      const quadPoint = (u, v) => ({
+        x: lerp(lerp(a.x, b.x, u), lerp(d.x, c.x, u), v),
+        y: lerp(lerp(a.y, b.y, u), lerp(d.y, c.y, u), v)
+      });
       const quadPath = () => {
         ctx.beginPath();
         ctx.moveTo(a.x, a.y);
@@ -7146,62 +7845,131 @@
       ctx.fillStyle = "#000";
       ctx.fillRect(bounds.minX - 6, bounds.minY - 6, bounds.maxX - bounds.minX + 12, bounds.maxY - bounds.minY + 12);
       if (ultraFxEnabled()) {
-        const shimmer = .32 + Math.max(0, Math.sin(performance.now() / 430)) * .4;
-        const seal = ctx.createRadialGradient(cx, cy, 0, cx, cy, span * .62);
-        seal.addColorStop(0, `rgba(74,144,255,${.06 + .10 * shimmer})`);
-        seal.addColorStop(.55, `rgba(46,104,224,${.05 + .09 * shimmer})`);
-        seal.addColorStop(1, "rgba(20,60,170,0)");
-        ctx.fillStyle = seal;
-        ctx.fillRect(bounds.minX - 6, bounds.minY - 6, bounds.maxX - bounds.minX + 12, bounds.maxY - bounds.minY + 12);
+        // Subtle inner docking tunnel: nested slot-local quads imply depth without
+        // becoming a separate animated texture on the station face.
+        const tunnelDepth = 5;
+        for (let i = tunnelDepth; i >= 1; i--) {
+          const t = i / tunnelDepth;
+          const inset = .06 + t * .32;
+          const p0 = quadPoint(inset, inset);
+          const p1 = quadPoint(1 - inset, inset);
+          const p2 = quadPoint(1 - inset, 1 - inset);
+          const p3 = quadPoint(inset, 1 - inset);
+          ctx.fillStyle = `rgba(${12 + i * 4},${16 + i * 5},${18 + i * 7},${.18 - t * .018})`;
+          ctx.beginPath();
+          ctx.moveTo(p0.x, p0.y);
+          ctx.lineTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.lineTo(p3.x, p3.y);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = `rgba(95,120,130,${.12 - t * .015})`;
+          ctx.lineWidth = Math.max(.7, span * (.0028 + t * .0016));
+          ctx.stroke();
+        }
+        ctx.strokeStyle = "rgba(150,170,165,.13)";
+        ctx.lineWidth = Math.max(.8, span * .004);
+        for (const u of [.18, .82]) {
+          const p0 = quadPoint(u, .08);
+          const p1 = quadPoint(lerp(u, .5, .62), .5);
+          const p2 = quadPoint(u, .92);
+          ctx.beginPath();
+          ctx.moveTo(p0.x, p0.y);
+          ctx.lineTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.stroke();
+        }
+      }
+      if (ultraFxEnabled()) {
+        // Keep every seal feature in slot UV coordinates. Screen-space gradients/lines
+        // look fine until the station rotates, then they visibly swim across the portal.
+        const shimmer = .42 + Math.max(0, Math.sin(performance.now() / 430 + (station?.rot || 0))) * .38;
+        for (let i = 0; i < 6; i++) {
+          const inset = i * .07;
+          const p0 = quadPoint(inset, inset);
+          const p1 = quadPoint(1 - inset, inset);
+          const p2 = quadPoint(1 - inset, 1 - inset);
+          const p3 = quadPoint(inset, 1 - inset);
+          ctx.fillStyle = `rgba(58,128,255,${(.018 + i * .008) * shimmer})`;
+          ctx.beginPath();
+          ctx.moveTo(p0.x, p0.y);
+          ctx.lineTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.lineTo(p3.x, p3.y);
+          ctx.closePath();
+          ctx.fill();
+        }
         ctx.globalCompositeOperation = "lighter";
         ctx.strokeStyle = `rgba(120,180,255,${.10 * shimmer})`;
         ctx.lineWidth = Math.max(1, span * .012);
-        for (let i = 1; i < 4; i++) {
-          const yy = bounds.minY + (bounds.maxY - bounds.minY) * (i / 4) + Math.sin(performance.now() / 260 + i) * span * .01;
+        for (let i = 1; i < 5; i++) {
+          const v = clamp(i / 5 + Math.sin(performance.now() / 260 + i + (station?.rot || 0)) * .018, .04, .96);
+          const p0 = quadPoint(.04, v);
+          const p1 = quadPoint(.96, v);
           ctx.beginPath();
-          ctx.moveTo(bounds.minX, yy);
-          ctx.lineTo(bounds.maxX, yy);
+          ctx.moveTo(p0.x, p0.y);
+          ctx.lineTo(p1.x, p1.y);
           ctx.stroke();
         }
       }
       ctx.restore();
 
-      // Hazard chevron strip around the OUTSIDE of the slot. Ticks are built from the
-      // actual projected quad edges (not screen-axis-aligned), so the strip stays glued
-      // to the slot and rotates with the station instead of swimming like the old fill.
-      const bandW = Math.max(3, span * .07);
-      const centroid = { x: (a.x + b.x + c.x + d.x) / 4, y: (a.y + b.y + c.y + d.y) / 4 };
+      // Hazard strip around the OUTSIDE of the slot. Segments are projected edge-band
+      // polygons, not diagonal screen-space strokes, so the border stays outside the hole.
+      const bandW = Math.max(2, span * .04);
       ctx.save();
-      ctx.lineCap = "butt";
-      for (const [p, q] of [[a, b], [b, c], [c, d], [d, a]]) {
+      [[a, b], [b, c], [c, d], [d, a]].forEach(([p, q], edgeIndex) => {
         const dx = q.x - p.x, dy = q.y - p.y, elen = Math.hypot(dx, dy) || 1;
         const ux = dx / elen, uy = dy / elen;
         let nx = -uy, ny = ux;
         const mx = (p.x + q.x) / 2, my = (p.y + q.y) / 2;
         if ((mx - centroid.x) * nx + (my - centroid.y) * ny < 0) { nx = -nx; ny = -ny; }
-        // Chevron tick direction: diagonal (along-edge + outward), consistent per edge.
-        let tx = ux * .8 + nx, ty = uy * .8 + ny;
-        const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
-        const step = bandW * 1.5;
-        const n = Math.max(2, Math.round(elen / step));
+        const n = 9;
         for (let i = 0; i < n; i++) {
-          const t = (i + .5) / n * elen;
-          const bx = p.x + ux * t, by = p.y + uy * t;
-          ctx.strokeStyle = "#0c0f0c";
-          ctx.lineWidth = step * .74;
+          const t0 = i / n * elen;
+          const t1 = (i + 1) / n * elen;
+          const p0 = { x: p.x + ux * t0, y: p.y + uy * t0 };
+          const p1 = { x: p.x + ux * t1, y: p.y + uy * t1 };
+          const o0 = { x: p0.x + nx * bandW, y: p0.y + ny * bandW };
+          const o1 = { x: p1.x + nx * bandW, y: p1.y + ny * bandW };
+          ctx.fillStyle = (i + edgeIndex) % 2 ? "#0c0f0c" : "#ffd33d";
           ctx.beginPath();
-          ctx.moveTo(bx - tx * bandW, by - ty * bandW);
-          ctx.lineTo(bx + tx * bandW, by + ty * bandW);
-          ctx.stroke();
-          ctx.strokeStyle = "#ffd33d";
-          ctx.lineWidth = step * .46;
-          ctx.beginPath();
-          ctx.moveTo(bx - tx * bandW, by - ty * bandW);
-          ctx.lineTo(bx + tx * bandW, by + ty * bandW);
-          ctx.stroke();
+          ctx.moveTo(p0.x, p0.y);
+          ctx.lineTo(p1.x, p1.y);
+          ctx.lineTo(o1.x, o1.y);
+          ctx.lineTo(o0.x, o0.y);
+          ctx.closePath();
+          ctx.fill();
         }
-      }
+      });
       ctx.restore();
+
+      // Four corner strobes: bright approach beacons anchored to the slot corners, with
+      // a slow one-second flash. The glow is screen-facing, but the positions are not.
+      if (ultraFxEnabled()) {
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        const phase = Math.pow(Math.max(0, Math.sin(performance.now() / 1000 * TAU)), 5);
+        [a, b, c, d].forEach((p) => {
+          const out = norm(vec(p.x - centroid.x, p.y - centroid.y, 0));
+          const x = p.x + out.x * bandW * 1.55;
+          const y = p.y + out.y * bandW * 1.55;
+          const r = Math.max(2.4, bandW * (.55 + phase * .25));
+          const glow = ctx.createRadialGradient(x, y, 0, x, y, r * 4.2);
+          glow.addColorStop(0, `rgba(255,206,92,${.62 + phase * .35})`);
+          glow.addColorStop(.2, `rgba(255,132,22,${.34 + phase * .42})`);
+          glow.addColorStop(1, "rgba(255,96,0,0)");
+          ctx.fillStyle = glow;
+          ctx.beginPath();
+          ctx.arc(x, y, r * 4.2, 0, TAU);
+          ctx.fill();
+          ctx.fillStyle = `rgba(255,226,130,${.78 + phase * .22})`;
+          ctx.beginPath();
+          ctx.arc(x, y, r * .82, 0, TAU);
+          ctx.fill();
+        });
+        ctx.restore();
+      }
 
       // Blue force-field edge glow around the opening.
       if (ultraFxEnabled()) {
@@ -7948,10 +8716,16 @@
       byId("barShields").style.width = `${clamp(game.shields, 0, 100)}%`;
       byId("barFuel").style.width = `${game.fuel / 7 * 100}%`;
       byId("barSpeed").style.width = `${clamp(game.speed / game.maxSpeed, 0, 1) * 100}%`;
+      const laserHeat = clamp(game.laserHeat, 0, 100);
+      const heatBar = byId("barLaserHeat");
+      heatBar.style.width = `${laserHeat}%`;
+      heatBar.classList.toggle("warm", laserHeat >= 55 && laserHeat < 82);
+      heatBar.classList.toggle("hot", laserHeat >= 82);
       byId("txtEnergy").textContent = `${Math.round(game.energy)}%`;
       byId("txtShields").textContent = `${Math.round(game.shields)}%`;
       byId("txtFuel").textContent = fmt(game.fuel);
       byId("txtSpeed").textContent = Math.round(game.speed);
+      byId("txtLaserHeat").textContent = laserHeat >= 95 ? "HOT" : `${Math.round(laserHeat)}%`;
       byId("txtLaser").textContent = laserPower().name;
       byId("txtMissiles").textContent = game.missiles;
       byId("txtEcm").textContent = game.equipment.ecm ? "Yes" : "No";
