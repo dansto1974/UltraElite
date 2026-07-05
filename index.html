@@ -19,6 +19,7 @@
       --white: #e9f2e4;
       --muted: #91a78d;
       --shadow: rgba(101, 255, 71, .18);
+      --ui-font: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
       color-scheme: dark;
     }
 
@@ -34,7 +35,8 @@
       overflow: hidden;
       background: #000;
       color: var(--green);
-      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-family: var(--ui-font);
+      font-weight: 500;
       letter-spacing: 0;
     }
 
@@ -48,25 +50,24 @@
       width: 100vw;
       height: 100vh;
       display: grid;
-      grid-template-rows: minmax(0, 1fr) 104px 36px;
+      grid-template-rows: minmax(0, 1fr) 38px;
       padding: 8px;
       gap: 8px;
       background:
         radial-gradient(circle at 50% 40%, rgba(33, 64, 41, .18), transparent 48%),
         linear-gradient(180deg, #020403, #000);
       overflow: hidden;
+      position: relative;
     }
 
     .main {
       min-height: 0;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(310px, 31vw);
-      gap: 8px;
+      display: block;
+      min-width: 0;
     }
 
     .view-wrap,
     .panel,
-    .dashboard,
     .message-line {
       border: 1px solid var(--line);
       background: rgba(0, 0, 0, .74);
@@ -77,6 +78,8 @@
       position: relative;
       min-width: 0;
       min-height: 0;
+      width: 100%;
+      height: 100%;
       overflow: hidden;
     }
 
@@ -85,6 +88,70 @@
       width: 100%;
       height: 100%;
       image-rendering: pixelated;
+    }
+
+    .cockpit-frame {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      pointer-events: none;
+      overflow: visible;
+    }
+
+    .cockpit-frame .glass-vignette {
+      fill: url(#cockpitVignette);
+      opacity: .45;
+    }
+
+    .cockpit-frame .console-fill {
+      fill: url(#consoleSheen);
+      stroke: rgba(136, 144, 132, .18);
+      stroke-width: .7;
+      opacity: .38;
+    }
+
+    .cockpit-frame .shell-fill {
+      fill: url(#cockpitShell);
+      fill-rule: evenodd;
+      stroke: rgba(136, 144, 132, .16);
+      stroke-width: .65;
+      opacity: .56;
+    }
+
+    .cockpit-frame .rail {
+      fill: none;
+      stroke: rgba(190, 210, 184, .2);
+      stroke-width: .75;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .cockpit-frame .rail-soft {
+      fill: none;
+      stroke: rgba(101, 255, 71, .12);
+      stroke-width: .55;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .cockpit-frame .rail-amber {
+      fill: none;
+      stroke: rgba(255, 211, 61, .16);
+      stroke-width: .65;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .cockpit-frame .rib-shadow {
+      fill: none;
+      stroke: rgba(0, 0, 0, .34);
+      stroke-width: 3.2;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .top-readout,
+    .crosshair,
+    .comms-log,
+    .hud-actions,
+    .screen-flash {
+      z-index: 7;
     }
 
     .top-readout {
@@ -97,6 +164,7 @@
       text-shadow: 0 0 8px var(--shadow);
       font-size: clamp(10px, 1.3vw, 15px);
       line-height: 1.45;
+      text-transform: uppercase;
     }
 
     .top-readout .center {
@@ -111,41 +179,119 @@
       position: absolute;
       left: 50%;
       top: 50%;
-      width: 34px;
-      height: 34px;
+      width: 52px;
+      height: 52px;
       transform: translate(-50%, -50%);
       pointer-events: none;
-      opacity: .9;
+      opacity: .7;
     }
 
     .crosshair::before,
     .crosshair::after {
       content: "";
       position: absolute;
-      background: var(--white);
-      box-shadow: 0 0 8px rgba(255, 255, 255, .25);
-    }
-
-    .crosshair::before {
-      left: 0;
-      right: 0;
-      top: 16px;
-      height: 1px;
+      inset: 0;
+      background:
+        linear-gradient(var(--green), var(--green)) 50% 0 / 1px 15px no-repeat,
+        linear-gradient(var(--green), var(--green)) 50% 100% / 1px 15px no-repeat,
+        linear-gradient(var(--green), var(--green)) 0 50% / 15px 1px no-repeat,
+        linear-gradient(var(--green), var(--green)) 100% 50% / 15px 1px no-repeat;
+      filter: drop-shadow(0 0 4px rgba(101, 255, 71, .25));
     }
 
     .crosshair::after {
-      top: 0;
-      bottom: 0;
-      left: 16px;
-      width: 1px;
+      inset: 10px;
+      background:
+        linear-gradient(var(--green), var(--green)) 0 0 / 9px 1px no-repeat,
+        linear-gradient(var(--green), var(--green)) 0 0 / 1px 9px no-repeat,
+        linear-gradient(var(--green), var(--green)) 100% 0 / 9px 1px no-repeat,
+        linear-gradient(var(--green), var(--green)) 100% 0 / 1px 9px no-repeat,
+        linear-gradient(var(--green), var(--green)) 0 100% / 9px 1px no-repeat,
+        linear-gradient(var(--green), var(--green)) 0 100% / 1px 9px no-repeat,
+        linear-gradient(var(--green), var(--green)) 100% 100% / 9px 1px no-repeat,
+        linear-gradient(var(--green), var(--green)) 100% 100% / 1px 9px no-repeat;
     }
 
     .side {
+      position: fixed;
+      z-index: 25;
+      top: 8px;
+      right: 8px;
+      bottom: 8px;
+      width: min(590px, calc(100vw - 22px));
       min-width: 0;
       min-height: 0;
       display: grid;
       grid-template-rows: auto minmax(0, 1fr);
       gap: 8px;
+      transform: translateX(calc(100% + 14px));
+      transition: transform .18s ease;
+      filter: drop-shadow(0 0 18px rgba(0, 0, 0, .72));
+    }
+
+    .side.open {
+      transform: translateX(0);
+    }
+
+    .side-toggle {
+      position: absolute;
+      left: -48px;
+      top: 50%;
+      width: 42px;
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transform: translateY(-50%);
+      border-color: #6c7b36;
+      background:
+        linear-gradient(90deg, rgba(101, 255, 71, .14), rgba(0, 0, 0, .9) 44%),
+        #030603;
+      clip-path: polygon(0 50%, 12px 0, 100% 0, 100% 100%, 12px 100%);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .04), 0 0 14px rgba(101, 255, 71, .1);
+    }
+
+    .side-toggle.active,
+    .side-toggle:hover,
+    .side-toggle:focus-visible {
+      color: var(--green);
+      border-color: var(--green);
+      background:
+        linear-gradient(90deg, rgba(101, 255, 71, .22), rgba(8, 18, 8, .94) 48%),
+        #061006;
+    }
+
+    .side-toggle .toggle-arrows {
+      position: relative;
+      width: 22px;
+      height: 26px;
+    }
+
+    .side-toggle .toggle-arrows::before,
+    .side-toggle .toggle-arrows::after {
+      content: "";
+      position: absolute;
+      top: 7px;
+      width: 11px;
+      height: 11px;
+      border-top: 2px solid var(--green);
+      border-left: 2px solid var(--green);
+      transform: rotate(-45deg);
+      filter: drop-shadow(0 0 4px rgba(101, 255, 71, .38));
+    }
+
+    .side-toggle .toggle-arrows::before {
+      left: 2px;
+    }
+
+    .side-toggle .toggle-arrows::after {
+      left: 10px;
+    }
+
+    .side-toggle.active .toggle-arrows::before,
+    .side-toggle.active .toggle-arrows::after {
+      transform: rotate(135deg);
     }
 
     .tabs {
@@ -162,7 +308,6 @@
       color: var(--green);
       padding: 6px 8px;
       cursor: pointer;
-      text-transform: uppercase;
       text-align: center;
       transition: background .12s ease, color .12s ease, border-color .12s ease;
     }
@@ -226,17 +371,40 @@
     .comms-log {
       position: absolute;
       left: 12px;
-      bottom: 10px;
-      max-width: 46%;
-      font-size: 11px;
-      line-height: 1.45;
+      bottom: 158px;
+      max-width: min(520px, 44%);
+      max-height: 108px;
+      overflow: hidden;
+      font-family: var(--ui-font);
+      font-size: 9px;
+      line-height: 1.35;
       color: var(--green);
       text-shadow: 0 0 6px rgba(70, 220, 90, .35);
       pointer-events: none;
+      text-transform: uppercase;
+    }
+
+    .comms-line {
+      min-height: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: clip;
     }
 
     .comms-line .comms-from {
       color: var(--amber);
+    }
+
+    .comms-cursor {
+      display: inline-block;
+      width: 6px;
+      margin-left: 2px;
+      color: var(--amber);
+      animation: commsCursor .55s steps(2, start) infinite;
+    }
+
+    @keyframes commsCursor {
+      50% { opacity: .12; }
     }
 
     .comms-line.comms-station,
@@ -266,6 +434,51 @@
     .comms-line.alien-comms {
       color: #77fff0;
       text-shadow: 0 0 8px rgba(90, 255, 235, .45);
+    }
+
+    .hud-actions {
+      position: absolute;
+      left: 50%;
+      bottom: 124px;
+      z-index: 7;
+      display: flex;
+      gap: 6px;
+      transform: translateX(-50%);
+      pointer-events: auto;
+      text-transform: uppercase;
+    }
+
+    .hud-actions .btn {
+      min-width: 74px;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, .2);
+      opacity: .8;
+      box-shadow: 0 0 12px rgba(101, 255, 71, .06);
+    }
+
+    .hud-actions .btn.primary:not(:disabled) {
+      color: var(--green);
+      background: rgba(0, 0, 0, .2);
+      border-color: var(--green);
+      box-shadow: 0 0 14px rgba(101, 255, 71, .16);
+    }
+
+    .hud-actions .btn:disabled {
+      color: rgba(101, 255, 71, .42);
+      border-color: rgba(101, 255, 71, .22);
+      background: rgba(0, 0, 0, .2);
+      opacity: .45;
+      box-shadow: none;
+    }
+
+    .btn.side-toggle.active,
+    .btn.side-toggle.active:hover,
+    .btn.side-toggle.active:focus-visible {
+      color: var(--green);
+      border-color: var(--green);
+      background:
+        linear-gradient(90deg, rgba(101, 255, 71, .22), rgba(8, 18, 8, .94) 48%),
+        #061006;
     }
 
     .alien-text {
@@ -311,6 +524,38 @@
       line-height: 1;
     }
 
+    .desktop-only-message {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      padding: 28px;
+      background:
+        radial-gradient(ellipse at center, rgba(18, 38, 20, .55), rgba(0, 0, 0, .96) 72%),
+        #020402;
+      color: var(--green);
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .desktop-only-box {
+      max-width: 460px;
+      border: 1px solid var(--line);
+      padding: 22px;
+      background: rgba(0, 0, 0, .72);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .03), 0 0 22px rgba(50, 255, 80, .08);
+      line-height: 1.45;
+    }
+
+    .desktop-only-box strong {
+      display: block;
+      color: var(--amber);
+      font-size: 18px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
     #splash {
       position: fixed;
       inset: 0;
@@ -339,12 +584,36 @@
       opacity: .8;
     }
 
+    #splash svg text {
+      font-family: var(--ui-font);
+    }
+
     #splash .splash-prompt {
       color: var(--amber);
       font-size: 12px;
       letter-spacing: 4px;
       margin-top: 16px;
       animation: splashBlink 1.6s steps(2, start) infinite;
+    }
+
+    #splash .splash-legal {
+      position: absolute;
+      left: clamp(18px, 5vw, 72px);
+      right: clamp(18px, 5vw, 72px);
+      bottom: 18px;
+      max-width: 920px;
+      margin: 0 auto;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.45;
+      text-align: center;
+      text-transform: uppercase;
+      opacity: .68;
+    }
+
+    #splash .splash-legal strong {
+      color: var(--amber);
+      font-weight: 400;
     }
 
     @keyframes splashBlink {
@@ -368,7 +637,6 @@
       padding: 10px 12px;
       border-bottom: 1px solid var(--soft-line);
       color: var(--green);
-      text-transform: uppercase;
       font-size: 15px;
     }
 
@@ -469,20 +737,61 @@
     }
 
     .dashboard {
+      position: absolute;
+      left: 22px;
+      right: 22px;
+      bottom: 24px;
+      z-index: 7;
       min-width: 0;
-      min-height: 0;
+      min-height: 84px;
       display: grid;
-      grid-template-columns: 250px minmax(250px, 1fr) 250px;
-      gap: 8px;
-      padding: 4px;
+      grid-template-columns: minmax(210px, 270px) minmax(360px, 560px) minmax(210px, 270px);
+      justify-content: center;
+      align-items: stretch;
+      gap: 16px;
+      padding: 0 8px;
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+      pointer-events: none;
+      text-shadow: 0 0 7px rgba(101, 255, 71, .34), 0 1px 2px #000;
+      text-transform: uppercase;
+    }
+
+    .dashboard::before {
+      display: none;
     }
 
     .dash-section {
+      position: relative;
       min-width: 0;
-      border: 1px solid var(--soft-line);
-      padding: 4px;
-      background: rgba(0, 0, 0, .5);
-      overflow: hidden;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+      overflow: visible;
+    }
+
+    .dash-section::before {
+      display: none;
+    }
+
+    .dash-section::after {
+      display: none;
+    }
+
+    .dash-section:first-child {
+      clip-path: none;
+      padding-right: 0;
+    }
+
+    .dash-section:last-child {
+      clip-path: none;
+      padding-left: 0;
+    }
+
+    .dash-section:nth-child(2) {
+      background: transparent;
     }
 
     .dash-title {
@@ -549,25 +858,36 @@
 
     .scanner-wrap {
       position: relative;
-      height: 86px;
+      height: 82px;
       min-width: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 82px;
+      gap: 8px;
+      align-items: center;
     }
 
-    #scanner {
-      position: absolute;
-      inset: 0;
+    #scanner,
+    #foreAftRadar {
+      width: 100%;
+      height: 100%;
+    }
+
+    #foreAftRadar {
+      aspect-ratio: 1;
+      border-radius: 50%;
     }
 
     .message-line {
       min-width: 0;
       display: grid;
-      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-columns: auto minmax(0, 1fr);
       align-items: center;
       gap: 14px;
       padding: 6px 10px;
       min-height: 0;
       font-size: 13px;
       overflow: hidden;
+      text-transform: uppercase;
     }
 
     #message {
@@ -575,12 +895,6 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-    }
-
-    .cmds {
-      display: flex;
-      gap: 4px;
-      flex-wrap: nowrap;
     }
 
     .screen-flash {
@@ -615,6 +929,16 @@
       color: var(--muted);
       line-height: 1.45;
       margin-bottom: 10px;
+    }
+
+    .about-section {
+      color: var(--green);
+    }
+
+    .about-heading {
+      display: block;
+      color: var(--amber);
+      margin-bottom: 4px;
     }
 
     .update-log {
@@ -695,149 +1019,27 @@
     }
 
     @media (max-width: 860px) {
-      #app {
-        grid-template-rows: minmax(0, 1fr) 128px 42px;
-        padding: 6px;
-        gap: 6px;
+      .desktop-only-message {
+        display: flex;
       }
 
-      .main {
-        grid-template-columns: 1fr;
-        grid-template-rows: minmax(0, 48%) minmax(0, 52%);
-      }
-
-      .dashboard {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
-      }
-
-      .dashboard .dash-section:last-child {
+      #app,
+      #splash {
         display: none;
-      }
-
-      .tabs {
-        grid-template-columns: repeat(3, 1fr);
       }
     }
 
     @media (max-width: 520px) {
-      #app {
-        grid-template-rows: minmax(0, 1fr) 126px 42px;
-      }
-
-      .top-readout {
-        grid-template-columns: minmax(0, 1fr) auto;
-        font-size: 10px;
-      }
-
-      .top-readout .center {
-        overflow: hidden;
-        text-align: right;
-      }
-
-      .top-readout .right {
-        display: none;
-      }
-
-      .panel-head {
-        font-size: 13px;
-        padding: 8px 10px;
-      }
-
-      .panel-head span:last-child {
-        max-width: 150px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .panel-body {
-        padding: 8px 10px 10px;
-      }
-
-      .tabs .btn {
-        min-height: 36px;
-        font-size: 14px;
-        padding: 5px 4px;
-      }
-
-      table {
-        font-size: 10px;
-      }
-
-      th:nth-child(1),
-      td:nth-child(1) {
-        width: 31%;
-      }
-
-      th:nth-child(2),
-      td:nth-child(2),
-      th:nth-child(3),
-      td:nth-child(3),
-      th:nth-child(4),
-      td:nth-child(4) {
-        width: 15%;
-      }
-
-      th:nth-child(5),
-      td:nth-child(5),
-      th:nth-child(6),
-      td:nth-child(6) {
-        width: 12%;
-      }
-
-      th,
-      td {
-        padding: 4px 2px;
-      }
-
-      .mini {
-        min-height: 22px;
-        padding: 2px 4px;
-        font-size: 10px;
-      }
-
-      .dashboard {
-        gap: 6px;
-        padding: 6px;
-      }
-
-      .dash-section {
-        padding: 7px;
-      }
-
-      .bar-row {
-        grid-template-columns: 46px minmax(42px, 1fr) 30px;
-        gap: 5px;
-        font-size: 10px;
-      }
-
-      .message-line {
-        grid-template-columns: auto minmax(0, 1fr) 112px;
-        gap: 7px;
-        font-size: 11px;
-      }
-
-      .cmds {
-        min-width: 0;
-        overflow: hidden;
-      }
-
-      .cmds .btn {
-        width: 52px;
-        min-width: 0;
-        padding: 2px 5px;
-      }
-
-      .cmds .btn:nth-child(2),
-      .cmds .btn:nth-child(3),
-      .cmds .btn:nth-child(4),
-      .cmds .btn:nth-child(6) {
-        display: none;
-      }
     }
   </style>
 </head>
 <body>
+  <div class="desktop-only-message" role="status" aria-live="polite">
+    <div class="desktop-only-box">
+      <strong>Desktop Required</strong>
+      Ultra Elite needs a desktop-sized browser with a keyboard. Please open it on a laptop or desktop machine.
+    </div>
+  </div>
   <div id="splash" role="dialog" aria-label="Ultra Elite">
     <svg width="440" height="92" viewBox="0 0 220 46" aria-hidden="true">
       <line x1="4" y1="4" x2="20" y2="4" stroke="var(--green)" stroke-width="1.4"></line>
@@ -852,11 +1054,45 @@
     </svg>
     <div class="splash-version">v<span id="splashVersion"></span></div>
     <div class="splash-prompt">PRESS ANY KEY TO START</div>
+    <div class="splash-legal">
+      <strong>Legal Notice & Credits:</strong>
+      A non-commercial open-source fan tribute for educational, archival, and entertainment purposes.
+      Elite (1984) is the property of David Braben and Ian Bell; the Elite trademark and modern franchise assets are owned by Frontier Developments plc.
+      Not affiliated with, endorsed by, or sponsored by those parties. Please support the official modern space simulation, Elite Dangerous.
+    </div>
   </div>
   <div id="app">
     <main class="main">
       <section class="view-wrap" aria-label="Flight view">
         <canvas id="space" width="1280" height="720"></canvas>
+        <svg class="cockpit-frame" viewBox="0 0 1000 600" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <radialGradient id="cockpitVignette" cx="50%" cy="48%" r="72%">
+              <stop offset="54%" stop-color="#000000" stop-opacity="0"></stop>
+              <stop offset="100%" stop-color="#000000" stop-opacity=".42"></stop>
+            </radialGradient>
+            <linearGradient id="cockpitShell" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#161c18" stop-opacity=".54"></stop>
+              <stop offset=".52" stop-color="#020403" stop-opacity=".78"></stop>
+              <stop offset="1" stop-color="#000000" stop-opacity=".92"></stop>
+            </linearGradient>
+            <linearGradient id="consoleSheen" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#1e2621" stop-opacity=".58"></stop>
+              <stop offset=".38" stop-color="#000000" stop-opacity=".62"></stop>
+              <stop offset=".72" stop-color="#0e1611" stop-opacity=".7"></stop>
+              <stop offset="1" stop-color="#000000" stop-opacity=".9"></stop>
+            </linearGradient>
+          </defs>
+          <rect class="glass-vignette" x="0" y="0" width="1000" height="600"></rect>
+          <path class="shell-fill" d="M0 0 H1000 V600 H0 Z M74 58 H212 L276 108 H724 L788 58 H926 L842 472 H158 Z"></path>
+          <path class="console-fill" d="M102 600 L176 494 H824 L898 600 Z"></path>
+          <path class="rail" d="M26 26 H212 L270 74 H730 L788 26 H974"></path>
+          <path class="rail" d="M88 560 L188 430 H812 L912 560"></path>
+          <path class="rail-soft" d="M130 516 L218 414 H782 L870 516"></path>
+          <path class="rail-soft" d="M196 494 H804 M260 466 H740 M318 438 H682"></path>
+          <path class="rail-amber" d="M418 506 H582 M454 526 H546"></path>
+          <path class="rail-amber" d="M72 54 H146 M854 54 H928 M36 108 V170 M964 108 V170"></path>
+        </svg>
         <div class="top-readout">
           <div>
             <div>COMMANDER <span id="roCommander">JAMESON</span></div>
@@ -874,22 +1110,52 @@
         </div>
         <div class="crosshair" aria-hidden="true"></div>
         <div class="comms-log" id="commsLog" aria-live="polite"></div>
+        <div class="hud-actions" aria-label="Flight actions">
+          <button class="btn mini primary" id="launchBtn">Launch</button>
+          <button class="btn mini" id="jumpBtn">Jump</button>
+          <button class="btn mini" id="dockBtn">Dock</button>
+        </div>
+        <section class="dashboard" aria-label="Ship dashboard">
+          <div class="dash-section">
+            <div class="bar-row"><span>Energy</span><div class="bar"><div class="fill" id="barEnergy"></div></div><span id="txtEnergy">100%</span></div>
+            <div class="bar-row"><span>Shields</span><div class="bar"><div class="fill cyan" id="barShields"></div></div><span id="txtShields">100%</span></div>
+            <div class="bar-row"><span>Fuel</span><div class="bar"><div class="fill" id="barFuel"></div></div><span id="txtFuel">7.0</span></div>
+            <div class="bar-row"><span>Speed</span><div class="bar"><div class="fill" id="barSpeed"></div></div><span id="txtSpeed">0</span></div>
+            <div class="bar-row heat-row"><span>Laser Temp</span><div class="bar heat-bar"><div class="fill heat" id="barLaserHeat"></div></div><span id="txtLaserHeat">0%</span></div>
+          </div>
+          <div class="dash-section">
+            <div class="scanner-wrap">
+              <canvas id="scanner" width="520" height="104"></canvas>
+              <canvas id="foreAftRadar" width="104" height="104" aria-label="Forward and rear radar"></canvas>
+            </div>
+          </div>
+          <div class="dash-section">
+            <div class="row"><span class="label">Laser</span><span class="value" id="txtLaser">Pulse</span></div>
+            <div class="row"><span class="label">Missiles</span><span class="value" id="txtMissiles">1</span></div>
+            <div class="row"><span class="label">ECM</span><span class="value" id="txtEcm">No</span></div>
+            <div class="row"><span class="label">Cargo</span><span class="value" id="txtCargo">0/20</span></div>
+          </div>
+        </section>
         <div class="screen-flash" id="flash"></div>
       </section>
 
-      <aside class="side">
+      <aside class="side" id="sidePanel">
+        <button class="btn mini side-toggle" id="panelToggle" aria-expanded="false" aria-controls="panelBody" aria-label="Show panel" title="Show panel">
+          <span class="toggle-arrows" aria-hidden="true"></span>
+        </button>
         <nav class="tabs" aria-label="Panels">
-          <button class="btn active" data-panel="market">Market</button>
+          <button class="btn" data-panel="market">Market</button>
           <button class="btn" data-panel="chart">Chart</button>
           <button class="btn" data-panel="equip">Equip</button>
           <button class="btn" data-panel="status">Status</button>
           <button class="btn" data-panel="ship">Ship</button>
           <button class="btn" data-panel="help">Help</button>
-          <button class="btn" data-panel="cheats" data-dev-only hidden>Cheats</button>
+          <button class="btn active" data-panel="about">About</button>
+          <button class="btn" data-panel="cheats" data-dev-only hidden>Dev</button>
         </nav>
         <section class="panel">
           <div class="panel-head">
-            <span id="panelTitle">Market</span>
+            <span id="panelTitle">About</span>
             <span id="panelSub">Docked at Lave Station</span>
           </div>
           <div class="panel-body" id="panelBody"></div>
@@ -897,37 +1163,9 @@
       </aside>
     </main>
 
-    <section class="dashboard" aria-label="Ship dashboard">
-      <div class="dash-section">
-        <div class="bar-row"><span>Energy</span><div class="bar"><div class="fill" id="barEnergy"></div></div><span id="txtEnergy">100%</span></div>
-        <div class="bar-row"><span>Shields</span><div class="bar"><div class="fill cyan" id="barShields"></div></div><span id="txtShields">100%</span></div>
-        <div class="bar-row"><span>Fuel</span><div class="bar"><div class="fill" id="barFuel"></div></div><span id="txtFuel">7.0</span></div>
-        <div class="bar-row"><span>Speed</span><div class="bar"><div class="fill" id="barSpeed"></div></div><span id="txtSpeed">0</span></div>
-        <div class="bar-row heat-row"><span>Laser Temp</span><div class="bar heat-bar"><div class="fill heat" id="barLaserHeat"></div></div><span id="txtLaserHeat">0%</span></div>
-      </div>
-      <div class="dash-section">
-        <div class="scanner-wrap"><canvas id="scanner" width="520" height="104"></canvas></div>
-      </div>
-      <div class="dash-section">
-        <div class="row"><span class="label">Laser</span><span class="value" id="txtLaser">Pulse</span></div>
-        <div class="row"><span class="label">Missiles</span><span class="value" id="txtMissiles">1</span></div>
-        <div class="row"><span class="label">ECM</span><span class="value" id="txtEcm">No</span></div>
-        <div class="row"><span class="label">Cargo</span><span class="value" id="txtCargo">0/20</span></div>
-      </div>
-    </section>
-
     <footer class="message-line">
       <span>&gt;</span>
       <div id="message">Welcome, Commander. Trade, launch, fight, dock, and try not to become expensive wreckage.</div>
-      <div class="cmds">
-        <button class="btn mini primary" id="launchBtn">Launch</button>
-        <button class="btn mini" id="jumpBtn">Jump</button>
-        <button class="btn mini" id="dockBtn">Dock</button>
-        <button class="btn mini warn" id="laserBtn">Laser</button>
-        <button class="btn mini" id="armadaBtn">Armada</button>
-        <button class="btn mini" id="saveBtn">Save</button>
-        <button class="btn mini dev" id="devBtn" title="Developer mode">Dev</button>
-      </div>
     </footer>
   </div>
 
@@ -1949,6 +2187,11 @@
       rollRate: 0,
       pitchRate: 0,
       yawRate: 0,
+      controlHold: {
+        roll: { dir: 0, time: 0 },
+        pitch: { dir: 0, time: 0 },
+        yaw: { dir: 0, time: 0 }
+      },
       cargoCap: 20,
       cargo: Object.fromEntries(GOODS.map((g) => [g[0], 0])),
       equipment: {
@@ -1967,7 +2210,8 @@
       missiles: 1,
       laserHeat: 0,
       view: "front",
-      panel: "market",
+      panel: "about",
+      panelOpen: false,
       mapMode: "local",
       localMapZoom: 4,
       localMapPanX: 0,
@@ -2001,10 +2245,45 @@
     const ctx = space.getContext("2d");
     const scanner = byId("scanner");
     const sctx = scanner.getContext("2d");
+    const foreAftRadar = byId("foreAftRadar");
+    const rctx = foreAftRadar.getContext("2d");
     const panelBody = byId("panelBody");
+    const sidePanel = byId("sidePanel");
+    const panelToggle = byId("panelToggle");
+    const hudEls = {
+      roCommander: byId("roCommander"),
+      roCredits: byId("roCredits"),
+      roLegal: byId("roLegal"),
+      roTarget: byId("roTarget"),
+      roSystem: byId("roSystem"),
+      roDistance: byId("roDistance"),
+      roLockDist: byId("roLockDist"),
+      barEnergy: byId("barEnergy"),
+      barShields: byId("barShields"),
+      barFuel: byId("barFuel"),
+      barSpeed: byId("barSpeed"),
+      barLaserHeat: byId("barLaserHeat"),
+      txtEnergy: byId("txtEnergy"),
+      txtShields: byId("txtShields"),
+      txtFuel: byId("txtFuel"),
+      txtSpeed: byId("txtSpeed"),
+      txtLaserHeat: byId("txtLaserHeat"),
+      txtLaser: byId("txtLaser"),
+      txtMissiles: byId("txtMissiles"),
+      txtEcm: byId("txtEcm"),
+      txtCargo: byId("txtCargo"),
+      launchBtn: byId("launchBtn"),
+      jumpBtn: byId("jumpBtn"),
+      dockBtn: byId("dockBtn")
+    };
+    const devOnlyEls = Array.from(document.querySelectorAll("[data-dev-only]"));
+    const UI_CANVAS_FONT = '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace';
     const keys = new Set();
     let last = performance.now();
     let lastRenderedPanel = "";
+    let devChordLatched = false;
+    let lastDeveloperModeRendered = null;
+    let lastPanelOpenRendered = null;
 
     function currentSystem() {
       return galaxies[game.galaxy][game.current];
@@ -2054,7 +2333,12 @@
       };
     }
 
-    const LASER_EQUIPMENT_IDS = ["beamLaser", "militaryLaser", "miningLaser"];
+    const LASER_EQUIPMENT_IDS = ["miningLaser", "beamLaser", "militaryLaser"];
+    const DEV_EQUIPMENT_ORDER = {
+      miningLaser: 10,
+      beamLaser: 11,
+      militaryLaser: 12
+    };
 
     function isLaserEquipment(id) {
       return LASER_EQUIPMENT_IDS.includes(id);
@@ -2086,6 +2370,7 @@
     const escapeAttr = (s) => escapeHtml(s).replace(/"/g, "&quot;");
     const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
     const alienGlyphCache = new Map();
+    let commsSeq = 0;
 
     function inferCommsKind(from, alien = false) {
       const name = String(from || "").toUpperCase();
@@ -2100,7 +2385,8 @@
     function commsMessage(from, text, alienOrKind = false) {
       const alien = alienOrKind === true || alienOrKind === "alien";
       const kind = typeof alienOrKind === "string" ? alienOrKind : inferCommsKind(from, alien);
-      game.comms.push({ from, text, alien, kind, until: performance.now() + 9500 });
+      const now = performance.now();
+      game.comms.push({ id: ++commsSeq, from, text, alien, kind, born: now, until: now + 9500 });
       if (game.comms.length > 4) game.comms.splice(0, game.comms.length - 4);
       renderComms();
     }
@@ -2159,13 +2445,21 @@
       const now = performance.now();
       const live = game.comms.filter((m) => m.until > now);
       if (live.length !== game.comms.length) game.comms = live;
+      const newest = live[live.length - 1];
+      const renderState = live.map((m) => `${m.id}:${Math.min(String(m.text).length, Math.floor(Math.max(0, now - (m.born || 0)) / 18))}`).join("|");
+      const key = `${renderState}:${newest ? newest.id : 0}`;
+      if (el.dataset.renderKey === key) return;
+      el.dataset.renderKey = key;
       el.innerHTML = live.map((m) => {
-        const body = m.alien ? alienGlyphMarkup(m.text) : escapeHtml(m.text);
+        const typed = Math.min(String(m.text).length, Math.floor(Math.max(0, now - (m.born || 0)) / 18));
+        const visibleText = String(m.text).slice(0, typed);
+        const body = m.alien ? alienGlyphMarkup(visibleText) : escapeHtml(visibleText);
         const kindClass = m.alien ? "alien-comms" : `comms-${escapeAttr(m.kind || "trader")}`;
-        return `<div class="comms-line ${kindClass}"><span class="comms-from">${escapeHtml(m.from)}:</span> ${body}</div>`;
+        const cursor = m === newest ? `<span class="comms-cursor">_</span>` : "";
+        return `<div class="comms-line ${kindClass}"><span class="comms-from">${escapeHtml(m.from)}:</span> ${body}${cursor}</div>`;
       }).join("");
     }
-    setInterval(renderComms, 1200);
+    setInterval(renderComms, 120);
 
     function isAlienShip(o) {
       return !!o && (o.thargoid || ALIEN_MODELS.includes(o.model));
@@ -2817,10 +3111,11 @@
 
     function resizeCanvases() {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      for (const canvas of [space, scanner]) {
+      for (const canvas of [space, scanner, foreAftRadar]) {
         const r = canvas.getBoundingClientRect();
-        canvas.width = Math.max(320, Math.floor(r.width * dpr));
-        canvas.height = Math.max(120, Math.floor(r.height * dpr));
+        const min = canvas === foreAftRadar ? 80 : 320;
+        canvas.width = Math.max(min, Math.floor(r.width * dpr));
+        canvas.height = Math.max(canvas === foreAftRadar ? min : 120, Math.floor(r.height * dpr));
       }
     }
 
@@ -3113,6 +3408,10 @@
     }
 
     function spawnArmada() {
+      if (!game.developerMode) {
+        setMessage("Developer mode required for test armada.", true);
+        return;
+      }
       if (game.transition) return;
       if (game.docked) launch();
       game.objects = game.objects.filter((o) => o.type !== "ship" && o.type !== "canister");
@@ -3251,6 +3550,11 @@
       const from = currentSystem();
       const to = targetSystem();
       const d = distance(from, to);
+      if (game.target === game.current) {
+        eliteAudio.play("boop");
+        setMessage(`Already in ${from.name}. Select another system.`, true);
+        return;
+      }
       if (!game.developerMode && d > 7) {
         eliteAudio.play("boop");
         setMessage("Target is outside the 7.0 light year jump range.", true);
@@ -4117,12 +4421,6 @@
       renderPanel();
     }
 
-    function cheatFitMilitaryLaser() {
-      fitLaser("militaryLaser");
-      setMessage("Cheat: military laser fitted.");
-      renderPanel();
-    }
-
     function cheatSetEquipment(id, fitted) {
       const item = EQUIPMENT.find((e) => e.id === id);
       if (!item) return;
@@ -4352,16 +4650,23 @@
             game.energy = clamp(game.energy - dt * 4, 0, 100);
           }
         }
+        let liveShipCount = 0;
+        let liveRockCount = 0;
         game.objects = game.objects.filter((o) => {
           if (o._remove) return false;
           const d = len(sub(o.pos, game.camera.pos));
-          return shouldKeepShip(o, d);
+          const keep = shouldKeepShip(o, d);
+          if (keep) {
+            if (o.type === "ship") liveShipCount++;
+            else if (o.type === "asteroid" || o.type === "boulder") liveRockCount++;
+          }
+          return keep;
         });
         if (game.targetObject && !game.objects.includes(game.targetObject)) game.targetObject = nearestTarget(false);
-        if (Math.random() < dt * .035 && game.objects.filter((o) => o.type === "ship").length < 7) {
+        if (Math.random() < dt * .035 && liveShipCount < 7) {
           spawnShip(Math.random, Math.random() > (currentSystem().government / 9 + .25));
         }
-        if (Math.random() < dt * .012 && game.objects.filter((o) => o.type === "asteroid" || o.type === "boulder").length < 4) {
+        if (Math.random() < dt * .012 && liveRockCount < 4) {
           spawnAsteroid(Math.random, game.camera.pos);
         }
         game.shields = clamp(game.shields + dt * (game.equipment.extraEnergy ? 5 : 3), 0, 100);
@@ -4371,6 +4676,12 @@
       }
       else {
         game.rollRate = game.pitchRate = game.yawRate = 0;
+        if (game.controlHold) {
+          for (const hold of Object.values(game.controlHold)) {
+            hold.dir = 0;
+            hold.time = 0;
+          }
+        }
       }
       game.explosions = game.explosions.filter((e) => (e.t += dt) < e.dur);
       game.smokePuffs = game.smokePuffs.filter((p) => (p.t += dt) < p.dur);
@@ -4384,6 +4695,7 @@
       updateReadouts();
       drawSpace();
       drawScanner();
+      drawForeAftRadar();
     }
 
     function updateAutoDock(dt) {
@@ -4397,8 +4709,29 @@
       if (d < 165) dock(true);
     }
 
-    function updateAxisRate(rate, input, dt, accel, maxRate, damping = .055) {
-      if (input) rate += input * accel * dt;
+    function controlHoldTime(axis, input, dt) {
+      if (!game.controlHold) game.controlHold = {};
+      const hold = game.controlHold[axis] || (game.controlHold[axis] = { dir: 0, time: 0 });
+      if (!input) {
+        hold.dir = 0;
+        hold.time = 0;
+      } else if (hold.dir !== input) {
+        hold.dir = input;
+        hold.time = dt;
+      } else {
+        hold.time += dt;
+      }
+      return hold.time;
+    }
+
+    function controlRamp(holdTime, initial = .24, rampSeconds = .48) {
+      const t = clamp(holdTime / rampSeconds, 0, 1);
+      const eased = t * t * (3 - 2 * t);
+      return lerp(initial, 1, eased);
+    }
+
+    function updateAxisRate(rate, input, dt, accel, maxRate, damping = .055, ramp = 1) {
+      if (input) rate += input * accel * ramp * dt;
       else rate *= Math.pow(damping, dt);
       return clamp(rate, -maxRate, maxRate);
     }
@@ -4407,9 +4740,12 @@
       const rollInput = (keys.has("KeyA") ? 1 : 0) - (keys.has("KeyD") ? 1 : 0);
       const pitchInput = (keys.has("KeyW") ? 1 : 0) - (keys.has("KeyS") ? 1 : 0);
       const yawInput = (keys.has("KeyE") ? 1 : 0) - (keys.has("KeyQ") ? 1 : 0);
-      game.rollRate = updateAxisRate(game.rollRate || 0, rollInput, dt, 4.8, 2.05);
-      game.pitchRate = updateAxisRate(game.pitchRate || 0, pitchInput, dt, 3.5, 1.42);
-      game.yawRate = updateAxisRate(game.yawRate || 0, yawInput, dt, 3.2, 1.24);
+      const rollRamp = controlRamp(controlHoldTime("roll", rollInput, dt), .32, .42);
+      const pitchRamp = controlRamp(controlHoldTime("pitch", pitchInput, dt), .2, .52);
+      const yawRamp = controlRamp(controlHoldTime("yaw", yawInput, dt), .2, .52);
+      game.rollRate = updateAxisRate(game.rollRate || 0, rollInput, dt, 4.8, 2.05, .055, rollRamp);
+      game.pitchRate = updateAxisRate(game.pitchRate || 0, pitchInput, dt, 3.5, 1.42, .055, pitchRamp);
+      game.yawRate = updateAxisRate(game.yawRate || 0, yawInput, dt, 3.2, 1.24, .055, yawRamp);
       if (Math.abs(game.rollRate) > .001) rotateCameraLocal(game.camera, vec(0, 0, 1), game.rollRate * dt);
       if (Math.abs(game.pitchRate) > .001) rotateCameraLocal(game.camera, vec(1, 0, 0), game.pitchRate * dt);
       if (Math.abs(game.yawRate) > .001) rotateCameraLocal(game.camera, vec(0, 1, 0), game.yawRate * dt);
@@ -4567,21 +4903,37 @@
       const miss = targetPos
         ? scale(shipRight(attacker), (Math.random() - .5) * Math.max(10, targetRadius * .18))
         : null;
+      const canopyHit = targetPos ? null : {
+        x: (Math.random() - .5) * .86,
+        y: (Math.random() - .5) * .6
+      };
+      const sparks = targetPos ? null : Array.from({ length: 8 + Math.floor(Math.random() * 6) }, () => {
+        const a = Math.random() * TAU;
+        return {
+        x: Math.cos(a),
+        y: Math.sin(a),
+        len: 18 + Math.random() * 58,
+        drift: 10 + Math.random() * 46,
+        life: .75 + Math.random() * .7,
+        size: 1.3 + Math.random() * 2.8,
+        warm: Math.random()
+        };
+      });
       game.enemyShots.push({
         from,
         to: targetPos ? add(targetPos, miss) : null,
         t: 0,
-        dur: visual.dur,
+        dur: targetPos ? visual.dur : visual.dur + .24,
+        beamDur: visual.dur,
         missile: false,
         color: visual.color,
         core: visual.core,
         width: visual.width,
         glow: visual.glow,
         forks: visual.forks,
-        screenOffset: targetPos ? null : {
-          x: (Math.random() - .5) * visual.jitter,
-          y: (Math.random() - .5) * visual.jitter * .72
-        },
+        screenAim: canopyHit,
+        screenOffset: targetPos ? null : { x: 0, y: 0 },
+        sparks,
         flare: !targetPos
       });
     }
@@ -4620,6 +4972,7 @@
       }
       pushEnemyLaserShot(o);
       eliteAudio.play("enemyLaser");
+      game.screenShake = Math.max(game.screenShake || 0, o.thargoid ? 1.65 : 1.15);
       game.shields -= o.thargoid ? 14 : 8;
       setMessage(`${o.name} laser strike.`);
       if (game.shields <= 0) {
@@ -5896,7 +6249,7 @@
     }
 
     function drawShipLabels(w, h) {
-      ctx.font = "13px monospace";
+      ctx.font = `13px ${UI_CANVAS_FONT}`;
       ctx.textAlign = "center";
       for (const o of game.objects) {
         if (o.type !== "ship") continue;
@@ -5911,9 +6264,9 @@
         const distText = `${Math.round(len(sub(o.pos, game.camera.pos)))}m`;
         const labelY = pr.y - apparentR - 12;
         const barW = 55;
-        ctx.font = "13px monospace";
+        ctx.font = `13px ${UI_CANVAS_FONT}`;
         const nameW = ctx.measureText(o.name).width;
-        ctx.font = "11px monospace";
+        ctx.font = `11px ${UI_CANVAS_FONT}`;
         const statusW = ctx.measureText(status.text).width;
         const distW = ctx.measureText(distText).width;
         const boxW = Math.max(nameW, statusW, distW, barW) + 12;
@@ -5925,10 +6278,10 @@
         ctx.strokeRect(pr.x - boxW / 2, labelY - 48, boxW, 54);
 
         ctx.fillStyle = "#cfe9c8";
-        ctx.font = "13px monospace";
+        ctx.font = `13px ${UI_CANVAS_FONT}`;
         ctx.fillText(o.name, pr.x, labelY - 34);
         ctx.fillStyle = status.color;
-        ctx.font = "11px monospace";
+        ctx.font = `11px ${UI_CANVAS_FONT}`;
         ctx.fillText(status.text, pr.x, labelY - 21);
         ctx.fillStyle = "#91a78d";
         ctx.fillText(distText, pr.x, labelY - 8);
@@ -5976,7 +6329,7 @@
       if (game.showShipLabels) drawShipLabels(w, h);
       if (!game.docked && game.viewMode !== "fwd" && VIEW_LABELS[game.viewMode]) {
         ctx.fillStyle = "rgba(233,242,228,.75)";
-        ctx.font = "13px monospace";
+        ctx.font = `13px ${UI_CANVAS_FONT}`;
         ctx.textAlign = "center";
         ctx.fillText(VIEW_LABELS[game.viewMode], w / 2, 20);
         ctx.textAlign = "left";
@@ -6488,15 +6841,16 @@
         // beam to the crosshair; damage is handled in the combat routine, so this is
         // allowed to show near-misses and glancing fire.
         let toP = {
-          x: w / 2 + (s.screenOffset?.x || 0),
-          y: h / 2 + (s.screenOffset?.y || 0)
+          x: w * (.5 + (s.screenAim?.x || 0)) + (s.screenOffset?.x || 0),
+          y: h * (.5 + (s.screenAim?.y || 0)) + (s.screenOffset?.y || 0)
         };
         if (s.to) {
           const p = project(cameraTransform(s.to, game.camera), w, h);
           if (!p) continue;
           toP = p;
         }
-        const alpha = clamp(1 - s.t / s.dur, 0, 1);
+        const alpha = clamp(1 - s.t / (s.beamDur || s.dur), 0, 1);
+        const sparkAlpha = clamp(1 - s.t / s.dur, 0, 1);
         const dx = toP.x - fromP.x, dy = toP.y - fromP.y;
         const dist = Math.max(1, Math.hypot(dx, dy));
         const nx = -dy / dist, ny = dx / dist;
@@ -6575,14 +6929,66 @@
         ctx.fill();
 
         if (s.flare) {
-          const impact = ctx.createRadialGradient(toP.x, toP.y, 0, toP.x, toP.y, 24);
-          impact.addColorStop(0, `rgba(${coreRgb.r},${coreRgb.g},${coreRgb.b},${alpha * .32})`);
-          impact.addColorStop(.45, `rgba(${beam.r},${beam.g},${beam.b},${alpha * .18})`);
+          const impactRadius = 22 + (s.width || 2) * 5;
+          const impact = ctx.createRadialGradient(toP.x, toP.y, 0, toP.x, toP.y, impactRadius);
+          impact.addColorStop(0, `rgba(${coreRgb.r},${coreRgb.g},${coreRgb.b},${sparkAlpha * .82})`);
+          impact.addColorStop(.22, `rgba(255,225,130,${sparkAlpha * .48})`);
+          impact.addColorStop(.52, `rgba(${beam.r},${beam.g},${beam.b},${sparkAlpha * .2})`);
           impact.addColorStop(1, `rgba(${beam.r},${beam.g},${beam.b},0)`);
           ctx.fillStyle = impact;
           ctx.beginPath();
-          ctx.arc(toP.x, toP.y, 24, 0, TAU);
+          ctx.arc(toP.x, toP.y, impactRadius, 0, TAU);
           ctx.fill();
+
+          ctx.save();
+          ctx.globalCompositeOperation = "lighter";
+          ctx.shadowColor = `rgba(255,205,80,${sparkAlpha})`;
+          ctx.shadowBlur = 14 * sparkAlpha;
+          ctx.strokeStyle = `rgba(255,245,190,${sparkAlpha * .88})`;
+          ctx.lineWidth = 1.4 + (s.width || 2) * .35;
+          ctx.beginPath();
+          ctx.moveTo(toP.x - 18, toP.y);
+          ctx.lineTo(toP.x + 18, toP.y);
+          ctx.moveTo(toP.x, toP.y - 13);
+          ctx.lineTo(toP.x, toP.y + 13);
+          ctx.moveTo(toP.x - 10, toP.y - 10);
+          ctx.lineTo(toP.x + 10, toP.y + 10);
+          ctx.moveTo(toP.x + 10, toP.y - 10);
+          ctx.lineTo(toP.x - 10, toP.y + 10);
+          ctx.stroke();
+
+          ctx.shadowBlur = 6 * sparkAlpha;
+          ctx.strokeStyle = `rgba(255,210,82,${sparkAlpha * .72})`;
+          ctx.fillStyle = `rgba(255,238,150,${sparkAlpha * .78})`;
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          for (const sp of s.sparks || []) {
+            const sparkT = clamp(s.t / (s.dur * sp.life), 0, 1);
+            if (sparkT >= 1) continue;
+            const spread = sp.drift * sparkT;
+            const x0 = toP.x + sp.x * spread;
+            const y0 = toP.y + sp.y * spread;
+            const x1 = toP.x + sp.x * (spread + sp.len * (1 - sparkT * .25));
+            const y1 = toP.y + sp.y * (spread + sp.len * (1 - sparkT * .25));
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x1, y1);
+          }
+          ctx.stroke();
+          for (const sp of s.sparks || []) {
+            const sparkT = clamp(s.t / (s.dur * sp.life), 0, 1);
+            if (sparkT >= 1) continue;
+            const sa = (1 - sparkT) * sparkAlpha;
+            if (sa <= .05) continue;
+            const spread = sp.drift * sparkT;
+            const x = toP.x + sp.x * (spread + sp.len * (1 - sparkT * .25));
+            const y = toP.y + sp.y * (spread + sp.len * (1 - sparkT * .25));
+            ctx.globalAlpha = sa * .7;
+            ctx.beginPath();
+            ctx.arc(x, y, clamp(sp.size * .55, .75, 2.1), 0, TAU);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          ctx.restore();
         }
         ctx.globalCompositeOperation = "source-over";
         ctx.strokeStyle = `rgba(${beam.r},${beam.g},${beam.b},${alpha * .22})`;
@@ -8073,24 +8479,22 @@
     }
 
     function drawDockedBackdrop(w, h) {
-      ctx.fillStyle = "rgba(0,0,0,.66)";
+      ctx.fillStyle = "rgba(0,0,0,.5)";
       ctx.fillRect(0, 0, w, h);
-      ctx.strokeStyle = "#65ff47";
-      ctx.lineWidth = 1;
-      ctx.globalAlpha = .65;
-      for (let i = 0; i < 9; i++) {
-        const y = h * .2 + i * h * .07;
+      ctx.strokeStyle = "rgba(101,255,71,.18)";
+      ctx.lineWidth = Math.max(.5, w / 2200);
+      for (let i = 0; i < 7; i++) {
+        const y = h * .24 + i * h * .07;
         ctx.beginPath();
-        ctx.moveTo(w * .24 - i * 18, y);
-        ctx.lineTo(w * .76 + i * 18, y);
+        ctx.moveTo(w * .3 - i * 13, y);
+        ctx.lineTo(w * .7 + i * 13, y);
         ctx.stroke();
       }
-      ctx.globalAlpha = 1;
       ctx.fillStyle = "#65ff47";
       ctx.textAlign = "center";
-      ctx.font = `${Math.max(16, Math.floor(w / 42))}px monospace`;
+      ctx.font = `${Math.max(16, Math.floor(w / 42))}px ${UI_CANVAS_FONT}`;
       ctx.fillText(`DOCKED AT ${game.dockedAt || currentSystem().name + " STATION"}`, w / 2, h * .48);
-      ctx.font = `${Math.max(11, Math.floor(w / 76))}px monospace`;
+      ctx.font = `${Math.max(11, Math.floor(w / 76))}px ${UI_CANVAS_FONT}`;
       ctx.fillStyle = "#91a78d";
       ctx.fillText("MARKET, EQUIPMENT, CHARTS AND COMMANDER STATUS AVAILABLE", w / 2, h * .55);
     }
@@ -8196,15 +8600,91 @@
       }
     }
 
+    function drawForeAftRadarMarker(x, y, style, sizeMul = 1) {
+      const s = Math.max(2, (style.size || 3) * sizeMul);
+      rctx.fillStyle = style.color;
+      rctx.strokeStyle = style.color;
+      rctx.beginPath();
+      if (style.shape === "triangle") {
+        rctx.moveTo(x, y - s);
+        rctx.lineTo(x + s, y + s);
+        rctx.lineTo(x - s, y + s);
+        rctx.closePath();
+        rctx.fill();
+      } else if (style.shape === "target") {
+        rctx.strokeRect(x - s, y - s, s * 2, s * 2);
+      } else {
+        rctx.arc(x, y, s, 0, TAU);
+        rctx.fill();
+      }
+    }
+
+    function drawForeAftRadar() {
+      const w = foreAftRadar.width, h = foreAftRadar.height;
+      rctx.clearRect(0, 0, w, h);
+      const cx = w / 2, cy = h / 2;
+      const radius = Math.min(w, h) * .43;
+      rctx.strokeStyle = "#2bb934";
+      rctx.lineWidth = Math.max(1, Math.min(w, h) / 120);
+      rctx.beginPath();
+      rctx.arc(cx, cy, radius, 0, TAU);
+      rctx.stroke();
+      rctx.globalAlpha = .42;
+      rctx.beginPath();
+      rctx.moveTo(cx, cy - radius);
+      rctx.lineTo(cx, cy + radius);
+      rctx.moveTo(cx - radius, cy);
+      rctx.lineTo(cx + radius, cy);
+      rctx.stroke();
+      rctx.globalAlpha = .28;
+      rctx.beginPath();
+      rctx.arc(cx, cy, radius * .5, 0, TAU);
+      rctx.stroke();
+      rctx.globalAlpha = 1;
+      rctx.fillStyle = "#ffd33d";
+      rctx.font = `${Math.max(8, Math.floor(radius * .18))}px ${UI_CANVAS_FONT}`;
+      rctx.textAlign = "center";
+      rctx.fillText("FWD", cx, cy - radius - 4);
+      rctx.fillStyle = "#65ff47";
+      rctx.fillText("AFT", cx, cy + radius + 10);
+      rctx.beginPath();
+      rctx.arc(cx, cy, 2.5, 0, TAU);
+      rctx.fill();
+      for (const o of game.objects) {
+        const p = cameraTransform(o.pos, game.camera);
+        const fore = p.z >= 0;
+        const dirLen = Math.max(1, Math.hypot(p.x, p.y, p.z));
+        const x = cx + clamp(p.x / dirLen, -1, 1) * radius * .86;
+        const y = cy - clamp(p.y / dirLen, -1, 1) * radius * .86;
+        const style = { ...scannerStyleFor(o), color: fore ? "#ffd33d" : "#65ff47" };
+        drawForeAftRadarMarker(x, y, style, .72);
+      }
+    }
+
+    function devChordActive() {
+      return keys.has("KeyD") && keys.has("KeyE") && keys.has("KeyV");
+    }
+
+    function updatePanelDrawer() {
+      if (lastPanelOpenRendered === game.panelOpen) return;
+      lastPanelOpenRendered = game.panelOpen;
+      sidePanel.classList.toggle("open", game.panelOpen);
+      panelToggle.classList.toggle("active", game.panelOpen);
+      panelToggle.setAttribute("aria-expanded", String(game.panelOpen));
+      panelToggle.setAttribute("aria-label", game.panelOpen ? "Hide panel" : "Show panel");
+      panelToggle.title = game.panelOpen ? "Hide panel" : "Show panel";
+    }
+
     function renderPanel() {
       if (game.panel === "cheats" && !game.developerMode) game.panel = "status";
       const activeModels = previewModelList();
       if (!activeModels.includes(shipDiagramState.model)) shipDiagramState.model = activeModels[0] || "cobra";
+      updatePanelDrawer();
       document.querySelectorAll(".tabs .btn").forEach((b) => b.classList.toggle("active", b.dataset.panel === game.panel));
-      const title = game.panel[0].toUpperCase() + game.panel.slice(1);
+      const title = game.panel === "cheats" ? "Dev" : game.panel[0].toUpperCase() + game.panel.slice(1);
       byId("panelTitle").textContent = title;
       byId("panelSub").textContent = game.docked ? `Docked at ${game.dockedAt || currentSystem().name + " Station"}` : "In flight";
-      const map = { market: renderMarket, chart: renderChart, equip: renderEquip, status: renderStatus, ship: renderShip, help: renderHelp, cheats: renderCheats };
+      const map = { market: renderMarket, chart: renderChart, equip: renderEquip, status: renderStatus, ship: renderShip, help: renderHelp, about: renderAbout, cheats: renderCheats };
       const panelChanged = lastRenderedPanel !== game.panel;
       panelBody.innerHTML = map[game.panel]();
       if (panelChanged || game.panel === "ship") panelBody.scrollTop = 0;
@@ -8351,6 +8831,7 @@
       </div>
       <div class="notice" style="margin-top:10px">${s.name} is ${s.description}.</div>
       <div class="notice save-actions">
+        <button class="btn" data-save>Save Browser Save</button>
         <button class="btn" data-load>Load Browser Save</button>
         <button class="btn" data-download-save>Download Commander</button>
         <label class="btn" for="commanderFileInput">Upload Commander</label>
@@ -8411,7 +8892,9 @@
       const shipOptions = SHIP_MODEL_LIST.map((model) =>
         `<option value="${model}" ${model === currentShip ? "selected" : ""}>${shipName(model)}</option>`
       ).join("");
-      const equipmentRows = EQUIPMENT.map((e) => {
+      const equipmentRows = [...EQUIPMENT].sort((a, b) =>
+        (DEV_EQUIPMENT_ORDER[a.id] ?? 100) - (DEV_EQUIPMENT_ORDER[b.id] ?? 100) || a.name.localeCompare(b.name)
+      ).map((e) => {
         const fitted = !!game.equipment[e.id];
         return `<div class="row">
           <span class="label">${e.name}</span>
@@ -8424,10 +8907,10 @@
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0">
         <button class="btn mini" data-cheat="credits1000">+1,000 CR</button>
         <button class="btn mini" data-cheat="credits10000">+10,000 CR</button>
-        <button class="btn mini" data-cheat="militaryLaser">Fit Military Laser</button>
         <button class="btn mini" data-cheat="refillShip">Refill Ship</button>
         <button class="btn mini" data-cheat="fillCargo">Fill Cargo Hold</button>
         <button class="btn mini" data-cheat="cleanLegal">Clear Legal Status</button>
+        <button class="btn mini warn" data-cheat="armada">Deploy Armada</button>
       </div>
       <div class="grid2">
         ${stat("Ship", shipName(currentShip))}
@@ -8451,23 +8934,7 @@
       const updates = UPDATE_LOG.map(([version, text]) =>
         `<li><strong>v${version}</strong> ${text}</li>`
       ).join("");
-      return `<div style="text-align:center;margin-bottom:10px;">
-        <svg width="220" height="46" viewBox="0 0 220 46" aria-hidden="true">
-          <line x1="4" y1="4" x2="20" y2="4" stroke="var(--green)" stroke-width="1.4"></line>
-          <line x1="4" y1="4" x2="4" y2="20" stroke="var(--green)" stroke-width="1.4"></line>
-          <line x1="216" y1="4" x2="200" y2="4" stroke="var(--green)" stroke-width="1.4"></line>
-          <line x1="216" y1="4" x2="216" y2="20" stroke="var(--green)" stroke-width="1.4"></line>
-          <line x1="4" y1="42" x2="20" y2="42" stroke="var(--green)" stroke-width="1.4"></line>
-          <line x1="4" y1="42" x2="4" y2="26" stroke="var(--green)" stroke-width="1.4"></line>
-          <line x1="216" y1="42" x2="200" y2="42" stroke="var(--green)" stroke-width="1.4"></line>
-          <line x1="216" y1="42" x2="216" y2="26" stroke="var(--green)" stroke-width="1.4"></line>
-          <text x="110" y="28" text-anchor="middle" font-family="monospace" font-size="18" letter-spacing="5" fill="var(--amber)">ULTRA ELITE</text>
-        </svg>
-      </div>
-      <div class="notice">
-        This is a compact browser experiment inspired by the 1984 space trading classic: deterministic galaxies, economy-driven markets, wireframe combat, docking, equipment, ranks, police attention, cargo scooping and witch-space encounters.
-      </div>
-      <div class="row"><span class="label"><span class="kbd">Launch</span></span><span class="value">Leave station</span></div>
+      return `<div class="row"><span class="label"><span class="kbd">Launch</span></span><span class="value">Leave station</span></div>
       <div class="row"><span class="label"><span class="kbd">W/S</span></span><span class="value">Pitch</span></div>
       <div class="row"><span class="label"><span class="kbd">A/D</span></span><span class="value">Roll</span></div>
       <div class="row"><span class="label"><span class="kbd">Q/E</span></span><span class="value">Yaw</span></div>
@@ -8481,17 +8948,33 @@
       <div class="row"><span class="label"><span class="kbd">G</span></span><span class="value">Presentation preset</span></div>
       <div class="row"><span class="label"><span class="kbd">L</span></span><span class="value">Toggle ship labels</span></div>
       <div class="row"><span class="label"><span class="kbd">N</span></span><span class="value">Toggle sound</span></div>
-      <div class="row"><span class="label"><span class="kbd">R</span></span><span class="value">Deploy test armada</span></div>
       <div class="row"><span class="label"><span class="kbd">J</span></span><span class="value">Hyperspace</span></div>
       <div class="row"><span class="label"><span class="kbd">O</span></span><span class="value">Dock attempt</span></div>
       <div class="row"><span class="label"><span class="kbd">C</span></span><span class="value">Docking computer</span></div>
-      <div class="notice" style="margin-top:10px">
-        <strong>README</strong><br>
-        Version v${GAME_VERSION}. Ultra Elite is a single-file browser homage with source-derived ships, deterministic procedural systems, shaded/wire hybrid rendering, trading, combat, docking, mining, save files and developer test tools.
-      </div>
       <div class="notice">
         <strong>Update Log</strong>
         <ul class="update-log">${updates}</ul>
+      </div>`;
+    }
+
+    function renderAbout() {
+      return `<div class="notice about-section">
+        <strong class="about-heading">Legal Notice &amp; Credits</strong>
+      </div>
+      <div class="notice about-section">
+        This project is a non-commercial, open-source fan tribute developed solely for educational, archival, and entertainment purposes. It is a work of reverse-engineered game logic built from scratch and is not an official release.
+      </div>
+      <div class="notice about-section">
+        <strong class="about-heading">Intellectual Property</strong>
+        Elite (1984) is the property of its original creators, David Braben and Ian Bell. The broader Elite trademark and modern franchise assets are owned by Frontier Developments plc.
+      </div>
+      <div class="notice about-section">
+        <strong class="about-heading">No Affiliation</strong>
+        This project is not affiliated with, endorsed by, or sponsored by David Braben, Ian Bell, or Frontier Developments plc.
+      </div>
+      <div class="notice about-section">
+        <strong class="about-heading">Non-Commercial Status</strong>
+        This game is completely free to play. The author does not generate revenue, host advertisements, accept donations, or profit from this project in any way. All source code is shared under an educational, non-commercial open-source framework. If you enjoy this tribute, please support the creators by checking out the official, modern space simulation, Elite Dangerous, available via Frontier Developments.
       </div>`;
     }
 
@@ -8555,10 +9038,10 @@
         const action = b.dataset.cheat;
         if (action === "credits1000") cheatAddCredits(1000);
         else if (action === "credits10000") cheatAddCredits(10000);
-        else if (action === "militaryLaser") cheatFitMilitaryLaser();
         else if (action === "refillShip") cheatRefillShip();
         else if (action === "fillCargo") cheatFillCargo();
         else if (action === "cleanLegal") cheatClearLegalStatus();
+        else if (action === "armada") spawnArmada();
       }));
       panelBody.querySelectorAll("[data-cheat-equip]").forEach((b) => b.addEventListener("click", () => {
         cheatSetEquipment(b.dataset.cheatEquip, b.dataset.cheatEquipState === "add");
@@ -8579,6 +9062,11 @@
       if (gal) gal.addEventListener("click", galacticJump);
       const load = panelBody.querySelector("[data-load]");
       if (load) load.addEventListener("click", loadGame);
+      const save = panelBody.querySelector("[data-save]");
+      if (save) save.addEventListener("click", () => {
+        saveGame();
+        renderPanel();
+      });
       const downloadSave = panelBody.querySelector("[data-download-save]");
       if (downloadSave) downloadSave.addEventListener("click", downloadCommanderFile);
       const uploadSave = panelBody.querySelector("[data-upload-save]");
@@ -8696,49 +9184,50 @@
         c.stroke();
       }
       c.fillStyle = hullColor;
-      c.font = "13px monospace";
+      c.font = `13px ${UI_CANVAS_FONT}`;
       c.fillText(modelDisplayName(modelName), 14, 22);
     }
 
     function updateReadouts() {
       const sys = currentSystem();
       const target = targetSystem();
-      byId("roCommander").textContent = game.commander;
-      byId("roCredits").textContent = fmt(game.credits);
-      byId("roLegal").textContent = legalStatus();
-      byId("roTarget").textContent = target.name;
-      byId("roSystem").textContent = sys.name;
-      byId("roDistance").textContent = `${fmt(distance(sys, target))} LY`;
-      byId("roLockDist").textContent = (game.targetObject && game.objects.includes(game.targetObject))
+      hudEls.roCommander.textContent = game.commander;
+      hudEls.roCredits.textContent = fmt(game.credits);
+      hudEls.roLegal.textContent = legalStatus();
+      hudEls.roTarget.textContent = target.name;
+      hudEls.roSystem.textContent = sys.name;
+      hudEls.roDistance.textContent = `${fmt(distance(sys, target))} LY`;
+      hudEls.roLockDist.textContent = (game.targetObject && game.objects.includes(game.targetObject))
         ? `LOCK ${game.targetObject.name} ${Math.round(len(sub(game.targetObject.pos, game.camera.pos)))}m`
         : "LOCK --";
-      byId("barEnergy").style.width = `${clamp(game.energy, 0, 100)}%`;
-      byId("barShields").style.width = `${clamp(game.shields, 0, 100)}%`;
-      byId("barFuel").style.width = `${game.fuel / 7 * 100}%`;
-      byId("barSpeed").style.width = `${clamp(game.speed / game.maxSpeed, 0, 1) * 100}%`;
+      hudEls.barEnergy.style.width = `${clamp(game.energy, 0, 100)}%`;
+      hudEls.barShields.style.width = `${clamp(game.shields, 0, 100)}%`;
+      hudEls.barFuel.style.width = `${game.fuel / 7 * 100}%`;
+      hudEls.barSpeed.style.width = `${clamp(game.speed / game.maxSpeed, 0, 1) * 100}%`;
       const laserHeat = clamp(game.laserHeat, 0, 100);
-      const heatBar = byId("barLaserHeat");
+      const heatBar = hudEls.barLaserHeat;
       heatBar.style.width = `${laserHeat}%`;
       heatBar.classList.toggle("warm", laserHeat >= 55 && laserHeat < 82);
       heatBar.classList.toggle("hot", laserHeat >= 82);
-      byId("txtEnergy").textContent = `${Math.round(game.energy)}%`;
-      byId("txtShields").textContent = `${Math.round(game.shields)}%`;
-      byId("txtFuel").textContent = fmt(game.fuel);
-      byId("txtSpeed").textContent = Math.round(game.speed);
-      byId("txtLaserHeat").textContent = laserHeat >= 95 ? "HOT" : `${Math.round(laserHeat)}%`;
-      byId("txtLaser").textContent = laserPower().name;
-      byId("txtMissiles").textContent = game.missiles;
-      byId("txtEcm").textContent = game.equipment.ecm ? "Yes" : "No";
-      byId("txtCargo").textContent = `${usedCargo()}/${game.cargoCap}`;
-      byId("launchBtn").disabled = !game.docked || !!game.transition;
-      byId("jumpBtn").disabled = game.docked || !!game.transition;
-      byId("dockBtn").disabled = game.docked || !!game.transition;
-      byId("laserBtn").disabled = game.docked || !!game.transition;
-      byId("armadaBtn").disabled = !!game.transition;
-      document.querySelectorAll("[data-dev-only]").forEach((el) => {
-        el.hidden = !game.developerMode;
-      });
-      byId("devBtn").classList.toggle("active", game.developerMode);
+      hudEls.txtEnergy.textContent = `${Math.round(game.energy)}%`;
+      hudEls.txtShields.textContent = `${Math.round(game.shields)}%`;
+      hudEls.txtFuel.textContent = fmt(game.fuel);
+      hudEls.txtSpeed.textContent = Math.round(game.speed);
+      hudEls.txtLaserHeat.textContent = laserHeat >= 95 ? "HOT" : `${Math.round(laserHeat)}%`;
+      hudEls.txtLaser.textContent = laserPower().name;
+      hudEls.txtMissiles.textContent = game.missiles;
+      hudEls.txtEcm.textContent = game.equipment.ecm ? "Yes" : "No";
+      hudEls.txtCargo.textContent = `${usedCargo()}/${game.cargoCap}`;
+      hudEls.launchBtn.disabled = !game.docked || !!game.transition;
+      hudEls.jumpBtn.disabled = game.docked || !!game.transition;
+      hudEls.dockBtn.disabled = game.docked || !!game.transition;
+      if (lastDeveloperModeRendered !== game.developerMode) {
+        lastDeveloperModeRendered = game.developerMode;
+        devOnlyEls.forEach((el) => {
+          el.hidden = !game.developerMode;
+        });
+      }
+      updatePanelDrawer();
     }
 
     function toggleDeveloperMode() {
@@ -8760,10 +9249,14 @@
     window.addEventListener("pointerdown", () => eliteAudio.resume(), { capture: true });
     const splashEl = byId("splash");
     byId("splashVersion").textContent = GAME_VERSION;
+
     function dismissSplash() {
       if (!splashEl || splashEl.classList.contains("hidden")) return false;
       splashEl.classList.add("hidden");
       setTimeout(() => splashEl.remove(), 600);
+      if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+        document.documentElement.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
+      }
       return true;
     }
     splashEl.addEventListener("click", dismissSplash);
@@ -8776,19 +9269,25 @@
       }
       eliteAudio.resume();
       keys.add(e.code);
+      if (devChordActive() && !devChordLatched) {
+        devChordLatched = true;
+        toggleDeveloperMode();
+        e.preventDefault();
+        return;
+      }
+      updateReadouts();
       if (["Space", "KeyW", "KeyA", "KeyS", "KeyD", "KeyQ", "KeyE", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault();
       if (e.code === "ArrowUp") setViewMode("fwd");
       if (e.code === "ArrowDown") setViewMode("rear");
       if (e.code === "ArrowLeft") setViewMode("left");
       if (e.code === "ArrowRight") setViewMode("right");
-      if (e.code === "KeyV") setViewMode(game.viewMode === "ext" ? "fwd" : "ext");
+      if (e.code === "KeyV" && !(keys.has("KeyD") && keys.has("KeyE"))) setViewMode(game.viewMode === "ext" ? "fwd" : "ext");
       if (e.code === "Space") fireLaser();
       if (e.code === "KeyJ") hyperspace();
       if (e.code === "KeyO") dock(false);
       if (e.code === "KeyC") startAutoDock();
       if (e.code === "KeyM") fireMissile();
       if (e.code === "KeyB") useEnergyBomb();
-      if (e.code === "KeyR") spawnArmada();
       if (e.code === "KeyT") lockNextTarget();
       if (e.code === "KeyG") {
         applyPresetMode(game.fxLevel === "ultra" ? "classic" : "ultra");
@@ -8798,25 +9297,30 @@
         setMessage(`Ship labels: ${game.showShipLabels ? "on" : "off"}.`);
       }
       if (e.code === "KeyN") eliteAudio.toggle();
-      if (e.code === "Digit1") { game.panel = "market"; renderPanel(); }
-      if (e.code === "Digit2") { game.panel = "chart"; renderPanel(); }
-      if (e.code === "Digit3") { game.panel = "equip"; renderPanel(); }
-      if (e.code === "Digit4") { game.panel = "status"; renderPanel(); }
+      if (e.code === "Digit1") { game.panel = "market"; game.panelOpen = true; renderPanel(); }
+      if (e.code === "Digit2") { game.panel = "chart"; game.panelOpen = true; renderPanel(); }
+      if (e.code === "Digit3") { game.panel = "equip"; game.panelOpen = true; renderPanel(); }
+      if (e.code === "Digit4") { game.panel = "status"; game.panelOpen = true; renderPanel(); }
     });
-    window.addEventListener("keyup", (e) => keys.delete(e.code));
+    window.addEventListener("keyup", (e) => {
+      keys.delete(e.code);
+      if (!devChordActive()) devChordLatched = false;
+      updateReadouts();
+    });
 
     document.querySelectorAll(".tabs .btn").forEach((b) => b.addEventListener("click", () => {
       if (b.dataset.panel === "cheats" && !game.developerMode) return;
       game.panel = b.dataset.panel;
+      game.panelOpen = true;
       renderPanel();
     }));
+    panelToggle.addEventListener("click", () => {
+      game.panelOpen = !game.panelOpen;
+      renderPanel();
+    });
     byId("launchBtn").addEventListener("click", launch);
     byId("jumpBtn").addEventListener("click", hyperspace);
     byId("dockBtn").addEventListener("click", () => dock(false));
-    byId("laserBtn").addEventListener("click", fireLaser);
-    byId("armadaBtn").addEventListener("click", spawnArmada);
-    byId("saveBtn").addEventListener("click", saveGame);
-    byId("devBtn").addEventListener("click", toggleDeveloperMode);
 
     resizeCanvases();
     (function boot() {
