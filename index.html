@@ -5960,15 +5960,22 @@
     // per-point 3D positions through the normal cameraTransform/project pipeline (like
     // every other object) fixes that, and lets front/back occlusion be a genuine depth
     // test instead of a guessed screen-space angle range.
-    // A ring point is eclipsed when it sits on the anti-sun side of the planet AND within
-    // the planet's shadow cylinder (perpendicular distance from the planet-sun axis under
-    // the planet radius) — the same geometry that casts a real shadow band across a ring.
-    function ringPointInPlanetShadow(offset, sunDir, planetR) {
-      if (!sunDir) return false;
+    // Ring brightness against the sun (1 = fully lit .. ~0.1 = black). Two parts:
+    // a hard near-black core where the planet's true umbra cylinder crosses the ring
+    // (anti-sun side, perpendicular distance from the sun axis under the planet radius),
+    // plus a smooth falloff across the whole night half of the ring. The pure umbra
+    // alone is physically right but reads as just two thin eclipsed stubs poking out
+    // beside the planet disc (the rest of the band hides behind the planet) — the
+    // night-half falloff gives the ring a proper dark side matching the terminator.
+    function ringShade(offset, sunDir, planetR) {
+      if (!sunDir) return 1;
+      const d = len(offset) || 1;
       const along = dot(offset, sunDir);
-      if (along >= 0) return false;
-      const perp = sub(offset, scale(sunDir, along));
-      return len(perp) < planetR;
+      if (along >= 0) return 1;
+      const perp = len(sub(offset, scale(sunDir, along)));
+      if (perp < planetR) return .1;
+      const t = -along / d; // 0 at the terminator plane -> 1 fully anti-sun
+      return lerp(.95, .3, Math.pow(t, .75));
     }
 
     function drawPlanetRing(o, r, hue, w, h, front) {
@@ -6001,15 +6008,16 @@
         const bandSat = debris ? 8 + rng() * 14 : (solid ? 26 + rng() * 18 : 38);
         const bandLight = debris ? 22 + rng() * 22 : light;
         const baseAlpha = (solid ? (debris ? .42 : .34) : .26) * dusty;
-        const litStyle = `hsla(${bandHue}, ${bandSat}%, ${bandLight}%, ${baseAlpha})`;
-        // Eclipsed arc: a hard, near-black shadow (the planet blocking the sun), not just
-        // a dimmer band — matches the crisp planet terminator.
-        const shadowStyle = `hsla(${bandHue}, ${Math.round(bandSat * .3)}%, ${Math.max(3, Math.round(bandLight * .1))}%, ${baseAlpha})`;
+        // Shade-graded band colour: full colour lit, desaturating and darkening toward
+        // near-black in the umbra core.
+        const styleFor = (shade) => shade >= .99
+          ? `hsla(${bandHue}, ${bandSat}%, ${bandLight}%, ${baseAlpha})`
+          : `hsla(${bandHue}, ${Math.round(bandSat * (.35 + .65 * shade))}%, ${Math.max(3, Math.round(bandLight * shade))}%, ${baseAlpha})`;
         ctx.lineWidth = Math.max(1, r * (solid ? (debris ? (.008 + rng() * .024) : (.012 + rng() * .018)) : .028));
-        // The band is one path per lit/shadowed run: strokeStyle can't vary within a
-        // stroke, so the current run is flushed whenever it's clipped by a gap, the
-        // front/back split, or the sun-shadow boundary.
-        let drawing = false, curShadow = false;
+        // strokeStyle can't vary within one stroke, so the shade is quantised into a few
+        // levels and the current run is flushed whenever the level changes (as well as at
+        // gaps and the front/back split).
+        let drawing = false, curLevel = -1;
         for (let i = 0; i <= segs; i++) {
           const a = (i / segs) * TAU;
           const gap =
@@ -6023,15 +6031,15 @@
             ? project(cameraTransform(add(o.pos, offset), game.camera), w, h)
             : null;
           if (!p || gap) { if (drawing) { ctx.stroke(); drawing = false; } continue; }
-          const inShadow = ringPointInPlanetShadow(offset, sunDir, o.r);
-          if (drawing && inShadow !== curShadow) {
+          const level = Math.round((solid ? ringShade(offset, sunDir, o.r) : 1) * 7);
+          if (drawing && level !== curLevel) {
             ctx.lineTo(p.x, p.y);
             ctx.stroke();
             drawing = false;
           }
           if (!drawing) {
-            curShadow = inShadow;
-            ctx.strokeStyle = inShadow ? shadowStyle : litStyle;
+            curLevel = level;
+            ctx.strokeStyle = styleFor(level / 7);
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             drawing = true;
@@ -6081,7 +6089,7 @@
         if (front !== null && isFront !== front) continue;
         const p = project(cameraTransform(add(o.pos, offset), game.camera), w, h);
         if (!p) continue;
-        const shadeMul = ringPointInPlanetShadow(offset, sunDir, o.r) ? .34 : 1;
+        const shadeMul = ringShade(offset, sunDir, o.r);
         const size = clamp(r * (.006 + rng() * .014), .7, Math.max(1.4, r * .035));
         const alpha = clamp(.16 + rng() * .45, .12, .58) * (isFront ? 1 : .72);
         const gold = rng() < .18;
