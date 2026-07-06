@@ -6999,10 +6999,10 @@
       const p = projectFn(cam);
       return p ? { cam, u: (a.u + b.u) / 2, v: (a.v + b.v) / 2, x: p.x, y: p.y } : null;
     }
-    function subdivideTexTri(targetCtx, img, A, B, C, projectFn, depth) {
+    function subdivideTexTri(targetCtx, img, A, B, C, projectFn, depth, maxPx = TEX_SUBDIV_PX) {
       const ab = texEdgeLen(A, B), bc = texEdgeLen(B, C), ca = texEdgeLen(C, A);
       const longest = Math.max(ab, bc, ca);
-      if (depth >= 5 || longest < TEX_SUBDIV_PX) {
+      if (depth >= 5 || longest < maxPx) {
         drawTexturedTriangle(targetCtx, img, A.x, A.y, B.x, B.y, C.x, C.y, A.u, A.v, B.u, B.v, C.u, C.v);
         return;
       }
@@ -7010,21 +7010,21 @@
       if (ab >= bc && ab >= ca) {
         m = texMid(A, B, projectFn);
         if (!m) return drawTexturedTriangle(targetCtx, img, A.x, A.y, B.x, B.y, C.x, C.y, A.u, A.v, B.u, B.v, C.u, C.v);
-        subdivideTexTri(targetCtx, img, A, m, C, projectFn, depth + 1);
-        subdivideTexTri(targetCtx, img, m, B, C, projectFn, depth + 1);
+        subdivideTexTri(targetCtx, img, A, m, C, projectFn, depth + 1, maxPx);
+        subdivideTexTri(targetCtx, img, m, B, C, projectFn, depth + 1, maxPx);
       } else if (bc >= ab && bc >= ca) {
         m = texMid(B, C, projectFn);
         if (!m) return drawTexturedTriangle(targetCtx, img, A.x, A.y, B.x, B.y, C.x, C.y, A.u, A.v, B.u, B.v, C.u, C.v);
-        subdivideTexTri(targetCtx, img, A, B, m, projectFn, depth + 1);
-        subdivideTexTri(targetCtx, img, A, m, C, projectFn, depth + 1);
+        subdivideTexTri(targetCtx, img, A, B, m, projectFn, depth + 1, maxPx);
+        subdivideTexTri(targetCtx, img, A, m, C, projectFn, depth + 1, maxPx);
       } else {
         m = texMid(C, A, projectFn);
         if (!m) return drawTexturedTriangle(targetCtx, img, A.x, A.y, B.x, B.y, C.x, C.y, A.u, A.v, B.u, B.v, C.u, C.v);
-        subdivideTexTri(targetCtx, img, A, B, m, projectFn, depth + 1);
-        subdivideTexTri(targetCtx, img, B, C, m, projectFn, depth + 1);
+        subdivideTexTri(targetCtx, img, A, B, m, projectFn, depth + 1, maxPx);
+        subdivideTexTri(targetCtx, img, B, C, m, projectFn, depth + 1, maxPx);
       }
     }
-    function drawUVLayerPersp(targetCtx, item, img, alpha, uv = item.uv, centered = true) {
+    function drawUVLayerPersp(targetCtx, item, img, alpha, uv = item.uv, centered = true, maxPx = TEX_SUBDIV_PX) {
       const projectFn = item.project, camV = item.camVerts;
       if (!projectFn || !camV || !uv) return;
       const off = centered ? img.width / 2 : 0;
@@ -7037,7 +7037,7 @@
       };
       for (let i = 1; i + 1 < camV.length; i++) {
         const A = mk(0), B = mk(i), C = mk(i + 1);
-        if (A && B && C) subdivideTexTri(targetCtx, img, A, B, C, projectFn, 0);
+        if (A && B && C) subdivideTexTri(targetCtx, img, A, B, C, projectFn, 0, maxPx);
       }
       targetCtx.restore();
     }
@@ -7777,7 +7777,14 @@
         if (aIn) out.push(a);
         if (aIn !== bIn) {
           const t = (near - a.z) / (b.z - a.z);
-          out.push(vec(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, near));
+          const m = vec(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, near);
+          // Carry texture coordinates through the clip: UV is affine in camera space
+          // (rigid transform), so lerping by the same t is exact.
+          if (a.u !== undefined) {
+            m.u = a.u + (b.u - a.u) * t;
+            m.v = a.v + (b.v - a.v) * t;
+          }
+          out.push(m);
         }
       }
       return out;
@@ -7805,9 +7812,22 @@
     }
 
     function hangarTexturedQuad(points, view, w, h, texture, alpha = .58, shade = "rgba(0,0,0,.18)") {
-      const corners = points.map((p) => hangarProject(p, view, w, h));
-      const pr = corners.some((p) => !p) ? hangarProjectPoly(points, view, w, h) : corners;
-      if (!pr) return null;
+      // Planar UVs from the quad's own edges (u along 0->1, v along 0->3), attached to
+      // the camera-space verts so clipPolyNear can interpolate them at the near plane.
+      const e1 = sub(points[1], points[0]), e2 = sub(points[3], points[0]);
+      const uExt = len(e1) || 1, vExt = len(e2) || 1;
+      const uAxis = scale(e1, 1 / uExt), vAxis = scale(e2, 1 / vExt);
+      const camPts = points.map((pt) => {
+        const c = cameraTransform(pt, view);
+        const rel = sub(pt, points[0]);
+        c.u = dot(rel, uAxis);
+        c.v = dot(rel, vAxis);
+        return c;
+      });
+      const clipped = clipPolyNear(camPts);
+      if (clipped.length < 3) return null;
+      const pr = clipped.map((p) => project(p, w, h));
+      if (pr.some((p) => !p)) return null;
       ctx.save();
       ctx.fillStyle = `rgba(54,64,57,${alpha})`;
       ctx.beginPath();
@@ -7815,6 +7835,17 @@
       for (let i = 1; i < pr.length; i++) ctx.lineTo(pr[i].x, pr[i].y);
       ctx.closePath();
       ctx.fill();
+      if (texture && game.fxLevel !== "classic") {
+        // Real texture mapping over the flat fill, perspective-correct via the same
+        // camera-space subdivision the station hull uses (coarser 130px threshold: the
+        // walls are huge on screen and brushed metal hides residual affine error).
+        const su = (texture.width - 2) / uExt, sv = (texture.height - 2) / vExt;
+        drawUVLayerPersp(ctx, {
+          camVerts: clipped,
+          uv: clipped.map((c) => [c.u * su - texture.width / 2 + 1, c.v * sv - texture.height / 2 + 1]),
+          project: (p) => project(p, w, h)
+        }, texture, clamp(alpha + .04, .4, .72), undefined, true, 130);
+      }
       ctx.fillStyle = shade;
       ctx.beginPath();
       ctx.moveTo(pr[0].x, pr[0].y);
@@ -7972,6 +8003,13 @@
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, w, h);
 
+      // Back wall closing the near end of the room, so looking sideways/backwards during
+      // the launch sweep shows hull panelling instead of black void. Skipped when the
+      // camera sits outside the near end (the dock arrival's stage-style establishing
+      // shot films through that opening).
+      if (view.pos.z > near + 2) {
+        hangarTexturedQuad([p(hw, floor, near), p(-hw, floor, near), p(-hw, ceil, near), p(hw, ceil, near)], view, w, h, texture, .58, "rgba(0,0,0,.22)");
+      }
       hangarTexturedQuad([p(-hw, floor, far), p(hw, floor, far), p(hw, floor, near), p(-hw, floor, near)], view, w, h, texture, .66, "rgba(0,0,0,.04)");
       hangarTexturedQuad([p(-hw, ceil, near), p(hw, ceil, near), p(hw, ceil, far), p(-hw, ceil, far)], view, w, h, texture, .52, "rgba(0,0,0,.3)");
       hangarTexturedQuad([p(-hw, floor, near), p(-hw, floor, far), p(-hw, ceil, far), p(-hw, ceil, near)], view, w, h, texture, .56, "rgba(0,0,0,.28)");
