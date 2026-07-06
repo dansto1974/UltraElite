@@ -439,7 +439,7 @@
     .hud-actions {
       position: absolute;
       left: 50%;
-      bottom: 124px;
+      bottom: 142px;
       z-index: 7;
       display: flex;
       gap: 6px;
@@ -449,7 +449,9 @@
     }
 
     .hud-actions .btn {
-      min-width: 74px;
+      min-width: 68px;
+      min-height: 22px;
+      padding: 2px 8px;
       border-radius: 8px;
       background: rgba(0, 0, 0, .2);
       opacity: .8;
@@ -743,13 +745,13 @@
       bottom: 24px;
       z-index: 7;
       min-width: 0;
-      min-height: 84px;
+      min-height: 68px;
       display: grid;
-      grid-template-columns: minmax(210px, 270px) minmax(360px, 560px) minmax(210px, 270px);
+      grid-template-columns: minmax(200px, 248px) minmax(360px, 560px) minmax(200px, 248px);
       justify-content: center;
       align-items: stretch;
-      gap: 16px;
-      padding: 0 8px;
+      gap: 13px;
+      padding: 0 6px;
       background: transparent;
       border: 0;
       box-shadow: none;
@@ -808,73 +810,199 @@
 
     .bar-row {
       display: grid;
-      grid-template-columns: 70px minmax(70px, 1fr) 42px;
-      gap: 8px;
+      grid-template-columns: 27px minmax(62px, 1fr) 34px;
+      gap: 6px;
       align-items: center;
-      margin: 2px 0;
-      font-size: 12px;
+      margin: 1px 0;
+      font-size: 10px;
     }
 
     .bar {
-      height: 14px;
-      border: 1px solid #204620;
-      background: #031003;
+      position: relative;
+      height: 11px;
+      border: 1px solid rgba(101, 255, 71, .24);
+      background: rgba(101, 255, 71, .16);
       overflow: hidden;
+      box-shadow: inset 0 0 8px rgba(101, 255, 71, .08);
     }
 
     .bar-row.heat-row {
       margin-top: 1px;
-      font-size: 11px;
+      font-size: 10px;
     }
 
     .bar.heat-bar {
-      height: 9px;
+      height: 8px;
     }
 
     .fill {
-      height: 100%;
-      background: repeating-linear-gradient(90deg, var(--green) 0 9px, #061406 9px 11px);
+      height: calc(100% - 4px);
+      margin: 2px 0 2px 2px;
+      background: var(--green);
+      box-shadow: 0 0 7px rgba(101, 255, 71, .38);
     }
 
     .fill.cyan {
-      background: repeating-linear-gradient(90deg, var(--cyan) 0 9px, #061014 9px 11px);
+      background: var(--green);
     }
 
-    .fill.red {
-      background: repeating-linear-gradient(90deg, var(--red) 0 9px, #140606 9px 11px);
-    }
-
-    .fill.heat {
-      background: repeating-linear-gradient(90deg, var(--green) 0 9px, #061406 9px 11px);
-    }
-
+    .fill.warn,
     .fill.heat.warm {
-      background: repeating-linear-gradient(90deg, var(--amber) 0 9px, #151204 9px 11px);
+      background: var(--amber);
+      box-shadow: 0 0 7px rgba(255, 207, 54, .45);
     }
 
+    .fill.red,
+    .fill.critical,
     .fill.heat.hot {
-      background: repeating-linear-gradient(90deg, var(--red) 0 9px, #140606 9px 11px);
+      background: var(--red);
+      box-shadow: 0 0 9px rgba(255, 72, 72, .56);
+    }
+
+    .bar.center-bar::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -2px;
+      bottom: -2px;
+      width: 1px;
+      background: rgba(255, 207, 54, .82);
+      box-shadow: 0 0 7px rgba(255, 207, 54, .5);
+    }
+
+    .fill.center-fill {
+      position: absolute;
+      top: 1px;
+      bottom: 1px;
+      width: 2px;
+      height: auto;
+      margin: 0;
+      background: var(--amber);
+      box-shadow: 0 0 8px rgba(255, 207, 54, .62);
+    }
+
+    .missile-row {
+      display: grid;
+      grid-template-columns: 27px 1fr;
+      gap: 6px;
+      align-items: center;
+      margin: 3px 0 0;
+      font-size: 10px;
+    }
+
+    .missile-icon {
+      position: relative;
+      width: 20px;
+      height: 7px;
+      background: var(--green);
+      box-shadow: 0 0 6px rgba(101, 255, 71, .42);
+    }
+
+    .missile-icon::before {
+      content: "";
+      position: absolute;
+      right: -8px;
+      top: 0;
+      border-left: 8px solid var(--green);
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+      filter: drop-shadow(0 0 4px rgba(101, 255, 71, .35));
+    }
+
+    .missile-icon::after {
+      content: "";
+      position: absolute;
+      left: -4px;
+      top: -5px;
+      border-right: 7px solid var(--green);
+      border-top: 5px solid transparent;
+      border-bottom: 0 solid transparent;
+      filter: drop-shadow(0 12px 0 var(--green)) drop-shadow(0 0 4px rgba(101, 255, 71, .35));
+    }
+
+    .missile-slots {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(18px, 1fr));
+      gap: 5px;
+    }
+
+    .missile-slot {
+      height: 11px;
+      border: 1px solid rgba(101, 255, 71, .24);
+      background: rgba(101, 255, 71, .11);
+      box-shadow: inset 0 0 8px rgba(101, 255, 71, .08);
+    }
+
+    .missile-slot.full {
+      background: var(--green);
+      box-shadow: 0 0 8px rgba(101, 255, 71, .52);
+    }
+
+    .hud-tip {
+      position: relative;
+      pointer-events: auto;
+    }
+
+    .hud-tip::before,
+    .hud-tip::after {
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 8px);
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 4px);
+      transition: opacity .12s ease, transform .12s ease;
+      z-index: 20;
+    }
+
+    .hud-tip::before {
+      content: attr(data-help);
+      width: max-content;
+      max-width: 230px;
+      padding: 5px 7px;
+      border: 1px solid rgba(101, 255, 71, .42);
+      border-radius: 4px;
+      background: rgba(0, 10, 0, .82);
+      color: var(--green);
+      font-size: 10px;
+      line-height: 1.25;
+      text-transform: none;
+      white-space: normal;
+      box-shadow: 0 0 14px rgba(101, 255, 71, .18);
+    }
+
+    .hud-tip::after {
+      content: "";
+      bottom: calc(100% + 3px);
+      border: 5px solid transparent;
+      border-top-color: rgba(101, 255, 71, .42);
+    }
+
+    .hud-tip:hover::before,
+    .hud-tip:hover::after {
+      opacity: 1;
+      transform: translate(-50%, 0);
     }
 
     .scanner-wrap {
       position: relative;
       height: 82px;
       min-width: 0;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 82px;
-      gap: 8px;
-      align-items: center;
     }
 
-    #scanner,
-    #foreAftRadar {
+    #scanner {
       width: 100%;
       height: 100%;
     }
 
     #foreAftRadar {
-      aspect-ratio: 1;
+      position: absolute;
+      top: 2px;
+      right: 4px;
+      width: 58px;
+      height: 58px;
       border-radius: 50%;
+      opacity: .9;
     }
 
     .message-line {
@@ -1111,17 +1239,21 @@
         <div class="crosshair" aria-hidden="true"></div>
         <div class="comms-log" id="commsLog" aria-live="polite"></div>
         <div class="hud-actions" aria-label="Flight actions">
-          <button class="btn mini primary" id="launchBtn">Launch</button>
-          <button class="btn mini" id="jumpBtn">Jump</button>
-          <button class="btn mini" id="dockBtn">Dock</button>
+          <button class="btn mini primary hud-tip" id="launchBtn" data-help="Launch from the station into local space.">Launch</button>
+          <button class="btn mini hud-tip" id="jumpBtn" data-help="Start a live hyperspace countdown to the selected system.">Jump</button>
+          <button class="btn mini hud-tip" id="dockBtn" data-help="Request docking when lined up with the station slot at low speed.">Dock</button>
+          <button class="btn mini hud-tip" id="autoDockBtn" data-help="Toggle the docking computer for an automated slot approach.">Auto Dock</button>
+          <button class="btn mini warn hud-tip" id="galJumpBtn" data-help="Use the galactic hyperdrive after a longer live countdown.">Galactic</button>
         </div>
         <section class="dashboard" aria-label="Ship dashboard">
           <div class="dash-section">
-            <div class="bar-row"><span>Energy</span><div class="bar"><div class="fill" id="barEnergy"></div></div><span id="txtEnergy">100%</span></div>
-            <div class="bar-row"><span>Shields</span><div class="bar"><div class="fill cyan" id="barShields"></div></div><span id="txtShields">100%</span></div>
-            <div class="bar-row"><span>Fuel</span><div class="bar"><div class="fill" id="barFuel"></div></div><span id="txtFuel">7.0</span></div>
-            <div class="bar-row"><span>Speed</span><div class="bar"><div class="fill" id="barSpeed"></div></div><span id="txtSpeed">0</span></div>
-            <div class="bar-row heat-row"><span>Laser Temp</span><div class="bar heat-bar"><div class="fill heat" id="barLaserHeat"></div></div><span id="txtLaserHeat">0%</span></div>
+            <div class="bar-row hud-tip" data-help="Forward shield strength. Hits from ahead drain this before energy banks."><span>FS</span><div class="bar"><div class="fill cyan" id="barForeShield"></div></div><span id="txtForeShield">100%</span></div>
+            <div class="bar-row hud-tip" data-help="Aft shield strength. Pursuit fire and rear missile impacts hit this bank first."><span>AF</span><div class="bar"><div class="fill cyan" id="barAftShield"></div></div><span id="txtAftShield">100%</span></div>
+            <div class="bar-row hud-tip" data-help="Fuel volume in light years. Fuel scoops refill near stars, but heat rises quickly."><span>FV</span><div class="bar"><div class="fill" id="barFuel"></div></div><span id="txtFuel">7.0</span></div>
+            <div class="bar-row hud-tip" data-help="Cabin temperature. Solar heat rises sharply near the star and can damage the hull."><span>CT</span><div class="bar heat-bar"><div class="fill heat" id="barCabinTemp"></div></div><span id="txtCabinTemp">0%</span></div>
+            <div class="bar-row heat-row hud-tip" data-help="Laser temperature. Original-style lasers fire normally until overheated, then wait for cooling."><span>LT</span><div class="bar heat-bar"><div class="fill heat" id="barLaserHeat"></div></div><span id="txtLaserHeat">0%</span></div>
+            <div class="bar-row hud-tip" data-help="Altitude above nearest planet surface. Low altitude warns amber then red."><span>AL</span><div class="bar"><div class="fill" id="barAltitude"></div></div><span id="txtAltitude">--</span></div>
+            <div class="missile-row hud-tip" data-help="Missile bank. Bright cells are loaded missiles; dark cells are empty racks."><span class="missile-icon" aria-label="Missiles"></span><div class="missile-slots" id="missileSlots"><span class="missile-slot"></span><span class="missile-slot"></span><span class="missile-slot"></span><span class="missile-slot"></span></div></div>
           </div>
           <div class="dash-section">
             <div class="scanner-wrap">
@@ -1130,10 +1262,14 @@
             </div>
           </div>
           <div class="dash-section">
-            <div class="row"><span class="label">Laser</span><span class="value" id="txtLaser">Pulse</span></div>
-            <div class="row"><span class="label">Missiles</span><span class="value" id="txtMissiles">1</span></div>
-            <div class="row"><span class="label">ECM</span><span class="value" id="txtEcm">No</span></div>
-            <div class="row"><span class="label">Cargo</span><span class="value" id="txtCargo">0/20</span></div>
+            <div class="bar-row hud-tip" data-help="Current speed as a fraction of maximum cruise speed."><span>SP</span><div class="bar"><div class="fill" id="barSpeed"></div></div><span id="txtSpeed">0</span></div>
+            <div class="bar-row hud-tip" data-help="Roll rate. The amber mark is neutral centre."><span>RL</span><div class="bar center-bar"><div class="fill center-fill" id="barRoll"></div></div><span id="txtRoll">0</span></div>
+            <div class="bar-row hud-tip" data-help="Dive/climb rate. Positive values climb, negative values dive."><span>DC</span><div class="bar center-bar"><div class="fill center-fill" id="barPitch"></div></div><span id="txtPitch">0</span></div>
+            <div class="bar-row hud-tip" data-help="Yaw rate. The amber mark is neutral centre."><span>Y</span><div class="bar center-bar"><div class="fill center-fill" id="barYaw"></div></div><span id="txtYaw">0</span></div>
+            <div class="bar-row hud-tip" data-help="Energy bank 1. Shields draw recharge power from these banks."><span>1</span><div class="bar"><div class="fill" id="barEnergy1"></div></div><span id="txtEnergy1">100</span></div>
+            <div class="bar-row hud-tip" data-help="Energy bank 2. Lower banks empty as hull energy falls."><span>2</span><div class="bar"><div class="fill" id="barEnergy2"></div></div><span id="txtEnergy2">100</span></div>
+            <div class="bar-row hud-tip" data-help="Energy bank 3. Extra Energy Unit improves recharge rate."><span>3</span><div class="bar"><div class="fill" id="barEnergy3"></div></div><span id="txtEnergy3">100</span></div>
+            <div class="bar-row hud-tip" data-help="Energy bank 4. If all banks drain, the ship is destroyed."><span>4</span><div class="bar"><div class="fill" id="barEnergy4"></div></div><span id="txtEnergy4">100</span></div>
           </div>
         </section>
         <div class="screen-flash" id="flash"></div>
@@ -1282,6 +1418,35 @@
       return vec(r.x, r.y, r.z);
     }
 
+    function quatSlerp(a, b, t) {
+      t = clamp(t, 0, 1);
+      a = quatNorm(a);
+      b = quatNorm(b);
+      let cos = a.w * b.w + a.x * b.x + a.y * b.y + a.z * b.z;
+      if (cos < 0) {
+        b = quat(-b.w, -b.x, -b.y, -b.z);
+        cos = -cos;
+      }
+      if (cos > .9995) {
+        return quatNorm(quat(
+          lerp(a.w, b.w, t),
+          lerp(a.x, b.x, t),
+          lerp(a.y, b.y, t),
+          lerp(a.z, b.z, t)
+        ));
+      }
+      const theta = Math.acos(clamp(cos, -1, 1));
+      const sinTheta = Math.sin(theta) || 1;
+      const s0 = Math.sin((1 - t) * theta) / sinTheta;
+      const s1 = Math.sin(t * theta) / sinTheta;
+      return quatNorm(quat(
+        a.w * s0 + b.w * s1,
+        a.x * s0 + b.x * s1,
+        a.y * s0 + b.y * s1,
+        a.z * s0 + b.z * s1
+      ));
+    }
+
     function cross(a, b) {
       return vec(
         a.y * b.z - a.z * b.y,
@@ -1395,9 +1560,21 @@
       if (mode === "ext") {
         // Chase position scales with the player's hull so a Worm and an Anaconda both frame nicely.
         const r = Math.max(60, modelBoundingRadius(MODELS[playerShipModel()]));
+        const st = game.externalView || {};
+        const yaw = st.yaw || 0;
+        const pitch = clamp(st.pitch ?? Math.atan2(1.1, 3.4), -.95, 1.15);
+        const zoom = clamp(st.zoom || 1, .42, 2.8);
+        const dist = r * Math.hypot(3.4, 1.1) * zoom;
+        const cp = Math.cos(pitch);
+        const local = vec(
+          Math.sin(yaw) * cp * dist,
+          Math.sin(pitch) * dist,
+          -Math.cos(yaw) * cp * dist
+        );
+        const pos = cameraLocalToWorld(cam, local);
         return {
-          pos: cameraLocalToWorld(cam, vec(0, r * 1.1, -r * 3.4)),
-          q: quatNorm(quatMul(cam.q, quatFromAxisAngle(vec(1, 0, 0), .18)))
+          pos,
+          q: quatLookRotation(norm(sub(cam.pos, pos)), quatRotate(cam.q, vec(0, 1, 0)))
         };
       }
       return { pos: cam.pos, q: quatNorm(quatMul(cam.q, quatFromAxisAngle(vec(0, 1, 0), VIEW_YAW[mode]))) };
@@ -1409,9 +1586,11 @@
       // The CSS crosshair belongs to the forward (weapons) view only.
       const cross = document.querySelector(".crosshair");
       if (cross) cross.style.display = mode === "fwd" ? "" : "none";
+      if (space) space.style.cursor = mode === "ext" && !game.docked ? "grab" : "";
     }
 
     const DECAL_TEXTURE_SIZE = 400;
+    const galaxyBackdropCache = new Map();
 
     const ECONOMIES = [
       "Rich Industrial", "Average Industrial", "Poor Industrial", "Mainly Industrial",
@@ -1805,7 +1984,10 @@
         edges: [[0,1],[1,2],[2,3],[3,0],[0,2],[3,1]],
         edgeFaces: [[3,2],[3,0],[1,0],[2,1],[3,1],[2,0]],
         edgeVisibility: [31,31,31,31,31,31],
-        normals: [[52,0,-122],[39,103,30],[39,-103,30],[-112,0,0]]
+        normals: [[52,0,-122],[39,103,30],[39,-103,30],[-112,0,0]],
+        details: [
+          { type: "engine", points: [[-7,-5,-12],[-7,5,-12],[0,0,-8]], color: "#ffd33d", stroke: "#fff2a8", normal: [0,0,-1], lift: 2.5 }
+        ]
       }),
       plate: {
         verts: [[-15,-22,-9],[-15,38,-9],[19,32,11],[10,-46,6]],
@@ -2062,6 +2244,7 @@
       game.cargoCap = playerBaseCargoCap(game.playerShip) + (game.equipment.cargoBay ? 15 : 0);
       if (trimCargo) trimCargoToCap();
       game.speed = clamp(game.speed, 0, game.maxSpeed);
+      syncDockSceneShip();
     }
 
     function shipColor(model, police = false) {
@@ -2182,6 +2365,9 @@
       playerShip: "cobra",
       energy: 100,
       shields: 100,
+      foreShield: 100,
+      aftShield: 100,
+      cabinTemp: 0,
       speed: 0,
       maxSpeed: 220,
       rollRate: 0,
@@ -2221,19 +2407,32 @@
       soundEnabled: true,
       developerMode: false,
       transition: null,
+      dockScene: null,
+      jumpCountdown: null,
+      playerDestroyed: false,
       camera: makeCamera(-850),
       objects: [],
       stars: [],
       explosions: [],
       smokePuffs: [],
       enemyShots: [],
+      playerDamageMarks: [],
       screenShake: 0,
+      playerEngineTrailClock: 0,
       playerShot: null,
       targetObject: null,
       lastShot: 0,
       autoDock: false,
       witchspace: false,
       viewMode: "fwd",
+      externalView: {
+        yaw: 0,
+        pitch: Math.atan2(1.1, 3.4),
+        zoom: 1,
+        dragging: false,
+        lastX: 0,
+        lastY: 0
+      },
       fxLevel: "ultra",
       comms: [],
       commsClock: 10,
@@ -2258,23 +2457,40 @@
       roSystem: byId("roSystem"),
       roDistance: byId("roDistance"),
       roLockDist: byId("roLockDist"),
-      barEnergy: byId("barEnergy"),
-      barShields: byId("barShields"),
+      barForeShield: byId("barForeShield"),
+      barAftShield: byId("barAftShield"),
       barFuel: byId("barFuel"),
+      barAltitude: byId("barAltitude"),
+      barCabinTemp: byId("barCabinTemp"),
       barSpeed: byId("barSpeed"),
+      barRoll: byId("barRoll"),
+      barPitch: byId("barPitch"),
+      barYaw: byId("barYaw"),
+      barEnergy1: byId("barEnergy1"),
+      barEnergy2: byId("barEnergy2"),
+      barEnergy3: byId("barEnergy3"),
+      barEnergy4: byId("barEnergy4"),
       barLaserHeat: byId("barLaserHeat"),
-      txtEnergy: byId("txtEnergy"),
-      txtShields: byId("txtShields"),
+      txtForeShield: byId("txtForeShield"),
+      txtAftShield: byId("txtAftShield"),
       txtFuel: byId("txtFuel"),
+      txtAltitude: byId("txtAltitude"),
+      txtCabinTemp: byId("txtCabinTemp"),
       txtSpeed: byId("txtSpeed"),
+      txtRoll: byId("txtRoll"),
+      txtPitch: byId("txtPitch"),
+      txtYaw: byId("txtYaw"),
+      txtEnergy1: byId("txtEnergy1"),
+      txtEnergy2: byId("txtEnergy2"),
+      txtEnergy3: byId("txtEnergy3"),
+      txtEnergy4: byId("txtEnergy4"),
       txtLaserHeat: byId("txtLaserHeat"),
-      txtLaser: byId("txtLaser"),
-      txtMissiles: byId("txtMissiles"),
-      txtEcm: byId("txtEcm"),
-      txtCargo: byId("txtCargo"),
+      missileSlots: Array.from(document.querySelectorAll("#missileSlots .missile-slot")),
       launchBtn: byId("launchBtn"),
       jumpBtn: byId("jumpBtn"),
-      dockBtn: byId("dockBtn")
+      dockBtn: byId("dockBtn"),
+      autoDockBtn: byId("autoDockBtn"),
+      galJumpBtn: byId("galJumpBtn")
     };
     const devOnlyEls = Array.from(document.querySelectorAll("[data-dev-only]"));
     const UI_CANVAS_FONT = '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace';
@@ -2370,6 +2586,7 @@
     const escapeAttr = (s) => escapeHtml(s).replace(/"/g, "&quot;");
     const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
     const alienGlyphCache = new Map();
+    const commsSenderThrottle = new Map();
     let commsSeq = 0;
 
     function inferCommsKind(from, alien = false) {
@@ -2386,9 +2603,17 @@
       const alien = alienOrKind === true || alienOrKind === "alien";
       const kind = typeof alienOrKind === "string" ? alienOrKind : inferCommsKind(from, alien);
       const now = performance.now();
+      const throttleKey = `${kind}:${from}`;
+      const recent = commsSenderThrottle.get(throttleKey);
+      const protectedComms = kind === "station" || kind === "warning";
+      if (!protectedComms && recent && now - recent.at < 4200) {
+        if (recent.text === text || now - recent.at < 1800) return false;
+      }
+      commsSenderThrottle.set(throttleKey, { text, at: now });
       game.comms.push({ id: ++commsSeq, from, text, alien, kind, born: now, until: now + 9500 });
       if (game.comms.length > 4) game.comms.splice(0, game.comms.length - 4);
       renderComms();
+      return true;
     }
 
     function alienGlyphSvg(ch) {
@@ -2501,6 +2726,15 @@
 
     const hail = (o, text) => commsMessage(o.name || "UNKNOWN", text, isAlienShip(o) ? "alien" : o.police ? "police" : o.hostile ? "hostile" : "trader");
     const stationCommsName = () => `${currentSystem().name.toUpperCase()} CONTROL`;
+
+    function shipHail(o, mood, text, chance = 1, cooldown = 9000) {
+      if (!o || Math.random() > chance) return false;
+      const now = performance.now();
+      o._hailTimes = o._hailTimes || {};
+      if (o._hailTimes[mood] && now - o._hailTimes[mood] < cooldown) return false;
+      o._hailTimes[mood] = now;
+      return hail(o, text);
+    }
 
     function governmentCommsTone() {
       const gov = currentSystem().government;
@@ -3099,6 +3333,312 @@
       el.classList.add("on");
     }
 
+    function ensureShipSystems() {
+      const legacyShield = Number.isFinite(game.shields) ? game.shields : 100;
+      if (!Number.isFinite(game.foreShield)) game.foreShield = legacyShield;
+      if (!Number.isFinite(game.aftShield)) game.aftShield = legacyShield;
+      if (!Number.isFinite(game.cabinTemp)) game.cabinTemp = 0;
+      game.foreShield = clamp(game.foreShield, 0, 100);
+      game.aftShield = clamp(game.aftShield, 0, 100);
+      game.energy = clamp(Number.isFinite(game.energy) ? game.energy : 100, 0, 100);
+      game.shields = Math.min(game.foreShield, game.aftShield);
+    }
+
+    function restoreShipSystems() {
+      game.energy = 100;
+      game.foreShield = 100;
+      game.aftShield = 100;
+      game.shields = 100;
+      game.cabinTemp = 0;
+      game.playerDamageMarks = [];
+      game._lastHullDamageMarkAt = 0;
+    }
+
+    function playerHullRepairNeeded() {
+      ensureShipSystems();
+      return game.energy < 99.5 || (game.playerDamageMarks?.length || 0) > 0;
+    }
+
+    function stationHullRepairLine() {
+      return pick([
+        "Hull scoring patched. Repair charge waived.",
+        "Maintenance crew sealed the hull. Complimentary landing service.",
+        "Hull plates pressure-tested and signed off. No charge logged.",
+        "Surface damage dressed out. Consider it a courtesy repair."
+      ]);
+    }
+
+    function makeDockScene(stationName, hullRepaired, repairLine, marks = []) {
+      const sys = currentSystem();
+      return {
+        stationName,
+        systemName: sys.name,
+        shipModel: playerShipModel(),
+        hullRepaired,
+        repairLine,
+        preRepairMarks: marks.map((m) => ({ ...m })),
+        seed: hash32(`dock-scene:${game.galaxy}:${sys.index}:${stationName}:${game.kills}`),
+        born: performance.now()
+      };
+    }
+
+    function syncDockSceneShip() {
+      if (!game?.dockScene || !game.docked) return;
+      const model = playerShipModel();
+      if (game.dockScene.shipModel === model) return;
+      const sys = currentSystem();
+      game.dockScene.shipModel = model;
+      game.dockScene.preRepairMarks = [];
+      game.dockScene.seed = hash32(`dock-scene:${game.galaxy}:${sys.index}:${game.dockScene.stationName}:${game.kills}:${model}`);
+      game.dockScene.born = performance.now();
+    }
+
+    function recordPlayerHullDamage(arc, sourcePos, amount = 1) {
+      if (game.docked || game.playerDestroyed) return;
+      const now = performance.now();
+      if (amount < 1.2 && game._lastHullDamageMarkAt && now - game._lastHullDamageMarkAt < 650) return;
+      game._lastHullDamageMarkAt = now;
+
+      const model = MODELS[playerShipModel()];
+      const radius = Math.max(42, model ? modelBoundingRadius(model) : 72);
+      let localDir;
+      if (sourcePos) {
+        const worldDir = norm(sub(sourcePos, game.camera.pos));
+        localDir = quatRotate(quatConj(ensureCameraQuat(game.camera)), len(worldDir) > .001 ? worldDir : vec(0, 0, arc === "aft" ? -1 : 1));
+      } else {
+        localDir = vec((Math.random() - .5) * .5, (Math.random() - .5) * .34, arc === "aft" ? -1 : 1);
+      }
+      localDir = norm(add(localDir, vec((Math.random() - .5) * .2, (Math.random() - .5) * .16, 0)));
+      if (arc === "aft" && localDir.z > -.08) localDir = norm(vec(localDir.x, localDir.y, -.42 - Math.abs(localDir.z)));
+      if (arc !== "aft" && localDir.z < .08) localDir = norm(vec(localDir.x, localDir.y, .42 + Math.abs(localDir.z)));
+
+      const hit = scale(localDir, radius * (.64 + Math.random() * .18));
+      game.playerDamageMarks = game.playerDamageMarks || [];
+      game.playerDamageMarks.push({
+        x: hit.x,
+        y: hit.y,
+        z: hit.z,
+        radius: clamp(8 + amount * 1.15 + Math.random() * 9, 8, 28),
+        severity: clamp(amount / 18, .18, 1),
+        at: now
+      });
+      if (game.playerDamageMarks.length > 28) game.playerDamageMarks.splice(0, game.playerDamageMarks.length - 28);
+    }
+
+    function hitArcFromWorld(pos) {
+      if (!pos) return "fore";
+      return cameraTransform(pos, game.camera).z < 0 ? "aft" : "fore";
+    }
+
+    function damagePlayer(amount, reason, options = {}) {
+      ensureShipSystems();
+      let remaining = Math.max(0, amount);
+      const arc = options.arc || hitArcFromWorld(options.sourcePos);
+      if (!options.bypassShields) {
+        const shieldKey = arc === "aft" ? "aftShield" : "foreShield";
+        const absorbed = Math.min(game[shieldKey], remaining);
+        game[shieldKey] -= absorbed;
+        remaining -= absorbed;
+      }
+      if (remaining > 0) {
+        game.energy -= remaining;
+        recordPlayerHullDamage(arc, options.sourcePos, remaining);
+      }
+      ensureShipSystems();
+      if (game.energy <= 0) destroyPlayer(reason);
+      return arc;
+    }
+
+    function playerCollisionRadius() {
+      const model = MODELS[playerShipModel()];
+      return Math.max(38, (model ? modelBoundingRadius(model) : 72) * .58);
+    }
+
+    function objectCollisionRadius(o) {
+      const modelRadius = MODELS[o?.model] ? modelBoundingRadius(MODELS[o.model]) : 0;
+      const base = o?.r || modelRadius || 20;
+      if (o.type === "canister" || o.type === "plate" || o.type === "splinter") return Math.max(10, base * .92);
+      if (o.type === "boulder" || o.type === "asteroid") return Math.max(16, base * .82);
+      return Math.max(14, base * .74);
+    }
+
+    function objectCollisionMass(o) {
+      const r = objectCollisionRadius(o);
+      if (o.type === "ship") return Math.max(1, r * r * .018);
+      if (o.type === "asteroid" || o.type === "boulder") return Math.max(1, r * r * .03);
+      return Math.max(.35, r * r * .008);
+    }
+
+    function collisionBody(o) {
+      return o && !o._remove && (
+        o.type === "ship" ||
+        o.type === "asteroid" ||
+        o.type === "boulder" ||
+        o.type === "splinter" ||
+        o.type === "canister" ||
+        o.type === "plate"
+      );
+    }
+
+    function bodyVelocity(o) {
+      if (o.vel) return { ...o.vel };
+      if (o.type === "ship") return scale(shipForwardWorld(o), o.speed || 0);
+      return vec();
+    }
+
+    function setBodyVelocity(o, v) {
+      if (!o) return;
+      const speed = len(v);
+      o.vel = speed > .01 ? { ...v } : vec();
+      if (o.type === "ship") {
+        o.speed = clamp(speed, 12, Math.max(24, 180 * (shipStats(o.model).speed || 1)));
+        if (speed > 6) setNoseDirection(o, v, o.roll || 0);
+      }
+    }
+
+    function resolveBodyBounce(a, b, restitution = .46) {
+      const delta = sub(b.pos, a.pos);
+      const d = len(delta);
+      const ar = objectCollisionRadius(a);
+      const br = objectCollisionRadius(b);
+      const minD = ar + br;
+      if (d >= minD) return false;
+      const n = d > .001 ? scale(delta, 1 / d) : norm(vec(Math.random() - .5, Math.random() - .5, Math.random() - .5));
+      const overlap = minD - d + .8;
+      const am = objectCollisionMass(a);
+      const bm = objectCollisionMass(b);
+      const total = am + bm || 1;
+      a.pos = add(a.pos, scale(n, -overlap * (bm / total)));
+      b.pos = add(b.pos, scale(n, overlap * (am / total)));
+
+      const av = bodyVelocity(a);
+      const bv = bodyVelocity(b);
+      const closing = dot(sub(bv, av), n);
+      if (closing < 0) {
+        const impulse = -(1 + restitution) * closing / (1 / am + 1 / bm);
+        setBodyVelocity(a, sub(av, scale(n, impulse / am)));
+        setBodyVelocity(b, add(bv, scale(n, impulse / bm)));
+      } else {
+        setBodyVelocity(a, sub(av, scale(n, 8 * (bm / total))));
+        setBodyVelocity(b, add(bv, scale(n, 8 * (am / total))));
+      }
+      return true;
+    }
+
+    function handlePlayerCollision(o) {
+      if (!o || game.docked || game.transition) return;
+      if (!collisionBody(o)) return;
+      const delta = sub(o.pos, game.camera.pos);
+      const d = len(delta);
+      const n = d > .001 ? scale(delta, 1 / d) : forwardVector(game.camera);
+      const hitRadius = objectCollisionRadius(o) + playerCollisionRadius();
+      if (d > hitRadius) return;
+      const overlap = hitRadius - d + 1.2;
+      const playerMass = Math.max(1.2, playerCollisionRadius() * playerCollisionRadius() * .02);
+      const objectMass = objectCollisionMass(o);
+      const totalMass = playerMass + objectMass;
+      game.camera.pos = add(game.camera.pos, scale(n, -overlap * (objectMass / totalMass)));
+      o.pos = add(o.pos, scale(n, overlap * (playerMass / totalMass)));
+
+      const fwd = forwardVector(game.camera);
+      const playerVel = scale(fwd, game.speed || 0);
+      const objectVel = bodyVelocity(o);
+      const closing = dot(sub(objectVel, playerVel), n);
+      if (closing < 0) {
+        const impulse = -(1 + .42) * closing / (1 / playerMass + 1 / objectMass);
+        const bouncedPlayer = sub(playerVel, scale(n, impulse / playerMass));
+        const bouncedObject = add(objectVel, scale(n, impulse / objectMass));
+        game.speed = clamp(Math.max(0, dot(bouncedPlayer, fwd)), 0, game.maxSpeed);
+        setBodyVelocity(o, bouncedObject);
+      } else {
+        game.speed = clamp(game.speed * .86, 0, game.maxSpeed);
+        setBodyVelocity(o, add(objectVel, scale(n, 12)));
+      }
+
+      const now = performance.now();
+      if (o._playerCollisionAt && now - o._playerCollisionAt < 850) return;
+      o._playerCollisionAt = now;
+      const objectSpeed = o.speed || (o.vel ? len(o.vel) : 0);
+      const impact = clamp(5 + game.speed / 24 + objectSpeed / 70 + (o.r || 20) / 90, 7, 42);
+      const arc = damagePlayer(impact, `${o.name || o.type} collision`, { sourcePos: o.pos });
+      if (Number.isFinite(o.hp)) {
+        o.hp -= impact * (o.type === "ship" ? 1.35 : 2.6);
+        if (o.hp <= 0) destroyObject(o, false);
+      }
+      game.speed = clamp(game.speed - impact * .8, 0, game.maxSpeed);
+      eliteAudio.play("hit");
+      game.screenShake = Math.max(game.screenShake || 0, clamp(impact / 15, .8, 2.4));
+      setMessage(`${arc === "aft" ? "Aft" : "Fore"} shield collision.`);
+    }
+
+    function resolveObjectCollisions() {
+      const bodies = game.objects.filter(collisionBody);
+      const now = performance.now();
+      for (let i = 0; i < bodies.length; i++) {
+        const a = bodies[i];
+        for (let j = i + 1; j < bodies.length; j++) {
+          const b = bodies[j];
+          if (a._remove || b._remove) continue;
+          const maxD = objectCollisionRadius(a) + objectCollisionRadius(b);
+          if (Math.abs(a.pos.x - b.pos.x) > maxD || Math.abs(a.pos.y - b.pos.y) > maxD || Math.abs(a.pos.z - b.pos.z) > maxD) continue;
+          if (!resolveBodyBounce(a, b)) continue;
+          if ((a._collisionAt && now - a._collisionAt < 700) || (b._collisionAt && now - b._collisionAt < 700)) continue;
+          a._collisionAt = now;
+          b._collisionAt = now;
+          const impact = clamp((len(bodyVelocity(a)) + len(bodyVelocity(b))) / 95, 1.2, 9);
+          if (Number.isFinite(a.hp)) a.hp -= impact * (b.type === "ship" ? .75 : 1.15);
+          if (Number.isFinite(b.hp)) b.hp -= impact * (a.type === "ship" ? .75 : 1.15);
+          if (a.hp <= 0) destroyObject(a, false);
+          if (b.hp <= 0) destroyObject(b, false);
+        }
+      }
+    }
+
+    function rechargeShipSystems(dt) {
+      ensureShipSystems();
+      const energyRate = game.equipment.extraEnergy ? 5.2 : 3.1;
+      const shieldRate = game.equipment.extraEnergy ? 7.2 : 4.6;
+      game.energy = clamp(game.energy + dt * energyRate, 0, 100);
+      for (let i = 0; i < 2; i++) {
+        const target = game.foreShield <= game.aftShield ? "foreShield" : "aftShield";
+        if (game[target] >= 100 || game.energy <= 4) break;
+        const transfer = Math.min(dt * shieldRate * .5, 100 - game[target], Math.max(0, game.energy - 4));
+        game[target] += transfer;
+        game.energy -= transfer * .72;
+      }
+      ensureShipSystems();
+    }
+
+    function playerAltitude() {
+      let nearest = Infinity;
+      for (const o of game.objects) {
+        if (o.type !== "planet") continue;
+        nearest = Math.min(nearest, len(sub(o.pos, game.camera.pos)) - (o.r || 0));
+      }
+      return Number.isFinite(nearest) ? Math.max(0, nearest) : null;
+    }
+
+    function updateCabinTemperature(dt) {
+      const sun = game.objects.find((o) => o.type === "sun");
+      let targetHeat = 0;
+      if (sun) {
+        const surfaceDist = Math.max(1, len(sub(sun.pos, game.camera.pos)) - sun.r * .45);
+        targetHeat = clamp(Math.pow((sun.r * 2.9) / surfaceDist, 2.35) * 30, 0, 125);
+      }
+      const response = targetHeat > game.cabinTemp ? 1.25 : .42;
+      game.cabinTemp += (targetHeat - game.cabinTemp) * clamp(dt * response, 0, 1);
+      game.cabinTemp = clamp(game.cabinTemp, 0, 125);
+      if (game.cabinTemp > 84 && !game.docked) {
+        const excess = (game.cabinTemp - 84) / 16;
+        damagePlayer(dt * Math.pow(excess, 1.75) * 7.5, "hull over temperature", { bypassShields: true, arc: "fore" });
+        if (!game._heatWarnAt || performance.now() - game._heatWarnAt > 1150) {
+          game._heatWarnAt = performance.now();
+          setMessage("HULL OVER TEMPERATURE", true);
+          flash();
+        }
+      }
+    }
+
     // A brief, non-interactive animated beat for launch/dock/hyperspace/galactic jump,
     // instead of those all being an instant state snap. update() freezes normal flight
     // control/AI while game.transition is set and advances its timer instead; drawSpace()
@@ -3107,6 +3647,75 @@
     // finishes, so save data / game state is never in a "half-jumped" condition.
     function startTransition(kind, dur, onComplete, extra = {}) {
       game.transition = { kind, t: 0, dur, onComplete, ...extra };
+    }
+
+    function startJumpCountdown(kind, dur, label, onComplete) {
+      game.jumpCountdown = { kind, t: 0, dur, countdownLabel: label, onComplete };
+    }
+
+    function updateJumpCountdown(dt) {
+      const jc = game.jumpCountdown;
+      if (!jc || game.transition) return;
+      jc.t += dt;
+      if (jc.t < jc.dur) return;
+      game.jumpCountdown = null;
+      jc.onComplete();
+    }
+
+    function spawnDeathDebris(pos, count = 7) {
+      for (let i = 0; i < count; i++) {
+        const isPlate = Math.random() < .55;
+        const model = isPlate ? "plate" : "canister";
+        const stats = shipStats(model);
+        const dir = randomBurstDir(.7);
+        game.objects.push({
+          type: isPlate ? "plate" : "canister",
+          model,
+          name: isPlate ? "HULL PLATE" : "WRECKAGE CANISTER",
+          pos: add(pos, scale(dir, 18 + Math.random() * 34)),
+          vel: scale(dir, 85 + Math.random() * 210),
+          rot: Math.random() * TAU,
+          pitch: Math.random() * TAU,
+          roll: Math.random() * TAU,
+          tumbleRot: (Math.random() - .5) * 3.4,
+          tumblePitch: (Math.random() - .5) * 2.6,
+          r: stats.r,
+          color: isPlate ? "#a9b5aa" : "#ffd33d",
+          hp: stats.hp,
+          hostile: false,
+          _deathCinematic: true
+        });
+      }
+    }
+
+    function updateDeathTransitionEvents(tr, dt) {
+      const pos = tr.deathPos || game.camera.pos;
+      game.speed = 0;
+      game.camera.pos = { ...pos };
+      game.camera.q = tr.deathQuat || game.camera.q;
+      if (tr.hadCapsule && !tr._podLaunched && tr.t >= .95) {
+        tr._podLaunched = true;
+        const podDir = norm(add(quatRotate(tr.deathQuat || ensureCameraQuat(game.camera), vec(.28, .18, -1)), randomBurstDir(.15)));
+        const pod = spawnEscapePod(add(pos, scale(podDir, 42)));
+        pod.vel = scale(podDir, 235);
+        pod._deathCinematic = true;
+        spawnEjectFlash(pos);
+        eliteAudio.play("launch");
+        setMessage("ESCAPE CAPSULE LAUNCHED", true);
+      }
+      if (!tr._exploded && tr.t >= (tr.hadCapsule ? 1.55 : 1.08)) {
+        tr._exploded = true;
+        spawnExplosion(pos, 4.2);
+        spawnSmokePuffs(pos, 3.1, 18);
+        spawnDeathDebris(pos, 9);
+        flash();
+      }
+      for (const o of game.objects) {
+        if (!o._deathCinematic || !o.vel) continue;
+        o.pos = add(o.pos, scale(o.vel, dt));
+        o.rot = (o.rot || 0) + (o.tumbleRot || .8) * dt;
+        o.pitch = (o.pitch || 0) + (o.tumblePitch || .5) * dt;
+      }
     }
 
     function resizeCanvases() {
@@ -3253,15 +3862,17 @@
       const rot = st?.rot || 0;
       const center = add(st.pos, rotatePoint(centerLocal, 0, 0, rot));
       const outward = norm(rotatePoint(normal, 0, 0, rot));
-      const up = norm(rotatePoint(vec(0, 1, 0), 0, 0, rot));
+      const up = norm(rotatePoint(vec(1, 0, 0), 0, 0, rot));
       return { center, outward, up };
     }
 
     function resetFlightScene(arrival = false) {
       const sys = currentSystem();
+      game.dockScene = null;
       game.camera = makeCamera(arrival ? -1200 : -850);
       game.speed = 0;
       game.autoDock = false;
+      game.jumpCountdown = null;
       const rng = mulberry(hash32(`${game.galaxy}:${game.current}:${game.kills}:${Date.now() >> 12}`));
       const { planet, sun } = buildSystemBodies(sys);
       const isDodo = sys.government < 2;
@@ -3465,7 +4076,35 @@
     }
 
     function launch() {
-      if (!game.docked || game.transition) return;
+      if (!game.docked || game.transition || game.jumpCountdown) return;
+      const finishLaunch = (startSpeed = 40) => {
+        game.docked = false;
+        resetFlightScene(false);
+        const station = game.objects.find((o) => o.type === "station");
+        const slot = station ? stationSlotFrame(station) : null;
+        const fromPos = slot ? add(slot.center, scale(slot.outward, 34)) : vec(0, 0, -560);
+        const toPos = slot ? add(slot.center, scale(slot.outward, 310)) : vec(0, 0, -980);
+        game.camera.pos = { ...toPos };
+        game.camera.q = slot ? quatLookRotation(slot.outward, slot.up) : quat();
+        game.speed = startSpeed;
+        spawnPlayerEnginePlume(2.1);
+        commsMessage(stationCommsName(), stationControllerLine("launch"), "station");
+        setMessage("Launch complete.", true);
+        renderPanel();
+        return { station, slot, fromPos, toPos };
+      };
+      if (ultraFxEnabled()) {
+        if (!game.dockScene) game.dockScene = makeDockScene(game.dockedAt || `${currentSystem().name} STATION`, false, "", []);
+        syncDockSceneShip();
+        eliteAudio.play("beep");
+        commsMessage(stationCommsName(), "Clear for take off. Start engines and proceed through the field.", "station");
+        startTransition("launchHangar", 4.4, () => {
+          eliteAudio.play("launch");
+          finishLaunch(55);
+        }, { scene: game.dockScene });
+        renderPanel();
+        return;
+      }
       eliteAudio.play("launch");
       game.docked = false;
       resetFlightScene(false);
@@ -3480,6 +4119,7 @@
         game.camera.pos = { ...toPos };
         game.camera.q = slot ? quatLookRotation(slot.outward, slot.up) : quat();
         game.speed = 40;
+        spawnPlayerEnginePlume(1.6);
         commsMessage(stationCommsName(), stationControllerLine("launch"), "station");
         setMessage("Launch complete.", true);
         renderPanel();
@@ -3494,7 +4134,7 @@
     }
 
     function dock(auto = false) {
-      if (game.docked || game.transition) return;
+      if (game.docked || game.transition || game.jumpCountdown) return;
       const st = dockableTarget();
       if (!st) return;
       const rel = cameraTransform(st.pos, game.camera);
@@ -3507,41 +4147,51 @@
         game.speed = 0;
         game.autoDock = false;
         commsMessage(`${st.name.toUpperCase()} CONTROL`, stationControllerLine("dockClear"), "station");
-        startTransition("dock", 1.25, () => {
+        const finishDockArrival = () => {
+          const hullRepaired = playerHullRepairNeeded();
+          const repairLine = hullRepaired ? stationHullRepairLine() : "";
+          const preRepairMarks = game.playerDamageMarks ? game.playerDamageMarks.map((m) => ({ ...m })) : [];
           game.docked = true;
           setViewMode("fwd");
           game.dockedAt = st.name;
-          game.shields = 100;
-          game.energy = 100;
+          restoreShipSystems();
           game.fuel = clamp(game.fuel + 0.2, 0, 7);
           game.legal = Math.max(0, game.legal - 2);
-          commsMessage(`${st.name.toUpperCase()} CONTROL`, stationControllerLine("dockComplete"), "station");
-          setMessage(`Docked at ${st.name}.`, true);
+          game.dockScene = makeDockScene(st.name, hullRepaired, repairLine, preRepairMarks);
+          const completeDock = () => {
+            commsMessage(`${st.name.toUpperCase()} CONTROL`, stationControllerLine("dockComplete"), "station");
+            if (hullRepaired) commsMessage(`${st.name.toUpperCase()} SERVICE`, repairLine, "station");
+            setMessage(hullRepaired ? `Welcome to ${st.name}. Free hull repair complete.` : `Welcome to ${st.name}.`, true);
+            renderPanel();
+          };
+          if (ultraFxEnabled()) startTransition("dockHangar", 6.2, completeDock, { scene: game.dockScene });
+          else completeDock();
           renderPanel();
-        });
+        };
+        if (ultraFxEnabled()) finishDockArrival();
+        else startTransition("dock", 1.25, finishDockArrival);
       } else {
         const reason = !slow ? "TOO FAST" : !centered ? "BAD APPROACH" : !slotOk ? "SLOT ROTATION" : "TOO FAR";
         eliteAudio.play("boop");
-        game.shields -= 12;
+        damagePlayer(12, "docking collision", { sourcePos: st.pos, arc: "fore" });
         commsMessage(`${st.name.toUpperCase()} CONTROL`, stationControllerLine("dockDeny", reason), "station");
         setMessage("Docking denied.", true);
-        if (game.shields <= 0) destroyPlayer("docking collision");
       }
     }
 
     function startAutoDock() {
-      if (game.docked || game.transition) return;
+      if (game.docked || game.transition || game.jumpCountdown) return;
       if (!game.equipment.dockingComputer) {
         setMessage("No docking computer fitted.");
         return;
       }
-      game.autoDock = !game.autoDock;
+      game.autoDock = game.autoDock ? false : { stage: "marshal", announced: "" };
       setMessage(game.autoDock ? "Docking computer engaged." : "Docking computer disengaged.");
       commsMessage("TRAFFIC CONTROL", stationControllerLine(game.autoDock ? "autoOn" : "autoOff"), "station");
     }
 
     function hyperspace() {
-      if (game.transition) return;
+      if (game.transition || game.jumpCountdown) return;
       if (game.docked) {
         eliteAudio.play("boop");
         setMessage("Launch before engaging hyperspace.");
@@ -3566,52 +4216,58 @@
         return;
       }
       if (!game.developerMode) game.fuel -= d;
-      eliteAudio.play("hyperspace");
       const toWitch = Math.random() < 0.05 + (game.legal > 15 ? 0.08 : 0);
-      startTransition("hyperspace", 1.1, () => {
-        if (toWitch) {
-          game.witchspace = true;
-          game.objects = [];
-          game.stars = Array.from({ length: 264 }, (_, i) => vec((Math.random() - .5) * 2600, (Math.random() - .5) * 1600, Math.random() * 2600 - 900));
-          for (let i = 0; i < 4; i++) {
-            game.objects.push({
-              type: "ship", model: "thargoid", name: "THARGOID", pos: vec((Math.random() - .5) * 900, (Math.random() - .5) * 500, 700 + Math.random() * 900),
-              vel: vec(0, 0, -35), rot: Math.random() * TAU, pitch: 0, r: shipStats("thargoid").r, color: shipColor("thargoid"), hp: shipStats("thargoid").hp, maxHp: shipStats("thargoid").hp, hostile: true, bounty: 250, thargoid: true
-            });
+      setMessage("Hyperspace countdown initiated.", true);
+      startJumpCountdown("hyperspace", 5, "HYPERSPACE", () => {
+        eliteAudio.play("hyperspace");
+        startTransition("hyperspace", 1.1, () => {
+          if (toWitch) {
+            game.witchspace = true;
+            game.objects = [];
+            game.stars = Array.from({ length: 264 }, (_, i) => vec((Math.random() - .5) * 2600, (Math.random() - .5) * 1600, Math.random() * 2600 - 900));
+            for (let i = 0; i < 4; i++) {
+              game.objects.push({
+                type: "ship", model: "thargoid", name: "THARGOID", pos: vec((Math.random() - .5) * 900, (Math.random() - .5) * 500, 700 + Math.random() * 900),
+                vel: vec(0, 0, -35), rot: Math.random() * TAU, pitch: 0, r: shipStats("thargoid").r, color: shipColor("thargoid"), hp: shipStats("thargoid").hp, maxHp: shipStats("thargoid").hp, hostile: true, bounty: 250, thargoid: true
+              });
+            }
+            game.docked = false;
+            game.speed = 50;
+            setMessage("Witch-space malfunction. Thargoids detected.", true);
+          } else {
+            game.current = game.target;
+            game.witchspace = false;
+            resetFlightScene(true);
+            setMessage(`Hyperspace complete. Arrived at ${currentSystem().name}.`, true);
           }
-          game.docked = false;
-          game.speed = 50;
-          setMessage("Witch-space malfunction. Thargoids detected.", true);
-        } else {
-          game.current = game.target;
-          game.witchspace = false;
-          resetFlightScene(true);
-          setMessage(`Hyperspace complete. Arrived at ${currentSystem().name}.`, true);
-        }
-        flash();
-        renderPanel();
+          flash();
+          renderPanel();
+        });
       });
     }
 
     function galacticJump() {
-      if (game.transition) return;
+      if (game.transition || game.jumpCountdown) return;
       if (!game.equipment.galacticHyperdrive) {
         eliteAudio.play("boop");
         setMessage("No Galactic Hyperdrive fitted.");
         return;
       }
-      eliteAudio.play("hyperspace");
-      startTransition("galactic", 2.8, () => {
-        game.galaxy = (game.galaxy + 1) % 8;
-        game.current = 0;
-        game.target = 1;
-        game.equipment.galacticHyperdrive = false;
-        game.docked = false;
-        game.witchspace = false;
-        resetFlightScene(true);
-        flash();
-        setMessage(`Galactic hyperspace complete. Galaxy ${game.galaxy + 1}.`, true);
-        renderPanel();
+      setMessage("Galactic jump countdown initiated.", true);
+      startJumpCountdown("galactic", 10, "GALACTIC JUMP", () => {
+        eliteAudio.play("hyperspace");
+        startTransition("galactic", 2.8, () => {
+          game.galaxy = (game.galaxy + 1) % 8;
+          game.current = 0;
+          game.target = 1;
+          game.equipment.galacticHyperdrive = false;
+          game.docked = false;
+          game.witchspace = false;
+          resetFlightScene(true);
+          flash();
+          setMessage(`Galactic hyperspace complete. Galaxy ${game.galaxy + 1}.`, true);
+          renderPanel();
+        });
       });
     }
 
@@ -3689,9 +4345,9 @@
         setMessage("Lasers are safed while docked.");
         return;
       }
-      if ((game.viewMode || "fwd") !== "fwd") {
+      if (!["fwd", "ext"].includes(game.viewMode || "fwd")) {
         eliteAudio.play("boop");
-        setMessage("Lasers are forward-mounted — switch to forward view.");
+        setMessage("Lasers are forward-mounted.");
         return;
       }
       const now = performance.now();
@@ -3740,7 +4396,7 @@
         }
       }
       const hitPos = best ? cameraLocalToWorld(game.camera, vec(0, 0, hitDepth || cameraTransform(best.pos, game.camera).z)) : null;
-      game.playerShot = { to: hitPos, color: laser.color, width: laser.width, duration: laser.duration, kind: laser.id, t: now };
+      game.playerShot = { to: hitPos, color: laser.color, width: laser.width, duration: laser.duration, kind: laser.id, range: laser.range, t: now };
       if (!best) {
         if (outOfRange) setMessage(`${outOfRange.o.name} out of ${laser.name.toLowerCase()} laser range (${Math.round(outOfRange.dist)}m / ${laser.range}m).`);
         else setMessage("Laser fired.");
@@ -3804,13 +4460,9 @@
         setMessage(`${o.target.name} missile hit.`, true);
         if (o.target.hp <= 0) destroyObject(o.target, !o.hostile);
       } else {
-        game.shields -= 22;
+        const arc = damagePlayer(22, o.source ? o.source.name : "missile", { sourcePos: o.source?.pos });
         setMessage(`${o.source ? o.source.name + " missile" : "Missile"} impact!`, true);
-        if (game.shields <= 0) {
-          game.energy += game.shields;
-          game.shields = 0;
-        }
-        if (game.energy <= 0) destroyPlayer(o.source ? o.source.name : "missile");
+        if (arc === "aft") commsMessage("DAMAGE CONTROL", "AFT SHIELD STRIKE", "warning");
       }
     }
 
@@ -3946,23 +4598,28 @@
       if (game.smokePuffs.length > 130) game.smokePuffs.splice(0, game.smokePuffs.length - 130);
     }
 
-    function spawnEnginePlasma(pos, aftDir, magnitude = 1, alien = false) {
-      if (!ultraFxEnabled()) return;
+    function makeEnginePlasmaPuff(pos, aftDir, magnitude = 1, alien = false, hueOverride = null) {
       const mag = clamp(magnitude, .45, 2.2);
       const jitter = scale(randomBurstDir(.7), 4.5 * mag);
       const drift = add(scale(aftDir, 72 + Math.random() * 82), jitter);
-      game.smokePuffs.push({
+      const podTrail = hueOverride != null;
+      return {
         kind: "enginePlasma",
         pos: add(pos, scale(randomBurstDir(.8), Math.random() * 2.4 * mag)),
         drift,
         t: 0,
-        dur: 2.35 + Math.random() * .45,
-        radius: (7 + Math.random() * 8) * mag,
-        alpha: alien ? .16 + Math.random() * .09 : .13 + Math.random() * .07,
-        tailTime: .42 + Math.random() * .18,
-        hue: alien ? 266 + Math.random() * 28 : 190 + Math.random() * 26,
+        dur: (podTrail ? 1.65 : 2.35) + Math.random() * (podTrail ? .28 : .45),
+        radius: (podTrail ? 4.8 + Math.random() * 4.2 : 7 + Math.random() * 8) * mag,
+        alpha: podTrail ? .2 + Math.random() * .08 : alien ? .16 + Math.random() * .09 : .13 + Math.random() * .07,
+        tailTime: podTrail ? .34 + Math.random() * .1 : .42 + Math.random() * .18,
+        hue: hueOverride ?? (alien ? 266 + Math.random() * 28 : 190 + Math.random() * 26),
         alien
-      });
+      };
+    }
+
+    function spawnEnginePlasma(pos, aftDir, magnitude = 1, alien = false, hueOverride = null) {
+      if (!ultraFxEnabled()) return;
+      game.smokePuffs.push(makeEnginePlasmaPuff(pos, aftDir, magnitude, alien, hueOverride));
       if (game.smokePuffs.length > 260) game.smokePuffs.splice(0, game.smokePuffs.length - 260);
     }
 
@@ -4022,6 +4679,42 @@
       return centers;
     }
 
+    function spawnPlayerEnginePlume(strength = 1) {
+      if (!ultraFxEnabled()) return;
+      const ship = playerTrailShip();
+      const aft = scale(shipForwardWorld(ship), -1);
+      const centers = engineWorldCenters(ship);
+      const engineMul = centers.length > 3 ? .82 : 1;
+      for (let burst = 0; burst < 5; burst++) {
+        for (const center of centers) {
+          spawnEnginePlasma(add(center, scale(aft, burst * 10)), aft, strength * engineMul * (1.35 - burst * .12));
+        }
+      }
+    }
+
+    function playerTrailShip() {
+      return {
+        type: "ship",
+        model: playerShipModel(),
+        pos: game.camera.pos,
+        quat: ensureCameraQuat(game.camera),
+        rot: 0,
+        pitch: 0,
+        roll: 0,
+        speed: game.speed,
+        engineTrailClock: game.playerEngineTrailClock || 0,
+        hp: game.energy,
+        maxHp: 100
+      };
+    }
+
+    function updatePlayerEngineTrails(dt) {
+      if (!ultraFxEnabled() || game.docked || game.playerDestroyed || !MODELS[playerShipModel()]?.details) return;
+      const ship = playerTrailShip();
+      updateEngineTrails(ship, dt);
+      game.playerEngineTrailClock = ship.engineTrailClock || 0;
+    }
+
     function updateEngineTrails(o, dt) {
       if (!ultraFxEnabled() || o.type !== "ship" || !MODELS[o.model]?.details) return;
       const speed = o.speed ?? len(o.vel || vec());
@@ -4029,12 +4722,13 @@
       o.engineTrailClock = (o.engineTrailClock || 0) - dt;
       if (o.engineTrailClock > 0) return;
       o.engineTrailClock = .035 + Math.random() * .025;
-      const aft = scale(shipForward(o), -1);
+      const aft = scale(shipForwardWorld(o), -1);
       const centers = engineWorldCenters(o);
       const engineMul = centers.length > 3 ? .82 : 1;
       const alienTrail = isAlienShip(o);
+      const podTrailHue = o.model === "escapePod" ? 48 + Math.random() * 8 : null;
       for (let i = 0; i < centers.length; i++) {
-        spawnEnginePlasma(centers[i], aft, clamp(speed / 105, .6, 2.2) * engineMul, alienTrail);
+        spawnEnginePlasma(centers[i], aft, clamp(speed / 105, .6, 2.2) * engineMul, alienTrail, podTrailHue);
       }
       const hullFrac = o.maxHp ? (o.hp ?? o.maxHp) / o.maxHp : 1;
       const smokeThreshold = .28;
@@ -4108,12 +4802,14 @@
 
     function spawnEscapePod(pos) {
       const stats = shipStats("escapePod");
-      game.objects.push({
+      const pod = {
         type: "ship", model: "escapePod", name: "ESCAPE POD",
         pos: { ...pos }, vel: scale(norm(vec(Math.random() - .5, Math.random() - .5, Math.random() - .5)), 50),
         rot: 0, pitch: 0, roll: 0, r: stats.r, color: "#e9f2e4", hp: stats.hp, maxHp: stats.hp,
         hostile: false, role: "pod", bounty: 15, aiMode: "cruise", wobble: Math.random() * TAU
-      });
+      };
+      game.objects.push(pod);
+      return pod;
     }
 
     function destroyObject(o, byPlayer = true) {
@@ -4268,9 +4964,14 @@
     }
 
     function destroyPlayer(reason) {
+      if (game.playerDestroyed) return;
+      game.playerDestroyed = true;
       eliteAudio.play("death");
       const hadCapsule = game.equipment.escapeCapsule;
       game.equipment.escapeCapsule = false;
+      const deathPos = { ...game.camera.pos };
+      const deathQuat = ensureCameraQuat(game.camera);
+      const deathModel = playerShipModel();
       const finish = () => {
         if (hadCapsule) {
           setMessage(`Escape capsule fired! Ship lost to ${reason}, but you're alive. Picked up and returned to Lave.`, true);
@@ -4282,24 +4983,39 @@
         game.target = DISO_INDEX;
         game.docked = true;
         setViewMode("fwd");
+        game.playerDestroyed = false;
         game.credits = Math.max(10, Math.floor(game.credits * (hadCapsule ? .7 : .35)));
         game.fuel = 7;
-        game.energy = 100;
-        game.shields = 100;
+        restoreShipSystems();
         game.speed = 0;
         game.legal = hadCapsule ? Math.max(0, game.legal - 6) : 0;
         game.cargo = Object.fromEntries(GOODS.map((g) => [g[0], 0]));
         resetFlightScene(false);
         renderPanel();
       };
-      // The capsule gets a real ejection beat (flash + tumble) before the respawn state
-      // change, same pattern as launch/dock/hyperspace; an uncushioned death stays abrupt.
-      if (hadCapsule && !game.transition) {
-        setMessage("EJECT EJECT EJECT — capsule away!", true);
-        startTransition("eject", 1.6, finish);
-      } else {
-        finish();
-      }
+      game.docked = false;
+      game.speed = 0;
+      game.playerShot = null;
+      setViewMode("ext");
+      game.externalView.yaw = .52;
+      game.externalView.pitch = .28;
+      game.externalView.zoom = .82;
+      setMessage(hadCapsule ? "EJECT EJECT EJECT" : "HULL BREACH - SHIP LOST", true);
+      startTransition("death", hadCapsule ? 4.2 : 3.5, finish, {
+        reason,
+        hadCapsule,
+        deathPos,
+        deathQuat,
+        deathModel
+      });
+    }
+
+    function finishGameOver() {
+      const tr = game.transition;
+      if (!tr || tr.kind !== "death" || !tr.waitingForRestart) return false;
+      game.transition = null;
+      tr.onComplete();
+      return true;
     }
 
     function useEnergyBomb() {
@@ -4435,8 +5151,7 @@
       if (!SHIP_MODEL_LIST.includes(model)) return;
       game.playerShip = model;
       applyPlayerShipStats();
-      game.shields = 100;
-      game.energy = 100;
+      restoreShipSystems();
       shipDiagramState.model = model;
       setMessage(`Cheat: ship changed to ${shipName(model)}.`);
       renderPanel();
@@ -4444,8 +5159,7 @@
 
     function cheatRefillShip() {
       game.fuel = 7;
-      game.shields = 100;
-      game.energy = 100;
+      restoreShipSystems();
       game.missiles = 4;
       setMessage("Cheat: ship fully refuelled and repaired.");
       renderPanel();
@@ -4464,8 +5178,9 @@
       renderPanel();
     }
 
-    const GAME_VERSION = "0.2.1";
+    const GAME_VERSION = "0.2.2";
     const UPDATE_LOG = [
+      ["0.2.2", "Reworked the cockpit HUD, docking computer display, browser save loading/deletion, collision bounce, hangar launch/docking sequences and shared blue ion engine trails."],
       ["0.2.1", "Added colour-coded comms, government-biased station controller chatter, visible NPC station traffic and differentiated laser behaviour/sounds."],
       ["0.2.0", "Procedural planet biomes now match chart descriptions; added gas giants, rocky worlds, industrial planets, debris rings and varied stellar classes."],
       ["0.1.9", "Added richer explosions, smoke puffs, engine haze, alien glyph comms, lower-pitched sound effects and close-range explosion rumble."],
@@ -4513,11 +5228,13 @@
       game.docked = true;
       setViewMode("fwd");
       game.dockedAt = null;
-      game.energy = 100;
-      game.shields = 100;
+      restoreShipSystems();
       game.speed = 0;
       game.rollRate = game.pitchRate = game.yawRate = 0;
       game.transition = null;
+      game.dockScene = null;
+      game.jumpCountdown = null;
+      game.playerDestroyed = false;
       game.autoDock = false;
       game.witchspace = false;
       shipDiagramState.model = playerShipModel();
@@ -4528,19 +5245,49 @@
       setMessage("Commander saved to browser storage.", true);
     }
 
-    function loadGame() {
-      const raw = localStorage.getItem(SAVE_KEY);
+    function browserSaveExists() {
+      try {
+        return !!localStorage.getItem(SAVE_KEY);
+      } catch {
+        return false;
+      }
+    }
+
+    function loadBrowserSave(silent = false) {
+      let raw = null;
+      try {
+        raw = localStorage.getItem(SAVE_KEY);
+      } catch {
+        if (!silent) setMessage("Browser save storage unavailable.");
+        return false;
+      }
       if (!raw) {
-        setMessage("No saved commander found.");
-        return;
+        if (!silent) setMessage("No saved commander found.");
+        return false;
       }
       try {
         applyCommanderSave(JSON.parse(raw));
-        setMessage("Commander loaded.", true);
+        if (!silent) setMessage("Commander loaded.", true);
         renderPanel();
+        return true;
       } catch {
-        setMessage("Commander file corrupted.");
+        if (!silent) setMessage("Commander file corrupted.");
+        return false;
       }
+    }
+
+    function loadGame() {
+      loadBrowserSave(false);
+    }
+
+    function deleteBrowserSave() {
+      try {
+        localStorage.removeItem(SAVE_KEY);
+        setMessage("Browser save deleted.", true);
+      } catch {
+        setMessage("Browser save storage unavailable.");
+      }
+      renderPanel();
     }
 
     function saveFilename() {
@@ -4572,10 +5319,12 @@
     }
 
     function update(dt) {
+      updateJumpCountdown(dt);
       if (game.transition) {
         const tr = game.transition;
         const step = Math.min(dt, 1 / 30);
-        tr.t += step;
+        if (!tr.waitingForRestart) tr.t += step;
+        if (tr.kind === "death") updateDeathTransitionEvents(tr, step);
         if (tr.kind === "launch") {
           const p = clamp(tr.t / tr.dur, 0, 1);
           if (tr.fromPos && tr.toPos) {
@@ -4589,7 +5338,30 @@
           }
           game.speed = lerp(tr.fromSpeed, tr.toSpeed, p);
         }
-        if (tr.t >= tr.dur) {
+        if (tr.kind === "launchHangar") {
+          const lp = tr.t / tr.dur;
+          if (!tr._engines && lp >= .16) {
+            tr._engines = true;
+            eliteAudio.play("launch");
+          }
+          if (!tr._lift && lp >= .34) {
+            tr._lift = true;
+            game.screenShake = Math.max(game.screenShake || 0, .55);
+          }
+          if (!tr._exitPunch && lp >= .82) {
+            tr._exitPunch = true;
+            game.screenShake = Math.max(game.screenShake || 0, .75);
+          }
+        }
+        if (tr.kind === "dockHangar" && !tr._landed && tr.t / tr.dur >= .42) {
+          tr._landed = true;
+          game.screenShake = Math.max(game.screenShake || 0, 1.15);
+          eliteAudio.play("hit");
+        }
+        if (tr.kind === "death" && tr.t >= tr.dur) {
+          tr.t = tr.dur;
+          tr.waitingForRestart = true;
+        } else if (tr.t >= tr.dur) {
           game.transition = null;
           tr.onComplete();
         }
@@ -4616,6 +5388,7 @@
         if (game.autoDock) updateAutoDock(dt);
         const fwd = forwardVector(game.camera);
         game.camera.pos = add(game.camera.pos, scale(fwd, game.speed * dt));
+        updatePlayerEngineTrails(dt);
         for (const star of game.stars) {
           const rel = cameraTransform(star, game.camera);
           if (rel.z < -1200 || rel.z > 3000 || Math.abs(rel.x) > 2600 || Math.abs(rel.y) > 1500) {
@@ -4645,11 +5418,12 @@
           }
           else if (o.vel) o.pos = add(o.pos, scale(o.vel, dt));
           if ((o.type === "canister" || o.type === "plate") && game.equipment.fuelScoop && len(sub(o.pos, game.camera.pos)) < 38) scoopCargo(o);
+          handlePlayerCollision(o);
           if (o.type === "sun" && game.equipment.fuelScoop && len(sub(o.pos, game.camera.pos)) < o.r + 220) {
             game.fuel = clamp(game.fuel + dt * .18, 0, 7);
-            game.energy = clamp(game.energy - dt * 4, 0, 100);
           }
         }
+        resolveObjectCollisions();
         let liveShipCount = 0;
         let liveRockCount = 0;
         game.objects = game.objects.filter((o) => {
@@ -4669,8 +5443,8 @@
         if (Math.random() < dt * .012 && liveRockCount < 4) {
           spawnAsteroid(Math.random, game.camera.pos);
         }
-        game.shields = clamp(game.shields + dt * (game.equipment.extraEnergy ? 5 : 3), 0, 100);
-        game.energy = clamp(game.energy + dt * (game.equipment.extraEnergy ? 4 : 2.5), 0, 100);
+        updateCabinTemperature(dt);
+        rechargeShipSystems(dt);
         game.laserHeat = clamp(game.laserHeat - dt * 18, 0, 100);
         game.legal = Math.max(0, game.legal - dt * 0.025);
       }
@@ -4698,15 +5472,116 @@
       drawForeAftRadar();
     }
 
+    function dockingComputerAvoidance() {
+      let avoid = vec();
+      let nearest = Infinity;
+      const avoidTypes = new Set(["ship", "asteroid", "boulder", "splinter", "canister", "plate", "missile"]);
+      for (const o of game.objects) {
+        if (!o || o._remove || !avoidTypes.has(o.type)) continue;
+        const away = sub(game.camera.pos, o.pos);
+        const d = len(away);
+        if (d <= .001) continue;
+        const radius = (o.r || (MODELS[o.model] ? modelBoundingRadius(MODELS[o.model]) : 20) || 20) + 110;
+        const range = Math.max(230, radius * 3);
+        if (d > range) continue;
+        const pressure = clamp((range - d) / range, 0, 1);
+        avoid = add(avoid, scale(norm(away), pressure * pressure));
+        nearest = Math.min(nearest, d - radius);
+      }
+      return { dir: len(avoid) > .001 ? norm(avoid) : null, nearest };
+    }
+
     function updateAutoDock(dt) {
       const st = dockableTarget();
-      if (!st) return;
-      const to = sub(st.pos, game.camera.pos);
-      const d = len(to);
-      const desired = norm(to);
-      game.camera.q = quatLookRotation(desired);
-      game.speed = lerp(game.speed, d > 260 ? 90 : 24, dt * 1.3);
-      if (d < 165) dock(true);
+      if (!st) {
+        game.autoDock = false;
+        setMessage("Docking computer lost station lock.");
+        return;
+      }
+      if (st.type !== "station") {
+        const state = typeof game.autoDock === "object" ? game.autoDock : (game.autoDock = { stage: "final" });
+        const to = sub(st.pos, game.camera.pos);
+        const d = len(to);
+        const avoidance = dockingComputerAvoidance();
+        const desiredDir = avoidance.dir ? norm(add(norm(to), scale(avoidance.dir, .42))) : norm(to);
+        const avoidSlow = avoidance.nearest < 130 ? .55 : avoidance.nearest < 230 ? .76 : 1;
+        game.camera.q = quatSlerp(ensureCameraQuat(game.camera), quatLookRotation(desiredDir), dt * 1.8);
+        game.speed = lerp(game.speed, (d > 260 ? 90 : 24) * avoidSlow, dt * 1.3);
+        state.hud = { stage: "final", range: d, slotRange: d, lateral: 0, alignment: 1, avoidance: Number.isFinite(avoidance.nearest) ? avoidance.nearest : null };
+        if (d < 165) dock(true);
+        return;
+      }
+
+      const state = typeof game.autoDock === "object" ? game.autoDock : (game.autoDock = { stage: "marshal" });
+      const slot = stationSlotFrame(st);
+      const inward = scale(slot.outward, -1);
+      const right = norm(cross(slot.up, slot.outward));
+      const frontness = dot(sub(game.camera.pos, slot.center), slot.outward);
+      const marshal = add(slot.center, add(scale(slot.outward, 1380), add(scale(right, 520), scale(slot.up, 210))));
+      const approach = add(slot.center, scale(slot.outward, 760));
+      const final = add(slot.center, scale(slot.outward, 118));
+      const relToAxis = sub(game.camera.pos, slot.center);
+      const lateral = len(sub(relToAxis, scale(slot.outward, dot(relToAxis, slot.outward))));
+      const stageTarget = state.stage === "marshal"
+        ? (frontness < 420 ? marshal : approach)
+        : state.stage === "approach"
+          ? approach
+          : state.stage === "align"
+            ? final
+            : slot.center;
+      const toTarget = sub(stageTarget, game.camera.pos);
+      const d = len(toTarget);
+      if (state.stage === "marshal" && d < 170 && frontness > 420) state.stage = "approach";
+      if (state.stage === "approach" && d < 105 && lateral < 115) state.stage = "align";
+      const forward = forwardVector(game.camera);
+      const alignment = dot(forward, inward);
+      if (state.stage === "align" && d < 55 && alignment > .988) state.stage = "final";
+
+      const freshStage = state.stage !== state.announced;
+      if (freshStage) {
+        state.announced = state.stage;
+        const line = state.stage === "marshal"
+          ? "Docking computer: acquiring front approach lane."
+          : state.stage === "approach"
+            ? "Docking computer: lining up with station slot."
+            : state.stage === "align"
+              ? "Docking computer: matching slot rotation."
+              : "Docking computer: final approach.";
+        setMessage(line, true);
+      }
+
+      const desiredDir = state.stage === "final"
+        ? inward
+        : state.stage === "align"
+          ? norm(add(scale(inward, 3.8), scale(toTarget, .004)))
+          : norm(toTarget);
+      const avoidance = dockingComputerAvoidance();
+      const avoidWeight = state.stage === "final" ? .16 : state.stage === "align" ? .28 : .48;
+      const steeredDir = avoidance.dir ? norm(add(desiredDir, scale(avoidance.dir, avoidWeight))) : desiredDir;
+      const desiredQ = quatLookRotation(steeredDir, slot.up);
+      const turnRate = state.stage === "final" ? 2.8 : state.stage === "align" ? 2.35 : 1.75;
+      game.camera.q = quatSlerp(ensureCameraQuat(game.camera), desiredQ, 1 - Math.exp(-turnRate * dt));
+      game.rollRate = 0;
+      game.pitchRate = 0;
+      game.yawRate = 0;
+
+      const targetSpeed = state.stage === "marshal" ? (d > 500 ? 118 : 72)
+        : state.stage === "approach" ? (d > 260 ? 70 : 42)
+          : state.stage === "align" ? 26
+            : 24;
+      const avoidSlow = avoidance.nearest < 140 ? .52 : avoidance.nearest < 260 ? .74 : 1;
+      game.speed = lerp(game.speed, targetSpeed * avoidSlow, dt * (state.stage === "final" ? 1.8 : 1.25));
+
+      const slotDist = len(sub(game.camera.pos, slot.center));
+      state.hud = {
+        stage: state.stage,
+        range: d,
+        slotRange: slotDist,
+        lateral,
+        alignment: clamp(alignment, 0, 1),
+        avoidance: Number.isFinite(avoidance.nearest) ? avoidance.nearest : null
+      };
+      if (state.stage === "final" && slotDist < 74 && alignment > .985) dock(true);
     }
 
     function controlHoldTime(axis, input, dt) {
@@ -4764,6 +5639,10 @@
 
     function shipForward(o) {
       return norm(rotateShipPoint(vec(0, 0, 1), o.rot || 0, o.pitch || 0, o.roll || 0));
+    }
+
+    function shipForwardWorld(o) {
+      return o?.quat ? norm(quatRotate(o.quat, vec(0, 0, 1))) : shipForward(o);
     }
 
     function shipRight(o) {
@@ -4894,36 +5773,41 @@
       return { color: "#ff9b45", core: "#fff0c8", width: 2, glow: 12, forks: 1, jitter: 72, dur: .18 };
     }
 
-    function pushEnemyLaserShot(attacker, targetPos = null, targetRadius = 0) {
+    function pushEnemyLaserShot(attacker, targetPos = null, targetRadius = 0, options = {}) {
       const visual = enemyLaserVisual(attacker);
       const side = shipRight(attacker);
       const hardpoint = (attacker.r || 50) * .18 * (Math.random() < .5 ? -1 : 1);
       const nose = Math.max(24, (attacker.r || 50) * .42);
       const from = add(attacker.pos, add(scale(shipForward(attacker), nose), scale(side, hardpoint)));
       const miss = targetPos
-        ? scale(shipRight(attacker), (Math.random() - .5) * Math.max(10, targetRadius * .18))
+        ? add(
+          scale(shipRight(attacker), (Math.random() - .5) * Math.max(10, targetRadius * .18)),
+          scale(vec(0, 1, 0), (Math.random() - .5) * Math.max(6, targetRadius * .12))
+        )
         : null;
       const canopyHit = targetPos ? null : {
         x: (Math.random() - .5) * .86,
         y: (Math.random() - .5) * .6
       };
-      const sparks = targetPos ? null : Array.from({ length: 8 + Math.floor(Math.random() * 6) }, () => {
+      const sparkCount = targetPos ? 5 + Math.floor(Math.random() * 5) : 8 + Math.floor(Math.random() * 6);
+      const sparks = Array.from({ length: sparkCount }, () => {
         const a = Math.random() * TAU;
         return {
         x: Math.cos(a),
         y: Math.sin(a),
-        len: 18 + Math.random() * 58,
-        drift: 10 + Math.random() * 46,
-        life: .75 + Math.random() * .7,
-        size: 1.3 + Math.random() * 2.8,
+        len: (targetPos ? 9 : 18) + Math.random() * (targetPos ? 34 : 58),
+        drift: (targetPos ? 6 : 10) + Math.random() * (targetPos ? 26 : 46),
+        life: .75 + Math.random() * (targetPos ? .45 : .7),
+        size: 1.1 + Math.random() * (targetPos ? 2.1 : 2.8),
         warm: Math.random()
         };
       });
+      const worldImpact = !!targetPos && options.impact !== false;
       game.enemyShots.push({
         from,
         to: targetPos ? add(targetPos, miss) : null,
         t: 0,
-        dur: targetPos ? visual.dur : visual.dur + .24,
+        dur: targetPos ? visual.dur + (worldImpact ? .18 : 0) : visual.dur + .24,
         beamDur: visual.dur,
         missile: false,
         color: visual.color,
@@ -4934,7 +5818,7 @@
         screenAim: canopyHit,
         screenOffset: targetPos ? null : { x: 0, y: 0 },
         sparks,
-        flare: !targetPos
+        flare: !targetPos || worldImpact
       });
     }
 
@@ -4970,16 +5854,20 @@
         setMessage(`${o.name} launches a missile!`, true);
         return;
       }
-      pushEnemyLaserShot(o);
+      const externalTarget = game.viewMode === "ext" && !game.docked;
+      const playerRadius = Math.max(42, modelBoundingRadius(MODELS[playerShipModel()]) || 72);
+      const energyBefore = game.energy;
+      if (externalTarget) pushEnemyLaserShot(o, { ...game.camera.pos }, playerRadius, { impact: true });
+      else pushEnemyLaserShot(o);
       eliteAudio.play("enemyLaser");
       game.screenShake = Math.max(game.screenShake || 0, o.thargoid ? 1.65 : 1.15);
-      game.shields -= o.thargoid ? 14 : 8;
-      setMessage(`${o.name} laser strike.`);
-      if (game.shields <= 0) {
-        game.energy += game.shields;
-        game.shields = 0;
+      const arc = damagePlayer(o.thargoid ? 14 : 8, o.name, { sourcePos: o.pos });
+      if (externalTarget && game.energy < energyBefore) {
+        const towardAttacker = norm(sub(o.pos, game.camera.pos));
+        const hitPos = add(game.camera.pos, scale(towardAttacker, playerRadius * .38));
+        spawnSmokePuffs(hitPos, .7, 3);
       }
-      if (game.energy <= 0) destroyPlayer(o.name);
+      setMessage(`${o.name} ${arc === "aft" ? "aft" : "fore"} laser strike.`);
     }
 
     // A hard override on top of whatever a ship's aiMode steering wants: other terms
@@ -5074,11 +5962,12 @@
       const targetPos = o.hostile ? hostileTargetPos(o) : game.camera.pos;
       const d = len(sub(targetPos, o.pos));
 
-      if (o.hostile && o.role !== "police" && !o.thargoid && o.maxHp && o.hp < o.maxHp * .32 && o.aiMode !== "flee") {
+      if (o.hostile && o.role !== "police" && !o.thargoid && o.maxHp && o.hp < o.maxHp * .32 && o.aiMode !== "flee" && !o._fleeCommitted) {
+        o._fleeCommitted = true;
         o.aiMode = "flee";
         o.fleeFrom = { ...targetPos };
         setMessage(`${o.name} breaks off and flees.`);
-        if (Math.random() < .6) hail(o, fleeLine(o));
+        shipHail(o, "flee", fleeLine(o), .6, 12000);
       }
 
       if (o.aiMode === "flee") {
@@ -5134,12 +6023,12 @@
         o.aiMode = "flee";
         o.fleeFrom = { ...o.huntedBy.pos };
         setMessage(`${o.name} is under attack and flees.`);
-        if (Math.random() < .6) hail(o, fleeLine(o));
+        shipHail(o, "flee", fleeLine(o), .6, 12000);
       } else if (d < 460 && Math.random() < dt * .5) {
         o.aiMode = "flee";
         o.fleeFrom = { ...game.camera.pos };
         setMessage(`${o.name} panics and flees.`);
-        if (Math.random() < .6) hail(o, fleeLine(o));
+        shipHail(o, "flee", fleeLine(o), .6, 12000);
       } else if (o.aiMode === "formation") {
         o.orbitAngle += (o.orbitSpeed || .18) * dt;
         const speedMul = shipStats(o.model).speed || 1;
@@ -5185,6 +6074,30 @@
       if (p.z <= 8) return null;
       const f = Math.min(w, h) * .82;
       return { x: w / 2 + (p.x / p.z) * f, y: h / 2 - (p.y / p.z) * f, s: f / p.z };
+    }
+
+    const RENDER_NEAR_PLANE = 8.05;
+
+    function clipCamPolygonNear(verts, near = RENDER_NEAR_PLANE) {
+      if (!verts.length) return [];
+      const out = [];
+      for (let i = 0; i < verts.length; i++) {
+        const a = verts[i];
+        const b = verts[(i + 1) % verts.length];
+        const aIn = a.z > near;
+        const bIn = b.z > near;
+        if (aIn && bIn) {
+          out.push(b);
+        } else if (aIn && !bIn) {
+          const t = (near - a.z) / (b.z - a.z || 1);
+          out.push(vec(lerp(a.x, b.x, t), lerp(a.y, b.y, t), near));
+        } else if (!aIn && bIn) {
+          const t = (near - a.z) / (b.z - a.z || 1);
+          out.push(vec(lerp(a.x, b.x, t), lerp(a.y, b.y, t), near));
+          out.push(b);
+        }
+      }
+      return out;
     }
 
     function hexToRgb(hex) {
@@ -5242,9 +6155,17 @@
       if (!model.faces) return [];
       const faces = [];
       model.faces.forEach((face, faceIndex) => {
-        const projected = face.map((i) => points[i]);
-        if (projected.some((p) => !p)) return;
-        const verts = face.map((i) => camVerts[i]);
+        let projected = face.map((i) => points[i]);
+        let verts = face.map((i) => camVerts[i]);
+        let clipped = false;
+        if (projected.some((p) => !p)) {
+          if (!options.project) return;
+          verts = clipCamPolygonNear(verts);
+          if (verts.length < 3) return;
+          projected = verts.map((p) => options.project(p));
+          if (projected.some((p) => !p)) return;
+          clipped = true;
+        }
         const avgZ = verts.reduce((sum, p) => sum + p.z, 0) / verts.length;
         const { n, center, facing: cameraFacing } = faceFacing(verts);
         if (cameraFacing <= -0.015) return;
@@ -5263,14 +6184,14 @@
           projected,
           camVerts: verts,
           project: options.project || null,
-          uv: model.faceUV && model.faceUV[faceIndex],
-          decalUV: model.decalUV && model.decalUV[faceIndex],
+          uv: !clipped && model.faceUV && model.faceUV[faceIndex],
+          decalUV: !clipped && model.decalUV && model.decalUV[faceIndex],
           avgZ,
           fillStyle: shadedColor(baseColor, lit * (.92 + grain * .12), alpha),
           metal: true,
           metalAlpha: clamp((.34 + facing * .34) * (options.metalAlphaMul ?? 1), .18, .78),
-          texture: options.texture || null,
-          decal
+          texture: clipped ? null : options.texture || null,
+          decal: clipped ? null : decal
         });
       });
       return faces;
@@ -5331,14 +6252,19 @@
           });
           continue;
         }
+        const engineGlow = detail.type === "engine" ? (o.engineGlow ?? 1) : 1;
+        const engineFill = engineGlow > .02
+          ? `rgb(${Math.round(70 + 177 * engineGlow)},${Math.round(76 + 179 * engineGlow)},${Math.round(72 + 175 * engineGlow)})`
+          : "#454c48";
         details.push({
           kind: "poly",
           projected,
           avgZ: verts.reduce((sum, p) => sum + p.z, 0) / verts.length,
-          fillStyle: detail.color || (detail.type === "engine" ? "#f7fff7" : "#101915"),
-          strokeStyle: detail.stroke || (detail.type === "engine" ? "#ffffff" : null),
+          fillStyle: detail.type === "engine" ? engineFill : (detail.color || "#101915"),
+          strokeStyle: detail.type === "engine" ? (engineGlow > .08 ? detail.stroke || "#ffffff" : "rgba(20,24,22,.75)") : detail.stroke || null,
           lineWidth: detail.width || 1.2,
           glow: detail.type === "engine",
+          glowAlpha: engineGlow,
           glass: detail.type === "window"
         });
       }
@@ -5406,7 +6332,7 @@
       const orient = (v) => o.quat ? quatRotate(o.quat, v) : rotateShipPoint(v, o.rot || 0, o.pitch || 0, roll);
       const camVerts = model.verts.map(([x, y, z]) => add(worldDirToCam(orient(vec(x, y, z))), rel));
       const points = camVerts.map((p) => project(p, w, h));
-      const faceItems = collectSolidFaces(model, camVerts, points, "#000", 1, true);
+      const faceItems = collectSolidFaces(model, camVerts, points, "#000", 1, true, null, { project: (p) => project(p, w, h) });
       let nearestEdge = Infinity;
       for (const item of faceItems) {
         const bounds = polygonBounds(item.projected);
@@ -6113,9 +7039,10 @@
         subdivideTexTri(targetCtx, img, B, C, m, projectFn, depth + 1);
       }
     }
-    function drawUVLayerPersp(targetCtx, item, img, alpha) {
-      const projectFn = item.project, camV = item.camVerts, uv = item.uv;
-      const off = img.width / 2;
+    function drawUVLayerPersp(targetCtx, item, img, alpha, uv = item.uv, centered = true) {
+      const projectFn = item.project, camV = item.camVerts;
+      if (!projectFn || !camV || !uv) return;
+      const off = centered ? img.width / 2 : 0;
       targetCtx.save();
       targetCtx.globalCompositeOperation = "multiply";
       targetCtx.globalAlpha = alpha;
@@ -6143,18 +7070,26 @@
         drawUVLayer(targetCtx, item, img, item.metalAlpha ?? .3);
       }
       // Decal stripes use continuous object-space UVs, while metal keeps local face UVs.
-      if (item.decal) drawUVLayer(targetCtx, item, item.decal, .86, item.decalUV, false);
+      if (item.decal) {
+        if (item.project && item.camVerts && item.decalUV) {
+          drawUVLayerPersp(targetCtx, item, item.decal, .86, item.decalUV, false);
+        } else {
+          drawUVLayer(targetCtx, item, item.decal, .86, item.decalUV, false);
+        }
+      }
     }
 
-    function drawEngineGlow(targetCtx, points) {
+    function drawEngineGlow(targetCtx, points, alpha = 1) {
+      if (alpha <= .01) return;
       const b = polygonBounds(points);
       const cx = (b.minX + b.maxX) / 2;
       const cy = (b.minY + b.maxY) / 2;
       const r = clamp(Math.max(b.maxX - b.minX, b.maxY - b.minY) * 2.8, 6, 42);
       const g = targetCtx.createRadialGradient(cx, cy, 0, cx, cy, r);
-      g.addColorStop(0, "rgba(255,255,235,.9)");
-      g.addColorStop(.28, "rgba(255,226,116,.32)");
-      g.addColorStop(1, "rgba(255,126,40,0)");
+      g.addColorStop(0, `hsla(202,96%,86%,${.72 * alpha})`);
+      g.addColorStop(.28, `hsla(196,94%,66%,${.34 * alpha})`);
+      g.addColorStop(.62, `hsla(190,90%,52%,${.14 * alpha})`);
+      g.addColorStop(1, "hsla(206,90%,42%,0)");
       targetCtx.save();
       targetCtx.globalCompositeOperation = "lighter";
       targetCtx.fillStyle = g;
@@ -6207,7 +7142,7 @@
     function drawSolidItems(targetCtx, items) {
       items.sort((a, b) => b.avgZ - a.avgZ);
       for (const item of items) {
-        if (item.glow) drawEngineGlow(targetCtx, item.projected);
+        if (item.glow) drawEngineGlow(targetCtx, item.projected, item.glowAlpha ?? 1);
         targetCtx.beginPath();
         targetCtx.moveTo(item.projected[0].x, item.projected[0].y);
         for (let i = 1; i < item.projected.length; i++) targetCtx.lineTo(item.projected[i].x, item.projected[i].y);
@@ -6233,8 +7168,8 @@
       }
     }
 
-    function drawSolidFaces(model, camVerts, points, baseColor, alpha = 1) {
-      drawSolidItems(ctx, collectSolidFaces(model, camVerts, points, baseColor, alpha));
+    function drawSolidFaces(model, camVerts, points, baseColor, alpha = 1, projectFn = null) {
+      drawSolidItems(ctx, collectSolidFaces(model, camVerts, points, baseColor, alpha, false, null, projectFn ? { project: projectFn } : {}));
     }
 
     function drawSolidDetails(model, o, camVerts, points, w, h, targetCtx = ctx, scaleFactor = 1) {
@@ -6300,6 +7235,50 @@
       ctx.textAlign = "left";
     }
 
+    function drawExternalPlayerShot(w, h, flightCam) {
+      const shot = game.playerShot;
+      if (!shot || game.viewMode !== "ext") return;
+      const elapsed = performance.now() - (shot.t || game.lastShot);
+      const dur = shot.duration || 85;
+      if (elapsed >= dur) return;
+      const age = clamp(elapsed / dur, 0, 1);
+      const alpha = Math.pow(1 - age, shot.kind === "pulse" ? .52 : .68);
+      const q = ensureCameraQuat(flightCam);
+      const forward = quatRotate(q, vec(0, 0, 1));
+      const right = quatRotate(q, vec(1, 0, 0));
+      const down = quatRotate(q, vec(0, -1, 0));
+      const r = Math.max(48, modelBoundingRadius(MODELS[playerShipModel()]));
+      const endWorld = shot.to || add(flightCam.pos, scale(forward, shot.range || 1800));
+      const end = projectWorldPoint(endWorld, w, h, game.camera);
+      if (!end) return;
+      const color = shot.color || "#ffd33d";
+      const rgb = hexToRgb(color);
+      const hardpoints = [
+        add(flightCam.pos, add(scale(forward, r * .55), add(scale(right, -r * .42), scale(down, r * .08)))),
+        add(flightCam.pos, add(scale(forward, r * .55), add(scale(right, r * .42), scale(down, r * .08))))
+      ];
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.lineCap = "round";
+      for (const hp of hardpoints) {
+        const from = projectWorldPoint(hp, w, h, game.camera);
+        if (!from) continue;
+        const grad = ctx.createLinearGradient(from.x, from.y, end.x, end.y);
+        grad.addColorStop(0, `rgba(255,245,190,${alpha * .82})`);
+        grad.addColorStop(.36, `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha * .55})`);
+        grad.addColorStop(1, `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha * .08})`);
+        ctx.strokeStyle = grad;
+        ctx.shadowColor = `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`;
+        ctx.shadowBlur = (shot.kind === "pulse" ? 16 : 10) * alpha;
+        ctx.lineWidth = Math.max(1.2, (shot.width || 2) * 1.6);
+        ctx.beginPath();
+        ctx.moveTo(from.x, from.y);
+        ctx.lineTo(end.x, end.y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
     function drawSpace() {
       const w = space.width, h = space.height;
       const flightCam = game.camera;
@@ -6312,18 +7291,21 @@
         ctx.translate((Math.random() - .5) * shake, (Math.random() - .5) * shake);
       }
       ctx.lineCap = "round";
+      drawGalaxyBackdrop(w, h);
       drawStars(w, h);
       drawSmokePuffs(w, h);
       const visible = game.objects
         .map((o) => ({ o, p: cameraTransform(o.pos, game.camera), d: len(sub(o.pos, game.camera.pos)) }));
-      if (game.viewMode === "ext" && !game.docked) {
+      const deathExploded = game.transition?.kind === "death" && game.transition._exploded;
+      if (game.viewMode === "ext" && !game.docked && !deathExploded) {
         // The player's own ship only exists on screen in the external view; it rides the
         // flight camera exactly (same position, orientation via quat instead of Euler).
-        const shipObj = { type: "ship", model: playerShipModel(), pos: flightCam.pos, quat: ensureCameraQuat(flightCam), color: "#e9f2e4", name: game.commander, role: "private", hp: game.energy, maxHp: 100 };
+        const shipObj = { type: "ship", model: game.transition?.deathModel || playerShipModel(), pos: flightCam.pos, quat: ensureCameraQuat(flightCam), color: "#e9f2e4", name: game.commander, role: "private", hp: Math.max(1, game.energy), maxHp: 100, playerDamageMarks: game.playerDamageMarks };
         visible.push({ o: shipObj, p: cameraTransform(shipObj.pos, game.camera), d: len(sub(shipObj.pos, game.camera.pos)) });
       }
       visible.sort((a, b) => b.d - a.d);
       for (const item of visible) drawObject(item.o, item.p, w, h);
+      drawExternalPlayerShot(w, h, flightCam);
       drawExplosions(w, h);
       drawEnemyShots(w, h);
       if (game.showShipLabels) drawShipLabels(w, h);
@@ -6427,16 +7409,75 @@
         ctx.restore();
       }
       if (game.transition) drawTransitionEffect(w, h, game.transition);
-      if (game.docked) drawDockedBackdrop(w, h);
+      if (game.jumpCountdown) drawJumpCountdown(w, h, game.jumpCountdown);
+      if (game.autoDock && !game.docked) drawAutoDockHud(w, h);
+      if (game.docked && !["dockHangar", "launchHangar"].includes(game.transition?.kind)) drawDockedBackdrop(w, h);
       ctx.restore();
       game.camera = flightCam;
     }
 
+    function drawAutoDockHud(w, h) {
+      const state = typeof game.autoDock === "object" ? game.autoDock : null;
+      if (!state?.hud) return;
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      const boxW = Math.min(w * .34, 360 * dpr);
+      const boxH = 86 * dpr;
+      const x = w / 2 - boxW / 2;
+      const y = Math.max(76 * dpr, h - 262 * dpr);
+      const pad = 10 * dpr;
+      const stage = state.hud.stage || "AUTO";
+      const stageText = {
+        marshal: "ACQUIRING APPROACH LANE",
+        approach: "LINING UP WITH SLOT AXIS",
+        align: "MATCHING SLOT ROTATION",
+        final: "FINAL APPROACH"
+      }[stage] || "AUTO DOCK ACTIVE";
+      const alignPct = clamp((state.hud.alignment || 0) * 100, 0, 100);
+      const latPct = clamp(1 - (state.hud.lateral || 0) / 380, 0, 1);
+      ctx.save();
+      ctx.fillStyle = "rgba(0,0,0,.18)";
+      ctx.fillRect(x, y, boxW, boxH);
+      ctx.strokeStyle = "rgba(101,255,71,.42)";
+      ctx.lineWidth = Math.max(1, dpr);
+      ctx.strokeRect(x, y, boxW, boxH);
+      ctx.fillStyle = "rgba(101,255,71,.08)";
+      ctx.fillRect(x + dpr, y + dpr, boxW - dpr * 2, 22 * dpr);
+      ctx.textAlign = "left";
+      ctx.font = `${11 * dpr}px ${UI_CANVAS_FONT}`;
+      ctx.fillStyle = "rgba(101,255,71,.9)";
+      ctx.shadowColor = "rgba(101,255,71,.32)";
+      ctx.shadowBlur = 7 * dpr;
+      ctx.fillText(`DOCKING COMPUTER - ${stageText}`, x + pad, y + 16 * dpr);
+      ctx.shadowBlur = 0;
+      ctx.font = `${8.5 * dpr}px ${UI_CANVAS_FONT}`;
+      ctx.fillStyle = "rgba(145,167,141,.82)";
+      const lineY = y + 38 * dpr;
+      ctx.fillText(`RANGE ${Math.round(state.hud.range || 0)}M   SLOT ${Math.round(state.hud.slotRange || 0)}M`, x + pad, lineY);
+      ctx.fillText(`LATERAL ${Math.round(state.hud.lateral || 0)}M   ALIGN ${Math.round(alignPct)}%   SPEED ${Math.round(game.speed)}`, x + pad, lineY + 15 * dpr);
+      const barX = x + pad;
+      const barY = y + boxH - 17 * dpr;
+      const barW = boxW - pad * 2;
+      const barH = 4 * dpr;
+      ctx.fillStyle = "rgba(101,255,71,.12)";
+      ctx.fillRect(barX, barY, barW, barH);
+      ctx.fillStyle = stage === "final" ? "rgba(255,211,61,.78)" : "rgba(101,255,71,.72)";
+      ctx.fillRect(barX, barY, barW * latPct * clamp(alignPct / 100, .08, 1), barH);
+      ctx.strokeStyle = "rgba(101,255,71,.32)";
+      ctx.strokeRect(barX, barY, barW, barH);
+      ctx.restore();
+    }
+
     function drawTransitionEffect(w, h, tr) {
-      if (tr.kind === "eject") {
+      if (tr.kind === "death") {
+        drawDeathSequence(w, h, tr);
+      } else if (tr.kind === "eject") {
         drawEjectSequence(w, h, tr);
       } else if (tr.kind === "launch" || tr.kind === "dock") {
         drawDockingTunnel(w, h, tr);
+      } else if (tr.kind === "launchHangar") {
+        drawLaunchHangarSequence(w, h, tr);
+      } else if (tr.kind === "dockHangar") {
+        drawDockHangarSequence(w, h, tr);
       } else if (tr.kind === "galactic") {
         drawGalacticTunnel(w, h, tr);
       } else {
@@ -6444,9 +7485,160 @@
       }
     }
 
+    const JUMP_STATUS_LINES = {
+      hyperspace: [
+        "CALCULATING WITCHSPACE VECTOR LATTICE",
+        "CHARGING TOROIDAL JUMP-DRIVE CAPACITORS",
+        "PHASE-LOCKING QUIRIUM INJECTOR MANIFOLD",
+        "ALIGNING NAV COMPUTER TO TARGET STAR",
+        "MASS-LOCK EXCLUSION CONE SCAN ACTIVE",
+        "STABILISING HYPERSPACE FIELD COILS",
+        "VERIFYING FUEL PLASMA FLOW RATE",
+        "ARMING FRAME-SHIFT CONTAINMENT GRID"
+      ],
+      galactic: [
+        "INDEXING GALACTIC SEED HARMONICS",
+        "PRECESSING LONG-RANGE TOROIDAL DRIVE",
+        "CHARGING ONE-SHOT QUIRIUM CASCADE",
+        "ALIGNING MEAN GALACTIC PLANE VECTOR",
+        "VERIFYING INTERGALACTIC NAV SOLUTION",
+        "LOCKING DEEP-WITCHSPACE EXIT ANCHOR",
+        "SPINNING HYPERCOIL FIELD GYROS",
+        "FINALISING GALAXY TRANSFER ENVELOPE"
+      ]
+    };
+
+    function drawJumpCountdown(w, h, tr) {
+      const remaining = Math.max(0, Math.ceil(tr.dur - tr.t));
+      const p = clamp(tr.t / tr.dur, 0, 1);
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      const cx = w / 2;
+      const boxW = Math.min(w * .44, 430 * dpr);
+      const boxH = 104 * dpr;
+      const boxX = cx - boxW / 2;
+      const boxY = Math.max(92 * dpr, h - 300 * dpr);
+      const pad = 11 * dpr;
+      const lineH = 13 * dpr;
+      const warning = remaining <= 3;
+      const lines = JUMP_STATUS_LINES[tr.kind] || JUMP_STATUS_LINES.hyperspace;
+      const scroll = tr.t * 4.2;
+      const baseIndex = Math.floor(scroll);
+      const frac = scroll - baseIndex;
+      const hexFor = (n) => (Math.imul((n + 1) | 0, 2654435761) >>> 0).toString(16).toUpperCase().padStart(8, "0");
+      const byteFor = (n) => hexFor(n).slice(0, 2);
+      const asciiFor = (text, tick, width = 14) => {
+        const clean = String(text).replace(/[^A-Z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+        const spin = clean ? (tick % clean.length) : 0;
+        return (clean.slice(spin) + " " + clean).slice(0, width).padEnd(width, ".");
+      };
+      ctx.save();
+      ctx.fillStyle = "rgba(0,0,0,.18)";
+      ctx.fillRect(boxX, boxY, boxW, boxH);
+      ctx.strokeStyle = warning ? "rgba(255,72,72,.46)" : "rgba(101,255,71,.42)";
+      ctx.lineWidth = Math.max(1, dpr);
+      ctx.strokeRect(boxX, boxY, boxW, boxH);
+      ctx.fillStyle = warning ? "rgba(255,72,72,.18)" : "rgba(101,255,71,.08)";
+      ctx.fillRect(boxX + 1 * dpr, boxY + 1 * dpr, boxW - 2 * dpr, 24 * dpr);
+      ctx.shadowColor = warning ? "rgba(255,72,72,.45)" : "rgba(101,255,71,.42)";
+      ctx.shadowBlur = warning ? 12 * dpr : 8 * dpr;
+      ctx.textAlign = "left";
+      ctx.fillStyle = warning ? "rgba(255,72,72,.82)" : "rgba(101,255,71,.9)";
+      ctx.font = `${13 * dpr}px ${UI_CANVAS_FONT}`;
+      ctx.fillText(`${tr.countdownLabel || "JUMP"} T-${String(remaining).padStart(2, "0")}`, boxX + pad, boxY + 18 * dpr);
+      ctx.textAlign = "right";
+      ctx.fillText(`${Math.round(p * 100)}%`, boxX + boxW - pad, boxY + 18 * dpr);
+      ctx.shadowBlur = 0;
+      const barX = boxX + pad;
+      const barY = boxY + 28 * dpr;
+      const barW = boxW - pad * 2;
+      const barH = 4 * dpr;
+      ctx.fillStyle = "rgba(101,255,71,.12)";
+      ctx.fillRect(barX, barY, barW, barH);
+      ctx.fillStyle = "rgba(101,255,71,.74)";
+      ctx.fillRect(barX, barY, barW * p, barH);
+      ctx.strokeStyle = "rgba(101,255,71,.32)";
+      ctx.strokeRect(barX, barY, barW, barH);
+      ctx.textAlign = "left";
+      ctx.font = `${8.5 * dpr}px ${UI_CANVAS_FONT}`;
+      ctx.fillStyle = "rgba(101,255,71,.78)";
+      for (let i = -1; i < 5; i++) {
+        const lineIndex = baseIndex + i;
+        const line = lines[((lineIndex % lines.length) + lines.length) % lines.length];
+        const y = boxY + 50 * dpr + i * lineH - frac * lineH;
+        if (y < boxY + 38 * dpr || y > boxY + boxH - 8 * dpr) continue;
+        const tick = Math.floor(tr.t * 18);
+        const addr = (0x7C00 + ((lineIndex * 16 + tick * 3) & 0x03ff)).toString(16).toUpperCase().padStart(4, "0");
+        const bytes = Array.from({ length: 8 }, (_, b) => byteFor(tick * 11 + lineIndex * 37 + b * 19)).join(" ");
+        ctx.fillText(`&${addr}  ${bytes}  |${asciiFor(line, tick + lineIndex)}|`, boxX + pad, y);
+      }
+      ctx.restore();
+    }
+
     function easeInOut(t) {
       t = clamp(t, 0, 1);
       return t * t * (3 - 2 * t);
+    }
+
+    function smoothstep(edge0, edge1, x) {
+      const t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
+      return t * t * (3 - 2 * t);
+    }
+
+    function drawDeathSequence(w, h, tr) {
+      const p = clamp(tr.t / tr.dur, 0, 1);
+      const cx = w / 2, cy = h / 2;
+      ctx.save();
+      if (tr.hadCapsule) {
+        const podFlash = clamp(1 - Math.abs(tr.t - .95) / .2, 0, 1);
+        if (podFlash > 0) {
+          ctx.fillStyle = `rgba(220,255,235,${podFlash * .22})`;
+          ctx.fillRect(0, 0, w, h);
+          ctx.strokeStyle = `rgba(101,255,71,${podFlash * .68})`;
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          for (let i = 0; i < 18; i++) {
+            const a = i / 18 * TAU + podFlash * .4;
+            ctx.moveTo(cx + Math.cos(a) * 24, cy + Math.sin(a) * 16);
+            ctx.lineTo(cx + Math.cos(a) * (110 + podFlash * 120), cy + Math.sin(a) * (70 + podFlash * 80));
+          }
+          ctx.stroke();
+        }
+      }
+      const boomFlash = clamp(1 - Math.abs(tr.t - (tr.hadCapsule ? 1.55 : 1.08)) / .28, 0, 1);
+      if (boomFlash > 0) {
+        ctx.fillStyle = `rgba(255,238,190,${boomFlash * .38})`;
+        ctx.fillRect(0, 0, w, h);
+      }
+      const fade = smoothstep(.68, 1, p);
+      if (fade > 0) {
+        ctx.fillStyle = `rgba(0,0,0,${fade})`;
+        ctx.fillRect(0, 0, w, h);
+      }
+      ctx.font = `${Math.max(11, w * .009)}px ${UI_CANVAS_FONT}`;
+      ctx.textAlign = "center";
+      ctx.fillStyle = `rgba(101,255,71,${clamp(1 - fade * 1.3, 0, .9)})`;
+      const status = tr.t < .9
+        ? "EXTERNAL CAM - HULL FAILURE"
+        : tr.hadCapsule && tr.t < 1.55
+          ? "ESCAPE CAPSULE ARMED"
+          : tr._exploded
+            ? "PRIMARY HULL DETONATION"
+            : "REACTOR CASCADE";
+      ctx.fillText(status, cx, h * .18);
+      if (fade > .72) {
+        const finalAlpha = (fade - .72) / .28;
+        ctx.fillStyle = `rgba(101,255,71,${finalAlpha * .9})`;
+        ctx.font = `${Math.max(28, w * .038)}px ${UI_CANVAS_FONT}`;
+        ctx.fillText("GAME OVER", cx, h * .47);
+        ctx.font = `${Math.max(12, w * .012)}px ${UI_CANVAS_FONT}`;
+        ctx.fillStyle = `rgba(101,255,71,${finalAlpha * .72})`;
+        const promptAlpha = tr.waitingForRestart ? .42 + Math.sin(performance.now() / 240) * .28 : .42;
+        ctx.fillStyle = `rgba(101,255,71,${finalAlpha * promptAlpha})`;
+        ctx.fillText("PRESS ANY KEY TO RESTART", cx, h * .55);
+        ctx.fillStyle = `rgba(101,255,71,${finalAlpha * .48})`;
+        ctx.fillText(tr.hadCapsule ? "RECOVERY BEACON ACQUIRED" : "COMMANDER RECORD REBUILT", cx, h * .61);
+      }
+      ctx.restore();
     }
 
     // Player escape-capsule ejection: hard white canopy-blow flash, then the view
@@ -6565,6 +7757,582 @@
       ctx.restore();
     }
 
+    function drawDockFadeOut(w, h, tr) {
+      const p = clamp(tr.t / tr.dur, 0, 1);
+      const fade = smoothstep(.08, .92, p);
+      ctx.save();
+      ctx.fillStyle = `rgba(0,0,0,${.34 + fade * .66})`;
+      ctx.fillRect(0, 0, w, h);
+      ctx.textAlign = "center";
+      ctx.font = `${Math.max(10, w * .009)}px ${UI_CANVAS_FONT}`;
+      ctx.fillStyle = `rgba(101,255,71,${clamp(1 - fade * 1.15, 0, .72)})`;
+      ctx.fillText("DOCKING CLAMPS ENGAGED", w / 2, h * .52);
+      ctx.restore();
+    }
+
+    function makeHangarCamera(pos, target) {
+      return { pos, q: quatLookRotation(norm(sub(target, pos)), vec(0, 1, 0)) };
+    }
+
+    function hangarProject(p, view, w, h) {
+      return project(cameraTransform(p, view), w, h);
+    }
+
+    function hangarTexturedQuad(points, view, w, h, texture, alpha = .58, shade = "rgba(0,0,0,.18)") {
+      const pr = points.map((p) => hangarProject(p, view, w, h));
+      if (pr.some((p) => !p)) return null;
+      ctx.save();
+      ctx.fillStyle = `rgba(54,64,57,${alpha})`;
+      ctx.beginPath();
+      ctx.moveTo(pr[0].x, pr[0].y);
+      for (let i = 1; i < pr.length; i++) ctx.lineTo(pr[i].x, pr[i].y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = shade;
+      ctx.beginPath();
+      ctx.moveTo(pr[0].x, pr[0].y);
+      for (let i = 1; i < pr.length; i++) ctx.lineTo(pr[i].x, pr[i].y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = "rgba(150,170,145,.2)";
+      ctx.lineWidth = Math.max(.7, w / 1800);
+      ctx.stroke();
+
+      // Projection-stable panel seams. These are tied to the quad corners rather than
+      // affine texture coordinates, so orbiting the hangar camera does not make the
+      // metal pattern appear to crawl over the walls.
+      ctx.strokeStyle = "rgba(185,205,175,.09)";
+      ctx.lineWidth = Math.max(.5, w / 2600);
+      for (let i = 1; i < 5; i++) {
+        const t = i / 5;
+        const a = { x: lerp(pr[0].x, pr[1].x, t), y: lerp(pr[0].y, pr[1].y, t) };
+        const b = { x: lerp(pr[3].x, pr[2].x, t), y: lerp(pr[3].y, pr[2].y, t) };
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+      for (let i = 1; i < 4; i++) {
+        const t = i / 4;
+        const a = { x: lerp(pr[0].x, pr[3].x, t), y: lerp(pr[0].y, pr[3].y, t) };
+        const b = { x: lerp(pr[1].x, pr[2].x, t), y: lerp(pr[1].y, pr[2].y, t) };
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+      ctx.restore();
+      return pr;
+    }
+
+    function hangarPoly(points, view, w, h, fill, stroke = null) {
+      const pr = points.map((p) => hangarProject(p, view, w, h));
+      if (pr.some((p) => !p)) return null;
+      ctx.beginPath();
+      ctx.moveTo(pr[0].x, pr[0].y);
+      for (let i = 1; i < pr.length; i++) ctx.lineTo(pr[i].x, pr[i].y);
+      ctx.closePath();
+      if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+      if (stroke) { ctx.strokeStyle = stroke; ctx.stroke(); }
+      return pr;
+    }
+
+    function hangarShipScale(modelName, base = 1) {
+      const r = Math.max(48, modelBoundingRadius(MODELS[modelName] || MODELS.cobra) || 95);
+      // Fit all commander ships in the hangar while preserving enough size difference
+      // that freighters still feel heavier than fighters.
+      return base * clamp(1.08 * Math.pow(95 / r, .55), .42, 1.36);
+    }
+
+    function drawHangarModel(modelName, pos, view, w, h, opts = {}) {
+      const model = MODELS[modelName];
+      if (!model) return;
+      const scale = opts.scale ?? 1;
+      const yaw = opts.yaw ?? 0;
+      const pitch = opts.pitch ?? 0;
+      const roll = opts.roll ?? 0;
+      const worldVerts = model.verts.map(([x, y, z]) => add(rotateShipPoint(vec(x * scale, y * scale, z * scale), yaw, pitch, roll), pos));
+      const camVerts = worldVerts.map((p) => cameraTransform(p, view));
+      const pts = camVerts.map((p) => project(p, w, h));
+      const color = opts.color || "#b6c5aa";
+      drawSolidItems(ctx, collectSolidFaces(model, camVerts, pts, color, opts.alpha ?? 1, false, null, { project: (p) => project(p, w, h) }));
+      if (game.graphicsMode !== "solid") {
+        ctx.strokeStyle = game.graphicsMode === "both" ? "rgba(61,61,61,.38)" : color;
+        ctx.lineWidth = Math.max(.6, scale * .55);
+        const faceVisible = collectWireFaceVisibility(model, camVerts);
+        ctx.beginPath();
+        for (let edgeIndex = 0; edgeIndex < model.edges.length; edgeIndex++) {
+          if (!wireEdgeVisible(model, edgeIndex, faceVisible)) continue;
+          const [a, b] = model.edges[edgeIndex];
+          if (!pts[a] || !pts[b]) continue;
+          ctx.moveTo(pts[a].x, pts[a].y);
+          ctx.lineTo(pts[b].x, pts[b].y);
+        }
+        ctx.stroke();
+      }
+    }
+
+    function drawHangarCargoStacks(w, h, scene, view, floor) {
+      const rng = mulberry((scene?.seed || 1) ^ 0xc0a9e);
+      const colors = [
+        "#839277",
+        "#8f8a68",
+        "#6e8b91",
+        "#9a873d"
+      ];
+      for (const side of [-1, 1]) {
+        for (let i = 0; i < 5; i++) {
+          const stack = 1 + (rng() > .48 ? 1 : 0) + (rng() > .86 ? 1 : 0);
+          const x = side * (330 + rng() * 72);
+          const z = 245 + i * 108 + rng() * 34;
+          for (let j = 0; j < stack; j++) {
+            drawHangarModel("canister", vec(x + side * rng() * 16, floor + 19 + j * 33, z + rng() * 14), view, w, h, {
+              scale: 1.08 + rng() * .18,
+              yaw: side * Math.PI / 2 + (rng() - .5) * .18,
+              pitch: (rng() - .5) * .06,
+              roll: (rng() - .5) * .08,
+              color: colors[(i + j + (side > 0 ? 1 : 0)) % colors.length],
+              alpha: .96
+            });
+          }
+        }
+      }
+    }
+
+    function drawHangarOutsideThroughGate(view, w, h, gatePr, seed) {
+      if (!gatePr) return;
+      const bounds = polygonBounds(gatePr);
+      const rng = mulberry(seed || 1);
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(gatePr[0].x, gatePr[0].y);
+      gatePr.slice(1).forEach((p) => ctx.lineTo(p.x, p.y));
+      ctx.closePath();
+      ctx.clip();
+      ctx.fillStyle = "rgba(0,0,6,.9)";
+      ctx.fillRect(bounds.minX, bounds.minY, bounds.maxX - bounds.minX, bounds.maxY - bounds.minY);
+      ctx.fillStyle = "rgba(220,245,255,.62)";
+      for (let i = 0; i < 36; i++) {
+        const x = lerp(bounds.minX, bounds.maxX, rng());
+        const y = lerp(bounds.minY, bounds.maxY, rng());
+        const s = .5 + rng() * 1.2;
+        ctx.fillRect(x, y, s, s);
+      }
+      ctx.strokeStyle = "rgba(101,255,71,.38)";
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 2; i++) {
+        const x = lerp(bounds.minX, bounds.maxX, .32 + i * .26);
+        const y = lerp(bounds.minY, bounds.maxY, .36 + rng() * .3);
+        ctx.beginPath();
+        ctx.moveTo(x - 7, y);
+        ctx.lineTo(x + 7, y + 2);
+        ctx.lineTo(x + 1, y - 5);
+        ctx.closePath();
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawHangarRoom(w, h, scene, view) {
+      const texture = getStationTexture(stationStyleForSystem(currentSystem()));
+      const p = (x, y, z) => vec(x, y, z);
+      const near = 120, far = 900, hw = 460, floor = -175, ceil = 210;
+      ctx.save();
+      const bg = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, Math.max(w, h) * .72);
+      bg.addColorStop(0, "#090c0a");
+      bg.addColorStop(1, "#010201");
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, w, h);
+
+      hangarTexturedQuad([p(-hw, floor, far), p(hw, floor, far), p(hw, floor, near), p(-hw, floor, near)], view, w, h, texture, .66, "rgba(0,0,0,.04)");
+      hangarTexturedQuad([p(-hw, ceil, near), p(hw, ceil, near), p(hw, ceil, far), p(-hw, ceil, far)], view, w, h, texture, .52, "rgba(0,0,0,.3)");
+      hangarTexturedQuad([p(-hw, floor, near), p(-hw, floor, far), p(-hw, ceil, far), p(-hw, ceil, near)], view, w, h, texture, .56, "rgba(0,0,0,.28)");
+      hangarTexturedQuad([p(hw, floor, far), p(hw, floor, near), p(hw, ceil, near), p(hw, ceil, far)], view, w, h, texture, .56, "rgba(0,0,0,.24)");
+      hangarTexturedQuad([p(-hw, floor, far), p(-hw, ceil, far), p(hw, ceil, far), p(hw, floor, far)], view, w, h, texture, .52, "rgba(0,0,0,.36)");
+
+      ctx.strokeStyle = "rgba(200,220,190,.18)";
+      ctx.lineWidth = Math.max(.7, w / 1800);
+      for (let i = 0; i <= 8; i++) {
+        const z = lerp(near, far, i / 8);
+        const a = hangarProject(p(-hw, floor, z), view, w, h);
+        const b = hangarProject(p(hw, floor, z), view, w, h);
+        const c = hangarProject(p(-hw, ceil, z), view, w, h);
+        const d = hangarProject(p(hw, ceil, z), view, w, h);
+        if (!a || !b || !c || !d) continue;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+        ctx.moveTo(c.x, c.y); ctx.lineTo(d.x, d.y);
+        ctx.stroke();
+      }
+      for (let i = -3; i <= 3; i++) {
+        const x = i * hw / 4;
+        const a = hangarProject(p(x, floor, near), view, w, h);
+        const b = hangarProject(p(x, floor, far), view, w, h);
+        if (!a || !b) continue;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+      drawHangarCargoStacks(w, h, scene, view, floor);
+
+      const gateW = 270, gateH = 150;
+      const gate = [p(-gateW, -gateH, far - 5), p(gateW, -gateH, far - 5), p(gateW, gateH, far - 5), p(-gateW, gateH, far - 5)];
+      const gatePr = hangarPoly(gate, view, w, h, "rgba(0,0,0,.92)", "rgba(120,185,255,.36)");
+      drawHangarOutsideThroughGate(view, w, h, gatePr, (scene?.seed || 1) ^ 0xa5a5);
+      const pulse = .44 + Math.sin(performance.now() / 260) * .18;
+      if (gatePr) {
+        const grad = ctx.createLinearGradient(gatePr[0].x, gatePr[0].y, gatePr[2].x, gatePr[2].y);
+        grad.addColorStop(0, `rgba(86,184,255,${.22 + pulse * .12})`);
+        grad.addColorStop(.5, `rgba(42,126,255,${.18 + pulse * .16})`);
+        grad.addColorStop(1, `rgba(8,36,100,${.18 + pulse * .08})`);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(gatePr[0].x, gatePr[0].y);
+        gatePr.slice(1).forEach((pt) => ctx.lineTo(pt.x, pt.y));
+        ctx.closePath();
+        ctx.fill();
+        ctx.globalCompositeOperation = "lighter";
+        ctx.strokeStyle = `rgba(120,196,255,${.3 + pulse * .32})`;
+        ctx.lineWidth = Math.max(1.2, w / 900);
+        for (let i = 1; i < 5; i++) {
+          const t = i / 5;
+          ctx.beginPath();
+          ctx.moveTo(lerp(gatePr[0].x, gatePr[3].x, t), lerp(gatePr[0].y, gatePr[3].y, t));
+          ctx.lineTo(lerp(gatePr[1].x, gatePr[2].x, t), lerp(gatePr[1].y, gatePr[2].y, t));
+          ctx.stroke();
+        }
+        ctx.globalCompositeOperation = "source-over";
+      }
+
+      for (let i = -2; i <= 2; i++) {
+        const strip = [p(i * 125 - 24, ceil - 4, 260), p(i * 125 + 24, ceil - 4, 260), p(i * 125 + 24, ceil - 4, 730), p(i * 125 - 24, ceil - 4, 730)];
+        hangarPoly(strip, view, w, h, "rgba(225,245,220,.42)");
+      }
+      for (const b of [p(-gateW - 34, gateH + 28, far - 8), p(gateW + 34, gateH + 28, far - 8), p(-gateW - 34, -gateH - 28, far - 8), p(gateW + 34, -gateH - 28, far - 8)]) {
+        const pr = hangarProject(b, view, w, h);
+        if (!pr) continue;
+        const blink = .4 + Math.max(0, Math.sin(performance.now() / 1000 * TAU + b.x * .01)) * .6;
+        ctx.globalCompositeOperation = "lighter";
+        const r = Math.max(2, pr.s * 9);
+        const beacon = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, r * 5);
+        beacon.addColorStop(0, `rgba(255,222,120,${.72 * blink})`);
+        beacon.addColorStop(1, "rgba(255,120,20,0)");
+        ctx.fillStyle = beacon;
+        ctx.beginPath();
+        ctx.arc(pr.x, pr.y, r * 5, 0, TAU);
+        ctx.fill();
+        ctx.globalCompositeOperation = "source-over";
+      }
+
+      ctx.restore();
+    }
+
+    function hangarEngineAnchors(modelName, pos, scaleFactor, yaw, pitch, roll) {
+      const model = MODELS[modelName];
+      if (!model) return [];
+      const engineDetails = (model.details || []).filter((d) => d.type === "engine");
+      const anchors = engineDetails.map((detail) => {
+        const localVerts = detail.indices
+          ? detail.indices.map((i) => {
+            const [x, y, z] = model.verts[i];
+            return vec(x * scaleFactor, y * scaleFactor, z * scaleFactor);
+          })
+          : detail.points.map(([x, y, z]) => vec(x * scaleFactor, y * scaleFactor, z * scaleFactor));
+        const localCenter = scale(localVerts.reduce((sum, p) => add(sum, p), vec()), 1 / localVerts.length);
+        return {
+          pos: add(rotateShipPoint(localCenter, yaw, pitch, roll), pos),
+          aft: norm(rotateShipPoint(vec(0, 0, -1), yaw, pitch, roll))
+        };
+      });
+      if (anchors.length) return anchors;
+      return [{
+        pos: add(rotateShipPoint(vec(0, 0, -objectCollisionRadius({ model: modelName }) * .72), yaw, pitch, roll), pos),
+        aft: norm(rotateShipPoint(vec(0, 0, -1), yaw, pitch, roll))
+      }];
+    }
+
+    function drawHangarEngineEffects(w, h, scene, view, opts = {}) {
+      if (!ultraFxEnabled()) return;
+      const modelName = scene?.shipModel || playerShipModel();
+      const glow = clamp(opts.engineGlow ?? 1, 0, 1);
+      if (glow <= .02) return;
+      const pos = opts.pos || vec(0, -105, 430);
+      const scaleFactor = opts.scaleFactor || 1.16;
+      const yaw = opts.yaw ?? .68;
+      const pitch = opts.pitch ?? .28;
+      const roll = opts.roll ?? -.08;
+      const anchors = hangarEngineAnchors(modelName, pos, scaleFactor, yaw, pitch, roll);
+      const now = performance.now() / 1000;
+      const trailMul = opts.trail ?? 1;
+      const puffStore = scene._hangarEnginePuffs || (scene._hangarEnginePuffs = []);
+      const lastNow = scene._hangarEnginePuffClock || now;
+      const dt = clamp(now - lastNow, 0, .08);
+      scene._hangarEnginePuffClock = now;
+      for (const p of puffStore) p.t += dt;
+      if (trailMul > .03) {
+        scene._hangarEngineSpawnClock = (scene._hangarEngineSpawnClock || 0) - dt;
+        if (scene._hangarEngineSpawnClock <= 0) {
+          scene._hangarEngineSpawnClock = .035 + Math.random() * .025;
+          const engineMul = anchors.length > 3 ? .82 : 1;
+          for (const anchor of anchors) {
+            puffStore.push(makeEnginePlasmaPuff(anchor.pos, anchor.aft, clamp(trailMul * 1.25, .55, 2.2) * engineMul));
+          }
+        }
+      }
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      for (const p of puffStore) {
+        const age = clamp(p.t / p.dur, 0, 1);
+        if (age >= 1) continue;
+        const worldPos = add(p.pos, scale(p.drift, p.t));
+        const rel = cameraTransform(worldPos, view);
+        const pr = project(rel, w, h);
+        if (!pr) continue;
+        const tailWorld = sub(worldPos, scale(p.drift, Math.min(p.t, p.tailTime || .45) + .2));
+        const tailRel = cameraTransform(tailWorld, view);
+        drawEnginePlasmaVisual(pr, project(tailRel, w, h), p, age);
+      }
+      if (puffStore.length > 180) puffStore.splice(0, puffStore.length - 180);
+      for (let i = puffStore.length - 1; i >= 0; i--) {
+        if (puffStore[i].t >= puffStore[i].dur) puffStore.splice(i, 1);
+      }
+      for (const [idx, anchor] of anchors.entries()) {
+        const head = hangarProject(anchor.pos, view, w, h);
+        if (!head) continue;
+        const camHead = cameraTransform(anchor.pos, view);
+        const baseS = clamp(220 / Math.max(60, camHead.z), .35, 2.6);
+        const r = clamp(baseS * (28 + glow * 42) * scaleFactor, 8, 82);
+        const core = ctx.createRadialGradient(head.x, head.y, 0, head.x, head.y, r);
+        core.addColorStop(0, `hsla(202,96%,86%,${.62 * glow})`);
+        core.addColorStop(.18, `hsla(196,94%,68%,${.38 * glow})`);
+        core.addColorStop(.46, `hsla(190,90%,52%,${.22 * glow})`);
+        core.addColorStop(1, "hsla(206,90%,42%,0)");
+        ctx.fillStyle = core;
+        ctx.beginPath();
+        ctx.arc(head.x, head.y, r, 0, TAU);
+        ctx.fill();
+        const halo = ctx.createRadialGradient(head.x, head.y, 0, head.x, head.y, r * 1.85);
+        halo.addColorStop(0, `hsla(196,95%,70%,${.18 * glow})`);
+        halo.addColorStop(.35, `hsla(190,90%,52%,${.1 * glow})`);
+        halo.addColorStop(1, "hsla(210,90%,40%,0)");
+        ctx.fillStyle = halo;
+        ctx.beginPath();
+        ctx.arc(head.x, head.y, r * 1.85, 0, TAU);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawHangarShip(w, h, scene, view, opts = {}) {
+      const modelName = scene?.shipModel || playerShipModel();
+      const model = MODELS[modelName];
+      if (!model) return;
+      const pos = opts.pos || vec(0, -105, 430);
+      const scaleFactor = opts.scaleFactor || 1.16;
+      const yaw = opts.yaw ?? .68;
+      const pitch = opts.pitch ?? .28;
+      const roll = opts.roll ?? -.08;
+      const worldVerts = model.verts.map(([x, y, z]) => add(rotateShipPoint(vec(x * scaleFactor, y * scaleFactor, z * scaleFactor), yaw, pitch, roll), pos));
+      const camVerts = worldVerts.map((p) => cameraTransform(p, view));
+      const pts = camVerts.map((p) => project(p, w, h));
+      const hullColor = shipColor(modelName, POLICE_MODELS.includes(modelName));
+      const camPos = cameraTransform(pos, view);
+      const shipObj = {
+        type: "ship",
+        model: modelName,
+        rot: yaw,
+        pitch,
+        roll,
+        cam: camPos,
+        engineGlow: opts.engineGlow ?? 1,
+        project: (p) => project(p, w, h),
+        playerDamageMarks: (opts.damageMarks || []).map((m) => ({
+          ...m,
+          x: m.x * scaleFactor,
+          y: m.y * scaleFactor,
+          z: m.z * scaleFactor,
+          radius: (m.radius || 12) * scaleFactor
+        }))
+      };
+      ctx.save();
+      ctx.globalAlpha = opts.alpha ?? 1;
+      if (game.graphicsMode === "wire") {
+        drawSolidItems(ctx, collectSolidFaces(model, camVerts, pts, "#000", 1, true, null, { project: (p) => project(p, w, h) }));
+      } else {
+        drawSolidItems(ctx, collectSolidFaces(model, camVerts, pts, hullColor, 1, false, getPreviewShipDecal(modelName), { project: (p) => project(p, w, h) }));
+        drawSolidItems(ctx, collectSolidDetails(model, shipObj, camVerts, pts, w, h, scaleFactor, view));
+        drawPlayerHullDamageMarks(shipObj, camPos, w, h, view, (p) => project(p, w, h));
+      }
+      if (game.graphicsMode !== "solid") {
+        ctx.strokeStyle = game.graphicsMode === "both" ? ULTRA_WIRE_STROKE : hullColor;
+        ctx.lineWidth = Math.max(.8, (opts.scale ?? 1) * 1.15);
+        const faceVisible = collectWireFaceVisibility(model, camVerts);
+        ctx.beginPath();
+        for (let edgeIndex = 0; edgeIndex < model.edges.length; edgeIndex++) {
+          if (!wireEdgeVisible(model, edgeIndex, faceVisible)) continue;
+          const [a, b] = model.edges[edgeIndex];
+          if (!pts[a] || !pts[b]) continue;
+          ctx.moveTo(pts[a].x, pts[a].y);
+          ctx.lineTo(pts[b].x, pts[b].y);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawHangarSparkles(w, h, seed, strength = 1) {
+      const rng = mulberry(seed || 1);
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      for (let i = 0; i < 38; i++) {
+        const x = w * (.32 + rng() * .38);
+        const y = h * (.34 + rng() * .36);
+        const tw = .5 + .5 * Math.sin(performance.now() / (170 + rng() * 160) + rng() * TAU);
+        const a = strength * tw * (.18 + rng() * .42);
+        const r = 2 + rng() * 9;
+        ctx.strokeStyle = `rgba(230,255,220,${a})`;
+        ctx.lineWidth = .8 + rng() * .7;
+        ctx.beginPath();
+        ctx.moveTo(x - r, y);
+        ctx.lineTo(x + r, y);
+        ctx.moveTo(x, y - r);
+        ctx.lineTo(x, y + r);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawHangarCaption(w, h, scene, alpha = 1, repaired = false) {
+      const station = scene?.stationName || game.dockedAt || `${currentSystem().name} STATION`;
+      ctx.save();
+      ctx.textAlign = "center";
+      ctx.shadowColor = "rgba(101,255,71,.35)";
+      ctx.shadowBlur = 8;
+      ctx.fillStyle = `rgba(101,255,71,${alpha * .88})`;
+      ctx.font = `${Math.max(14, w * .014)}px ${UI_CANVAS_FONT}`;
+      ctx.fillText(`WELCOME TO ${station.toUpperCase()}`, w / 2, h * .2);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = `rgba(145,167,141,${alpha * .8})`;
+      ctx.font = `${Math.max(9, w * .0085)}px ${UI_CANVAS_FONT}`;
+      const line = repaired && scene?.hullRepaired
+        ? (scene.repairLine || "Hull repair complete.")
+        : "Docking clamps secured. Station services online.";
+      ctx.fillText(line.toUpperCase(), w / 2, h * .235);
+      ctx.restore();
+    }
+
+    function hangarShipParkPos() {
+      return vec(0, -116, 430);
+    }
+
+    function drawLaunchHangarSequence(w, h, tr) {
+      const scene = tr.scene || game.dockScene || {};
+      const p = clamp(tr.t / tr.dur, 0, 1);
+      const modelName = scene?.shipModel || playerShipModel();
+      const spool = smoothstep(.16, .36, p);
+      const lift = smoothstep(.36, .58, p);
+      const exit = Math.pow(smoothstep(.58, .88, p), 2.15);
+      const shipBase = hangarShipParkPos();
+      const shipPos = vec(
+        0,
+        lerp(shipBase.y, -78, lift),
+        lerp(shipBase.z, 965, exit * exit)
+      );
+      const cameraPos = vec(-235 + Math.sin(p * TAU * .7) * 18, -132, 170 + exit * 160);
+      const target = vec(0, lerp(-104, -72, lift), lerp(450, 695, exit));
+      const view = makeHangarCamera(cameraPos, target);
+      drawHangarRoom(w, h, scene, view);
+      const shipOpts = {
+        pos: shipPos,
+        scaleFactor: hangarShipScale(modelName, 1.16),
+        yaw: 0,
+        pitch: lerp(.04, -.08, exit),
+        roll: Math.sin(p * TAU) * .012 * (1 - exit),
+        engineGlow: spool,
+        damageMarks: []
+      };
+      drawHangarEngineEffects(w, h, scene, view, { ...shipOpts, trail: spool * (1 + exit * .9) });
+      drawHangarShip(w, h, scene, view, shipOpts);
+      drawHangarEngineEffects(w, h, scene, view, { ...shipOpts, trail: 0 });
+
+      const fadeOut = smoothstep(.92, 1, p);
+      ctx.save();
+      ctx.textAlign = "center";
+      ctx.shadowColor = "rgba(101,255,71,.35)";
+      ctx.shadowBlur = 8;
+      ctx.font = `${Math.max(13, w * .012)}px ${UI_CANVAS_FONT}`;
+      ctx.fillStyle = `rgba(101,255,71,${(1 - fadeOut) * .88})`;
+      const status = p < .2
+        ? "CLEAR FOR TAKE OFF"
+        : p < .42
+          ? "START ENGINES - DRIVE CORES RISING"
+          : p < .72
+            ? "ELEVATING FROM DECK"
+            : "DEPARTURE VECTOR LOCKED - FORCEFIELD EXIT";
+      ctx.fillText(status, w / 2, h * .2);
+      ctx.shadowBlur = 0;
+      ctx.font = `${Math.max(8, w * .0075)}px ${UI_CANVAS_FONT}`;
+      ctx.fillStyle = `rgba(145,167,141,${(1 - fadeOut) * .78})`;
+      ctx.fillText(`LAUNCH CONTROL ${Math.round(p * 100).toString().padStart(3, "0")}% - MAG CLAMPS CLEAR`, w / 2, h * .232);
+      if (fadeOut > .01) {
+        ctx.fillStyle = `rgba(0,0,0,${fadeOut})`;
+        ctx.fillRect(0, 0, w, h);
+      }
+      ctx.restore();
+    }
+
+    function drawDockHangarSequence(w, h, tr) {
+      const scene = tr.scene || game.dockScene || {};
+      const p = clamp(tr.t / tr.dur, 0, 1);
+      const modelName = scene?.shipModel || playerShipModel();
+      const arrival = easeInOut(smoothstep(.14, .54, p));
+      const fadeIn = smoothstep(.08, .22, p);
+      const serviceFade = smoothstep(.64, .74, p) - smoothstep(.82, .9, p);
+      const repaired = p > .82;
+      const settle = smoothstep(.48, .68, p);
+      const bounce = Math.sin(clamp((p - .56) / .18, 0, 1) * Math.PI) * 11;
+      const engineGlow = 1 - smoothstep(.56, .76, p);
+      const view = makeHangarCamera(vec(0, -145, 95), vec(0, -103, 515));
+      drawHangarRoom(w, h, scene, view);
+      const parked = hangarShipParkPos();
+      const shipOpts = {
+        pos: vec(0, lerp(-52, parked.y, arrival) + bounce, lerp(850, parked.z, arrival)),
+        scaleFactor: hangarShipScale(modelName, lerp(.78, 1.12, arrival)),
+        yaw: lerp(Math.PI + .24, 0, settle),
+        pitch: lerp(.16, .04, settle),
+        roll: (1 - settle) * -.12,
+        alpha: clamp(fadeIn * (1 - serviceFade * .92), .08, 1),
+        engineGlow,
+        damageMarks: repaired ? [] : scene.preRepairMarks
+      };
+      drawHangarEngineEffects(w, h, scene, view, { ...shipOpts, trail: engineGlow * (1 - settle * .45) });
+      drawHangarShip(w, h, scene, view, shipOpts);
+      drawHangarEngineEffects(w, h, scene, view, { ...shipOpts, trail: 0 });
+      if (p > .82) drawHangarSparkles(w, h, (scene.seed || 1) ^ 0x9e3779b9, smoothstep(.82, .96, p));
+      drawHangarCaption(w, h, scene, fadeIn, repaired);
+      if (p > .62 && serviceFade < .25) {
+        ctx.save();
+        ctx.textAlign = "center";
+        ctx.fillStyle = `rgba(145,167,141,${smoothstep(.62, .76, p) * .78})`;
+        ctx.font = `${Math.max(8, w * .0075)}px ${UI_CANVAS_FONT}`;
+        ctx.fillText("ENGINE PLASMA DISCHARGE SAFE - DRIVE CORES IDLE", w / 2, h * .265);
+        ctx.restore();
+      }
+      if (serviceFade > .02) {
+        ctx.fillStyle = `rgba(0,0,0,${clamp(serviceFade, 0, .94)})`;
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = `rgba(101,255,71,${serviceFade * .8})`;
+        ctx.textAlign = "center";
+        ctx.font = `${Math.max(12, w * .011)}px ${UI_CANVAS_FONT}`;
+        ctx.fillText(scene.hullRepaired ? "STATION SERVICE BAY - HULL REPAIR" : "STATION SERVICE BAY - TURNAROUND COMPLETE", w / 2, h * .52);
+      }
+      const black = 1 - fadeIn;
+      if (black > .01) {
+        ctx.fillStyle = `rgba(0,0,0,${black})`;
+        ctx.fillRect(0, 0, w, h);
+      }
+    }
+
     function drawWarpStars(w, h, color, progress, lengthMul = 1) {
       const cx = w / 2, cy = h / 2;
       ctx.save();
@@ -6653,6 +8421,128 @@
       core.addColorStop(1, "rgba(0,0,0,0)");
       ctx.fillStyle = core;
       ctx.fillRect(0, 0, w, h);
+      ctx.restore();
+    }
+
+    function randomSphereDir(rng) {
+      const y = rng() * 2 - 1;
+      const a = rng() * TAU;
+      const r = Math.sqrt(Math.max(0, 1 - y * y));
+      return vec(Math.cos(a) * r, y, Math.sin(a) * r);
+    }
+
+    function tangentFrameForDir(dir) {
+      let a = cross(Math.abs(dir.y) > .82 ? vec(1, 0, 0) : vec(0, 1, 0), dir);
+      if (len(a) < .001) a = cross(vec(0, 0, 1), dir);
+      a = norm(a);
+      return { a, b: norm(cross(dir, a)) };
+    }
+
+    function buildGalaxyBackdrop(seed) {
+      const rng = mulberry(seed);
+      const planeA = randomSphereDir(rng);
+      let planeB = cross(planeA, randomSphereDir(rng));
+      if (len(planeB) < .01) planeB = cross(planeA, vec(0, 1, 0));
+      planeB = norm(planeB);
+      const planeN = norm(cross(planeA, planeB));
+      const palette = [
+        [210 + rng() * 35, 80, 56],
+        [142 + rng() * 42, 74, 48],
+        [330 + rng() * 40, 78, 52],
+        [24 + rng() * 30, 88, 52]
+      ];
+      const clouds = [];
+      for (let i = 0; i < 96; i++) {
+        const [hue, sat, light] = palette[Math.floor(rng() * palette.length)];
+        const a = rng() * TAU;
+        const lat = (rng() - .5) * (rng() < .72 ? .62 : 1.65);
+        const dir = norm(add(
+          add(scale(planeA, Math.cos(a) * Math.cos(lat)), scale(planeB, Math.sin(a) * Math.cos(lat))),
+          scale(planeN, Math.sin(lat))
+        ));
+        const angular = rng() < .18 ? .19 + rng() * .18 : .055 + rng() * .14;
+        const alpha = rng() < .18 ? .11 + rng() * .08 : .045 + rng() * .075;
+        const frame = tangentFrameForDir(dir);
+        const puffCount = 3 + Math.floor(rng() * (angular > .18 ? 7 : 4));
+        for (let p = 0; p < puffCount; p++) {
+          const pa = rng() * TAU;
+          const pr = Math.pow(rng(), .55) * angular * .88;
+          const local = add(scale(frame.a, Math.cos(pa) * pr), scale(frame.b, Math.sin(pa) * pr));
+          clouds.push({
+            dir: norm(add(dir, local)),
+            hue: hue + (rng() - .5) * 18,
+            sat,
+            light,
+            angular: angular * (.42 + rng() * .42),
+            alpha: alpha / Math.sqrt(puffCount) * (.72 + rng() * .62)
+          });
+        }
+      }
+      const bursts = Array.from({ length: 90 }, () => ({
+        dir: randomSphereDir(rng),
+        size: .004 + rng() * .026,
+        alpha: .06 + rng() * .2,
+        hue: rng() < .38 ? palette[Math.floor(rng() * palette.length)][0] : 210 + rng() * 20
+      }));
+      return { clouds, bursts };
+    }
+
+    function galaxyBackdrop() {
+      const sys = currentSystem();
+      const key = `${game.galaxy}:${sys.index}:${sys.name}`;
+      let backdrop = galaxyBackdropCache.get(key);
+      if (!backdrop) {
+        backdrop = buildGalaxyBackdrop(hash32(`galaxy-backdrop:${key}`));
+        galaxyBackdropCache.set(key, backdrop);
+        if (galaxyBackdropCache.size > 12) galaxyBackdropCache.delete(galaxyBackdropCache.keys().next().value);
+      }
+      return backdrop;
+    }
+
+    function drawGalaxyBackdrop(w, h) {
+      if (game.fxLevel === "classic") return;
+      const backdrop = galaxyBackdrop();
+      const camInv = quatConj(ensureCameraQuat(game.camera));
+      const f = Math.min(w, h) * .82;
+      const toScreen = (dir) => {
+        const p = quatRotate(camInv, dir);
+        if (p.z <= .035) return null;
+        return { x: w / 2 + (p.x / p.z) * f, y: h / 2 - (p.y / p.z) * f, z: p.z, p };
+      };
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      for (const cloud of backdrop.clouds) {
+        const pr = toScreen(cloud.dir);
+        if (!pr) continue;
+        const edgeFade = smoothstep(.07, .34, pr.z);
+        const r = clamp((f * cloud.angular) / Math.max(.18, pr.z), 12, Math.max(w, h) * .32);
+        const alpha = cloud.alpha * edgeFade * (game.witchspace ? .42 : 1.2);
+        if (alpha <= .008) continue;
+        const g = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, r);
+        g.addColorStop(0, `hsla(${cloud.hue},${cloud.sat}%,${Math.min(86, cloud.light + 24)}%,${alpha})`);
+        g.addColorStop(.42, `hsla(${cloud.hue},${cloud.sat}%,${cloud.light}%,${alpha * .42})`);
+        g.addColorStop(1, `hsla(${cloud.hue},${cloud.sat}%,${Math.max(20, cloud.light - 20)}%,0)`);
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(pr.x, pr.y, r, 0, TAU);
+        ctx.fill();
+      }
+      ctx.globalCompositeOperation = "lighter";
+      for (const burst of backdrop.bursts) {
+        const pr = toScreen(burst.dir);
+        if (!pr) continue;
+        const edgeFade = clamp((pr.z - .035) / .18, 0, 1);
+        const alpha = burst.alpha * edgeFade * (game.witchspace ? .38 : .82);
+        const s = clamp(f * burst.size / Math.max(.12, pr.z), 1.5, 24);
+        ctx.strokeStyle = `hsla(${burst.hue},82%,86%,${alpha})`;
+        ctx.lineWidth = clamp(s * .12, .6, 1.8);
+        ctx.beginPath();
+        ctx.moveTo(pr.x - s * 1.7, pr.y);
+        ctx.lineTo(pr.x + s * 1.7, pr.y);
+        ctx.moveTo(pr.x, pr.y - s);
+        ctx.lineTo(pr.x, pr.y + s);
+        ctx.stroke();
+      }
       ctx.restore();
     }
 
@@ -7003,6 +8893,36 @@
       }
     }
 
+    function drawEnginePlasmaVisual(pr, tailPr, p, age) {
+      const hue = p.hue || 204;
+      const solid = clamp(1 - age / .18, 0, 1);
+      const fade = Math.pow(1 - age, .85);
+      const alpha = p.alpha * fade;
+      const r = clamp(p.radius * pr.s * (1 + age * 4.8), 1.4, 32);
+      ctx.globalCompositeOperation = "screen";
+      if (tailPr) {
+        const grad = ctx.createLinearGradient(tailPr.x, tailPr.y, pr.x, pr.y);
+        grad.addColorStop(0, `hsla(${hue},92%,56%,0)`);
+        grad.addColorStop(.38, `hsla(${hue},92%,58%,${alpha * (.22 + solid * .12)})`);
+        grad.addColorStop(1, `hsla(${hue + 12},95%,72%,${alpha * (.42 + solid * .28)})`);
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = clamp(r * (.72 + solid * .35), 1.2, 10);
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(tailPr.x, tailPr.y);
+        ctx.lineTo(pr.x, pr.y);
+        ctx.stroke();
+      }
+      const g = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, r * 3.4);
+      g.addColorStop(0, `hsla(${hue + 10},95%,70%,${alpha * (.22 + solid * .24)})`);
+      g.addColorStop(.45, `hsla(${hue},95%,54%,${alpha * .14})`);
+      g.addColorStop(1, `hsla(${hue},95%,42%,0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(pr.x, pr.y, r * 3.4, 0, TAU);
+      ctx.fill();
+    }
+
     function drawSmokePuffs(w, h) {
       if (!ultraFxEnabled()) return;
       ctx.save();
@@ -7079,32 +8999,7 @@
             continue;
           }
           if (isEngine) {
-            const solid = clamp(1 - age / .18, 0, 1);
-            const fade = Math.pow(1 - age, .85);
-            const alpha = p.alpha * fade;
-            const r = clamp(p.radius * pr.s * (1 + age * 4.8), 1.4, 32);
-            ctx.globalCompositeOperation = "screen";
-            if (tailPr) {
-              const grad = ctx.createLinearGradient(tailPr.x, tailPr.y, pr.x, pr.y);
-              grad.addColorStop(0, `hsla(${hue},92%,56%,0)`);
-              grad.addColorStop(.38, `hsla(${hue},92%,58%,${alpha * (.22 + solid * .12)})`);
-              grad.addColorStop(1, `hsla(${hue + 12},95%,72%,${alpha * (.42 + solid * .28)})`);
-              ctx.strokeStyle = grad;
-              ctx.lineWidth = clamp(r * (.72 + solid * .35), 1.2, 10);
-              ctx.lineCap = "round";
-              ctx.beginPath();
-              ctx.moveTo(tailPr.x, tailPr.y);
-              ctx.lineTo(pr.x, pr.y);
-              ctx.stroke();
-            }
-            const g = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, r * 3.4);
-            g.addColorStop(0, `hsla(${hue + 10},95%,70%,${alpha * (.22 + solid * .24)})`);
-            g.addColorStop(.45, `hsla(${hue},95%,54%,${alpha * .14})`);
-            g.addColorStop(1, `hsla(${hue},95%,42%,0)`);
-            ctx.fillStyle = g;
-            ctx.beginPath();
-            ctx.arc(pr.x, pr.y, r * 3.4, 0, TAU);
-            ctx.fill();
+            drawEnginePlasmaVisual(pr, tailPr, p, age);
             continue;
           }
           const alpha = p.alpha * (1 - age) * (1 - age * .25);
@@ -8225,6 +10120,47 @@
       drawWireModel(model, o, cam, w, h);
     }
 
+    function drawPlayerHullDamageMarks(o, cam, w, h, camera = game.camera, projectFn = null) {
+      if (!ultraFxEnabled() || !o.playerDamageMarks?.length) return;
+      const roll = o.roll ?? (o.rot || 0) * .7;
+      const orient = (v) => o.quat ? quatRotate(o.quat, v) : rotateShipPoint(v, o.rot || 0, o.pitch || 0, roll);
+      ctx.save();
+      for (const mark of o.playerDamageMarks) {
+        const local = vec(mark.x, mark.y, mark.z);
+        const normalLocal = norm(local);
+        const camPos = add(worldDirToCam(orient(local), camera), cam);
+        const camNormal = worldDirToCam(norm(orient(normalLocal)), camera);
+        const facing = -dot(camNormal, norm(camPos));
+        if (facing <= .02) continue;
+        const pr = projectFn ? projectFn(camPos) : project(camPos, w, h);
+        if (!pr) continue;
+
+        const radius = clamp((mark.radius || 12) * pr.s * (.82 + facing * .55), 3.5, 36);
+        const alpha = clamp((.38 + (mark.severity || .35) * .42) * (.36 + facing * .7), .18, .82);
+        const scorch = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, radius);
+        scorch.addColorStop(0, `rgba(12,8,5,${alpha})`);
+        scorch.addColorStop(.38, `rgba(68,28,12,${alpha * .46})`);
+        scorch.addColorStop(.72, `rgba(18,14,10,${alpha * .2})`);
+        scorch.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.globalCompositeOperation = "multiply";
+        ctx.fillStyle = scorch;
+        ctx.beginPath();
+        ctx.arc(pr.x, pr.y, radius, 0, TAU);
+        ctx.fill();
+
+        ctx.globalCompositeOperation = "source-over";
+        ctx.strokeStyle = `rgba(255,152,60,${alpha * .28})`;
+        ctx.lineWidth = Math.max(.7, radius * .055);
+        ctx.beginPath();
+        ctx.moveTo(pr.x - radius * .35, pr.y - radius * .08);
+        ctx.lineTo(pr.x + radius * .28, pr.y + radius * .04);
+        ctx.moveTo(pr.x - radius * .1, pr.y + radius * .31);
+        ctx.lineTo(pr.x + radius * .16, pr.y - radius * .26);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
     function drawDockPortal(points, station) {
       if (points.some((p) => !p)) return;
       const [a, b, c, d] = points;
@@ -8251,17 +10187,16 @@
       ctx.fillStyle = "#000";
       ctx.fillRect(bounds.minX - 6, bounds.minY - 6, bounds.maxX - bounds.minX + 12, bounds.maxY - bounds.minY + 12);
       if (ultraFxEnabled()) {
-        // Subtle inner docking tunnel: nested slot-local quads imply depth without
-        // becoming a separate animated texture on the station face.
-        const tunnelDepth = 5;
-        for (let i = tunnelDepth; i >= 1; i--) {
-          const t = i / tunnelDepth;
-          const inset = .06 + t * .32;
-          const p0 = quadPoint(inset, inset);
-          const p1 = quadPoint(1 - inset, inset);
-          const p2 = quadPoint(1 - inset, 1 - inset);
-          const p3 = quadPoint(inset, 1 - inset);
-          ctx.fillStyle = `rgba(${12 + i * 4},${16 + i * 5},${18 + i * 7},${.18 - t * .018})`;
+        // Slot-local hangar glimpse: textured wall/floor/ceiling panels sit behind the
+        // blue field, so from outside the entrance reads as a real station interior.
+        const tex = getStationTexture(station?.stationStyle || stationStyleForSystem(currentSystem()));
+        const texQuad = (p0, p1, p2, p3, alpha = .55, shade = "rgba(0,0,0,.15)") => {
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          drawTexturedTriangle(ctx, tex, p0.x, p0.y, p1.x, p1.y, p2.x, p2.y, 0, 0, tex.width, 0, tex.width, tex.height);
+          drawTexturedTriangle(ctx, tex, p0.x, p0.y, p2.x, p2.y, p3.x, p3.y, 0, 0, tex.width, tex.height, 0, tex.height);
+          ctx.restore();
+          ctx.fillStyle = shade;
           ctx.beginPath();
           ctx.moveTo(p0.x, p0.y);
           ctx.lineTo(p1.x, p1.y);
@@ -8269,20 +10204,41 @@
           ctx.lineTo(p3.x, p3.y);
           ctx.closePath();
           ctx.fill();
-          ctx.strokeStyle = `rgba(95,120,130,${.12 - t * .015})`;
-          ctx.lineWidth = Math.max(.7, span * (.0028 + t * .0016));
-          ctx.stroke();
-        }
-        ctx.strokeStyle = "rgba(150,170,165,.13)";
-        ctx.lineWidth = Math.max(.8, span * .004);
-        for (const u of [.18, .82]) {
-          const p0 = quadPoint(u, .08);
-          const p1 = quadPoint(lerp(u, .5, .62), .5);
-          const p2 = quadPoint(u, .92);
+        };
+        const back = [.26, .22, .74, .78];
+        const b0 = quadPoint(back[0], back[1]);
+        const b1 = quadPoint(back[2], back[1]);
+        const b2 = quadPoint(back[2], back[3]);
+        const b3 = quadPoint(back[0], back[3]);
+        texQuad(quadPoint(.05, .05), quadPoint(.95, .05), b1, b0, .42, "rgba(0,0,0,.22)");
+        texQuad(quadPoint(.05, .95), b3, b2, quadPoint(.95, .95), .46, "rgba(0,0,0,.08)");
+        texQuad(quadPoint(.05, .05), b0, b3, quadPoint(.05, .95), .48, "rgba(0,0,0,.32)");
+        texQuad(b1, quadPoint(.95, .05), quadPoint(.95, .95), b2, .48, "rgba(0,0,0,.28)");
+        texQuad(b0, b1, b2, b3, .52, "rgba(0,0,0,.38)");
+
+        ctx.strokeStyle = "rgba(190,205,180,.16)";
+        ctx.lineWidth = Math.max(.7, span * .0032);
+        for (let i = 1; i < 5; i++) {
+          const t = i / 5;
+          const p0 = quadPoint(lerp(.07, back[0], t), lerp(.08, back[1], t));
+          const p1 = quadPoint(lerp(.93, back[2], t), lerp(.08, back[1], t));
+          const p2 = quadPoint(lerp(.07, back[0], t), lerp(.92, back[3], t));
+          const p3 = quadPoint(lerp(.93, back[2], t), lerp(.92, back[3], t));
           ctx.beginPath();
           ctx.moveTo(p0.x, p0.y);
           ctx.lineTo(p1.x, p1.y);
-          ctx.lineTo(p2.x, p2.y);
+          ctx.moveTo(p2.x, p2.y);
+          ctx.lineTo(p3.x, p3.y);
+          ctx.stroke();
+        }
+        ctx.strokeStyle = "rgba(225,245,220,.24)";
+        ctx.lineWidth = Math.max(1, span * .007);
+        for (const u of [.38, .62]) {
+          const p0 = quadPoint(u, .12);
+          const p1 = quadPoint(lerp(u, .5, .55), .33);
+          ctx.beginPath();
+          ctx.moveTo(p0.x, p0.y);
+          ctx.lineTo(p1.x, p1.y);
           ctx.stroke();
         }
       }
@@ -8399,10 +10355,11 @@
       const points = camVerts.map((p) => project(p, w, h));
       const mode = game.graphicsMode;
       if (mode === "wire") {
-        drawSolidItems(ctx, collectSolidFaces(model, camVerts, points, "#000", 1, true));
+        drawSolidItems(ctx, collectSolidFaces(model, camVerts, points, "#000", 1, true, null, { project: (p) => project(p, w, h) }));
       } else {
         drawSolidItems(ctx, collectSolidFaces(model, camVerts, points, o.color || "#e9f2e4", 1, false, getShipDecal(o), { project: (p) => project(p, w, h) }));
         drawSolidItems(ctx, collectSolidDetails(model, { ...o, cam }, camVerts, points, w, h));
+        drawPlayerHullDamageMarks(o, cam, w, h);
         if (o.police && ultraFxEnabled()) drawPoliceStrobes(ctx, points);
       }
       if (mode !== "solid") {
@@ -8438,7 +10395,7 @@
       const pts = camVerts.map((p) => project(p, w, h));
       const mode = game.graphicsMode;
       if (mode === "wire") {
-        drawSolidItems(ctx, collectSolidFaces(model, camVerts, pts, "#000", 1, true));
+        drawSolidItems(ctx, collectSolidFaces(model, camVerts, pts, "#000", 1, true, null, { project: (p) => project(p, w, h) }));
       } else {
         drawSolidItems(ctx, collectSolidFaces(model, camVerts, pts, o.color || "#d8ded4", 1, false, null, {
           texture: getStationTexture(o.stationStyle || stationStyleForSystem(currentSystem())),
@@ -8478,25 +10435,55 @@
       }
     }
 
-    function drawDockedBackdrop(w, h) {
-      ctx.fillStyle = "rgba(0,0,0,.5)";
+    function drawClassicDockedBackdrop(w, h, scene) {
+      ctx.fillStyle = "#000";
       ctx.fillRect(0, 0, w, h);
-      ctx.strokeStyle = "rgba(101,255,71,.18)";
-      ctx.lineWidth = Math.max(.5, w / 2200);
-      for (let i = 0; i < 7; i++) {
-        const y = h * .24 + i * h * .07;
-        ctx.beginPath();
-        ctx.moveTo(w * .3 - i * 13, y);
-        ctx.lineTo(w * .7 + i * 13, y);
-        ctx.stroke();
-      }
-      ctx.fillStyle = "#65ff47";
+      drawHangarCaption(w, h, scene, .9, true);
+      ctx.save();
       ctx.textAlign = "center";
-      ctx.font = `${Math.max(16, Math.floor(w / 42))}px ${UI_CANVAS_FONT}`;
-      ctx.fillText(`DOCKED AT ${game.dockedAt || currentSystem().name + " STATION"}`, w / 2, h * .48);
-      ctx.font = `${Math.max(11, Math.floor(w / 76))}px ${UI_CANVAS_FONT}`;
-      ctx.fillStyle = "#91a78d";
-      ctx.fillText("MARKET, EQUIPMENT, CHARTS AND COMMANDER STATUS AVAILABLE", w / 2, h * .55);
+      ctx.font = `${Math.max(9, w * .0085)}px ${UI_CANVAS_FONT}`;
+      ctx.fillStyle = "rgba(145,167,141,.74)";
+      ctx.fillText("MARKET, EQUIPMENT, CHARTS AND COMMANDER STATUS AVAILABLE", w / 2, h * .58);
+      ctx.restore();
+    }
+
+    function drawDockedBackdrop(w, h) {
+      if (!game.dockScene) {
+        game.dockScene = makeDockScene(game.dockedAt || `${currentSystem().name} STATION`, false, "", []);
+      }
+      const scene = game.dockScene;
+      syncDockSceneShip();
+      if (!ultraFxEnabled()) {
+        drawClassicDockedBackdrop(w, h, scene);
+        return;
+      }
+      const modelName = scene?.shipModel || playerShipModel();
+      const t = performance.now() / 7200;
+      const shipPos = hangarShipParkPos();
+      const orbitAxis = norm(vec(.16, 1, .09));
+      const orbitBase = vec(0, -26, -315);
+      const camOffset = quatRotate(quatFromAxisAngle(orbitAxis, t), orbitBase);
+      const camPos = add(shipPos, camOffset);
+      camPos.y = Math.max(camPos.y, -128);
+      const view = makeHangarCamera(camPos, shipPos);
+      drawHangarRoom(w, h, scene, view);
+      drawHangarShip(w, h, scene, view, {
+        pos: shipPos,
+        scaleFactor: hangarShipScale(modelName, 1.16),
+        yaw: Math.sin(t * .9) * .045,
+        pitch: .04 + Math.sin(t * .65) * .018,
+        roll: Math.sin(performance.now() / 8400) * .025,
+        engineGlow: 0,
+        damageMarks: []
+      });
+      drawHangarSparkles(w, h, scene.seed ^ 0x51ed270b, .42);
+      drawHangarCaption(w, h, scene, .9, true);
+      ctx.save();
+      ctx.textAlign = "center";
+      ctx.font = `${Math.max(9, w * .0085)}px ${UI_CANVAS_FONT}`;
+      ctx.fillStyle = "rgba(145,167,141,.74)";
+      ctx.fillText("MARKET, EQUIPMENT, CHARTS AND COMMANDER STATUS AVAILABLE", w / 2, h * .875);
+      ctx.restore();
     }
 
     function scannerStyleFor(o) {
@@ -8623,7 +10610,7 @@
       const w = foreAftRadar.width, h = foreAftRadar.height;
       rctx.clearRect(0, 0, w, h);
       const cx = w / 2, cy = h / 2;
-      const radius = Math.min(w, h) * .43;
+      const radius = Math.min(w, h) * .38;
       rctx.strokeStyle = "#2bb934";
       rctx.lineWidth = Math.max(1, Math.min(w, h) / 120);
       rctx.beginPath();
@@ -8642,11 +10629,11 @@
       rctx.stroke();
       rctx.globalAlpha = 1;
       rctx.fillStyle = "#ffd33d";
-      rctx.font = `${Math.max(8, Math.floor(radius * .18))}px ${UI_CANVAS_FONT}`;
+      rctx.font = `${Math.max(7, Math.floor(radius * .17))}px ${UI_CANVAS_FONT}`;
       rctx.textAlign = "center";
-      rctx.fillText("FWD", cx, cy - radius - 4);
+      rctx.fillText("FWD", cx, cy - radius - 2);
       rctx.fillStyle = "#65ff47";
-      rctx.fillText("AFT", cx, cy + radius + 10);
+      rctx.fillText("AFT", cx, cy + radius + 8);
       rctx.beginPath();
       rctx.arc(cx, cy, 2.5, 0, TAU);
       rctx.fill();
@@ -8805,7 +10792,6 @@
       }).join("");
       return `<div class="notice">Local tech level ${sys.tech + 1}. Missiles cost 30 CR each and refill one rack slot.</div>
         <button class="btn" data-missile ${game.docked && game.credits >= 30 && game.missiles < 4 ? "" : "disabled"}>Buy Missile</button>
-        <button class="btn warn" data-galjump ${game.equipment.galacticHyperdrive ? "" : "disabled"}>Use Galactic Hyperdrive</button>
         ${rows}`;
     }
 
@@ -8832,7 +10818,8 @@
       <div class="notice" style="margin-top:10px">${s.name} is ${s.description}.</div>
       <div class="notice save-actions">
         <button class="btn" data-save>Save Browser Save</button>
-        <button class="btn" data-load>Load Browser Save</button>
+        <button class="btn" data-load ${browserSaveExists() ? "" : "disabled"}>Load Browser Save</button>
+        <button class="btn danger" data-delete-save ${browserSaveExists() ? "" : "disabled"}>Delete Browser Save</button>
         <button class="btn" data-download-save>Download Commander</button>
         <label class="btn" for="commanderFileInput">Upload Commander</label>
         <input id="commanderFileInput" type="file" accept="application/json,.json,.txt" data-upload-save style="display:none">
@@ -9058,10 +11045,10 @@
           renderPanel();
         }
       });
-      const gal = panelBody.querySelector("[data-galjump]");
-      if (gal) gal.addEventListener("click", galacticJump);
       const load = panelBody.querySelector("[data-load]");
       if (load) load.addEventListener("click", loadGame);
+      const deleteSave = panelBody.querySelector("[data-delete-save]");
+      if (deleteSave) deleteSave.addEventListener("click", deleteBrowserSave);
       const save = panelBody.querySelector("[data-save]");
       if (save) save.addEventListener("click", () => {
         saveGame();
@@ -9119,6 +11106,44 @@
       canvas.addEventListener("pointercancel", end);
     }
 
+    function attachExternalViewControls(canvas) {
+      const st = game.externalView;
+      const active = () => game.viewMode === "ext" && !game.docked && !game.transition;
+      const start = (e) => {
+        if (!active() || e.button !== 0) return;
+        st.dragging = true;
+        st.lastX = e.clientX;
+        st.lastY = e.clientY;
+        canvas.setPointerCapture(e.pointerId);
+        canvas.style.cursor = "grabbing";
+        e.preventDefault();
+      };
+      const move = (e) => {
+        if (!st.dragging) return;
+        st.yaw += (e.clientX - st.lastX) * .008;
+        st.pitch = clamp(st.pitch + (e.clientY - st.lastY) * .006, -.85, 1.15);
+        st.lastX = e.clientX;
+        st.lastY = e.clientY;
+        e.preventDefault();
+      };
+      const end = (e) => {
+        if (!st.dragging) return;
+        st.dragging = false;
+        canvas.style.cursor = active() ? "grab" : "";
+        if (e?.pointerId != null && canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
+      };
+      canvas.addEventListener("pointerdown", start);
+      canvas.addEventListener("pointermove", move);
+      canvas.addEventListener("pointerup", end);
+      canvas.addEventListener("pointerleave", end);
+      canvas.addEventListener("pointercancel", end);
+      canvas.addEventListener("wheel", (e) => {
+        if (!active()) return;
+        st.zoom = clamp(st.zoom * (e.deltaY > 0 ? 1.1 : .9), .42, 2.8);
+        e.preventDefault();
+      }, { passive: false });
+    }
+
     function drawShipDiagram(canvas, dt = 0) {
       if (!shipDiagramState.dragging) shipDiagramState.yaw += dt * shipDiagramState.idleSpeed;
       const c = canvas.getContext("2d");
@@ -9159,14 +11184,14 @@
       // without an identity override here, detail visibility would flip randomly with
       // whichever way the player actually happens to be flying.
       const identityCamera = makeCamera(0);
+      const detailProject = (p) => {
+        const f = 320 / p.z;
+        return fitPreviewPoint({ x: canvas.width / 2 + p.x * f, y: canvas.height / 2 - p.y * f });
+      };
       if (mode === "wire") {
-        drawSolidItems(c, collectSolidFaces(model, camVerts, pts, "#000", 1, true));
+        drawSolidItems(c, collectSolidFaces(model, camVerts, pts, "#000", 1, true, null, { project: detailProject }));
       } else {
-        const detailProject = (p) => {
-          const f = 320 / p.z;
-          return fitPreviewPoint({ x: canvas.width / 2 + p.x * f, y: canvas.height / 2 - p.y * f });
-        };
-        drawSolidItems(c, collectSolidFaces(model, camVerts, pts, hullColor, 1, false, previewDecal));
+        drawSolidItems(c, collectSolidFaces(model, camVerts, pts, hullColor, 1, false, previewDecal, { project: detailProject }));
         drawSolidItems(c, collectSolidDetails(model, { rot: yaw, pitch, roll, cam: tempCam, project: detailProject }, camVerts, pts, canvas.width, canvas.height, scaleFactor, identityCamera));
         if (POLICE_MODELS.includes(modelName) && ultraFxEnabled()) drawPoliceStrobes(c, pts);
       }
@@ -9189,6 +11214,7 @@
     }
 
     function updateReadouts() {
+      ensureShipSystems();
       const sys = currentSystem();
       const target = targetSystem();
       hudEls.roCommander.textContent = game.commander;
@@ -9200,27 +11226,56 @@
       hudEls.roLockDist.textContent = (game.targetObject && game.objects.includes(game.targetObject))
         ? `LOCK ${game.targetObject.name} ${Math.round(len(sub(game.targetObject.pos, game.camera.pos)))}m`
         : "LOCK --";
-      hudEls.barEnergy.style.width = `${clamp(game.energy, 0, 100)}%`;
-      hudEls.barShields.style.width = `${clamp(game.shields, 0, 100)}%`;
-      hudEls.barFuel.style.width = `${game.fuel / 7 * 100}%`;
-      hudEls.barSpeed.style.width = `${clamp(game.speed / game.maxSpeed, 0, 1) * 100}%`;
+      setLevelMeter(hudEls.barForeShield, game.foreShield, { lowWarn: 42, lowCritical: 18 });
+      setLevelMeter(hudEls.barAftShield, game.aftShield, { lowWarn: 42, lowCritical: 18 });
+      setLevelMeter(hudEls.barFuel, game.fuel / 7 * 100, { lowWarn: 28, lowCritical: 12 });
+      setLevelMeter(hudEls.barSpeed, clamp(game.speed / game.maxSpeed, 0, 1) * 100);
+      const altitude = playerAltitude();
+      const altitudePct = altitude == null ? 0 : clamp(altitude / 4200 * 100, 0, 100);
+      setLevelMeter(hudEls.barAltitude, altitudePct, { lowWarn: 28, lowCritical: 12 });
+      setCenteredMeter(hudEls.barRoll, game.rollRate, 2.05);
+      setCenteredMeter(hudEls.barPitch, game.pitchRate, 1.42);
+      setCenteredMeter(hudEls.barYaw, game.yawRate, 1.24);
+      updateEnergyBankMeter(1);
+      updateEnergyBankMeter(2);
+      updateEnergyBankMeter(3);
+      updateEnergyBankMeter(4);
+      const cabinTemp = clamp(game.cabinTemp, 0, 125);
+      const cabinPct = clamp(cabinTemp, 0, 100);
+      const cabinBar = hudEls.barCabinTemp;
+      setLevelMeter(cabinBar, cabinPct, { highWarn: 58, highCritical: 84 });
       const laserHeat = clamp(game.laserHeat, 0, 100);
       const heatBar = hudEls.barLaserHeat;
-      heatBar.style.width = `${laserHeat}%`;
-      heatBar.classList.toggle("warm", laserHeat >= 55 && laserHeat < 82);
-      heatBar.classList.toggle("hot", laserHeat >= 82);
-      hudEls.txtEnergy.textContent = `${Math.round(game.energy)}%`;
-      hudEls.txtShields.textContent = `${Math.round(game.shields)}%`;
+      setLevelMeter(heatBar, laserHeat, { highWarn: 55, highCritical: 82 });
+      hudEls.txtForeShield.textContent = `${Math.round(game.foreShield)}%`;
+      hudEls.txtAftShield.textContent = `${Math.round(game.aftShield)}%`;
       hudEls.txtFuel.textContent = fmt(game.fuel);
+      hudEls.txtAltitude.textContent = altitude == null ? "--" : altitude < 999 ? `${Math.round(altitude)}` : `${(altitude / 1000).toFixed(1)}K`;
+      hudEls.txtCabinTemp.textContent = cabinTemp >= 100 ? "HOT" : `${Math.round(cabinTemp)}%`;
       hudEls.txtSpeed.textContent = Math.round(game.speed);
+      hudEls.txtRoll.textContent = signedMeterText(game.rollRate, 2.05);
+      hudEls.txtPitch.textContent = signedMeterText(game.pitchRate, 1.42);
+      hudEls.txtYaw.textContent = signedMeterText(game.yawRate, 1.24);
       hudEls.txtLaserHeat.textContent = laserHeat >= 95 ? "HOT" : `${Math.round(laserHeat)}%`;
-      hudEls.txtLaser.textContent = laserPower().name;
-      hudEls.txtMissiles.textContent = game.missiles;
-      hudEls.txtEcm.textContent = game.equipment.ecm ? "Yes" : "No";
-      hudEls.txtCargo.textContent = `${usedCargo()}/${game.cargoCap}`;
-      hudEls.launchBtn.disabled = !game.docked || !!game.transition;
-      hudEls.jumpBtn.disabled = game.docked || !!game.transition;
-      hudEls.dockBtn.disabled = game.docked || !!game.transition;
+      hudEls.missileSlots.forEach((slot, i) => slot.classList.toggle("full", i < game.missiles));
+      const jumpBusy = !!game.transition || !!game.jumpCountdown;
+      const canLaunch = game.docked && !jumpBusy;
+      const canJump = !game.docked && !jumpBusy;
+      const canDock = !game.docked && !jumpBusy;
+      const canAutoDock = !game.docked && !jumpBusy && game.equipment.dockingComputer;
+      const canGalJump = game.equipment.galacticHyperdrive && !jumpBusy;
+      hudEls.launchBtn.disabled = !canLaunch;
+      hudEls.jumpBtn.disabled = !canJump;
+      hudEls.dockBtn.disabled = !canDock;
+      hudEls.autoDockBtn.disabled = !canAutoDock;
+      hudEls.galJumpBtn.disabled = !canGalJump;
+      hudEls.autoDockBtn.textContent = game.autoDock ? "Cancel Dock" : "Auto Dock";
+      hudEls.autoDockBtn.classList.toggle("primary", !!game.autoDock);
+      hudEls.launchBtn.hidden = !canLaunch;
+      hudEls.jumpBtn.hidden = !canJump;
+      hudEls.dockBtn.hidden = !canDock;
+      hudEls.autoDockBtn.hidden = !canAutoDock && !game.autoDock;
+      hudEls.galJumpBtn.hidden = !canGalJump;
       if (lastDeveloperModeRendered !== game.developerMode) {
         lastDeveloperModeRendered = game.developerMode;
         devOnlyEls.forEach((el) => {
@@ -9228,6 +11283,37 @@
         });
       }
       updatePanelDrawer();
+    }
+
+    function setCenteredMeter(el, value, maxAbs) {
+      const pct = clamp(value / maxAbs, -1, 1) * 50;
+      el.style.left = `calc(${50 + pct}% - 1px)`;
+      el.style.width = "2px";
+    }
+
+    function signedMeterText(value, maxAbs) {
+      const pct = Math.round(clamp(value / maxAbs, -1, 1) * 99);
+      return pct > 0 ? `+${pct}` : `${pct}`;
+    }
+
+    function updateEnergyBankMeter(bank) {
+      const raw = clamp(game.energy - (bank - 1) * 25, 0, 25);
+      const pct = raw / 25 * 100;
+      setLevelMeter(hudEls[`barEnergy${bank}`], pct, { lowWarn: 45, lowCritical: 20 });
+      hudEls[`txtEnergy${bank}`].textContent = `${Math.round(pct)}`;
+    }
+
+    function setLevelMeter(el, value, thresholds = {}) {
+      const pct = clamp(value, 0, 100);
+      el.style.width = `${pct}%`;
+      const warn = (thresholds.lowWarn != null && pct <= thresholds.lowWarn)
+        || (thresholds.highWarn != null && pct >= thresholds.highWarn);
+      const critical = (thresholds.lowCritical != null && pct <= thresholds.lowCritical)
+        || (thresholds.highCritical != null && pct >= thresholds.highCritical);
+      el.classList.toggle("warn", warn && !critical);
+      el.classList.toggle("warm", warn && !critical);
+      el.classList.toggle("critical", critical);
+      el.classList.toggle("hot", critical);
     }
 
     function toggleDeveloperMode() {
@@ -9268,6 +11354,10 @@
         return;
       }
       eliteAudio.resume();
+      if (finishGameOver()) {
+        e.preventDefault();
+        return;
+      }
       keys.add(e.code);
       if (devChordActive() && !devChordLatched) {
         devChordLatched = true;
@@ -9321,10 +11411,17 @@
     byId("launchBtn").addEventListener("click", launch);
     byId("jumpBtn").addEventListener("click", hyperspace);
     byId("dockBtn").addEventListener("click", () => dock(false));
+    byId("autoDockBtn").addEventListener("click", startAutoDock);
+    byId("galJumpBtn").addEventListener("click", galacticJump);
+    attachExternalViewControls(space);
 
     resizeCanvases();
     (function boot() {
+      const hadBrowserSave = browserSaveExists();
+      const loadedBrowserSave = loadBrowserSave(true);
       resetFlightScene(false);
+      if (loadedBrowserSave) setMessage("Browser commander save loaded.", true);
+      else if (hadBrowserSave) setMessage("Browser save could not be loaded.");
       renderPanel();
       requestAnimationFrame(loop);
     })();
