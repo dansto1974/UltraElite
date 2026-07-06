@@ -891,33 +891,18 @@
     }
 
     .missile-icon {
-      position: relative;
-      width: 20px;
-      height: 7px;
-      background: var(--green);
-      box-shadow: 0 0 6px rgba(101, 255, 71, .42);
+      display: flex;
+      align-items: center;
+      width: 27px;
+      height: 12px;
+      padding-right: 5px;
+      box-sizing: border-box;
+      filter: drop-shadow(0 0 4px rgba(101, 255, 71, .4));
     }
 
-    .missile-icon::before {
-      content: "";
-      position: absolute;
-      right: -8px;
-      top: 0;
-      border-left: 8px solid var(--green);
-      border-top: 4px solid transparent;
-      border-bottom: 4px solid transparent;
-      filter: drop-shadow(0 0 4px rgba(101, 255, 71, .35));
-    }
-
-    .missile-icon::after {
-      content: "";
-      position: absolute;
-      left: -4px;
-      top: -5px;
-      border-right: 7px solid var(--green);
-      border-top: 5px solid transparent;
-      border-bottom: 0 solid transparent;
-      filter: drop-shadow(0 12px 0 var(--green)) drop-shadow(0 0 4px rgba(101, 255, 71, .35));
+    .missile-icon svg {
+      width: 100%;
+      height: auto;
     }
 
     .missile-slots {
@@ -1253,7 +1238,7 @@
             <div class="bar-row hud-tip" data-help="Cabin temperature. Solar heat rises sharply near the star and can damage the hull."><span>CT</span><div class="bar heat-bar"><div class="fill heat" id="barCabinTemp"></div></div><span id="txtCabinTemp">0%</span></div>
             <div class="bar-row heat-row hud-tip" data-help="Laser temperature. Original-style lasers fire normally until overheated, then wait for cooling."><span>LT</span><div class="bar heat-bar"><div class="fill heat" id="barLaserHeat"></div></div><span id="txtLaserHeat">0%</span></div>
             <div class="bar-row hud-tip" data-help="Altitude above nearest planet surface. Low altitude warns amber then red."><span>AL</span><div class="bar"><div class="fill" id="barAltitude"></div></div><span id="txtAltitude">--</span></div>
-            <div class="missile-row hud-tip" data-help="Missile bank. Bright cells are loaded missiles; dark cells are empty racks."><span class="missile-icon" aria-label="Missiles"></span><div class="missile-slots" id="missileSlots"><span class="missile-slot"></span><span class="missile-slot"></span><span class="missile-slot"></span><span class="missile-slot"></span></div></div>
+            <div class="missile-row hud-tip" data-help="Missile bank. Bright cells are loaded missiles; dark cells are empty racks."><span class="missile-icon" aria-label="Missiles"><svg viewBox="0 0 26 12" width="26" height="12" aria-hidden="true"><g fill="var(--green)"><rect x="5" y="4" width="12" height="4"/><polygon points="17,4 24,6 17,8"/><polygon points="5,4 5,1 9,4"/><polygon points="5,8 5,11 9,8"/></g></svg></span><div class="missile-slots" id="missileSlots"><span class="missile-slot"></span><span class="missile-slot"></span><span class="missile-slot"></span><span class="missile-slot"></span></div></div>
           </div>
           <div class="dash-section">
             <div class="scanner-wrap">
@@ -7778,9 +7763,51 @@
       return project(cameraTransform(p, view), w, h);
     }
 
+    // The hangar camera flies INSIDE the room during the launch/dock sweeps, so wall and
+    // floor corners routinely fall behind it. project() nulls those corners, and dropping
+    // a whole surface because one corner failed made entire walls/floors pop in and out.
+    // Proper fix: Sutherland-Hodgman clip each polygon against the camera near plane in
+    // 3D camera space, then project the clipped shape (every remaining vert is in front).
+    const HANGAR_NEAR = 9;
+    function clipPolyNear(camPts, near = HANGAR_NEAR) {
+      const out = [];
+      for (let i = 0; i < camPts.length; i++) {
+        const a = camPts[i], b = camPts[(i + 1) % camPts.length];
+        const aIn = a.z > near, bIn = b.z > near;
+        if (aIn) out.push(a);
+        if (aIn !== bIn) {
+          const t = (near - a.z) / (b.z - a.z);
+          out.push(vec(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, near));
+        }
+      }
+      return out;
+    }
+
+    function hangarProjectPoly(points, view, w, h) {
+      const clipped = clipPolyNear(points.map((p) => cameraTransform(p, view)));
+      if (clipped.length < 3) return null;
+      const pr = clipped.map((p) => project(p, w, h));
+      return pr.some((p) => !p) ? null : pr;
+    }
+
+    // A line segment gets the same treatment: clip to the near plane instead of vanishing
+    // whole whenever one endpoint dips behind the camera.
+    function hangarLine(a3, b3, view, w, h) {
+      let a = cameraTransform(a3, view), b = cameraTransform(b3, view);
+      if (a.z <= HANGAR_NEAR && b.z <= HANGAR_NEAR) return null;
+      if (a.z <= HANGAR_NEAR || b.z <= HANGAR_NEAR) {
+        const t = (HANGAR_NEAR - a.z) / (b.z - a.z);
+        const m = vec(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, HANGAR_NEAR);
+        if (a.z <= HANGAR_NEAR) a = m; else b = m;
+      }
+      const pa = project(a, w, h), pb = project(b, w, h);
+      return pa && pb ? [pa, pb] : null;
+    }
+
     function hangarTexturedQuad(points, view, w, h, texture, alpha = .58, shade = "rgba(0,0,0,.18)") {
-      const pr = points.map((p) => hangarProject(p, view, w, h));
-      if (pr.some((p) => !p)) return null;
+      const corners = points.map((p) => hangarProject(p, view, w, h));
+      const pr = corners.some((p) => !p) ? hangarProjectPoly(points, view, w, h) : corners;
+      if (!pr) return null;
       ctx.save();
       ctx.fillStyle = `rgba(54,64,57,${alpha})`;
       ctx.beginPath();
@@ -7798,27 +7825,28 @@
       ctx.lineWidth = Math.max(.7, w / 1800);
       ctx.stroke();
 
-      // Projection-stable panel seams. These are tied to the quad corners rather than
-      // affine texture coordinates, so orbiting the hangar camera does not make the
-      // metal pattern appear to crawl over the walls.
+      // Projection-stable panel seams: true 3D lines across the quad (lerped in world
+      // space, clipped like everything else), so they neither crawl over the walls as
+      // the camera orbits nor vanish when the quad is partially behind the camera.
       ctx.strokeStyle = "rgba(185,205,175,.09)";
       ctx.lineWidth = Math.max(.5, w / 2600);
+      const l3 = (a, b, t) => vec(lerp(a.x, b.x, t), lerp(a.y, b.y, t), lerp(a.z, b.z, t));
       for (let i = 1; i < 5; i++) {
         const t = i / 5;
-        const a = { x: lerp(pr[0].x, pr[1].x, t), y: lerp(pr[0].y, pr[1].y, t) };
-        const b = { x: lerp(pr[3].x, pr[2].x, t), y: lerp(pr[3].y, pr[2].y, t) };
+        const seg = hangarLine(l3(points[0], points[1], t), l3(points[3], points[2], t), view, w, h);
+        if (!seg) continue;
         ctx.beginPath();
-        ctx.moveTo(a.x, a.y);
-        ctx.lineTo(b.x, b.y);
+        ctx.moveTo(seg[0].x, seg[0].y);
+        ctx.lineTo(seg[1].x, seg[1].y);
         ctx.stroke();
       }
       for (let i = 1; i < 4; i++) {
         const t = i / 4;
-        const a = { x: lerp(pr[0].x, pr[3].x, t), y: lerp(pr[0].y, pr[3].y, t) };
-        const b = { x: lerp(pr[1].x, pr[2].x, t), y: lerp(pr[1].y, pr[2].y, t) };
+        const seg = hangarLine(l3(points[0], points[3], t), l3(points[1], points[2], t), view, w, h);
+        if (!seg) continue;
         ctx.beginPath();
-        ctx.moveTo(a.x, a.y);
-        ctx.lineTo(b.x, b.y);
+        ctx.moveTo(seg[0].x, seg[0].y);
+        ctx.lineTo(seg[1].x, seg[1].y);
         ctx.stroke();
       }
       ctx.restore();
@@ -7826,8 +7854,8 @@
     }
 
     function hangarPoly(points, view, w, h, fill, stroke = null) {
-      const pr = points.map((p) => hangarProject(p, view, w, h));
-      if (pr.some((p) => !p)) return null;
+      const pr = hangarProjectPoly(points, view, w, h);
+      if (!pr) return null;
       ctx.beginPath();
       ctx.moveTo(pr[0].x, pr[0].y);
       for (let i = 1; i < pr.length; i++) ctx.lineTo(pr[i].x, pr[i].y);
@@ -7954,23 +7982,19 @@
       ctx.lineWidth = Math.max(.7, w / 1800);
       for (let i = 0; i <= 8; i++) {
         const z = lerp(near, far, i / 8);
-        const a = hangarProject(p(-hw, floor, z), view, w, h);
-        const b = hangarProject(p(hw, floor, z), view, w, h);
-        const c = hangarProject(p(-hw, ceil, z), view, w, h);
-        const d = hangarProject(p(hw, ceil, z), view, w, h);
-        if (!a || !b || !c || !d) continue;
+        const fl = hangarLine(p(-hw, floor, z), p(hw, floor, z), view, w, h);
+        const cl = hangarLine(p(-hw, ceil, z), p(hw, ceil, z), view, w, h);
         ctx.beginPath();
-        ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
-        ctx.moveTo(c.x, c.y); ctx.lineTo(d.x, d.y);
-        ctx.stroke();
+        if (fl) { ctx.moveTo(fl[0].x, fl[0].y); ctx.lineTo(fl[1].x, fl[1].y); }
+        if (cl) { ctx.moveTo(cl[0].x, cl[0].y); ctx.lineTo(cl[1].x, cl[1].y); }
+        if (fl || cl) ctx.stroke();
       }
       for (let i = -3; i <= 3; i++) {
         const x = i * hw / 4;
-        const a = hangarProject(p(x, floor, near), view, w, h);
-        const b = hangarProject(p(x, floor, far), view, w, h);
-        if (!a || !b) continue;
+        const seg = hangarLine(p(x, floor, near), p(x, floor, far), view, w, h);
+        if (!seg) continue;
         ctx.beginPath();
-        ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+        ctx.moveTo(seg[0].x, seg[0].y); ctx.lineTo(seg[1].x, seg[1].y);
         ctx.stroke();
       }
       drawHangarCargoStacks(w, h, scene, view, floor);
