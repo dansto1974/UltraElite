@@ -7483,6 +7483,25 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
     }
 
+    function rgbToHex(r, g, b) {
+      const toHex = (v) => clamp(Math.round(v), 0, 255).toString(16).padStart(2, "0");
+      return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    }
+
+    function distantModelColor(o) {
+      const base = hexToRgb(o?.color || shipColor(o?.model, o?.police));
+      const anchor = o?.type === "missile" ? { r: 68, g: 22, b: 18 }
+        : ALIEN_MODELS.includes(o?.model) ? { r: 36, g: 28, b: 48 }
+        : o?.police ? { r: 26, g: 42, b: 48 }
+        : { r: 34, g: 38, b: 36 };
+      const tint = o?.police || ALIEN_MODELS.includes(o?.model) || o?.type === "missile" ? .36 : .24;
+      return rgbToHex(
+        anchor.r * (1 - tint) + base.r * tint,
+        anchor.g * (1 - tint) + base.g * tint,
+        anchor.b * (1 - tint) + base.b * tint
+      );
+    }
+
     function shadedColor(hex, shade, alpha = 1) {
       const c = hexToRgb(hex);
       const floor = 10;
@@ -13253,7 +13272,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const rock = isRockEntity(o);
         const rockSeed = o.textureSeed ?? o.decalSeed ?? hash32(`${game.galaxy}:${currentSystem().index}:${o.name || ""}:${o.model || o.type}:rock`);
         drawModelEntity(ctx, { camera: game.camera, w, h, centerCam: cam, mode: distanceLod ? "solid" : game.graphicsMode }, o, {
-          color: rock ? (o.color || "#9b927f") : (o.color || "#e9f2e4"),
+          color: rock ? (o.color || "#9b927f") : (distanceLod ? distantModelColor(o) : (o.color || "#e9f2e4")),
           quality: distanceLod
             ? { pxRadius: Infinity, textures: false, decals: false, details: false, damage: false, effects: false }
             : undefined,
