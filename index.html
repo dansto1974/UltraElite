@@ -11585,6 +11585,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return front ? side >= -overlap : side <= overlap;
     }
 
+    function ringSplitOverlap(o, rr) {
+      // The front/back ring pass is sampled in angular segments. At the projected
+      // tangent the outer lanes can otherwise miss one sample and leave a straight
+      // split, so scale the overlap by actual lane radius rather than planet radius.
+      return Math.max(o.r * .045, rr * .05);
+    }
+
     function drawPlanetRing(o, r, hue, w, h, front) {
       if (game.fxLevel === "classic") return;
       if (!o._ringBasis) {
@@ -11612,7 +11619,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       for (let b = 0; b < bands; b++) {
         const t = bands === 1 ? 0 : b / (bands - 1);
         const rr = lerp(o.r * o.ringInner, o.r * o.ringOuter, t);
-        const splitOverlap = Math.max(o.r * .025, rr * .006);
+        const splitOverlap = ringSplitOverlap(o, rr);
         const laneNoise = rng();
         const dusty = .52 + rng() * .38;
         const light = 74 - t * 22 + Math.sin(t * TAU * 5.1) * 8 + (laneNoise - .5) * 9;
@@ -11674,7 +11681,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
             scale(u, Math.cos(a) * o.r * o.ringInner * 1.04),
             scale(v, Math.sin(a) * o.r * o.ringInner * 1.04)
           );
-          if (!ringHalfVisible(offset, viewDir, false, o.r * .025)) { drawing = false; continue; }
+          if (!ringHalfVisible(offset, viewDir, false, ringSplitOverlap(o, o.r * o.ringInner * 1.04))) { drawing = false; continue; }
           const p = project(cameraTransform(add(o.pos, offset), game.camera), w, h);
           if (!p) { drawing = false; continue; }
           if (drawing) ctx.lineTo(p.x, p.y);
@@ -11732,7 +11739,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const normal = norm(cross(u, v));
         const offset = add(add(scale(u, Math.cos(a) * rr), scale(v, Math.sin(a) * rr)), scale(normal, height));
         const isFront = dot(offset, viewDir) >= 0;
-        if (!ringHalfVisible(offset, viewDir, front, Math.max(o.r * .03, rr * .008))) continue;
+        if (!ringHalfVisible(offset, viewDir, front, ringSplitOverlap(o, rr))) continue;
         const p = project(cameraTransform(add(o.pos, offset), game.camera), w, h);
         if (!p) continue;
         const shadeMul = ringShade(offset, sunDir, o.r);
