@@ -473,6 +473,11 @@
       box-shadow: none;
     }
 
+    .hud-actions .mode-toggle {
+      margin-left: 18px;
+      min-width: 82px;
+    }
+
     .btn.side-toggle.active,
     .btn.side-toggle.active:hover,
     .btn.side-toggle.active:focus-visible {
@@ -1257,6 +1262,7 @@
           <button class="btn mini" id="dockBtn">Dock</button>
           <button class="btn mini" id="autoDockBtn">Auto Dock</button>
           <button class="btn mini warn" id="galJumpBtn">Galactic</button>
+          <button class="btn mini mode-toggle" id="modeSwitchBtn" aria-label="Toggle presentation mode" aria-pressed="true">Ultra</button>
         </div>
         <section class="dashboard" aria-label="Ship dashboard">
           <div class="dash-section">
@@ -1561,6 +1567,13 @@
     const VIEW_YAW = { rear: Math.PI, left: -Math.PI / 2, right: Math.PI / 2 };
     const VIEW_LABELS = { fwd: "", rear: "REAR VIEW", left: "LEFT VIEW", right: "RIGHT VIEW", ext: "EXTERNAL VIEW" };
     const ULTRA_WIRE_STROKE = "rgba(61,61,61,.5)";
+    const MODEL_RENDER_QUALITY = {
+      texturePx: 9,
+      decalPx: 12,
+      detailPx: 10,
+      damagePx: 16,
+      effectPx: 7
+    };
 
     function ultraFxEnabled() {
       return game.fxLevel === "ultra";
@@ -2690,6 +2703,7 @@
       txtEnergy4: byId("txtEnergy4"),
       txtLaserHeat: byId("txtLaserHeat"),
       missileSlots: Array.from(document.querySelectorAll("#missileSlots .missile-slot")),
+      modeSwitchBtn: byId("modeSwitchBtn"),
       launchBtn: byId("launchBtn"),
       jumpBtn: byId("jumpBtn"),
       dockBtn: byId("dockBtn"),
@@ -5274,10 +5288,27 @@
       };
     }
 
+    function spawnEnginePlasmaInto(store, pos, aftDir, magnitude = 1, alien = false, hueOverride = null, limit = 260) {
+      if (!ultraFxEnabled()) return;
+      store.push(makeEnginePlasmaPuff(pos, aftDir, magnitude, alien, hueOverride));
+      if (store.length > limit) store.splice(0, store.length - limit);
+    }
+
+    function emitEnginePlasmaForShip(store, ship, trailMul, opts = {}) {
+      if (!ultraFxEnabled() || trailMul <= .03) return;
+      const anchors = engineWorldAnchors(ship);
+      const engineMul = anchors.length > 3 ? .82 : 1;
+      const alienTrail = opts.alien ?? isAlienShip(ship);
+      const hue = opts.hue ?? (ship.model === "escapePod" ? 48 + Math.random() * 8 : null);
+      const boostMul = opts.boostMul ?? (1 + (ship.engineBoost || 0) * 1.45);
+      for (const anchor of anchors) {
+        spawnEnginePlasmaInto(store, anchor.pos, anchor.aft, clamp(trailMul * engineMul * boostMul, .45, 2.2), alienTrail, hue, opts.limit || 260);
+      }
+    }
+
     function spawnEnginePlasma(pos, aftDir, magnitude = 1, alien = false, hueOverride = null) {
       if (!ultraFxEnabled()) return;
-      game.smokePuffs.push(makeEnginePlasmaPuff(pos, aftDir, magnitude, alien, hueOverride));
-      if (game.smokePuffs.length > 260) game.smokePuffs.splice(0, game.smokePuffs.length - 260);
+      spawnEnginePlasmaInto(game.smokePuffs, pos, aftDir, magnitude, alien, hueOverride, 260);
     }
 
     function spawnDamagedEngineSmoke(pos, aftDir, magnitude = 1, alien = false) {
@@ -5318,22 +5349,34 @@
       if (game.smokePuffs.length > 280) game.smokePuffs.splice(0, game.smokePuffs.length - 280);
     }
 
-    function engineWorldCenters(o) {
+    function engineWorldAnchors(o) {
       const model = MODELS[o.model];
       if (!model?.details?.length) return [];
       const roll = o.roll ?? (o.rot || 0) * .7;
+      const scaleFactor = o.scaleFactor ?? o.scale ?? 1;
       const orient = (v) => o.quat ? quatRotate(o.quat, v) : rotateShipPoint(v, o.rot || 0, o.pitch || 0, roll);
-      const centers = [];
+      const anchors = [];
       for (const detail of model.details) {
         if (detail.type !== "engine") continue;
         const localPoints = detail.points || (detail.indices || []).map((i) => model.verts[i]).filter(Boolean);
         if (!localPoints.length) continue;
-        const center = scale(localPoints.reduce((sum, p) => add(sum, vec(p[0], p[1], p[2])), vec()), 1 / localPoints.length);
+        const center = scale(localPoints.reduce((sum, p) => add(sum, vec(p[0] * scaleFactor, p[1] * scaleFactor, p[2] * scaleFactor)), vec()), 1 / localPoints.length);
         const normal = detail.normal ? norm(vec(...detail.normal)) : vec(0, 0, -1);
-        const lift = detail.lift ?? 1;
-        centers.push(add(o.pos, orient(add(center, scale(normal, lift)))));
+        const lift = (detail.lift ?? 1) * scaleFactor;
+        anchors.push({
+          pos: add(o.pos, orient(add(center, scale(normal, lift)))),
+          aft: norm(orient(vec(0, 0, -1)))
+        });
       }
-      return centers;
+      if (anchors.length) return anchors;
+      return [{
+        pos: add(o.pos, orient(vec(0, 0, -objectCollisionRadius({ model: o.model }) * scaleFactor * .72))),
+        aft: norm(orient(vec(0, 0, -1)))
+      }];
+    }
+
+    function engineWorldCenters(o) {
+      return engineWorldAnchors(o).map((anchor) => anchor.pos);
     }
 
     function spawnPlayerEnginePlume(strength = 1) {
@@ -5382,13 +5425,8 @@
       o.engineTrailClock = .035 + Math.random() * .025;
       const aft = scale(shipForwardWorld(o), -1);
       const centers = engineWorldCenters(o);
-      const engineMul = centers.length > 3 ? .82 : 1;
       const alienTrail = isAlienShip(o);
-      const podTrailHue = o.model === "escapePod" ? 48 + Math.random() * 8 : null;
-      const boostMul = 1 + (o.engineBoost || 0) * 1.45;
-      for (let i = 0; i < centers.length; i++) {
-        spawnEnginePlasma(centers[i], aft, clamp(speed / 105, .6, 2.2) * engineMul * boostMul, alienTrail, podTrailHue);
-      }
+      emitEnginePlasmaForShip(game.smokePuffs, o, clamp(speed / 105, .6, 2.2), { alien: alienTrail });
       const hullFrac = o.maxHp ? (o.hp ?? o.maxHp) / o.maxHp : 1;
       const smokeThreshold = .28;
       if (hullFrac < smokeThreshold && centers.length) {
@@ -7264,7 +7302,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           decalUV: !clipped && model.decalUV && model.decalUV[faceIndex],
           avgZ,
           fillStyle: shadedColor(baseColor, lit * (.92 + grain * .12), alpha),
-          metal: true,
+          metal: options.textures !== false,
           metalAlpha: clamp((.34 + facing * .34) * (options.metalAlphaMul ?? 1), .18, .78),
           texture: clipped ? null : options.texture || null,
           decal: clipped ? null : decal
@@ -7296,12 +7334,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return !!faceVisible[faces[0]] || !!faceVisible[faces[1]];
     }
 
-    function collectSolidDetails(model, o, camVerts, points, w, h, scaleFactor = 1, camera = game.camera) {
+    function collectSolidDetails(model, o, camVerts, points, w, h, scaleFactor = 1, camera = game.camera, options = {}) {
       if (game.graphicsMode === "wire" || !model.details) return [];
       const roll = o.roll ?? (o.rot || 0) * .7;
       const orient = (v) => o.quat ? quatRotate(o.quat, v) : rotateShipPoint(v, o.rot || 0, o.pitch || 0, roll);
       const details = [];
       for (const detail of model.details) {
+        if (options.enginesOnly && detail.type !== "engine") continue;
         const normal = detail.normal
           ? worldDirToCam(norm(orient(vec(detail.normal[0], detail.normal[1], detail.normal[2]))), camera)
           : null;
@@ -8371,9 +8410,17 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.lineCap = "round";
       drawGalaxyBackdrop(w, h);
       drawStars(w, h);
-      drawSmokePuffs(w, h);
+      if (game.transition) drawTransitionBackgroundEffect(w, h, game.transition);
       const visible = game.objects
         .map((o) => ({ o, p: cameraTransform(o.pos, game.camera), d: len(sub(o.pos, game.camera.pos)) }));
+      if (ultraFxEnabled()) {
+        for (const puff of game.smokePuffs) {
+          const pos = add(puff.pos, scale(puff.drift, puff.t));
+          const p = cameraTransform(pos, game.camera);
+          if (p.z <= 1) continue;
+          visible.push({ effect: puff, p, d: len(sub(pos, game.camera.pos)) });
+        }
+      }
       const deathExploded = game.transition?.kind === "death" && game.transition._exploded;
       if (game.viewMode === "ext" && !game.docked && !deathExploded) {
         // The player's own ship only exists on screen in the external view; it rides the
@@ -8382,7 +8429,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         visible.push({ o: shipObj, p: cameraTransform(shipObj.pos, game.camera), d: len(sub(shipObj.pos, game.camera.pos)) });
       }
       visible.sort((a, b) => b.d - a.d);
-      for (const item of visible) drawObject(item.o, item.p, w, h);
+      for (const item of visible) {
+        if (item.effect) drawSmokePuff(item.effect, w, h, game.camera);
+        else drawObject(item.o, item.p, w, h);
+      }
       drawExternalPlayerShot(w, h, flightCam);
       drawExplosions(w, h);
       drawEnemyShots(w, h);
@@ -8663,6 +8713,29 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         drawGalacticTunnel(w, h, tr);
       } else {
         drawHyperspaceTunnel(w, h, tr);
+      }
+    }
+
+    function drawTransitionBackgroundEffect(w, h, tr) {
+      if (!tr || !ultraFxEnabled()) return;
+      if (tr.kind === "hyperspace") {
+        drawUltraJumpDepartureStreaks(w, h, tr, {
+          departureEnd: tr.departureEnd ?? .26,
+          streakStart: tr.streakStart ?? .09,
+          palette: [208, 190, 168, 122],
+          captured: { travel: 5400, tail: 1380, alpha: .95 },
+          fallbackMin: 24,
+          fallback: { seed: 0x51504545, lanes: 90, tail: 520, alpha: .18, speed: 3.6 }
+        });
+      } else if (tr.kind === "galactic") {
+        drawUltraJumpDepartureStreaks(w, h, tr, {
+          departureEnd: tr.departureEnd ?? .22,
+          streakStart: tr.streakStart ?? .075,
+          palette: [210, 260, 300, 58],
+          captured: { travel: 7200, tail: 1780, width: 1.12, alpha: .98 },
+          fallbackMin: 28,
+          fallback: { seed: 0x6a554d50, lanes: 110, tail: 680, width: 1.08, speed: 4.1, alpha: .2 }
+        });
       }
     }
 
@@ -9135,11 +9208,107 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return pr;
     }
 
+    function drawHangarFloorEllipse(w, h, view, center, rx, rz, fill, segments = 34) {
+      const pts = [];
+      for (let i = 0; i < segments; i++) {
+        const a = i / segments * TAU;
+        pts.push(vec(center.x + Math.cos(a) * rx, center.y, center.z + Math.sin(a) * rz));
+      }
+      const pr = hangarProjectPoly(pts, view, w, h);
+      if (!pr) return null;
+      const bounds = polygonBounds(pr);
+      if (![bounds.minX, bounds.maxX, bounds.minY, bounds.maxY].every(Number.isFinite)) return null;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(pr[0].x, pr[0].y);
+      for (let i = 1; i < pr.length; i++) ctx.lineTo(pr[i].x, pr[i].y);
+      ctx.closePath();
+      ctx.clip();
+      const cx = (bounds.minX + bounds.maxX) / 2;
+      const cy = (bounds.minY + bounds.maxY) / 2;
+      const r = Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY) * .62;
+      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(1, r));
+      for (const stop of fill) grad.addColorStop(stop[0], stop[1]);
+      ctx.fillStyle = grad;
+      ctx.fillRect(bounds.minX, bounds.minY, bounds.maxX - bounds.minX, bounds.maxY - bounds.minY);
+      ctx.restore();
+      return pr;
+    }
+
+    function drawHangarLightGlow(w, h, view, pos, radius, alpha = .35, warm = true) {
+      const pr = hangarProject(pos, view, w, h);
+      if (!pr) return;
+      const r = clamp((pr.s || 1) * radius, 18, Math.max(w, h) * .34);
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      const glow = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, r);
+      const core = warm ? "255,236,184" : "175,220,255";
+      const edge = warm ? "255,170,82" : "80,150,255";
+      glow.addColorStop(0, `rgba(${core},${alpha})`);
+      glow.addColorStop(.22, `rgba(${core},${alpha * .34})`);
+      glow.addColorStop(1, `rgba(${edge},0)`);
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(pr.x, pr.y, r, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawHangarLightPools(w, h, view, floor, ceil) {
+      if (!ultraFxEnabled()) return;
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      const lightXs = [-250, 0, 250];
+      const lightZs = [285, 505, 725];
+      for (const z of lightZs) {
+        for (const x of lightXs) {
+          drawHangarLightGlow(w, h, view, vec(x, ceil - 8, z), 86, .32, true);
+          drawHangarFloorEllipse(w, h, view, vec(x, floor + 1.5, z + 12), 112, 82, [
+            [0, "rgba(255,232,176,.18)"],
+            [.42, "rgba(255,205,118,.07)"],
+            [1, "rgba(255,180,80,0)"]
+          ], 30);
+        }
+      }
+      ctx.restore();
+    }
+
+    function drawHangarShipShadow(w, h, view, modelName, pos, scaleFactor, alpha = 1) {
+      if (!ultraFxEnabled()) return;
+      const floor = -175;
+      const height = Math.max(0, pos.y - floor);
+      const fade = clamp(1 - height / 260, 0, 1);
+      if (fade <= .02) return;
+      const r = Math.max(52, modelBoundingRadius(MODELS[modelName] || MODELS.cobra) * scaleFactor);
+      drawHangarFloorEllipse(w, h, view, vec(pos.x, floor + 2, pos.z), r * .82, r * 1.18, [
+        [0, `rgba(0,0,0,${.36 * fade * alpha})`],
+        [.48, `rgba(0,0,0,${.16 * fade * alpha})`],
+        [1, "rgba(0,0,0,0)"]
+      ], 38);
+    }
+
     function hangarShipScale(modelName, base = 1) {
       const r = Math.max(48, modelBoundingRadius(MODELS[modelName] || MODELS.cobra) || 95);
       // Fit all commander ships in the hangar while preserving enough size difference
       // that freighters still feel heavier than fighters.
       return base * clamp(1.08 * Math.pow(95 / r, .55), .42, 1.36);
+    }
+
+    function hangarSceneShip(scene, opts = {}) {
+      const modelName = scene?.shipModel || playerShipModel();
+      return {
+        type: "ship",
+        model: modelName,
+        pos: opts.pos || vec(0, -105, 430),
+        scaleFactor: opts.scaleFactor || 1.16,
+        rot: opts.yaw ?? opts.rot ?? .68,
+        pitch: opts.pitch ?? .28,
+        roll: opts.roll ?? -.08,
+        speed: Math.max(0, opts.speed ?? (opts.trail || 0) * 105),
+        engineBoost: opts.engineBoost ?? Math.max(0, (opts.engineGlow ?? 1) - .65),
+        engineGlow: opts.engineGlow ?? 1,
+        playerDamageMarks: (opts.damageMarks || []).map((m) => ({ ...m, radius: m.radius || 12 }))
+      };
     }
 
     function drawHangarModel(modelName, pos, view, w, h, opts = {}) {
@@ -9348,6 +9517,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ctx.moveTo(seg[0].x, seg[0].y); ctx.lineTo(seg[1].x, seg[1].y);
         ctx.stroke();
       }
+      drawHangarLightPools(w, h, view, floor, ceil);
       drawHangarCargoStacks(w, h, scene, view, floor);
 
       const gateW = HANGAR_GATE_W, gateH = HANGAR_GATE_H;
@@ -9386,7 +9556,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
       for (let i = -2; i <= 2; i++) {
         const strip = [p(i * 125 - 24, ceil - 4, 260), p(i * 125 + 24, ceil - 4, 260), p(i * 125 + 24, ceil - 4, 730), p(i * 125 - 24, ceil - 4, 730)];
-        hangarPoly(strip, view, w, h, "rgba(225,245,220,.42)");
+        hangarPoly(strip, view, w, h, "rgba(255,244,204,.68)");
       }
       for (const b of [p(-gateW - 34, gateH + 28, far - 8), p(gateW + 34, gateH + 28, far - 8), p(-gateW - 34, -gateH - 28, far - 8), p(gateW + 34, -gateH - 28, far - 8)]) {
         const pr = hangarProject(b, view, w, h);
@@ -9407,165 +9577,54 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.restore();
     }
 
-    function hangarEngineAnchors(modelName, pos, scaleFactor, yaw, pitch, roll) {
-      const model = MODELS[modelName];
-      if (!model) return [];
-      const engineDetails = (model.details || []).filter((d) => d.type === "engine");
-      const anchors = engineDetails.map((detail) => {
-        const localVerts = detail.indices
-          ? detail.indices.map((i) => {
-            const [x, y, z] = model.verts[i];
-            return vec(x * scaleFactor, y * scaleFactor, z * scaleFactor);
-          })
-          : detail.points.map(([x, y, z]) => vec(x * scaleFactor, y * scaleFactor, z * scaleFactor));
-        const localCenter = scale(localVerts.reduce((sum, p) => add(sum, p), vec()), 1 / localVerts.length);
-        return {
-          pos: add(rotateShipPoint(localCenter, yaw, pitch, roll), pos),
-          aft: norm(rotateShipPoint(vec(0, 0, -1), yaw, pitch, roll))
-        };
-      });
-      if (anchors.length) return anchors;
-      return [{
-        pos: add(rotateShipPoint(vec(0, 0, -objectCollisionRadius({ model: modelName }) * .72), yaw, pitch, roll), pos),
-        aft: norm(rotateShipPoint(vec(0, 0, -1), yaw, pitch, roll))
-      }];
-    }
-
-    function drawHangarEngineEffects(w, h, scene, view, opts = {}) {
-      if (!ultraFxEnabled()) return;
-      const modelName = scene?.shipModel || playerShipModel();
-      const glow = clamp(opts.engineGlow ?? 1, 0, 1);
-      const trailMul = opts.trail ?? 1;
-      const drawTrails = opts.drawTrails !== false;
-      const drawGlow = opts.drawGlow !== false;
-      if ((glow <= .02 || !drawGlow) && (trailMul <= .03 || !drawTrails)) return;
-      const pos = opts.pos || vec(0, -105, 430);
-      const scaleFactor = opts.scaleFactor || 1.16;
-      const yaw = opts.yaw ?? .68;
-      const pitch = opts.pitch ?? .28;
-      const roll = opts.roll ?? -.08;
-      const anchors = hangarEngineAnchors(modelName, pos, scaleFactor, yaw, pitch, roll);
-      const now = performance.now() / 1000;
-      const puffStore = scene._hangarEnginePuffs || (scene._hangarEnginePuffs = []);
-      const lastNow = scene._hangarEnginePuffClock || now;
-      const dt = clamp(now - lastNow, 0, .08);
-      scene._hangarEnginePuffClock = now;
-      for (const p of puffStore) p.t += dt;
-      if (drawTrails && trailMul > .03) {
-        scene._hangarEngineSpawnClock = (scene._hangarEngineSpawnClock || 0) - dt;
-        if (scene._hangarEngineSpawnClock <= 0) {
-          scene._hangarEngineSpawnClock = .035 + Math.random() * .025;
-          const engineMul = anchors.length > 3 ? .82 : 1;
-          for (const anchor of anchors) {
-            puffStore.push(makeEnginePlasmaPuff(anchor.pos, anchor.aft, clamp(trailMul * 1.25, .55, 2.2) * engineMul));
-          }
-        }
-      }
-      ctx.save();
-      ctx.globalCompositeOperation = "screen";
-      if (drawTrails) {
-        for (const p of puffStore) {
-          const age = clamp(p.t / p.dur, 0, 1);
-          if (age >= 1) continue;
-          const worldPos = add(p.pos, scale(p.drift, p.t));
-          const rel = cameraTransform(worldPos, view);
-          const pr = project(rel, w, h);
-          if (!pr) continue;
-          const tailWorld = sub(worldPos, scale(p.drift, Math.min(p.t, p.tailTime || .45) + .2));
-          const tailRel = cameraTransform(tailWorld, view);
-          drawEnginePlasmaVisual(pr, project(tailRel, w, h), p, age);
-        }
-      }
-      if (puffStore.length > 180) puffStore.splice(0, puffStore.length - 180);
-      for (let i = puffStore.length - 1; i >= 0; i--) {
-        if (puffStore[i].t >= puffStore[i].dur) puffStore.splice(i, 1);
-      }
-      if (!drawGlow || glow <= .02) {
-        ctx.restore();
-        return;
-      }
-      for (const [idx, anchor] of anchors.entries()) {
-        const head = hangarProject(anchor.pos, view, w, h);
-        if (!head) continue;
-        const camHead = cameraTransform(anchor.pos, view);
-        const baseS = clamp(220 / Math.max(60, camHead.z), .35, 2.6);
-        const r = clamp(baseS * (28 + glow * 42) * scaleFactor, 8, 82);
-        const core = ctx.createRadialGradient(head.x, head.y, 0, head.x, head.y, r);
-        core.addColorStop(0, `hsla(202,96%,86%,${.62 * glow})`);
-        core.addColorStop(.18, `hsla(196,94%,68%,${.38 * glow})`);
-        core.addColorStop(.46, `hsla(190,90%,52%,${.22 * glow})`);
-        core.addColorStop(1, "hsla(206,90%,42%,0)");
-        ctx.fillStyle = core;
-        ctx.beginPath();
-        ctx.arc(head.x, head.y, r, 0, TAU);
-        ctx.fill();
-        const halo = ctx.createRadialGradient(head.x, head.y, 0, head.x, head.y, r * 1.85);
-        halo.addColorStop(0, `hsla(196,95%,70%,${.18 * glow})`);
-        halo.addColorStop(.35, `hsla(190,90%,52%,${.1 * glow})`);
-        halo.addColorStop(1, "hsla(210,90%,40%,0)");
-        ctx.fillStyle = halo;
-        ctx.beginPath();
-        ctx.arc(head.x, head.y, r * 1.85, 0, TAU);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-
     function drawHangarShip(w, h, scene, view, opts = {}) {
       const modelName = scene?.shipModel || playerShipModel();
       const model = MODELS[modelName];
       if (!model) return;
-      const pos = opts.pos || vec(0, -105, 430);
-      const scaleFactor = opts.scaleFactor || 1.16;
-      const yaw = opts.yaw ?? .68;
-      const pitch = opts.pitch ?? .28;
-      const roll = opts.roll ?? -.08;
-      const worldVerts = model.verts.map(([x, y, z]) => add(rotateShipPoint(vec(x * scaleFactor, y * scaleFactor, z * scaleFactor), yaw, pitch, roll), pos));
-      const camVerts = worldVerts.map((p) => cameraTransform(p, view));
-      const pts = camVerts.map((p) => project(p, w, h));
-      const hullColor = shipColor(modelName, POLICE_MODELS.includes(modelName));
-      const camPos = cameraTransform(pos, view);
-      const shipObj = {
-        type: "ship",
-        model: modelName,
-        rot: yaw,
-        pitch,
-        roll,
-        cam: camPos,
-        engineGlow: opts.engineGlow ?? 1,
-        project: (p) => project(p, w, h),
-        playerDamageMarks: (opts.damageMarks || []).map((m) => ({
-          ...m,
-          x: m.x * scaleFactor,
-          y: m.y * scaleFactor,
-          z: m.z * scaleFactor,
-          radius: (m.radius || 12) * scaleFactor
-        }))
-      };
-      ctx.save();
-      ctx.globalAlpha = opts.alpha ?? 1;
-      if (game.graphicsMode === "wire") {
-        drawSolidItems(ctx, collectSolidFaces(model, camVerts, pts, "#000", 1, true, null, { project: (p) => project(p, w, h) }));
-      } else {
-        drawSolidItems(ctx, collectSolidFaces(model, camVerts, pts, hullColor, 1, false, getPreviewShipDecal(modelName), { project: (p) => project(p, w, h) }));
-        drawSolidItems(ctx, collectSolidDetails(model, shipObj, camVerts, pts, w, h, scaleFactor, view));
-        drawPlayerHullDamageMarks(shipObj, camPos, w, h, view, (p) => project(p, w, h));
-      }
-      if (game.graphicsMode !== "solid") {
-        ctx.strokeStyle = game.graphicsMode === "both" ? ULTRA_WIRE_STROKE : hullColor;
-        ctx.lineWidth = Math.max(.8, (opts.scale ?? 1) * 1.15);
-        const faceVisible = collectWireFaceVisibility(model, camVerts);
-        ctx.beginPath();
-        for (let edgeIndex = 0; edgeIndex < model.edges.length; edgeIndex++) {
-          if (!wireEdgeVisible(model, edgeIndex, faceVisible)) continue;
-          const [a, b] = model.edges[edgeIndex];
-          if (!pts[a] || !pts[b]) continue;
-          ctx.moveTo(pts[a].x, pts[a].y);
-          ctx.lineTo(pts[b].x, pts[b].y);
+      const shipObj = hangarSceneShip(scene, opts);
+      drawHangarShipShadow(w, h, view, modelName, shipObj.pos, shipObj.scaleFactor, opts.alpha ?? 1);
+      drawModelEntity(ctx, { camera: view, w, h, mode: game.graphicsMode }, shipObj, {
+        alpha: opts.alpha ?? 1,
+        decal: getPreviewShipDecal(modelName),
+        edgeWidth: Math.max(.8, shipObj.scaleFactor * 1.15)
+      });
+    }
+
+    function updateHangarShipEffects(scene, shipObj, trailMul = 1, opts = {}) {
+      if (!ultraFxEnabled()) return [];
+      const drawTrails = opts.drawTrails !== false;
+      const puffStore = scene._hangarEnginePuffs || (scene._hangarEnginePuffs = []);
+      const now = performance.now() / 1000;
+      const lastNow = scene._hangarEnginePuffClock || now;
+      const dt = clamp(now - lastNow, 0, .08);
+      scene._hangarEnginePuffClock = now;
+      updatePuffStore(puffStore, dt, 180);
+      if (drawTrails && trailMul > .03) {
+        scene._hangarEngineSpawnClock = (scene._hangarEngineSpawnClock || 0) - dt;
+        if (scene._hangarEngineSpawnClock <= 0) {
+          scene._hangarEngineSpawnClock = .035 + Math.random() * .025;
+          emitEnginePlasmaForShip(puffStore, shipObj, clamp(trailMul * 1.25, .55, 2.2), { limit: 180, boostMul: 1 });
         }
-        ctx.stroke();
       }
-      ctx.restore();
+      return drawTrails ? puffStore : [];
+    }
+
+    function drawHangarShipWithWorldEffects(w, h, scene, view, opts = {}) {
+      const shipObj = hangarSceneShip(scene, opts);
+      const puffs = updateHangarShipEffects(scene, shipObj, opts.trail ?? 1, opts);
+      const items = [{ kind: "ship", d: len(sub(shipObj.pos, view.pos)) }];
+      for (const puff of puffs) {
+        if (puff.t >= puff.dur) continue;
+        const pos = add(puff.pos, scale(puff.drift, puff.t));
+        const cam = cameraTransform(pos, view);
+        if (cam.z <= 1) continue;
+        items.push({ kind: "effect", puff, d: len(sub(pos, view.pos)) });
+      }
+      items.sort((a, b) => b.d - a.d);
+      for (const item of items) {
+        if (item.kind === "effect") drawSmokePuff(item.puff, w, h, view);
+        else drawHangarShip(w, h, scene, view, opts);
+      }
     }
 
     function drawHangarSparkles(w, h, seed, strength = 1) {
@@ -9623,29 +9682,30 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const exitRun = Math.max(0, t - 4.85);
       const exitTravel = exitRun > 0 ? Math.pow(exitRun / 1.55, 2.45) : 0;
       const exit = clamp(exitTravel, 0, 1);
+      const climbOut = smootherstep(6.08, 7.48, t);
+      const climbArc = Math.pow(climbOut, 1.55);
       const shipBase = hangarShipParkPos();
       const shipPos = vec(
-        0,
-        lerp(shipBase.y, HANGAR_FLIGHT_Y, lift),
+        -Math.pow(climbOut, 1.28) * 420,
+        lerp(shipBase.y, HANGAR_FLIGHT_Y, lift) + climbArc * 420,
         shipBase.z + exitTravel * 1550
       );
       const cameraPos = vec(-235 + Math.sin(p * TAU * .5) * 14, -132, 170 + exit * 92);
-      const target = vec(0, lerp(-104, HANGAR_FLIGHT_Y + 6, lift), lerp(450, 1160, exit));
+      const target = vec(shipPos.x * .04, lerp(-104, HANGAR_FLIGHT_Y + 6, lift) + climbArc * 22, lerp(450, 1160, exit));
       const view = makeHangarCamera(cameraPos, target);
       drawHangarRoom(w, h, scene, view);
       const shipOpts = {
         pos: shipPos,
         scaleFactor: hangarShipScale(modelName, lerp(1.16, .36, smoothstep(.55, 3.7, exitTravel))),
-        yaw: 0,
-        pitch: lerp(.04, -.08, exit),
-        roll: Math.sin(p * TAU) * .012 * (1 - exit),
+        yaw: -climbOut * .24,
+        pitch: lerp(.04, -.08, exit) + climbOut * .68,
+        roll: Math.sin(p * TAU) * .012 * (1 - exit) + climbOut * .78,
         engineGlow: clamp(spool + smoothstep(4.85, 5.45, t) * 1.05, 0, 1.85),
         damageMarks: []
       };
       const drawShipPass = () => {
         const exitTrail = spool * smoothstep(4.95, 5.45, t) * (1 + exit * 2.25);
-        drawHangarEngineEffects(w, h, scene, view, { ...shipOpts, trail: exitTrail, drawGlow: false });
-        drawHangarShip(w, h, scene, view, shipOpts);
+        drawHangarShipWithWorldEffects(w, h, scene, view, { ...shipOpts, trail: exitTrail });
       };
       const forcefieldInFront = shipPos.z > HANGAR_GATE_Z - 12;
       if (!forcefieldInFront) drawHangarForcefieldSheet(w, h, scene, view, hangarGateCrossingIntensity(shipPos.z));
@@ -9721,8 +9781,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       };
       const drawShipPass = () => {
         const entryTrail = engineGlow * (1 - smoothstep(3.35, 6.4, t)) * .95;
-        drawHangarEngineEffects(w, h, scene, view, { ...shipOpts, trail: entryTrail, drawGlow: false });
-        drawHangarShip(w, h, scene, view, shipOpts);
+        drawHangarShipWithWorldEffects(w, h, scene, view, { ...shipOpts, trail: entryTrail });
       };
       const forcefieldInFront = shipZ > HANGAR_GATE_Z - 12;
       if (!forcefieldInFront) drawHangarForcefieldSheet(w, h, scene, view, hangarGateCrossingIntensity(shipZ));
@@ -9953,6 +10012,18 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return drawn;
     }
 
+    function drawUltraJumpDepartureStreaks(w, h, tr, opts) {
+      const p = clamp(tr.t / tr.dur, 0, 1);
+      if (p >= opts.departureEnd) return 0;
+      const streak = clamp((p - opts.streakStart) / Math.max(.04, opts.departureEnd - opts.streakStart), 0, 1);
+      if (streak <= 0) return 0;
+      const drawn = drawUltraCapturedStarStreaks(w, h, tr, streak, opts.palette, opts.captured);
+      if (drawn < opts.fallbackMin) {
+        drawUltraStarAcceleration(w, h, streak, opts.palette, opts.fallback);
+      }
+      return drawn;
+    }
+
     function drawUltraCloudTunnel(w, h, p, palette, opts = {}) {
       const cx = w / 2, cy = h / 2;
       const rng = mulberry(opts.seed || 0xc10d);
@@ -10041,12 +10112,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.save();
       applyUltraWormholeShake(w, h, p, 1);
       if (p < (tr.departureEnd ?? .26)) {
-        const streakStart = tr.streakStart ?? .09;
-        const streak = clamp((p - streakStart) / Math.max(.04, (tr.departureEnd ?? .26) - streakStart), 0, 1);
-        if (streak > 0) {
-          const drawn = drawUltraCapturedStarStreaks(w, h, tr, streak, [208, 190, 168, 122], { travel: 5400, tail: 1380, alpha: .95 });
-          if (drawn < 24) drawUltraStarAcceleration(w, h, streak, [208, 190, 168, 122], { seed: 0x51504545, lanes: 90, tail: 520, alpha: .18, speed: 3.6 });
-        }
         ctx.restore();
         return;
       }
@@ -10080,12 +10145,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.save();
       applyUltraWormholeShake(w, h, p, 1.22);
       if (p < (tr.departureEnd ?? .22)) {
-        const streakStart = tr.streakStart ?? .075;
-        const streak = clamp((p - streakStart) / Math.max(.04, (tr.departureEnd ?? .22) - streakStart), 0, 1);
-        if (streak > 0) {
-          const drawn = drawUltraCapturedStarStreaks(w, h, tr, streak, [210, 260, 300, 58], { travel: 7200, tail: 1780, width: 1.12, alpha: .98 });
-          if (drawn < 28) drawUltraStarAcceleration(w, h, streak, [210, 260, 300, 58], { seed: 0x6a554d50, lanes: 110, tail: 680, width: 1.08, speed: 4.1, alpha: .2 });
-        }
         ctx.restore();
         return;
       }
@@ -10709,95 +10768,73 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.fill();
     }
 
-    function drawSmokePuffs(w, h) {
+    function updatePuffStore(store, dt, limit = 260) {
+      for (const p of store) p.t += dt;
+      if (store.length > limit) store.splice(0, store.length - limit);
+      for (let i = store.length - 1; i >= 0; i--) {
+        if (store[i].t >= store[i].dur) store.splice(i, 1);
+      }
+    }
+
+    function drawSmokePuff(p, w, h, camera = game.camera) {
       if (!ultraFxEnabled()) return;
+      const age = clamp(p.t / p.dur, 0, 1);
+      const worldPos = add(p.pos, scale(p.drift, p.t));
+      const rel = cameraTransform(worldPos, camera);
+      const pr = project(rel, w, h);
+      if (!pr) return;
       ctx.save();
       ctx.globalCompositeOperation = "screen";
-      for (const p of game.smokePuffs) {
-        const age = clamp(p.t / p.dur, 0, 1);
-        const worldPos = add(p.pos, scale(p.drift, p.t));
-        const rel = cameraTransform(worldPos, game.camera);
-        const pr = project(rel, w, h);
-        if (!pr) continue;
-        if (p.kind === "fireSmoke") {
-          const r = clamp(p.radius * (1 + age * 2.6) * pr.s, 3, 130);
-          const heat = Math.max(0, 1 - age * 1.55) * (p.heat || 1);
-          const smokeA = p.alpha * Math.sin(age * Math.PI) * (1 - age * .12);
-          if (heat > .02) {
-            ctx.globalCompositeOperation = "lighter";
-            const fire = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, r * .9);
-            fire.addColorStop(0, `rgba(255,238,175,${heat * .55})`);
-            fire.addColorStop(.28, `rgba(255,126,46,${heat * .34})`);
-            fire.addColorStop(.75, `rgba(180,50,18,${heat * .12})`);
-            fire.addColorStop(1, "rgba(120,30,10,0)");
-            ctx.fillStyle = fire;
-            ctx.beginPath();
-            ctx.arc(pr.x, pr.y, r * .9, 0, TAU);
-            ctx.fill();
-          }
-          ctx.globalCompositeOperation = "source-over";
-          const shade = Math.round(p.shade || 72);
-          const smoke = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, r);
-          smoke.addColorStop(0, `rgba(${shade + 36},${shade + 28},${shade + 18},${smokeA * .34})`);
-          smoke.addColorStop(.42, `rgba(${shade},${shade - 4},${shade - 10},${smokeA * .28})`);
-          smoke.addColorStop(1, `rgba(${shade - 12},${shade - 12},${shade - 14},0)`);
-          ctx.fillStyle = smoke;
+      if (p.kind === "fireSmoke") {
+        const r = clamp(p.radius * (1 + age * 2.6) * pr.s, 3, 130);
+        const heat = Math.max(0, 1 - age * 1.55) * (p.heat || 1);
+        const smokeA = p.alpha * Math.sin(age * Math.PI) * (1 - age * .12);
+        if (heat > .02) {
+          ctx.globalCompositeOperation = "lighter";
+          const fire = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, r * .9);
+          fire.addColorStop(0, `rgba(255,238,175,${heat * .55})`);
+          fire.addColorStop(.28, `rgba(255,126,46,${heat * .34})`);
+          fire.addColorStop(.75, `rgba(180,50,18,${heat * .12})`);
+          fire.addColorStop(1, "rgba(120,30,10,0)");
+          ctx.fillStyle = fire;
           ctx.beginPath();
-          ctx.arc(pr.x, pr.y, r, 0, TAU);
+          ctx.arc(pr.x, pr.y, r * .9, 0, TAU);
           ctx.fill();
-          continue;
         }
-        if (p.kind === "plasma" || p.kind === "enginePlasma" || p.kind === "missileTrail") {
-          const isEngine = p.kind === "enginePlasma";
-          const isMissile = p.kind === "missileTrail";
-          const tailHold = isMissile ? (p.tailTime || .55) : isEngine ? (p.tailTime || .45) : .18;
-          const tailWorld = sub(worldPos, scale(p.drift, Math.min(p.t, tailHold) + (isMissile ? .26 : isEngine ? .2 : .08)));
-          const tailRel = cameraTransform(tailWorld, game.camera);
-          const tailPr = project(tailRel, w, h);
-          const hue = p.hue || 204;
-          if (isMissile) {
-            const fade = Math.pow(1 - age, .7);
-            const alpha = p.alpha * fade;
-            const r = clamp(p.radius * pr.s * (1 + age * 2.7), 1.2, 24);
-            ctx.globalCompositeOperation = "lighter";
-            if (tailPr) {
-              const grad = ctx.createLinearGradient(tailPr.x, tailPr.y, pr.x, pr.y);
-              grad.addColorStop(0, `hsla(${hue},100%,38%,0)`);
-              grad.addColorStop(.28, `hsla(${hue},100%,44%,${alpha * .28})`);
-              grad.addColorStop(.72, `hsla(${hue + 8},100%,56%,${alpha * .62})`);
-              grad.addColorStop(1, `hsla(${hue + 22},100%,78%,${alpha})`);
-              ctx.strokeStyle = grad;
-              ctx.lineWidth = clamp(r * .7, 1.1, 8);
-              ctx.lineCap = "round";
-              ctx.beginPath();
-              ctx.moveTo(tailPr.x, tailPr.y);
-              ctx.lineTo(pr.x, pr.y);
-              ctx.stroke();
-            }
-            const g = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, r * 2.8);
-            g.addColorStop(0, `hsla(${hue + 28},100%,86%,${alpha * .78})`);
-            g.addColorStop(.32, `hsla(${hue + 6},100%,52%,${alpha * .34})`);
-            g.addColorStop(1, `hsla(${hue},100%,36%,0)`);
-            ctx.fillStyle = g;
-            ctx.beginPath();
-            ctx.arc(pr.x, pr.y, r * 2.8, 0, TAU);
-            ctx.fill();
-            continue;
-          }
-          if (isEngine) {
-            drawEnginePlasmaVisual(pr, tailPr, p, age);
-            continue;
-          }
-          const alpha = p.alpha * (1 - age) * (1 - age * .25);
-          const r = clamp(p.radius * pr.s * (1 + age * 1.1), 1, 12);
+        ctx.globalCompositeOperation = "source-over";
+        const shade = Math.round(p.shade || 72);
+        const smoke = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, r);
+        smoke.addColorStop(0, `rgba(${shade + 36},${shade + 28},${shade + 18},${smokeA * .34})`);
+        smoke.addColorStop(.42, `rgba(${shade},${shade - 4},${shade - 10},${smokeA * .28})`);
+        smoke.addColorStop(1, `rgba(${shade - 12},${shade - 12},${shade - 14},0)`);
+        ctx.fillStyle = smoke;
+        ctx.beginPath();
+        ctx.arc(pr.x, pr.y, r, 0, TAU);
+        ctx.fill();
+        ctx.restore();
+        return;
+      }
+      if (p.kind === "plasma" || p.kind === "enginePlasma" || p.kind === "missileTrail") {
+        const isEngine = p.kind === "enginePlasma";
+        const isMissile = p.kind === "missileTrail";
+        const tailHold = isMissile ? (p.tailTime || .55) : isEngine ? (p.tailTime || .45) : .18;
+        const tailWorld = sub(worldPos, scale(p.drift, Math.min(p.t, tailHold) + (isMissile ? .26 : isEngine ? .2 : .08)));
+        const tailRel = cameraTransform(tailWorld, camera);
+        const tailPr = project(tailRel, w, h);
+        const hue = p.hue || 204;
+        if (isMissile) {
+          const fade = Math.pow(1 - age, .7);
+          const alpha = p.alpha * fade;
+          const r = clamp(p.radius * pr.s * (1 + age * 2.7), 1.2, 24);
           ctx.globalCompositeOperation = "lighter";
           if (tailPr) {
             const grad = ctx.createLinearGradient(tailPr.x, tailPr.y, pr.x, pr.y);
-            grad.addColorStop(0, `hsla(${hue},100%,58%,0)`);
-            grad.addColorStop(.45, `hsla(${hue},100%,62%,${alpha * .45})`);
-            grad.addColorStop(1, `hsla(${hue + 16},100%,84%,${alpha})`);
+            grad.addColorStop(0, `hsla(${hue},100%,38%,0)`);
+            grad.addColorStop(.28, `hsla(${hue},100%,44%,${alpha * .28})`);
+            grad.addColorStop(.72, `hsla(${hue + 8},100%,56%,${alpha * .62})`);
+            grad.addColorStop(1, `hsla(${hue + 22},100%,78%,${alpha})`);
             ctx.strokeStyle = grad;
-            ctx.lineWidth = clamp(r * .45, .8, 3.2);
+            ctx.lineWidth = clamp(r * .7, 1.1, 8);
             ctx.lineCap = "round";
             ctx.beginPath();
             ctx.moveTo(tailPr.x, tailPr.y);
@@ -10805,34 +10842,66 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
             ctx.stroke();
           }
           const g = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, r * 2.8);
-          g.addColorStop(0, `hsla(${hue + 18},100%,90%,${alpha * .75})`);
-          g.addColorStop(.35, `hsla(${hue},100%,60%,${alpha * .35})`);
-          g.addColorStop(1, `hsla(${hue},100%,46%,0)`);
+          g.addColorStop(0, `hsla(${hue + 28},100%,86%,${alpha * .78})`);
+          g.addColorStop(.32, `hsla(${hue + 6},100%,52%,${alpha * .34})`);
+          g.addColorStop(1, `hsla(${hue},100%,36%,0)`);
           ctx.fillStyle = g;
           ctx.beginPath();
           ctx.arc(pr.x, pr.y, r * 2.8, 0, TAU);
           ctx.fill();
-          continue;
+          ctx.restore();
+          return;
         }
-        ctx.globalCompositeOperation = "screen";
-        const burst = p.burst || 0;
-        const r = clamp(p.radius * (1 + age * (2.2 + burst * 1.35)) * pr.s, 1.5, 70 + burst * 85);
-        const alpha = p.alpha * Math.sin(age * Math.PI) * (1 - age * (.2 - burst * .08));
-        const shade = Math.round(p.shade);
-        const tint = p.smokeTint;
-        const c0 = tint ? tint.map((c) => Math.round(c * .72 + shade * .28)) : [shade + 32, shade + 32, shade + 28];
-        const c1 = tint ? tint.map((c) => Math.round(c * .5 + shade * .5)) : [shade, shade, shade - 6];
-        const c2 = tint ? tint.map((c) => Math.round(c * .25 + (shade - 18) * .75)) : [shade - 18, shade - 18, shade - 20];
-        const g = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, r);
-        g.addColorStop(0, `rgba(${c0[0]},${c0[1]},${c0[2]},${alpha * (1 + burst * .18)})`);
-        g.addColorStop(.3, `rgba(${c1[0]},${c1[1]},${c1[2]},${alpha * (.62 + burst * .18)})`);
-        g.addColorStop(.68, `rgba(${c2[0]},${c2[1]},${c2[2]},${alpha * (.2 + burst * .18)})`);
-        g.addColorStop(1, `rgba(${c1[0]},${c1[1]},${c1[2]},0)`);
+        if (isEngine) {
+          drawEnginePlasmaVisual(pr, tailPr, p, age);
+          ctx.restore();
+          return;
+        }
+        const alpha = p.alpha * (1 - age) * (1 - age * .25);
+        const r = clamp(p.radius * pr.s * (1 + age * 1.1), 1, 12);
+        ctx.globalCompositeOperation = "lighter";
+        if (tailPr) {
+          const grad = ctx.createLinearGradient(tailPr.x, tailPr.y, pr.x, pr.y);
+          grad.addColorStop(0, `hsla(${hue},100%,58%,0)`);
+          grad.addColorStop(.45, `hsla(${hue},100%,62%,${alpha * .45})`);
+          grad.addColorStop(1, `hsla(${hue + 16},100%,84%,${alpha})`);
+          ctx.strokeStyle = grad;
+          ctx.lineWidth = clamp(r * .45, .8, 3.2);
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.moveTo(tailPr.x, tailPr.y);
+          ctx.lineTo(pr.x, pr.y);
+          ctx.stroke();
+        }
+        const g = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, r * 2.8);
+        g.addColorStop(0, `hsla(${hue + 18},100%,90%,${alpha * .75})`);
+        g.addColorStop(.35, `hsla(${hue},100%,60%,${alpha * .35})`);
+        g.addColorStop(1, `hsla(${hue},100%,46%,0)`);
         ctx.fillStyle = g;
         ctx.beginPath();
-        ctx.arc(pr.x, pr.y, r, 0, TAU);
+        ctx.arc(pr.x, pr.y, r * 2.8, 0, TAU);
         ctx.fill();
+        ctx.restore();
+        return;
       }
+      ctx.globalCompositeOperation = "screen";
+      const burst = p.burst || 0;
+      const r = clamp(p.radius * (1 + age * (2.2 + burst * 1.35)) * pr.s, 1.5, 70 + burst * 85);
+      const alpha = p.alpha * Math.sin(age * Math.PI) * (1 - age * (.2 - burst * .08));
+      const shade = Math.round(p.shade);
+      const tint = p.smokeTint;
+      const c0 = tint ? tint.map((c) => Math.round(c * .72 + shade * .28)) : [shade + 32, shade + 32, shade + 28];
+      const c1 = tint ? tint.map((c) => Math.round(c * .5 + shade * .5)) : [shade, shade, shade - 6];
+      const c2 = tint ? tint.map((c) => Math.round(c * .25 + (shade - 18) * .75)) : [shade - 18, shade - 18, shade - 20];
+      const g = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, r);
+      g.addColorStop(0, `rgba(${c0[0]},${c0[1]},${c0[2]},${alpha * (1 + burst * .18)})`);
+      g.addColorStop(.3, `rgba(${c1[0]},${c1[1]},${c1[2]},${alpha * (.62 + burst * .18)})`);
+      g.addColorStop(.68, `rgba(${c2[0]},${c2[1]},${c2[2]},${alpha * (.2 + burst * .18)})`);
+      g.addColorStop(1, `rgba(${c1[0]},${c1[1]},${c1[2]},0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(pr.x, pr.y, r, 0, TAU);
+      ctx.fill();
       ctx.restore();
     }
 
@@ -11153,6 +11222,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const debris = !!o.debrisRing;
       const bands = debris ? (solid ? 34 : 12) : (solid ? 26 : 10), segs = debris ? 208 : 176;
       const gapC = rng() * TAU;
+      let drawnSegments = 0;
       ctx.save();
       ctx.lineCap = "butt";
       ctx.lineJoin = "round";
@@ -11165,13 +11235,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const bandHue = debris ? 34 + rng() * 18 : hue - 18 + rng() * 14;
         const bandSat = debris ? 8 + rng() * 14 : (solid ? 26 + rng() * 18 : 38);
         const bandLight = debris ? 22 + rng() * 22 : light;
-        const baseAlpha = (solid ? (debris ? .2 : .17) : .24) * dusty * (laneNoise < .18 ? 1.65 : 1);
+        const baseAlpha = (solid ? (debris ? .34 : .3) : .36) * dusty * (laneNoise < .18 ? 1.8 : 1);
         // Shade-graded band colour: full colour lit, desaturating and darkening toward
         // near-black in the umbra core.
         const styleFor = (shade) => shade >= .99
           ? `hsla(${bandHue}, ${bandSat}%, ${bandLight}%, ${baseAlpha})`
           : `hsla(${bandHue}, ${Math.round(bandSat * (.35 + .65 * shade))}%, ${Math.max(3, Math.round(bandLight * shade))}%, ${baseAlpha})`;
-        ctx.lineWidth = clamp(r * (solid ? (debris ? (.003 + rng() * .0052) : (.0024 + rng() * .0042)) : .012), .8, solid ? 3 : 3.2);
+        ctx.lineWidth = clamp(r * (solid ? (debris ? (.0042 + rng() * .007) : (.0038 + rng() * .006)) : .014), 1.05, solid ? 4.4 : 3.8);
         // strokeStyle can't vary within one stroke, so the shade is quantised into a few
         // levels and the current run is flushed whenever the level changes (as well as at
         // gaps and the front/back split).
@@ -11186,6 +11256,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
             ? project(cameraTransform(add(o.pos, offset), game.camera), w, h)
             : null;
           if (!p || gap) { if (drawing) { ctx.stroke(); drawing = false; } continue; }
+          drawnSegments++;
           const level = Math.round((solid ? ringShade(offset, sunDir, o.r) : 1) * 15);
           if (drawing && level !== curLevel) {
             ctx.lineTo(p.x, p.y);
@@ -11205,10 +11276,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         if (drawing) ctx.stroke();
       }
       ctx.restore();
+      if (front === true && drawnSegments < bands * 8) {
+        drawPlanetRingFallback(o, r, hue, w, h, u, v, solid, debris);
+      }
       if (debris && solid) drawPlanetDebris(o, r, w, h, front, u, v);
       if (solid && front === false) {
-        ctx.strokeStyle = "rgba(0,0,0,.08)";
-        ctx.lineWidth = clamp(r * .008, .6, 2);
+        ctx.strokeStyle = "rgba(0,0,0,.12)";
+        ctx.lineWidth = clamp(r * .01, .8, 2.8);
         ctx.beginPath();
         let drawing = false;
         for (let i = 0; i <= segs; i++) {
@@ -11225,6 +11299,39 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         }
         ctx.stroke();
       }
+    }
+
+    function drawPlanetRingFallback(o, r, hue, w, h, u, v, solid, debris) {
+      const rng = mulberry((o.textureSeed || 1) ^ 0x515afe);
+      const bands = debris ? 12 : 8;
+      const segs = 160;
+      ctx.save();
+      ctx.lineCap = "butt";
+      for (let b = 0; b < bands; b++) {
+        const t = bands === 1 ? 0 : b / (bands - 1);
+        const rr = lerp(o.r * o.ringInner, o.r * o.ringOuter, t);
+        ctx.strokeStyle = `hsla(${debris ? 38 : hue - 12 + rng() * 10}, ${debris ? 16 : 34}%, ${debris ? 42 : 68 - t * 18}%, ${solid ? .11 : .18})`;
+        ctx.lineWidth = clamp(r * (debris ? .004 : .0032), .8, 2.4);
+        ctx.beginPath();
+        let drawing = false;
+        for (let i = 0; i <= segs; i++) {
+          const a = i / segs * TAU;
+          const offset = add(scale(u, Math.cos(a) * rr), scale(v, Math.sin(a) * rr));
+          const p = project(cameraTransform(add(o.pos, offset), game.camera), w, h);
+          if (!p) {
+            if (drawing) { ctx.stroke(); drawing = false; }
+            continue;
+          }
+          if (!drawing) {
+            ctx.moveTo(p.x, p.y);
+            drawing = true;
+          } else {
+            ctx.lineTo(p.x, p.y);
+          }
+        }
+        if (drawing) ctx.stroke();
+      }
+      ctx.restore();
     }
 
     function drawPlanetDebris(o, r, w, h, front, u, v) {
@@ -11736,22 +11843,22 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function drawPlanetAtmosphere(o, pr, r) {
       if (!ultraFxEnabled()) return;
       const atm = {
-        industrial: { h: 46, s: 72, l: 54, str: .28 },
-        ocean: { h: 208, s: 64, l: 64, str: .3 },
-        desert: { h: 44, s: 48, l: 68, str: .2 },
-        rocky: { h: 30, s: 22, l: 58, str: .1 },
-        gas: { h: o.hue ?? 32, s: 54, l: 60, str: .26 }
-      }[o.biome || "ocean"] || { h: 208, s: 55, l: 64, str: .24 };
+        industrial: { h: 46, s: 72, l: 54, str: .36 },
+        ocean: { h: 208, s: 64, l: 64, str: .4 },
+        desert: { h: 44, s: 48, l: 68, str: .26 },
+        rocky: { h: 30, s: 22, l: 58, str: .15 },
+        gas: { h: o.hue ?? 32, s: 54, l: 60, str: .34 }
+      }[o.biome || "ocean"] || { h: 208, s: 55, l: 64, str: .32 };
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
-      const glow = ctx.createRadialGradient(pr.x, pr.y, r * .93, pr.x, pr.y, r * 1.08);
+      const glow = ctx.createRadialGradient(pr.x, pr.y, r * .9, pr.x, pr.y, r * 1.16);
       glow.addColorStop(0, `hsla(${atm.h}, ${atm.s}%, ${atm.l}%, 0)`);
-      glow.addColorStop(.7, `hsla(${atm.h}, ${atm.s}%, ${atm.l}%, ${.035 * atm.str})`);
-      glow.addColorStop(.88, `hsla(${atm.h}, ${atm.s}%, ${atm.l}%, ${.2 * atm.str})`);
+      glow.addColorStop(.64, `hsla(${atm.h}, ${atm.s}%, ${atm.l}%, ${.045 * atm.str})`);
+      glow.addColorStop(.83, `hsla(${atm.h}, ${atm.s}%, ${atm.l}%, ${.25 * atm.str})`);
       glow.addColorStop(1, `hsla(${atm.h}, ${atm.s}%, ${atm.l}%, 0)`);
       ctx.fillStyle = glow;
       ctx.beginPath();
-      ctx.arc(pr.x, pr.y, r * 1.08, 0, TAU);
+      ctx.arc(pr.x, pr.y, r * 1.16, 0, TAU);
       ctx.fill();
       ctx.restore();
     }
@@ -11799,11 +11906,20 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function drawPlanetBody(o, cam, w, h) {
+      ctx.save();
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = "source-over";
       const pr = project(cam, w, h);
-      if (!pr) return;
+      if (!pr) {
+        ctx.restore();
+        return;
+      }
       const r = Math.abs(o.r * pr.s);
       const cullR = o.hasRing ? r * (o.ringOuter || 1) * 1.08 : r;
-      if (r < 2 || pr.x + cullR < 0 || pr.x - cullR > w || pr.y + cullR < 0 || pr.y - cullR > h) return;
+      if (r < 2 || pr.x + cullR < 0 || pr.x - cullR > w || pr.y + cullR < 0 || pr.y - cullR > h) {
+        ctx.restore();
+        return;
+      }
 
       const hue = o.hue ?? 110, sat = o.sat ?? 45, light = o.light ?? 45;
       const meridianAngle = (o.rot || 0) * .2;
@@ -11824,6 +11940,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ctx.stroke();
         ctx.globalAlpha = 1;
         if (o.hasRing) drawPlanetRing(o, r, hue, w, h, null);
+        ctx.restore();
         return;
       }
 
@@ -11866,6 +11983,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       drawPlanetAtmosphere(o, pr, r);
 
       if (o.hasRing) drawPlanetRing(o, r, hue, w, h, true);
+      ctx.restore();
     }
 
     function drawObject(o, cam, w, h) {
@@ -11925,6 +12043,104 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ctx.stroke();
       }
       ctx.restore();
+    }
+
+    function modelRenderQuality(renderCtx, entity, model, centerCam, scaleFactor) {
+      if (renderCtx.quality === false) {
+        return { pxRadius: Infinity, textures: true, decals: true, details: true, damage: true, effects: true };
+      }
+      const f = Math.min(renderCtx.w, renderCtx.h) * .82;
+      const radius = Math.max(1, modelBoundingRadius(model) * scaleFactor);
+      const pxRadius = Math.abs(radius * f / Math.max(1, centerCam.z));
+      return {
+        pxRadius,
+        textures: pxRadius > MODEL_RENDER_QUALITY.texturePx,
+        decals: pxRadius > MODEL_RENDER_QUALITY.decalPx,
+        details: pxRadius > MODEL_RENDER_QUALITY.detailPx,
+        damage: pxRadius > MODEL_RENDER_QUALITY.damagePx,
+        effects: pxRadius > MODEL_RENDER_QUALITY.effectPx
+      };
+    }
+
+    function drawModelEntity(targetCtx, renderCtx, entity, opts = {}) {
+      const modelName = entity.model || "cobra";
+      const model = MODELS[modelName];
+      if (!model) return null;
+      const camera = renderCtx.camera || game.camera;
+      const w = renderCtx.w, h = renderCtx.h;
+      const scaleFactor = entity.scaleFactor ?? entity.scale ?? 1;
+      const yaw = entity.rot ?? entity.yaw ?? 0;
+      const pitch = entity.pitch ?? 0;
+      const roll = entity.roll ?? yaw * .7;
+      const pos = entity.pos || vec();
+      const centerCam = renderCtx.centerCam || cameraTransform(pos, camera);
+      const orient = (v) => entity.quat ? quatRotate(entity.quat, v) : rotateShipPoint(v, yaw, pitch, roll);
+      const projectFn = renderCtx.project || ((p) => project(p, w, h));
+      const camVerts = model.verts.map(([x, y, z]) =>
+        add(worldDirToCam(orient(vec(x * scaleFactor, y * scaleFactor, z * scaleFactor)), camera), centerCam)
+      );
+      const points = camVerts.map(projectFn);
+      const quality = opts.quality || modelRenderQuality(renderCtx, entity, model, centerCam, scaleFactor);
+      const mode = renderCtx.mode || game.graphicsMode;
+      const alpha = entity.alpha ?? opts.alpha ?? 1;
+      const hullColor = entity.color || opts.color || shipColor(modelName, entity.police);
+      const decal = quality.decals && opts.decal === undefined
+        ? (entity.type === "ship" ? getShipDecal(entity) : null)
+        : (quality.decals ? opts.decal : null);
+      const renderShip = {
+        ...entity,
+        type: entity.type || "ship",
+        model: modelName,
+        rot: yaw,
+        pitch,
+        roll,
+        cam: centerCam,
+        engineGlow: entity.engineGlow ?? opts.engineGlow ?? shipEngineGlowLevel(entity),
+        project: projectFn,
+        playerDamageMarks: (entity.playerDamageMarks || opts.damageMarks || []).map((m) => ({
+          ...m,
+          x: m.x * scaleFactor,
+          y: m.y * scaleFactor,
+          z: m.z * scaleFactor,
+          radius: (m.radius || 12) * scaleFactor
+        }))
+      };
+
+      targetCtx.save();
+      targetCtx.globalAlpha *= alpha;
+      if (mode === "wire") {
+        drawSolidItems(targetCtx, collectSolidFaces(model, camVerts, points, "#000", 1, true, null, { project: projectFn }));
+      } else {
+        drawSolidItems(targetCtx, collectSolidFaces(model, camVerts, points, hullColor, 1, false, decal, {
+          project: projectFn,
+          textures: quality.textures,
+          metalAlphaMul: quality.textures ? 1 : 0
+        }));
+        if (quality.details) {
+          drawSolidItems(targetCtx, collectSolidDetails(model, renderShip, camVerts, points, w, h, scaleFactor, camera));
+        } else if ((renderShip.engineGlow ?? 0) > .02) {
+          drawSolidItems(targetCtx, collectSolidDetails(model, renderShip, camVerts, points, w, h, scaleFactor, camera, { enginesOnly: true }));
+        }
+        if (quality.damage && targetCtx === ctx) drawPlayerHullDamageMarks(renderShip, centerCam, w, h, camera, projectFn);
+        if (quality.effects && renderShip.police && ultraFxEnabled()) drawPoliceStrobes(targetCtx, points);
+      }
+      if (mode !== "solid") {
+        targetCtx.strokeStyle = mode === "both" ? ULTRA_WIRE_STROKE : hullColor;
+        targetCtx.lineWidth = opts.edgeWidth ?? clamp(680 / Math.max(80, centerCam.z), .7, 2);
+        const faceVisible = collectWireFaceVisibility(model, camVerts);
+        targetCtx.beginPath();
+        for (let edgeIndex = 0; edgeIndex < model.edges.length; edgeIndex++) {
+          if (!wireEdgeVisible(model, edgeIndex, faceVisible)) continue;
+          const [a, b] = model.edges[edgeIndex];
+          const pa = points[a], pb = points[b];
+          if (!pa || !pb) continue;
+          targetCtx.moveTo(pa.x, pa.y);
+          targetCtx.lineTo(pb.x, pb.y);
+        }
+        targetCtx.stroke();
+      }
+      targetCtx.restore();
+      return { model, points, camVerts, centerCam };
     }
 
     function drawDockPortal(points, station) {
@@ -12115,38 +12331,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function drawWireModel(model, o, cam, w, h) {
-      const roll = o.roll ?? (o.rot || 0) * .7;
-      const orient = (v) => o.quat ? quatRotate(o.quat, v) : rotateShipPoint(v, o.rot || 0, o.pitch || 0, roll);
-      const camVerts = model.verts.map(([x, y, z]) => add(worldDirToCam(orient(vec(x, y, z))), cam));
-      const points = camVerts.map((p) => project(p, w, h));
-      const mode = game.graphicsMode;
-      if (mode === "wire") {
-        drawSolidItems(ctx, collectSolidFaces(model, camVerts, points, "#000", 1, true, null, { project: (p) => project(p, w, h) }));
-      } else {
-        const renderShip = { ...o, cam, engineGlow: shipEngineGlowLevel(o) };
-        drawSolidItems(ctx, collectSolidFaces(model, camVerts, points, o.color || "#e9f2e4", 1, false, getShipDecal(o), { project: (p) => project(p, w, h) }));
-        drawSolidItems(ctx, collectSolidDetails(model, renderShip, camVerts, points, w, h));
-        drawPlayerHullDamageMarks(o, cam, w, h);
-        if (o.police && ultraFxEnabled()) drawPoliceStrobes(ctx, points);
-      }
-      if (mode !== "solid") {
-        // In "both" mode the fill already carries the ship's colour/lighting, so the
-        // edge overlay reads as construction lines rather than a second bright outline —
-        // dark grey instead of the hull colour used in pure wire mode.
-        ctx.strokeStyle = mode === "both" ? ULTRA_WIRE_STROKE : (o.color || "#e9f2e4");
-        ctx.lineWidth = clamp(680 / Math.max(80, cam.z), .7, 2);
-        const faceVisible = collectWireFaceVisibility(model, camVerts);
-        ctx.beginPath();
-        for (let edgeIndex = 0; edgeIndex < model.edges.length; edgeIndex++) {
-          if (!wireEdgeVisible(model, edgeIndex, faceVisible)) continue;
-          const [a, b] = model.edges[edgeIndex];
-          const pa = points[a], pb = points[b];
-          if (!pa || !pb) continue;
-          ctx.moveTo(pa.x, pa.y);
-          ctx.lineTo(pb.x, pb.y);
-        }
-        ctx.stroke();
-      }
+      drawModelEntity(ctx, { camera: game.camera, w, h, centerCam: cam, mode: game.graphicsMode }, o, {
+        color: o.color || "#e9f2e4"
+      });
       if (o === game.targetObject) {
         const c = project(cam, w, h);
         if (c) {
@@ -12245,12 +12432,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       });
       drawHangarSparkles(w, h, scene.seed ^ 0x51ed270b, .42);
       drawHangarCaption(w, h, scene, .9, true);
-      ctx.save();
-      ctx.textAlign = "center";
-      ctx.font = `${Math.max(9, w * .0085)}px ${UI_CANVAS_FONT}`;
-      ctx.fillStyle = "rgba(145,167,141,.74)";
-      ctx.fillText("MARKET, EQUIPMENT, CHARTS AND COMMANDER STATUS AVAILABLE", w / 2, h * .875);
-      ctx.restore();
     }
 
     function scannerStyleFor(o) {
@@ -12639,11 +12820,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ${stat("Speed", `${stats.speed.toFixed(2)}x Cobra`)}
         ${stat("Size", `${Math.round(modelOverallSize(model))} m`)}
       </div>
-      <div class="notice">
-        Presentation
-        <button class="btn mini ${game.fxLevel === "classic" ? "primary" : ""}" data-preset="classic">Old School</button>
-        <button class="btn mini ${game.fxLevel !== "classic" ? "primary" : ""}" data-preset="ultra">Ultra Elite</button>
-      </div>
       <div class="grid2">
         ${stat("Your Ship", shipName(playerShipModel()))}
         ${stat("Presentation", graphicsModeLabel(game.graphicsMode))}
@@ -12773,6 +12949,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
       setMessage(mode === "classic" ? "Standard old-school mode engaged. It is 1984." : "Ultra Elite mode engaged: full effects.", true);
       renderPanel();
+      updateReadouts();
     }
 
     function attachPanelEvents() {
@@ -12806,7 +12983,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         renderPanel();
       });
       panelBody.querySelectorAll("[data-equip]").forEach((b) => b.addEventListener("click", () => buyEquipment(b.dataset.equip)));
-      panelBody.querySelectorAll("[data-preset]").forEach((b) => b.addEventListener("click", () => applyPresetMode(b.dataset.preset)));
       panelBody.querySelectorAll("[data-ship-nav]").forEach((b) => b.addEventListener("click", () => cycleShipDiagram(Number(b.dataset.shipNav))));
       panelBody.querySelectorAll("[data-cheat]").forEach((b) => b.addEventListener("click", () => {
         const action = b.dataset.cheat;
@@ -12975,26 +13151,28 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const f = 320 / p.z;
         return fitPreviewPoint({ x: canvas.width / 2 + p.x * f, y: canvas.height / 2 - p.y * f });
       };
-      if (mode === "wire") {
-        drawSolidItems(c, collectSolidFaces(model, camVerts, pts, "#000", 1, true, null, { project: detailProject }));
-      } else {
-        drawSolidItems(c, collectSolidFaces(model, camVerts, pts, hullColor, 1, false, previewDecal, { project: detailProject }));
-        drawSolidItems(c, collectSolidDetails(model, { rot: yaw, pitch, roll, cam: tempCam, project: detailProject }, camVerts, pts, canvas.width, canvas.height, scaleFactor, identityCamera));
-        if (POLICE_MODELS.includes(modelName) && ultraFxEnabled()) drawPoliceStrobes(c, pts);
-      }
-      if (mode !== "solid") {
-        c.strokeStyle = mode === "both" ? ULTRA_WIRE_STROKE : hullColor;
-        c.lineWidth = 1.4;
-        const faceVisible = collectWireFaceVisibility(model, camVerts);
-        c.beginPath();
-        for (let edgeIndex = 0; edgeIndex < model.edges.length; edgeIndex++) {
-          if (!wireEdgeVisible(model, edgeIndex, faceVisible)) continue;
-          const [a, b] = model.edges[edgeIndex];
-          c.moveTo(pts[a].x, pts[a].y);
-          c.lineTo(pts[b].x, pts[b].y);
-        }
-        c.stroke();
-      }
+      drawModelEntity(c, {
+        camera: identityCamera,
+        centerCam: tempCam,
+        w: canvas.width,
+        h: canvas.height,
+        mode,
+        project: detailProject,
+        quality: false
+      }, {
+        type: "ship",
+        model: modelName,
+        scaleFactor,
+        rot: yaw,
+        pitch,
+        roll,
+        police: POLICE_MODELS.includes(modelName),
+        engineGlow: 1,
+        color: hullColor
+      }, {
+        decal: previewDecal,
+        edgeWidth: 1.4
+      });
       c.fillStyle = hullColor;
       c.font = `13px ${UI_CANVAS_FONT}`;
       c.fillText(modelDisplayName(modelName), 14, 22);
@@ -13045,6 +13223,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       hudEls.txtYaw.textContent = signedMeterText(game.yawRate, 1.24);
       hudEls.txtLaserHeat.textContent = laserHeat >= 95 ? "HOT" : `${Math.round(laserHeat)}%`;
       hudEls.missileSlots.forEach((slot, i) => slot.classList.toggle("full", i < game.missiles));
+      hudEls.modeSwitchBtn.textContent = game.fxLevel === "classic" ? "Ultra" : "Classic";
+      hudEls.modeSwitchBtn.classList.toggle("primary", game.fxLevel !== "classic");
+      hudEls.modeSwitchBtn.setAttribute("aria-pressed", game.fxLevel !== "classic" ? "true" : "false");
       const jumpBusy = !!game.transition || !!game.jumpCountdown;
       const canLaunch = game.docked && !jumpBusy;
       const canJump = !game.docked && !jumpBusy;
@@ -13063,6 +13244,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       hudEls.dockBtn.hidden = !canDock;
       hudEls.autoDockBtn.hidden = !canAutoDock && !game.autoDock;
       hudEls.galJumpBtn.hidden = !canGalJump;
+      hudEls.modeSwitchBtn.hidden = jumpBusy;
       if (lastDeveloperModeRendered !== game.developerMode) {
         lastDeveloperModeRendered = game.developerMode;
         devOnlyEls.forEach((el) => {
@@ -13198,6 +13380,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     byId("launchBtn").addEventListener("click", launch);
     byId("jumpBtn").addEventListener("click", hyperspace);
     byId("dockBtn").addEventListener("click", () => dock(false));
+    byId("modeSwitchBtn").addEventListener("click", () => applyPresetMode(game.fxLevel === "ultra" ? "classic" : "ultra"));
     byId("autoDockBtn").addEventListener("click", startAutoDock);
     byId("galJumpBtn").addEventListener("click", galacticJump);
     attachExternalViewControls(space);
