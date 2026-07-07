@@ -258,7 +258,7 @@ The game is currently designed for desktop. Mobile displays show a desktop-only 
 - Deterministic Elite-style galaxy generation across eight galaxies and 256 systems each.
 - Original-style markets, cargo, fuel, equipment, legal status, bounties, docking, hyperspace, galactic jumps and commander saves.
 - BBC-inspired system names, economy/government/population/species data and procedural descriptions.
-- A source-informed ship roster using the original-style hull catalogue, with OBJ reference models kept in `elite_obj_models/`.
+- A source-informed ship roster using original-style hull data baked directly into `index.html`.
 - Ultra and Old School presentation presets: modern textured shaded rendering or crisp wireframe nostalgia.
 - Solid shaded ships, stations, planets and stars with sun-based lighting, fixed object-space hull textures and cockpit glass.
 - Procedural planets that reflect system descriptions, including agricultural worlds, industrial worlds, rocky barren worlds, gas giants, rings, debris fields, polar caps, city lights, clouds and craters.
@@ -298,7 +298,7 @@ The game is currently designed for desktop. Mobile displays show a desktop-only 
 
 ### Rendering and Models
 
-- Replaced ad-hoc object geometry with source-informed ship/station models and OBJ references.
+- Replaced ad-hoc object geometry with source-informed ship/station model data.
 - Fixed perspective projection, back-face culling, hidden-line wireframe behaviour and object draw ordering.
 - Added solid shaded rendering with optional wire overlay, then made Ultra mode the default modern presentation.
 - Added fixed object-space hull textures, perspective-correct texture subdivision for large near faces and notes to prevent screen-space texture regressions.
