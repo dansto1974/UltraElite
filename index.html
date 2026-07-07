@@ -10857,11 +10857,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const dist = Math.hypot(dx, dy);
       const screenDiag = Math.hypot(w, h);
       const visible = clamp(1 - dist / (screenDiag * .8), 0, 1);
-      const a = clamp((.18 + strength * .82) * (.42 + visible * .48), .045, .48);
+      const brightness = clamp((light - 52) / 48, .45, 1.15) * clamp(.55 + strength * 1.35, .35, 1.45);
+      const a = clamp((.16 + strength * .96) * (.42 + visible * .58) * brightness, .035, .72);
       if (a <= .015) return;
       const axisLen = Math.hypot(dx, dy) || 1;
       const ax = dx / axisLen, ay = dy / axisLen;
       const px = -ay, py = ax;
+      const axisAngle = Math.atan2(dy, dx);
       const drawOrb = (x, y, radius, alpha, hueShift = 0, stretch = 1) => {
         const g = ctx.createRadialGradient(x, y, 0, x, y, radius);
         g.addColorStop(0, `hsla(${hue + hueShift}, ${sat}%, ${light}%, ${alpha * .72})`);
@@ -10910,32 +10912,43 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ctx.stroke();
         ctx.restore();
       };
+      const drawRay = (angle, length, width, alpha, hueShift = 0, core = false) => {
+        const ux = Math.cos(angle), uy = Math.sin(angle);
+        const x0 = pr.x - ux * length, y0 = pr.y - uy * length;
+        const x1 = pr.x + ux * length, y1 = pr.y + uy * length;
+        const g = ctx.createLinearGradient(x0, y0, x1, y1);
+        g.addColorStop(0, `hsla(${hue + hueShift}, ${sat}%, ${light}%, 0)`);
+        g.addColorStop(.46, `hsla(${hue + hueShift}, ${Math.min(100, sat + 8)}%, ${Math.min(98, light + 8)}%, ${alpha * .36})`);
+        g.addColorStop(.5, `hsla(${hue + hueShift}, ${Math.min(100, sat + 10)}%, 96%, ${alpha})`);
+        g.addColorStop(.54, `hsla(${hue + hueShift}, ${Math.min(100, sat + 8)}%, ${Math.min(98, light + 8)}%, ${alpha * .36})`);
+        g.addColorStop(1, `hsla(${hue + hueShift}, ${sat}%, ${light}%, 0)`);
+        ctx.save();
+        ctx.strokeStyle = g;
+        ctx.lineWidth = width;
+        ctx.lineCap = "round";
+        ctx.shadowColor = `hsla(${hue + hueShift}, ${sat}%, ${light}%, ${alpha * .8})`;
+        ctx.shadowBlur = core ? width * 2.8 : width * 1.4;
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x1, y1);
+        ctx.stroke();
+        ctx.restore();
+      };
 
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
-      const haloR = clamp(r * (3.1 + strength * 4.2), 34, screenDiag * .52);
-      drawOrb(pr.x, pr.y, haloR, a * .16, 0, 1.18);
+      const haloR = clamp(r * (3.6 + strength * 5.4), 42, screenDiag * .58);
+      drawOrb(pr.x, pr.y, haloR, a * .2, 0, 1.18);
 
-      // Anamorphic-style streak from the source, plus a softer vertical diffraction
-      // spike. The ghost chain below carries the actual lens-reflection read.
-      const streak = clamp(screenDiag * (.22 + strength * .34), 140, 780);
-      const streakGrad = ctx.createLinearGradient(pr.x - streak, pr.y, pr.x + streak, pr.y);
-      streakGrad.addColorStop(0, `hsla(${hue}, ${sat}%, ${light}%, 0)`);
-      streakGrad.addColorStop(.5, `hsla(${hue}, ${sat}%, ${light}%, ${a * .2})`);
-      streakGrad.addColorStop(1, `hsla(${hue}, ${sat}%, ${light}%, 0)`);
-      ctx.strokeStyle = streakGrad;
-      ctx.lineWidth = clamp(r * .018, .55, 2.4);
-      ctx.lineCap = "round";
-      ctx.beginPath();
-      ctx.moveTo(pr.x - streak, pr.y);
-      ctx.lineTo(pr.x + streak, pr.y);
-      ctx.stroke();
-      ctx.strokeStyle = `hsla(${hue + 20}, ${Math.round(sat * .75)}%, ${light}%, ${a * .08})`;
-      ctx.lineWidth = clamp(r * .01, .35, 1.3);
-      ctx.beginPath();
-      ctx.moveTo(pr.x, pr.y - streak * .32);
-      ctx.lineTo(pr.x, pr.y + streak * .32);
-      ctx.stroke();
+      const flareLen = clamp(screenDiag * (.16 + strength * .36), 130, screenDiag * .62);
+      const diagonal = axisAngle + .72;
+      drawRay(diagonal, flareLen, clamp(r * .052 + strength * 7, 3.5, 22), a * .22, 185);
+      drawRay(diagonal + Math.PI, flareLen * .72, clamp(r * .035 + strength * 5, 2.4, 15), a * .16, 205);
+      const spikeLen = clamp(r * (3.2 + strength * 6.5), 32, screenDiag * .3);
+      drawRay(0, spikeLen, clamp(r * .018, .7, 3.4), a * .6, 4, true);
+      drawRay(Math.PI / 2, spikeLen * .72, clamp(r * .012, .55, 2.6), a * .34, 18, true);
+      drawRay(Math.PI / 4, spikeLen * .46, clamp(r * .01, .45, 1.7), a * .22, -12);
+      drawRay(-Math.PI / 4, spikeLen * .46, clamp(r * .01, .45, 1.7), a * .2, -12);
 
       const ghosts = [
         { t: -.72, s: .095, a: .24, h: -70, stretch: 1.05, aperture: true, ring: true, off: -.018 },
