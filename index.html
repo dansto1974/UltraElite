@@ -12051,6 +12051,22 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.restore();
     }
 
+    function modelMeshForRender(model, camera, w, h, opts = {}) {
+      const scaleFactor = opts.scaleFactor ?? 1;
+      const centerCam = opts.centerCam || cameraTransform(opts.pos || vec(), camera);
+      const orient = opts.orient || ((v) => v);
+      const projectFn = opts.project || ((p) => project(p, w, h));
+      const camVerts = model.verts.map(([x, y, z]) =>
+        add(worldDirToCam(orient(vec(x * scaleFactor, y * scaleFactor, z * scaleFactor)), camera), centerCam)
+      );
+      return {
+        camVerts,
+        points: camVerts.map(projectFn),
+        centerCam,
+        project: projectFn
+      };
+    }
+
     function modelRenderQuality(renderCtx, entity, model, centerCam, scaleFactor) {
       if (renderCtx.quality === false) {
         return { pxRadius: Infinity, textures: true, decals: true, details: true, damage: true, effects: true };
@@ -12082,10 +12098,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const centerCam = renderCtx.centerCam || cameraTransform(pos, camera);
       const orient = (v) => entity.quat ? quatRotate(entity.quat, v) : rotateShipPoint(v, yaw, pitch, roll);
       const projectFn = renderCtx.project || ((p) => project(p, w, h));
-      const camVerts = model.verts.map(([x, y, z]) =>
-        add(worldDirToCam(orient(vec(x * scaleFactor, y * scaleFactor, z * scaleFactor)), camera), centerCam)
-      );
-      const points = camVerts.map(projectFn);
+      const mesh = modelMeshForRender(model, camera, w, h, { scaleFactor, centerCam, orient, project: projectFn });
+      const { camVerts, points } = mesh;
       const quality = opts.quality || modelRenderQuality(renderCtx, entity, model, centerCam, scaleFactor);
       const mode = renderCtx.mode || game.graphicsMode;
       const alpha = entity.alpha ?? opts.alpha ?? 1;
@@ -12351,8 +12365,12 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function drawStation(o, cam, w, h) {
       const model = stationModelFor(o);
-      const camVerts = model.verts.map(([x, y, z]) => add(worldDirToCam(rotatePoint(vec(x, y, z), 0, 0, o.rot)), cam));
-      const pts = camVerts.map((p) => project(p, w, h));
+      const mesh = modelMeshForRender(model, game.camera, w, h, {
+        centerCam: cam,
+        orient: (v) => rotatePoint(v, 0, 0, o.rot),
+        project: (p) => project(p, w, h)
+      });
+      const { camVerts, points: pts } = mesh;
       const mode = game.graphicsMode;
       if (mode === "wire") {
         drawSolidItems(ctx, collectSolidFaces(model, camVerts, pts, "#000", 1, true, null, { project: (p) => project(p, w, h) }));
@@ -12377,7 +12395,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         }
         ctx.stroke();
       }
-      const slotVerts = model.verts.slice(-4).map(([x, y, z]) => add(worldDirToCam(rotatePoint(vec(x, y, z), 0, 0, o.rot)), cam));
+      const slotVerts = camVerts.slice(-4);
       const [slotA, slotB, slotC, slotD] = slotVerts.map((p) => project(p, w, h));
       // The portal is painted on top of the hull (no depth buffer), so gate it on the
       // slot face actually pointing at the camera — otherwise it shows through the
