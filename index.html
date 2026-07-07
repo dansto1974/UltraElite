@@ -7762,6 +7762,15 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     let hullTextureCanvas = null;
+    const ROCK_MODEL_NAMES = new Set(["asteroid", "boulder", "splinter", "hermit"]);
+
+    function isRockModelName(modelName) {
+      return ROCK_MODEL_NAMES.has(modelName);
+    }
+
+    function isRockEntity(o) {
+      return !!o && (isRockModelName(o.model) || ROCK_MODEL_NAMES.has(o.type));
+    }
 
     function buildHullTexture() {
       const size = 400;
@@ -7825,6 +7834,80 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function getHullTexture() {
       if (!hullTextureCanvas) hullTextureCanvas = buildHullTexture();
       return hullTextureCanvas;
+    }
+
+    const rockTextureCache = new Map();
+
+    function buildRockTexture(seed = 1) {
+      const size = 360;
+      const c = document.createElement("canvas");
+      c.width = size;
+      c.height = size;
+      const tc = c.getContext("2d");
+      const rng = mulberry(hash32(`rock-texture:${seed}`));
+
+      const base = tc.createLinearGradient(0, 0, size, size);
+      base.addColorStop(0, "#b9aa91");
+      base.addColorStop(.45, "#807868");
+      base.addColorStop(1, "#c2b398");
+      tc.fillStyle = base;
+      tc.fillRect(0, 0, size, size);
+
+      for (let i = 0; i < 1800; i++) {
+        const x = rng() * size, y = rng() * size;
+        const shade = rng() < .5 ? 40 + rng() * 65 : 175 + rng() * 55;
+        tc.fillStyle = `rgba(${shade},${shade * .96},${shade * .82},${.08 + rng() * .18})`;
+        const s = rng() > .85 ? 2 : 1;
+        tc.fillRect(x, y, s, s);
+      }
+
+      for (let i = 0; i < 34; i++) {
+        const x = rng() * size, y = rng() * size;
+        const r = 7 + rng() * 34;
+        const g = tc.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, `rgba(40,34,28,${.12 + rng() * .18})`);
+        g.addColorStop(.55, `rgba(65,55,45,${.05 + rng() * .11})`);
+        g.addColorStop(1, "rgba(0,0,0,0)");
+        tc.fillStyle = g;
+        tc.beginPath();
+        tc.ellipse(x, y, r * (1.1 + rng() * .8), r * (.45 + rng() * .55), rng() * TAU, 0, TAU);
+        tc.fill();
+      }
+
+      tc.lineCap = "round";
+      for (let i = 0; i < 44; i++) {
+        let x = rng() * size, y = rng() * size;
+        const steps = 3 + Math.floor(rng() * 5);
+        tc.strokeStyle = `rgba(34,29,24,${.16 + rng() * .22})`;
+        tc.lineWidth = .7 + rng() * 1.8;
+        tc.beginPath();
+        tc.moveTo(x, y);
+        for (let s = 0; s < steps; s++) {
+          x += (rng() - .5) * 58;
+          y += (rng() - .5) * 58;
+          tc.lineTo(x, y);
+        }
+        tc.stroke();
+      }
+
+      const dust = tc.createLinearGradient(0, 0, size, size * .8);
+      dust.addColorStop(0, "rgba(255,245,210,.12)");
+      dust.addColorStop(.55, "rgba(255,245,210,0)");
+      dust.addColorStop(1, "rgba(40,32,24,.16)");
+      tc.fillStyle = dust;
+      tc.fillRect(0, 0, size, size);
+      return c;
+    }
+
+    function getRockTexture(seed = 1) {
+      const key = hash32(`rock:${seed}`);
+      let canvas = rockTextureCache.get(key);
+      if (!canvas) {
+        canvas = buildRockTexture(key);
+        rockTextureCache.set(key, canvas);
+        if (rockTextureCache.size > 24) rockTextureCache.delete(rockTextureCache.keys().next().value);
+      }
+      return canvas;
     }
 
     const stationTextureCache = new Map();
@@ -13167,12 +13250,16 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         drawSceneModelImpostor(o, model, cam, w, h);
       } else {
         const distanceLod = sceneModelCanDistanceLod(o) && sceneModelDistance(o) > sceneModelPlainDistance(model, o);
+        const rock = isRockEntity(o);
+        const rockSeed = o.textureSeed ?? o.decalSeed ?? hash32(`${game.galaxy}:${currentSystem().index}:${o.name || ""}:${o.model || o.type}:rock`);
         drawModelEntity(ctx, { camera: game.camera, w, h, centerCam: cam, mode: distanceLod ? "solid" : game.graphicsMode }, o, {
-          color: o.color || "#e9f2e4",
+          color: rock ? (o.color || "#9b927f") : (o.color || "#e9f2e4"),
           quality: distanceLod
             ? { pxRadius: Infinity, textures: false, decals: false, details: false, damage: false, effects: false }
             : undefined,
-          metalAlphaMul: distanceLod ? 0 : undefined
+          texture: rock && !distanceLod ? getRockTexture(rockSeed) : undefined,
+          edgeColor: rock ? "rgba(178,168,142,.58)" : undefined,
+          metalAlphaMul: distanceLod ? 0 : (rock ? .82 : undefined)
         });
       }
       if (o === game.targetObject) {
@@ -13970,9 +14057,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         y: canvas.height / 2 + (p.y - previewCy) * previewScale
       });
       for (let i = 0; i < pts.length; i++) pts[i] = fitPreviewPoint(pts[i]);
-      const hullColor = shipColor(modelName, POLICE_MODELS.includes(modelName));
+      const rockPreview = isRockModelName(modelName);
+      const hullColor = rockPreview ? "#9b927f" : shipColor(modelName, POLICE_MODELS.includes(modelName));
       const mode = game.graphicsMode;
-      const previewDecal = getPreviewShipDecal(modelName);
+      const previewDecal = rockPreview ? null : getPreviewShipDecal(modelName);
       // Details (windows/engine glow/trim) are culled via worldDirToCam, which reads the
       // real player camera's orientation -- correct for the main flight view, but this
       // widget is a self-contained turntable with no relation to game.camera at all, so
@@ -13991,17 +14079,20 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         project: detailProject,
         quality: false
       }, {
-        type: "ship",
+        type: rockPreview ? modelName : "ship",
         model: modelName,
         scaleFactor,
         rot: yaw,
         pitch,
         roll,
         police: POLICE_MODELS.includes(modelName),
-        engineGlow: 1,
+        engineGlow: rockPreview ? 0 : 1,
         color: hullColor
       }, {
         decal: previewDecal,
+        texture: rockPreview ? getRockTexture(hash32(`preview:${modelName}:rock`)) : undefined,
+        edgeColor: rockPreview ? "rgba(178,168,142,.58)" : undefined,
+        metalAlphaMul: rockPreview ? .82 : undefined,
         edgeWidth: 1.4
       });
       c.fillStyle = hullColor;
