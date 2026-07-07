@@ -1239,11 +1239,11 @@
         <div class="crosshair" aria-hidden="true"></div>
         <div class="comms-log" id="commsLog" aria-live="polite"></div>
         <div class="hud-actions" aria-label="Flight actions">
-          <button class="btn mini primary hud-tip" id="launchBtn" data-help="Launch from the station into local space.">Launch</button>
-          <button class="btn mini hud-tip" id="jumpBtn" data-help="Start a live hyperspace countdown to the selected system.">Jump</button>
-          <button class="btn mini hud-tip" id="dockBtn" data-help="Request docking when lined up with the station slot at low speed.">Dock</button>
-          <button class="btn mini hud-tip" id="autoDockBtn" data-help="Toggle the docking computer for an automated slot approach.">Auto Dock</button>
-          <button class="btn mini warn hud-tip" id="galJumpBtn" data-help="Use the galactic hyperdrive after a longer live countdown.">Galactic</button>
+          <button class="btn mini primary" id="launchBtn">Launch</button>
+          <button class="btn mini" id="jumpBtn">Jump</button>
+          <button class="btn mini" id="dockBtn">Dock</button>
+          <button class="btn mini" id="autoDockBtn">Auto Dock</button>
+          <button class="btn mini warn" id="galJumpBtn">Galactic</button>
         </div>
         <section class="dashboard" aria-label="Ship dashboard">
           <div class="dash-section">
@@ -3852,6 +3852,21 @@
       return slotFacing && depth > -95 && depth < 310 && lateral < 92 && game.speed < 85;
     }
 
+    function inAutoDockStationCorridor(st) {
+      if (!st || st.type !== "station" || !game.autoDock) return false;
+      const target = dockableTarget();
+      if (target !== st) return false;
+      const state = typeof game.autoDock === "object" ? game.autoDock : null;
+      const stage = state?.stage || "marshal";
+      if (stage === "marshal" || stage === "goAround") return false;
+      const { center, outward } = stationAutoDockFrame(st);
+      const rel = sub(game.camera.pos, center);
+      const depth = dot(rel, outward);
+      const lateral = len(sub(rel, scale(outward, depth)));
+      const lateralLimit = stage === "final" ? 180 : stage === "align" ? 240 : 380;
+      return depth > -170 && depth < 980 && lateral < lateralLimit && game.speed < 140;
+    }
+
     function bodyVelocity(o) {
       if (o.vel) return { ...o.vel };
       if (o.type === "ship") return scale(shipForwardWorld(o), o.speed || 0);
@@ -3863,9 +3878,26 @@
       const speed = len(v);
       o.vel = speed > .01 ? { ...v } : vec();
       if (o.type === "ship") {
+        const prev = o.speed || 0;
         o.speed = clamp(speed, 12, Math.max(24, 180 * (shipStats(o.model).speed || 1)));
+        registerShipAcceleration(o, o.speed - prev, 1 / 30);
         if (speed > 6) setNoseDirection(o, v, o.roll || 0);
       }
+    }
+
+    function registerShipAcceleration(o, deltaSpeed, dt) {
+      if (!o || o.type !== "ship") return;
+      const accel = deltaSpeed / Math.max(.016, dt || .016);
+      const boost = clamp((accel - 8) / 95, 0, 1.35);
+      o.engineBoost = Math.max((o.engineBoost || 0) * Math.pow(.16, dt || .016), boost);
+    }
+
+    function shipEngineGlowLevel(o, base = null) {
+      const speed = o?.speed ?? len(o?.vel || vec());
+      const stats = shipStats(o?.model || playerShipModel());
+      const max = Math.max(90, 180 * (stats.speed || 1));
+      const cruiseGlow = base ?? clamp(speed / max, .22, .78);
+      return clamp(cruiseGlow + (o?.engineBoost || 0) * .95, 0, 1.85);
     }
 
     function resolveBodyBounce(a, b, restitution = .46) {
@@ -3945,7 +3977,7 @@
 
     function handlePlayerLargeCollision(o) {
       if (!largeCollisionBody(o) || game.docked || game.transition) return;
-      if (o.type === "station" && inStationDockingCorridor(o)) return;
+      if (o.type === "station" && (inStationDockingCorridor(o) || inAutoDockStationCorridor(o))) return;
       const bodyR = largeCollisionRadius(o);
       const playerR = playerCollisionRadius();
       const delta = sub(game.camera.pos, o.pos);
@@ -4052,14 +4084,140 @@
       game.transition = { kind, t: 0, dur, onComplete, ...extra };
     }
 
-    function startJumpCountdown(kind, dur, label, onComplete) {
-      game.jumpCountdown = { kind, t: 0, dur, countdownLabel: label, onComplete };
+    function jumpTransitionProgress(tr) {
+      return tr ? clamp(tr.t / tr.dur, 0, 1) : 0;
+    }
+
+    function calculateJumpTrajectoryQuat(camera = game.camera) {
+      const q = ensureCameraQuat(camera);
+      const currentForward = forwardVector(camera);
+      const upHint = quatRotate(q, vec(0, 1, 0));
+      const yawSteps = [-2.45, -2.05, -1.62, -1.18, -.78, -.38, 0, .38, .78, 1.18, 1.62, 2.05, 2.45, Math.PI];
+      const pitchSteps = [-1.08, -.78, -.52, -.26, 0, .26, .52, .78, 1.08];
+      let bestDir = currentForward;
+      let bestScore = -Infinity;
+      for (const yaw of yawSteps) {
+        for (const pitch of pitchSteps) {
+          const cp = Math.cos(pitch);
+          const localDir = norm(vec(Math.sin(yaw) * cp, Math.sin(pitch), Math.cos(yaw) * cp));
+          const dir = norm(quatRotate(q, localDir));
+          let score = dot(dir, currentForward) * .55 - (Math.abs(yaw) + Math.abs(pitch)) * .05;
+          for (const o of game.objects) {
+            if (!o?.pos) continue;
+            const rel = sub(o.pos, camera.pos);
+            const dist = len(rel);
+            if (dist < 1 || dist > 24000) continue;
+            const ahead = dot(norm(rel), dir);
+            if (ahead <= .04) continue;
+            const miss = dist * Math.sqrt(Math.max(0, 1 - ahead * ahead));
+            const baseR = o.r || (o.type === "ship" ? 80 : 120);
+            const clearance = baseR
+              + (o.type === "sun" ? 4200
+                : o.type === "planet" ? 2200
+                  : o.type === "station" || o.type === "hermit" ? 900
+                    : o.type === "ship" ? 260
+                      : 180);
+            const cone = clearance * (o.type === "sun" || o.type === "planet" ? 2.9 : 2.15);
+            if (miss < cone) {
+              const severity = (1 - miss / cone) * ahead;
+              const weight = o.type === "sun" ? 7.5
+                : o.type === "planet" ? 6.2
+                  : o.type === "station" || o.type === "hermit" ? 4.8
+                    : o.type === "ship" ? 2.7
+                      : 1.4;
+              score -= severity * weight * clamp(12000 / dist, .35, 3.2);
+            }
+          }
+          if (score > bestScore) {
+            bestScore = score;
+            bestDir = dir;
+          }
+        }
+      }
+      return quatLookRotation(bestDir, upHint);
+    }
+
+    function jumpTransitionCameraOffset(tr) {
+      if (!tr || !ultraFxEnabled() || (tr.kind !== "hyperspace" && tr.kind !== "galactic")) return 0;
+      const p = jumpTransitionProgress(tr);
+      const bigJump = tr.kind === "galactic";
+      const maxOffset = bigJump ? 32000 : 19000;
+      const departureEnd = tr.departureEnd ?? (bigJump ? .2 : .24);
+      const arrivalAt = tr.arrivalAt ?? .74;
+      if (tr._arrived) {
+        const t = clamp((p - arrivalAt) / Math.max(.08, 1 - arrivalAt), 0, 1);
+        return -maxOffset * (1 - easeInOut(t));
+      }
+      const solveEnd = Math.min(departureEnd * .22, .045);
+      if (p < solveEnd) return 0;
+      if (p < departureEnd) return maxOffset * easeInOut((p - solveEnd) / Math.max(.04, departureEnd - solveEnd));
+      return maxOffset;
+    }
+
+    function jumpTransitionRenderCamera(renderCam, shipCam, tr) {
+      const offset = jumpTransitionCameraOffset(tr);
+      if (!offset) return renderCam;
+      return {
+        pos: add(renderCam.pos, scale(forwardVector(shipCam), offset)),
+        q: renderCam.q
+      };
+    }
+
+    function captureJumpDepartureStarfield(camera = game.camera) {
+      return (game.stars || [])
+        .map((star, i) => {
+          const p = cameraTransform(star, camera);
+          return {
+            x: p.x,
+            y: p.y,
+            z: p.z,
+            size: star.size || 1.2,
+            hue: star.hue || 205,
+            sat: star.sat || 0,
+            tw: star.tw || i * 17.31,
+            depth: (i * 1103515245 + 12345 >>> 0) / 0xffffffff
+          };
+        })
+        .filter((s) => s.z > 18 && s.z < 5200 && Math.abs(s.x / s.z) < 2.4 && Math.abs(s.y / s.z) < 1.8);
+    }
+
+    function arrivalStationFacingQuat(camera = game.camera) {
+      const station = game.objects.find((o) => o.type === "station" || o.type === "hermit");
+      if (!station?.pos) return ensureCameraQuat(camera);
+      return quatLookRotation(norm(sub(station.pos, camera.pos)), vec(0, 1, 0));
+    }
+
+    function startJumpCountdown(kind, dur, label, onComplete, extra = {}) {
+      game.jumpCountdown = { kind, t: 0, dur, countdownLabel: label, onComplete, ...extra };
+    }
+
+    function updateJumpTrajectoryControl(jc, dt) {
+      if (!jc?.trajectoryControl || !ultraFxEnabled()) return;
+      if (!jc.fromQ) jc.fromQ = quatNorm(ensureCameraQuat(game.camera));
+      if (!jc.trajectoryQ) jc.trajectoryQ = calculateJumpTrajectoryQuat(game.camera);
+      const p = clamp(jc.t / jc.dur, 0, 1);
+      const settle = easeInOut(p);
+      const wobbleWindow = Math.sin(Math.PI * clamp(p, 0, 1));
+      const finalCalm = 1 - easeInOut(clamp((p - .72) / .28, 0, 1));
+      const amp = (jc.kind === "galactic" ? .105 : .075) * wobbleWindow * (.35 + finalCalm * .65);
+      const seed = jc.wobbleSeed || 1;
+      const yawWobble = Math.sin(jc.t * 2.15 + seed * .0017) * amp;
+      const pitchWobble = Math.sin(jc.t * 2.85 + seed * .0031) * amp * .62;
+      const rollWobble = Math.sin(jc.t * 1.55 + seed * .0043) * amp * .45;
+      const base = quatSlerp(jc.fromQ, jc.trajectoryQ, settle);
+      const wobbleQ = quatMul(
+        quatFromAxisAngle(vec(0, 1, 0), yawWobble),
+        quatMul(quatFromAxisAngle(vec(1, 0, 0), pitchWobble), quatFromAxisAngle(vec(0, 0, 1), rollWobble))
+      );
+      game.camera.q = quatNorm(quatMul(base, wobbleQ));
+      game.rollRate = game.pitchRate = game.yawRate = 0;
     }
 
     function updateJumpCountdown(dt) {
       const jc = game.jumpCountdown;
       if (!jc || game.transition) return;
       jc.t += dt;
+      updateJumpTrajectoryControl(jc, dt);
       if (jc.t < jc.dur) return;
       game.jumpCountdown = null;
       jc.onComplete();
@@ -4109,6 +4267,7 @@
       if (!tr._exploded && tr.t >= (tr.hadCapsule ? 1.55 : 1.08)) {
         tr._exploded = true;
         spawnExplosion(pos, 4.2);
+        game.screenShake = Math.min(game.screenShake || 0, 2.8);
         spawnSmokePuffs(pos, 3.1, 18);
         spawnDeathDebris(pos, 9);
         flash();
@@ -4374,6 +4533,10 @@
       return { ...slot, right: norm(right) };
     }
 
+    function stationAutoDockFrame(st) {
+      return stationSlotAxes(st);
+    }
+
     function spawnStationTraffic(kind = "launch", rng = Math.random) {
       const st = game.objects.find((o) => o.type === "station");
       if (!st) return null;
@@ -4505,7 +4668,7 @@
         syncDockSceneShip();
         eliteAudio.play("beep");
         commsMessage(stationCommsName(), "Clear for take off. Start engines and proceed through the field.", "station");
-        startTransition("launchHangar", 4.4, () => {
+        startTransition("launchHangar", 8.2, () => {
           eliteAudio.play("launch");
           finishLaunch(55);
         }, { scene: game.dockScene });
@@ -4566,12 +4729,14 @@
           game.legal = Math.max(0, game.legal - 2);
           game.dockScene = makeDockScene(st.name, hullRepaired, repairLine, preRepairMarks);
           const completeDock = () => {
-            commsMessage(`${st.name.toUpperCase()} CONTROL`, stationControllerLine("dockComplete"), "station");
-            if (hullRepaired) commsMessage(`${st.name.toUpperCase()} SERVICE`, repairLine, "station");
+            if (!game.dockScene?._sequenceServiceComms) {
+              commsMessage(`${st.name.toUpperCase()} CONTROL`, stationControllerLine("dockComplete"), "station");
+              if (hullRepaired) commsMessage(`${st.name.toUpperCase()} SERVICE`, repairLine, "station");
+            }
             setMessage(hullRepaired ? `Welcome to ${st.name}. Free hull repair complete.` : `Welcome to ${st.name}.`, true);
             renderPanel();
           };
-          if (ultraFxEnabled()) startTransition("dockHangar", 6.2, completeDock, { scene: game.dockScene });
+          if (ultraFxEnabled()) startTransition("dockHangar", 10.2, completeDock, { scene: game.dockScene });
           else completeDock();
           renderPanel();
         };
@@ -4625,9 +4790,16 @@
       if (!game.developerMode) game.fuel -= d;
       const toWitch = Math.random() < 0.05 + (game.legal > 15 ? 0.08 : 0);
       setMessage("Hyperspace countdown initiated.", true);
+      const countdownTrajectory = ultraFxEnabled() ? {
+        trajectoryControl: true,
+        fromQ: quatNorm(ensureCameraQuat(game.camera)),
+        trajectoryQ: calculateJumpTrajectoryQuat(game.camera),
+        wobbleSeed: hash32(`jump:${game.galaxy}:${game.current}:${game.target}:${Date.now() >> 8}`)
+      } : {};
       startJumpCountdown("hyperspace", 5, "HYPERSPACE", () => {
         eliteAudio.play("hyperspace");
-        startTransition("hyperspace", 1.1, () => {
+        const finalTrajectoryQ = quatNorm(ensureCameraQuat(game.camera));
+        const arrive = () => {
           if (toWitch) {
             game.witchspace = true;
             game.objects = [];
@@ -4654,10 +4826,23 @@
             resetFlightScene(true);
             setMessage(`Hyperspace complete. Arrived at ${currentSystem().name}.`, true);
           }
+        };
+        const finish = () => {
+          if (!ultraFxEnabled() || toWitch) arrive();
+          game.screenShake = Math.max(game.screenShake || 0, ultraFxEnabled() ? 1.2 : .5);
           flash();
           renderPanel();
-        });
-      });
+        };
+        const extra = ultraFxEnabled() ? {
+          departureEnd: .26,
+          arrivalAt: .74,
+          fromQ: finalTrajectoryQ,
+          trajectoryQ: finalTrajectoryQ,
+          departureStars: captureJumpDepartureStarfield(game.camera),
+          ...(toWitch ? {} : { onArrive: arrive })
+        } : {};
+        startTransition("hyperspace", ultraFxEnabled() ? 3.8 : 1.1, finish, extra);
+      }, countdownTrajectory);
     }
 
     function galacticJump() {
@@ -4668,9 +4853,16 @@
         return;
       }
       setMessage("Galactic jump countdown initiated.", true);
+      const countdownTrajectory = ultraFxEnabled() ? {
+        trajectoryControl: true,
+        fromQ: quatNorm(ensureCameraQuat(game.camera)),
+        trajectoryQ: calculateJumpTrajectoryQuat(game.camera),
+        wobbleSeed: hash32(`galactic:${game.galaxy}:${game.current}:${Date.now() >> 8}`)
+      } : {};
       startJumpCountdown("galactic", 10, "GALACTIC JUMP", () => {
         eliteAudio.play("hyperspace");
-        startTransition("galactic", 2.8, () => {
+        const finalTrajectoryQ = quatNorm(ensureCameraQuat(game.camera));
+        const arrive = () => {
           game.galaxy = (game.galaxy + 1) % 8;
           game.current = 0;
           game.target = 1;
@@ -4678,11 +4870,24 @@
           game.docked = false;
           game.witchspace = false;
           resetFlightScene(true);
+        };
+        const finish = () => {
+          if (!ultraFxEnabled()) arrive();
+          game.screenShake = Math.max(game.screenShake || 0, ultraFxEnabled() ? 1.6 : .6);
           flash();
           setMessage(`Galactic hyperspace complete. Galaxy ${game.galaxy + 1}.`, true);
           renderPanel();
-        });
-      });
+        };
+        const extra = ultraFxEnabled() ? {
+          departureEnd: .22,
+          arrivalAt: .76,
+          fromQ: finalTrajectoryQ,
+          trajectoryQ: finalTrajectoryQ,
+          departureStars: captureJumpDepartureStarfield(game.camera),
+          onArrive: arrive
+        } : {};
+        startTransition("galactic", ultraFxEnabled() ? 7.2 : 2.8, finish, extra);
+      }, countdownTrajectory);
     }
 
     function nearStationSafeZone() {
@@ -4752,6 +4957,28 @@
       return true;
     }
 
+    function segmentSphereHit(a, b, center, radius) {
+      const ab = sub(b, a);
+      const ab2 = dot(ab, ab);
+      if (ab2 <= 1e-6) return null;
+      const t = clamp(dot(sub(center, a), ab) / ab2, 0, 1);
+      const closest = add(a, scale(ab, t));
+      const d = len(sub(center, closest));
+      return d <= radius ? { t, point: closest, d } : null;
+    }
+
+    function stationBlocksLaser(from, to, ignoreTarget = null) {
+      let best = null;
+      for (const st of game.objects) {
+        if ((st.type !== "station" && st.type !== "hermit") || st === ignoreTarget || st._remove) continue;
+        const radius = largeCollisionRadius(st) * 1.03;
+        const hit = segmentSphereHit(from, to, st.pos, radius);
+        if (!hit || hit.t <= .015 || hit.t >= .985) continue;
+        if (!best || hit.t < best.t) best = { ...hit, station: st };
+      }
+      return best;
+    }
+
     function fireLaser() {
       if (game.transition) return;
       if (game.docked) {
@@ -4801,6 +5028,8 @@
         }
         const hit = laserFootprintHit(o, rel, w, h);
         if (!hit) continue;
+        const candidateHitPos = cameraLocalToWorld(game.camera, vec(0, 0, hit.depth));
+        if (stationBlocksLaser(game.camera.pos, candidateHitPos, o)) continue;
         const aim = Math.hypot(rel.x, rel.y) / Math.max(1, rel.z);
         const depthScore = hit.depth + aim * 18 + hit.screenDist * .05;
         if (depthScore < score) {
@@ -5117,6 +5346,7 @@
         pitch: 0,
         roll: 0,
         speed: game.speed,
+        engineBoost: game.playerEngineBoost || 0,
         engineTrailClock: game.playerEngineTrailClock || 0,
         hp: game.energy,
         maxHp: 100
@@ -5142,8 +5372,9 @@
       const engineMul = centers.length > 3 ? .82 : 1;
       const alienTrail = isAlienShip(o);
       const podTrailHue = o.model === "escapePod" ? 48 + Math.random() * 8 : null;
+      const boostMul = 1 + (o.engineBoost || 0) * 1.45;
       for (let i = 0; i < centers.length; i++) {
-        spawnEnginePlasma(centers[i], aft, clamp(speed / 105, .6, 2.2) * engineMul, alienTrail, podTrailHue);
+        spawnEnginePlasma(centers[i], aft, clamp(speed / 105, .6, 2.2) * engineMul * boostMul, alienTrail, podTrailHue);
       }
       const hullFrac = o.maxHp ? (o.hp ?? o.maxHp) / o.maxHp : 1;
       const smokeThreshold = .28;
@@ -5984,6 +6215,29 @@ More than forty years later, I am still staying up all night because of the same
         const step = Math.min(dt, 1 / 30);
         if (!tr.waitingForRestart) tr.t += step;
         if (tr.kind === "death") updateDeathTransitionEvents(tr, step);
+        if ((tr.kind === "hyperspace" || tr.kind === "galactic") && ultraFxEnabled()) {
+          const jp = clamp(tr.t / tr.dur, 0, 1);
+          const bigJump = tr.kind === "galactic";
+          if (tr.fromQ && tr.trajectoryQ && !tr._arrived) {
+            const solveEnd = (tr.departureEnd ?? (bigJump ? .22 : .26)) * .62;
+            const solve = easeInOut(clamp(jp / Math.max(.05, solveEnd), 0, 1));
+            game.camera.q = quatSlerp(tr.fromQ, tr.trajectoryQ, solve);
+          }
+          if (!tr._jumpAccelShake && jp >= .05) {
+            tr._jumpAccelShake = true;
+            game.screenShake = Math.max(game.screenShake || 0, bigJump ? 2.1 : 1.55);
+          }
+          if (!tr._jumpDecelShake && jp >= .74) {
+            tr._jumpDecelShake = true;
+            game.screenShake = Math.max(game.screenShake || 0, bigJump ? 2.7 : 2.05);
+          }
+          if (tr.onArrive && !tr._arrived && jp >= (tr.arrivalAt ?? .74)) {
+            tr._arrived = true;
+            tr.onArrive();
+            game.camera.q = arrivalStationFacingQuat(game.camera);
+            tr.arrivalQ = ensureCameraQuat(game.camera);
+          }
+        }
         if (tr.kind === "launch") {
           const p = clamp(tr.t / tr.dur, 0, 1);
           if (tr.fromPos && tr.toPos) {
@@ -5998,34 +6252,42 @@ More than forty years later, I am still staying up all night because of the same
           game.speed = lerp(tr.fromSpeed, tr.toSpeed, p);
         }
         if (tr.kind === "launchHangar") {
-          const lp = tr.t / tr.dur;
-          if (!tr._engines && lp >= .16) {
+          if (!tr._engines && tr.t >= 2) {
             tr._engines = true;
             eliteAudio.play("launch");
           }
-          if (!tr._lift && lp >= .34) {
+          if (!tr._lift && tr.t >= 3.4) {
             tr._lift = true;
             game.screenShake = Math.max(game.screenShake || 0, .55);
           }
-          if (!tr._exitPunch && lp >= .82) {
+          if (!tr._exitPunch && tr.t >= 5.55) {
             tr._exitPunch = true;
             game.screenShake = Math.max(game.screenShake || 0, .75);
           }
         }
-        if (tr.kind === "dockHangar" && !tr._landed && tr.t / tr.dur >= .42) {
+        if (tr.kind === "dockHangar" && !tr._landed && tr.t >= 7.15) {
           tr._landed = true;
-          game.screenShake = Math.max(game.screenShake || 0, 1.15);
+          game.screenShake = Math.max(game.screenShake || 0, 1.35);
           eliteAudio.play("hit");
+        }
+        if (tr.kind === "dockHangar" && !tr._serviceComms && tr.t >= 7.65) {
+          tr._serviceComms = true;
+          const scene = tr.scene || game.dockScene || {};
+          const stationName = scene.stationName || game.dockedAt || `${currentSystem().name} STATION`;
+          commsMessage(`${stationName.toUpperCase()} CONTROL`, stationControllerLine("dockComplete"), "station");
+          if (scene.hullRepaired) commsMessage(`${stationName.toUpperCase()} SERVICE`, scene.repairLine || "Hull repair complete.", "station");
+          if (scene) scene._sequenceServiceComms = true;
         }
         if (tr.kind === "death" && tr.t >= tr.dur) {
           tr.t = tr.dur;
           tr.waitingForRestart = true;
+          game.screenShake = 0;
         } else if (tr.t >= tr.dur) {
           game.transition = null;
           tr.onComplete();
         }
       } else if (!game.docked) {
-        updatePlayerControls(dt);
+        if (!game.jumpCountdown?.trajectoryControl) updatePlayerControls(dt);
         game.commsClock -= dt;
         if (game.commsClock <= 0) {
           game.commsClock = 16 + Math.random() * 26;
@@ -6039,9 +6301,14 @@ More than forty years later, I am still staying up all night because of the same
           }
         }
         updateStationTraffic(dt);
+        const playerSpeedBefore = game.speed;
         if (keys.has("Equal") || keys.has("NumpadAdd")) game.speed += dt * 120;
         if (keys.has("Minus") || keys.has("NumpadSubtract")) game.speed -= dt * 120;
         game.speed = clamp(game.speed, 0, game.maxSpeed);
+        const playerShipForBoost = playerTrailShip();
+        playerShipForBoost.engineBoost = game.playerEngineBoost || 0;
+        registerShipAcceleration(playerShipForBoost, game.speed - playerSpeedBefore, dt);
+        game.playerEngineBoost = playerShipForBoost.engineBoost || 0;
         if (keys.has("Space")) fireLaser();
 
         if (game.autoDock) updateAutoDock(dt);
@@ -6175,15 +6442,22 @@ More than forty years later, I am still staying up all night because of the same
       }
 
       const state = typeof game.autoDock === "object" ? game.autoDock : (game.autoDock = { stage: "marshal" });
-      const slot = stationSlotFrame(st);
+      const slot = stationAutoDockFrame(st);
       const inward = scale(slot.outward, -1);
-      const right = norm(cross(slot.up, slot.outward));
+      const right = slot.right || norm(cross(slot.up, slot.outward));
+      if (!state.laneRight || !state.laneUp) {
+        state.laneRight = { ...right };
+        state.laneUp = { ...slot.up };
+      }
+      const laneRight = norm(state.laneRight);
+      const laneUp = norm(state.laneUp);
       const frontness = dot(sub(game.camera.pos, slot.center), slot.outward);
-      const marshal = add(slot.center, add(scale(slot.outward, 1380), add(scale(right, 520), scale(slot.up, 210))));
+      const marshal = add(slot.center, add(scale(slot.outward, 1380), add(scale(laneRight, 520), scale(laneUp, 210))));
       const goSide = state.goSide || (state.goSide = Math.random() < .5 ? -1 : 1);
-      const goAround = add(slot.center, add(scale(slot.outward, 1720), add(scale(right, goSide * 760), scale(slot.up, 320))));
+      const goAround = add(slot.center, add(scale(slot.outward, 1720), add(scale(laneRight, goSide * 760), scale(laneUp, 320))));
       const approach = add(slot.center, scale(slot.outward, 760));
       const final = add(slot.center, scale(slot.outward, 118));
+      const finalAim = add(slot.center, scale(inward, 150));
       const relToAxis = sub(game.camera.pos, slot.center);
       const lateral = len(sub(relToAxis, scale(slot.outward, dot(relToAxis, slot.outward))));
       const stageTarget = state.stage === "marshal"
@@ -6199,18 +6473,23 @@ More than forty years later, I am still staying up all night because of the same
       const d = len(toTarget);
       const slotDist = len(sub(game.camera.pos, slot.center));
       const avoidance = dockingComputerAvoidance();
-      const trafficClose = Number.isFinite(avoidance.nearest) && avoidance.nearest < 95;
+      const trafficClose = Number.isFinite(avoidance.nearest) && avoidance.nearest < (state.stage === "final" ? 34 : 72);
       const forward = forwardVector(game.camera);
       const alignment = dot(forward, inward);
-      const offTrajectory = state.stage !== "marshal" && state.stage !== "goAround" && (
-        (state.stage === "approach" && (lateral > 430 || frontness < 260)) ||
-        (state.stage === "align" && (lateral > 260 || frontness < 95)) ||
-        (state.stage === "final" && (lateral > 128 || frontness < -28 || alignment < .93 || trafficClose))
+
+      if (state.stage === "marshal" && (frontness > 720 || (d < 300 && frontness > 360))) state.stage = "approach";
+      if (state.stage === "approach" && frontness < 840 && lateral < 360) state.stage = "align";
+      if (state.stage === "align" && frontness < 240 && lateral < 190 && alignment > .82) state.stage = "final";
+
+      const offTrajectory = state.stage !== "marshal" && state.stage !== "goAround" && state.stage !== "final" && (
+        (state.stage === "approach" && (lateral > 820 || frontness < -220)) ||
+        (state.stage === "align" && (lateral > 560 || frontness < -240 || (trafficClose && lateral > 170)))
       );
       state.offTrackTime = offTrajectory ? (state.offTrackTime || 0) + dt : Math.max(0, (state.offTrackTime || 0) - dt * 1.8);
-      if (state.stage !== "goAround" && state.offTrackTime > .95) {
+      if (state.stage !== "goAround" && state.offTrackTime > 1.65) {
         state.stage = "goAround";
         state.offTrackTime = 0;
+        state.goAroundCount = (state.goAroundCount || 0) + 1;
         state.goSide *= -1;
         state.announced = "";
         commsMessage("TRAFFIC CONTROL", "Approach unstable. Go around and re-enter the lane.", "station");
@@ -6220,10 +6499,6 @@ More than forty years later, I am still staying up all night because of the same
         state.offTrackTime = 0;
         state.announced = "";
       }
-      if (state.stage === "marshal" && d < 170 && frontness > 420) state.stage = "approach";
-      if (state.stage === "approach" && d < 105 && lateral < 115) state.stage = "align";
-      if (state.stage === "align" && d < 55 && alignment > .988) state.stage = "final";
-
       const freshStage = state.stage !== state.announced;
       if (freshStage) {
         state.announced = state.stage;
@@ -6240,26 +6515,37 @@ More than forty years later, I am still staying up all night because of the same
       }
 
       const desiredDir = state.stage === "final"
-        ? inward
+        ? norm(add(scale(inward, 1.7), scale(norm(sub(finalAim, game.camera.pos)), 2.6)))
         : state.stage === "align"
-          ? norm(add(scale(inward, 3.8), scale(toTarget, .004)))
+          ? norm(add(scale(inward, 2.4), scale(norm(sub(final, game.camera.pos)), 1.8)))
           : norm(toTarget);
-      const avoidWeight = state.stage === "final" ? .28 : state.stage === "align" ? .44 : state.stage === "goAround" ? .72 : .66;
+      const avoidWeight = state.stage === "final"
+        ? (trafficClose ? .24 : .08)
+        : state.stage === "align" ? .44 : state.stage === "goAround" ? .72 : .66;
       const steeredDir = avoidance.dir ? norm(add(desiredDir, scale(avoidance.dir, avoidWeight))) : desiredDir;
       const desiredQ = quatLookRotation(steeredDir, slot.up);
-      const turnRate = state.stage === "final" ? 3.15 : state.stage === "align" ? 2.85 : state.stage === "goAround" ? 2.45 : 2.05;
+      const turnRate = state.stage === "final" ? 5.6 : state.stage === "align" ? 3.35 : state.stage === "goAround" ? 2.45 : 2.05;
       game.camera.q = quatSlerp(ensureCameraQuat(game.camera), desiredQ, 1 - Math.exp(-turnRate * dt));
       game.rollRate = 0;
       game.pitchRate = 0;
       game.yawRate = 0;
 
+      if (state.stage !== "marshal" && state.stage !== "goAround" && frontness > -150 && frontness < 980 && lateral > .1) {
+        const axisPoint = add(slot.center, scale(slot.outward, frontness));
+        const lateralVec = sub(game.camera.pos, axisPoint);
+        const correctionRate = state.stage === "final" ? 2.9 : state.stage === "align" ? 1.65 : .8;
+        game.camera.pos = sub(game.camera.pos, scale(lateralVec, clamp(correctionRate * dt, 0, .16)));
+      }
+
       const targetSpeed = state.stage === "marshal" ? (d > 500 ? 118 : 72)
         : state.stage === "goAround" ? (d > 520 ? 108 : 76)
           : state.stage === "approach" ? (d > 260 ? 70 : 42)
-          : state.stage === "align" ? 26
-            : 24;
+          : state.stage === "align" ? 24
+            : 19;
+      const headingAlign = clamp(dot(forwardVector(game.camera), steeredDir), 0, 1);
+      const steeringSpeedMul = lerp(.38, 1, headingAlign * headingAlign);
       const avoidSlow = avoidance.nearest < 115 ? .42 : avoidance.nearest < 240 ? .66 : avoidance.nearest < 380 ? .84 : 1;
-      game.speed = lerp(game.speed, targetSpeed * avoidSlow, dt * (state.stage === "final" ? 1.8 : 1.25));
+      game.speed = lerp(game.speed, targetSpeed * avoidSlow * steeringSpeedMul, dt * (state.stage === "final" ? 1.8 : 1.25));
 
       state.hud = {
         stage: state.stage,
@@ -6269,7 +6555,7 @@ More than forty years later, I am still staying up all night because of the same
         alignment: clamp(alignment, 0, 1),
         avoidance: Number.isFinite(avoidance.nearest) ? avoidance.nearest : null
       };
-      if (state.stage === "final" && slotDist < 74 && alignment > .985) dock(true);
+      if (state.stage === "final" && slotDist < 135 && lateral < 150 && alignment > .86) dock(true);
     }
 
     function controlHoldTime(axis, input, dt) {
@@ -6359,6 +6645,7 @@ More than forty years later, I am still staying up all night because of the same
       // like drones. Keep the desired-vector callers, but convert that into turn inputs
       // and scalar speed here.
       const desiredLen = len(desired);
+      const speedBefore = o.speed ?? len(o.vel || vec());
       if (o.speed === undefined) {
         const initialSpeed = len(o.vel || vec());
         o.speed = clamp(initialSpeed || maxSpeed * .38, maxSpeed * .18, maxSpeed);
@@ -6384,6 +6671,7 @@ More than forty years later, I am still staying up all night because of the same
       else o.speed += Math.sign(targetSpeed - o.speed) * speedStep;
       if (beforeTurnAlignment < -.35) o.speed = Math.max(o.speed - accel * .22 * dt, maxSpeed * .22);
       o.speed = clamp(o.speed, maxSpeed * .16, maxSpeed);
+      registerShipAcceleration(o, o.speed - speedBefore, dt);
       o.vel = scale(shipForward(o), o.speed);
       o.pos = add(o.pos, scale(o.vel, dt));
     }
@@ -6548,6 +6836,7 @@ More than forty years later, I am still staying up all night because of the same
     }
 
     function fireAtShip(attacker, target) {
+      if (stationBlocksLaser(attacker.pos, target.pos)) return;
       const dmg = npcCombatProfile(attacker).damage;
       pushEnemyLaserShot(attacker, target.pos, target.r || 50);
       eliteAudio.play("enemyLaser");
@@ -6588,6 +6877,7 @@ More than forty years later, I am still staying up all night because of the same
       }
       const externalTarget = game.viewMode === "ext" && !game.docked;
       const playerRadius = Math.max(42, modelBoundingRadius(MODELS[playerShipModel()]) || 72);
+      if (stationBlocksLaser(o.pos, game.camera.pos, o)) return;
       const energyBefore = game.energy;
       if (externalTarget) pushEnemyLaserShot(o, { ...game.camera.pos }, playerRadius, { impact: true });
       else pushEnemyLaserShot(o);
@@ -6647,6 +6937,29 @@ More than forty years later, I am still staying up all night because of the same
       spawnStationTraffic(kind, Math.random);
     }
 
+    function stationLaunchLaneBlocker(o, center, outward, right, up) {
+      const candidates = [
+        { pos: game.camera.pos, r: playerCollisionRadius(), name: game.commander },
+        ...game.objects.filter((x) => x.type === "ship" && x !== o && !x._remove)
+      ];
+      let best = null;
+      for (const x of candidates) {
+        const rel = sub(x.pos, o.pos);
+        const ahead = dot(rel, outward);
+        if (ahead < 40 || ahead > 980) continue;
+        const lane = sub(rel, scale(outward, ahead));
+        const lateral = len(lane);
+        const limit = (o.r || 55) + (x.r || 55) + 150;
+        if (lateral > limit) continue;
+        const score = ahead + lateral * 2.2;
+        if (!best || score < best.score) best = { obj: x, ahead, lateral, lane, score };
+      }
+      if (!best) return null;
+      const sideSign = dot(best.lane, right) >= 0 ? -1 : 1;
+      const upSign = dot(best.lane, up) >= 0 ? -1 : 1;
+      return norm(add(scale(outward, 1.6), add(scale(right, sideSign * 1.25), scale(up, upSign * .55))));
+    }
+
     function updateStationTrafficShip(o, dt) {
       const station = o.trafficStation && game.objects.includes(o.trafficStation)
         ? o.trafficStation
@@ -6656,12 +6969,22 @@ More than forty years later, I am still staying up all night because of the same
         return;
       }
       o.trafficAge = (o.trafficAge || 0) + dt;
-      const { center, outward } = stationSlotAxes(station);
+      const { center, outward, right, up } = stationSlotAxes(station);
       const offset = o.trafficSlotOffset || vec();
       const speedMul = shipStats(o.model).speed || 1;
       if (o.aiMode === "stationLaunch") {
         const target = add(center, add(offset, scale(outward, 1800)));
-        steerVelocity(o, sub(target, o.pos), dt, 70, 96 * speedMul);
+        const panicDir = stationLaunchLaneBlocker(o, center, outward, right, up);
+        if (panicDir) {
+          o.engineBoost = Math.max(o.engineBoost || 0, 1.2);
+          if (!o._launchPanicAt || performance.now() - o._launchPanicAt > 1400) {
+            o._launchPanicAt = performance.now();
+            shipHail(o, "flee", "Traffic lane blocked! Breaking hard!", .75, 5500);
+          }
+          steerVelocity(o, scale(panicDir, 960), dt, 175, 168 * speedMul);
+        } else {
+          steerVelocity(o, sub(target, o.pos), dt, 70, 96 * speedMul);
+        }
         if (dot(sub(o.pos, center), outward) > 1500 || o.trafficAge > 16) {
           o.aiMode = "cruise";
           o.trafficStation = null;
@@ -6985,9 +7308,10 @@ More than forty years later, I am still staying up all night because of the same
           });
           continue;
         }
-        const engineGlow = detail.type === "engine" ? (o.engineGlow ?? 1) : 1;
+        const engineGlow = detail.type === "engine" ? clamp(o.engineGlow ?? 1, 0, 1.45) : 1;
+        const engineFillGlow = clamp(engineGlow, 0, 1);
         const engineFill = engineGlow > .02
-          ? `rgb(${Math.round(70 + 177 * engineGlow)},${Math.round(76 + 179 * engineGlow)},${Math.round(72 + 175 * engineGlow)})`
+          ? `rgb(${Math.round(70 + 177 * engineFillGlow)},${Math.round(76 + 179 * engineFillGlow)},${Math.round(72 + 175 * engineFillGlow)})`
           : "#454c48";
         details.push({
           kind: "poly",
@@ -7813,6 +8137,7 @@ More than forty years later, I am still staying up all night because of the same
     }
 
     function drawEngineGlow(targetCtx, points, alpha = 1) {
+      alpha = clamp(alpha, 0, 1.45);
       if (alpha <= .01) return;
       const b = polygonBounds(points);
       const cx = (b.minX + b.maxX) / 2;
@@ -8015,7 +8340,7 @@ More than forty years later, I am still staying up all night because of the same
     function drawSpace() {
       const w = space.width, h = space.height;
       const flightCam = game.camera;
-      game.camera = viewCamera();
+      game.camera = jumpTransitionRenderCamera(viewCamera(), flightCam, game.transition);
       ctx.fillStyle = "#000";
       ctx.fillRect(0, 0, w, h);
       ctx.save();
@@ -8201,6 +8526,108 @@ More than forty years later, I am still staying up all night because of the same
       ctx.restore();
     }
 
+    function drawLaunchSequenceHud(w, h, tr) {
+      const p = clamp(tr.t / tr.dur, 0, 1);
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      const boxW = Math.min(w * .34, 360 * dpr);
+      const boxH = 86 * dpr;
+      const x = w / 2 - boxW / 2;
+      const y = Math.max(76 * dpr, h - 262 * dpr);
+      const pad = 10 * dpr;
+      const stage = p < .2
+        ? "CLEAR FOR TAKE OFF"
+        : p < .42
+          ? "DRIVE CORES RISING"
+          : p < .72
+            ? "MAG CLAMPS CLEAR"
+            : "DEPARTURE VECTOR LOCKED";
+      const thrust = Math.round(clamp(smoothstep(.12, .34, p) * 100, 0, 100));
+      const lift = Math.round(clamp(smoothstep(.34, .64, p) * 100, 0, 100));
+      const exit = Math.round(clamp(smoothstep(.58, 1, p) * 100, 0, 100));
+      ctx.save();
+      ctx.fillStyle = "rgba(0,0,0,.18)";
+      ctx.fillRect(x, y, boxW, boxH);
+      ctx.strokeStyle = "rgba(101,255,71,.42)";
+      ctx.lineWidth = Math.max(1, dpr);
+      ctx.strokeRect(x, y, boxW, boxH);
+      ctx.fillStyle = "rgba(101,255,71,.08)";
+      ctx.fillRect(x + dpr, y + dpr, boxW - dpr * 2, 22 * dpr);
+      ctx.textAlign = "left";
+      ctx.font = `${11 * dpr}px ${UI_CANVAS_FONT}`;
+      ctx.fillStyle = "rgba(101,255,71,.9)";
+      ctx.shadowColor = "rgba(101,255,71,.32)";
+      ctx.shadowBlur = 7 * dpr;
+      ctx.fillText(`LAUNCH CONTROL - ${stage}`, x + pad, y + 16 * dpr);
+      ctx.shadowBlur = 0;
+      ctx.font = `${8.5 * dpr}px ${UI_CANVAS_FONT}`;
+      ctx.fillStyle = "rgba(145,167,141,.82)";
+      const lineY = y + 38 * dpr;
+      ctx.fillText(`THRUST ${thrust}%   LIFT ${lift}%   EXIT ${exit}%`, x + pad, lineY);
+      ctx.fillText(`VECTOR ${Math.round(p * 100).toString().padStart(3, "0")}%   FORCEFIELD CLEARANCE ACTIVE`, x + pad, lineY + 15 * dpr);
+      const barX = x + pad;
+      const barY = y + boxH - 17 * dpr;
+      const barW = boxW - pad * 2;
+      const barH = 4 * dpr;
+      ctx.fillStyle = "rgba(101,255,71,.12)";
+      ctx.fillRect(barX, barY, barW, barH);
+      ctx.fillStyle = p > .72 ? "rgba(255,211,61,.78)" : "rgba(101,255,71,.72)";
+      ctx.fillRect(barX, barY, barW * p, barH);
+      ctx.strokeStyle = "rgba(101,255,71,.32)";
+      ctx.strokeRect(barX, barY, barW, barH);
+      ctx.restore();
+    }
+
+    function drawDockingSequenceHud(w, h, tr) {
+      const p = clamp(tr.t / tr.dur, 0, 1);
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      const boxW = Math.min(w * .34, 360 * dpr);
+      const boxH = 86 * dpr;
+      const x = w / 2 - boxW / 2;
+      const y = Math.max(76 * dpr, h - 262 * dpr);
+      const pad = 10 * dpr;
+      const stage = p < .22
+        ? "FORCEFIELD ENTRY"
+        : p < .5
+          ? "DESCENT VECTOR"
+          : p < .66
+            ? "LANDING CLAMPS"
+            : "STATION SERVICES ONLINE";
+      const entry = Math.round(clamp(smoothstep(0, .42, p) * 100, 0, 100));
+      const descent = Math.round(clamp(smoothstep(.32, .76, p) * 100, 0, 100));
+      const clamps = Math.round(clamp(smoothstep(.72, .9, p) * 100, 0, 100));
+      ctx.save();
+      ctx.fillStyle = "rgba(0,0,0,.18)";
+      ctx.fillRect(x, y, boxW, boxH);
+      ctx.strokeStyle = "rgba(101,255,71,.42)";
+      ctx.lineWidth = Math.max(1, dpr);
+      ctx.strokeRect(x, y, boxW, boxH);
+      ctx.fillStyle = "rgba(101,255,71,.08)";
+      ctx.fillRect(x + dpr, y + dpr, boxW - dpr * 2, 22 * dpr);
+      ctx.textAlign = "left";
+      ctx.font = `${11 * dpr}px ${UI_CANVAS_FONT}`;
+      ctx.fillStyle = "rgba(101,255,71,.9)";
+      ctx.shadowColor = "rgba(101,255,71,.32)";
+      ctx.shadowBlur = 7 * dpr;
+      ctx.fillText(`DOCKING CONTROL - ${stage}`, x + pad, y + 16 * dpr);
+      ctx.shadowBlur = 0;
+      ctx.font = `${8.5 * dpr}px ${UI_CANVAS_FONT}`;
+      ctx.fillStyle = "rgba(145,167,141,.82)";
+      const lineY = y + 38 * dpr;
+      ctx.fillText(`ENTRY ${entry}%   DESCENT ${descent}%   CLAMPS ${clamps}%`, x + pad, lineY);
+      ctx.fillText(`HANGAR VECTOR ${Math.round(p * 100).toString().padStart(3, "0")}%   TOUCHDOWN SEQUENCE ACTIVE`, x + pad, lineY + 15 * dpr);
+      const barX = x + pad;
+      const barY = y + boxH - 17 * dpr;
+      const barW = boxW - pad * 2;
+      const barH = 4 * dpr;
+      ctx.fillStyle = "rgba(101,255,71,.12)";
+      ctx.fillRect(barX, barY, barW, barH);
+      ctx.fillStyle = p > .66 ? "rgba(255,211,61,.78)" : "rgba(101,255,71,.72)";
+      ctx.fillRect(barX, barY, barW * p, barH);
+      ctx.strokeStyle = "rgba(101,255,71,.32)";
+      ctx.strokeRect(barX, barY, barW, barH);
+      ctx.restore();
+    }
+
     function drawTransitionEffect(w, h, tr) {
       if (tr.kind === "death") {
         drawDeathSequence(w, h, tr);
@@ -8316,6 +8743,11 @@ More than forty years later, I am still staying up all night because of the same
     function smoothstep(edge0, edge1, x) {
       const t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
       return t * t * (3 - 2 * t);
+    }
+
+    function smootherstep(edge0, edge1, x) {
+      const t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
+      return t * t * t * (t * (t * 6 - 15) + 10);
     }
 
     function drawDeathSequence(w, h, tr) {
@@ -8780,6 +9212,79 @@ More than forty years later, I am still staying up all night because of the same
       ctx.restore();
     }
 
+    const HANGAR_FAR_Z = 900;
+    const HANGAR_GATE_Z = HANGAR_FAR_Z - 5;
+    const HANGAR_GATE_W = 270;
+    const HANGAR_GATE_H = 150;
+    const HANGAR_FLIGHT_Y = -24;
+
+    function hangarGatePoints() {
+      return [
+        vec(-HANGAR_GATE_W, -HANGAR_GATE_H, HANGAR_GATE_Z),
+        vec(HANGAR_GATE_W, -HANGAR_GATE_H, HANGAR_GATE_Z),
+        vec(HANGAR_GATE_W, HANGAR_GATE_H, HANGAR_GATE_Z),
+        vec(-HANGAR_GATE_W, HANGAR_GATE_H, HANGAR_GATE_Z)
+      ];
+    }
+
+    function hangarGateProjection(view, w, h) {
+      return hangarProjectPoly(hangarGatePoints(), view, w, h);
+    }
+
+    function withHangarGateClip(view, w, h, drawFn) {
+      const gatePr = hangarGateProjection(view, w, h);
+      if (!gatePr || gatePr.length < 3) return drawFn();
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(gatePr[0].x, gatePr[0].y);
+      gatePr.slice(1).forEach((pt) => ctx.lineTo(pt.x, pt.y));
+      ctx.closePath();
+      ctx.clip();
+      drawFn();
+      ctx.restore();
+    }
+
+    function drawHangarForcefieldSheet(w, h, scene, view, intensity = 1) {
+      const gatePr = hangarGateProjection(view, w, h);
+      if (!gatePr || gatePr.length < 4 || intensity <= .01) return;
+      const bounds = polygonBounds(gatePr);
+      if (![bounds.minX, bounds.maxX, bounds.minY, bounds.maxY].every(Number.isFinite)) return;
+      const pulse = .55 + Math.sin(performance.now() / 220 + (scene?.seed || 1)) * .16;
+      ctx.save();
+      const grad = ctx.createLinearGradient(bounds.minX, bounds.minY, bounds.maxX, bounds.maxY);
+      grad.addColorStop(0, `rgba(112,205,255,${(.22 + pulse * .1) * intensity})`);
+      grad.addColorStop(.5, `rgba(45,124,255,${(.2 + pulse * .11) * intensity})`);
+      grad.addColorStop(1, `rgba(6,22,72,${(.2 + pulse * .08) * intensity})`);
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(gatePr[0].x, gatePr[0].y);
+      gatePr.slice(1).forEach((pt) => ctx.lineTo(pt.x, pt.y));
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.strokeStyle = `rgba(148,214,255,${(.24 + pulse * .34) * intensity})`;
+      ctx.lineWidth = Math.max(1.2, w / 850) * (1 + intensity * .55);
+      for (let i = 1; i < 5; i++) {
+        const t = i / 5;
+        ctx.beginPath();
+        ctx.moveTo(lerp(gatePr[0].x, gatePr[3].x, t), lerp(gatePr[0].y, gatePr[3].y, t));
+        ctx.lineTo(lerp(gatePr[1].x, gatePr[2].x, t), lerp(gatePr[1].y, gatePr[2].y, t));
+        ctx.stroke();
+      }
+      ctx.strokeStyle = `rgba(210,240,255,${.32 * intensity})`;
+      ctx.lineWidth = Math.max(1, w / 1200);
+      ctx.beginPath();
+      ctx.moveTo(gatePr[0].x, gatePr[0].y);
+      gatePr.slice(1).forEach((pt) => ctx.lineTo(pt.x, pt.y));
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function hangarGateCrossingIntensity(z) {
+      return Math.pow(clamp(1 - Math.abs(z - HANGAR_GATE_Z) / 170, 0, 1), .65);
+    }
+
     function drawHangarRoom(w, h, scene, view) {
       const texture = getStationTexture(stationStyleForSystem(currentSystem()));
       const p = (x, y, z) => vec(x, y, z);
@@ -8825,8 +9330,8 @@ More than forty years later, I am still staying up all night because of the same
       }
       drawHangarCargoStacks(w, h, scene, view, floor);
 
-      const gateW = 270, gateH = 150;
-      const gate = [p(-gateW, -gateH, far - 5), p(gateW, -gateH, far - 5), p(gateW, gateH, far - 5), p(-gateW, gateH, far - 5)];
+      const gateW = HANGAR_GATE_W, gateH = HANGAR_GATE_H;
+      const gate = hangarGatePoints();
       const gatePr = hangarPoly(gate, view, w, h, "rgba(0,0,0,.92)", "rgba(120,185,255,.36)");
       drawHangarOutsideThroughGate(view, w, h, gatePr, (scene?.seed || 1) ^ 0xa5a5);
       const pulse = .44 + Math.sin(performance.now() / 260) * .18;
@@ -8910,7 +9415,10 @@ More than forty years later, I am still staying up all night because of the same
       if (!ultraFxEnabled()) return;
       const modelName = scene?.shipModel || playerShipModel();
       const glow = clamp(opts.engineGlow ?? 1, 0, 1);
-      if (glow <= .02) return;
+      const trailMul = opts.trail ?? 1;
+      const drawTrails = opts.drawTrails !== false;
+      const drawGlow = opts.drawGlow !== false;
+      if ((glow <= .02 || !drawGlow) && (trailMul <= .03 || !drawTrails)) return;
       const pos = opts.pos || vec(0, -105, 430);
       const scaleFactor = opts.scaleFactor || 1.16;
       const yaw = opts.yaw ?? .68;
@@ -8918,13 +9426,12 @@ More than forty years later, I am still staying up all night because of the same
       const roll = opts.roll ?? -.08;
       const anchors = hangarEngineAnchors(modelName, pos, scaleFactor, yaw, pitch, roll);
       const now = performance.now() / 1000;
-      const trailMul = opts.trail ?? 1;
       const puffStore = scene._hangarEnginePuffs || (scene._hangarEnginePuffs = []);
       const lastNow = scene._hangarEnginePuffClock || now;
       const dt = clamp(now - lastNow, 0, .08);
       scene._hangarEnginePuffClock = now;
       for (const p of puffStore) p.t += dt;
-      if (trailMul > .03) {
+      if (drawTrails && trailMul > .03) {
         scene._hangarEngineSpawnClock = (scene._hangarEngineSpawnClock || 0) - dt;
         if (scene._hangarEngineSpawnClock <= 0) {
           scene._hangarEngineSpawnClock = .035 + Math.random() * .025;
@@ -8936,20 +9443,26 @@ More than forty years later, I am still staying up all night because of the same
       }
       ctx.save();
       ctx.globalCompositeOperation = "screen";
-      for (const p of puffStore) {
-        const age = clamp(p.t / p.dur, 0, 1);
-        if (age >= 1) continue;
-        const worldPos = add(p.pos, scale(p.drift, p.t));
-        const rel = cameraTransform(worldPos, view);
-        const pr = project(rel, w, h);
-        if (!pr) continue;
-        const tailWorld = sub(worldPos, scale(p.drift, Math.min(p.t, p.tailTime || .45) + .2));
-        const tailRel = cameraTransform(tailWorld, view);
-        drawEnginePlasmaVisual(pr, project(tailRel, w, h), p, age);
+      if (drawTrails) {
+        for (const p of puffStore) {
+          const age = clamp(p.t / p.dur, 0, 1);
+          if (age >= 1) continue;
+          const worldPos = add(p.pos, scale(p.drift, p.t));
+          const rel = cameraTransform(worldPos, view);
+          const pr = project(rel, w, h);
+          if (!pr) continue;
+          const tailWorld = sub(worldPos, scale(p.drift, Math.min(p.t, p.tailTime || .45) + .2));
+          const tailRel = cameraTransform(tailWorld, view);
+          drawEnginePlasmaVisual(pr, project(tailRel, w, h), p, age);
+        }
       }
       if (puffStore.length > 180) puffStore.splice(0, puffStore.length - 180);
       for (let i = puffStore.length - 1; i >= 0; i--) {
         if (puffStore[i].t >= puffStore[i].dur) puffStore.splice(i, 1);
+      }
+      if (!drawGlow || glow <= .02) {
+        ctx.restore();
+        return;
       }
       for (const [idx, anchor] of anchors.entries()) {
         const head = hangarProject(anchor.pos, view, w, h);
@@ -9083,52 +9596,51 @@ More than forty years later, I am still staying up all night because of the same
     function drawLaunchHangarSequence(w, h, tr) {
       const scene = tr.scene || game.dockScene || {};
       const p = clamp(tr.t / tr.dur, 0, 1);
+      const t = tr.t;
       const modelName = scene?.shipModel || playerShipModel();
-      const spool = smoothstep(.16, .36, p);
-      const lift = smoothstep(.36, .58, p);
-      const exit = Math.pow(smoothstep(.58, .88, p), 2.15);
+      const spool = smoothstep(2, 3, t);
+      const lift = smootherstep(0, 1, smootherstep(2.45, 4.85, t));
+      const exitRun = Math.max(0, t - 4.85);
+      const exitTravel = exitRun > 0 ? Math.pow(exitRun / 1.55, 2.45) : 0;
+      const exit = clamp(exitTravel, 0, 1);
       const shipBase = hangarShipParkPos();
       const shipPos = vec(
         0,
-        lerp(shipBase.y, -78, lift),
-        lerp(shipBase.z, 965, exit * exit)
+        lerp(shipBase.y, HANGAR_FLIGHT_Y, lift),
+        shipBase.z + exitTravel * 1550
       );
-      const cameraPos = vec(-235 + Math.sin(p * TAU * .7) * 18, -132, 170 + exit * 160);
-      const target = vec(0, lerp(-104, -72, lift), lerp(450, 695, exit));
+      const cameraPos = vec(-235 + Math.sin(p * TAU * .5) * 14, -132, 170 + exit * 92);
+      const target = vec(0, lerp(-104, HANGAR_FLIGHT_Y + 6, lift), lerp(450, 1160, exit));
       const view = makeHangarCamera(cameraPos, target);
       drawHangarRoom(w, h, scene, view);
       const shipOpts = {
         pos: shipPos,
-        scaleFactor: hangarShipScale(modelName, 1.16),
+        scaleFactor: hangarShipScale(modelName, lerp(1.16, .36, smoothstep(.55, 3.7, exitTravel))),
         yaw: 0,
         pitch: lerp(.04, -.08, exit),
         roll: Math.sin(p * TAU) * .012 * (1 - exit),
-        engineGlow: spool,
+        engineGlow: clamp(spool + smoothstep(4.85, 5.45, t) * 1.05, 0, 1.85),
         damageMarks: []
       };
-      drawHangarEngineEffects(w, h, scene, view, { ...shipOpts, trail: spool * (1 + exit * .9) });
-      drawHangarShip(w, h, scene, view, shipOpts);
-      drawHangarEngineEffects(w, h, scene, view, { ...shipOpts, trail: 0 });
+      const drawShipPass = () => {
+        const exitTrail = spool * smoothstep(4.95, 5.45, t) * (1 + exit * 2.25);
+        drawHangarEngineEffects(w, h, scene, view, { ...shipOpts, trail: exitTrail, drawGlow: false });
+        drawHangarShip(w, h, scene, view, shipOpts);
+      };
+      const forcefieldInFront = shipPos.z > HANGAR_GATE_Z - 12;
+      if (!forcefieldInFront) drawHangarForcefieldSheet(w, h, scene, view, hangarGateCrossingIntensity(shipPos.z));
+      if (forcefieldInFront) withHangarGateClip(view, w, h, drawShipPass);
+      else drawShipPass();
+      if (forcefieldInFront) drawHangarForcefieldSheet(w, h, scene, view, hangarGateCrossingIntensity(shipPos.z));
 
-      const fadeOut = smoothstep(.92, 1, p);
+      drawLaunchSequenceHud(w, h, tr);
+      const fadeInBlack = 1 - smoothstep(0, 1, t);
+      const fadeOut = smoothstep(7.2, 8.2, t);
       ctx.save();
-      ctx.textAlign = "center";
-      ctx.shadowColor = "rgba(101,255,71,.35)";
-      ctx.shadowBlur = 8;
-      ctx.font = `${Math.max(13, w * .012)}px ${UI_CANVAS_FONT}`;
-      ctx.fillStyle = `rgba(101,255,71,${(1 - fadeOut) * .88})`;
-      const status = p < .2
-        ? "CLEAR FOR TAKE OFF"
-        : p < .42
-          ? "START ENGINES - DRIVE CORES RISING"
-          : p < .72
-            ? "ELEVATING FROM DECK"
-            : "DEPARTURE VECTOR LOCKED - FORCEFIELD EXIT";
-      ctx.fillText(status, w / 2, h * .2);
-      ctx.shadowBlur = 0;
-      ctx.font = `${Math.max(8, w * .0075)}px ${UI_CANVAS_FONT}`;
-      ctx.fillStyle = `rgba(145,167,141,${(1 - fadeOut) * .78})`;
-      ctx.fillText(`LAUNCH CONTROL ${Math.round(p * 100).toString().padStart(3, "0")}% - MAG CLAMPS CLEAR`, w / 2, h * .232);
+      if (fadeInBlack > .01) {
+        ctx.fillStyle = `rgba(0,0,0,${fadeInBlack})`;
+        ctx.fillRect(0, 0, w, h);
+      }
       if (fadeOut > .01) {
         ctx.fillStyle = `rgba(0,0,0,${fadeOut})`;
         ctx.fillRect(0, 0, w, h);
@@ -9139,49 +9651,67 @@ More than forty years later, I am still staying up all night because of the same
     function drawDockHangarSequence(w, h, tr) {
       const scene = tr.scene || game.dockScene || {};
       const p = clamp(tr.t / tr.dur, 0, 1);
+      const t = tr.t;
       const modelName = scene?.shipModel || playerShipModel();
-      const arrival = easeInOut(smoothstep(.14, .54, p));
-      const fadeIn = smoothstep(.08, .22, p);
-      const serviceFade = smoothstep(.64, .74, p) - smoothstep(.82, .9, p);
-      const repaired = p > .82;
-      const settle = smoothstep(.48, .68, p);
-      const bounce = Math.sin(clamp((p - .56) / .18, 0, 1) * Math.PI) * 11;
-      const engineGlow = 1 - smoothstep(.56, .76, p);
-      const view = makeHangarCamera(vec(0, -145, 95), vec(0, -103, 515));
+      const dockFade = smoothstep(9.2, 10.2, t);
+      if (dockFade > 0) {
+        drawDockedBackdrop(w, h);
+        ctx.fillStyle = `rgba(0,0,0,${1 - dockFade})`;
+        ctx.fillRect(0, 0, w, h);
+        return;
+      }
+      const cutAt = 7.35;
+      const cut = t >= cutAt;
+      const gateAt = 2.65;
+      const stopAt = 3.55;
+      const rotateAt = 3.75;
+      const approach = Math.pow(clamp(t / gateAt, 0, 1), 1.65);
+      const insideEntry = 1 - Math.pow(1 - clamp((t - gateAt) / (stopAt - gateAt), 0, 1), 3);
+      const landAt = 7.35;
+      const parkSettle = smootherstep(0, 1, smootherstep(rotateAt, landAt, t));
+      const fadeIn = smoothstep(0, 1, t);
+      const fadeOut = smoothstep(8.2, 9.2, t);
+      const repaired = t > 7.2;
+      const settle = cut ? 1 : parkSettle;
+      const descent = cut ? 1 : parkSettle;
+      const bounce = 0;
+      const engineGlow = cut ? 0 : clamp((1 - smoothstep(6.05, 7.2, t)) + (1 - smoothstep(2.65, 3.55, t)) * .85, 0, 1.75);
+      const approachCam = vec(235 - Math.sin(p * TAU * .5) * 14, -132, 170);
+      const view = makeHangarCamera(approachCam, vec(0, -108, 492));
       drawHangarRoom(w, h, scene, view);
       const parked = hangarShipParkPos();
+      const gateInsideZ = HANGAR_GATE_Z - 20;
+      const stagingZ = 640;
+      const shipZ = cut
+        ? parked.z
+        : t < gateAt
+          ? lerp(4200, gateInsideZ, approach)
+          : t < rotateAt
+            ? lerp(gateInsideZ, stagingZ, insideEntry)
+            : lerp(stagingZ, parked.z, parkSettle);
       const shipOpts = {
-        pos: vec(0, lerp(-52, parked.y, arrival) + bounce, lerp(850, parked.z, arrival)),
-        scaleFactor: hangarShipScale(modelName, lerp(.78, 1.12, arrival)),
+        pos: vec(0, lerp(HANGAR_FLIGHT_Y, parked.y, descent) + bounce, shipZ),
+        scaleFactor: hangarShipScale(modelName, t < gateAt ? lerp(.24, .86, approach) : lerp(.86, 1.12, Math.max(insideEntry, parkSettle))),
         yaw: lerp(Math.PI + .24, 0, settle),
         pitch: lerp(.16, .04, settle),
         roll: (1 - settle) * -.12,
-        alpha: clamp(fadeIn * (1 - serviceFade * .92), .08, 1),
+        alpha: clamp(fadeIn, .08, 1),
         engineGlow,
         damageMarks: repaired ? [] : scene.preRepairMarks
       };
-      drawHangarEngineEffects(w, h, scene, view, { ...shipOpts, trail: engineGlow * (1 - settle * .45) });
-      drawHangarShip(w, h, scene, view, shipOpts);
-      drawHangarEngineEffects(w, h, scene, view, { ...shipOpts, trail: 0 });
-      if (p > .82) drawHangarSparkles(w, h, (scene.seed || 1) ^ 0x9e3779b9, smoothstep(.82, .96, p));
-      drawHangarCaption(w, h, scene, fadeIn, repaired);
-      if (p > .62 && serviceFade < .25) {
-        ctx.save();
-        ctx.textAlign = "center";
-        ctx.fillStyle = `rgba(145,167,141,${smoothstep(.62, .76, p) * .78})`;
-        ctx.font = `${Math.max(8, w * .0075)}px ${UI_CANVAS_FONT}`;
-        ctx.fillText("ENGINE PLASMA DISCHARGE SAFE - DRIVE CORES IDLE", w / 2, h * .265);
-        ctx.restore();
-      }
-      if (serviceFade > .02) {
-        ctx.fillStyle = `rgba(0,0,0,${clamp(serviceFade, 0, .94)})`;
-        ctx.fillRect(0, 0, w, h);
-        ctx.fillStyle = `rgba(101,255,71,${serviceFade * .8})`;
-        ctx.textAlign = "center";
-        ctx.font = `${Math.max(12, w * .011)}px ${UI_CANVAS_FONT}`;
-        ctx.fillText(scene.hullRepaired ? "STATION SERVICE BAY - HULL REPAIR" : "STATION SERVICE BAY - TURNAROUND COMPLETE", w / 2, h * .52);
-      }
-      const black = 1 - fadeIn;
+      const drawShipPass = () => {
+        const entryTrail = engineGlow * (1 - smoothstep(3.35, 6.4, t)) * .95;
+        drawHangarEngineEffects(w, h, scene, view, { ...shipOpts, trail: entryTrail, drawGlow: false });
+        drawHangarShip(w, h, scene, view, shipOpts);
+      };
+      const forcefieldInFront = shipZ > HANGAR_GATE_Z - 12;
+      if (!forcefieldInFront) drawHangarForcefieldSheet(w, h, scene, view, hangarGateCrossingIntensity(shipZ));
+      if (forcefieldInFront) withHangarGateClip(view, w, h, drawShipPass);
+      else drawShipPass();
+      if (forcefieldInFront) drawHangarForcefieldSheet(w, h, scene, view, hangarGateCrossingIntensity(shipZ));
+      if (t > 7.05) drawHangarSparkles(w, h, (scene.seed || 1) ^ 0x9e3779b9, smoothstep(7.05, 8.2, t));
+      drawDockingSequenceHud(w, h, tr);
+      const black = Math.max(1 - fadeIn, fadeOut);
       if (black > .01) {
         ctx.fillStyle = `rgba(0,0,0,${black})`;
         ctx.fillRect(0, 0, w, h);
@@ -9210,7 +9740,363 @@ More than forty years later, I am still staying up all night because of the same
       ctx.restore();
     }
 
+    function drawUltraWarpField(w, h, p, palette, opts = {}) {
+      const cx = w / 2, cy = h / 2;
+      const rng = mulberry(opts.seed || 0x51a7);
+      const spin = (opts.spin || 0) + p * TAU * (opts.spinRate || 1.4);
+      const depthSpeed = opts.depthSpeed || 2.4;
+      const flare = easeInOut(clamp((p - .08) / .82, 0, 1));
+      const maxR = Math.hypot(w, h) * (opts.radius || .78);
+      const laneCount = opts.lanes || 150;
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.lineCap = "round";
+      for (let i = 0; i < laneCount; i++) {
+        const base = rng();
+        const a0 = rng() * TAU;
+        const phase = (base + p * depthSpeed) % 1;
+        const curve = Math.pow(phase, .62);
+        const twist = spin * (1.15 - phase * .46) + Math.sin(phase * TAU * 2 + i) * (opts.wobble || .18);
+        const a = a0 + twist;
+        const r = lerp(6, maxR, curve);
+        const tail = (38 + flare * 420 * (opts.streak || 1)) * (1 - phase * .28);
+        const hue = palette[i % palette.length];
+        const alpha = clamp((.12 + flare * .62) * (1 - phase * .42), .04, .86);
+        const x = cx + Math.cos(a) * r;
+        const y = cy + Math.sin(a) * r * (opts.flatten || .72);
+        const tx = Math.cos(a + spin * .08) * tail;
+        const ty = Math.sin(a + spin * .08) * tail * (opts.flatten || .72);
+        const grad = ctx.createLinearGradient(x - tx, y - ty, x + tx * .16, y + ty * .16);
+        grad.addColorStop(0, `hsla(${hue},100%,72%,0)`);
+        grad.addColorStop(.34, `hsla(${hue},100%,68%,${alpha * .34})`);
+        grad.addColorStop(1, `hsla(${hue},100%,86%,${alpha})`);
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = (opts.line || 1.1) + phase * (opts.lineGrow || 2.6);
+        ctx.beginPath();
+        ctx.moveTo(x - tx, y - ty);
+        ctx.lineTo(x + tx * .16, y + ty * .16);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawUltraLightRibbons(w, h, p, palette, opts = {}) {
+      const cx = w / 2, cy = h / 2;
+      const maxR = Math.hypot(w, h) * (opts.radius || .82);
+      const twist = p * TAU * (opts.twist || 1.8) + (opts.offset || 0);
+      const ribbons = opts.count || 5;
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.lineCap = "round";
+      for (let rIndex = 0; rIndex < ribbons; rIndex++) {
+        const hue = palette[rIndex % palette.length];
+        const offset = rIndex / ribbons * TAU;
+        ctx.strokeStyle = `hsla(${hue},100%,72%,${opts.alpha || .34})`;
+        ctx.lineWidth = (opts.width || 2.4) + Math.sin(p * TAU + rIndex) * .8;
+        ctx.beginPath();
+        for (let i = 0; i <= 96; i++) {
+          const t = i / 96;
+          const z = Math.pow(t, .78);
+          const radius = lerp(8, maxR, z);
+          const a = offset + twist * (1.25 - t * .7) + Math.sin(t * TAU * 4 + offset) * .38;
+          const x = cx + Math.cos(a) * radius;
+          const y = cy + Math.sin(a) * radius * (opts.flatten || .66);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawUltraAperture(w, h, p, palette, opts = {}) {
+      const cx = w / 2, cy = h / 2;
+      const pulse = .5 + .5 * Math.sin(p * TAU * (opts.pulses || 3));
+      const open = easeInOut(clamp((p - .06) / .78, 0, 1));
+      const collapse = easeInOut(clamp((p - .82) / .18, 0, 1));
+      const r = Math.min(w, h) * (.05 + open * .18 + pulse * .018);
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * (4.2 + open * 2.5));
+      core.addColorStop(0, `rgba(255,255,255,${.1 + open * .42})`);
+      core.addColorStop(.2, `hsla(${palette[0]},100%,80%,${.13 + open * .26})`);
+      core.addColorStop(.58, `hsla(${palette[1] || palette[0]},100%,58%,${.05 + open * .14})`);
+      core.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = core;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r * (4.2 + open * 2.5), 0, TAU);
+      ctx.fill();
+      if (collapse > .01) {
+        ctx.fillStyle = `rgba(255,255,255,${collapse * .42})`;
+        ctx.fillRect(0, 0, w, h);
+      }
+      ctx.restore();
+    }
+
+    function applyUltraWormholeShake(w, h, p, power = 1) {
+      const dpr = window.devicePixelRatio || 1;
+      const launchKick = Math.sin(clamp(p / .24, 0, 1) * Math.PI);
+      const arrivalKick = Math.sin(clamp((p - .72) / .28, 0, 1) * Math.PI);
+      const tunnelFlex = clamp((p - .2) / .52, 0, 1) * (1 - clamp((p - .72) / .28, 0, 1));
+      const bend = Math.sin(p * TAU * 2.2) * tunnelFlex;
+      const strength = (launchKick * 7 + arrivalKick * 10 + Math.abs(bend) * 3.5) * dpr * power;
+      if (strength <= .05) return;
+      ctx.translate(
+        Math.sin(p * TAU * 17.3) * strength,
+        Math.cos(p * TAU * 13.7) * strength * .68
+      );
+      ctx.rotate(Math.sin(p * TAU * 7.1) * strength * .0009);
+    }
+
+    function drawUltraStarAcceleration(w, h, p, palette, opts = {}) {
+      const cx = w / 2, cy = h / 2;
+      const rng = mulberry(opts.seed || 0x5eed);
+      const maxR = Math.hypot(w, h) * .72;
+      const power = easeInOut(p);
+      const lanes = opts.lanes || 230;
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.lineCap = "round";
+      for (let i = 0; i < lanes; i++) {
+        const a = rng() * TAU;
+        const base = rng();
+        const z = (base + p * (opts.speed || 2.8)) % 1;
+        const r = Math.pow(z, 1.95) * maxR;
+        const dx = Math.cos(a), dy = Math.sin(a) * .74;
+        const x = cx + dx * r;
+        const y = cy + dy * r;
+        const tail = (20 + power * (opts.tail || 760)) * (.35 + z * .95);
+        const hue = palette[Math.floor(rng() * palette.length)];
+        const alpha = clamp((.08 + power * .74) * (1 - z * .22) * (opts.alpha || 1), 0, .92);
+        const grad = ctx.createLinearGradient(x - dx * tail, y - dy * tail, x + dx * tail * .08, y + dy * tail * .08);
+        grad.addColorStop(0, `hsla(${hue},100%,82%,0)`);
+        grad.addColorStop(.72, `hsla(${hue},100%,78%,${alpha * .48})`);
+        grad.addColorStop(1, `rgba(255,255,255,${alpha})`);
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = (.7 + z * 2.2 + power * 1.2) * (opts.width || 1);
+        ctx.beginPath();
+        ctx.moveTo(x - dx * tail, y - dy * tail);
+        ctx.lineTo(x + dx * tail * .08, y + dy * tail * .08);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawUltraCapturedStarStreaks(w, h, tr, p, palette, opts = {}) {
+      const stars = tr.departureStars || [];
+      if (!stars.length || p <= 0) return 0;
+      const cx = w / 2, cy = h / 2;
+      const power = easeInOut(p);
+      const travel = (opts.travel || 5200) * (.08 + power * power * 1.18);
+      const tailBase = (opts.tail || 1450) * (.16 + power * .84);
+      let drawn = 0;
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      for (let i = 0; i < stars.length; i++) {
+        const s = stars[i];
+        const depthMul = .62 + s.depth * .82;
+        const zNow = s.z - travel * depthMul;
+        const zTail = zNow + tailBase * (.72 + s.depth * .92);
+        if (zTail <= 9) continue;
+        const now = project(vec(s.x, s.y, Math.max(9.2, zNow)), w, h);
+        const prev = project(vec(s.x, s.y, zTail), w, h);
+        if (!now || !prev) continue;
+        const loose = 260;
+        if ((now.x < -loose || now.x > w + loose || now.y < -loose || now.y > h + loose)
+          && (prev.x < -loose || prev.x > w + loose || prev.y < -loose || prev.y > h + loose)) continue;
+        const dx = now.x - prev.x;
+        const dy = now.y - prev.y;
+        const len2d = Math.hypot(dx, dy);
+        if (len2d < 3) continue;
+        const bend = Math.sin((s.tw || 0) + p * TAU * 1.7) * len2d * (.035 + power * .075);
+        const midX = (now.x + prev.x) / 2;
+        const midY = (now.y + prev.y) / 2;
+        const nx = -dy / len2d;
+        const ny = dx / len2d;
+        const hue = s.sat ? s.hue : palette[i % palette.length];
+        const alpha = clamp((.14 + power * .62) * (1 - Math.max(0, zNow) / 5600) * (opts.alpha || 1), .025, .9);
+        const grad = ctx.createLinearGradient(prev.x, prev.y, now.x, now.y);
+        grad.addColorStop(0, `hsla(${hue},100%,78%,0)`);
+        grad.addColorStop(.5, `hsla(${hue},100%,76%,${alpha * .42})`);
+        grad.addColorStop(1, `rgba(255,255,255,${alpha})`);
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = Math.max(.7, (s.size || 1) * (.65 + power * 1.45) * (opts.width || 1));
+        ctx.beginPath();
+        ctx.moveTo(prev.x, prev.y);
+        ctx.quadraticCurveTo(midX + nx * bend, midY + ny * bend, now.x, now.y);
+        ctx.stroke();
+        drawn++;
+      }
+      ctx.restore();
+      return drawn;
+    }
+
+    function drawUltraCloudTunnel(w, h, p, palette, opts = {}) {
+      const cx = w / 2, cy = h / 2;
+      const rng = mulberry(opts.seed || 0xc10d);
+      const maxR = Math.hypot(w, h) * (opts.radius || .68);
+      const spin = p * TAU * (opts.spin || .62);
+      const intensity = opts.intensity ?? 1;
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.lineCap = "round";
+      for (let i = 0; i < (opts.arcs || 48); i++) {
+        const z = (rng() + p * (opts.depth || 1.35)) % 1;
+        const r = lerp(18, maxR, Math.pow(z, .72));
+        const a = rng() * TAU + spin * (1.2 - z * .55);
+        const sweep = (.38 + rng() * .9) * (opts.sweep || 1);
+        const hue = palette[Math.floor(rng() * palette.length)];
+        const alpha = clamp((.05 + intensity * .22) * (1 - z * .35), .015, .34);
+        ctx.strokeStyle = `hsla(${hue},100%,70%,${alpha})`;
+        ctx.lineWidth = (10 + z * 28) * (opts.width || 1);
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, r, r * (opts.flatten || .58), a * .04, a, a + sweep);
+        ctx.stroke();
+      }
+      for (let i = 0; i < (opts.puffs || 90); i++) {
+        const z = (rng() + p * (opts.depth || 1.35)) % 1;
+        const a = rng() * TAU + spin * (1.4 - z * .4);
+        const r = lerp(10, maxR * .92, Math.pow(z, .78));
+        const x = cx + Math.cos(a) * r;
+        const y = cy + Math.sin(a) * r * (opts.flatten || .58);
+        const size = (12 + z * 42) * (opts.width || 1);
+        const hue = palette[Math.floor(rng() * palette.length)];
+        const g = ctx.createRadialGradient(x, y, 0, x, y, size);
+        g.addColorStop(0, `hsla(${hue},100%,76%,${.03 + intensity * .08})`);
+        g.addColorStop(1, `hsla(${hue},100%,48%,0)`);
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.ellipse(x, y, size * 1.55, size, a + spin, 0, TAU);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawUltraArrivalCrackle(w, h, p, palette, opts = {}) {
+      if (p <= 0) return;
+      const cx = w / 2, cy = h / 2;
+      const rng = mulberry(opts.seed || 0xa771);
+      const snap = easeInOut(p);
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.lineCap = "round";
+      for (let i = 0; i < (opts.bolts || 20); i++) {
+        const a = rng() * TAU;
+        const hue = palette[Math.floor(rng() * palette.length)];
+        const len0 = Math.min(w, h) * (.04 + rng() * .06);
+        const len1 = Math.hypot(w, h) * (.18 + rng() * .52) * snap;
+        ctx.strokeStyle = `hsla(${hue},100%,82%,${(.08 + rng() * .18) * snap})`;
+        ctx.lineWidth = (1 + rng() * 2.2) * (opts.width || 1);
+        ctx.beginPath();
+        let x = cx + Math.cos(a) * len0;
+        let y = cy + Math.sin(a) * len0 * .75;
+        ctx.moveTo(x, y);
+        const segs = 3 + Math.floor(rng() * 4);
+        for (let s = 1; s <= segs; s++) {
+          const t = s / segs;
+          const wob = (rng() - .5) * 42 * snap;
+          x = cx + Math.cos(a) * lerp(len0, len1, t) + Math.cos(a + Math.PI / 2) * wob;
+          y = cy + Math.sin(a) * lerp(len0, len1, t) * .75 + Math.sin(a + Math.PI / 2) * wob;
+          ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+      const flash = clamp((p - .72) / .28, 0, 1);
+      if (flash > 0) {
+        ctx.fillStyle = `rgba(220,245,255,${flash * .36})`;
+        ctx.fillRect(0, 0, w, h);
+      }
+      ctx.restore();
+    }
+
+    function drawUltraHyperspaceTunnel(w, h, tr) {
+      const p = clamp(tr.t / tr.dur, 0, 1);
+      const cx = w / 2, cy = h / 2;
+      const palette = [196, 210, 178, 146];
+      const accel = clamp(p / .28, 0, 1);
+      const tunnel = clamp((p - .22) / .54, 0, 1);
+      const arrival = clamp((p - .72) / .28, 0, 1);
+      ctx.save();
+      applyUltraWormholeShake(w, h, p, 1);
+      if (p < (tr.departureEnd ?? .26)) {
+        const streakStart = tr.streakStart ?? .09;
+        const streak = clamp((p - streakStart) / Math.max(.04, (tr.departureEnd ?? .26) - streakStart), 0, 1);
+        if (streak > 0) {
+          const drawn = drawUltraCapturedStarStreaks(w, h, tr, streak, [208, 190, 168, 122], { travel: 5400, tail: 1380, alpha: .95 });
+          if (drawn < 24) drawUltraStarAcceleration(w, h, streak, [208, 190, 168, 122], { seed: 0x51504545, lanes: 90, tail: 520, alpha: .18, speed: 3.6 });
+        }
+        ctx.restore();
+        return;
+      }
+      if (tr._arrived && p >= (tr.arrivalAt ?? .74)) {
+        const ap = clamp((p - (tr.arrivalAt ?? .74)) / Math.max(.08, 1 - (tr.arrivalAt ?? .74)), 0, 1);
+        drawUltraStarAcceleration(w, h, 1 - ap, [208, 190, 168, 122], { seed: 0x51504545, lanes: 220, tail: 620, alpha: .55 * (1 - ap), speed: 2.6 });
+        drawUltraArrivalCrackle(w, h, clamp(ap * 1.35, 0, 1), [196, 210, 178], { seed: 0xdec1, bolts: 14, width: .75 });
+        ctx.restore();
+        return;
+      }
+      const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.hypot(w, h) * .7);
+      bg.addColorStop(0, `rgba(12,32,42,${.2 + tunnel * .28})`);
+      bg.addColorStop(.5, `rgba(0,12,28,${.54 + tunnel * .24})`);
+      bg.addColorStop(1, `rgba(0,0,0,${.84 + arrival * .1})`);
+      ctx.fillStyle = bg;
+      ctx.fillRect(-w * .08, -h * .08, w * 1.16, h * 1.16);
+      drawUltraStarAcceleration(w, h, accel, [208, 190, 168, 122], { seed: 0x51504545, lanes: 260, tail: 840, alpha: 1 - tunnel * .35, speed: 3.8 });
+      if (tunnel > 0) drawUltraCloudTunnel(w, h, tunnel, palette, { seed: 0x4511e7, intensity: clamp(tunnel * 1.5, 0, 1) * (1 - arrival * .38), spin: .52, arcs: 42, puffs: 84, width: .82, flatten: .6 });
+      drawUltraAperture(w, h, clamp((p - .12) / .74, 0, 1), palette, { pulses: 2 });
+      drawUltraArrivalCrackle(w, h, arrival, [196, 210, 178], { seed: 0xdec1, bolts: 18, width: .9 });
+      ctx.restore();
+    }
+
+    function drawUltraGalacticTunnel(w, h, tr) {
+      const p = clamp(tr.t / tr.dur, 0, 1);
+      const cx = w / 2, cy = h / 2;
+      const palette = [204, 224, 270, 188, 318];
+      const accel = clamp(p / .24, 0, 1);
+      const tunnel = clamp((p - .18) / .62, 0, 1);
+      const arrival = clamp((p - .76) / .24, 0, 1);
+      ctx.save();
+      applyUltraWormholeShake(w, h, p, 1.22);
+      if (p < (tr.departureEnd ?? .22)) {
+        const streakStart = tr.streakStart ?? .075;
+        const streak = clamp((p - streakStart) / Math.max(.04, (tr.departureEnd ?? .22) - streakStart), 0, 1);
+        if (streak > 0) {
+          const drawn = drawUltraCapturedStarStreaks(w, h, tr, streak, [210, 260, 300, 58], { travel: 7200, tail: 1780, width: 1.12, alpha: .98 });
+          if (drawn < 28) drawUltraStarAcceleration(w, h, streak, [210, 260, 300, 58], { seed: 0x6a554d50, lanes: 110, tail: 680, width: 1.08, speed: 4.1, alpha: .2 });
+        }
+        ctx.restore();
+        return;
+      }
+      if (tr._arrived && p >= (tr.arrivalAt ?? .76)) {
+        const ap = clamp((p - (tr.arrivalAt ?? .76)) / Math.max(.08, 1 - (tr.arrivalAt ?? .76)), 0, 1);
+        drawUltraStarAcceleration(w, h, 1 - ap, [210, 260, 300, 58], { seed: 0x6a554d50, lanes: 300, tail: 820, width: 1.04, speed: 3.1, alpha: .6 * (1 - ap) });
+        drawUltraArrivalCrackle(w, h, clamp(ap * 1.4, 0, 1), [196, 230, 286, 52], { seed: 0x6a1ac7, bolts: 24, width: 1 });
+        ctx.restore();
+        return;
+      }
+      ctx.fillStyle = `rgba(0,0,0,${.72 + arrival * .16})`;
+      ctx.fillRect(-w * .08, -h * .08, w * 1.16, h * 1.16);
+      drawUltraStarAcceleration(w, h, accel, [210, 260, 300, 58], { seed: 0x6a554d50, lanes: 330, tail: 1040, width: 1.08, speed: 4.2, alpha: 1 - tunnel * .25 });
+      if (tunnel > 0) drawUltraCloudTunnel(w, h, tunnel, palette, { seed: 0x6a0a7, intensity: clamp(tunnel * 1.4, 0, 1) * (1 - arrival * .32), spin: .74, arcs: 66, puffs: 120, width: 1.08, flatten: .56, radius: .78, depth: 1.18, sweep: 1.25 });
+      ctx.globalCompositeOperation = "lighter";
+      for (let i = 0; i < 12; i++) {
+        const z = (i / 12 + tunnel * 1.18) % 1;
+        const rr = lerp(28, Math.hypot(w, h) * .62, z * z);
+        ctx.strokeStyle = `rgba(180,225,255,${clamp(.18 + tunnel * .34 - z * .26, .04, .42)})`;
+        ctx.lineWidth = 1.1 + z * 3;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, rr, rr * .52, p * .28, 0, TAU);
+        ctx.stroke();
+      }
+      drawUltraAperture(w, h, clamp((p - .1) / .78, 0, 1), palette, { pulses: 4 });
+      drawUltraArrivalCrackle(w, h, arrival, [196, 230, 286, 52], { seed: 0x6a1ac7, bolts: 30, width: 1.15 });
+      ctx.restore();
+    }
+
     function drawHyperspaceTunnel(w, h, tr) {
+      if (ultraFxEnabled()) return drawUltraHyperspaceTunnel(w, h, tr);
       const p = clamp(tr.t / tr.dur, 0, 1);
       const cx = w / 2, cy = h / 2;
       const progress = easeInOut(p);
@@ -9239,6 +10125,7 @@ More than forty years later, I am still staying up all night because of the same
     }
 
     function drawGalacticTunnel(w, h, tr) {
+      if (ultraFxEnabled()) return drawUltraGalacticTunnel(w, h, tr);
       const p = clamp(tr.t / tr.dur, 0, 1);
       const cx = w / 2, cy = h / 2;
       const progress = easeInOut(p);
@@ -9372,6 +10259,7 @@ More than forty years later, I am still staying up all night because of the same
       const backdrop = galaxyBackdrop();
       const camInv = quatConj(ensureCameraQuat(game.camera));
       const f = Math.min(w, h) * .82;
+      const trajectoryTakeover = !!game.jumpCountdown?.trajectoryControl;
       const toScreen = (dir) => {
         const p = quatRotate(camInv, dir);
         if (p.z <= .035) return null;
@@ -9379,12 +10267,14 @@ More than forty years later, I am still staying up all night because of the same
       };
       ctx.save();
       ctx.globalCompositeOperation = "screen";
-      for (const cloud of backdrop.clouds) {
+      const cloudStep = trajectoryTakeover ? 3 : 1;
+      for (let ci = 0; ci < backdrop.clouds.length; ci += cloudStep) {
+        const cloud = backdrop.clouds[ci];
         const pr = toScreen(cloud.dir);
         if (!pr) continue;
         const edgeFade = smoothstep(.07, .34, pr.z);
         const r = clamp((f * cloud.angular) / Math.max(.18, pr.z), 12, Math.max(w, h) * .32);
-        const alpha = cloud.alpha * edgeFade * (game.witchspace ? .42 : 1.2);
+        const alpha = cloud.alpha * edgeFade * (game.witchspace ? .42 : trajectoryTakeover ? .82 : 1.2);
         if (alpha <= .008) continue;
         const g = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, r);
         g.addColorStop(0, `hsla(${cloud.hue},${cloud.sat}%,${Math.min(86, cloud.light + 24)}%,${alpha})`);
@@ -11213,8 +12103,9 @@ More than forty years later, I am still staying up all night because of the same
       if (mode === "wire") {
         drawSolidItems(ctx, collectSolidFaces(model, camVerts, points, "#000", 1, true, null, { project: (p) => project(p, w, h) }));
       } else {
+        const renderShip = { ...o, cam, engineGlow: shipEngineGlowLevel(o) };
         drawSolidItems(ctx, collectSolidFaces(model, camVerts, points, o.color || "#e9f2e4", 1, false, getShipDecal(o), { project: (p) => project(p, w, h) }));
-        drawSolidItems(ctx, collectSolidDetails(model, { ...o, cam }, camVerts, points, w, h));
+        drawSolidItems(ctx, collectSolidDetails(model, renderShip, camVerts, points, w, h));
         drawPlayerHullDamageMarks(o, cam, w, h);
         if (o.police && ultraFxEnabled()) drawPoliceStrobes(ctx, points);
       }
@@ -11611,6 +12502,27 @@ More than forty years later, I am still staying up all night because of the same
       </svg>`;
     }
 
+    function renderSystemInfo(s, from = currentSystem()) {
+      const star = stellarProfileForSystem(s);
+      const distanceLine = s.index === from.index ? "Current system" : `${fmt(distance(from, s))} LY from ${from.name}`;
+      return `<div class="notice" style="margin-top:10px">
+        <strong class="about-heading">Selected System</strong>
+        <div class="grid2">
+          ${stat("System", s.name)}
+          ${stat("Distance", distanceLine)}
+          ${stat("Economy", ECONOMIES[s.economy])}
+          ${stat("Gov.", GOVS[s.government])}
+          ${stat("Tech", s.tech + 1)}
+          ${stat("Pop.", `${fmt(s.population / 10)} Billion`)}
+          ${stat("Prod.", `${s.productivity} M CR`)}
+          ${stat("Size", `${(s.radius * 2000).toLocaleString()} m`)}
+          ${stat("Star", star.label)}
+          ${stat("Species", s.species)}
+        </div>
+        <div style="margin-top:10px">${s.description}</div>
+      </div>`;
+    }
+
     function renderChart() {
       const from = currentSystem();
       const tgt = targetSystem();
@@ -11626,13 +12538,16 @@ More than forty years later, I am still staying up all night because of the same
           <button class="btn mini" data-mappan="6,0">&rarr;</button>
           <button class="btn mini" data-mapreset>Reset</button>
         </div>` : "";
-      return `<div class="notice">Galaxy ${game.galaxy + 1}. Hyperdrive range is ${rangeText} (dashed ring is the standard 7.0 LY range). Target: ${tgt.name}, ${fmt(distance(from, tgt))} LY — ${ECONOMIES[tgt.economy]}, ${GOVS[tgt.government]}, TL ${tgt.tech + 1}.</div>
-        <div class="notice">
-          <button class="btn mini ${mode === "galaxy" ? "primary" : ""}" data-mapmode="galaxy">Galaxy Map</button>
-          <button class="btn mini ${mode === "local" ? "primary" : ""}" data-mapmode="local">Local Map</button>
+      return `<div class="notice" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <span>
+            <button class="btn mini ${mode === "galaxy" ? "primary" : ""}" data-mapmode="galaxy">Galaxy Map</button>
+            <button class="btn mini ${mode === "local" ? "primary" : ""}" data-mapmode="local">Local Map</button>
+          </span>
+          <span style="font-size:11px;color:var(--muted)">Galaxy ${game.galaxy + 1}. Range ${rangeText}.</span>
         </div>
         ${localControls}
-        ${mode === "galaxy" ? renderGalaxyMap() : renderLocalMap()}`;
+        ${mode === "galaxy" ? renderGalaxyMap() : renderLocalMap()}
+        ${renderSystemInfo(tgt, from)}`;
     }
 
     function renderEquip() {
@@ -11652,8 +12567,6 @@ More than forty years later, I am still staying up all night because of the same
     }
 
     function renderStatus() {
-      const s = currentSystem();
-      const star = stellarProfileForSystem(s);
       return `<div class="grid2">
         ${stat("Commander", game.commander)}
         ${stat("Rating", rankName())}
@@ -11661,17 +12574,13 @@ More than forty years later, I am still staying up all night because of the same
         ${stat("Kills", game.kills)}
         ${stat("Legal", legalStatus())}
         ${stat("Galaxy", game.galaxy + 1)}
-        ${stat("System", s.name)}
-        ${stat("Economy", ECONOMIES[s.economy])}
-        ${stat("Gov.", GOVS[s.government])}
-        ${stat("Tech", s.tech + 1)}
-        ${stat("Pop.", `${fmt(s.population / 10)} Billion`)}
-        ${stat("Prod.", `${s.productivity} M CR`)}
-        ${stat("Size", `${(s.radius * 2000).toLocaleString()} m`)}
-        ${stat("Star", star.label)}
-        ${stat("Species", s.species)}
+        ${stat("Ship", shipName(playerShipModel()))}
+        ${stat("Cargo", `${usedCargo()}/${game.cargoCap}t`)}
+        ${stat("Fuel", `${fmt(game.fuel)} LY`)}
+        ${stat("Laser", laserPower().name)}
+        ${stat("Missiles", game.missiles)}
+        ${stat("Docked", game.docked ? "Yes" : "No")}
       </div>
-      <div class="notice" style="margin-top:10px">${s.description}</div>
       <div class="notice save-actions">
         <button class="btn" data-save>Save Browser Save</button>
         <button class="btn" data-load ${browserSaveExists() ? "" : "disabled"}>Load Browser Save</button>
