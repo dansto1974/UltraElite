@@ -3790,11 +3790,12 @@
 
       function updateTransitionBed(dt = 0) {
         if (!ctx || !game.soundEnabled) return;
-        const source = game.transition || game.jumpCountdown;
+        const dockedStation = !game.transition && !game.jumpCountdown && game.docked && ultraFxEnabled();
+        const source = game.transition || game.jumpCountdown || (dockedStation ? { kind: "stationIdle", t: (performance.now() % 9000) / 1000, dur: 9 } : null);
         const kind = source?.kind || "";
         const countdown = !game.transition && !!game.jumpCountdown && (kind === "hyperspace" || kind === "galactic");
         const transitionActive = !!game.transition && ["hyperspace", "galactic", "launchHangar", "dockHangar"].includes(kind);
-        const active = ultraFxEnabled() && !!source && (countdown || transitionActive);
+        const active = ultraFxEnabled() && !!source && (countdown || transitionActive || dockedStation);
         if (active && !transitionBed) startTransitionBed();
         if (!transitionBed) return;
         const p = source ? clamp((source.t || 0) / Math.max(.01, source.dur || 1), 0, 1) : 0;
@@ -3840,20 +3841,37 @@
           const fieldAt = launch ? .68 : .18;
           const field = Math.max(0, 1 - Math.abs(p - fieldAt) / .12);
           const motion = launch ? smoothstep(.38, .82, p) : smoothstep(.08, .46, p) * (1 - smoothstep(.68, .9, p));
+          const clampHum = launch
+            ? smoothstep(.16, .36, p) * (1 - smoothstep(.43, .58, p))
+            : smoothstep(.54, .7, p) * (1 - smoothstep(.82, .94, p));
+          const stationPulse = .5 + Math.sin(now * 2.15) * .22 + Math.sin(now * .63 + 1.7) * .16;
           const exitBlast = launch
             ? smoothstep(.58, .72, p) * (1 - smoothstep(.76, 1, p))
             : 0;
           pressure = (.014 + machinery * .022 + motion * .018) * fade;
-          pressure += exitBlast * .038;
-          drive = (.006 + motion * .017 + (launch ? smoothstep(.42, .72, p) * .018 : 0) + exitBlast * .046) * fade;
-          tunnel = (field * .018 + exitBlast * .044) * flutter;
-          crackle = (field * .034 + exitBlast * .018) * flutter;
-          pressureFreq = 31 + motion * 18 + exitBlast * 20;
-          driveFreq = 62 + motion * 92 + exitBlast * 150;
+          pressure += exitBlast * .038 + clampHum * (.012 + stationPulse * .006);
+          drive = (.006 + motion * .017 + (launch ? smoothstep(.42, .72, p) * .018 : 0) + exitBlast * .046 + clampHum * .014) * fade;
+          tunnel = (field * .018 + exitBlast * .044 + clampHum * .005) * flutter;
+          crackle = (field * .034 + exitBlast * .018 + clampHum * .007) * flutter;
+          pressureFreq = 27 + stationPulse * 5 + motion * 18 + exitBlast * 20;
+          driveFreq = 54 + clampHum * 36 + motion * 92 + exitBlast * 150;
           tunnelHp = 620 + field * 600 + exitBlast * 950;
           tunnelFreq = 900 + field * 1700 + exitBlast * 1500 + Math.sin(now * 3.4) * 160;
           crackleFreq = 2100 + field * 2600 + exitBlast * 1900 + Math.sin(now * 11.2) * 240;
           pan = Math.sin(now * .55) * field * .22 + Math.sin(now * .38) * exitBlast * .18;
+        } else if (kind === "stationIdle") {
+          const pulse = .54 + Math.sin(now * 1.85) * .22 + Math.sin(now * .47 + 2.1) * .18;
+          const duct = .5 + Math.sin(now * .28) * .22;
+          pressure = (.01 + pulse * .01) * fade;
+          drive = (.0035 + duct * .004) * fade;
+          tunnel = .0008 * duct;
+          crackle = .0012 * Math.max(0, Math.sin(now * 5.2));
+          pressureFreq = 25 + pulse * 5;
+          driveFreq = 42 + duct * 24;
+          tunnelHp = 180;
+          tunnelFreq = 520 + duct * 160;
+          crackleFreq = 1450 + duct * 380;
+          pan = Math.sin(now * .18) * .08;
         }
 
         smoothParam(transitionBed.pressure.frequency, pressureFreq, .08);
@@ -4043,6 +4061,22 @@
             tone({ freq: 72, endFreq: 260, dur: .9, gain: .075, type: "sawtooth", attack: .04, release: .22, bus: "ship", lowpass: 1050 });
             noise({ delay: .05, dur: .95, gain: .07, highpass: 34, lowpass: 3400, endLowpass: 1650, attack: .04, release: .26, bus: "ship" });
             rumble({ delay: .08, strength: .46, dur: .85, bus: "ship" });
+            return true;
+          case "hangarServo":
+            tone({ freq: 82, endFreq: 132, dur: .48, gain: .046, type: "triangle", attack: .018, release: .14, bus: "world", lowpass: 780, pan: -.16 });
+            tone({ delay: .045, freq: 205, endFreq: 96, dur: .42, gain: .024, type: "sawtooth", attack: .018, release: .16, bus: "world", lowpass: 1150, pan: .18 });
+            noise({ delay: .02, dur: .48, gain: .032, highpass: 55, lowpass: 1450, endLowpass: 520, attack: .018, release: .18, bus: "world", pan: .08 });
+            return true;
+          case "clampRelease":
+            tone({ freq: 56, endFreq: 38, dur: .3, gain: .082, type: "triangle", attack: .002, release: .16, bus: "ship", lowpass: 560 });
+            tone({ delay: .018, freq: 25, endFreq: 18, dur: .42, gain: .072, type: "sine", attack: .001, release: .22, bus: "ship" });
+            noise({ delay: .006, dur: .17, gain: .078, highpass: 24, lowpass: 620, endLowpass: 150, attack: .001, release: .095, bus: "ship" });
+            sparkTicks({ count: 3, dur: .13, gain: .009, bus: "ship" });
+            return true;
+          case "clampEngage":
+            tone({ freq: 42, endFreq: 30, dur: .36, gain: .074, type: "triangle", attack: .001, release: .19, bus: "ship", lowpass: 520 });
+            noise({ delay: .01, dur: .2, gain: .072, highpass: 22, lowpass: 480, endLowpass: 130, attack: .001, release: .12, bus: "ship" });
+            tone({ delay: .12, freq: 118, endFreq: 68, dur: .28, gain: .036, type: "triangle", attack: .004, release: .12, bus: "world", lowpass: 820 });
             return true;
           case "hyperspace":
             tone({ freq: 74, endFreq: 920, dur: 1.05, gain: .075, type: "sawtooth", attack: .025, release: .14, bus: "ambience", lowpass: 2600 });
@@ -6930,9 +6964,17 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           game.speed = lerp(tr.fromSpeed, tr.toSpeed, p);
         }
         if (tr.kind === "launchHangar") {
+          if (!tr._servos && tr.t >= 1.15) {
+            tr._servos = true;
+            eliteAudio.play("hangarServo");
+          }
           if (!tr._engines && tr.t >= 2) {
             tr._engines = true;
             eliteAudio.play("launch");
+          }
+          if (!tr._clamps && tr.t >= 3.32) {
+            tr._clamps = true;
+            eliteAudio.play("clampRelease");
           }
           if (!tr._lift && tr.t >= 3.4) {
             tr._lift = true;
@@ -6943,10 +6985,14 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
             game.screenShake = Math.max(game.screenShake || 0, .75);
           }
         }
+        if (tr.kind === "dockHangar" && !tr._servos && tr.t >= 5.85) {
+          tr._servos = true;
+          eliteAudio.play("hangarServo");
+        }
         if (tr.kind === "dockHangar" && !tr._landed && tr.t >= 7.15) {
           tr._landed = true;
           game.screenShake = Math.max(game.screenShake || 0, 1.35);
-          eliteAudio.play("hit");
+          eliteAudio.play("clampEngage");
         }
         if (tr.kind === "dockHangar" && !tr._serviceComms && tr.t >= 7.65) {
           tr._serviceComms = true;
