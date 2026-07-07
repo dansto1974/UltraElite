@@ -9339,28 +9339,20 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const model = MODELS[modelName];
       if (!model) return;
       const scale = opts.scale ?? 1;
-      const yaw = opts.yaw ?? 0;
-      const pitch = opts.pitch ?? 0;
-      const roll = opts.roll ?? 0;
-      const worldVerts = model.verts.map(([x, y, z]) => add(rotateShipPoint(vec(x * scale, y * scale, z * scale), yaw, pitch, roll), pos));
-      const camVerts = worldVerts.map((p) => cameraTransform(p, view));
-      const pts = camVerts.map((p) => project(p, w, h));
-      const color = opts.color || "#b6c5aa";
-      drawSolidItems(ctx, collectSolidFaces(model, camVerts, pts, color, opts.alpha ?? 1, false, null, { project: (p) => project(p, w, h) }));
-      if (game.graphicsMode !== "solid") {
-        ctx.strokeStyle = game.graphicsMode === "both" ? "rgba(61,61,61,.38)" : color;
-        ctx.lineWidth = Math.max(.6, scale * .55);
-        const faceVisible = collectWireFaceVisibility(model, camVerts);
-        ctx.beginPath();
-        for (let edgeIndex = 0; edgeIndex < model.edges.length; edgeIndex++) {
-          if (!wireEdgeVisible(model, edgeIndex, faceVisible)) continue;
-          const [a, b] = model.edges[edgeIndex];
-          if (!pts[a] || !pts[b]) continue;
-          ctx.moveTo(pts[a].x, pts[a].y);
-          ctx.lineTo(pts[b].x, pts[b].y);
-        }
-        ctx.stroke();
-      }
+      drawModelEntity(ctx, { camera: view, w, h, mode: game.graphicsMode }, {
+        type: "prop",
+        model: modelName,
+        pos,
+        scaleFactor: scale,
+        rot: opts.yaw ?? 0,
+        pitch: opts.pitch ?? 0,
+        roll: opts.roll ?? 0,
+        color: opts.color || "#b6c5aa",
+        alpha: opts.alpha ?? 1,
+        engineGlow: 0
+      }, {
+        edgeWidth: Math.max(.6, scale * .55)
+      });
     }
 
     function drawHangarCargoStacks(w, h, scene, view, floor) {
