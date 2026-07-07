@@ -8297,14 +8297,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
     }
 
-    function drawSolidFaces(model, camVerts, points, baseColor, alpha = 1, projectFn = null) {
-      drawSolidItems(ctx, collectSolidFaces(model, camVerts, points, baseColor, alpha, false, null, projectFn ? { project: projectFn } : {}));
-    }
-
-    function drawSolidDetails(model, o, camVerts, points, w, h, targetCtx = ctx, scaleFactor = 1) {
-      drawSolidItems(targetCtx, collectSolidDetails(model, o, camVerts, points, w, h, scaleFactor));
-    }
-
     function drawProjectedModelHull(targetCtx, model, camVerts, points, opts = {}) {
       const mode = opts.mode || game.graphicsMode;
       const color = opts.color || "#e9f2e4";
