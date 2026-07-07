@@ -3595,6 +3595,7 @@
       let buses = null;
       let noiseBuffer = null;
       let engineBed = null;
+      let transitionBed = null;
       const pitchScale = .62;
       const filterScale = .68;
       const BUS_LEVELS = {
@@ -3741,6 +3742,133 @@
         smoothParam(engineBed.crackleGain.gain, fade * (.00035 + speedNorm * .0012 + boost * .0045) * crackle, .035);
         smoothParam(engineBed.rushGain.gain, fade * (.00025 + boost * .0032 + heat * .0012), lag);
         smoothParam(engineBed.damageGain.gain, fade * Math.pow(stress, 1.65) * .026 * flicker, .04);
+      }
+
+      function startTransitionBed() {
+        const c = ensure();
+        if (!c || transitionBed || !noiseBuffer) return;
+        const pressure = c.createOscillator();
+        const drive = c.createOscillator();
+        const noiseSrc = c.createBufferSource();
+        const pressureGain = c.createGain();
+        const driveGain = c.createGain();
+        const tunnelGain = c.createGain();
+        const crackleGain = c.createGain();
+        const pressureFilter = c.createBiquadFilter();
+        const driveFilter = c.createBiquadFilter();
+        const tunnelHp = c.createBiquadFilter();
+        const tunnelBp = c.createBiquadFilter();
+        const crackleHp = c.createBiquadFilter();
+        const crackleBp = c.createBiquadFilter();
+        const pan = c.createStereoPanner ? c.createStereoPanner() : null;
+
+        pressure.type = "sine";
+        drive.type = "triangle";
+        noiseSrc.buffer = noiseBuffer;
+        noiseSrc.loop = true;
+        pressureFilter.type = "lowpass";
+        driveFilter.type = "lowpass";
+        tunnelHp.type = "highpass";
+        tunnelBp.type = "bandpass";
+        tunnelBp.Q.value = 3.2;
+        crackleHp.type = "highpass";
+        crackleBp.type = "bandpass";
+        crackleBp.Q.value = 9;
+        for (const g of [pressureGain, driveGain, tunnelGain, crackleGain]) g.gain.value = .00001;
+
+        pressure.connect(pressureFilter).connect(pressureGain).connect(outputNode("ambience"));
+        drive.connect(driveFilter).connect(driveGain).connect(outputNode("ambience"));
+        const tunnelOut = pan || outputNode("ambience");
+        noiseSrc.connect(tunnelHp).connect(tunnelBp).connect(tunnelGain).connect(tunnelOut);
+        if (pan) pan.connect(outputNode("ambience"));
+        noiseSrc.connect(crackleHp).connect(crackleBp).connect(crackleGain).connect(outputNode("world"));
+        pressure.start();
+        drive.start();
+        noiseSrc.start();
+        transitionBed = { pressure, drive, noiseSrc, pressureGain, driveGain, tunnelGain, crackleGain, pressureFilter, driveFilter, tunnelHp, tunnelBp, crackleHp, crackleBp, pan };
+      }
+
+      function updateTransitionBed(dt = 0) {
+        if (!ctx || !game.soundEnabled) return;
+        const source = game.transition || game.jumpCountdown;
+        const kind = source?.kind || "";
+        const countdown = !game.transition && !!game.jumpCountdown && (kind === "hyperspace" || kind === "galactic");
+        const transitionActive = !!game.transition && ["hyperspace", "galactic", "launchHangar", "dockHangar"].includes(kind);
+        const active = ultraFxEnabled() && !!source && (countdown || transitionActive);
+        if (active && !transitionBed) startTransitionBed();
+        if (!transitionBed) return;
+        const p = source ? clamp((source.t || 0) / Math.max(.01, source.dur || 1), 0, 1) : 0;
+        const fade = active ? 1 : 0;
+        const now = ctx.currentTime;
+        const flutter = .72 + Math.sin(now * 13.1) * .14 + Math.sin(now * 27.3 + 1.1) * .08;
+
+        let pressure = 0, drive = 0, tunnel = 0, crackle = 0;
+        let pressureFreq = 34, driveFreq = 72, tunnelFreq = 480, tunnelHp = 120, crackleFreq = 2200, pan = 0;
+        if (countdown) {
+          const big = kind === "galactic";
+          const charge = smoothstep(.08, .96, p);
+          const pulse = .72 + Math.max(0, Math.sin(now * (big ? 5.4 : 4.2))) * .18;
+          pressure = (.006 + charge * .015) * (big ? 1.18 : 1);
+          drive = (.005 + charge * .026) * pulse * (big ? 1.22 : 1);
+          tunnel = charge * charge * .006;
+          crackle = charge * .007 * flutter;
+          pressureFreq = 24 + charge * 12;
+          driveFreq = 74 + charge * (big ? 420 : 300);
+          tunnelHp = 900 + charge * 900;
+          tunnelFreq = 1200 + charge * 1800 + Math.sin(now * .5) * 80;
+          crackleFreq = 2400 + charge * 2600;
+          pan = Math.sin(now * .22) * charge * .12;
+        } else if (kind === "hyperspace" || kind === "galactic") {
+          const big = kind === "galactic";
+          const accel = smoothstep(.04, big ? .24 : .20, p);
+          const cruise = smoothstep(.16, .34, p) * (1 - smoothstep(.68, .9, p));
+          const arrive = smoothstep(.72, .94, p);
+          const burst = Math.max(accel * (1 - smoothstep(.3, .46, p)), arrive);
+          pressure = (.018 + accel * .032 + cruise * .022 + arrive * .042) * (big ? 1.18 : 1);
+          drive = (.006 + accel * .024 + cruise * .018) * (big ? 1.16 : 1);
+          tunnel = (cruise * .052 + burst * .026) * (big ? 1.22 : 1);
+          crackle = (burst * .019 + arrive * .027) * flutter * (big ? 1.25 : 1);
+          pressureFreq = 26 + accel * 28 + arrive * 20 + (big ? 6 : 0);
+          driveFreq = 78 + accel * 130 + cruise * 80 + arrive * 38;
+          tunnelHp = 70 + accel * 280 + cruise * 180;
+          tunnelFreq = 430 + cruise * (big ? 1850 : 1350) + arrive * 740 + Math.sin(now * (big ? .9 : .7)) * 140;
+          crackleFreq = 1800 + burst * 1800 + Math.sin(now * 6.7) * 260;
+          pan = Math.sin(now * (big ? .42 : .34)) * (.16 + cruise * .26);
+        } else if (kind === "launchHangar" || kind === "dockHangar") {
+          const launch = kind === "launchHangar";
+          const machinery = smoothstep(.03, .18, p) * (1 - smoothstep(.88, .98, p));
+          const fieldAt = launch ? .68 : .18;
+          const field = Math.max(0, 1 - Math.abs(p - fieldAt) / .12);
+          const motion = launch ? smoothstep(.38, .82, p) : smoothstep(.08, .46, p) * (1 - smoothstep(.68, .9, p));
+          const exitBlast = launch
+            ? smoothstep(.58, .72, p) * (1 - smoothstep(.76, 1, p))
+            : 0;
+          pressure = (.014 + machinery * .022 + motion * .018) * fade;
+          pressure += exitBlast * .038;
+          drive = (.006 + motion * .017 + (launch ? smoothstep(.42, .72, p) * .018 : 0) + exitBlast * .046) * fade;
+          tunnel = (field * .018 + exitBlast * .044) * flutter;
+          crackle = (field * .034 + exitBlast * .018) * flutter;
+          pressureFreq = 31 + motion * 18 + exitBlast * 20;
+          driveFreq = 62 + motion * 92 + exitBlast * 150;
+          tunnelHp = 620 + field * 600 + exitBlast * 950;
+          tunnelFreq = 900 + field * 1700 + exitBlast * 1500 + Math.sin(now * 3.4) * 160;
+          crackleFreq = 2100 + field * 2600 + exitBlast * 1900 + Math.sin(now * 11.2) * 240;
+          pan = Math.sin(now * .55) * field * .22 + Math.sin(now * .38) * exitBlast * .18;
+        }
+
+        smoothParam(transitionBed.pressure.frequency, pressureFreq, .08);
+        smoothParam(transitionBed.drive.frequency, driveFreq, .08);
+        smoothParam(transitionBed.pressureFilter.frequency, 160 + pressure * 6800, .11);
+        smoothParam(transitionBed.driveFilter.frequency, 340 + drive * 9200, .12);
+        smoothParam(transitionBed.tunnelHp.frequency, tunnelHp, .1);
+        smoothParam(transitionBed.tunnelBp.frequency, tunnelFreq, .08);
+        smoothParam(transitionBed.crackleHp.frequency, 1450 + crackle * 26000, .08);
+        smoothParam(transitionBed.crackleBp.frequency, crackleFreq, .04);
+        smoothParam(transitionBed.pressureGain.gain, fade * pressure, active ? .08 : .2);
+        smoothParam(transitionBed.driveGain.gain, fade * drive, active ? .08 : .2);
+        smoothParam(transitionBed.tunnelGain.gain, fade * tunnel, active ? .06 : .18);
+        smoothParam(transitionBed.crackleGain.gain, fade * crackle, active ? .035 : .16);
+        if (transitionBed.pan) transitionBed.pan.pan.setTargetAtTime(pan, ctx.currentTime, .12);
       }
 
       function tone({
@@ -4015,7 +4143,10 @@
       return {
         play,
         explosionRumble,
-        update: (dt) => { updateEngineBed(dt); },
+        update: (dt) => {
+          updateEngineBed(dt);
+          updateTransitionBed(dt);
+        },
         resume: () => { ensure(); },
         toggle: () => {
           game.soundEnabled = !game.soundEnabled;
