@@ -11579,17 +11579,19 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return lerp(.98, .38, Math.pow(t, .75));
     }
 
-    function ringHalfVisible(offset, viewDir, front, overlap) {
+    function ringHalfVisible(offset, viewDir, front) {
       if (front === null) return true;
       const side = dot(offset, viewDir);
-      return front ? side >= -overlap : side <= overlap;
+      return front ? side >= 0 : side <= 0;
     }
 
-    function ringSplitOverlap(o, rr) {
-      // The front/back ring pass is sampled in angular segments. At the projected
-      // tangent the outer lanes can otherwise miss one sample and leave a straight
-      // split, so scale the overlap by actual lane radius rather than planet radius.
-      return Math.max(o.r * .045, rr * .05);
+    function ringSplitOffset(a, b, viewDir) {
+      const sa = dot(a, viewDir);
+      const sb = dot(b, viewDir);
+      const denom = sa - sb;
+      if (Math.abs(denom) < 1e-9) return null;
+      const t = clamp(sa / denom, 0, 1);
+      return vec(lerp(a.x, b.x, t), lerp(a.y, b.y, t), lerp(a.z, b.z, t));
     }
 
     function drawPlanetRing(o, r, hue, w, h, front) {
@@ -11614,12 +11616,11 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const gapC = rng() * TAU;
       let drawnSegments = 0;
       ctx.save();
-      ctx.lineCap = "round";
+      ctx.lineCap = "butt";
       ctx.lineJoin = "round";
       for (let b = 0; b < bands; b++) {
         const t = bands === 1 ? 0 : b / (bands - 1);
         const rr = lerp(o.r * o.ringInner, o.r * o.ringOuter, t);
-        const splitOverlap = ringSplitOverlap(o, rr);
         const laneNoise = rng();
         const dusty = .52 + rng() * .38;
         const light = 74 - t * 22 + Math.sin(t * TAU * 5.1) * 8 + (laneNoise - .5) * 9;
@@ -11636,32 +11637,63 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         // strokeStyle can't vary within one stroke, so the shade is quantised into a few
         // levels and the current run is flushed whenever the level changes (as well as at
         // gaps and the front/back split).
-        let drawing = false, curLevel = -1;
+        let drawing = false, curLevel = -1, prevOffset = null, prevVisible = false;
+        const beginRun = (p, level) => {
+          curLevel = level;
+          ctx.strokeStyle = styleFor(level / 15);
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          drawing = true;
+        };
         for (let i = 0; i <= segs; i++) {
           const a = (i / segs) * TAU;
           const gap = debris && Math.abs(Math.atan2(Math.sin(a - gapC), Math.cos(a - gapC))) < .018 + rng() * .01;
           const ragged = debris ? 1 + Math.sin(a * (7 + b) + t * 11) * .018 + Math.sin(a * 19 + b) * .012 : 1;
           const offset = add(scale(u, Math.cos(a) * rr * ragged), scale(v, Math.sin(a) * rr * ragged));
-          const p = ringHalfVisible(offset, viewDir, front, splitOverlap)
-            ? project(cameraTransform(add(o.pos, offset), game.camera), w, h)
-            : null;
-          if (!p || gap) { if (drawing) { ctx.stroke(); drawing = false; } continue; }
-          drawnSegments++;
+          if (gap) {
+            if (drawing) { ctx.stroke(); drawing = false; }
+            prevOffset = null;
+            prevVisible = false;
+            continue;
+          }
+          const visible = ringHalfVisible(offset, viewDir, front);
           const level = Math.round((solid ? ringShade(offset, sunDir, o.r) : 1) * 15);
+          if (prevOffset && visible !== prevVisible) {
+            const split = ringSplitOffset(prevOffset, offset, viewDir);
+            const sp = split ? project(cameraTransform(add(o.pos, split), game.camera), w, h) : null;
+            if (sp) {
+              if (prevVisible && drawing) {
+                ctx.lineTo(sp.x, sp.y);
+                ctx.stroke();
+                drawing = false;
+              } else if (!prevVisible && visible) {
+                beginRun(sp, level);
+              }
+            } else if (prevVisible && drawing) {
+              ctx.stroke();
+              drawing = false;
+            }
+          }
+          const p = visible ? project(cameraTransform(add(o.pos, offset), game.camera), w, h) : null;
+          if (!p) {
+            if (drawing && visible) { ctx.stroke(); drawing = false; }
+            prevOffset = offset;
+            prevVisible = visible;
+            continue;
+          }
+          drawnSegments++;
           if (drawing && level !== curLevel) {
             ctx.lineTo(p.x, p.y);
             ctx.stroke();
             drawing = false;
           }
           if (!drawing) {
-            curLevel = level;
-            ctx.strokeStyle = styleFor(level / 15);
-            ctx.beginPath();
-            ctx.moveTo(p.x, p.y);
-            drawing = true;
+            beginRun(p, level);
           } else {
             ctx.lineTo(p.x, p.y);
           }
+          prevOffset = offset;
+          prevVisible = visible;
         }
         if (drawing) ctx.stroke();
       }
@@ -11681,7 +11713,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
             scale(u, Math.cos(a) * o.r * o.ringInner * 1.04),
             scale(v, Math.sin(a) * o.r * o.ringInner * 1.04)
           );
-          if (!ringHalfVisible(offset, viewDir, false, ringSplitOverlap(o, o.r * o.ringInner * 1.04))) { drawing = false; continue; }
+          if (!ringHalfVisible(offset, viewDir, false)) { drawing = false; continue; }
           const p = project(cameraTransform(add(o.pos, offset), game.camera), w, h);
           if (!p) { drawing = false; continue; }
           if (drawing) ctx.lineTo(p.x, p.y);
@@ -11739,7 +11771,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const normal = norm(cross(u, v));
         const offset = add(add(scale(u, Math.cos(a) * rr), scale(v, Math.sin(a) * rr)), scale(normal, height));
         const isFront = dot(offset, viewDir) >= 0;
-        if (!ringHalfVisible(offset, viewDir, front, ringSplitOverlap(o, rr))) continue;
+        if (!ringHalfVisible(offset, viewDir, front)) continue;
         const p = project(cameraTransform(add(o.pos, offset), game.camera), w, h);
         if (!p) continue;
         const shadeMul = ringShade(offset, sunDir, o.r);
