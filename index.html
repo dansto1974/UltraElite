@@ -618,6 +618,19 @@
       font-weight: 400;
     }
 
+    #splash .splash-legal a,
+    .about-copy a {
+      color: var(--amber);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(255, 211, 74, .42);
+    }
+
+    #splash .splash-legal a:hover,
+    .about-copy a:hover {
+      color: var(--green);
+      border-bottom-color: var(--green);
+    }
+
     @keyframes splashBlink {
       50% { opacity: .15; }
     }
@@ -1186,7 +1199,7 @@
       <strong>Legal Notice & Credits:</strong>
       A non-commercial open-source fan tribute for educational, archival, and entertainment purposes.
       Elite (1984) is the property of David Braben and Ian Bell; the Elite trademark and modern franchise assets are owned by Frontier Developments plc.
-      Not affiliated with, endorsed by, or sponsored by those parties. Please support the official modern space simulation, Elite Dangerous.
+      Not affiliated with, endorsed by, or sponsored by those parties. Source: <a href="https://github.com/dansto1974/UltraElite" target="_blank" rel="noopener">github.com/dansto1974/UltraElite</a>. Please support the official modern space simulation, Elite Dangerous.
     </div>
   </div>
   <div id="app">
@@ -5846,7 +5859,8 @@
       "Just One More Small Feature",
       "A Glorious Geek-Fest of Elite",
       "Procedurally Generated Scope Creep",
-      "One Webpage, No Sensible Limits"
+      "One Webpage, No Sensible Limits",
+      "Project Links"
     ]);
     const ABOUT_COPY = String.raw`Five Days, Two AI Coding Agents and a Slightly Unnecessary Number of Supernovas
 
@@ -6082,7 +6096,11 @@ I am, regrettably, still smoking—although I really must give some serious thou
 
 The technology has changed beyond recognition, but the basic ingredients remain remarkably familiar: too much caffeine, not enough sleep and a complete inability to leave Elite alone.
 
-More than forty years later, I am still staying up all night because of the same game.`;
+More than forty years later, I am still staying up all night because of the same game.
+
+Project Links
+
+Source code and change history: https://github.com/dansto1974/UltraElite`;
     const SAVE_KEY = "ultraEliteSave";
     const SAVE_FORMAT = "ultra-elite-commander";
     const SAVE_FIELDS = ["commander", "galaxy", "current", "target", "credits", "fuel", "kills", "legal", "playerShip", "cargoCap", "missiles", "graphicsMode", "fxLevel"];
@@ -12719,12 +12737,19 @@ More than forty years later, I am still staying up all night because of the same
         if (ABOUT_HEADINGS.has(text)) {
           return `<strong class="about-heading">${escapeHtml(text)}</strong>`;
         }
-        return `<p>${escapeHtml(text)}</p>`;
+        return `<p>${linkifyAboutText(text)}</p>`;
       }).join("");
       return `<div class="notice about-section about-copy">
         <div class="about-title">${escapeHtml(title)}</div>
         ${copy}
       </div>`;
+    }
+
+    function linkifyAboutText(text) {
+      return escapeHtml(text).replace(
+        /https:\/\/github\.com\/dansto1974\/UltraElite/g,
+        `<a href="https://github.com/dansto1974/UltraElite" target="_blank" rel="noopener">github.com/dansto1974/UltraElite</a>`
+      );
     }
 
     function stat(label, value) {
