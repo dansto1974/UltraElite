@@ -4288,10 +4288,11 @@
       const p = jumpTransitionProgress(tr);
       const bigJump = tr.kind === "galactic";
       const departureEnd = tr.departureEnd ?? (bigJump ? .2 : .24);
+      const arrivalAt = tr.arrivalAt ?? (bigJump ? .76 : .74);
       const solveEnd = Math.min(departureEnd * .22, .045);
-      if (p < solveEnd || p >= departureEnd) return 0;
+      if (p < solveEnd || p >= arrivalAt) return 0;
       const t = clamp((p - solveEnd) / Math.max(.04, departureEnd - solveEnd), 0, 1);
-      return Math.sin(t * Math.PI) * (bigJump ? 1.25 : 1);
+      return easeInOut(t) * (bigJump ? 1.25 : 1);
     }
 
     function jumpTransitionRenderCamera(renderCam, shipCam, tr) {
@@ -10401,7 +10402,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const p = clamp(tr.t / tr.dur, 0, 1);
       const cx = w / 2, cy = h / 2;
       const palette = [196, 210, 178, 146];
-      const accel = clamp(p / .28, 0, 1);
       const tunnel = clamp((p - .22) / .54, 0, 1);
       const arrival = clamp((p - .72) / .28, 0, 1);
       ctx.save();
@@ -10412,7 +10412,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
       if (tr._arrived && p >= (tr.arrivalAt ?? .74)) {
         const ap = clamp((p - (tr.arrivalAt ?? .74)) / Math.max(.08, 1 - (tr.arrivalAt ?? .74)), 0, 1);
-        drawUltraStarAcceleration(w, h, 1 - ap, [208, 190, 168, 122], { seed: 0x51504545, lanes: 220, tail: 620, alpha: .55 * (1 - ap), speed: 2.6 });
         drawUltraArrivalCrackle(w, h, clamp(ap * 1.35, 0, 1), [196, 210, 178], { seed: 0xdec1, bolts: 14, width: .75 });
         ctx.restore();
         return;
@@ -10423,7 +10422,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       bg.addColorStop(1, `rgba(0,0,0,${.84 + arrival * .1})`);
       ctx.fillStyle = bg;
       ctx.fillRect(-w * .08, -h * .08, w * 1.16, h * 1.16);
-      drawUltraStarAcceleration(w, h, accel, [208, 190, 168, 122], { seed: 0x51504545, lanes: 260, tail: 840, alpha: 1 - tunnel * .35, speed: 3.8 });
       if (tunnel > 0) drawUltraCloudTunnel(w, h, tunnel, palette, { seed: 0x4511e7, intensity: clamp(tunnel * 1.5, 0, 1) * (1 - arrival * .38), spin: .52, arcs: 42, puffs: 84, width: .82, flatten: .6 });
       drawUltraAperture(w, h, clamp((p - .12) / .74, 0, 1), palette, { pulses: 2 });
       drawUltraArrivalCrackle(w, h, arrival, [196, 210, 178], { seed: 0xdec1, bolts: 18, width: .9 });
@@ -10434,7 +10432,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const p = clamp(tr.t / tr.dur, 0, 1);
       const cx = w / 2, cy = h / 2;
       const palette = [204, 224, 270, 188, 318];
-      const accel = clamp(p / .24, 0, 1);
       const tunnel = clamp((p - .18) / .62, 0, 1);
       const arrival = clamp((p - .76) / .24, 0, 1);
       ctx.save();
@@ -10445,14 +10442,12 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
       if (tr._arrived && p >= (tr.arrivalAt ?? .76)) {
         const ap = clamp((p - (tr.arrivalAt ?? .76)) / Math.max(.08, 1 - (tr.arrivalAt ?? .76)), 0, 1);
-        drawUltraStarAcceleration(w, h, 1 - ap, [210, 260, 300, 58], { seed: 0x6a554d50, lanes: 300, tail: 820, width: 1.04, speed: 3.1, alpha: .6 * (1 - ap) });
         drawUltraArrivalCrackle(w, h, clamp(ap * 1.4, 0, 1), [196, 230, 286, 52], { seed: 0x6a1ac7, bolts: 24, width: 1 });
         ctx.restore();
         return;
       }
       ctx.fillStyle = `rgba(0,0,0,${.72 + arrival * .16})`;
       ctx.fillRect(-w * .08, -h * .08, w * 1.16, h * 1.16);
-      drawUltraStarAcceleration(w, h, accel, [210, 260, 300, 58], { seed: 0x6a554d50, lanes: 330, tail: 1040, width: 1.08, speed: 4.2, alpha: 1 - tunnel * .25 });
       if (tunnel > 0) drawUltraCloudTunnel(w, h, tunnel, palette, { seed: 0x6a0a7, intensity: clamp(tunnel * 1.4, 0, 1) * (1 - arrival * .32), spin: .74, arcs: 66, puffs: 120, width: 1.08, flatten: .56, radius: .78, depth: 1.18, sweep: 1.25 });
       ctx.globalCompositeOperation = "lighter";
       for (let i = 0; i < 12; i++) {
