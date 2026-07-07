@@ -4488,16 +4488,16 @@
         "ocean", "forest", "rain", "tropical", "mountain", "rock formation",
         "volcano", "earthquake", "dust", "ice", "mud", "plantations"
       ]);
-      const scores = { industrial: 0, ocean: 0, desert: 0, rocky: 0, gas: 0 };
+      const scores = { industrial: 0, ocean: 0, desert: 0, rocky: 0, ice: 0, venus: 0, gas: 0 };
       const economyProfiles = [
-        { industrial: 4.1, ocean: .45, desert: .3, rocky: .65, gas: .12 },
-        { industrial: 3.45, ocean: .55, desert: .55, rocky: .85, gas: .14 },
-        { industrial: 2.65, ocean: .35, desert: 1.25, rocky: 1.45, gas: .18 },
-        { industrial: 1.8, ocean: .85, desert: 1.75, rocky: 1.25, gas: .18 },
-        { industrial: .85, ocean: 2.75, desert: 1.25, rocky: .8, gas: .14 },
-        { industrial: .65, ocean: 3.55, desert: .55, rocky: .5, gas: .12 },
-        { industrial: .42, ocean: 2.2, desert: 1.65, rocky: 1.45, gas: .16 },
-        { industrial: .25, ocean: 1.05, desert: 2.55, rocky: 2.05, gas: .18 }
+        { industrial: 4.1, ocean: .45, desert: .3, rocky: .65, ice: .18, venus: .35, gas: .12 },
+        { industrial: 3.45, ocean: .55, desert: .55, rocky: .85, ice: .2, venus: .42, gas: .14 },
+        { industrial: 2.65, ocean: .35, desert: 1.25, rocky: 1.45, ice: .3, venus: .6, gas: .18 },
+        { industrial: 1.8, ocean: .85, desert: 1.75, rocky: 1.25, ice: .35, venus: .8, gas: .18 },
+        { industrial: .85, ocean: 2.75, desert: 1.25, rocky: .8, ice: .42, venus: .35, gas: .14 },
+        { industrial: .65, ocean: 3.55, desert: .55, rocky: .5, ice: .7, venus: .18, gas: .12 },
+        { industrial: .42, ocean: 2.2, desert: 1.65, rocky: 1.45, ice: .9, venus: .4, gas: .16 },
+        { industrial: .25, ocean: 1.05, desert: 2.55, rocky: 2.05, ice: 1.1, venus: .5, gas: .18 }
       ][sys.economy] || {};
       for (const [key, value] of Object.entries(economyProfiles)) scores[key] += value;
 
@@ -4509,6 +4509,7 @@
       if (smallWorld) {
         scores.rocky += 1.15;
         scores.desert += .8;
+        scores.ice += .25;
       }
       if (sys.population >= 42) scores.industrial += 1.25;
       else if (sys.population >= 32) scores.industrial += .65;
@@ -4521,8 +4522,11 @@
 
       if (has(["ocean", "oceans"])) scores.ocean += 4.2;
       if (has(["forest", "forests", "rain", "tropical", "exuberant", "plantations", "tulip", "banana", "corn", "weed"])) scores.ocean += 2.55;
-      if (has(["mountain", "mountains", "rock formation", "volcano", "volcanoes", "earthquake", "earthquakes"])) scores.rocky += 3.15;
-      if (has(["dust", "ice", "ice berg", "mud", "vacuum", "boring", "dull", "tedious", "unremarkable", "revolting"])) {
+      if (has(["volcano", "volcanoes"])) scores.venus += 2.35;
+      if (has(["mountain", "mountains", "rock formation", "earthquake", "earthquakes"])) scores.rocky += 3.15;
+      if (has(["ice", "ice berg", "ice bergs", "bleak", "remote"])) scores.ice += 3.75;
+      if (has(["dust", "mud", "revolting"])) scores.venus += 1.15;
+      if (has(["dust", "mud", "vacuum", "boring", "dull", "tedious", "unremarkable", "revolting"])) {
         scores.rocky += 1.55;
         scores.desert += 1.45;
       }
@@ -4571,17 +4575,23 @@
       // Biome drives deterministic surface rendering. It uses the original Elite
       // system data first, with goat-soup description words as flavour hints.
       const biome = planetBiomeForSystem(sys);
-      const planetR = lerp(900, 1900, clamp((sys.radius - 2816) / (6912 - 2816), 0, 1)) * (biome === "gas" ? 1.35 : 1);
-      const planetDir = norm(vec((rng() - .5) * 2, (rng() - .5) * 1.1, 1.4 + rng() * 1.2));
-      const planetDist = planetR * (7.5 + rng() * 3.5);
+      const planetR = lerp(900, 1900, clamp((sys.radius - 2816) / (6912 - 2816), 0, 1)) * (biome === "gas" ? 1.8 : biome === "venus" ? .88 : biome === "ice" ? 1.05 : 1);
+      const highOrbit = rng() < .46;
+      const orbitA = rng() * TAU;
+      const planetDir = highOrbit
+        ? norm(vec(Math.cos(orbitA) * (1.25 + rng() * 1.35), (rng() > .5 ? 1 : -1) * (.95 + rng() * 1.2), .55 + Math.sin(orbitA) * .55 + rng() * .7))
+        : norm(vec((rng() - .5) * 2, (rng() - .5) * 1.1, 1.4 + rng() * 1.2));
+      const planetDist = planetR * ((biome === "gas" ? 4.7 : 7.5) + rng() * (biome === "gas" ? 1.7 : 3.5));
       const ringRng = mulberry(hash32(`${sys.galaxy}:${sys.index}:${sys.name}:rings`));
       const debrisRing = biome === "industrial" && ringRng() < .62;
-      const hasRing = debrisRing || (biome === "gas" && ringRng() < .78) || (biome === "rocky" && ringRng() < .36) || ringRng() < .28;
+      const hasRing = debrisRing || (biome === "gas" && ringRng() < .78) || (biome === "rocky" && ringRng() < .36) || (biome === "ice" && ringRng() < .24) || ringRng() < .28;
       const palette = {
         industrial: { hue: lerp(15, 45, rng()), sat: lerp(8, 22, rng()), light: lerp(10, 20, rng()) },
         desert: { hue: lerp(25, 42, rng()), sat: lerp(45, 62, rng()), light: lerp(46, 60, rng()) },
         ocean: { hue: lerp(196, 214, rng()), sat: lerp(52, 70, rng()), light: lerp(28, 40, rng()) },
         rocky: { hue: lerp(18, 42, rng()), sat: lerp(12, 28, rng()), light: lerp(28, 46, rng()) },
+        ice: { hue: lerp(190, 212, rng()), sat: lerp(18, 34, rng()), light: lerp(58, 72, rng()) },
+        venus: { hue: lerp(34, 50, rng()), sat: lerp(42, 66, rng()), light: lerp(42, 58, rng()) },
         gas: { hue: lerp(24, 42, rng()), sat: lerp(38, 62, rng()), light: lerp(44, 62, rng()) }
       }[biome];
       const planet = {
@@ -4606,9 +4616,19 @@
       const stellar = stellarProfileForSystem(sys);
       const baseSunR = planetR * lerp(.65, 1.05, rng());
       const sunR = baseSunR * stellar.sizeMul;
-      const sunDir = norm(vec((rng() - .5) * 2, (rng() - .5) * 1.1, -(1.2 + rng() * 1)));
+      let side = cross(planetDir, vec(0, 1, 0));
+      if (len(side) < .001) side = vec(1, 0, 0);
+      side = norm(side);
+      const upSide = norm(cross(side, planetDir));
+      const sunPhase = rng();
+      const sunDir = sunPhase < .38
+        ? norm(add(scale(planetDir, 1.05 + rng() * .45), add(scale(side, (rng() - .5) * .7), scale(upSide, (rng() - .5) * .55))))
+        : sunPhase < .72
+          ? norm(add(scale(side, rng() > .5 ? 1 : -1), add(scale(upSide, (rng() - .5) * .9), scale(planetDir, (rng() - .5) * .55))))
+          : norm(add(scale(planetDir, -(1.1 + rng() * .55)), add(scale(side, (rng() - .5) * .8), scale(upSide, (rng() - .5) * .55))));
       const heatRadius = baseSunR * (stellar.heatMul || stellar.sizeMul);
-      const sunDist = sunR * lerp(stellar.kind === "whiteDwarf" ? 14 : stellar.kind === "redGiant" ? 2.25 : 9, stellar.kind === "whiteDwarf" ? 20 : stellar.kind === "redGiant" ? 3.05 : 14, rng());
+      let sunDist = sunR * lerp(stellar.kind === "whiteDwarf" ? 14 : stellar.kind === "redGiant" ? 2.25 : 9, stellar.kind === "whiteDwarf" ? 20 : stellar.kind === "redGiant" ? 3.05 : 14, rng());
+      if (dot(sunDir, planetDir) > .72) sunDist = Math.max(sunDist, planetDist + sunR * 2.4 + planetR);
       const sun = {
         type: "sun", name: stellar.label.toUpperCase(), pos: scale(sunDir, sunDist), r: sunR,
         heatRadius,
@@ -11817,21 +11837,38 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (o._geography) return o._geography;
       const rng = mulberry(o.textureSeed || 1);
       const biome = o.biome || "ocean";
-      const continentCount = biome === "desert" ? 4 : biome === "industrial" ? 5 : 6;
+      const continentCount = biome === "desert" ? 4 : biome === "industrial" ? 5 : biome === "ice" ? 5 : biome === "venus" ? 4 : 6;
       const continents = [];
       for (let i = 0; i < continentCount; i++) {
         const theta = rng() * TAU;
-        const lat = (rng() - .5) * (biome === "ocean" ? 1.75 : 1.35);
+        const lat = (rng() - .5) * (biome === "ocean" ? 1.75 : biome === "ice" ? 2.15 : biome === "venus" ? 1.25 : 1.35);
         const center = norm(vec(Math.cos(lat) * Math.cos(theta), Math.sin(lat), Math.cos(lat) * Math.sin(theta)));
-        const radius = (biome === "ocean" ? .22 : .28) + rng() * (biome === "ocean" ? .22 : .3);
+        const radius = (biome === "ocean" ? .22 : biome === "ice" ? .18 : biome === "venus" ? .24 : .28) + rng() * (biome === "ocean" ? .22 : biome === "ice" ? .24 : biome === "venus" ? .24 : .3);
+        const terrain = [];
+        const { u, v } = tangentBasisFor(center);
+        const terrainCount = biome === "industrial" ? 8 : biome === "desert" ? 14 : biome === "ice" ? 22 : biome === "venus" ? 10 : 16;
+        for (let j = 0; j < terrainCount; j++) {
+          const a = rng() * TAU;
+          const d = Math.pow(rng(), .58) * radius * .68;
+          terrain.push({
+            center: norm(add(center, add(scale(u, Math.cos(a) * d), scale(v, Math.sin(a) * d)))),
+            rx: radius * (biome === "ice" ? (.04 + rng() * .08) : (.028 + rng() * .055)),
+            ry: radius * (biome === "ice" ? (.006 + rng() * .018) : (.008 + rng() * .025)),
+            angle: rng() * TAU,
+            s: .45 + rng() * .75
+          });
+        }
         continents.push({
+          center,
+          radius,
           outline: makeContinent(rng, center, radius, 16 + Math.floor(rng() * 10)),
           hueShift: rng() * 22 - 11,
-          lightShift: rng() * 12 - 6
+          lightShift: rng() * 12 - 6,
+          terrain
         });
       }
       const islands = [];
-      const islandCount = biome === "ocean" ? 16 : 8;
+      const islandCount = biome === "ocean" ? 16 : biome === "ice" ? 12 : biome === "venus" ? 6 : 8;
       for (let i = 0; i < islandCount; i++) {
         const theta = rng() * TAU;
         const lat = (rng() - .5) * 2.25;
@@ -11839,36 +11876,38 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         islands.push(makeContinent(rng, center, .035 + rng() * .055, 7 + Math.floor(rng() * 5)));
       }
       const clouds = [];
-      const cloudCount = biome === "desert" ? 7 : 12;
+      const cloudCount = biome === "gas" ? 0 : biome === "venus" ? 15 : biome === "desert" ? 12 : biome === "rocky" ? 7 : biome === "ice" ? 11 : biome === "industrial" ? 13 : 18;
       for (let i = 0; i < cloudCount; i++) {
         const theta = rng() * TAU;
-        const lat = (rng() - .5) * 1.55;
+        const lat = (rng() - .5) * (biome === "ocean" ? 1.9 : 1.55);
         clouds.push({
           center: norm(vec(Math.cos(lat) * Math.cos(theta), Math.sin(lat), Math.cos(lat) * Math.sin(theta))),
-          width: .18 + rng() * .28,
-          height: .025 + rng() * .045,
+          width: (biome === "ocean" ? .2 : biome === "venus" ? .28 : .14) + rng() * (biome === "ocean" ? .36 : biome === "venus" ? .34 : .26),
+          height: (biome === "venus" ? .012 : .018) + rng() * (biome === "venus" ? .024 : .038),
           angle: rng() * TAU,
-          alpha: .18 + rng() * .22,
-          arms: 2 + Math.floor(rng() * 2),
-          twist: (rng() > .5 ? 1 : -1) * (1.1 + rng() * 1.1),
+          alpha: (biome === "desert" ? .12 : biome === "ice" ? .13 : biome === "venus" ? .2 : .16) + rng() * .18,
+          arms: 2 + Math.floor(rng() * 3),
+          twist: (rng() > .5 ? 1 : -1) * (1.7 + rng() * 1.7),
+          streaks: 3 + Math.floor(rng() * 5),
           seed: Math.floor(rng() * 0xfffffff)
         });
       }
       const craters = [];
-      const craterCount = biome === "rocky" ? 30 : biome === "desert" ? 14 : 0;
+      const craterCount = biome === "rocky" ? 44 : biome === "desert" ? 16 : biome === "ice" ? 10 : 0;
       for (let i = 0; i < craterCount; i++) {
         const theta = rng() * TAU;
         const lat = (rng() - .5) * 2.4;
-        const radius = .025 + rng() * (biome === "rocky" ? .085 : .055);
+        const radius = .025 + rng() * (biome === "rocky" ? .095 : biome === "ice" ? .045 : .055);
         craters.push({
           center: norm(vec(Math.cos(lat) * Math.cos(theta), Math.sin(lat), Math.cos(lat) * Math.sin(theta))),
           radius,
           angle: rng() * TAU,
           squash: .62 + rng() * .3,
-          rimLight: .1 + rng() * .13,
-          floorShade: .12 + rng() * .18,
-          ejecta: rng() < (biome === "rocky" ? .58 : .32),
-          alpha: .22 + rng() * .32
+          rimLight: (biome === "rocky" ? .18 : .1) + rng() * .16,
+          floorShade: (biome === "rocky" ? .22 : .12) + rng() * .22,
+          ejecta: rng() < (biome === "rocky" ? .78 : .32),
+          centralPeak: rng() < (biome === "rocky" ? .42 : .18),
+          alpha: (biome === "rocky" ? .34 : .22) + rng() * .32
         });
       }
       const industry = [];
@@ -11972,6 +12011,68 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.stroke();
     }
 
+    function planetLandStyle(o, dir, lightShift = 0, hueShift = 0, sunFacing = 0, alpha = .86) {
+      const biome = o.biome || "ocean";
+      const lat = Math.abs(dir.y);
+      const sunLift = sunFacing * 10 + lightShift;
+      if (biome === "industrial") {
+        const l = clamp(17 + lat * 9 + sunLift * .55, 8, 36);
+        return `hsla(${48 + hueShift * .25}, 18%, ${l}%, ${alpha})`;
+      }
+      if (biome === "desert") {
+        const polar = smoothstep(.68, .92, lat);
+        const l = clamp(52 + polar * 18 + sunLift * .6, 24, 76);
+        const h = lerp(35, 208, polar) + hueShift * .16;
+        const s = lerp(58, 10, polar);
+        const iceL = lerp(l, 86, polar);
+        return `hsla(${h}, ${s}%, ${iceL}%, ${alpha})`;
+      }
+      if (biome === "rocky") {
+        const polar = smoothstep(.74, .95, lat);
+        const l = clamp(33 + polar * 22 + sunLift * .65, 16, 68);
+        return `hsla(${34 + hueShift * .18}, ${lerp(24, 12, polar)}%, ${l}%, ${alpha})`;
+      }
+      if (biome === "ice") {
+        const rock = smoothstep(.18, .62, 1 - lat);
+        const l = clamp(76 - rock * 24 + sunLift * .55, 34, 88);
+        return `hsla(${lerp(204, 32, rock) + hueShift * .12}, ${lerp(18, 20, rock)}%, ${l}%, ${alpha})`;
+      }
+      if (biome === "venus") {
+        const upland = smoothstep(.32, .75, lat);
+        const h = lerp(38, 28, upland) + hueShift * .12;
+        const s = lerp(42, 24, upland);
+        const l = clamp(43 - upland * 13 + sunLift * .45, 18, 58);
+        return `hsla(${h}, ${s}%, ${l}%, ${alpha * .72})`;
+      }
+      const polar = smoothstep(.74, .94, lat);
+      const equatorDesert = 1 - smoothstep(.16, .34, lat);
+      const boreal = smoothstep(.42, .7, lat) * (1 - polar);
+      const h = equatorDesert > .45 ? lerp(92, 38, equatorDesert) : lerp(112, 96, boreal);
+      const s = equatorDesert > .45 ? lerp(44, 55, equatorDesert) : lerp(46, 34, boreal);
+      const baseL = equatorDesert > .45 ? lerp(40, 56, equatorDesert) : lerp(38, 24, boreal);
+      const iceL = lerp(baseL, 84, polar);
+      return `hsla(${h + hueShift * .22}, ${lerp(s, 12, polar)}%, ${clamp(iceL + sunLift, 12, 88)}%, ${alpha})`;
+    }
+
+    function planetTerrainStyle(o, dir, strength, sunFacing) {
+      const biome = o.biome || "ocean";
+      const lat = Math.abs(dir.y);
+      const shade = clamp(.45 + sunFacing * .45, .12, 1);
+      if (biome === "industrial") return `rgba(5,7,6,${.16 * strength * shade})`;
+      if (biome === "desert") return lat > .66
+        ? `rgba(235,232,210,${.14 * strength * shade})`
+        : `rgba(118,83,43,${.13 * strength * shade})`;
+      if (biome === "rocky") return `rgba(58,50,43,${.16 * strength * shade})`;
+      if (biome === "ice") return lat > .58
+        ? `rgba(250,255,255,${.16 * strength * shade})`
+        : `rgba(70,78,82,${.2 * strength * shade})`;
+      if (biome === "venus") return `rgba(82,59,35,${.11 * strength * shade})`;
+      if (lat > .74) return `rgba(245,250,246,${.22 * strength * shade})`;
+      if (lat > .42) return `rgba(18,42,24,${.19 * strength * shade})`;
+      if (lat < .28) return `rgba(164,116,58,${.13 * strength * shade})`;
+      return `rgba(20,72,34,${.12 * strength * shade})`;
+    }
+
     function drawProjectedCloud(o, q, cloud, cp, viewDir, sunDir, w, h, r) {
       const rng = mulberry((cloud.seed || 1) ^ 0xc10dd);
       const { u, v } = tangentBasisFor(cloud.center);
@@ -11979,28 +12080,46 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const baseAlpha = cloud.alpha * clamp(.45 + sunFacing * .45, .15, 1) * cp.facing;
       if (baseAlpha <= .01 || r * cloud.width * cp.facing < 2) return;
       const arms = cloud.arms || 2;
-      const steps = 9;
+      const steps = performanceLod() > 1 ? 7 : 11;
 
       for (let arm = 0; arm < arms; arm++) {
         for (let i = 0; i < steps; i++) {
           const t = i / (steps - 1);
           const curl = cloud.angle + arm / arms * TAU + t * cloud.twist * TAU;
-          const radial = cloud.width * (.08 + t * .45) * (.82 + rng() * .28);
-          const lateral = cloud.height * (1.2 + t * 1.7);
+          const radial = cloud.width * (.06 + t * .58) * (.82 + rng() * .28);
+          const lateral = cloud.height * (1.1 + t * 2.25);
           const puffCenter = norm(add(cloud.center, add(
             scale(u, Math.cos(curl) * radial),
             scale(v, Math.sin(curl) * lateral)
           )));
           const puff = projectedSurfacePatch(o, q, surfaceEllipseDirs(
             puffCenter,
-            cloud.width * (.08 + (1 - t) * .055) * (1 + rng() * .35),
-            cloud.height * (.7 + (1 - t) * .55) * (1 + rng() * .35),
+            cloud.width * (.045 + (1 - t) * .06) * (1 + rng() * .35),
+            cloud.height * (.58 + (1 - t) * .62) * (1 + rng() * .35),
             curl + Math.PI / 2,
             12
           ), viewDir, w, h, .38);
           if (!puff) continue;
-          drawProjectedPatch(puff, `rgba(255,255,255,${baseAlpha * (.18 + (1 - t) * .18)})`);
+          drawProjectedPatch(puff, `rgba(255,255,255,${baseAlpha * (.14 + (1 - t) * .16)})`);
         }
+      }
+
+      const streaks = performanceLod() > 1 ? Math.min(3, cloud.streaks || 3) : (cloud.streaks || 4);
+      for (let i = 0; i < streaks; i++) {
+        const t = (i + .5) / streaks;
+        const curl = cloud.angle + t * cloud.twist * TAU * .72 + (rng() - .5) * .45;
+        const streakCenter = norm(add(cloud.center, add(
+          scale(u, Math.cos(curl) * cloud.width * (.15 + t * .38)),
+          scale(v, Math.sin(curl) * cloud.height * (1.8 + t * 2.4))
+        )));
+        const streak = projectedSurfacePatch(o, q, surfaceEllipseDirs(
+          streakCenter,
+          cloud.width * (.18 + rng() * .18),
+          cloud.height * (.06 + rng() * .05),
+          curl,
+          14
+        ), viewDir, w, h, .32);
+        if (streak) drawProjectedPatch(streak, `rgba(255,255,255,${baseAlpha * (.08 + rng() * .08)})`);
       }
 
       for (let i = 0; i < 6; i++) {
@@ -12063,6 +12182,23 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ), viewDir, w, h, .42);
       if (floor) drawProjectedPatch(floor, `rgba(18,17,16,${alpha * crater.floorShade * (1.05 - sunFacing * .35)})`);
 
+      const gullyCount = performanceLod() > 1 ? 5 : 10;
+      for (let i = 0; i < gullyCount; i++) {
+        const a = angle + i / gullyCount * TAU + (i % 2 ? .08 : -.05);
+        const mid = norm(add(crater.center, add(
+          scale(u, Math.cos(a) * crater.radius * (.46 + (i % 3) * .08)),
+          scale(v, Math.sin(a) * crater.radius * squash * (.42 + (i % 4) * .06))
+        )));
+        const gully = projectedSurfacePatch(o, q, surfaceEllipseDirs(
+          mid,
+          crater.radius * (.32 + (i % 3) * .08),
+          crater.radius * .018,
+          a,
+          8
+        ), viewDir, w, h, .3);
+        if (gully) drawProjectedPatch(gully, `rgba(7,8,9,${alpha * .11 * (1.12 - sunFacing * .45)})`);
+      }
+
       const shadowCenter = norm(add(crater.center, add(
         scale(u, Math.cos(angle + .18) * crater.radius * .2),
         scale(v, Math.sin(angle + .18) * crater.radius * .12)
@@ -12083,8 +12219,19 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         angle,
         26
       ), viewDir, w, h, .42);
-      strokeProjectedPatch(rim, `rgba(35,31,27,${alpha * .74})`, Math.max(.55, cr * .11));
-      strokeProjectedPatch(rim, `rgba(236,226,205,${alpha * .2 * sunFacing})`, Math.max(.35, cr * .035));
+      strokeProjectedPatch(rim, `rgba(35,31,27,${alpha * .86})`, Math.max(.55, cr * .13));
+      strokeProjectedPatch(rim, `rgba(236,226,205,${alpha * .28 * sunFacing})`, Math.max(.35, cr * .045));
+
+      if (crater.centralPeak && cr > 4) {
+        const peak = projectedSurfacePatch(o, q, surfaceEllipseDirs(
+          crater.center,
+          crater.radius * .18,
+          crater.radius * .08,
+          angle + .4,
+          9
+        ), viewDir, w, h, .34);
+        if (peak) drawProjectedPatch(peak, `rgba(210,200,178,${alpha * .18 * (.4 + sunFacing)})`);
+      }
     }
 
     function drawPlanetSurface(o, pr, r, w, h) {
@@ -12100,20 +12247,27 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         drawGasGiantSurface(o, pr, r, geo, q, viewDir, w, h);
         return;
       }
-      const landHue = biome === "desert" ? 38 : biome === "industrial" ? 42 : 105;
-      const landSat = biome === "industrial" ? 22 : biome === "desert" ? 55 : 42;
       for (const c of geo.continents) {
         const pts = c.outline.map((d) => projectSurfacePoint(o, q, d, viewDir, w, h)).filter(Boolean);
         if (pts.length < c.outline.length * .72) continue;
         const avgDir = norm(c.outline.reduce((sum, d) => add(sum, quatRotate(q, d)), vec()));
         const sunFacing = dot(avgDir, sunDir);
-        const l = clamp((biome === "industrial" ? 28 : biome === "desert" ? 48 : 38) + c.lightShift + sunFacing * 12, 10, 72);
-        drawProjectedPatch(pts, `hsla(${landHue + c.hueShift}, ${landSat}%, ${l}%, .86)`);
+        drawProjectedPatch(pts, planetLandStyle(o, avgDir, c.lightShift, c.hueShift, sunFacing, .86));
+        if (planetSurfaceDetailAlpha(o) > .32 && (performanceLod() < 2 || r > 145)) {
+          for (const spot of c.terrain || []) {
+            const sp = projectSurfacePoint(o, q, spot.center, viewDir, w, h);
+            if (!sp) continue;
+            const patch = projectedSurfacePatch(o, q, surfaceEllipseDirs(spot.center, spot.rx, spot.ry, spot.angle, 9), viewDir, w, h, .34);
+            if (!patch) continue;
+            drawProjectedPatch(patch, planetTerrainStyle(o, sp.worldDir, spot.s, dot(sp.worldDir, sunDir)));
+          }
+        }
       }
       for (const island of geo.islands) {
         const pts = island.map((d) => projectSurfacePoint(o, q, d, viewDir, w, h)).filter(Boolean);
         if (pts.length < island.length * .7) continue;
-        drawProjectedPatch(pts, `hsla(${landHue + rng() * 8 - 4}, ${landSat}%, ${biome === "desert" ? 54 : 42}%, .78)`);
+        const avgDir = norm(island.reduce((sum, d) => add(sum, quatRotate(q, d)), vec()));
+        drawProjectedPatch(pts, planetLandStyle(o, avgDir, rng() * 8 - 4, rng() * 8 - 4, dot(avgDir, sunDir), .78));
       }
       for (const crater of geo.craters) {
         const cp = projectSurfacePoint(o, q, crater.center, viewDir, w, h);
@@ -12131,11 +12285,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       for (const pole of [vec(0, 1, 0), vec(0, -1, 0)]) {
         const pp = projectSurfacePoint(o, q, pole, viewDir, w, h);
         if (!pp) continue;
-        const capR = r * (.2 + Math.abs(pp.worldDir.y) * .08) * pp.facing;
+        const polarScale = biome === "ice" ? .38 : biome === "desert" ? .3 : .22;
+        const capR = r * (polarScale + Math.abs(pp.worldDir.y) * .08) * pp.facing;
         if (capR < 1) continue;
-        const cap = projectedSurfacePatch(o, q, surfaceEllipseDirs(pole, .22, .07, 0, 22), viewDir, w, h, .38);
-        if (cap) drawProjectedPatch(cap, `rgba(242,250,248,${.62 * pp.facing})`);
+        const cap = projectedSurfacePatch(o, q, surfaceEllipseDirs(pole, polarScale, biome === "ice" ? .11 : .08, 0, 24), viewDir, w, h, .38);
+        if (cap) drawProjectedPatch(cap, `rgba(242,250,248,${(biome === "ice" ? .72 : .62) * pp.facing})`);
       }
+      if (biome === "venus") drawVenusWeatherSurface(o, pr, r, geo, q, viewDir, w, h);
       for (const cloud of geo.clouds) {
         const cp = projectSurfacePoint(o, q, cloud.center, viewDir, w, h);
         if (!cp) continue;
@@ -12153,6 +12309,26 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         lower.unshift(norm(make(lat1 + wobble * .8)));
       }
       return upper.concat(lower);
+    }
+
+    function drawVenusWeatherSurface(o, pr, r, geo, q, viewDir, w, h) {
+      const rng = mulberry((o.textureSeed || 1) ^ 0x7e005);
+      const hue = o.hue ?? 42;
+      const bands = performanceLod() > 1 ? 7 : 10;
+      for (let i = 0; i < bands; i++) {
+        const lat0 = Math.asin(1 - i * 2 / bands);
+        const lat1 = Math.asin(1 - (i + 1) * 2 / bands);
+        const phase = geo.stormPhase + i * 1.3 + (o.rot || 0) * .18;
+        const patch = projectedSurfacePatch(o, q, gasBandDirs(lat0, lat1, phase, 58), viewDir, w, h, .3);
+        if (!patch) continue;
+        const light = clamp((o.light || 50) + (i % 2 ? 12 : -5) + rng() * 7, 28, 76);
+        drawProjectedPatch(patch, `hsla(${hue + (i % 2 ? 8 : -5)}, ${46 + rng() * 18}%, ${light}%, .34)`);
+      }
+      for (let i = 0; i < 7; i++) {
+        const lat = lerp(.72, -.72, i / 6);
+        const line = projectedSurfacePatch(o, q, gasBandDirs(lat + .006, lat - .006, geo.stormPhase + i * .7, 64), viewDir, w, h, .24);
+        if (line) drawProjectedPatch(line, `rgba(255,224,154,${.08 + rng() * .08})`);
+      }
     }
 
     function drawGasGiantSurface(o, pr, r, geo, q, viewDir, w, h) {
@@ -12200,6 +12376,18 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
             `hsl(${hue + 8}, ${sat * .85}%, ${clamp(light, 18, 48)}%)`,
             `hsl(${hue - 8}, ${sat * .65}%, ${clamp(light - 16, 8, 30)}%)`
           ];
+        case "ice":
+          return [
+            `hsl(${hue - 6}, ${sat + 8}%, ${clamp(light + 20, 68, 92)}%)`,
+            `hsl(${hue}, ${sat}%, ${clamp(light, 46, 78)}%)`,
+            `hsl(${hue + 18}, ${sat * .55}%, ${clamp(light - 22, 20, 48)}%)`
+          ];
+        case "venus":
+          return [
+            `hsl(${hue + 8}, ${sat + 8}%, ${clamp(light + 22, 54, 82)}%)`,
+            `hsl(${hue}, ${sat}%, ${clamp(light, 32, 62)}%)`,
+            `hsl(${hue - 10}, ${sat * .72}%, ${clamp(light - 22, 10, 34)}%)`
+          ];
         case "gas":
           return [
             `hsl(${hue}, ${sat}%, ${clamp(light + 20, 44, 82)}%)`,
@@ -12227,7 +12415,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (!geo.cities.length) return;
       const q = quatFromAxisAngle(o.rotAxis || vec(0, 1, 0), o.rot || 0);
       const viewDir = norm(sub(game.camera.pos, o.pos));
-      const warm = biome === "industrial" ? "255,196,92" : biome === "ocean" ? "186,214,255" : biome === "rocky" ? "255,222,150" : "255,206,120";
+      const warm = biome === "industrial" ? "255,196,92" : biome === "ocean" ? "186,214,255" : biome === "rocky" ? "255,222,150" : biome === "ice" ? "205,230,255" : "255,206,120";
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
       for (const city of geo.cities) {
@@ -12274,23 +12462,51 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function drawPlanetAtmosphere(o, pr, r) {
       if (!ultraFxEnabled()) return;
       const atm = {
-        industrial: { h: 46, s: 72, l: 54, str: .36 },
-        ocean: { h: 208, s: 64, l: 64, str: .4 },
-        desert: { h: 44, s: 48, l: 68, str: .26 },
-        rocky: { h: 30, s: 22, l: 58, str: .15 },
-        gas: { h: o.hue ?? 32, s: 54, l: 60, str: .34 }
+        industrial: { h: 46, s: 72, l: 54, str: .28 },
+        ocean: { h: 208, s: 64, l: 64, str: .32 },
+        desert: { h: 44, s: 48, l: 68, str: .22 },
+        rocky: { h: 30, s: 22, l: 58, str: .12 },
+        ice: { h: 205, s: 52, l: 72, str: .22 },
+        venus: { h: 43, s: 72, l: 66, str: .34 },
+        gas: { h: o.hue ?? 32, s: 54, l: 60, str: .28 }
       }[o.biome || "ocean"] || { h: 208, s: 55, l: 64, str: .32 };
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
-      const glow = ctx.createRadialGradient(pr.x, pr.y, r * .9, pr.x, pr.y, r * 1.16);
+      const glow = ctx.createRadialGradient(pr.x, pr.y, r * .97, pr.x, pr.y, r * 1.085);
       glow.addColorStop(0, `hsla(${atm.h}, ${atm.s}%, ${atm.l}%, 0)`);
-      glow.addColorStop(.64, `hsla(${atm.h}, ${atm.s}%, ${atm.l}%, ${.045 * atm.str})`);
-      glow.addColorStop(.83, `hsla(${atm.h}, ${atm.s}%, ${atm.l}%, ${.25 * atm.str})`);
+      glow.addColorStop(.58, `hsla(${atm.h}, ${atm.s}%, ${atm.l}%, ${.04 * atm.str})`);
+      glow.addColorStop(.82, `hsla(${atm.h}, ${atm.s}%, ${atm.l}%, ${.32 * atm.str})`);
       glow.addColorStop(1, `hsla(${atm.h}, ${atm.s}%, ${atm.l}%, 0)`);
       ctx.fillStyle = glow;
       ctx.beginPath();
-      ctx.arc(pr.x, pr.y, r * 1.16, 0, TAU);
+      ctx.arc(pr.x, pr.y, r * 1.085, 0, TAU);
       ctx.fill();
+      ctx.restore();
+    }
+
+    function drawPlanetHaze(o, pr, r, lx, ly) {
+      if (!ultraFxEnabled()) return;
+      const haze = {
+        industrial: { h: 48, s: 50, l: 44, a: .095 },
+        ocean: { h: 204, s: 62, l: 70, a: .11 },
+        desert: { h: 42, s: 58, l: 66, a: .13 },
+        rocky: { h: 34, s: 28, l: 58, a: .06 },
+        ice: { h: 204, s: 48, l: 78, a: .095 },
+        venus: { h: 42, s: 72, l: 68, a: .17 },
+        gas: { h: o.hue ?? 34, s: 52, l: 66, a: .05 }
+      }[o.biome || "ocean"] || { h: 204, s: 55, l: 68, a: .09 };
+      const g = ctx.createRadialGradient(
+        pr.x + lx * r * .18, pr.y + ly * r * .18, r * .08,
+        pr.x - lx * r * .18, pr.y - ly * r * .18, r * 1.02
+      );
+      g.addColorStop(0, `hsla(${haze.h}, ${haze.s}%, ${haze.l + 8}%, ${haze.a * .36})`);
+      g.addColorStop(.62, `hsla(${haze.h}, ${haze.s}%, ${haze.l}%, ${haze.a * .48})`);
+      g.addColorStop(.88, `hsla(${haze.h}, ${haze.s}%, ${haze.l}%, ${haze.a})`);
+      g.addColorStop(1, `hsla(${haze.h}, ${haze.s}%, ${haze.l}%, ${haze.a * .18})`);
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      ctx.fillStyle = g;
+      ctx.fillRect(pr.x - r, pr.y - r, r * 2, r * 2);
       ctx.restore();
     }
 
@@ -12412,6 +12628,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         drawPlanetSurface(o, pr, r, w, h);
         ctx.restore();
       }
+
+      if (planetDetail || r > 90) drawPlanetHaze(o, pr, r, lx, ly);
 
       drawPlanetTerminatorShadow(o, cam, pr, r, sunDir, w, h);
 
