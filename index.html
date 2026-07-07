@@ -1574,9 +1574,44 @@
       damagePx: 16,
       effectPx: 7
     };
+    const PERFORMANCE_DPR_CAP = [2, 1.5, 1.25, 1];
+    const PERFORMANCE_PARTICLE_SCALE = [1, .65, .38, .18];
 
     function ultraFxEnabled() {
       return game.fxLevel === "ultra";
+    }
+
+    function performanceLod() {
+      return game.performance?.lod || 0;
+    }
+
+    function performanceThresholdMul() {
+      return 1 + performanceLod() * .72;
+    }
+
+    function performanceParticleScale() {
+      return PERFORMANCE_PARTICLE_SCALE[performanceLod()] ?? .18;
+    }
+
+    function performanceParticleLimit(limit) {
+      return Math.max(18, Math.round(limit * performanceParticleScale()));
+    }
+
+    function trimParticleStore(store, limit) {
+      const cap = performanceParticleLimit(limit);
+      if (store.length > cap) store.splice(0, store.length - cap);
+    }
+
+    function updatePerformanceBudget(rawDt) {
+      const perf = game.performance || (game.performance = { frameMs: 16.7, lod: 0 });
+      const ms = clamp(rawDt * 1000, 1, 220);
+      perf.frameMs = perf.frameMs ? lerp(perf.frameMs, ms, .08) : ms;
+      const nextLod = perf.frameMs > 82 ? 3 : perf.frameMs > 46 ? 2 : perf.frameMs > 28 ? 1 : 0;
+      if (nextLod !== perf.lod) {
+        perf.lod = nextLod;
+        perf.dprCap = PERFORMANCE_DPR_CAP[nextLod] || 1;
+        resizeCanvases();
+      }
     }
 
     function viewCamera() {
@@ -2634,6 +2669,7 @@
       smokePuffs: [],
       enemyShots: [],
       playerDamageMarks: [],
+      performance: { frameMs: 16.7, lod: 0, dprCap: 2 },
       screenShake: 0,
       playerEngineTrailClock: 0,
       playerShot: null,
@@ -4333,7 +4369,7 @@
     }
 
     function resizeCanvases() {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, game.performance?.dprCap || 2);
       for (const canvas of [space, scanner, foreAftRadar]) {
         const r = canvas.getBoundingClientRect();
         const min = canvas === foreAftRadar ? 80 : 320;
@@ -5247,7 +5283,7 @@
     function spawnExplosionCloud(pos, magnitude = 1) {
       if (!ultraFxEnabled()) return;
       const mag = clamp(magnitude, .35, 5.2);
-      const count = Math.round(7 + mag * 9 + Math.random() * 5);
+      const count = Math.max(2, Math.round((7 + mag * 9 + Math.random() * 5) * performanceParticleScale()));
       for (let i = 0; i < count; i++) {
         const dir = randomBurstDir(.72);
         game.smokePuffs.push({
@@ -5262,14 +5298,15 @@
           shade: 58 + Math.random() * 52
         });
       }
-      if (game.smokePuffs.length > 300) game.smokePuffs.splice(0, game.smokePuffs.length - 300);
+      trimParticleStore(game.smokePuffs, 300);
     }
 
     function spawnExplosion(pos, magnitude = 1) {
       const mag = clamp(magnitude, .35, 5.2);
-      const shardCount = Math.round(16 + mag * 10 + Math.random() * 8);
-      const sparkCount = Math.round(20 + mag * 14 + Math.random() * 10);
-      const fragmentCount = Math.round(4 + mag * 5);
+      const particleScale = performanceParticleScale();
+      const shardCount = Math.max(5, Math.round((16 + mag * 10 + Math.random() * 8) * particleScale));
+      const sparkCount = Math.max(6, Math.round((20 + mag * 14 + Math.random() * 10) * particleScale));
+      const fragmentCount = Math.max(1, Math.round((4 + mag * 5) * particleScale));
       const shards = Array.from({ length: shardCount }, () => ({
         dir: randomBurstDir(.85),
         len: (16 + Math.random() * 42) * mag,
@@ -5303,7 +5340,7 @@
       spawnExplosionCloud(pos, mag);
       addExplosionShake(pos, mag);
       eliteAudio.explosionRumble(pos, mag);
-      if (game.explosions.length > 28) game.explosions.splice(0, game.explosions.length - 28);
+      trimParticleStore(game.explosions, 28);
     }
 
     function shipExplosionMagnitude(o) {
@@ -5316,6 +5353,7 @@
     function spawnSmokePuffs(pos, magnitude = 1, count = 4) {
       if (!ultraFxEnabled()) return;
       const mag = clamp(magnitude, .35, 2.8);
+      count = Math.max(1, Math.round(count * performanceParticleScale()));
       for (let i = 0; i < count; i++) {
         game.smokePuffs.push({
           kind: "smoke",
@@ -5343,7 +5381,7 @@
           hue: 188 + Math.random() * 34
         });
       }
-      if (game.smokePuffs.length > 130) game.smokePuffs.splice(0, game.smokePuffs.length - 130);
+      trimParticleStore(game.smokePuffs, 130);
     }
 
     function makeEnginePlasmaPuff(pos, aftDir, magnitude = 1, alien = false, hueOverride = null) {
@@ -5367,8 +5405,9 @@
 
     function spawnEnginePlasmaInto(store, pos, aftDir, magnitude = 1, alien = false, hueOverride = null, limit = 260) {
       if (!ultraFxEnabled()) return;
+      if (Math.random() > performanceParticleScale()) return;
       store.push(makeEnginePlasmaPuff(pos, aftDir, magnitude, alien, hueOverride));
-      if (store.length > limit) store.splice(0, store.length - limit);
+      trimParticleStore(store, limit);
     }
 
     function emitEnginePlasmaForShip(store, ship, trailMul, opts = {}) {
@@ -5405,7 +5444,7 @@
         burst,
         smokeTint: alien ? [80, 255, 125] : null
       });
-      if (game.smokePuffs.length > 320) game.smokePuffs.splice(0, game.smokePuffs.length - 320);
+      trimParticleStore(game.smokePuffs, 320);
     }
 
     function spawnMissileTrail(pos, aftDir, magnitude = 1) {
@@ -5423,7 +5462,7 @@
         tailTime: .5 + Math.random() * .16,
         hue: 4 + Math.random() * 12
       });
-      if (game.smokePuffs.length > 280) game.smokePuffs.splice(0, game.smokePuffs.length - 280);
+      trimParticleStore(game.smokePuffs, 280);
     }
 
     function engineWorldAnchors(o) {
@@ -5518,7 +5557,7 @@
       if (speed < 16) return;
       o.engineTrailClock = (o.engineTrailClock || 0) - dt;
       if (o.engineTrailClock > 0) return;
-      o.engineTrailClock = .035 + Math.random() * .025;
+      o.engineTrailClock = (.035 + Math.random() * .025) * (1 + performanceLod() * .85);
       const aft = scale(shipForwardWorld(o), -1);
       const centers = engineWorldCenters(o);
       const alienTrail = isAlienShip(o);
@@ -6539,7 +6578,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         }
       }
       game.explosions = game.explosions.filter((e) => (e.t += dt) < e.dur);
+      trimParticleStore(game.explosions, 28);
       game.smokePuffs = game.smokePuffs.filter((p) => (p.t += dt) < p.dur);
+      trimParticleStore(game.smokePuffs, 300);
       game.screenShake = Math.max(0, (game.screenShake || 0) - dt * 7.5);
       game.enemyShots = game.enemyShots.filter((s) => (s.t += dt) < s.dur);
       if (game.messageTimer > 0) game.messageTimer -= dt;
@@ -8671,7 +8712,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       drawExternalPlayerShot(w, h, flightCam);
       drawExplosions(w, h);
       drawEnemyShots(w, h);
-      if (game.showShipLabels) drawShipLabels(w, h);
+      if (game.showShipLabels && performanceLod() < 2) drawShipLabels(w, h);
       if (!game.docked && game.viewMode !== "fwd" && VIEW_LABELS[game.viewMode]) {
         ctx.fillStyle = "rgba(233,242,228,.75)";
         ctx.font = `13px ${UI_CANVAS_FONT}`;
@@ -10919,7 +10960,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function updatePuffStore(store, dt, limit = 260) {
       for (const p of store) p.t += dt;
-      if (store.length > limit) store.splice(0, store.length - limit);
+      trimParticleStore(store, limit);
       for (let i = store.length - 1; i >= 0; i--) {
         if (store[i].t >= store[i].dur) store.splice(i, 1);
       }
@@ -12105,7 +12146,11 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         if (sl > .0001) { lx = sc.x / sl; ly = -sc.y / sl; } // project() flips y
       }
 
-      if (o.hasRing) drawPlanetRing(o, r, hue, w, h, false);
+      const planetDetail = performanceLod() < 2 || r > 120;
+      const planetFineDetail = performanceLod() < 1 || r > 170;
+      const ringDetail = performanceLod() < 3 || r > 110;
+
+      if (o.hasRing && ringDetail) drawPlanetRing(o, r, hue, w, h, false);
       const g = ctx.createRadialGradient(pr.x + lx * r * .35, pr.y + ly * r * .35, r * .05, pr.x, pr.y, r * 1.05);
       const base = planetBaseStops(o);
       g.addColorStop(0, base[0]);
@@ -12120,18 +12165,18 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.fillRect(pr.x - r, pr.y - r, r * 2, r * 2);
 
       // Day-side surface features first, so the terminator shadow below darkens them.
-      drawPlanetSurface(o, pr, r, w, h);
+      if (planetDetail) drawPlanetSurface(o, pr, r, w, h);
 
       drawPlanetTerminatorShadow(o, cam, pr, r, sunDir, w, h);
 
       // Population centres glowing on the now-dark night side.
-      drawPlanetNightLights(o, r, w, h, sunDir);
+      if (planetFineDetail) drawPlanetNightLights(o, r, w, h, sunDir);
       ctx.restore();
 
       // Atmospheric limb glow (coloured by type), outside the disc clip so it haloes.
-      drawPlanetAtmosphere(o, pr, r);
+      if (performanceLod() < 3 || r > 150) drawPlanetAtmosphere(o, pr, r);
 
-      if (o.hasRing) drawPlanetRing(o, r, hue, w, h, true);
+      if (o.hasRing && ringDetail) drawPlanetRing(o, r, hue, w, h, true);
       ctx.restore();
     }
 
@@ -12217,13 +12262,14 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const f = Math.min(renderCtx.w, renderCtx.h) * .82;
       const radius = Math.max(1, modelBoundingRadius(model) * scaleFactor);
       const pxRadius = Math.abs(radius * f / Math.max(1, centerCam.z));
+      const thresholdMul = performanceThresholdMul();
       return {
         pxRadius,
-        textures: pxRadius > MODEL_RENDER_QUALITY.texturePx,
-        decals: pxRadius > MODEL_RENDER_QUALITY.decalPx,
-        details: pxRadius > MODEL_RENDER_QUALITY.detailPx,
-        damage: pxRadius > MODEL_RENDER_QUALITY.damagePx,
-        effects: pxRadius > MODEL_RENDER_QUALITY.effectPx
+        textures: pxRadius > MODEL_RENDER_QUALITY.texturePx * thresholdMul,
+        decals: pxRadius > MODEL_RENDER_QUALITY.decalPx * thresholdMul,
+        details: pxRadius > MODEL_RENDER_QUALITY.detailPx * thresholdMul,
+        damage: pxRadius > MODEL_RENDER_QUALITY.damagePx * thresholdMul,
+        effects: pxRadius > MODEL_RENDER_QUALITY.effectPx * thresholdMul && performanceLod() < 3
       };
     }
 
@@ -13436,7 +13482,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function loop(now) {
-      const dt = Math.min(.05, (now - last) / 1000);
+      const rawDt = (now - last) / 1000;
+      updatePerformanceBudget(rawDt);
+      const dt = Math.min(.05, rawDt);
       last = now;
       update(dt);
       requestAnimationFrame(loop);
