@@ -13147,14 +13147,17 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       // cargo objects framed more honestly while leaving a little more breathing room.
       const scaleFactor = 165 / modelOverallSize(model);
       const { yaw, pitch, roll } = shipDiagramState;
-      const camVerts = model.verts.map(([x,y,z]) => {
-        const p = rotateShipPoint(vec(x * scaleFactor, y * scaleFactor, z * scaleFactor), yaw, pitch, roll);
-        return add(p, tempCam);
+      const identityCamera = makeCamera(0);
+      const previewMesh = modelMeshForRender(model, identityCamera, canvas.width, canvas.height, {
+        scaleFactor,
+        centerCam: tempCam,
+        orient: (p) => rotateShipPoint(p, yaw, pitch, roll),
+        project: (p) => {
+          const f = 320 / p.z;
+          return { x: canvas.width / 2 + p.x * f, y: canvas.height / 2 - p.y * f };
+        }
       });
-      const pts = camVerts.map((p) => {
-        const f = 320 / p.z;
-        return { x: canvas.width / 2 + p.x * f, y: canvas.height / 2 - p.y * f };
-      });
+      const pts = previewMesh.points;
       const previewBounds = polygonBounds(pts);
       const previewW = Math.max(1, previewBounds.maxX - previewBounds.minX);
       const previewH = Math.max(1, previewBounds.maxY - previewBounds.minY);
@@ -13174,7 +13177,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       // widget is a self-contained turntable with no relation to game.camera at all, so
       // without an identity override here, detail visibility would flip randomly with
       // whichever way the player actually happens to be flying.
-      const identityCamera = makeCamera(0);
       const detailProject = (p) => {
         const f = 320 / p.z;
         return fitPreviewPoint({ x: canvas.width / 2 + p.x * f, y: canvas.height / 2 - p.y * f });
