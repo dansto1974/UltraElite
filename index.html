@@ -10736,7 +10736,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           : star.sat
             ? (a) => `hsla(${star.hue}, ${star.sat}%, 92%, ${a})`
             : (a) => `rgba(233,242,228,${a})`;
-        const alpha = clamp(clamp(1.68 - p.z / 3000, .3, 1) * twinkle * (1 + jumpBoost * 1.25), 0, 1);
+        const alpha = clamp(1.68 - p.z / 3000, .3, 1) * twinkle * (1 + jumpBoost * 1.65);
         const closeness = clamp(1 - p.z / 2600, .15, 1);
         // Streaks radiate from the screen's vanishing point (where the camera is heading), so
         // near/central dust appears to rush past fastest - the classic "sensation of movement"
@@ -10758,13 +10758,27 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const grad = ctx.createLinearGradient(tailX, tailY, pr.x, pr.y);
         grad.addColorStop(0, colorAt(0));
         const inJump = jumpBoost > .02;
-        grad.addColorStop(.72, inJump ? `rgba(255,255,255,${alpha * .26 * jumpBoost})` : colorAt(alpha * .35));
+        grad.addColorStop(.68, inJump ? `rgba(255,255,255,${alpha * .16 * jumpBoost})` : colorAt(alpha * .35));
         grad.addColorStop(1, inJump ? `rgba(255,255,255,${alpha})` : colorAt(alpha));
         ctx.lineCap = inJump ? "butt" : "round";
+        if (inJump) {
+          const glow = ctx.createLinearGradient(tailX, tailY, pr.x, pr.y);
+          glow.addColorStop(0, "rgba(255,255,255,0)");
+          glow.addColorStop(.58, `rgba(255,255,255,${alpha * .055 * jumpBoost})`);
+          glow.addColorStop(1, `rgba(255,255,255,${alpha * .22})`);
+          ctx.strokeStyle = glow;
+          ctx.shadowColor = `rgba(255,255,255,${alpha * .32})`;
+          ctx.shadowBlur = r * (5 + jumpBoost * 7);
+          ctx.lineWidth = r * (2.1 + jumpBoost * 1.4);
+          ctx.beginPath();
+          ctx.moveTo(tailX, tailY);
+          ctx.lineTo(pr.x, pr.y);
+          ctx.stroke();
+        }
         ctx.strokeStyle = grad;
-        ctx.shadowColor = inJump ? `rgba(255,255,255,${alpha * .7})` : colorAt(alpha);
-        ctx.shadowBlur = r * (inJump ? 4 + jumpBoost * 3.5 : 2.2);
-        ctx.lineWidth = inJump ? clamp(r * (.9 + jumpBoost * .18), .8, 1.65) : r;
+        ctx.shadowColor = inJump ? `rgba(255,255,255,${alpha * .58})` : colorAt(alpha);
+        ctx.shadowBlur = r * (inJump ? 3.2 + jumpBoost * 2.6 : 2.2);
+        ctx.lineWidth = inJump ? clamp(r * (.42 + jumpBoost * .16), .45, 1.05) : r;
         ctx.beginPath();
         ctx.moveTo(tailX, tailY);
         ctx.lineTo(pr.x, pr.y);
