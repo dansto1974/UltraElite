@@ -10857,8 +10857,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const dist = Math.hypot(dx, dy);
       const screenDiag = Math.hypot(w, h);
       const visible = clamp(1 - dist / (screenDiag * .8), 0, 1);
-      const brightness = clamp((light - 52) / 48, .45, 1.15) * clamp(.55 + strength * 1.35, .35, 1.45);
-      const a = clamp((.16 + strength * .96) * (.42 + visible * .58) * brightness, .035, .72);
+      const brightness = clamp((light - 50) / 46, .5, 1.25) * clamp(.68 + strength * 1.55, .45, 1.65);
+      const a = clamp((.2 + strength * 1.08) * (.48 + visible * .62) * brightness, .045, .86);
       if (a <= .015) return;
       const axisLen = Math.hypot(dx, dy) || 1;
       const ax = dx / axisLen, ay = dy / axisLen;
@@ -10938,17 +10938,17 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
       const haloR = clamp(r * (3.6 + strength * 5.4), 42, screenDiag * .58);
-      drawOrb(pr.x, pr.y, haloR, a * .2, 0, 1.18);
+      drawOrb(pr.x, pr.y, haloR, a * .26, 0, 1.18);
 
       const flareLen = clamp(screenDiag * (.16 + strength * .36), 130, screenDiag * .62);
       const diagonal = axisAngle + .72;
-      drawRay(diagonal, flareLen, clamp(r * .052 + strength * 7, 3.5, 22), a * .22, 185);
-      drawRay(diagonal + Math.PI, flareLen * .72, clamp(r * .035 + strength * 5, 2.4, 15), a * .16, 205);
+      drawRay(diagonal, flareLen, clamp(r * .06 + strength * 8, 4, 26), a * .3, 185);
+      drawRay(diagonal + Math.PI, flareLen * .72, clamp(r * .04 + strength * 6, 2.8, 18), a * .22, 205);
       const spikeLen = clamp(r * (3.2 + strength * 6.5), 32, screenDiag * .3);
-      drawRay(0, spikeLen, clamp(r * .018, .7, 3.4), a * .6, 4, true);
-      drawRay(Math.PI / 2, spikeLen * .72, clamp(r * .012, .55, 2.6), a * .34, 18, true);
-      drawRay(Math.PI / 4, spikeLen * .46, clamp(r * .01, .45, 1.7), a * .22, -12);
-      drawRay(-Math.PI / 4, spikeLen * .46, clamp(r * .01, .45, 1.7), a * .2, -12);
+      drawRay(0, spikeLen, clamp(r * .02, .8, 4), a * .74, 4, true);
+      drawRay(Math.PI / 2, spikeLen * .72, clamp(r * .014, .6, 3), a * .45, 18, true);
+      drawRay(Math.PI / 4, spikeLen * .5, clamp(r * .011, .5, 2), a * .3, -12);
+      drawRay(-Math.PI / 4, spikeLen * .5, clamp(r * .011, .5, 2), a * .28, -12);
 
       const ghosts = [
         { t: -.72, s: .095, a: .24, h: -70, stretch: 1.05, aperture: true, ring: true, off: -.018 },
@@ -11548,20 +11548,34 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
       drawLensFlare(pr, r, hue, sat, coreLight, flareStrength, w, h);
 
-      const coronaR = glowR * (1.08 + (o.corona || .4) * .35);
+      const coronaStrength = o.corona || .4;
+      const whiteDisc = o.stellarClass !== "redGiant" && o.stellarClass !== "redDwarf";
+      const coronaR = glowR * (1.14 + coronaStrength * .42);
       const corona = ctx.createRadialGradient(pr.x, pr.y, r * .35, pr.x, pr.y, coronaR);
-      corona.addColorStop(0, `hsla(${hue}, ${sat}%, ${midLight}%, ${.2 + (o.corona || .4) * .16})`);
-      corona.addColorStop(.45, `hsla(${hue - 8}, ${sat}%, ${rimLight}%, ${.11 + (o.corona || .4) * .12})`);
-      corona.addColorStop(1, `hsla(${hue - 14}, ${sat}%, ${Math.max(22, rimLight - 18)}%, 0)`);
+      corona.addColorStop(0, `rgba(255,255,250,${.1 + coronaStrength * .12})`);
+      corona.addColorStop(.2, `hsla(${hue}, ${Math.round(sat * .72)}%, ${Math.max(76, midLight + 8)}%, ${.18 + coronaStrength * .16})`);
+      corona.addColorStop(.58, `hsla(${hue - 8}, ${Math.round(sat * .9)}%, ${Math.max(46, rimLight + 10)}%, ${.09 + coronaStrength * .13})`);
+      corona.addColorStop(1, `hsla(${hue - 14}, ${sat}%, ${Math.max(18, rimLight - 18)}%, 0)`);
       ctx.fillStyle = corona;
       ctx.beginPath();
       ctx.arc(pr.x, pr.y, coronaR, 0, TAU);
       ctx.fill();
 
+      const outerCoronaR = coronaR * (1.45 + coronaStrength * .45);
+      const outerCorona = ctx.createRadialGradient(pr.x, pr.y, r * 1.1, pr.x, pr.y, outerCoronaR);
+      outerCorona.addColorStop(0, `hsla(${hue + 8}, ${Math.round(sat * .78)}%, ${Math.max(64, midLight)}%, ${.07 + coronaStrength * .08})`);
+      outerCorona.addColorStop(.42, `hsla(${hue - 10}, ${sat}%, ${Math.max(38, rimLight)}%, ${.045 + coronaStrength * .055})`);
+      outerCorona.addColorStop(1, `hsla(${hue - 18}, ${sat}%, ${Math.max(18, rimLight - 18)}%, 0)`);
+      ctx.fillStyle = outerCorona;
+      ctx.beginPath();
+      ctx.arc(pr.x, pr.y, outerCoronaR, 0, TAU);
+      ctx.fill();
+
       const g = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, glowR);
-      g.addColorStop(0, `hsl(${hue}, ${Math.min(100, sat + 10)}%, ${coreLight}%)`);
-      g.addColorStop(.22, `hsl(${hue}, ${sat}%, ${midLight}%)`);
-      g.addColorStop(.52, `hsl(${hue - 8}, ${sat}%, ${rimLight}%)`);
+      g.addColorStop(0, "rgba(255,255,255,.98)");
+      g.addColorStop(.16, `rgba(255,255,248,${whiteDisc ? .9 : .78})`);
+      g.addColorStop(.36, `hsla(${hue}, ${Math.round(sat * .42)}%, ${Math.max(82, midLight + 12)}%, ${whiteDisc ? .42 : .58})`);
+      g.addColorStop(.62, `hsla(${hue - 8}, ${Math.round(sat * .75)}%, ${Math.max(52, rimLight + 10)}%, ${whiteDisc ? .22 : .38})`);
       g.addColorStop(1, `hsla(${hue - 15}, ${sat}%, ${Math.max(20, rimLight - 10)}%, 0)`);
       ctx.fillStyle = g;
       ctx.beginPath();
@@ -11569,9 +11583,17 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.fill();
 
       const disk = ctx.createRadialGradient(pr.x - r * .22, pr.y - r * .2, r * .05, pr.x, pr.y, r);
-      disk.addColorStop(0, `hsla(${hue}, ${Math.min(100, sat + 8)}%, ${coreLight}%, .95)`);
-      disk.addColorStop(.7, `hsla(${hue + 4}, ${sat}%, ${midLight}%, .78)`);
-      disk.addColorStop(1, `hsla(${hue - 10}, ${sat}%, ${Math.max(18, rimLight - 8)}%, .55)`);
+      if (whiteDisc) {
+        disk.addColorStop(0, "rgba(255,255,255,1)");
+        disk.addColorStop(.58, "rgba(255,255,246,.98)");
+        disk.addColorStop(.82, `hsla(${hue}, ${Math.round(sat * .22)}%, 92%, .86)`);
+        disk.addColorStop(1, `hsla(${hue}, ${Math.round(sat * .36)}%, 82%, .52)`);
+      } else {
+        disk.addColorStop(0, "rgba(255,255,248,.98)");
+        disk.addColorStop(.5, `hsla(${hue + 4}, ${Math.round(sat * .72)}%, ${Math.max(78, midLight + 14)}%, .86)`);
+        disk.addColorStop(.82, `hsla(${hue}, ${sat}%, ${Math.max(50, midLight)}%, .72)`);
+        disk.addColorStop(1, `hsla(${hue - 10}, ${sat}%, ${Math.max(24, rimLight - 2)}%, .5)`);
+      }
       ctx.fillStyle = disk;
       ctx.beginPath();
       ctx.arc(pr.x, pr.y, r, 0, TAU);
@@ -11579,7 +11601,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
       drawRedGiantCracks(o, pr, r, hue, sat, w, h);
 
-      ctx.strokeStyle = `hsla(${hue}, ${sat}%, ${Math.max(80, coreLight - 2)}%, .55)`;
+      ctx.strokeStyle = whiteDisc
+        ? `rgba(255,255,255,.42)`
+        : `hsla(${hue}, ${sat}%, ${Math.max(80, coreLight - 2)}%, .5)`;
       ctx.lineWidth = 1.2;
       ctx.beginPath();
       ctx.arc(pr.x, pr.y, r, 0, TAU);
