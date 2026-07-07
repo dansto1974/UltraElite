@@ -4306,7 +4306,7 @@
     }
 
     function jumpDustMotion(tr = game.transition) {
-      if (!tr || !ultraFxEnabled() || (tr.kind !== "hyperspace" && tr.kind !== "galactic")) return 0;
+      if (!tr || !ultraFxEnabled() || (tr.kind !== "hyperspace" && tr.kind !== "galactic")) return { speed: 0, travel: 0 };
       const p = jumpTransitionProgress(tr);
       const bigJump = tr.kind === "galactic";
       const departureEnd = tr.departureEnd ?? (bigJump ? .2 : .24);
@@ -10792,7 +10792,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           : star.sat
             ? (a) => `hsla(${star.hue}, ${star.sat}%, 92%, ${a})`
             : (a) => `rgba(233,242,228,${a})`;
-        const alpha = clamp(1.68 - p.z / 3000, .3, 1) * twinkle * (1 + jumpBoost * 1.65);
+        const alpha = clamp(clamp(1.68 - p.z / 3000, .3, 1) * twinkle * (1 + jumpBoost * 1.35), 0, 1);
         const closeness = clamp(1 - p.z / 2600, .15, 1);
         // Streaks radiate from the screen's vanishing point (where the camera is heading), so
         // near/central dust appears to rush past fastest - the classic "sensation of movement"
@@ -10814,27 +10814,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const grad = ctx.createLinearGradient(tailX, tailY, pr.x, pr.y);
         grad.addColorStop(0, colorAt(0));
         const inJump = jumpBoost > .02;
-        grad.addColorStop(.68, inJump ? `rgba(255,255,255,${alpha * .16 * jumpBoost})` : colorAt(alpha * .35));
+        grad.addColorStop(.7, inJump ? `rgba(255,255,255,${clamp(alpha * .2 * jumpBoost, 0, .55)})` : colorAt(alpha * .35));
         grad.addColorStop(1, inJump ? `rgba(255,255,255,${alpha})` : colorAt(alpha));
         ctx.lineCap = inJump ? "butt" : "round";
-        if (inJump) {
-          const glow = ctx.createLinearGradient(tailX, tailY, pr.x, pr.y);
-          glow.addColorStop(0, "rgba(255,255,255,0)");
-          glow.addColorStop(.58, `rgba(255,255,255,${alpha * .055 * jumpBoost})`);
-          glow.addColorStop(1, `rgba(255,255,255,${alpha * .22})`);
-          ctx.strokeStyle = glow;
-          ctx.shadowColor = `rgba(255,255,255,${alpha * .32})`;
-          ctx.shadowBlur = r * (5 + jumpBoost * 7);
-          ctx.lineWidth = r * (2.1 + jumpBoost * 1.4);
-          ctx.beginPath();
-          ctx.moveTo(tailX, tailY);
-          ctx.lineTo(pr.x, pr.y);
-          ctx.stroke();
-        }
         ctx.strokeStyle = grad;
-        ctx.shadowColor = inJump ? `rgba(255,255,255,${alpha * .58})` : colorAt(alpha);
-        ctx.shadowBlur = r * (inJump ? 3.2 + jumpBoost * 2.6 : 2.2);
-        ctx.lineWidth = inJump ? clamp(r * (.42 + jumpBoost * .16), .45, 1.05) : r;
+        ctx.shadowColor = inJump ? `rgba(255,255,255,${alpha * .72})` : colorAt(alpha);
+        ctx.shadowBlur = r * (inJump ? 4.6 + jumpBoost * 3.2 : 2.2);
+        ctx.lineWidth = inJump ? clamp(r * (.72 + jumpBoost * .1), .7, 1.45) : r;
         ctx.beginPath();
         ctx.moveTo(tailX, tailY);
         ctx.lineTo(pr.x, pr.y);
