@@ -3591,9 +3591,18 @@
     const eliteAudio = (() => {
       let ctx = null;
       let master = null;
+      let limiter = null;
+      let buses = null;
       let noiseBuffer = null;
       const pitchScale = .62;
       const filterScale = .68;
+      const BUS_LEVELS = {
+        cockpit: .88,
+        weapons: 1,
+        ship: .72,
+        world: .96,
+        ambience: .56
+      };
 
       function ensure() {
         if (!game.soundEnabled) return null;
@@ -3602,8 +3611,21 @@
         if (!ctx) {
           ctx = new AudioCtx();
           master = ctx.createGain();
-          master.gain.value = .24;
-          master.connect(ctx.destination);
+          limiter = ctx.createDynamicsCompressor();
+          limiter.threshold.value = -17;
+          limiter.knee.value = 18;
+          limiter.ratio.value = 4.2;
+          limiter.attack.value = .004;
+          limiter.release.value = .22;
+          master.gain.value = .26;
+          master.connect(limiter).connect(ctx.destination);
+          buses = {};
+          for (const [name, level] of Object.entries(BUS_LEVELS)) {
+            const bus = ctx.createGain();
+            bus.gain.value = level;
+            bus.connect(master);
+            buses[name] = bus;
+          }
           noiseBuffer = makeNoiseBuffer();
         }
         if (ctx.state === "suspended") ctx.resume().catch(() => {});
@@ -3625,22 +3647,60 @@
         gain.gain.exponentialRampToValueAtTime(.0001, t + Math.max(attack + release, dur));
       }
 
-      function tone({ delay = 0, freq = 440, endFreq = null, dur = .12, gain = .08, type = "square", attack = .004 }) {
+      function outputNode(bus = "cockpit") {
+        return buses?.[bus] || master;
+      }
+
+      function connectAmp(amp, bus = "cockpit", pan = 0) {
+        if (!ctx) return;
+        if (Math.abs(pan) > .001 && ctx.createStereoPanner) {
+          const panner = ctx.createStereoPanner();
+          panner.pan.value = clamp(pan, -1, 1);
+          amp.connect(panner).connect(outputNode(bus));
+        } else {
+          amp.connect(outputNode(bus));
+        }
+      }
+
+      function tone({
+        delay = 0, freq = 440, endFreq = null, dur = .12, gain = .08,
+        type = "square", attack = .004, release = .035, bus = "cockpit",
+        pan = 0, highpass = null, lowpass = null
+      }) {
         const c = ensure();
         if (!c) return;
         const t = c.currentTime + delay;
         const osc = c.createOscillator();
         const amp = c.createGain();
+        let node = osc;
         osc.type = type;
         osc.frequency.setValueAtTime(Math.max(24, freq * pitchScale), t);
         if (endFreq) osc.frequency.exponentialRampToValueAtTime(Math.max(24, endFreq * pitchScale), t + Math.max(.01, dur));
-        envelope(amp, t, dur, gain, attack);
-        osc.connect(amp).connect(master);
+        if (highpass != null) {
+          const hp = c.createBiquadFilter();
+          hp.type = "highpass";
+          hp.frequency.setValueAtTime(Math.max(20, highpass * filterScale), t);
+          node.connect(hp);
+          node = hp;
+        }
+        if (lowpass != null) {
+          const lp = c.createBiquadFilter();
+          lp.type = "lowpass";
+          lp.frequency.setValueAtTime(Math.max(80, lowpass * filterScale), t);
+          node.connect(lp);
+          node = lp;
+        }
+        envelope(amp, t, dur, gain, attack, release);
+        node.connect(amp);
+        connectAmp(amp, bus, pan);
         osc.start(t);
         osc.stop(t + dur + .05);
       }
 
-      function noise({ delay = 0, dur = .16, gain = .08, highpass = 80, lowpass = 6000, attack = .004 }) {
+      function noise({
+        delay = 0, dur = .16, gain = .08, highpass = 80, lowpass = 6000,
+        endLowpass = null, attack = .004, release = .035, bus = "cockpit", pan = 0
+      }) {
         const c = ensure();
         if (!c || !noiseBuffer) return;
         const t = c.currentTime + delay;
@@ -3654,13 +3714,15 @@
         hp.frequency.setValueAtTime(Math.max(20, highpass * filterScale), t);
         lp.type = "lowpass";
         lp.frequency.setValueAtTime(Math.max(120, lowpass * filterScale), t);
-        envelope(amp, t, dur, gain, attack);
-        src.connect(hp).connect(lp).connect(amp).connect(master);
+        if (endLowpass) lp.frequency.exponentialRampToValueAtTime(Math.max(120, endLowpass * filterScale), t + Math.max(.01, dur));
+        envelope(amp, t, dur, gain, attack, release);
+        src.connect(hp).connect(lp).connect(amp);
+        connectAmp(amp, bus, pan);
         src.start(t);
         src.stop(t + dur + .05);
       }
 
-      function rumble({ delay = 0, strength = 1, dur = .8 }) {
+      function rumble({ delay = 0, strength = 1, dur = .8, bus = "world", pan = 0 }) {
         const c = ensure();
         if (!c || strength <= .02) return;
         const t = c.currentTime + delay;
@@ -3689,14 +3751,23 @@
         sub.connect(shaper);
         sub2.connect(shaper);
         body.connect(shaper);
-        shaper.connect(amp).connect(master);
+        shaper.connect(amp);
+        connectAmp(amp, bus, pan);
         sub.start(t);
         sub2.start(t + .08);
         body.start(t + .015);
         sub.stop(t + dur * 1.32 + .12);
         sub2.stop(t + dur * 1.36 + .12);
         body.stop(t + dur * 1.28 + .12);
-        noise({ delay: delay + .035, dur: dur * 1.28, gain: .066 * level, highpass: 10, lowpass: 92, attack: .045 });
+        noise({ delay: delay + .035, dur: dur * 1.28, gain: .066 * level, highpass: 10, lowpass: 92, attack: .045, release: .5, bus, pan });
+      }
+
+      function sparkTicks({ count = 5, dur = .38, gain = .025, bus = "weapons", pan = 0 }) {
+        for (let i = 0; i < count; i++) {
+          const delay = Math.random() * dur;
+          const f = 520 + Math.random() * 1800;
+          tone({ delay, freq: f, endFreq: f * (.62 + Math.random() * .26), dur: .025 + Math.random() * .045, gain: gain * (.55 + Math.random()), type: "triangle", attack: .001, release: .025, bus, pan: clamp(pan + (Math.random() - .5) * .35, -1, 1), highpass: 260 });
+        }
       }
 
       function explosionRumble(pos, magnitude = 1) {
@@ -3708,8 +3779,82 @@
         rumble({ strength, dur: .9 + strength * .82 });
       }
 
+      function playUltra(name) {
+        switch (name) {
+          case "laser":
+          case "laserPulse":
+            tone({ freq: 170, endFreq: 82, dur: .07, gain: .105, type: "square", attack: .001, release: .025, bus: "weapons", lowpass: 1600 });
+            tone({ delay: .018, freq: 920, endFreq: 260, dur: .12, gain: .048, type: "sawtooth", attack: .001, bus: "weapons", highpass: 260, lowpass: 7200 });
+            noise({ delay: .006, dur: .13, gain: .04, highpass: 980, lowpass: 8800, endLowpass: 2600, attack: .001, bus: "weapons" });
+            return true;
+          case "laserBeam":
+            tone({ freq: 285, endFreq: 210, dur: .16, gain: .068, type: "sawtooth", attack: .004, release: .045, bus: "weapons", lowpass: 1200 });
+            tone({ delay: .015, freq: 820, endFreq: 620, dur: .12, gain: .038, type: "triangle", attack: .002, bus: "weapons", highpass: 300, lowpass: 4800 });
+            noise({ delay: .004, dur: .16, gain: .035, highpass: 520, lowpass: 7200, endLowpass: 2600, attack: .006, bus: "weapons" });
+            return true;
+          case "laserMilitary":
+            tone({ freq: 210, endFreq: 54, dur: .18, gain: .12, type: "sawtooth", attack: .001, release: .055, bus: "weapons", lowpass: 1400 });
+            tone({ delay: .026, freq: 1180, endFreq: 190, dur: .16, gain: .052, type: "sawtooth", attack: .001, bus: "weapons", highpass: 320, lowpass: 7600 });
+            noise({ delay: .002, dur: .18, gain: .05, highpass: 360, lowpass: 9200, endLowpass: 1700, attack: .001, bus: "weapons" });
+            sparkTicks({ count: 3, dur: .14, gain: .014 });
+            return true;
+          case "laserMining":
+            tone({ freq: 132, endFreq: 58, dur: .46, gain: .105, type: "sawtooth", attack: .018, release: .12, bus: "weapons", lowpass: 900 });
+            tone({ delay: .055, freq: 72, endFreq: 42, dur: .42, gain: .062, type: "triangle", attack: .028, release: .16, bus: "weapons" });
+            noise({ delay: .018, dur: .42, gain: .07, highpass: 45, lowpass: 2600, endLowpass: 900, attack: .02, release: .16, bus: "weapons" });
+            sparkTicks({ count: 7, dur: .38, gain: .012 });
+            return true;
+          case "enemyLaser":
+            tone({ freq: 520, endFreq: 110, dur: .14, gain: .06, type: "sawtooth", attack: .001, bus: "weapons", pan: (Math.random() - .5) * .7, highpass: 180, lowpass: 5200 });
+            noise({ dur: .1, gain: .032, highpass: 640, lowpass: 7600, endLowpass: 1800, attack: .001, bus: "weapons", pan: (Math.random() - .5) * .7 });
+            return true;
+          case "hit":
+            tone({ freq: 118, endFreq: 62, dur: .18, gain: .075, type: "triangle", attack: .001, release: .08, bus: "ship", lowpass: 720 });
+            noise({ dur: .18, gain: .09, highpass: 180, lowpass: 4600, endLowpass: 1300, attack: .001, release: .08, bus: "ship" });
+            sparkTicks({ count: 5, dur: .18, gain: .018, bus: "ship" });
+            return true;
+          case "explosion":
+            noise({ dur: 1.05, gain: .15, highpass: 22, lowpass: 2200, endLowpass: 580, attack: .001, release: .34, bus: "world" });
+            tone({ freq: 92, endFreq: 24, dur: 1.05, gain: .078, type: "sawtooth", attack: .002, release: .28, bus: "world", lowpass: 720 });
+            noise({ delay: .025, dur: .22, gain: .065, highpass: 1200, lowpass: 11000, endLowpass: 2200, attack: .001, bus: "world" });
+            rumble({ delay: .02, strength: .82, dur: 1.15 });
+            sparkTicks({ count: 9, dur: .62, gain: .018, bus: "world" });
+            return true;
+          case "death":
+            noise({ dur: 1.75, gain: .18, highpass: 18, lowpass: 1600, endLowpass: 340, attack: .001, release: .55, bus: "world" });
+            tone({ freq: 118, endFreq: 18, dur: 1.65, gain: .095, type: "sawtooth", attack: .001, release: .46, bus: "world", lowpass: 760 });
+            rumble({ delay: .03, strength: 1.28, dur: 1.55 });
+            sparkTicks({ count: 16, dur: 1.05, gain: .022, bus: "world" });
+            return true;
+          case "missile":
+            tone({ freq: 96, endFreq: 420, dur: .32, gain: .075, type: "sawtooth", attack: .008, release: .075, bus: "weapons", lowpass: 1600 });
+            noise({ delay: .03, dur: .4, gain: .06, highpass: 80, lowpass: 4200, endLowpass: 1800, attack: .02, release: .16, bus: "weapons" });
+            return true;
+          case "launch":
+            tone({ freq: 72, endFreq: 260, dur: .9, gain: .075, type: "sawtooth", attack: .04, release: .22, bus: "ship", lowpass: 1050 });
+            noise({ delay: .05, dur: .95, gain: .07, highpass: 34, lowpass: 3400, endLowpass: 1650, attack: .04, release: .26, bus: "ship" });
+            rumble({ delay: .08, strength: .46, dur: .85, bus: "ship" });
+            return true;
+          case "hyperspace":
+            tone({ freq: 74, endFreq: 920, dur: 1.05, gain: .075, type: "sawtooth", attack: .025, release: .14, bus: "ambience", lowpass: 2600 });
+            tone({ delay: .14, freq: 180, endFreq: 1480, dur: .98, gain: .052, type: "triangle", attack: .025, bus: "ambience", highpass: 90, lowpass: 6200 });
+            noise({ delay: .02, dur: 1.18, gain: .072, highpass: 120, lowpass: 9800, endLowpass: 3400, attack: .025, release: .22, bus: "ambience" });
+            rumble({ delay: .02, strength: .54, dur: 1.05, bus: "ambience" });
+            return true;
+          case "bomb":
+            noise({ dur: .82, gain: .17, highpass: 70, lowpass: 9800, endLowpass: 880, attack: .001, release: .28, bus: "world" });
+            tone({ freq: 58, endFreq: 18, dur: .9, gain: .095, type: "sawtooth", attack: .001, release: .28, bus: "world", lowpass: 780 });
+            rumble({ strength: 1.05, dur: 1.05 });
+            sparkTicks({ count: 8, dur: .4, gain: .018, bus: "world" });
+            return true;
+          default:
+            return false;
+        }
+      }
+
       function play(name) {
         if (!game.soundEnabled) return;
+        if (ultraFxEnabled() && playUltra(name)) return;
         switch (name) {
           case "boop":
             tone({ freq: 150, endFreq: 120, dur: .32, gain: .07 });
