@@ -7446,8 +7446,12 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const edgeTolerance = clamp(5.5 * dpr, 4, 13);
       const roll = o.roll ?? (o.rot || 0) * .7;
       const orient = (v) => o.quat ? quatRotate(o.quat, v) : rotateShipPoint(v, o.rot || 0, o.pitch || 0, roll);
-      const camVerts = model.verts.map(([x, y, z]) => add(worldDirToCam(orient(vec(x, y, z))), rel));
-      const points = camVerts.map((p) => project(p, w, h));
+      const mesh = modelMeshForRender(model, game.camera, w, h, {
+        centerCam: rel,
+        orient,
+        project: (p) => project(p, w, h)
+      });
+      const { camVerts, points } = mesh;
       const faceItems = collectSolidFaces(model, camVerts, points, "#000", 1, true, null, { project: (p) => project(p, w, h) });
       let nearestEdge = Infinity;
       for (const item of faceItems) {
