@@ -1262,7 +1262,7 @@
           <button class="btn mini" id="dockBtn">Dock</button>
           <button class="btn mini" id="autoDockBtn">Auto Dock</button>
           <button class="btn mini warn" id="galJumpBtn">Galactic</button>
-          <button class="btn mini mode-toggle" id="modeSwitchBtn" aria-label="Toggle presentation mode" aria-pressed="true">Ultra</button>
+          <button class="btn mini mode-toggle" id="modeSwitchBtn" aria-label="Toggle presentation mode" aria-pressed="true">Old School</button>
         </div>
         <section class="dashboard" aria-label="Ship dashboard">
           <div class="dash-section">
@@ -11435,6 +11435,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function drawPlanetRing(o, r, hue, w, h, front) {
+      if (game.fxLevel === "classic") return;
       if (!o._ringBasis) {
         const axis = o.rotAxis || vec(0, 1, 0);
         const tiltAxis = len(cross(axis, vec(0, 0, 1))) > .0001 ? norm(cross(axis, vec(0, 0, 1))) : vec(1, 0, 0);
@@ -12170,7 +12171,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ctx.ellipse(pr.x, pr.y, r * .2, r, -.2 + meridianAngle, 0, TAU);
         ctx.stroke();
         ctx.globalAlpha = 1;
-        if (o.hasRing) drawPlanetRing(o, r, hue, w, h, null);
         ctx.restore();
         return;
       }
@@ -12502,6 +12502,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         }
       }
       ctx.restore();
+      if (!ultraFxEnabled()) return;
 
       // Hazard strip around the OUTSIDE of the slot. Segments are projected edge-band
       // polygons, not diagonal screen-space strokes, so the border stays outside the hole.
@@ -12535,44 +12536,40 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
       // Four corner strobes: bright approach beacons anchored to the slot corners, with
       // a slow one-second flash. The glow is screen-facing, but the positions are not.
-      if (ultraFxEnabled()) {
-        ctx.save();
-        ctx.globalCompositeOperation = "lighter";
-        const phase = Math.pow(Math.max(0, Math.sin(performance.now() / 1000 * TAU)), 5);
-        [a, b, c, d].forEach((p) => {
-          const out = norm(vec(p.x - centroid.x, p.y - centroid.y, 0));
-          const x = p.x + out.x * bandW * 1.55;
-          const y = p.y + out.y * bandW * 1.55;
-          const r = Math.max(2.4, bandW * (.55 + phase * .25));
-          const glow = ctx.createRadialGradient(x, y, 0, x, y, r * 4.2);
-          glow.addColorStop(0, `rgba(255,206,92,${.62 + phase * .35})`);
-          glow.addColorStop(.2, `rgba(255,132,22,${.34 + phase * .42})`);
-          glow.addColorStop(1, "rgba(255,96,0,0)");
-          ctx.fillStyle = glow;
-          ctx.beginPath();
-          ctx.arc(x, y, r * 4.2, 0, TAU);
-          ctx.fill();
-          ctx.fillStyle = `rgba(255,226,130,${.78 + phase * .22})`;
-          ctx.beginPath();
-          ctx.arc(x, y, r * .82, 0, TAU);
-          ctx.fill();
-        });
-        ctx.restore();
-      }
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      const phase = Math.pow(Math.max(0, Math.sin(performance.now() / 1000 * TAU)), 5);
+      [a, b, c, d].forEach((p) => {
+        const out = norm(vec(p.x - centroid.x, p.y - centroid.y, 0));
+        const x = p.x + out.x * bandW * 1.55;
+        const y = p.y + out.y * bandW * 1.55;
+        const r = Math.max(2.4, bandW * (.55 + phase * .25));
+        const glow = ctx.createRadialGradient(x, y, 0, x, y, r * 4.2);
+        glow.addColorStop(0, `rgba(255,206,92,${.62 + phase * .35})`);
+        glow.addColorStop(.2, `rgba(255,132,22,${.34 + phase * .42})`);
+        glow.addColorStop(1, "rgba(255,96,0,0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(x, y, r * 4.2, 0, TAU);
+        ctx.fill();
+        ctx.fillStyle = `rgba(255,226,130,${.78 + phase * .22})`;
+        ctx.beginPath();
+        ctx.arc(x, y, r * .82, 0, TAU);
+        ctx.fill();
+      });
+      ctx.restore();
 
       // Blue force-field edge glow around the opening.
-      if (ultraFxEnabled()) {
-        const pulse = .4 + Math.max(0, Math.sin(performance.now() / 240)) * .6;
-        ctx.save();
-        ctx.globalCompositeOperation = "lighter";
-        ctx.strokeStyle = `rgba(90,160,255,${.24 * pulse})`;
-        ctx.lineWidth = Math.max(1.5, span * .018);
-        ctx.shadowColor = "rgba(90,160,255,.9)";
-        ctx.shadowBlur = span * .1;
-        quadPath();
-        ctx.stroke();
-        ctx.restore();
-      }
+      const pulse = .4 + Math.max(0, Math.sin(performance.now() / 240)) * .6;
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.strokeStyle = `rgba(90,160,255,${.24 * pulse})`;
+      ctx.lineWidth = Math.max(1.5, span * .018);
+      ctx.shadowColor = "rgba(90,160,255,.9)";
+      ctx.shadowBlur = span * .1;
+      quadPath();
+      ctx.stroke();
+      ctx.restore();
     }
 
     function projectedModelRadius(model, centerCam, w, h, scaleFactor = 1) {
@@ -12586,6 +12583,32 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return 4 + performanceLod() * 5 + load * 22;
     }
 
+    function sceneModelDistance(o) {
+      return o?.pos ? len(sub(o.pos, game.camera.pos)) : 0;
+    }
+
+    function sceneModelCanDistanceLod(o) {
+      return ultraFxEnabled() && (o.type === "ship" || o.type === "missile");
+    }
+
+    function sceneModelDistanceLodScale(model, o) {
+      const scaleFactor = o?.scaleFactor ?? o?.scale ?? 1;
+      const radius = model ? modelBoundingRadius(model) * scaleFactor : 80;
+      return clamp(Math.sqrt(radius / 80), .72, 1.75);
+    }
+
+    function sceneModelPlainDistance(model, o) {
+      return 2000 * sceneModelDistanceLodScale(model, o);
+    }
+
+    function sceneModelDotDistance(model, o) {
+      return 3000 * sceneModelDistanceLodScale(model, o);
+    }
+
+    function shouldDrawSceneModelDot(o, model) {
+      return sceneModelCanDistanceLod(o) && sceneModelDistance(o) > sceneModelDotDistance(model, o);
+    }
+
     function shouldDrawSceneModelImpostor(o, model, cam, w, h) {
       if (!model || o === game.targetObject || game.fxLevel === "classic" || game.graphicsMode === "wire") return false;
       if (o.type === "station" || o.type === "hermit") return false;
@@ -12593,6 +12616,29 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (load < .25 && performanceLod() < 2) return false;
       const scaleFactor = o.scaleFactor ?? o.scale ?? 1;
       return projectedModelRadius(model, cam, w, h, scaleFactor) < sceneModelImpostorThreshold();
+    }
+
+    function drawSceneModelDot(o, cam, w, h) {
+      const c = project(cam, w, h);
+      if (!c) return;
+      const glow = clamp(resolvedEngineGlowLevel(o, {}) || .2, .15, 1.1);
+      const r = o.type === "missile" ? 1.6 : 2.2;
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      const halo = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, r * (4 + glow * 3));
+      halo.addColorStop(0, `rgba(92,188,255,${.34 + glow * .2})`);
+      halo.addColorStop(.35, `rgba(72,160,255,${.1 + glow * .08})`);
+      halo.addColorStop(1, "rgba(72,160,255,0)");
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, r * (4 + glow * 3), 0, TAU);
+      ctx.fill();
+      ctx.globalCompositeOperation = "source-over";
+      ctx.fillStyle = "rgba(0,0,0,.92)";
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, r, 0, TAU);
+      ctx.fill();
+      ctx.restore();
     }
 
     function drawSceneModelImpostor(o, model, cam, w, h) {
@@ -12635,11 +12681,18 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function drawSceneModel(o, cam, w, h) {
       const model = MODELS[o.model || "cobra"];
-      if (shouldDrawSceneModelImpostor(o, model, cam, w, h)) {
+      if (shouldDrawSceneModelDot(o, model)) {
+        drawSceneModelDot(o, cam, w, h);
+      } else if (shouldDrawSceneModelImpostor(o, model, cam, w, h)) {
         drawSceneModelImpostor(o, model, cam, w, h);
       } else {
-        drawModelEntity(ctx, { camera: game.camera, w, h, centerCam: cam, mode: game.graphicsMode }, o, {
-          color: o.color || "#e9f2e4"
+        const distanceLod = sceneModelCanDistanceLod(o) && sceneModelDistance(o) > sceneModelPlainDistance(model, o);
+        drawModelEntity(ctx, { camera: game.camera, w, h, centerCam: cam, mode: distanceLod ? "solid" : game.graphicsMode }, o, {
+          color: o.color || "#e9f2e4",
+          quality: distanceLod
+            ? { pxRadius: Infinity, textures: false, decals: false, details: false, damage: false, effects: false }
+            : undefined,
+          metalAlphaMul: distanceLod ? 0 : undefined
         });
       }
       if (o === game.targetObject) {
@@ -13521,7 +13574,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       hudEls.txtYaw.textContent = signedMeterText(game.yawRate, 1.24);
       hudEls.txtLaserHeat.textContent = laserHeat >= 95 ? "HOT" : `${Math.round(laserHeat)}%`;
       hudEls.missileSlots.forEach((slot, i) => slot.classList.toggle("full", i < game.missiles));
-      hudEls.modeSwitchBtn.textContent = game.fxLevel === "classic" ? "Ultra" : "Classic";
+      hudEls.modeSwitchBtn.textContent = game.fxLevel === "classic" ? "Ultra" : "Old School";
       hudEls.modeSwitchBtn.classList.toggle("primary", game.fxLevel !== "classic");
       hudEls.modeSwitchBtn.setAttribute("aria-pressed", game.fxLevel !== "classic" ? "true" : "false");
       const jumpBusy = !!game.transition || !!game.jumpCountdown;
