@@ -4317,17 +4317,61 @@
       }
     }
 
-    function planetBiomeForSystem(sys, rng) {
-      const desc = `${sys.description} ${ECONOMIES[sys.economy]}`.toLowerCase();
+    function planetBiomeForSystem(sys) {
+      const desc = `${sys.description} ${ECONOMIES[sys.economy]} ${sys.species || ""}`.toLowerCase();
       const has = (words) => words.some((word) => desc.includes(word));
+      const rng = mulberry(hash32(`${sys.galaxy}:${sys.index}:${sys.name}:biome`));
       const largeWorld = sys.radius > 6000;
-      const surfaceSpecific = has(["oceans", "forests", "shipyards", "dust plains", "ice fields", "mountains", "terraformers", "miners"]);
-      if (has(["shipyards", "busy", "traders", "casinos"]) || sys.economy <= 2) return "industrial";
-      if (has(["oceans", "forests", "terraformers", "lobster poets", "temples"]) || sys.economy >= 4) return "ocean";
-      if (has(["dust plains", "miners", "mountains", "ice fields"])) return "rocky";
-      if (largeWorld && !surfaceSpecific && has(["remote", "bleak", "ancient", "unstable", "fabled"]) && rng() < .42) return "gas";
-      if (has(["bleak", "remote", "tedious"])) return "rocky";
-      return sys.economy === 3 ? "desert" : "ocean";
+      const smallWorld = sys.radius < 4200;
+      const surfaceSpecific = has([
+        "ocean", "forest", "rain", "tropical", "mountain", "rock formation",
+        "volcano", "earthquake", "dust", "ice", "mud", "plantations"
+      ]);
+      const scores = { industrial: 0, ocean: 0, desert: 0, rocky: 0, gas: 0 };
+      const economyProfiles = [
+        { industrial: 4.1, ocean: .45, desert: .3, rocky: .65, gas: .12 },
+        { industrial: 3.45, ocean: .55, desert: .55, rocky: .85, gas: .14 },
+        { industrial: 2.65, ocean: .35, desert: 1.25, rocky: 1.45, gas: .18 },
+        { industrial: 1.8, ocean: .85, desert: 1.75, rocky: 1.25, gas: .18 },
+        { industrial: .85, ocean: 2.75, desert: 1.25, rocky: .8, gas: .14 },
+        { industrial: .65, ocean: 3.55, desert: .55, rocky: .5, gas: .12 },
+        { industrial: .42, ocean: 2.2, desert: 1.65, rocky: 1.45, gas: .16 },
+        { industrial: .25, ocean: 1.05, desert: 2.55, rocky: 2.05, gas: .18 }
+      ][sys.economy] || {};
+      for (const [key, value] of Object.entries(economyProfiles)) scores[key] += value;
+
+      if (largeWorld) {
+        scores.gas += 2.45 + clamp((sys.radius - 6000) / 650, 0, 2.1);
+        scores.ocean += .25;
+        if (sys.radius > 6500) scores.gas += 1.15;
+      }
+      if (smallWorld) {
+        scores.rocky += 1.15;
+        scores.desert += .8;
+      }
+      if (sys.population >= 42) scores.industrial += 1.25;
+      else if (sys.population >= 32) scores.industrial += .65;
+      else if (sys.population <= 18) {
+        scores.rocky += .55;
+        scores.desert += .45;
+      }
+      if (sys.productivity >= 23000 || sys.tech >= 10) scores.industrial += .85;
+      if (sys.productivity <= 9000 && sys.economy >= 5) scores.desert += .45;
+
+      if (has(["ocean", "oceans"])) scores.ocean += 4.2;
+      if (has(["forest", "forests", "rain", "tropical", "exuberant", "plantations", "tulip", "banana", "corn", "weed"])) scores.ocean += 2.55;
+      if (has(["mountain", "mountains", "rock formation", "volcano", "volcanoes", "earthquake", "earthquakes"])) scores.rocky += 3.15;
+      if (has(["dust", "ice", "ice berg", "mud", "vacuum", "boring", "dull", "tedious", "unremarkable", "revolting"])) {
+        scores.rocky += 1.55;
+        scores.desert += 1.45;
+      }
+      if (has(["casinos", "night life", "parking meters", "discos", "tourists", "food blenders", "civil war"])) scores.industrial += 1.7;
+      if (has(["ancient", "fabled", "notable", "pink"]) && largeWorld) scores.gas += .9;
+      if (!largeWorld) scores.gas *= .25;
+      else if (surfaceSpecific) scores.gas *= .45;
+
+      for (const key of Object.keys(scores)) scores[key] += rng() * 1.1;
+      return Object.entries(scores).sort((a, b) => b[1] - a[1])[0][0];
     }
 
     function stellarProfileForSystem(sys) {
@@ -4363,15 +4407,15 @@
       // size stays roughly consistent, echoing the original's fixed radius-to-distance
       // ratio (the planet is always ~2.67 planet-radii from the station).
       const rng = mulberry(hash32(`${sys.name}:bodies`));
-      // Biome drives deterministic surface rendering and is tied to the generated
-      // system description/economy so "oceans", "shipyards", "dust plains", etc.
-      // produce planets that visually agree with the chart text.
-      const biome = planetBiomeForSystem(sys, rng);
+      // Biome drives deterministic surface rendering. It uses the original Elite
+      // system data first, with goat-soup description words as flavour hints.
+      const biome = planetBiomeForSystem(sys);
       const planetR = lerp(900, 1900, clamp((sys.radius - 2816) / (6912 - 2816), 0, 1)) * (biome === "gas" ? 1.35 : 1);
       const planetDir = norm(vec((rng() - .5) * 2, (rng() - .5) * 1.1, 1.4 + rng() * 1.2));
       const planetDist = planetR * (7.5 + rng() * 3.5);
-      const debrisRing = biome === "industrial" && rng() < .72;
-      const hasRing = debrisRing || rng() < .4;
+      const ringRng = mulberry(hash32(`${sys.galaxy}:${sys.index}:${sys.name}:rings`));
+      const debrisRing = biome === "industrial" && ringRng() < .62;
+      const hasRing = debrisRing || (biome === "gas" && ringRng() < .78) || (biome === "rocky" && ringRng() < .36) || ringRng() < .28;
       const palette = {
         industrial: { hue: lerp(15, 45, rng()), sat: lerp(8, 22, rng()), light: lerp(10, 20, rng()) },
         desert: { hue: lerp(25, 42, rng()), sat: lerp(45, 62, rng()), light: lerp(46, 60, rng()) },
@@ -4385,17 +4429,17 @@
         hue: palette.hue,
         sat: palette.sat,
         light: palette.light,
-        textureSeed: hash32(sys.name + ":surface"),
+        textureSeed: hash32(`${sys.galaxy}:${sys.index}:${sys.name}:surface`),
         rotAxis: norm(vec((rng() - .5) * .7, 1, (rng() - .5) * .7)),
         rotSpeed: (rng() > .5 ? 1 : -1) * (.003 + rng() * .005),
         rot: rng() * TAU,
         hasRing,
         debrisRing,
-        debrisField: debrisRing && rng() < .68,
-        ringInner: 1.75 + rng() * 0.25,
-        ringOuter: 2.55 + rng() * 0.85,
-        ringFlatten: .22 + rng() * .16,
-        ringTilt: (rng() - .5) * 1.1,
+        debrisField: debrisRing && ringRng() < .68,
+        ringInner: 1.75 + ringRng() * 0.25,
+        ringOuter: 2.55 + ringRng() * 0.85,
+        ringFlatten: .22 + ringRng() * .16,
+        ringTilt: (ringRng() - .5) * 1.1,
         hp: 9999, hostile: false
       };
       const stellar = stellarProfileForSystem(sys);
