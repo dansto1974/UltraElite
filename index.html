@@ -3927,6 +3927,31 @@
       return clamp(cruiseGlow + (o?.engineBoost || 0) * .95, 0, 1.85);
     }
 
+    function resolvedEngineGlowLevel(entity, opts = {}) {
+      if (entity?.engineGlow != null) return clamp(entity.engineGlow, 0, 1.85);
+      if (opts.engineGlow != null) return clamp(opts.engineGlow, 0, 1.85);
+      if ((entity?.type || "ship") === "ship") return shipEngineGlowLevel(entity);
+      return 0;
+    }
+
+    function engineDetailVisual(level, stroke = "#ffffff") {
+      const glow = clamp(level, 0, 1.85);
+      if (glow <= .02) {
+        return {
+          fill: "#343a37",
+          stroke: "rgba(20,24,22,.75)",
+          glowAlpha: 0
+        };
+      }
+      const heat = smoothstep(.05, .85, glow);
+      const boost = smoothstep(.75, 1.55, glow);
+      return {
+        fill: `rgb(${Math.round(118 + 129 * heat)},${Math.round(134 + 121 * heat)},${Math.round(142 + 113 * heat)})`,
+        stroke: glow > .08 ? stroke : "rgba(92,124,118,.7)",
+        glowAlpha: clamp(.3 + glow * .92 + boost * .35, 0, 1.85)
+      };
+    }
+
     function resolveBodyBounce(a, b, restitution = .46) {
       const delta = sub(b.pos, a.pos);
       const d = len(delta);
@@ -7412,20 +7437,18 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           });
           continue;
         }
-        const engineGlow = detail.type === "engine" ? clamp(o.engineGlow ?? 1, 0, 1.45) : 1;
-        const engineFillGlow = clamp(engineGlow, 0, 1);
-        const engineFill = engineGlow > .02
-          ? `rgb(${Math.round(70 + 177 * engineFillGlow)},${Math.round(76 + 179 * engineFillGlow)},${Math.round(72 + 175 * engineFillGlow)})`
-          : "#454c48";
+        const engineVisual = detail.type === "engine"
+          ? engineDetailVisual(o.engineGlow ?? 1, detail.stroke || "#ffffff")
+          : null;
         details.push({
           kind: "poly",
           projected,
           avgZ: verts.reduce((sum, p) => sum + p.z, 0) / verts.length,
-          fillStyle: detail.type === "engine" ? engineFill : (detail.color || "#101915"),
-          strokeStyle: detail.type === "engine" ? (engineGlow > .08 ? detail.stroke || "#ffffff" : "rgba(20,24,22,.75)") : detail.stroke || null,
+          fillStyle: detail.type === "engine" ? engineVisual.fill : (detail.color || "#101915"),
+          strokeStyle: detail.type === "engine" ? engineVisual.stroke : detail.stroke || null,
           lineWidth: detail.width || 1.2,
           glow: detail.type === "engine",
-          glowAlpha: engineGlow,
+          glowAlpha: engineVisual?.glowAlpha ?? 1,
           glass: detail.type === "window"
         });
       }
@@ -9703,7 +9726,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         scene._hangarEngineSpawnClock = (scene._hangarEngineSpawnClock || 0) - dt;
         if (scene._hangarEngineSpawnClock <= 0) {
           scene._hangarEngineSpawnClock = .035 + Math.random() * .025;
-          emitEnginePlasmaForShip(puffStore, shipObj, clamp(trailMul * 1.25, .55, 2.2), { limit: 180, boostMul: 1 });
+          emitEnginePlasmaForShip(puffStore, shipObj, clamp(trailMul * 1.25, .55, 2.2), { limit: 180 });
         }
       }
       return drawTrails ? puffStore : [];
@@ -12199,7 +12222,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         pitch,
         roll,
         cam: centerCam,
-        engineGlow: entity.engineGlow ?? opts.engineGlow ?? shipEngineGlowLevel(entity),
+        engineGlow: resolvedEngineGlowLevel(entity, opts),
         project: projectFn,
         playerDamageMarks: (entity.playerDamageMarks || opts.damageMarks || []).map((m) => ({
           ...m,
