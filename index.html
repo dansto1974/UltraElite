@@ -5576,10 +5576,13 @@
       const aft = scale(shipForwardWorld(o), -1);
       const centers = engineWorldCenters(o);
       const alienTrail = isAlienShip(o);
-      emitEnginePlasmaForShip(game.smokePuffs, o, clamp(speed / 105, .6, 2.2), { alien: alienTrail });
+      const model = MODELS[o.model];
+      const trailDistance = sceneModelDistance(o);
+      const trailVisible = !model || trailDistance <= sceneModelDotDistance(model, o);
+      if (trailVisible) emitEnginePlasmaForShip(game.smokePuffs, o, clamp(speed / 105, .6, 2.2), { alien: alienTrail });
       const hullFrac = o.maxHp ? (o.hp ?? o.maxHp) / o.maxHp : 1;
       const smokeThreshold = .28;
-      if (hullFrac < smokeThreshold && centers.length) {
+      if (trailVisible && hullFrac < smokeThreshold && centers.length) {
         o.damageSmokeClock = (o.damageSmokeClock || 0) - dt;
         if (o.damageSmokeClock <= 0) {
           const severity = clamp((smokeThreshold - hullFrac) / smokeThreshold, .15, 1);
