@@ -4295,6 +4295,18 @@
       return easeInOut(t) * (bigJump ? 1.25 : 1);
     }
 
+    function jumpDepartureDustTravel(tr = game.transition) {
+      if (!tr || !ultraFxEnabled() || (tr.kind !== "hyperspace" && tr.kind !== "galactic") || tr._arrived) return 0;
+      const p = jumpTransitionProgress(tr);
+      const bigJump = tr.kind === "galactic";
+      const departureEnd = tr.departureEnd ?? (bigJump ? .2 : .24);
+      const arrivalAt = tr.arrivalAt ?? (bigJump ? .76 : .74);
+      const solveEnd = Math.min(departureEnd * .22, .045);
+      if (p < solveEnd || p >= arrivalAt) return 0;
+      const t = clamp((p - solveEnd) / Math.max(.05, arrivalAt - solveEnd), 0, 1);
+      return t * (bigJump ? 62000 : 43000);
+    }
+
     function jumpTransitionRenderCamera(renderCam, shipCam, tr) {
       const offset = jumpTransitionCameraOffset(tr);
       if (!offset) return renderCam;
@@ -10686,8 +10698,16 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const cx = w / 2, cy = h / 2;
       const speedFrac = clamp((game.speed || 0) / (game.maxSpeed || 220), 0, 1);
       const jumpBoost = jumpDepartureStarBoost();
+      const jumpTravel = jumpDepartureDustTravel();
       for (const star of game.stars) {
-        const p = cameraTransform(star, camera);
+        let p = cameraTransform(star, camera);
+        if (jumpTravel > 0) {
+          const near = 26, far = 3600, span = far - near;
+          const phase = (((star.tw || 0) / TAU) % 1 + 1) % 1;
+          const speedMul = .72 + phase * .62;
+          const z = near + ((((p.z - jumpTravel * speedMul) - near) % span + span) % span);
+          p = vec(p.x, p.y, z);
+        }
         const pr = project(p, w, h);
         if (!pr || pr.x < 0 || pr.y < 0 || pr.x > w || pr.y > h) continue;
         if (game.fxLevel === "classic") {
