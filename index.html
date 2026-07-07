@@ -8586,6 +8586,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const candidates = [];
       for (const o of game.objects) {
         if (o.type !== "ship") continue;
+        if (!finiteVec3(o.pos)) continue;
         const rel = cameraTransform(o.pos, game.camera);
         if (rel.z < 40) continue;
         const pr = project(rel, w, h);
@@ -8874,7 +8875,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       drawExternalPlayerShot(w, h, flightCam);
       drawExplosions(w, h);
       drawEnemyShots(w, h);
-      if (game.showShipLabels && performanceLod() < 2 && performanceSceneLoad() < .35) drawShipLabels(w, h);
+      if (game.showShipLabels && performanceLod() < 3) drawShipLabels(w, h);
       drawPerformanceTicker(w, h);
       if (!game.docked && game.viewMode !== "fwd" && VIEW_LABELS[game.viewMode]) {
         ctx.fillStyle = "rgba(233,242,228,.75)";
