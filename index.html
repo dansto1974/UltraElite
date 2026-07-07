@@ -12118,7 +12118,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const roll = entity.roll ?? yaw * .7;
       const pos = entity.pos || vec();
       const centerCam = renderCtx.centerCam || cameraTransform(pos, camera);
-      const orient = (v) => entity.quat ? quatRotate(entity.quat, v) : rotateShipPoint(v, yaw, pitch, roll);
+      const orient = opts.orient || ((v) => entity.quat ? quatRotate(entity.quat, v) : rotateShipPoint(v, yaw, pitch, roll));
       const projectFn = renderCtx.project || ((p) => project(p, w, h));
       const mesh = modelMeshForRender(model, camera, w, h, { scaleFactor, centerCam, orient, project: projectFn });
       const { camVerts, points } = mesh;
@@ -12155,9 +12155,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         color: hullColor,
         decal,
         project: projectFn,
-        textures: quality.textures,
-        metalAlphaMul: quality.textures ? 1 : 0,
-        edgeColor: hullColor,
+        texture: opts.texture || null,
+        textures: opts.textures ?? quality.textures,
+        metalAlphaMul: opts.metalAlphaMul ?? (quality.textures ? 1 : 0),
+        edgeColor: opts.edgeColor || hullColor,
         edgeWidth: opts.edgeWidth ?? clamp(680 / Math.max(80, centerCam.z), .7, 2)
       });
       if (mode !== "wire") {
@@ -12375,23 +12376,26 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function drawStation(o, cam, w, h) {
       const model = stationModelFor(o);
-      const mesh = modelMeshForRender(model, game.camera, w, h, {
+      const rendered = drawModelEntity(ctx, { camera: game.camera, w, h, centerCam: cam, mode: game.graphicsMode }, {
+        type: "station",
+        model: o.model || "coriolis",
+        pos: o.pos,
+        rot: o.rot || 0,
+        color: o.color || "#d8ded4",
+        engineGlow: 0
+      }, {
+        orient: (v) => rotatePoint(v, 0, 0, o.rot),
+        edgeColor: "#d8ded4",
+        edgeWidth: clamp(800 / Math.max(110, cam.z), .7, 2),
+        texture: getStationTexture(o.stationStyle || stationStyleForSystem(currentSystem())),
+        metalAlphaMul: o.stationStyle?.wealth > .72 ? 1.05 : o.stationStyle?.wealth < .32 ? .82 : .95
+      });
+      const mesh = rendered || modelMeshForRender(model, game.camera, w, h, {
         centerCam: cam,
         orient: (v) => rotatePoint(v, 0, 0, o.rot),
         project: (p) => project(p, w, h)
       });
-      const { camVerts, points: pts } = mesh;
-      const mode = game.graphicsMode;
-      drawProjectedModelHull(ctx, model, camVerts, pts, {
-        mode,
-        color: o.color || "#d8ded4",
-        edgeColor: "#d8ded4",
-        edgeWidth: clamp(800 / Math.max(110, cam.z), .7, 2),
-        texture: getStationTexture(o.stationStyle || stationStyleForSystem(currentSystem())),
-        metalAlphaMul: o.stationStyle?.wealth > .72 ? 1.05 : o.stationStyle?.wealth < .32 ? .82 : .95,
-        project: (p) => project(p, w, h)
-      });
-      const slotVerts = camVerts.slice(-4);
+      const slotVerts = mesh.camVerts.slice(-4);
       const [slotA, slotB, slotC, slotD] = slotVerts.map((p) => project(p, w, h));
       // The portal is painted on top of the hull (no depth buffer), so gate it on the
       // slot face actually pointing at the camera — otherwise it shows through the
