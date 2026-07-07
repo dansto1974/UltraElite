@@ -1585,12 +1585,16 @@
       return game.performance?.lod || 0;
     }
 
+    function performanceSceneLoad() {
+      return clamp(((game.performance?.visibleModels || 0) - 8) / 24, 0, 1);
+    }
+
     function performanceThresholdMul() {
-      return 1 + performanceLod() * .72;
+      return 1 + performanceLod() * .9 + performanceSceneLoad() * 3.5;
     }
 
     function performanceParticleScale() {
-      return PERFORMANCE_PARTICLE_SCALE[performanceLod()] ?? .18;
+      return Math.max(.12, (PERFORMANCE_PARTICLE_SCALE[performanceLod()] ?? .18) * (1 - performanceSceneLoad() * .55));
     }
 
     function performanceParticleLimit(limit) {
@@ -1612,6 +1616,17 @@
         perf.dprCap = PERFORMANCE_DPR_CAP[nextLod] || 1;
         resizeCanvases();
       }
+    }
+
+    function updateScenePerformanceLoad(items) {
+      const perf = game.performance || (game.performance = { frameMs: 16.7, lod: 0, dprCap: 2 });
+      let visibleModels = 0;
+      for (const item of items) {
+        const o = item.o;
+        if (!o || item.p?.z <= 1) continue;
+        if (o.type === "ship" || o.type === "station" || o.type === "hermit" || o.type === "missile") visibleModels++;
+      }
+      perf.visibleModels = visibleModels;
     }
 
     function viewCamera() {
@@ -8675,6 +8690,24 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
     }
 
+    function drawPerformanceTicker(w, h) {
+      const perf = game.performance;
+      if (!perf || game.docked) return;
+      const fps = Math.round(1000 / Math.max(1, perf.frameMs || 16.7));
+      const text = `FPS ${fps}  LOD ${perf.lod || 0}  OBJ ${perf.visibleModels || 0}`;
+      ctx.save();
+      ctx.font = `10px ${UI_CANVAS_FONT}`;
+      ctx.textAlign = "right";
+      ctx.textBaseline = "top";
+      const x = w - 14, y = 8;
+      const tw = ctx.measureText(text).width + 10;
+      ctx.fillStyle = "rgba(0,0,0,.32)";
+      ctx.fillRect(x - tw, y - 3, tw, 15);
+      ctx.fillStyle = (perf.lod || 0) >= 2 ? "rgba(255,211,61,.82)" : "rgba(101,255,71,.72)";
+      ctx.fillText(text, x - 5, y);
+      ctx.restore();
+    }
+
     function drawSpace() {
       const w = space.width, h = space.height;
       const flightCam = game.camera;
@@ -8692,6 +8725,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (game.transition) drawTransitionBackgroundEffect(w, h, game.transition);
       const visible = game.objects
         .map((o) => ({ o, p: cameraTransform(o.pos, game.camera), d: len(sub(o.pos, game.camera.pos)) }));
+      updateScenePerformanceLoad(visible);
       addWorldEffectItems(visible, game.smokePuffs, game.camera);
       const deathExploded = game.transition?.kind === "death" && game.transition._exploded;
       if (game.viewMode === "ext" && !game.docked && !deathExploded) {
@@ -8712,7 +8746,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       drawExternalPlayerShot(w, h, flightCam);
       drawExplosions(w, h);
       drawEnemyShots(w, h);
-      if (game.showShipLabels && performanceLod() < 2) drawShipLabels(w, h);
+      if (game.showShipLabels && performanceLod() < 2 && performanceSceneLoad() < .35) drawShipLabels(w, h);
+      drawPerformanceTicker(w, h);
       if (!game.docked && game.viewMode !== "fwd" && VIEW_LABELS[game.viewMode]) {
         ctx.fillStyle = "rgba(233,242,228,.75)";
         ctx.font = `13px ${UI_CANVAS_FONT}`;
@@ -12263,13 +12298,19 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const radius = Math.max(1, modelBoundingRadius(model) * scaleFactor);
       const pxRadius = Math.abs(radius * f / Math.max(1, centerCam.z));
       const thresholdMul = performanceThresholdMul();
+      const load = performanceSceneLoad();
+      const texturePx = Math.max(MODEL_RENDER_QUALITY.texturePx * thresholdMul, lerp(0, 72, load));
+      const decalPx = Math.max(MODEL_RENDER_QUALITY.decalPx * thresholdMul, lerp(0, 110, load));
+      const detailPx = Math.max(MODEL_RENDER_QUALITY.detailPx * thresholdMul, lerp(0, 54, load));
+      const damagePx = Math.max(MODEL_RENDER_QUALITY.damagePx * thresholdMul, lerp(0, 86, load));
+      const effectPx = Math.max(MODEL_RENDER_QUALITY.effectPx * thresholdMul, lerp(0, 48, load));
       return {
         pxRadius,
-        textures: pxRadius > MODEL_RENDER_QUALITY.texturePx * thresholdMul,
-        decals: pxRadius > MODEL_RENDER_QUALITY.decalPx * thresholdMul,
-        details: pxRadius > MODEL_RENDER_QUALITY.detailPx * thresholdMul,
-        damage: pxRadius > MODEL_RENDER_QUALITY.damagePx * thresholdMul,
-        effects: pxRadius > MODEL_RENDER_QUALITY.effectPx * thresholdMul && performanceLod() < 3
+        textures: pxRadius > texturePx,
+        decals: pxRadius > decalPx,
+        details: pxRadius > detailPx,
+        damage: pxRadius > damagePx,
+        effects: pxRadius > effectPx && performanceLod() < 3 && load < .92
       };
     }
 
