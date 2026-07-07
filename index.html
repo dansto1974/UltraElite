@@ -8305,6 +8305,36 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       drawSolidItems(targetCtx, collectSolidDetails(model, o, camVerts, points, w, h, scaleFactor));
     }
 
+    function drawProjectedModelHull(targetCtx, model, camVerts, points, opts = {}) {
+      const mode = opts.mode || game.graphicsMode;
+      const color = opts.color || "#e9f2e4";
+      const projectFn = opts.project || null;
+      if (mode === "wire") {
+        drawSolidItems(targetCtx, collectSolidFaces(model, camVerts, points, "#000", 1, true, null, { project: projectFn }));
+      } else {
+        drawSolidItems(targetCtx, collectSolidFaces(model, camVerts, points, color, 1, false, opts.decal || null, {
+          project: projectFn,
+          texture: opts.texture || null,
+          textures: opts.textures,
+          metalAlphaMul: opts.metalAlphaMul
+        }));
+      }
+      if (mode === "solid") return;
+      targetCtx.strokeStyle = mode === "both" ? ULTRA_WIRE_STROKE : (opts.edgeColor || color);
+      targetCtx.lineWidth = opts.edgeWidth || 1;
+      const faceVisible = collectWireFaceVisibility(model, camVerts);
+      targetCtx.beginPath();
+      for (let edgeIndex = 0; edgeIndex < model.edges.length; edgeIndex++) {
+        if (!wireEdgeVisible(model, edgeIndex, faceVisible)) continue;
+        const [a, b] = model.edges[edgeIndex];
+        const pa = points[a], pb = points[b];
+        if (!pa || !pb) continue;
+        targetCtx.moveTo(pa.x, pa.y);
+        targetCtx.lineTo(pb.x, pb.y);
+      }
+      targetCtx.stroke();
+    }
+
     function shipStatus(o) {
       if (o.aiMode === "flee") return { text: "FLEEING", color: "#91a78d" };
       if (o.hostile) return o.police ? { text: "PURSUING", color: "#46dfff" } : { text: "HOSTILE", color: "#ff6a55" };
@@ -12128,14 +12158,17 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
       targetCtx.save();
       targetCtx.globalAlpha *= alpha;
-      if (mode === "wire") {
-        drawSolidItems(targetCtx, collectSolidFaces(model, camVerts, points, "#000", 1, true, null, { project: projectFn }));
-      } else {
-        drawSolidItems(targetCtx, collectSolidFaces(model, camVerts, points, hullColor, 1, false, decal, {
-          project: projectFn,
-          textures: quality.textures,
-          metalAlphaMul: quality.textures ? 1 : 0
-        }));
+      drawProjectedModelHull(targetCtx, model, camVerts, points, {
+        mode,
+        color: hullColor,
+        decal,
+        project: projectFn,
+        textures: quality.textures,
+        metalAlphaMul: quality.textures ? 1 : 0,
+        edgeColor: hullColor,
+        edgeWidth: opts.edgeWidth ?? clamp(680 / Math.max(80, centerCam.z), .7, 2)
+      });
+      if (mode !== "wire") {
         if (quality.details) {
           drawSolidItems(targetCtx, collectSolidDetails(model, renderShip, camVerts, points, w, h, scaleFactor, camera));
         } else if ((renderShip.engineGlow ?? 0) > .02) {
@@ -12143,21 +12176,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         }
         if (quality.damage && targetCtx === ctx) drawPlayerHullDamageMarks(renderShip, centerCam, w, h, camera, projectFn);
         if (quality.effects && renderShip.police && ultraFxEnabled()) drawPoliceStrobes(targetCtx, points);
-      }
-      if (mode !== "solid") {
-        targetCtx.strokeStyle = mode === "both" ? ULTRA_WIRE_STROKE : hullColor;
-        targetCtx.lineWidth = opts.edgeWidth ?? clamp(680 / Math.max(80, centerCam.z), .7, 2);
-        const faceVisible = collectWireFaceVisibility(model, camVerts);
-        targetCtx.beginPath();
-        for (let edgeIndex = 0; edgeIndex < model.edges.length; edgeIndex++) {
-          if (!wireEdgeVisible(model, edgeIndex, faceVisible)) continue;
-          const [a, b] = model.edges[edgeIndex];
-          const pa = points[a], pb = points[b];
-          if (!pa || !pb) continue;
-          targetCtx.moveTo(pa.x, pa.y);
-          targetCtx.lineTo(pb.x, pb.y);
-        }
-        targetCtx.stroke();
       }
       targetCtx.restore();
       return { model, points, camVerts, centerCam };
@@ -12372,29 +12390,15 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       });
       const { camVerts, points: pts } = mesh;
       const mode = game.graphicsMode;
-      if (mode === "wire") {
-        drawSolidItems(ctx, collectSolidFaces(model, camVerts, pts, "#000", 1, true, null, { project: (p) => project(p, w, h) }));
-      } else {
-        drawSolidItems(ctx, collectSolidFaces(model, camVerts, pts, o.color || "#d8ded4", 1, false, null, {
-          texture: getStationTexture(o.stationStyle || stationStyleForSystem(currentSystem())),
-          metalAlphaMul: o.stationStyle?.wealth > .72 ? 1.05 : o.stationStyle?.wealth < .32 ? .82 : .95,
-          project: (p) => project(p, w, h)
-        }));
-      }
-      if (mode !== "solid") {
-        ctx.strokeStyle = mode === "both" ? ULTRA_WIRE_STROKE : "#d8ded4";
-        ctx.lineWidth = clamp(800 / Math.max(110, cam.z), .7, 2);
-        const faceVisible = collectWireFaceVisibility(model, camVerts);
-        ctx.beginPath();
-        for (let edgeIndex = 0; edgeIndex < model.edges.length; edgeIndex++) {
-          if (!wireEdgeVisible(model, edgeIndex, faceVisible)) continue;
-          const [a, b] = model.edges[edgeIndex];
-          if (!pts[a] || !pts[b]) continue;
-          ctx.moveTo(pts[a].x, pts[a].y);
-          ctx.lineTo(pts[b].x, pts[b].y);
-        }
-        ctx.stroke();
-      }
+      drawProjectedModelHull(ctx, model, camVerts, pts, {
+        mode,
+        color: o.color || "#d8ded4",
+        edgeColor: "#d8ded4",
+        edgeWidth: clamp(800 / Math.max(110, cam.z), .7, 2),
+        texture: getStationTexture(o.stationStyle || stationStyleForSystem(currentSystem())),
+        metalAlphaMul: o.stationStyle?.wealth > .72 ? 1.05 : o.stationStyle?.wealth < .32 ? .82 : .95,
+        project: (p) => project(p, w, h)
+      });
       const slotVerts = camVerts.slice(-4);
       const [slotA, slotB, slotC, slotD] = slotVerts.map((p) => project(p, w, h));
       // The portal is painted on top of the hull (no depth buffer), so gate it on the
