@@ -8196,19 +8196,31 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function drawEngineGlow(targetCtx, points, alpha = 1) {
-      alpha = clamp(alpha, 0, 1.45);
+      if (!ultraFxEnabled()) return;
+      alpha = clamp(alpha, 0, 1.85);
       if (alpha <= .01) return;
       const b = polygonBounds(points);
       const cx = (b.minX + b.maxX) / 2;
       const cy = (b.minY + b.maxY) / 2;
-      const r = clamp(Math.max(b.maxX - b.minX, b.maxY - b.minY) * 2.8, 6, 42);
-      const g = targetCtx.createRadialGradient(cx, cy, 0, cx, cy, r);
-      g.addColorStop(0, `hsla(202,96%,86%,${.72 * alpha})`);
-      g.addColorStop(.28, `hsla(196,94%,66%,${.34 * alpha})`);
-      g.addColorStop(.62, `hsla(190,90%,52%,${.14 * alpha})`);
-      g.addColorStop(1, "hsla(206,90%,42%,0)");
+      const span = Math.max(b.maxX - b.minX, b.maxY - b.minY);
+      const r = clamp(span * 3.2, 7, 54);
+      const hazeR = clamp(span * 7.4, 22, 118);
       targetCtx.save();
       targetCtx.globalCompositeOperation = "lighter";
+      const haze = targetCtx.createRadialGradient(cx, cy, 0, cx, cy, hazeR);
+      haze.addColorStop(0, `hsla(198,95%,72%,${.18 * alpha})`);
+      haze.addColorStop(.32, `hsla(192,92%,56%,${.105 * alpha})`);
+      haze.addColorStop(.72, `hsla(210,92%,46%,${.045 * alpha})`);
+      haze.addColorStop(1, "hsla(216,92%,38%,0)");
+      targetCtx.fillStyle = haze;
+      targetCtx.beginPath();
+      targetCtx.arc(cx, cy, hazeR, 0, TAU);
+      targetCtx.fill();
+      const g = targetCtx.createRadialGradient(cx, cy, 0, cx, cy, r);
+      g.addColorStop(0, `hsla(202,96%,88%,${.76 * alpha})`);
+      g.addColorStop(.26, `hsla(196,94%,68%,${.38 * alpha})`);
+      g.addColorStop(.62, `hsla(190,90%,52%,${.16 * alpha})`);
+      g.addColorStop(1, "hsla(206,90%,42%,0)");
       targetCtx.fillStyle = g;
       targetCtx.beginPath();
       targetCtx.arc(cx, cy, r, 0, TAU);
