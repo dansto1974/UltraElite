@@ -11579,6 +11579,12 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return lerp(.98, .38, Math.pow(t, .75));
     }
 
+    function ringHalfVisible(offset, viewDir, front, overlap) {
+      if (front === null) return true;
+      const side = dot(offset, viewDir);
+      return front ? side >= -overlap : side <= overlap;
+    }
+
     function drawPlanetRing(o, r, hue, w, h, front) {
       if (game.fxLevel === "classic") return;
       if (!o._ringBasis) {
@@ -11601,11 +11607,12 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const gapC = rng() * TAU;
       let drawnSegments = 0;
       ctx.save();
-      ctx.lineCap = "butt";
+      ctx.lineCap = "round";
       ctx.lineJoin = "round";
       for (let b = 0; b < bands; b++) {
         const t = bands === 1 ? 0 : b / (bands - 1);
         const rr = lerp(o.r * o.ringInner, o.r * o.ringOuter, t);
+        const splitOverlap = Math.max(o.r * .025, rr * .006);
         const laneNoise = rng();
         const dusty = .52 + rng() * .38;
         const light = 74 - t * 22 + Math.sin(t * TAU * 5.1) * 8 + (laneNoise - .5) * 9;
@@ -11628,8 +11635,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           const gap = debris && Math.abs(Math.atan2(Math.sin(a - gapC), Math.cos(a - gapC))) < .018 + rng() * .01;
           const ragged = debris ? 1 + Math.sin(a * (7 + b) + t * 11) * .018 + Math.sin(a * 19 + b) * .012 : 1;
           const offset = add(scale(u, Math.cos(a) * rr * ragged), scale(v, Math.sin(a) * rr * ragged));
-          const isFront = dot(offset, viewDir) >= 0;
-          const p = (front === null || isFront === front)
+          const p = ringHalfVisible(offset, viewDir, front, splitOverlap)
             ? project(cameraTransform(add(o.pos, offset), game.camera), w, h)
             : null;
           if (!p || gap) { if (drawing) { ctx.stroke(); drawing = false; } continue; }
@@ -11668,7 +11674,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
             scale(u, Math.cos(a) * o.r * o.ringInner * 1.04),
             scale(v, Math.sin(a) * o.r * o.ringInner * 1.04)
           );
-          if (dot(offset, viewDir) >= 0) { drawing = false; continue; }
+          if (!ringHalfVisible(offset, viewDir, false, o.r * .025)) { drawing = false; continue; }
           const p = project(cameraTransform(add(o.pos, offset), game.camera), w, h);
           if (!p) { drawing = false; continue; }
           if (drawing) ctx.lineTo(p.x, p.y);
@@ -11726,7 +11732,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const normal = norm(cross(u, v));
         const offset = add(add(scale(u, Math.cos(a) * rr), scale(v, Math.sin(a) * rr)), scale(normal, height));
         const isFront = dot(offset, viewDir) >= 0;
-        if (front !== null && isFront !== front) continue;
+        if (!ringHalfVisible(offset, viewDir, front, Math.max(o.r * .03, rr * .008))) continue;
         const p = project(cameraTransform(add(o.pos, offset), game.camera), w, h);
         if (!p) continue;
         const shadeMul = ringShade(offset, sunDir, o.r);
@@ -11870,6 +11876,15 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (facing <= .015) return null;
       const p = project(cameraTransform(add(o.pos, scale(worldDir, o.r)), game.camera), w, h);
       return p ? { ...p, facing, worldDir } : null;
+    }
+
+    function planetSurfaceClearance(o, cam = null) {
+      return (finiteVec3(cam) ? len(cam) : len(sub(game.camera.pos, o.pos))) - o.r;
+    }
+
+    function planetSurfaceDetailAlpha(o, cam = null) {
+      const clearance = planetSurfaceClearance(o, cam);
+      return clamp((clearance - o.r * .08) / Math.max(1, o.r * .22), 0, 1);
     }
 
     function drawProjectedPatch(points, fillStyle) {
@@ -12332,8 +12347,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         if (sl > .0001) { lx = sc.x / sl; ly = -sc.y / sl; } // project() flips y
       }
 
-      const planetDetail = performanceLod() < 2 || r > 120;
-      const planetFineDetail = performanceLod() < 1 || r > 170;
+      const detailAlpha = planetSurfaceDetailAlpha(o, cam);
+      const planetDetail = detailAlpha > .04 && (performanceLod() < 2 || r > 120);
+      const planetFineDetail = detailAlpha > .18 && (performanceLod() < 1 || r > 170);
       const ringDetail = performanceLod() < 3 || r > 110;
 
       if (o.hasRing && ringDetail) drawPlanetRing(o, r, hue, w, h, false);
@@ -12351,12 +12367,22 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.fillRect(pr.x - r, pr.y - r, r * 2, r * 2);
 
       // Day-side surface features first, so the terminator shadow below darkens them.
-      if (planetDetail) drawPlanetSurface(o, pr, r, w, h);
+      if (planetDetail) {
+        ctx.save();
+        ctx.globalAlpha *= detailAlpha;
+        drawPlanetSurface(o, pr, r, w, h);
+        ctx.restore();
+      }
 
       drawPlanetTerminatorShadow(o, cam, pr, r, sunDir, w, h);
 
       // Population centres glowing on the now-dark night side.
-      if (planetFineDetail) drawPlanetNightLights(o, r, w, h, sunDir);
+      if (planetFineDetail) {
+        ctx.save();
+        ctx.globalAlpha *= detailAlpha;
+        drawPlanetNightLights(o, r, w, h, sunDir);
+        ctx.restore();
+      }
       ctx.restore();
 
       // Atmospheric limb glow (coloured by type), outside the disc clip so it haloes.
