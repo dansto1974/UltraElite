@@ -1357,6 +1357,10 @@
       return { x, y, z };
     }
 
+    function finiteVec3(v) {
+      return !!v && Number.isFinite(v.x) && Number.isFinite(v.y) && Number.isFinite(v.z);
+    }
+
     function add(a, b) {
       return vec(a.x + b.x, a.y + b.y, a.z + b.z);
     }
@@ -8791,13 +8795,33 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.restore();
     }
 
+    function recordRenderError(scope, err) {
+      const message = `${scope}: ${err?.message || err || "unknown render error"}`;
+      if (game._lastRenderError !== message) {
+        game._lastRenderError = message;
+        setMessage(`Render fallback: ${message}`, true);
+      }
+      console.error(message, err);
+    }
+
+    function drawDockedBackdropSafe(w, h) {
+      try {
+        drawDockedBackdrop(w, h);
+      } catch (err) {
+        recordRenderError("docked backdrop", err);
+        const scene = game.dockScene || makeDockScene(game.dockedAt || `${currentSystem().name} STATION`, false, "", []);
+        drawClassicDockedBackdrop(w, h, scene);
+      }
+    }
+
     function drawSpace() {
       const w = space.width, h = space.height;
       const flightCam = game.camera;
-      game.camera = jumpTransitionRenderCamera(viewCamera(), flightCam, game.transition);
       ctx.fillStyle = "#000";
       ctx.fillRect(0, 0, w, h);
       ctx.save();
+      try {
+      game.camera = jumpTransitionRenderCamera(viewCamera(), flightCam, game.transition);
       if (game.screenShake > .05 && ultraFxEnabled()) {
         const shake = clamp(game.screenShake, 0, 12) * (window.devicePixelRatio || 1);
         ctx.translate((Math.random() - .5) * shake, (Math.random() - .5) * shake);
@@ -8807,6 +8831,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       drawStars(w, h, flightCam);
       if (game.transition) drawTransitionBackgroundEffect(w, h, game.transition);
       const visible = game.objects
+        .filter((o) => finiteVec3(o?.pos))
         .map((o) => ({ o, p: cameraTransform(o.pos, game.camera), d: len(sub(o.pos, game.camera.pos)) }));
       updateScenePerformanceLoad(visible);
       addWorldEffectItems(visible, game.smokePuffs, game.camera);
@@ -8874,9 +8899,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (game.transition) drawTransitionEffect(w, h, game.transition);
       if (game.jumpCountdown) drawJumpCountdown(w, h, game.jumpCountdown);
       if (game.autoDock && !game.docked) drawAutoDockHud(w, h);
-      if (game.docked && !["dockHangar", "launchHangar"].includes(game.transition?.kind)) drawDockedBackdrop(w, h);
-      ctx.restore();
-      game.camera = flightCam;
+      if (game.docked && !["dockHangar", "launchHangar"].includes(game.transition?.kind)) drawDockedBackdropSafe(w, h);
+      } catch (err) {
+        recordRenderError("space render", err);
+      } finally {
+        ctx.restore();
+        game.camera = flightCam;
+      }
     }
 
     function drawAutoDockHud(w, h) {
@@ -13651,14 +13680,17 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ensureShipSystems();
       const sys = currentSystem();
       const target = targetSystem();
+      const lockDist = game.targetObject && game.objects.includes(game.targetObject) && finiteVec3(game.targetObject.pos) && finiteVec3(game.camera?.pos)
+        ? len(sub(game.targetObject.pos, game.camera.pos))
+        : null;
       setDomText(hudEls.roCommander, game.commander);
       setDomText(hudEls.roCredits, fmt(game.credits));
       setDomText(hudEls.roLegal, legalStatus());
       setDomText(hudEls.roTarget, target.name);
       setDomText(hudEls.roSystem, sys.name);
       setDomText(hudEls.roDistance, `${fmt(distance(sys, target))} LY`);
-      setDomText(hudEls.roLockDist, (game.targetObject && game.objects.includes(game.targetObject))
-        ? `LOCK ${game.targetObject.name} ${Math.round(len(sub(game.targetObject.pos, game.camera.pos)))}m`
+      setDomText(hudEls.roLockDist, Number.isFinite(lockDist)
+        ? `LOCK ${game.targetObject.name} ${Math.round(lockDist)}m`
         : "LOCK --");
       setLevelMeter(hudEls.barForeShield, game.foreShield, { lowWarn: 42, lowCritical: 18 });
       setLevelMeter(hudEls.barAftShield, game.aftShield, { lowWarn: 42, lowCritical: 18 });
