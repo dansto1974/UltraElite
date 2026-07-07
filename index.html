@@ -8479,7 +8479,20 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (game.viewMode === "ext" && !game.docked && !deathExploded) {
         // The player's own ship only exists on screen in the external view; it rides the
         // flight camera exactly (same position, orientation via quat instead of Euler).
-        const shipObj = { type: "ship", model: game.transition?.deathModel || playerShipModel(), pos: flightCam.pos, quat: ensureCameraQuat(flightCam), color: "#e9f2e4", name: game.commander, role: "private", hp: Math.max(1, game.energy), maxHp: 100, playerDamageMarks: game.playerDamageMarks };
+        const playerRenderShip = playerTrailShip();
+        const shipObj = {
+          ...playerRenderShip,
+          model: game.transition?.deathModel || playerRenderShip.model,
+          pos: flightCam.pos,
+          quat: ensureCameraQuat(flightCam),
+          color: "#e9f2e4",
+          name: game.commander,
+          role: "private",
+          hp: Math.max(1, game.energy),
+          maxHp: 100,
+          playerDamageMarks: game.playerDamageMarks,
+          engineGlow: shipEngineGlowLevel(playerRenderShip)
+        };
         visible.push({ o: shipObj, p: cameraTransform(shipObj.pos, game.camera), d: len(sub(shipObj.pos, game.camera.pos)) });
       }
       drawWorldItems(visible, w, h, game.camera, (item) => drawObject(item.o, item.p, w, h));
