@@ -4283,6 +4283,17 @@
       return maxOffset;
     }
 
+    function jumpDepartureStarBoost(tr = game.transition) {
+      if (!tr || !ultraFxEnabled() || (tr.kind !== "hyperspace" && tr.kind !== "galactic") || tr._arrived) return 0;
+      const p = jumpTransitionProgress(tr);
+      const bigJump = tr.kind === "galactic";
+      const departureEnd = tr.departureEnd ?? (bigJump ? .2 : .24);
+      const solveEnd = Math.min(departureEnd * .22, .045);
+      if (p < solveEnd || p >= departureEnd) return 0;
+      const t = clamp((p - solveEnd) / Math.max(.04, departureEnd - solveEnd), 0, 1);
+      return Math.sin(t * Math.PI) * (bigJump ? 1.25 : 1);
+    }
+
     function jumpTransitionRenderCamera(renderCam, shipCam, tr) {
       const offset = jumpTransitionCameraOffset(tr);
       if (!offset) return renderCam;
@@ -9016,25 +9027,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function drawTransitionBackgroundEffect(w, h, tr) {
       if (!tr || !ultraFxEnabled()) return;
-      if (tr.kind === "hyperspace") {
-        drawUltraJumpDepartureStreaks(w, h, tr, {
-          departureEnd: tr.departureEnd ?? .26,
-          streakStart: tr.streakStart ?? .09,
-          palette: [208, 190, 168, 122],
-          captured: { travel: 5400, tail: 1380, alpha: .95 },
-          fallbackMin: 24,
-          fallback: { seed: 0x51504545, lanes: 90, tail: 520, alpha: .18, speed: 3.6 }
-        });
-      } else if (tr.kind === "galactic") {
-        drawUltraJumpDepartureStreaks(w, h, tr, {
-          departureEnd: tr.departureEnd ?? .22,
-          streakStart: tr.streakStart ?? .075,
-          palette: [210, 260, 300, 58],
-          captured: { travel: 7200, tail: 1780, width: 1.12, alpha: .98 },
-          fallbackMin: 28,
-          fallback: { seed: 0x6a554d50, lanes: 110, tail: 680, width: 1.08, speed: 4.1, alpha: .2 }
-        });
-      }
+      // Departure star stretch now lives in drawStars(), where the normal local
+      // speed-reference dust is drawn. Keeping this hook quiet prevents a separate
+      // cinematic layer from sitting over foreground ships and stations.
     }
 
     const JUMP_STATUS_LINES = {
@@ -10695,6 +10690,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.save();
       const cx = w / 2, cy = h / 2;
       const speedFrac = clamp((game.speed || 0) / (game.maxSpeed || 220), 0, 1);
+      const jumpBoost = jumpDepartureStarBoost();
       for (const star of game.stars) {
         const p = cameraTransform(star, game.camera);
         const pr = project(p, w, h);
@@ -10712,12 +10708,12 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           : star.sat
             ? (a) => `hsla(${star.hue}, ${star.sat}%, 92%, ${a})`
             : (a) => `rgba(233,242,228,${a})`;
-        const alpha = clamp(1.68 - p.z / 3000, .3, 1) * twinkle;
+        const alpha = clamp(1.68 - p.z / 3000, .3, 1) * twinkle * (1 + jumpBoost * 1.45);
         const closeness = clamp(1 - p.z / 2600, .15, 1);
         // Streaks radiate from the screen's vanishing point (where the camera is heading), so
         // near/central dust appears to rush past fastest - the classic "sensation of movement"
         // cue - while distant/off-axis stars barely stretch, matching real forward-motion parallax.
-        const streak = speedFrac * closeness * 30;
+        const streak = speedFrac * closeness * 30 + jumpBoost * closeness * (180 + 300 * closeness);
         const dx = pr.x - cx, dy = pr.y - cy;
         const dist = Math.hypot(dx, dy) || 1;
         // Apparent motion depends on the view: radial out of the vanishing point ahead
@@ -10734,8 +10730,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         grad.addColorStop(1, colorAt(alpha));
         ctx.strokeStyle = grad;
         ctx.shadowColor = colorAt(alpha);
-        ctx.shadowBlur = r * 2.2;
-        ctx.lineWidth = r;
+        ctx.shadowBlur = r * (2.2 + jumpBoost * 6);
+        ctx.lineWidth = r * (1 + jumpBoost * 1.8);
         ctx.beginPath();
         ctx.moveTo(tailX, tailY);
         ctx.lineTo(pr.x, pr.y);
