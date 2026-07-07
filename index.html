@@ -12309,13 +12309,16 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const decalPx = Math.max(MODEL_RENDER_QUALITY.decalPx * thresholdMul, lerp(0, 110, load));
       const detailPx = Math.max(MODEL_RENDER_QUALITY.detailPx * thresholdMul, lerp(0, 54, load));
       const damagePx = Math.max(MODEL_RENDER_QUALITY.damagePx * thresholdMul, lerp(0, 86, load));
+      const camera = renderCtx.camera || game.camera;
+      const damageDistance = entity.pos && camera.pos ? len(sub(entity.pos, camera.pos)) : 0;
+      const damageRange = 1000 * sceneModelDistanceLodScale(model, entity);
       const effectPx = Math.max(MODEL_RENDER_QUALITY.effectPx * thresholdMul, lerp(0, 48, load));
       return {
         pxRadius,
         textures: pxRadius > texturePx,
         decals: pxRadius > decalPx,
         details: pxRadius > detailPx,
-        damage: pxRadius > damagePx,
+        damage: pxRadius > damagePx && (!damageDistance || damageDistance <= damageRange),
         effects: pxRadius > effectPx && performanceLod() < 3 && load < .92
       };
     }
@@ -12622,21 +12625,33 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const c = project(cam, w, h);
       if (!c) return;
       const glow = clamp(resolvedEngineGlowLevel(o, {}) || .2, .15, 1.1);
+      const rect = space.getBoundingClientRect();
+      const dpr = rect.width ? w / rect.width : Math.max(1, window.devicePixelRatio || 1);
       const r = o.type === "missile" ? 1.6 : 2.2;
+      const whiteR = 10 * dpr;
+      const blueR = whiteR * (2.5 + glow * .7);
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
-      const halo = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, r * (4 + glow * 3));
-      halo.addColorStop(0, `rgba(92,188,255,${.34 + glow * .2})`);
-      halo.addColorStop(.35, `rgba(72,160,255,${.1 + glow * .08})`);
-      halo.addColorStop(1, "rgba(72,160,255,0)");
-      ctx.fillStyle = halo;
+      const blueHalo = ctx.createRadialGradient(c.x, c.y, whiteR * .4, c.x, c.y, blueR);
+      blueHalo.addColorStop(0, `rgba(82,170,255,${.24 + glow * .12})`);
+      blueHalo.addColorStop(.46, `rgba(56,142,255,${.12 + glow * .08})`);
+      blueHalo.addColorStop(1, "rgba(56,142,255,0)");
+      ctx.fillStyle = blueHalo;
       ctx.beginPath();
-      ctx.arc(c.x, c.y, r * (4 + glow * 3), 0, TAU);
+      ctx.arc(c.x, c.y, blueR, 0, TAU);
+      ctx.fill();
+      const whiteGlow = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, whiteR);
+      whiteGlow.addColorStop(0, `rgba(255,255,255,${.74 + glow * .18})`);
+      whiteGlow.addColorStop(.35, `rgba(255,255,255,${.22 + glow * .08})`);
+      whiteGlow.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = whiteGlow;
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, whiteR, 0, TAU);
       ctx.fill();
       ctx.globalCompositeOperation = "source-over";
       ctx.fillStyle = "rgba(0,0,0,.92)";
       ctx.beginPath();
-      ctx.arc(c.x, c.y, r, 0, TAU);
+      ctx.arc(c.x, c.y, r * dpr, 0, TAU);
       ctx.fill();
       ctx.restore();
     }
