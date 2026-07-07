@@ -10246,8 +10246,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (!stars.length || p <= 0) return 0;
       const cx = w / 2, cy = h / 2;
       const power = easeInOut(p);
-      const travel = (opts.travel || 5200) * (.08 + power * power * 1.18);
-      const tailBase = (opts.tail || 1450) * (.16 + power * .84);
+      const layerFade = 1 - smoothstep(.52, 1, p);
+      if (layerFade <= .01) return 0;
+      const travel = (opts.travel || 5200) * (.08 + power * power * 1.05);
+      const tailBase = (opts.tail || 1450) * (.12 + power * .72);
       let drawn = 0;
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
@@ -10255,36 +10257,53 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.lineJoin = "round";
       for (let i = 0; i < stars.length; i++) {
         const s = stars[i];
-        const depthMul = .62 + s.depth * .82;
-        const zNow = s.z - travel * depthMul;
-        const zTail = zNow + tailBase * (.72 + s.depth * .92);
-        if (zTail <= 9) continue;
-        const now = project(vec(s.x, s.y, Math.max(9.2, zNow)), w, h);
-        const prev = project(vec(s.x, s.y, zTail), w, h);
-        if (!now || !prev) continue;
-        const loose = 260;
-        if ((now.x < -loose || now.x > w + loose || now.y < -loose || now.y > h + loose)
-          && (prev.x < -loose || prev.x > w + loose || prev.y < -loose || prev.y > h + loose)) continue;
-        const dx = now.x - prev.x;
-        const dy = now.y - prev.y;
+        const start = project(vec(s.x, s.y, s.z), w, h);
+        if (!start) continue;
+        const dx0 = start.x - cx;
+        const dy0 = start.y - cy;
+        const radial = Math.hypot(dx0, dy0);
+        if (radial < 3) continue;
+        const stagger = s.depth * .2;
+        const phase = clamp((p - stagger) / .62, 0, 1);
+        if (phase <= 0 || phase >= 1) continue;
+        const burst = Math.sin(phase * Math.PI);
+        const ux = dx0 / radial;
+        const uy = dy0 / radial;
+        const depthMul = .58 + s.depth * .9;
+        const headShift = travel * phase * phase * depthMul;
+        const tailLen = tailBase * burst * (.38 + s.depth * .92);
+        const head = {
+          x: start.x + ux * headShift,
+          y: start.y + uy * headShift * .82
+        };
+        const tail = {
+          x: start.x + ux * Math.max(0, headShift - tailLen),
+          y: start.y + uy * Math.max(0, headShift - tailLen) * .82
+        };
+        const loose = Math.max(180, tailBase * .35);
+        if ((head.x < -loose || head.x > w + loose || head.y < -loose || head.y > h + loose)
+          && (tail.x < -loose || tail.x > w + loose || tail.y < -loose || tail.y > h + loose)) continue;
+        const dx = head.x - tail.x;
+        const dy = head.y - tail.y;
         const len2d = Math.hypot(dx, dy);
-        if (len2d < 3) continue;
-        const bend = Math.sin((s.tw || 0) + p * TAU * 1.7) * len2d * (.035 + power * .075);
-        const midX = (now.x + prev.x) / 2;
-        const midY = (now.y + prev.y) / 2;
+        if (len2d < 2.5) continue;
+        const bend = Math.sin((s.tw || 0) + p * TAU * 1.4) * len2d * .025 * burst;
+        const midX = (head.x + tail.x) / 2;
+        const midY = (head.y + tail.y) / 2;
         const nx = -dy / len2d;
         const ny = dx / len2d;
         const hue = s.sat ? s.hue : palette[i % palette.length];
-        const alpha = clamp((.14 + power * .62) * (1 - Math.max(0, zNow) / 5600) * (opts.alpha || 1), .025, .9);
-        const grad = ctx.createLinearGradient(prev.x, prev.y, now.x, now.y);
+        const screenFade = clamp(1 - radial / (Math.hypot(w, h) * .74), .18, 1);
+        const alpha = clamp((.08 + power * .82) * burst * layerFade * screenFade * (opts.alpha || 1), .02, .86);
+        const grad = ctx.createLinearGradient(tail.x, tail.y, head.x, head.y);
         grad.addColorStop(0, `hsla(${hue},100%,78%,0)`);
-        grad.addColorStop(.5, `hsla(${hue},100%,76%,${alpha * .42})`);
+        grad.addColorStop(.62, `hsla(${hue},100%,76%,${alpha * .32})`);
         grad.addColorStop(1, `rgba(255,255,255,${alpha})`);
         ctx.strokeStyle = grad;
-        ctx.lineWidth = Math.max(.7, (s.size || 1) * (.65 + power * 1.45) * (opts.width || 1));
+        ctx.lineWidth = Math.max(.65, (s.size || 1) * (.58 + burst * 1.35) * (opts.width || 1));
         ctx.beginPath();
-        ctx.moveTo(prev.x, prev.y);
-        ctx.quadraticCurveTo(midX + nx * bend, midY + ny * bend, now.x, now.y);
+        ctx.moveTo(tail.x, tail.y);
+        ctx.quadraticCurveTo(midX + nx * bend, midY + ny * bend, head.x, head.y);
         ctx.stroke();
         drawn++;
       }
@@ -10299,7 +10318,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (streak <= 0) return 0;
       const drawn = drawUltraCapturedStarStreaks(w, h, tr, streak, opts.palette, opts.captured);
       if (drawn < opts.fallbackMin) {
-        drawUltraStarAcceleration(w, h, streak, opts.palette, opts.fallback);
+        const fallbackFade = 1 - smoothstep(.46, 1, streak);
+        if (fallbackFade > .02) drawUltraStarAcceleration(w, h, streak, opts.palette, { ...opts.fallback, alpha: (opts.fallback?.alpha || 1) * fallbackFade });
       }
       return drawn;
     }
