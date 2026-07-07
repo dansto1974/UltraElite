@@ -2770,6 +2770,32 @@
     let lastDeveloperModeRendered = null;
     let lastPanelOpenRendered = null;
 
+    function setDomText(el, value) {
+      const text = String(value);
+      if (el && el.textContent !== text) el.textContent = text;
+    }
+
+    function setDomHidden(el, value) {
+      if (el && el.hidden !== value) el.hidden = value;
+    }
+
+    function setDomDisabled(el, value) {
+      if (el && el.disabled !== value) el.disabled = value;
+    }
+
+    function setDomAttr(el, name, value) {
+      const text = String(value);
+      if (el && el.getAttribute(name) !== text) el.setAttribute(name, text);
+    }
+
+    function setStyleProp(el, prop, value) {
+      if (el && el.style[prop] !== value) el.style[prop] = value;
+    }
+
+    function toggleClass(el, name, value) {
+      if (el && el.classList.contains(name) !== value) el.classList.toggle(name, value);
+    }
+
     function currentSystem() {
       return galaxies[game.galaxy][game.current];
     }
@@ -8495,6 +8521,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function drawShipLabels(w, h) {
       ctx.font = `13px ${UI_CANVAS_FONT}`;
       ctx.textAlign = "center";
+      const maxLabels = performanceLod() > 0 ? 4 : performanceSceneLoad() > .18 ? 5 : 7;
+      const candidates = [];
       for (const o of game.objects) {
         if (o.type !== "ship") continue;
         const rel = cameraTransform(o.pos, game.camera);
@@ -8503,9 +8531,17 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         if (!pr) continue;
         const apparentR = Math.abs(o.r * pr.s);
         if (apparentR < 16 || pr.x < -60 || pr.x > w + 60 || pr.y < -30 || pr.y > h + 30) continue;
+        const d = len(sub(o.pos, game.camera.pos));
+        const priority = (o === game.targetObject ? -10000 : 0) + (o.hostile ? -2200 : 0) + (o.police ? -900 : 0) + d;
+        candidates.push({ o, pr, apparentR, d, priority });
+      }
+
+      candidates.sort((a, b) => a.priority - b.priority);
+      for (const item of candidates.slice(0, maxLabels)) {
+        const { o, pr, apparentR, d } = item;
 
         const status = shipStatus(o);
-        const distText = `${Math.round(len(sub(o.pos, game.camera.pos)))}m`;
+        const distText = `${Math.round(d)}m`;
         const labelY = pr.y - apparentR - 12;
         const barW = 55;
         ctx.font = `13px ${UI_CANVAS_FONT}`;
@@ -13551,15 +13587,15 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ensureShipSystems();
       const sys = currentSystem();
       const target = targetSystem();
-      hudEls.roCommander.textContent = game.commander;
-      hudEls.roCredits.textContent = fmt(game.credits);
-      hudEls.roLegal.textContent = legalStatus();
-      hudEls.roTarget.textContent = target.name;
-      hudEls.roSystem.textContent = sys.name;
-      hudEls.roDistance.textContent = `${fmt(distance(sys, target))} LY`;
-      hudEls.roLockDist.textContent = (game.targetObject && game.objects.includes(game.targetObject))
+      setDomText(hudEls.roCommander, game.commander);
+      setDomText(hudEls.roCredits, fmt(game.credits));
+      setDomText(hudEls.roLegal, legalStatus());
+      setDomText(hudEls.roTarget, target.name);
+      setDomText(hudEls.roSystem, sys.name);
+      setDomText(hudEls.roDistance, `${fmt(distance(sys, target))} LY`);
+      setDomText(hudEls.roLockDist, (game.targetObject && game.objects.includes(game.targetObject))
         ? `LOCK ${game.targetObject.name} ${Math.round(len(sub(game.targetObject.pos, game.camera.pos)))}m`
-        : "LOCK --";
+        : "LOCK --");
       setLevelMeter(hudEls.barForeShield, game.foreShield, { lowWarn: 42, lowCritical: 18 });
       setLevelMeter(hudEls.barAftShield, game.aftShield, { lowWarn: 42, lowCritical: 18 });
       setLevelMeter(hudEls.barFuel, game.fuel / 7 * 100, { lowWarn: 28, lowCritical: 12 });
@@ -13581,43 +13617,43 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const laserHeat = clamp(game.laserHeat, 0, 100);
       const heatBar = hudEls.barLaserHeat;
       setLevelMeter(heatBar, laserHeat, { highWarn: 55, highCritical: 82 });
-      hudEls.txtForeShield.textContent = `${Math.round(game.foreShield)}%`;
-      hudEls.txtAftShield.textContent = `${Math.round(game.aftShield)}%`;
-      hudEls.txtFuel.textContent = fmt(game.fuel);
-      hudEls.txtAltitude.textContent = altitude == null ? "--" : altitude < 999 ? `${Math.round(altitude)}` : `${(altitude / 1000).toFixed(1)}K`;
-      hudEls.txtCabinTemp.textContent = cabinTemp >= 100 ? "HOT" : `${Math.round(cabinTemp)}%`;
-      hudEls.txtSpeed.textContent = Math.round(game.speed);
-      hudEls.txtRoll.textContent = signedMeterText(game.rollRate, 2.05);
-      hudEls.txtPitch.textContent = signedMeterText(game.pitchRate, 1.42);
-      hudEls.txtYaw.textContent = signedMeterText(game.yawRate, 1.24);
-      hudEls.txtLaserHeat.textContent = laserHeat >= 95 ? "HOT" : `${Math.round(laserHeat)}%`;
-      hudEls.missileSlots.forEach((slot, i) => slot.classList.toggle("full", i < game.missiles));
-      hudEls.modeSwitchBtn.textContent = game.fxLevel === "classic" ? "Ultra" : "Old School";
-      hudEls.modeSwitchBtn.classList.toggle("primary", game.fxLevel !== "classic");
-      hudEls.modeSwitchBtn.setAttribute("aria-pressed", game.fxLevel !== "classic" ? "true" : "false");
+      setDomText(hudEls.txtForeShield, `${Math.round(game.foreShield)}%`);
+      setDomText(hudEls.txtAftShield, `${Math.round(game.aftShield)}%`);
+      setDomText(hudEls.txtFuel, fmt(game.fuel));
+      setDomText(hudEls.txtAltitude, altitude == null ? "--" : altitude < 999 ? `${Math.round(altitude)}` : `${(altitude / 1000).toFixed(1)}K`);
+      setDomText(hudEls.txtCabinTemp, cabinTemp >= 100 ? "HOT" : `${Math.round(cabinTemp)}%`);
+      setDomText(hudEls.txtSpeed, Math.round(game.speed));
+      setDomText(hudEls.txtRoll, signedMeterText(game.rollRate, 2.05));
+      setDomText(hudEls.txtPitch, signedMeterText(game.pitchRate, 1.42));
+      setDomText(hudEls.txtYaw, signedMeterText(game.yawRate, 1.24));
+      setDomText(hudEls.txtLaserHeat, laserHeat >= 95 ? "HOT" : `${Math.round(laserHeat)}%`);
+      hudEls.missileSlots.forEach((slot, i) => toggleClass(slot, "full", i < game.missiles));
+      setDomText(hudEls.modeSwitchBtn, game.fxLevel === "classic" ? "Ultra" : "Old School");
+      toggleClass(hudEls.modeSwitchBtn, "primary", game.fxLevel !== "classic");
+      setDomAttr(hudEls.modeSwitchBtn, "aria-pressed", game.fxLevel !== "classic" ? "true" : "false");
       const jumpBusy = !!game.transition || !!game.jumpCountdown;
       const canLaunch = game.docked && !jumpBusy;
       const canJump = !game.docked && !jumpBusy;
       const canDock = !game.docked && !jumpBusy;
       const canAutoDock = !game.docked && !jumpBusy && game.equipment.dockingComputer;
       const canGalJump = game.equipment.galacticHyperdrive && !jumpBusy;
-      hudEls.launchBtn.disabled = !canLaunch;
-      hudEls.jumpBtn.disabled = !canJump;
-      hudEls.dockBtn.disabled = !canDock;
-      hudEls.autoDockBtn.disabled = !canAutoDock;
-      hudEls.galJumpBtn.disabled = !canGalJump;
-      hudEls.autoDockBtn.textContent = game.autoDock ? "Cancel Dock" : "Auto Dock";
-      hudEls.autoDockBtn.classList.toggle("primary", !!game.autoDock);
-      hudEls.launchBtn.hidden = !canLaunch;
-      hudEls.jumpBtn.hidden = !canJump;
-      hudEls.dockBtn.hidden = !canDock;
-      hudEls.autoDockBtn.hidden = !canAutoDock && !game.autoDock;
-      hudEls.galJumpBtn.hidden = !canGalJump;
-      hudEls.modeSwitchBtn.hidden = jumpBusy;
+      setDomDisabled(hudEls.launchBtn, !canLaunch);
+      setDomDisabled(hudEls.jumpBtn, !canJump);
+      setDomDisabled(hudEls.dockBtn, !canDock);
+      setDomDisabled(hudEls.autoDockBtn, !canAutoDock);
+      setDomDisabled(hudEls.galJumpBtn, !canGalJump);
+      setDomText(hudEls.autoDockBtn, game.autoDock ? "Cancel Dock" : "Auto Dock");
+      toggleClass(hudEls.autoDockBtn, "primary", !!game.autoDock);
+      setDomHidden(hudEls.launchBtn, !canLaunch);
+      setDomHidden(hudEls.jumpBtn, !canJump);
+      setDomHidden(hudEls.dockBtn, !canDock);
+      setDomHidden(hudEls.autoDockBtn, !canAutoDock && !game.autoDock);
+      setDomHidden(hudEls.galJumpBtn, !canGalJump);
+      setDomHidden(hudEls.modeSwitchBtn, jumpBusy);
       if (lastDeveloperModeRendered !== game.developerMode) {
         lastDeveloperModeRendered = game.developerMode;
         devOnlyEls.forEach((el) => {
-          el.hidden = !game.developerMode;
+          setDomHidden(el, !game.developerMode);
         });
       }
       updatePanelDrawer();
@@ -13625,8 +13661,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function setCenteredMeter(el, value, maxAbs) {
       const pct = clamp(value / maxAbs, -1, 1) * 50;
-      el.style.left = `calc(${50 + pct}% - 1px)`;
-      el.style.width = "2px";
+      setStyleProp(el, "left", `calc(${50 + pct}% - 1px)`);
+      setStyleProp(el, "width", "2px");
     }
 
     function signedMeterText(value, maxAbs) {
@@ -13638,20 +13674,21 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const raw = clamp(game.energy - (bank - 1) * 25, 0, 25);
       const pct = raw / 25 * 100;
       setLevelMeter(hudEls[`barEnergy${bank}`], pct, { lowWarn: 45, lowCritical: 20 });
-      hudEls[`txtEnergy${bank}`].textContent = `${Math.round(pct)}`;
+      setDomText(hudEls[`txtEnergy${bank}`], `${Math.round(pct)}`);
     }
 
     function setLevelMeter(el, value, thresholds = {}) {
       const pct = clamp(value, 0, 100);
-      el.style.width = `${pct}%`;
+      const width = `${Math.round(pct * 10) / 10}%`;
+      setStyleProp(el, "width", width);
       const warn = (thresholds.lowWarn != null && pct <= thresholds.lowWarn)
         || (thresholds.highWarn != null && pct >= thresholds.highWarn);
       const critical = (thresholds.lowCritical != null && pct <= thresholds.lowCritical)
         || (thresholds.highCritical != null && pct >= thresholds.highCritical);
-      el.classList.toggle("warn", warn && !critical);
-      el.classList.toggle("warm", warn && !critical);
-      el.classList.toggle("critical", critical);
-      el.classList.toggle("hot", critical);
+      toggleClass(el, "warn", warn && !critical);
+      toggleClass(el, "warm", warn && !critical);
+      toggleClass(el, "critical", critical);
+      toggleClass(el, "hot", critical);
     }
 
     function toggleDeveloperMode() {
