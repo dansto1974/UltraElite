@@ -3673,42 +3673,42 @@
         if (!c || engineBed || !noiseBuffer) return;
         const sub = c.createOscillator();
         const body = c.createOscillator();
-        const whine = c.createOscillator();
         const noiseSrc = c.createBufferSource();
         const subGain = c.createGain();
         const bodyGain = c.createGain();
-        const whineGain = c.createGain();
+        const crackleGain = c.createGain();
         const rushGain = c.createGain();
         const damageGain = c.createGain();
         const bodyFilter = c.createBiquadFilter();
-        const whineFilter = c.createBiquadFilter();
+        const crackleHp = c.createBiquadFilter();
+        const crackleBp = c.createBiquadFilter();
         const rushHp = c.createBiquadFilter();
         const rushLp = c.createBiquadFilter();
         const damageBp = c.createBiquadFilter();
 
         sub.type = "sine";
         body.type = "sawtooth";
-        whine.type = "triangle";
         noiseSrc.buffer = noiseBuffer;
         noiseSrc.loop = true;
         bodyFilter.type = "lowpass";
-        whineFilter.type = "bandpass";
+        crackleHp.type = "highpass";
+        crackleBp.type = "bandpass";
+        crackleBp.Q.value = 11;
         rushHp.type = "highpass";
         rushLp.type = "lowpass";
         damageBp.type = "bandpass";
         damageBp.Q.value = 7;
-        for (const g of [subGain, bodyGain, whineGain, rushGain, damageGain]) g.gain.value = .00001;
+        for (const g of [subGain, bodyGain, crackleGain, rushGain, damageGain]) g.gain.value = .00001;
 
         sub.connect(subGain).connect(outputNode("ship"));
         body.connect(bodyFilter).connect(bodyGain).connect(outputNode("ship"));
-        whine.connect(whineFilter).connect(whineGain).connect(outputNode("ship"));
+        noiseSrc.connect(crackleHp).connect(crackleBp).connect(crackleGain).connect(outputNode("ship"));
         noiseSrc.connect(rushHp).connect(rushLp).connect(rushGain).connect(outputNode("ship"));
         noiseSrc.connect(damageBp).connect(damageGain).connect(outputNode("ship"));
         sub.start();
         body.start();
-        whine.start();
         noiseSrc.start();
-        engineBed = { sub, body, whine, noiseSrc, subGain, bodyGain, whineGain, rushGain, damageGain, bodyFilter, whineFilter, rushHp, rushLp, damageBp };
+        engineBed = { sub, body, noiseSrc, subGain, bodyGain, crackleGain, rushGain, damageGain, bodyFilter, crackleHp, crackleBp, rushHp, rushLp, damageBp };
       }
 
       function updateEngineBed(dt = 0) {
@@ -3723,21 +3723,22 @@
         const stress = clamp(1 - (Number.isFinite(game.energy) ? game.energy : 100) / 100, 0, 1);
         const heat = clamp((game.cabinTemp || 0) / 100, 0, 1.4);
         const flicker = .72 + Math.sin(ctx.currentTime * (8 + stress * 16)) * .16 + Math.sin(ctx.currentTime * 17.7) * .08;
+        const crackle = .55 + Math.max(0, Math.sin(ctx.currentTime * 23.7)) * .24 + Math.max(0, Math.sin(ctx.currentTime * 41.3 + 1.7)) * .16;
         const throttle = active ? clamp(.1 + speedNorm * .68 + boost * .42, 0, 1.45) : 0;
         const fade = active ? 1 : 0;
         const lag = active ? .11 : .22;
 
         smoothParam(engineBed.sub.frequency, 26 + speedNorm * 20 + boost * 18, lag);
         smoothParam(engineBed.body.frequency, 42 + speedNorm * 44 + boost * 28 + stress * 8, lag);
-        smoothParam(engineBed.whine.frequency, 92 + speedNorm * 150 + boost * 90, lag);
         smoothParam(engineBed.bodyFilter.frequency, 220 + speedNorm * 420 + boost * 520, .14);
-        smoothParam(engineBed.whineFilter.frequency, 310 + speedNorm * 760 + boost * 620, .12);
+        smoothParam(engineBed.crackleHp.frequency, 960 + speedNorm * 420 + boost * 520, .16);
+        smoothParam(engineBed.crackleBp.frequency, 1500 + speedNorm * 1500 + boost * 1250, .07);
         smoothParam(engineBed.rushHp.frequency, 36 + speedNorm * 80, .16);
         smoothParam(engineBed.rushLp.frequency, 520 + speedNorm * 1800 + boost * 1800 + heat * 600, .14);
         smoothParam(engineBed.damageBp.frequency, 260 + stress * 840 + Math.sin(ctx.currentTime * 6.5) * 90, .08);
         smoothParam(engineBed.subGain.gain, fade * (.004 + throttle * .026 + boost * .012), lag);
         smoothParam(engineBed.bodyGain.gain, fade * (.003 + throttle * .018 + boost * .018), lag);
-        smoothParam(engineBed.whineGain.gain, fade * (.0015 + speedNorm * .010 + boost * .018), lag);
+        smoothParam(engineBed.crackleGain.gain, fade * (.0007 + speedNorm * .0035 + boost * .007) * crackle, .035);
         smoothParam(engineBed.rushGain.gain, fade * (.002 + speedNorm * .013 + boost * .026 + heat * .006), lag);
         smoothParam(engineBed.damageGain.gain, fade * Math.pow(stress, 1.65) * .026 * flicker, .04);
       }
