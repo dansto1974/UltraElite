@@ -10404,7 +10404,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
       ctx.lineCap = "round";
-      for (let i = 0; i < (opts.arcs || 48); i++) {
+      for (let i = 0; i < (opts.arcs ?? 48); i++) {
         const z = (rng() + p * (opts.depth || 1.35)) % 1;
         const r = lerp(18, maxR, Math.pow(z, .72));
         const a = rng() * TAU + spin * (1.2 - z * .55);
@@ -10417,7 +10417,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ctx.ellipse(cx, cy, r, r * (opts.flatten || .58), a * .04, a, a + sweep);
         ctx.stroke();
       }
-      for (let i = 0; i < (opts.puffs || 90); i++) {
+      for (let i = 0; i < (opts.puffs ?? 90); i++) {
         const z = (rng() + p * (opts.depth || 1.35)) % 1;
         const a = rng() * TAU + spin * (1.4 - z * .4);
         const r = lerp(10, maxR * .92, Math.pow(z, .78));
@@ -10497,7 +10497,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       bg.addColorStop(1, `rgba(0,0,0,${.84 + arrival * .1})`);
       ctx.fillStyle = bg;
       ctx.fillRect(-w * .08, -h * .08, w * 1.16, h * 1.16);
-      if (tunnel > 0) drawUltraCloudTunnel(w, h, tunnel, palette, { seed: 0x4511e7, intensity: clamp(tunnel * 1.5, 0, 1) * (1 - arrival * .38), spin: .52, arcs: 42, puffs: 84, width: .82, flatten: .6 });
+      if (tunnel > 0) drawUltraCloudTunnel(w, h, tunnel, palette, { seed: 0x4511e7, intensity: clamp(tunnel * 1.5, 0, 1) * (1 - arrival * .38), spin: .52, arcs: 0, puffs: 96, width: .82, flatten: .6 });
       drawUltraAperture(w, h, clamp((p - .12) / .74, 0, 1), palette, { pulses: 2 });
       drawUltraArrivalCrackle(w, h, arrival, [196, 210, 178], { seed: 0xdec1, bolts: 18, width: .9 });
       ctx.restore();
@@ -10523,7 +10523,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
       ctx.fillStyle = `rgba(0,0,0,${.72 + arrival * .16})`;
       ctx.fillRect(-w * .08, -h * .08, w * 1.16, h * 1.16);
-      if (tunnel > 0) drawUltraCloudTunnel(w, h, tunnel, palette, { seed: 0x6a0a7, intensity: clamp(tunnel * 1.4, 0, 1) * (1 - arrival * .32), spin: .74, arcs: 66, puffs: 120, width: 1.08, flatten: .56, radius: .78, depth: 1.18, sweep: 1.25 });
+      if (tunnel > 0) drawUltraCloudTunnel(w, h, tunnel, palette, { seed: 0x6a0a7, intensity: clamp(tunnel * 1.4, 0, 1) * (1 - arrival * .32), spin: .74, arcs: 0, puffs: 132, width: 1.08, flatten: .56, radius: .78, depth: 1.18, sweep: 1.25 });
       ctx.globalCompositeOperation = "lighter";
       for (let i = 0; i < 12; i++) {
         const z = (i / 12 + tunnel * 1.18) % 1;
