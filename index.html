@@ -8396,6 +8396,29 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.restore();
     }
 
+    function effectWorldPos(effect) {
+      return add(effect.pos, scale(effect.drift, effect.t));
+    }
+
+    function addWorldEffectItems(items, effects, camera) {
+      if (!ultraFxEnabled() || !effects?.length) return;
+      for (const effect of effects) {
+        if (effect.t >= effect.dur) continue;
+        const pos = effectWorldPos(effect);
+        const p = cameraTransform(pos, camera);
+        if (p.z <= 1) continue;
+        items.push({ effect, p, d: len(sub(pos, camera.pos)) });
+      }
+    }
+
+    function drawWorldItems(items, w, h, camera, drawEntity) {
+      items.sort((a, b) => b.d - a.d);
+      for (const item of items) {
+        if (item.effect) drawSmokePuff(item.effect, w, h, camera);
+        else drawEntity(item);
+      }
+    }
+
     function drawSpace() {
       const w = space.width, h = space.height;
       const flightCam = game.camera;
@@ -8413,14 +8436,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (game.transition) drawTransitionBackgroundEffect(w, h, game.transition);
       const visible = game.objects
         .map((o) => ({ o, p: cameraTransform(o.pos, game.camera), d: len(sub(o.pos, game.camera.pos)) }));
-      if (ultraFxEnabled()) {
-        for (const puff of game.smokePuffs) {
-          const pos = add(puff.pos, scale(puff.drift, puff.t));
-          const p = cameraTransform(pos, game.camera);
-          if (p.z <= 1) continue;
-          visible.push({ effect: puff, p, d: len(sub(pos, game.camera.pos)) });
-        }
-      }
+      addWorldEffectItems(visible, game.smokePuffs, game.camera);
       const deathExploded = game.transition?.kind === "death" && game.transition._exploded;
       if (game.viewMode === "ext" && !game.docked && !deathExploded) {
         // The player's own ship only exists on screen in the external view; it rides the
@@ -8428,11 +8444,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const shipObj = { type: "ship", model: game.transition?.deathModel || playerShipModel(), pos: flightCam.pos, quat: ensureCameraQuat(flightCam), color: "#e9f2e4", name: game.commander, role: "private", hp: Math.max(1, game.energy), maxHp: 100, playerDamageMarks: game.playerDamageMarks };
         visible.push({ o: shipObj, p: cameraTransform(shipObj.pos, game.camera), d: len(sub(shipObj.pos, game.camera.pos)) });
       }
-      visible.sort((a, b) => b.d - a.d);
-      for (const item of visible) {
-        if (item.effect) drawSmokePuff(item.effect, w, h, game.camera);
-        else drawObject(item.o, item.p, w, h);
-      }
+      drawWorldItems(visible, w, h, game.camera, (item) => drawObject(item.o, item.p, w, h));
       drawExternalPlayerShot(w, h, flightCam);
       drawExplosions(w, h);
       drawEnemyShots(w, h);
@@ -9613,18 +9625,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const shipObj = hangarSceneShip(scene, opts);
       const puffs = updateHangarShipEffects(scene, shipObj, opts.trail ?? 1, opts);
       const items = [{ kind: "ship", d: len(sub(shipObj.pos, view.pos)) }];
-      for (const puff of puffs) {
-        if (puff.t >= puff.dur) continue;
-        const pos = add(puff.pos, scale(puff.drift, puff.t));
-        const cam = cameraTransform(pos, view);
-        if (cam.z <= 1) continue;
-        items.push({ kind: "effect", puff, d: len(sub(pos, view.pos)) });
-      }
-      items.sort((a, b) => b.d - a.d);
-      for (const item of items) {
-        if (item.kind === "effect") drawSmokePuff(item.puff, w, h, view);
-        else drawHangarShip(w, h, scene, view, opts);
-      }
+      addWorldEffectItems(items, puffs, view);
+      drawWorldItems(items, w, h, view, () => drawHangarShip(w, h, scene, view, opts));
     }
 
     function drawHangarSparkles(w, h, seed, strength = 1) {
