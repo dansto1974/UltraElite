@@ -12003,7 +12003,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
       const model = MODELS[o.model || "cobra"];
       if (!model) return;
-      drawWireModel(model, o, cam, w, h);
+      drawSceneModel(o, cam, w, h);
     }
 
     function drawPlayerHullDamageMarks(o, cam, w, h, camera = game.camera, projectFn = null) {
@@ -12332,7 +12332,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
     }
 
-    function drawWireModel(model, o, cam, w, h) {
+    function drawSceneModel(o, cam, w, h) {
       drawModelEntity(ctx, { camera: game.camera, w, h, centerCam: cam, mode: game.graphicsMode }, o, {
         color: o.color || "#e9f2e4"
       });
