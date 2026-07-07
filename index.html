@@ -1586,7 +1586,7 @@
     }
 
     function performanceSceneLoad() {
-      return clamp(((game.performance?.visibleModels || 0) - 8) / 24, 0, 1);
+      return clamp(((game.performance?.visibleModels || 0) - 6) / 16, 0, 1);
     }
 
     function performanceThresholdMul() {
@@ -8697,15 +8697,20 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const fps = Math.round(1000 / Math.max(1, perf.frameMs || 16.7));
       const text = `FPS ${fps}  LOD ${perf.lod || 0}  OBJ ${perf.visibleModels || 0}`;
       ctx.save();
-      ctx.font = `10px ${UI_CANVAS_FONT}`;
+      const fontPx = Math.max(16, Math.min(24, Math.round(Math.min(w, h) * .018)));
+      const padX = Math.round(fontPx * .5);
+      const padY = Math.round(fontPx * .32);
+      ctx.font = `${fontPx}px ${UI_CANVAS_FONT}`;
       ctx.textAlign = "right";
       ctx.textBaseline = "top";
-      const x = w - 14, y = 8;
-      const tw = ctx.measureText(text).width + 10;
-      ctx.fillStyle = "rgba(0,0,0,.32)";
-      ctx.fillRect(x - tw, y - 3, tw, 15);
-      ctx.fillStyle = (perf.lod || 0) >= 2 ? "rgba(255,211,61,.82)" : "rgba(101,255,71,.72)";
-      ctx.fillText(text, x - 5, y);
+      const x = w - 18, y = 14;
+      const tw = ctx.measureText(text).width;
+      ctx.fillStyle = "rgba(0,0,0,.46)";
+      ctx.fillRect(x - tw - padX * 2, y - padY, tw + padX * 2, fontPx + padY * 2);
+      ctx.strokeStyle = (perf.lod || 0) >= 2 ? "rgba(255,211,61,.44)" : "rgba(101,255,71,.3)";
+      ctx.strokeRect(x - tw - padX * 2, y - padY, tw + padX * 2, fontPx + padY * 2);
+      ctx.fillStyle = (perf.lod || 0) >= 2 ? "rgba(255,211,61,.94)" : "rgba(101,255,71,.9)";
+      ctx.fillText(text, x - padX, y);
       ctx.restore();
     }
 
@@ -12570,10 +12575,73 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
     }
 
+    function projectedModelRadius(model, centerCam, w, h, scaleFactor = 1) {
+      const f = Math.min(w, h) * .82;
+      const radius = Math.max(1, modelBoundingRadius(model) * scaleFactor);
+      return Math.abs(radius * f / Math.max(1, centerCam.z));
+    }
+
+    function sceneModelImpostorThreshold() {
+      const load = performanceSceneLoad();
+      return 4 + performanceLod() * 5 + load * 22;
+    }
+
+    function shouldDrawSceneModelImpostor(o, model, cam, w, h) {
+      if (!model || o === game.targetObject || game.fxLevel === "classic" || game.graphicsMode === "wire") return false;
+      if (o.type === "station" || o.type === "hermit") return false;
+      const load = performanceSceneLoad();
+      if (load < .25 && performanceLod() < 2) return false;
+      const scaleFactor = o.scaleFactor ?? o.scale ?? 1;
+      return projectedModelRadius(model, cam, w, h, scaleFactor) < sceneModelImpostorThreshold();
+    }
+
+    function drawSceneModelImpostor(o, model, cam, w, h) {
+      const c = project(cam, w, h);
+      if (!c) return;
+      const scaleFactor = o.scaleFactor ?? o.scale ?? 1;
+      const px = projectedModelRadius(model, cam, w, h, scaleFactor);
+      const r = clamp(px, 2.2, 11);
+      const yaw = o.rot ?? o.yaw ?? 0;
+      const pitch = o.pitch ?? 0;
+      const roll = o.roll ?? yaw * .7;
+      const nose = project(add(worldDirToCam(rotateShipPoint(vec(0, 0, modelBoundingRadius(model) * scaleFactor), yaw, pitch, roll), game.camera), cam), w, h);
+      const angle = nose ? Math.atan2(nose.y - c.y, nose.x - c.x) + Math.PI / 2 : -Math.PI / 2;
+      const hull = o.type === "missile" ? "#ff584c" : (o.color || shipColor(o.model, o.police) || "#e9f2e4");
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      ctx.rotate(angle);
+      ctx.globalAlpha = clamp(.8 - performanceSceneLoad() * .22, .48, .82);
+      ctx.fillStyle = hull;
+      ctx.strokeStyle = o.police ? "rgba(83,180,255,.75)" : "rgba(210,245,210,.46)";
+      ctx.lineWidth = Math.max(1, r * .15);
+      if (o.type === "missile") {
+        ctx.beginPath();
+        ctx.moveTo(0, -r * 1.65);
+        ctx.lineTo(r * .45, r * 1.2);
+        ctx.lineTo(-r * .45, r * 1.2);
+        ctx.closePath();
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(0, -r * 1.35);
+        ctx.lineTo(r * 1.05, r * .68);
+        ctx.lineTo(0, r * .25);
+        ctx.lineTo(-r * 1.05, r * .68);
+        ctx.closePath();
+      }
+      ctx.fill();
+      if (r > 3.5) ctx.stroke();
+      ctx.restore();
+    }
+
     function drawSceneModel(o, cam, w, h) {
-      drawModelEntity(ctx, { camera: game.camera, w, h, centerCam: cam, mode: game.graphicsMode }, o, {
-        color: o.color || "#e9f2e4"
-      });
+      const model = MODELS[o.model || "cobra"];
+      if (shouldDrawSceneModelImpostor(o, model, cam, w, h)) {
+        drawSceneModelImpostor(o, model, cam, w, h);
+      } else {
+        drawModelEntity(ctx, { camera: game.camera, w, h, centerCam: cam, mode: game.graphicsMode }, o, {
+          color: o.color || "#e9f2e4"
+        });
+      }
       if (o === game.targetObject) {
         const c = project(cam, w, h);
         if (c) {
