@@ -12379,7 +12379,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function drawStation(o, cam, w, h) {
-      const model = stationModelFor(o);
       const rendered = drawModelEntity(ctx, { camera: game.camera, w, h, centerCam: cam, mode: game.graphicsMode }, {
         type: "station",
         model: o.model || "coriolis",
@@ -12394,12 +12393,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         texture: getStationTexture(o.stationStyle || stationStyleForSystem(currentSystem())),
         metalAlphaMul: o.stationStyle?.wealth > .72 ? 1.05 : o.stationStyle?.wealth < .32 ? .82 : .95
       });
-      const mesh = rendered || modelMeshForRender(model, game.camera, w, h, {
-        centerCam: cam,
-        orient: (v) => rotatePoint(v, 0, 0, o.rot),
-        project: (p) => project(p, w, h)
-      });
-      const slotVerts = mesh.camVerts.slice(-4);
+      if (!rendered) return;
+      const slotVerts = rendered.camVerts.slice(-4);
       const [slotA, slotB, slotC, slotD] = slotVerts.map((p) => project(p, w, h));
       // The portal is painted on top of the hull (no depth buffer), so gate it on the
       // slot face actually pointing at the camera — otherwise it shows through the
