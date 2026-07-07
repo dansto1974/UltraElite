@@ -5450,7 +5450,7 @@
 
     function spawnPlayerEnginePlume(strength = 1) {
       if (!ultraFxEnabled()) return;
-      const ship = playerTrailShip();
+      const ship = playerWorldShip();
       const aft = scale(shipForwardWorld(ship), -1);
       const centers = engineWorldCenters(ship);
       const engineMul = centers.length > 3 ? .82 : 1;
@@ -5461,26 +5461,37 @@
       }
     }
 
-    function playerTrailShip() {
+    function playerWorldShip(camera = game.camera, opts = {}) {
+      const model = opts.model || playerShipModel();
+      const boost = opts.engineBoost ?? game.playerEngineBoost ?? 0;
       return {
         type: "ship",
-        model: playerShipModel(),
-        pos: game.camera.pos,
-        quat: ensureCameraQuat(game.camera),
+        model,
+        pos: opts.pos || camera.pos,
+        quat: opts.quat || ensureCameraQuat(camera),
         rot: 0,
         pitch: 0,
         roll: 0,
-        speed: game.speed,
-        engineBoost: game.playerEngineBoost || 0,
-        engineTrailClock: game.playerEngineTrailClock || 0,
-        hp: game.energy,
-        maxHp: 100
+        speed: opts.speed ?? game.speed,
+        engineBoost: boost,
+        engineGlow: opts.engineGlow ?? shipEngineGlowLevel({ model, speed: opts.speed ?? game.speed, engineBoost: boost }),
+        engineTrailClock: opts.engineTrailClock ?? game.playerEngineTrailClock ?? 0,
+        hp: opts.hp ?? game.energy,
+        maxHp: opts.maxHp ?? 100,
+        name: opts.name || game.commander,
+        role: opts.role || "private",
+        color: opts.color || "#e9f2e4",
+        playerDamageMarks: opts.playerDamageMarks || game.playerDamageMarks
       };
+    }
+
+    function playerTrailShip() {
+      return playerWorldShip();
     }
 
     function updatePlayerEngineTrails(dt) {
       if (!ultraFxEnabled() || game.docked || game.playerDestroyed || !MODELS[playerShipModel()]?.details) return;
-      const ship = playerTrailShip();
+      const ship = playerWorldShip(game.camera);
       updateEngineTrails(ship, dt);
       game.playerEngineTrailClock = ship.engineTrailClock || 0;
     }
@@ -6433,8 +6444,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         if (keys.has("Equal") || keys.has("NumpadAdd")) game.speed += dt * 120;
         if (keys.has("Minus") || keys.has("NumpadSubtract")) game.speed -= dt * 120;
         game.speed = clamp(game.speed, 0, game.maxSpeed);
-        const playerShipForBoost = playerTrailShip();
-        playerShipForBoost.engineBoost = game.playerEngineBoost || 0;
+        const playerShipForBoost = playerWorldShip(game.camera, { engineBoost: game.playerEngineBoost || 0 });
         registerShipAcceleration(playerShipForBoost, game.speed - playerSpeedBefore, dt);
         game.playerEngineBoost = playerShipForBoost.engineBoost || 0;
         if (keys.has("Space")) fireLaser();
@@ -8547,20 +8557,15 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (game.viewMode === "ext" && !game.docked && !deathExploded) {
         // The player's own ship only exists on screen in the external view; it rides the
         // flight camera exactly (same position, orientation via quat instead of Euler).
-        const playerRenderShip = playerTrailShip();
-        const shipObj = {
-          ...playerRenderShip,
-          model: game.transition?.deathModel || playerRenderShip.model,
-          pos: flightCam.pos,
-          quat: ensureCameraQuat(flightCam),
+        const shipObj = playerWorldShip(flightCam, {
+          model: game.transition?.deathModel || playerShipModel(),
           color: "#e9f2e4",
           name: game.commander,
           role: "private",
           hp: Math.max(1, game.energy),
           maxHp: 100,
-          playerDamageMarks: game.playerDamageMarks,
-          engineGlow: shipEngineGlowLevel(playerRenderShip)
-        };
+          playerDamageMarks: game.playerDamageMarks
+        });
         visible.push({ o: shipObj, p: cameraTransform(shipObj.pos, game.camera), d: len(sub(shipObj.pos, game.camera.pos)) });
       }
       drawWorldItems(visible, w, h, game.camera, (item) => drawObject(item.o, item.p, w, h));
