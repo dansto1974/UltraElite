@@ -1,0 +1,276 @@
+:root {
+  color-scheme: dark;
+  --bg: #050706;
+  --panel: rgba(8, 18, 12, .82);
+  --panel-strong: rgba(10, 28, 15, .94);
+  --line: rgba(81, 255, 74, .28);
+  --line-hot: rgba(255, 214, 58, .54);
+  --text: #55ff4e;
+  --muted: rgba(159, 205, 154, .8);
+  --yellow: #ffd936;
+  --red: #ff5c4d;
+  --cyan: #6cecff;
+  --shadow: 0 0 24px rgba(73, 255, 65, .08);
+  font-family: "Andale Mono", "Menlo", "Consolas", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(48, 120, 70, .18), transparent 28rem),
+    radial-gradient(circle at 82% 18%, rgba(24, 106, 118, .14), transparent 30rem),
+    linear-gradient(180deg, #050706, #010201 62%, #020302);
+  color: var(--text);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: rgba(9, 24, 11, .82);
+  color: var(--text);
+  padding: .55rem .8rem;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+
+button:hover,
+button:focus-visible {
+  border-color: var(--text);
+  outline: none;
+}
+
+button.primary {
+  background: rgba(65, 255, 58, .18);
+  border-color: var(--text);
+}
+
+.app {
+  width: min(1760px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 22px 0 28px;
+}
+
+.topbar,
+.prompt,
+.panel {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 20px;
+}
+
+.eyebrow,
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+.eyebrow,
+h2 {
+  color: var(--yellow);
+}
+
+h1 {
+  font-size: clamp(2rem, 4vw, 4rem);
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h2 {
+  font-size: 1rem;
+  text-transform: uppercase;
+}
+
+.transport,
+.prompt-row,
+.section-head,
+.export-actions,
+.ab,
+.layer-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+}
+
+.prompt {
+  margin-top: 14px;
+  padding: 14px;
+}
+
+.prompt label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--yellow);
+  text-transform: uppercase;
+}
+
+.prompt-row input {
+  flex: 1;
+}
+
+input,
+select,
+textarea {
+  border: 1px solid rgba(81, 255, 74, .22);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, .42);
+  color: var(--text);
+  padding: .5rem .6rem;
+}
+
+input[type="range"] {
+  accent-color: var(--text);
+  padding: 0;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr) 430px;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.panel {
+  min-height: 640px;
+  padding: 14px;
+}
+
+.preset-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.preset-list button {
+  width: 100%;
+  text-align: left;
+}
+
+.ab {
+  align-items: stretch;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 16px;
+}
+
+.editor {
+  background: var(--panel-strong);
+}
+
+.section-head {
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+#patchSummary {
+  color: var(--muted);
+  margin-top: 5px;
+}
+
+.master-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(81, 255, 74, .16);
+  background: rgba(0, 0, 0, .26);
+}
+
+.master-grid label,
+.control label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: .78rem;
+  text-transform: uppercase;
+}
+
+.layers {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.layer-card {
+  border: 1px solid rgba(81, 255, 74, .18);
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(0, 0, 0, .3);
+}
+
+.layer-title {
+  margin-bottom: 12px;
+}
+
+.layer-name {
+  min-width: 160px;
+  flex: 1;
+}
+
+.control-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(116px, 1fr));
+  gap: 10px;
+}
+
+.control {
+  min-width: 0;
+}
+
+.readout {
+  color: var(--cyan);
+  font-size: .72rem;
+  min-height: 1em;
+}
+
+.export textarea {
+  width: 100%;
+  min-height: 560px;
+  margin-top: 12px;
+  resize: vertical;
+  color: #d1ffd0;
+  line-height: 1.45;
+  tab-size: 2;
+}
+
+@media (max-width: 1180px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .panel {
+    min-height: auto;
+  }
+
+  .control-grid,
+  .master-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
