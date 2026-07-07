@@ -8779,7 +8779,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
       ctx.lineCap = "round";
       drawGalaxyBackdrop(w, h);
-      drawStars(w, h);
+      drawStars(w, h, flightCam);
       if (game.transition) drawTransitionBackgroundEffect(w, h, game.transition);
       const visible = game.objects
         .map((o) => ({ o, p: cameraTransform(o.pos, game.camera), d: len(sub(o.pos, game.camera.pos)) }));
@@ -10681,13 +10681,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.restore();
     }
 
-    function drawStars(w, h) {
+    function drawStars(w, h, camera = game.camera) {
       ctx.save();
       const cx = w / 2, cy = h / 2;
       const speedFrac = clamp((game.speed || 0) / (game.maxSpeed || 220), 0, 1);
       const jumpBoost = jumpDepartureStarBoost();
       for (const star of game.stars) {
-        const p = cameraTransform(star, game.camera);
+        const p = cameraTransform(star, camera);
         const pr = project(p, w, h);
         if (!pr || pr.x < 0 || pr.y < 0 || pr.x > w || pr.y > h) continue;
         if (game.fxLevel === "classic") {
