@@ -8484,6 +8484,99 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.textAlign = "left";
     }
 
+    function drawLaserBeam2D(from, to, opts = {}) {
+      const color = opts.color || "#ffd33d";
+      const beam = hexToRgb(color);
+      const core = hexToRgb(opts.core || "#fff5be");
+      const width = opts.width || 2;
+      const alpha = clamp(opts.alpha ?? 1, 0, 1.25);
+      if (alpha <= .01) return;
+      const dx = to.x - from.x, dy = to.y - from.y;
+      const len2d = Math.hypot(dx, dy) || 1;
+      const nx = -dy / len2d, ny = dx / len2d;
+      const ultraLaser = opts.ultra ?? ultraFxEnabled();
+
+      ctx.save();
+      ctx.lineCap = "round";
+      if (!ultraLaser) {
+        ctx.strokeStyle = `rgba(${beam.r},${beam.g},${beam.b},${alpha})`;
+        ctx.lineWidth = opts.classicWidth || 1.2;
+        ctx.beginPath();
+        ctx.moveTo(from.x, from.y);
+        ctx.lineTo(to.x, to.y);
+        ctx.stroke();
+        ctx.restore();
+        return;
+      }
+
+      ctx.globalCompositeOperation = "lighter";
+      if (opts.wedge !== false) {
+        const near = { x: from.x + dx * .09, y: from.y + dy * .09 };
+        const far = { x: from.x + dx * .88, y: from.y + dy * .88 };
+        const wedgeBase = Math.max(42, width * 18);
+        const wedgeTip = Math.max(3, width * 2.8);
+        const wedgeGrad = ctx.createLinearGradient(from.x, from.y, to.x, to.y);
+        wedgeGrad.addColorStop(0, `rgba(${beam.r},${beam.g},${beam.b},${alpha * .2})`);
+        wedgeGrad.addColorStop(.72, `rgba(${beam.r},${beam.g},${beam.b},${alpha * .15})`);
+        wedgeGrad.addColorStop(1, `rgba(${beam.r},${beam.g},${beam.b},0)`);
+        ctx.fillStyle = wedgeGrad;
+        ctx.beginPath();
+        ctx.moveTo(near.x + nx * wedgeBase, near.y + ny * wedgeBase);
+        ctx.lineTo(near.x - nx * wedgeBase, near.y - ny * wedgeBase);
+        ctx.lineTo(far.x - nx * wedgeTip, far.y - ny * wedgeTip);
+        ctx.lineTo(far.x + nx * wedgeTip, far.y + ny * wedgeTip);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      const glowMul = opts.glowMul ?? (opts.kind === "pulse" ? 4.2 : opts.kind === "mining" ? 3.6 : 3);
+      const grad = ctx.createLinearGradient(from.x, from.y, to.x, to.y);
+      grad.addColorStop(0, `rgba(${core.r},${core.g},${core.b},${alpha * .84})`);
+      grad.addColorStop(.18, `rgba(${beam.r},${beam.g},${beam.b},${alpha * .64})`);
+      grad.addColorStop(.72, `rgba(${beam.r},${beam.g},${beam.b},${alpha * .34})`);
+      grad.addColorStop(1, `rgba(${beam.r},${beam.g},${beam.b},0)`);
+      ctx.strokeStyle = grad;
+      ctx.shadowColor = `rgba(${beam.r},${beam.g},${beam.b},${alpha})`;
+      ctx.shadowBlur = (opts.shadowBlur ?? 12) * alpha;
+      ctx.lineWidth = width * glowMul;
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = `rgba(${core.r},${core.g},${core.b},${alpha * (opts.kind === "pulse" ? 1 : .92)})`;
+      ctx.lineWidth = width;
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+
+      if (opts.secondary) {
+        ctx.strokeStyle = `rgba(${beam.r},${beam.g},${beam.b},${alpha * .2})`;
+        ctx.lineWidth = width * 2.4;
+        ctx.beginPath();
+        ctx.moveTo(from.x, from.y);
+        ctx.lineTo(to.x, to.y);
+        ctx.stroke();
+      }
+
+      if (opts.bloom !== false) {
+        const bloomCenter = { x: from.x + dx * .06, y: from.y + dy * .06 };
+        const bloomRadius = Math.max(70, width * 34);
+        const bloom = ctx.createRadialGradient(bloomCenter.x, bloomCenter.y, 0, bloomCenter.x, bloomCenter.y, bloomRadius);
+        bloom.addColorStop(0, `rgba(${beam.r},${beam.g},${beam.b},${alpha * .62})`);
+        bloom.addColorStop(.1, `rgba(${beam.r},${beam.g},${beam.b},${alpha * .62})`);
+        bloom.addColorStop(.34, `rgba(${beam.r},${beam.g},${beam.b},${alpha * .32})`);
+        bloom.addColorStop(1, `rgba(${beam.r},${beam.g},${beam.b},0)`);
+        ctx.fillStyle = bloom;
+        ctx.beginPath();
+        ctx.arc(bloomCenter.x, bloomCenter.y, bloomRadius, 0, TAU);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
     function drawExternalPlayerShot(w, h, flightCam) {
       const shot = game.playerShot;
       if (!shot || game.viewMode !== "ext") return;
@@ -8495,7 +8588,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const playerShip = playerWorldShip(flightCam);
       const forward = shipForwardWorld(playerShip);
       const color = shot.color || "#ffd33d";
-      const rgb = hexToRgb(color);
       const hardpoints = playerLaserHardpoints(playerShip);
       const muzzleCenter = hardpoints.length
         ? scale(hardpoints.reduce((sum, p) => add(sum, p), vec()), 1 / hardpoints.length)
@@ -8503,26 +8595,20 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const endWorld = shot.to || add(muzzleCenter, scale(forward, shot.range || 1800));
       const end = projectWorldPoint(endWorld, w, h, game.camera);
       if (!end) return;
-      ctx.save();
-      ctx.globalCompositeOperation = "lighter";
-      ctx.lineCap = "round";
       for (const hp of hardpoints) {
         const from = projectWorldPoint(hp, w, h, game.camera);
         if (!from) continue;
-        const grad = ctx.createLinearGradient(from.x, from.y, end.x, end.y);
-        grad.addColorStop(0, `rgba(255,245,190,${alpha * .82})`);
-        grad.addColorStop(.36, `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha * .55})`);
-        grad.addColorStop(1, `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha * .08})`);
-        ctx.strokeStyle = grad;
-        ctx.shadowColor = `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`;
-        ctx.shadowBlur = (shot.kind === "pulse" ? 16 : 10) * alpha;
-        ctx.lineWidth = Math.max(1.2, (shot.width || 2) * 1.6);
-        ctx.beginPath();
-        ctx.moveTo(from.x, from.y);
-        ctx.lineTo(end.x, end.y);
-        ctx.stroke();
+        drawLaserBeam2D(from, end, {
+          color,
+          width: Math.max(1.2, (shot.width || 2) * 1.6),
+          alpha,
+          kind: shot.kind,
+          wedge: false,
+          bloom: false,
+          glowMul: shot.kind === "pulse" ? 2.8 : 2.2,
+          shadowBlur: shot.kind === "pulse" ? 16 : 10
+        });
       }
-      ctx.restore();
     }
 
     function effectWorldPos(effect) {
@@ -8614,76 +8700,17 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const ultraLaser = ultraFxEnabled();
         const drawBeam = (from) => {
           const color = game.playerShot.color || "#ffd33d";
-          const dx = endX - from.x, dy = endY - from.y;
-          const len2d = Math.hypot(dx, dy) || 1;
-          const nx = -dy / len2d, ny = dx / len2d;
-          if (ultraLaser) {
-            const near = { x: from.x + dx * .09, y: from.y + dy * .09 };
-            const far = { x: from.x + dx * .88, y: from.y + dy * .88 };
-            const wedgeBase = Math.max(42, width * 18);
-            const wedgeTip = Math.max(3, width * 2.8);
-            const wedgeGrad = ctx.createLinearGradient(from.x, from.y, endX, endY);
-            wedgeGrad.addColorStop(0, color);
-            wedgeGrad.addColorStop(.16, color);
-            wedgeGrad.addColorStop(.72, color);
-            wedgeGrad.addColorStop(1, "rgba(255,255,255,0)");
-            ctx.fillStyle = wedgeGrad;
-            ctx.globalAlpha = alpha * .2;
-            ctx.beginPath();
-            ctx.moveTo(near.x + nx * wedgeBase, near.y + ny * wedgeBase);
-            ctx.lineTo(near.x - nx * wedgeBase, near.y - ny * wedgeBase);
-            ctx.lineTo(far.x - nx * wedgeTip, far.y - ny * wedgeTip);
-            ctx.lineTo(far.x + nx * wedgeTip, far.y + ny * wedgeTip);
-            ctx.closePath();
-            ctx.fill();
-            const grad = ctx.createLinearGradient(from.x, from.y, endX, endY);
-            grad.addColorStop(0, color);
-            grad.addColorStop(.18, color);
-            grad.addColorStop(.72, color);
-            grad.addColorStop(1, "rgba(255,255,255,0)");
-            ctx.strokeStyle = grad;
-            ctx.globalAlpha = alpha * .34;
-            ctx.lineWidth = width * glowMul;
-            ctx.beginPath();
-            ctx.moveTo(from.x, from.y);
-            ctx.lineTo(endX, endY);
-            ctx.stroke();
-          } else {
-            ctx.strokeStyle = color;
-          }
-          ctx.globalAlpha = alpha * (game.playerShot.kind === "pulse" ? 1 : .92);
-          ctx.lineWidth = ultraLaser ? width : 1.2;
-          ctx.beginPath();
-          ctx.moveTo(from.x, from.y);
-          ctx.lineTo(endX, endY);
-          ctx.stroke();
-          if (ultraLaser && (game.playerShot.kind === "mining" || game.playerShot.kind === "military")) {
-            ctx.globalAlpha = alpha * .2;
-            ctx.lineWidth = width * 2.4;
-            ctx.beginPath();
-            ctx.moveTo(from.x, from.y);
-            ctx.lineTo(endX, endY);
-            ctx.stroke();
-          }
-          if (!ultraLaser) return;
-          const bloomCenter = { x: from.x + dx * .06, y: from.y + dy * .06 };
-          const bloomRadius = Math.max(70, width * 34);
-          const bloom = ctx.createRadialGradient(bloomCenter.x, bloomCenter.y, 0, bloomCenter.x, bloomCenter.y, bloomRadius);
-          bloom.addColorStop(0, color);
-          bloom.addColorStop(.1, color);
-          bloom.addColorStop(.34, `${color}88`);
-          bloom.addColorStop(1, "rgba(255,255,255,0)");
-          ctx.globalAlpha = alpha * .62;
-          ctx.fillStyle = bloom;
-          ctx.beginPath();
-          ctx.arc(bloomCenter.x, bloomCenter.y, bloomRadius, 0, TAU);
-          ctx.fill();
+          drawLaserBeam2D(from, { x: endX, y: endY }, {
+            color,
+            width: ultraLaser ? width : 1.2,
+            alpha,
+            kind: game.playerShot.kind,
+            glowMul,
+            ultra: ultraLaser,
+            secondary: game.playerShot.kind === "mining" || game.playerShot.kind === "military"
+          });
         };
-        ctx.save();
-        ctx.globalCompositeOperation = "lighter";
-        ctx.lineCap = "round";
         muzzles.forEach(drawBeam);
-        ctx.restore();
       }
       if (game.transition) drawTransitionEffect(w, h, game.transition);
       if (game.jumpCountdown) drawJumpCountdown(w, h, game.jumpCountdown);
@@ -10729,43 +10756,34 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ctx.save();
         ctx.lineCap = "round";
         if (simple) {
-          ctx.strokeStyle = `rgba(${beam.r},${beam.g},${beam.b},${alpha})`;
-          ctx.lineWidth = s.missile ? 2.6 : 1.8;
-          ctx.beginPath();
-          ctx.moveTo(fromP.x, fromP.y);
-          ctx.lineTo(toP.x, toP.y);
-          ctx.stroke();
+          drawLaserBeam2D(fromP, toP, {
+            color,
+            width: s.width || 2,
+            alpha,
+            ultra: false,
+            classicWidth: s.missile ? 2.6 : 1.8
+          });
           ctx.restore();
           continue;
         }
 
-        ctx.globalCompositeOperation = "lighter";
         const muzzle = Math.min(60, 12 + dist * .035);
         const tail = {
           x: fromP.x + dx * .16,
           y: fromP.y + dy * .16
         };
-        const grad = ctx.createLinearGradient(fromP.x, fromP.y, toP.x, toP.y);
-        grad.addColorStop(0, `rgba(${coreRgb.r},${coreRgb.g},${coreRgb.b},${alpha * .92})`);
-        grad.addColorStop(.28, `rgba(${beam.r},${beam.g},${beam.b},${alpha * .72})`);
-        grad.addColorStop(1, `rgba(${beam.r},${beam.g},${beam.b},${alpha * .18})`);
-        ctx.shadowColor = `rgba(${beam.r},${beam.g},${beam.b},${alpha})`;
-        ctx.shadowBlur = (s.glow || 12) * alpha;
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = (s.width || 2) * 5.2;
-        ctx.beginPath();
-        ctx.moveTo(fromP.x, fromP.y);
-        ctx.lineTo(toP.x, toP.y);
-        ctx.stroke();
+        drawLaserBeam2D(fromP, toP, {
+          color,
+          core,
+          width: Math.max(1, s.width || 2),
+          alpha,
+          wedge: false,
+          bloom: false,
+          glowMul: 5.2,
+          shadowBlur: s.glow || 12
+        });
 
-        ctx.shadowBlur = 0;
-        ctx.strokeStyle = `rgba(${coreRgb.r},${coreRgb.g},${coreRgb.b},${alpha * .85})`;
-        ctx.lineWidth = Math.max(1, s.width || 2);
-        ctx.beginPath();
-        ctx.moveTo(fromP.x, fromP.y);
-        ctx.lineTo(toP.x, toP.y);
-        ctx.stroke();
-
+        ctx.globalCompositeOperation = "lighter";
         const forks = s.forks || 0;
         for (let i = 0; i < forks; i++) {
           const sign = i % 2 ? -1 : 1;
