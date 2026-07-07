@@ -4289,7 +4289,7 @@
     }
 
     function jumpTransitionCameraOffset(tr) {
-      if (!tr || !ultraFxEnabled() || (tr.kind !== "hyperspace" && tr.kind !== "galactic")) return { speed: 0, travel: 0 };
+      if (!tr || !ultraFxEnabled() || (tr.kind !== "hyperspace" && tr.kind !== "galactic")) return 0;
       const p = jumpTransitionProgress(tr);
       const bigJump = tr.kind === "galactic";
       const maxOffset = bigJump ? 32000 : 19000;
@@ -4344,7 +4344,7 @@
 
     function jumpTransitionRenderCamera(renderCam, shipCam, tr) {
       const offset = jumpTransitionCameraOffset(tr);
-      if (!offset) return renderCam;
+      if (!Number.isFinite(offset) || Math.abs(offset) < .001) return renderCam;
       return {
         pos: add(renderCam.pos, scale(forwardVector(shipCam), offset)),
         q: renderCam.q
