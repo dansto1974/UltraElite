@@ -1361,6 +1361,10 @@
       return !!v && Number.isFinite(v.x) && Number.isFinite(v.y) && Number.isFinite(v.z);
     }
 
+    function finiteQuat(q) {
+      return !!q && Number.isFinite(q.w) && Number.isFinite(q.x) && Number.isFinite(q.y) && Number.isFinite(q.z);
+    }
+
     function add(a, b) {
       return vec(a.x + b.x, a.y + b.y, a.z + b.z);
     }
@@ -1378,7 +1382,9 @@
     }
 
     function norm(a) {
-      const l = len(a) || 1;
+      if (!finiteVec3(a)) return vec();
+      const l = len(a);
+      if (!Number.isFinite(l) || l <= 1e-9) return vec();
       return scale(a, 1 / l);
     }
 
@@ -1413,7 +1419,9 @@
     }
 
     function quatNorm(q) {
-      const l = Math.hypot(q.w, q.x, q.y, q.z) || 1;
+      if (!finiteQuat(q)) return quat();
+      const l = Math.hypot(q.w, q.x, q.y, q.z);
+      if (!Number.isFinite(l) || l <= 1e-9) return quat();
       return quat(q.w / l, q.x / l, q.y / l, q.z / l);
     }
 
@@ -1505,6 +1513,7 @@
 
     function quatLookRotation(forward, upHint = vec(0, 1, 0)) {
       const f = norm(forward);
+      if (!finiteVec3(f) || len(f) <= 1e-9) return quat();
       let r = cross(upHint, f);
       if (len(r) < .001) r = cross(vec(1, 0, 0), f);
       r = norm(r);
@@ -1518,6 +1527,13 @@
       return camera.q;
     }
 
+    function ensureCameraState(camera) {
+      if (!camera) return makeCamera(-850);
+      if (!finiteVec3(camera.pos)) camera.pos = vec(0, 0, -850);
+      ensureCameraQuat(camera);
+      return camera;
+    }
+
     function makeCamera(z) {
       return { pos: vec(0, 0, z), q: quat() };
     }
@@ -1527,6 +1543,8 @@
     }
 
     function cameraTransform(world, camera) {
+      camera = ensureCameraState(camera);
+      if (!finiteVec3(world)) return vec(0, 0, -1);
       const p = sub(world, camera.pos);
       return quatRotate(quatConj(ensureCameraQuat(camera)), p);
     }
@@ -7409,8 +7427,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function project(p, w, h) {
-      if (p.z <= 8) return null;
+      if (!finiteVec3(p) || p.z <= 8) return null;
       const f = Math.min(w, h) * .82;
+      if (!Number.isFinite(f) || f <= 0) return null;
       return { x: w / 2 + (p.x / p.z) * f, y: h / 2 - (p.y / p.z) * f, s: f / p.z };
     }
 
@@ -8816,6 +8835,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function drawSpace() {
       const w = space.width, h = space.height;
+      ensureCameraState(game.camera);
       const flightCam = game.camera;
       ctx.fillStyle = "#000";
       ctx.fillRect(0, 0, w, h);
@@ -10682,11 +10702,14 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const backdrop = galaxyBackdrop();
       const camInv = quatConj(ensureCameraQuat(game.camera));
       const f = Math.min(w, h) * .82;
+      if (!Number.isFinite(f) || f <= 0) return;
       const trajectoryTakeover = !!game.jumpCountdown?.trajectoryControl;
       const toScreen = (dir) => {
+        if (!finiteVec3(dir)) return null;
         const p = quatRotate(camInv, dir);
-        if (p.z <= .035) return null;
-        return { x: w / 2 + (p.x / p.z) * f, y: h / 2 - (p.y / p.z) * f, z: p.z, p };
+        if (!finiteVec3(p) || p.z <= .035) return null;
+        const pr = { x: w / 2 + (p.x / p.z) * f, y: h / 2 - (p.y / p.z) * f, z: p.z, p };
+        return Number.isFinite(pr.x) && Number.isFinite(pr.y) ? pr : null;
       };
       ctx.save();
       ctx.globalCompositeOperation = "screen";
@@ -10697,7 +10720,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         if (!pr) continue;
         const edgeFade = smoothstep(.07, .34, pr.z);
         const r = clamp((f * cloud.angular) / Math.max(.18, pr.z), 12, Math.max(w, h) * .32);
-        const alpha = cloud.alpha * edgeFade * (game.witchspace ? .42 : trajectoryTakeover ? .82 : 1.2);
+        const alpha = clamp(cloud.alpha * edgeFade * (game.witchspace ? .42 : trajectoryTakeover ? .82 : 1.2), 0, 1);
+        if (![pr.x, pr.y, r, alpha].every(Number.isFinite)) continue;
         if (alpha <= .008) continue;
         const g = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, r);
         g.addColorStop(0, `hsla(${cloud.hue},${cloud.sat}%,${Math.min(86, cloud.light + 24)}%,${alpha})`);
@@ -10713,11 +10737,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const pr = toScreen(star.dir);
         if (!pr) continue;
         const edgeFade = clamp((pr.z - .035) / .18, 0, 1);
-        const alpha = star.alpha * edgeFade * (game.witchspace ? .55 : 1);
+        const alpha = clamp(star.alpha * edgeFade * (game.witchspace ? .55 : 1), 0, 1);
         if (alpha <= .025) continue;
         const s = clamp((star.size * f * .0028) / Math.max(.18, pr.z), .45, 2.8);
+        if (![pr.x, pr.y, s, alpha].every(Number.isFinite)) continue;
         if (star.glow) {
           const gr = clamp(s * 4.6, 2.4, 11);
+          if (!Number.isFinite(gr)) continue;
           const g = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, gr);
           g.addColorStop(0, `rgba(255,255,255,${alpha * .22})`);
           g.addColorStop(.45, `rgba(210,228,255,${alpha * .1})`);
