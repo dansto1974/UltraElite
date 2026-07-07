@@ -5135,7 +5135,15 @@
         }
       }
       const hitPos = best ? cameraLocalToWorld(game.camera, vec(0, 0, hitDepth || cameraTransform(best.pos, game.camera).z)) : null;
-      game.playerShot = { to: hitPos, color: laser.color, width: laser.width, duration: laser.duration, kind: laser.id, range: laser.range, t: now };
+      game.playerShot = {
+        to: hitPos,
+        color: laser.color,
+        width: laser.width,
+        duration: laser.duration,
+        kind: laser.id,
+        range: laser.range,
+        t: now
+      };
       if (!best) {
         if (outOfRange) setMessage(`${outOfRange.o.name} out of ${laser.name.toLowerCase()} laser range (${Math.round(outOfRange.dist)}m / ${laser.range}m).`);
         else setMessage("Laser fired.");
@@ -5485,8 +5493,16 @@
       };
     }
 
-    function playerTrailShip() {
-      return playerWorldShip();
+    function playerLaserHardpoints(ship = playerWorldShip()) {
+      const q = ship.quat || ensureCameraQuat(game.camera);
+      const forward = quatRotate(q, vec(0, 0, 1));
+      const right = quatRotate(q, vec(1, 0, 0));
+      const down = quatRotate(q, vec(0, -1, 0));
+      const radius = Math.max(48, modelBoundingRadius(MODELS[ship.model] || MODELS[playerShipModel()]));
+      return [
+        add(ship.pos, add(scale(forward, radius * .55), add(scale(right, -radius * .42), scale(down, radius * .08)))),
+        add(ship.pos, add(scale(forward, radius * .55), add(scale(right, radius * .42), scale(down, radius * .08))))
+      ];
     }
 
     function updatePlayerEngineTrails(dt) {
@@ -8476,20 +8492,17 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (elapsed >= dur) return;
       const age = clamp(elapsed / dur, 0, 1);
       const alpha = Math.pow(1 - age, shot.kind === "pulse" ? .52 : .68);
-      const q = ensureCameraQuat(flightCam);
-      const forward = quatRotate(q, vec(0, 0, 1));
-      const right = quatRotate(q, vec(1, 0, 0));
-      const down = quatRotate(q, vec(0, -1, 0));
-      const r = Math.max(48, modelBoundingRadius(MODELS[playerShipModel()]));
-      const endWorld = shot.to || add(flightCam.pos, scale(forward, shot.range || 1800));
-      const end = projectWorldPoint(endWorld, w, h, game.camera);
-      if (!end) return;
+      const playerShip = playerWorldShip(flightCam);
+      const forward = shipForwardWorld(playerShip);
       const color = shot.color || "#ffd33d";
       const rgb = hexToRgb(color);
-      const hardpoints = [
-        add(flightCam.pos, add(scale(forward, r * .55), add(scale(right, -r * .42), scale(down, r * .08)))),
-        add(flightCam.pos, add(scale(forward, r * .55), add(scale(right, r * .42), scale(down, r * .08))))
-      ];
+      const hardpoints = playerLaserHardpoints(playerShip);
+      const muzzleCenter = hardpoints.length
+        ? scale(hardpoints.reduce((sum, p) => add(sum, p), vec()), 1 / hardpoints.length)
+        : flightCam.pos;
+      const endWorld = shot.to || add(muzzleCenter, scale(forward, shot.range || 1800));
+      const end = projectWorldPoint(endWorld, w, h, game.camera);
+      if (!end) return;
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
       ctx.lineCap = "round";
