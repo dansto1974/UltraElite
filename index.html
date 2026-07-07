@@ -1048,10 +1048,25 @@
       color: var(--green);
     }
 
+    .about-title {
+      color: var(--amber);
+      font-size: 15px;
+      line-height: 1.25;
+      margin-bottom: 8px;
+    }
+
     .about-heading {
       display: block;
       color: var(--amber);
       margin-bottom: 4px;
+    }
+
+    .about-copy {
+      font-size: 12px;
+    }
+
+    .about-copy p {
+      margin: 0 0 9px;
     }
 
     .update-log {
@@ -1588,6 +1603,7 @@
       ["Deadly", 2560], ["Elite", 6400]
     ];
     const NAME_PAIRS = ["AL", "LE", "XE", "GE", "ZA", "CE", "BI", "SO", "US", "ES", "AR", "MA", "IN", "DI", "RE", "A?", "ER", "AT", "EN", "BE", "RA", "LA", "VE", "TI", "ED", "OR", "QU", "AN", "TE", "IS", "RI", "ON"];
+    const EXTENDED_WORD_PAIRS = ["AB", "OU", "SE", "IT", "IL", "ET", "ST", "ON", "LO", "NU", "TH", "NO", "AL", "LE", "XE", "GE", "ZA", "CE", "BI", "SO", "US", "ES", "AR", "MA", "IN", "DI", "RE", "A?", "ER", "AT", "EN", "BE"];
     const GOODS = [
       ["Food", 19, -2, 6, 0x01, "t", false],
       ["Textiles", 20, -1, 10, 0x03, "t", false],
@@ -2059,6 +2075,31 @@
     const ALIEN_MODELS = ["thargoid", "thargon"];
     const HAULER_MODELS = ["python", "boa", "anaconda", "shuttle", "transporter", "worm"];
     const ARMADA_MODELS = ["cobra", "cobra1", "krait", "viper", "adder", "gecko", "mamba", "sidewinder", "worm", "moray", "asp", "ferdelance", "python", "boa", "anaconda", "shuttle", "transporter", "constrictor", "cougar", "thargoid", "thargon"];
+    const SOURCE_BEHAVIOUR = {
+      escapePod: { trader: true },
+      shuttle: { trader: true, innocent: true, timid: true },
+      transporter: { trader: true, innocent: true, timid: true },
+      cobra: { innocent: true, escapePod: true },
+      python: { innocent: true, escapePod: true, hauler: true },
+      boa: { innocent: true, escapePod: true, hauler: true },
+      anaconda: { trader: true, innocent: true, escapePod: true, hauler: true },
+      hermit: { trader: true, innocent: true, escapePod: true },
+      viper: { bountyHunter: true, police: true, escapePod: true },
+      sidewinder: { hostile: true, pirate: true },
+      mamba: { hostile: true, pirate: true, escapePod: true },
+      krait: { hostile: true, pirate: true, escapePod: true },
+      adder: { hostile: true, pirate: true, escapePod: true },
+      gecko: { hostile: true, pirate: true },
+      cobra1: { hostile: true, pirate: true, escapePod: true },
+      worm: { hostile: true, trader: true, timid: true },
+      asp: { hostile: true, pirate: true, escapePod: true },
+      ferdelance: { bountyHunter: true, escapePod: true },
+      moray: { hostile: true, pirate: true },
+      thargoid: { hostile: true, pirate: true },
+      thargon: { hostile: true },
+      constrictor: { hostile: true },
+      cougar: { innocent: true }
+    };
 
     // Source-derived target radius, energy and speed. The speed multiplier is the BBC
     // max-speed byte divided by the Cobra Mk III's 28, so class differences track the
@@ -2099,10 +2140,20 @@
     };
 
     function npcMissileStock(model, role, police = false) {
+      if (model === "thargoid") return 6;
       if (ALIEN_MODELS.includes(model) || role === "trader") return 0;
       if (police) return 1;
       if (["python", "boa", "anaconda", "ferdelance", "constrictor", "cougar"].includes(model)) return 2;
       return 1;
+    }
+
+    function npcCombatProfile(o) {
+      if (o.thargoid) return { damage: 16, range: 1700, minRange: 95, cooldownMin: .62, cooldownJitter: .86, accel: 178, maxSpeed: 176, thargonChance: .42 };
+      if (o.model === "thargon") return { damage: 9, range: 1100, minRange: 70, cooldownMin: .72, cooldownJitter: .95, accel: 165, maxSpeed: 168 };
+      if (o.role === "police") return { damage: 13, range: 1350, minRange: 105, cooldownMin: .82, cooldownJitter: .9, accel: 156, maxSpeed: 166 };
+      if (SOURCE_BEHAVIOUR[o.model]?.bountyHunter) return { damage: 12, range: 1250, minRange: 110, cooldownMin: .92, cooldownJitter: 1.0, accel: 146, maxSpeed: 156 };
+      if (o.role === "pirate") return { damage: 10, range: 1050, minRange: 120, cooldownMin: 1.05, cooldownJitter: 1.15, accel: 122, maxSpeed: 136 };
+      return { damage: 8, range: 950, minRange: 130, cooldownMin: 1.2, cooldownJitter: 1.35, accel: 112, maxSpeed: 126 };
     }
 
     function shipName(model) {
@@ -2280,6 +2331,7 @@
 
       makeSystem(seed, galaxy, index) {
         const s0h = seed[0] >> 8, s1h = seed[1] >> 8, s1l = seed[1] & 255, s2h = seed[2] >> 8, s2l = seed[2] & 255;
+        const name = this.makeName(seed);
         let economy = s0h & 7;
         const government = (s1l >> 3) & 7;
         if (government < 2) economy |= 2;
@@ -2289,16 +2341,11 @@
         const radius = ((s2h & 15) + 11) * 256 + s1h;
         const rng = mulberry((galaxy + 1) * 99991 + index * 101 + seed[2]);
         const species = (s2l & 128) ? this.makeSpecies(seed) : "Human Colonials";
-        const descBits = [
-          ["notable", "fabled", "tedious", "ancient", "unstable", "remote", "busy", "bleak"],
-          ["mountains", "oceans", "forests", "shipyards", "casinos", "ice fields", "temples", "dust plains"],
-          ["traders", "pirates", "scholars", "miners", "lobster poets", "monks", "terraformers", "tax inspectors"]
-        ];
         return {
           galaxy,
           index,
           seed,
-          name: this.makeName(seed),
+          name,
           x: s1h,
           y: s0h >> 1,
           economy,
@@ -2310,11 +2357,170 @@
           species,
           law: government,
           marketRand: Math.floor(rng() * 256),
-          description: `${descBits[0][s0h & 7]} for its ${descBits[1][s1h & 7]} and ${descBits[2][s2h & 7]}`
+          description: this.makeDescription(seed, galaxy, name)
         };
       }
 
+      makeDescription(seed, galaxy, name) {
+        // BBC Elite's "goat soup" text engine: seed RAND from s1/s2, then
+        // expand token 5 via the MTIN recursive token table using DORND.
+        const mtin = [16, 21, 26, 31, 155, 160, 46, 165, 36, 41, 61, 51, 56, 170, 66, 71, 76, 81, 86, 140, 96, 101, 135, 130, 91, 106, 180, 185, 190, 225, 230, 235, 240, 245, 250, 115, 120, 125];
+        const rand = [seed[1] & 255, seed[1] >> 8, seed[2] & 255, seed[2] >> 8];
+        let carry = 0;
+        const dornd = () => {
+          const f1 = rand[0];
+          const f2 = ((f1 << 1) & 255) | carry;
+          carry = f1 >> 7;
+          let sum = f2 + rand[2] + carry;
+          rand[0] = sum & 255;
+          carry = sum > 255 ? 1 : 0;
+          rand[2] = f2;
+          const m0 = rand[1];
+          sum = m0 + rand[3] + carry;
+          rand[1] = sum & 255;
+          carry = sum > 255 ? 1 : 0;
+          rand[3] = m0;
+          return rand[1];
+        };
+        const ernd = (n) => {
+          const x = dornd();
+          let bucket = 0;
+          if (x >= 51) bucket++;
+          if (x >= 102) bucket++;
+          if (x >= 153) bucket++;
+          if (x >= 204) bucket++;
+          return token(mtin[n] + bucket);
+        };
+        const randomWord = () => {
+          const parts = (dornd() & 3) + 1;
+          let out = "";
+          for (let i = 0; i < parts; i++) out += EXTENDED_WORD_PAIRS[(dornd() & 62) >> 1].replace("?", "");
+          return `${out.charAt(0)}${out.slice(1).toLowerCase()}`;
+        };
+        const systemAdj = () => {
+          let s = name.toLowerCase();
+          if ("aeiou".includes(s.at(-1))) s = s.slice(0, -1);
+          s = `${s}ian`;
+          return `${s.charAt(0).toUpperCase()}${s.slice(1)}`;
+        };
+        const token = (id) => {
+          if (id >= 16 && id <= 20) return ["fabled", "notable", "well known", "famous", "noted"][id - 16];
+          if (id >= 21 && id <= 25) return ["very", "mildly", "most", "reasonably", ""][id - 21];
+          if (id === 26) return "ancient";
+          if (id === 27) return ernd(23);
+          if (id === 28) return "great";
+          if (id === 29) return "vast";
+          if (id === 30) return "pink";
+          if (id === 31) return `${ernd(28)} ${ernd(27)}ations`;
+          if (id === 32) return "mountains";
+          if (id === 33) return ernd(26);
+          if (id === 34) return `${ernd(37)} forests`;
+          if (id === 35) return "oceans";
+          if (id === 36) return "shyness";
+          if (id === 37) return "silliness";
+          if (id === 38) return "mating traditions";
+          if (id === 39) return `loathing of ${ernd(9)}`;
+          if (id === 40) return `love for ${ernd(9)}`;
+          if (id === 41) return "food blenders";
+          if (id === 42) return "tourists";
+          if (id === 43) return "poetry";
+          if (id === 44) return "discos";
+          if (id === 45) return ernd(17);
+          if (id === 46) return "walking tree";
+          if (id === 47) return "crab";
+          if (id === 48) return "bat";
+          if (id === 49) return "lobst";
+          if (id === 50) return randomWord();
+          if (id >= 51 && id <= 55) return ["beset", "plagued", "ravaged", "cursed", "scourged"][id - 51];
+          if (id === 56) return `${ernd(22)} civil war`;
+          if (id === 57) return `${ernd(13)} ${ernd(4)} ${ernd(5)}s`;
+          if (id === 58) return `a ${ernd(13)} disease`;
+          if (id === 59) return `${ernd(22)} earthquakes`;
+          if (id === 60) return `${ernd(22)} solar activity`;
+          if (id === 61) return `its ${ernd(2)} ${ernd(3)}`;
+          if (id === 62) return `the ${systemAdj()} ${ernd(4)} ${ernd(5)}`;
+          if (id === 63) return `its inhabitants' ${ernd(7)} ${ernd(8)}`;
+          if (id === 64) return ernd(31);
+          if (id === 65) return `its ${ernd(16)} ${ernd(17)}`;
+          if (id >= 66 && id <= 70) return ["juice", "brandy", "water", "brew", "gargle blasters"][id - 66];
+          if (id === 71) return randomWord();
+          if (id === 72) return `${systemAdj()} ${ernd(5)}`;
+          if (id === 73) return `${systemAdj()} ${randomWord()}`;
+          if (id === 74) return `${systemAdj()} ${ernd(13)}`;
+          if (id === 75) return `${ernd(13)} ${randomWord()}`;
+          if (id >= 76 && id <= 80) return ["fabulous", "exotic", "hoopy", "unusual", "exciting"][id - 76];
+          if (id === 81) return "cuisine";
+          if (id === 82) return "night life";
+          if (id === 83) return "casinos";
+          if (id === 84) return "sit coms";
+          if (id === 85) return ernd(31);
+          if (id === 86) return name.charAt(0) + name.slice(1).toLowerCase();
+          if (id === 87) return `The planet ${name.charAt(0)}${name.slice(1).toLowerCase()}`;
+          if (id === 88) return `The world ${name.charAt(0)}${name.slice(1).toLowerCase()}`;
+          if (id === 89) return "This planet";
+          if (id === 90) return "This world";
+          if (id >= 91 && id <= 95) return ["son of a bitch", "scoundrel", "blackguard", "rogue", "whoreson beetle headed flap ear'd knave"][id - 91];
+          if (id >= 96 && id <= 100) return ["n unremarkable", " boring", " dull", " tedious", " revolting"][id - 96];
+          if (id >= 101 && id <= 105) return ["planet", "world", "place", "little planet", "dump"][id - 101];
+          if (id === 115) return "wasp";
+          if (id === 116) return "moth";
+          if (id === 117) return "grub";
+          if (id === 118) return "ant";
+          if (id === 119) return randomWord();
+          if (id >= 120 && id <= 124) return ["poet", "arts graduate", "yak", "snail", "slug"][id - 120];
+          if (id >= 125 && id <= 129) return ["tropical", "dense", "rain", "impenetrable", "exuberant"][id - 125];
+          if (id >= 130 && id <= 134) return ["funny", "weird", "unusual", "strange", "peculiar"][id - 130];
+          if (id >= 135 && id <= 139) return ["frequent", "occasional", "unpredictable", "dreadful", "deadly"][id - 135];
+          if (id === 140) return `${ernd(1)} ${ernd(0)} for ${ernd(10)}`;
+          if (id === 141) return `${token(140)} and ${ernd(10)}`;
+          if (id === 142) return `${ernd(11)} by ${ernd(12)}`;
+          if (id === 143) return `${token(140)} but ${token(142)}`;
+          if (id === 144) return `a${ernd(20)} ${ernd(21)}`;
+          if (id === 155) return ernd(13);
+          if (id === 156) return "mountain";
+          if (id === 157) return "edible";
+          if (id === 158) return "tree";
+          if (id === 159) return "spotted";
+          if (id === 160) return ernd(29);
+          if (id === 161) return ernd(30);
+          if (id === 162) return `${ernd(6)}oid`;
+          if (id === 163) return ernd(36);
+          if (id === 164) return ernd(35);
+          if (id === 165) return "ancient";
+          if (id === 166) return "exceptional";
+          if (id === 167) return "eccentric";
+          if (id === 168) return "ingrained";
+          if (id === 169) return ernd(23);
+          if (id >= 170 && id <= 174) return ["killer", "deadly", "evil", "lethal", "vicious"][id - 170];
+          if (id >= 180 && id <= 184) return ["parking meters", "dust clouds", "ice bergs", "rock formations", "volcanoes"][id - 180];
+          if (id === 185) return "plant";
+          if (id === 186) return "tulip";
+          if (id === 187) return "banana";
+          if (id === 188) return "corn";
+          if (id === 189) return `${randomWord()}weed`;
+          if (id === 190) return randomWord();
+          if (id === 191) return `${systemAdj()} ${randomWord()}`;
+          if (id === 192) return `${systemAdj()} ${ernd(13)}`;
+          if (id === 193) return "inhabitant";
+          if (id === 194) return `${systemAdj()} ${randomWord()}`;
+          if (id >= 225 && id <= 229) return ["shrew", "beast", "bison", "snake", "wolf"][id - 225];
+          if (id >= 230 && id <= 234) return ["leopard", "cat", "monkey", "goat", "fish"][id - 230];
+          if (id === 235) return `${ernd(15)} ${ernd(14)}`;
+          if (id === 236) return `${systemAdj()} ${ernd(29)} ${ernd(32)}`;
+          if (id === 237) return `its ${ernd(16)} ${ernd(30)} ${ernd(32)}`;
+          if (id === 238) return `${ernd(33)} ${ernd(34)}`;
+          if (id === 239) return `${ernd(15)} ${ernd(14)}`;
+          if (id >= 240 && id <= 244) return ["meat", "cutlet", "steak", "burgers", "soup"][id - 240];
+          if (id >= 245 && id <= 249) return ["ice", "mud", "zero-g", "vacuum", `${systemAdj()} ultra`][id - 245];
+          if (id >= 250 && id <= 254) return ["hockey", "cricket", "karate", "polo", "tennis"][id - 250];
+          return "mysterious";
+        };
+        return `${ernd(18)} is ${ernd(19)}.`.replace(/\s+/g, " ").trim();
+      }
+
       makeSpecies(seed) {
+        // Source-style "pink felines" string: the adjectives are derived from
+        // s2_hi and (s0_hi EOR s1_hi), then pluralised like the original.
         const sizes = ["Large", "Fierce", "Small", "", "", "", "", ""];
         const colors = ["Green", "Red", "Yellow", "Blue", "Black", "Harmless", "", ""];
         const traits = ["Slimy", "Bug-Eyed", "Horned", "Bony", "Fat", "Furry", "", ""];
@@ -2776,6 +2982,90 @@
         ]);
     }
 
+    function attackedFleeLine(o, profile = {}) {
+      if (isAlienShip(o)) return alienChatterLine(o, "flee");
+      if (profile.timid || ["shuttle", "transporter", "worm"].includes(o.model)) {
+        return pick([
+          "Civilian vessel under fire! Breaking lane!",
+          "No weapons aboard! We are disengaging!",
+          "Control, this is a shuttle taking fire!",
+          "Transport manifest emergency! Fleeing contact!",
+          "We are non-combat traffic! Hold your fire!",
+          "Crew compartment hit! Running for beacon cover!"
+        ]);
+      }
+      if (profile.hauler || o.role === "trader") {
+        return pick([
+          "Hauler under attack. Dumping vector and running!",
+          "Cargo insured, hull isn't. We're leaving!",
+          "Freighter breaking off. Marking attacker hostile.",
+          "Control, commercial vessel fleeing weapons fire!",
+          "No cargo is worth this. Engines to emergency thrust.",
+          "Escort contract clearly expired. We are out."
+        ]);
+      }
+      return pick([
+        "Taking fire. Disengaging!",
+        "Hull strike logged. Running cold!",
+        "Not my fight. Breaking contact.",
+        "Vectoring away from hostile commander.",
+        "Shields unstable. I'm gone."
+      ]);
+    }
+
+    function retaliationLine(o, profile = {}) {
+      if (isAlienShip(o)) return alienChatterLine(o, "threat");
+      if (o.police || o.role === "police") return pick([
+        "Assault on Viper patrol. Weapons free.",
+        "Commander, you have fired on police. Stand by for enforcement.",
+        "Viper unit hit. Pursuit authority granted.",
+        "Patrol shields struck. Returning fire.",
+        "Criminal assault confirmed. Engaging."
+      ]);
+      if (profile.bountyHunter) return pick([
+        "Bad choice, commander. I was hunting bigger game.",
+        "You just made the bounty board.",
+        "Bounty hunter returning fire.",
+        "Assault logged. I'll collect the fine from your wreck.",
+        "You wanted my attention. You have it."
+      ]);
+      if (profile.pirate || o.hostile) return pick([
+        "You shoot first? I respect that.",
+        "Now it's personal, commander.",
+        "Fine. No cargo deal. Just wreckage.",
+        "You'll pay for that scratch.",
+        "Weapons hot. Coming about."
+      ]);
+      return pick([
+        "Self-defence systems live. Back off!",
+        "You fired on the wrong ship.",
+        "Warning ignored. Returning fire.",
+        "I don't want this fight, but I'll finish it.",
+        "Hostile act confirmed. Engaging."
+      ]);
+    }
+
+    function assaultReportLine(o, profile = {}) {
+      if (profile.timid) return pick([
+        `${o.name} reports civilian vessel under attack.`,
+        `Emergency beacon from ${o.name}: weapons impact logged.`,
+        `${o.name} requests immediate patrol support.`,
+        `Control copies distress call from ${o.name}.`
+      ]);
+      if (profile.hauler || o.role === "trader") return pick([
+        `${o.name} reports commercial traffic under fire.`,
+        `Freighter distress beacon received from ${o.name}.`,
+        `${o.name} has marked attacker hostile on trade net.`,
+        `Control copies cargo vessel assault report from ${o.name}.`
+      ]);
+      return pick([
+        `${o.name} reports illegal weapons strike.`,
+        `Assault report received from ${o.name}.`,
+        `${o.name} transponder marks hostile contact.`,
+        `Weapons impact logged by ${o.name}.`
+      ]);
+    }
+
     function mercyLine(o, attackerName = game.commander) {
       if (isAlienShip(o)) return alienChatterLine(o, "mercy");
       if (o.role === "police" || o.police) {
@@ -2813,6 +3103,63 @@
       if (hullFrac > .16 || Math.random() > chance) return;
       o._mercyHailed = true;
       hail(o, mercyLine(o, attackerName));
+    }
+
+    function shipHitReactionChance(o, profile) {
+      if (o.police || o.role === "police") return 1;
+      if (o.thargoid || isAlienShip(o)) return 1;
+      if (o.hostile || profile.pirate || profile.hostile) return .94;
+      if (profile.bountyHunter) return .82;
+      if (profile.timid || o.role === "pod") return .08;
+      if (profile.hauler || o.role === "trader") return .28;
+      return .45;
+    }
+
+    function reactToPlayerAttack(o) {
+      if (!o || o.type !== "ship" || o.role === "pod" || o.hp <= 0) return;
+      const profile = SOURCE_BEHAVIOUR[o.model] || {};
+      const innocent = profile.innocent || (!o.hostile && (o.role === "trader" || profile.trader || profile.hauler || profile.timid));
+      if (innocent && !o._reportedAssault) {
+        o._reportedAssault = true;
+        game.legal = Math.min(60, game.legal + (profile.timid ? 5 : 8));
+        commsMessage(stationCommsName(), assaultReportLine(o, profile), "station");
+        if (nearStationSafeZone()) provokeStationPolice(`${o.name} attacked near the station`);
+        else if (Math.random() < .42) spawnPoliceResponse();
+      }
+
+      const hullFrac = o.maxHp ? o.hp / o.maxHp : 1;
+      const shouldFlee = !o.police && !o.thargoid && (
+        o.role === "trader" ||
+        profile.timid ||
+        profile.hauler ||
+        (innocent && hullFrac < .72)
+      );
+      const fightChance = shipHitReactionChance(o, profile);
+      if (shouldFlee && Math.random() > fightChance) {
+        o.hostile = false;
+        o.target = null;
+        o.aiMode = "flee";
+        o.fleeFrom = { ...game.camera.pos };
+        o._fleeCommitted = true;
+        if (!o._fleeHailed) {
+          o._fleeHailed = true;
+          shipHail(o, "flee", attackedFleeLine(o, profile), .92, 12000);
+        }
+        return;
+      }
+
+      if (Math.random() <= fightChance) {
+        o.hostile = true;
+        o.target = null;
+        o.aiMode = "attack";
+        o.attackClock = Math.min(o.attackClock || .35, .28 + Math.random() * .55);
+        o._fleeCommitted = false;
+        if (o.role === "trader" && !profile.timid && !profile.hauler) o.role = "retaliating";
+        if (!o._retaliationHailed) {
+          o._retaliationHailed = true;
+          hail(o, retaliationLine(o, profile));
+        }
+      }
     }
 
     function policeScrambleLine() {
@@ -3052,6 +3399,21 @@
       const dest = galaxies[game.galaxy][game.target].name;
       const good = GOODS[Math.floor(Math.random() * GOODS.length)][0];
       if (isAlienShip(o)) return alienChatterLine(o, "ambient");
+      if (o.aiMode === "flee") return pick([
+        "Keeping distance from hostile contact.",
+        "Emergency vector set. No cargo is worth this.",
+        "Mayday logged. Running for clear space.",
+        "Shields unstable. Requesting patrol cover.",
+        "Breaking traffic lane, under fire.",
+        "If anyone asks, I was never on this route."
+      ]);
+      if (o.role === "retaliating") return pick([
+        "Self-defence profile armed.",
+        "Attacker marked. Holding weapons hot.",
+        "I gave them a warning. Now I give them fire.",
+        "Private vessel returning unlawful fire.",
+        "Combat log open. Let's settle this."
+      ]);
       if (o.police) return pick([
         "Routine sweep. Keep your transponder on.",
         `Scan complete: ${game.legal > 30 ? "fugitive-class vessel in sector." : "all clean."}`,
@@ -3460,9 +3822,34 @@
         o.type === "asteroid" ||
         o.type === "boulder" ||
         o.type === "splinter" ||
-        o.type === "canister" ||
-        o.type === "plate"
+        ((o.type === "canister" || o.type === "plate") && !game.equipment.fuelScoop)
       );
+    }
+
+    function largeCollisionBody(o) {
+      return o && !o._remove && (
+        o.type === "station" ||
+        o.type === "hermit" ||
+        o.type === "planet" ||
+        o.type === "sun"
+      );
+    }
+
+    function largeCollisionRadius(o) {
+      if (o.type === "planet" || o.type === "sun") return Math.max(80, o.r || 80);
+      if (o.type === "station") return Math.max(120, modelBoundingRadius(stationModelFor(o)) * .9);
+      if (o.type === "hermit") return Math.max(80, objectCollisionRadius(o) * 1.12);
+      return Math.max(80, o.r || objectCollisionRadius(o));
+    }
+
+    function inStationDockingCorridor(st) {
+      if (!st || st.type !== "station") return false;
+      const { center, outward } = stationSlotAxes(st);
+      const rel = sub(game.camera.pos, center);
+      const depth = dot(rel, outward);
+      const lateral = len(sub(rel, scale(outward, depth)));
+      const slotFacing = Math.abs(Math.sin(st.rot || 0)) < .45;
+      return slotFacing && depth > -95 && depth < 310 && lateral < 92 && game.speed < 85;
     }
 
     function bodyVelocity(o) {
@@ -3556,6 +3943,36 @@
       setMessage(`${arc === "aft" ? "Aft" : "Fore"} shield collision.`);
     }
 
+    function handlePlayerLargeCollision(o) {
+      if (!largeCollisionBody(o) || game.docked || game.transition) return;
+      if (o.type === "station" && inStationDockingCorridor(o)) return;
+      const bodyR = largeCollisionRadius(o);
+      const playerR = playerCollisionRadius();
+      const delta = sub(game.camera.pos, o.pos);
+      const d = len(delta);
+      const minD = bodyR + playerR;
+      if (d >= minD) return;
+
+      const away = d > .001 ? scale(delta, 1 / d) : scale(forwardVector(game.camera), -1);
+      const overlap = minD - d + 2;
+      game.camera.pos = add(game.camera.pos, scale(away, overlap));
+
+      const fwd = forwardVector(game.camera);
+      const intoSurface = dot(scale(fwd, game.speed || 0), away) < 0;
+      const sizeImpact = o.type === "planet" || o.type === "sun" ? 18 : 8;
+      const impact = clamp(sizeImpact + (game.speed || 0) / 13 + overlap / 28, 12, o.type === "sun" ? 95 : 62);
+      game.speed = clamp(game.speed * (intoSurface ? .16 : .62), 0, game.maxSpeed);
+
+      const now = performance.now();
+      if (o._playerCollisionAt && now - o._playerCollisionAt < 900) return;
+      o._playerCollisionAt = now;
+      const label = o.type === "sun" ? "stellar impact" : o.type === "planet" ? "planetary impact" : `${o.name || o.type} collision`;
+      const arc = damagePlayer(impact, label, { sourcePos: o.pos });
+      eliteAudio.play("hit");
+      game.screenShake = Math.max(game.screenShake || 0, clamp(impact / 16, 1, 3.2));
+      setMessage(o.type === "sun" ? "STELLAR IMPACT" : o.type === "planet" ? "PLANETARY IMPACT" : `${arc === "aft" ? "Aft" : "Fore"} shield collision.`);
+    }
+
     function resolveObjectCollisions() {
       const bodies = game.objects.filter(collisionBody);
       const now = performance.now();
@@ -3607,8 +4024,9 @@
       const sun = game.objects.find((o) => o.type === "sun");
       let targetHeat = 0;
       if (sun) {
-        const surfaceDist = Math.max(1, len(sub(sun.pos, game.camera.pos)) - sun.r * .45);
-        targetHeat = clamp(Math.pow((sun.r * 2.9) / surfaceDist, 2.35) * 30, 0, 125);
+        const heatRadius = sun.heatRadius || sun.r;
+        const surfaceDist = Math.max(1, len(sub(sun.pos, game.camera.pos)) - heatRadius * .45);
+        targetHeat = clamp(Math.pow((heatRadius * 2.9) / surfaceDist, 2.35) * 30, 0, 125);
       }
       const response = targetHeat > game.cabinTemp ? 1.25 : .42;
       game.cabinTemp += (targetHeat - game.cabinTemp) * clamp(dt * response, 0, 1);
@@ -3746,7 +4164,7 @@
         yellowDwarf: { label: "Yellow Dwarf", hue: 43 + rng() * 10, sat: 100, coreLight: 93, midLight: 74, rimLight: 48, sizeMul: .9 + rng() * .22, glowMul: 1.55, corona: .4, flare: .14, spots: .06 },
         blueWhite: { label: "Blue-White Star", hue: 212 + rng() * 18, sat: 68, coreLight: 98, midLight: 84, rimLight: 58, sizeMul: 1.08 + rng() * .28, glowMul: 1.95, corona: .62, flare: .32, spots: .02 },
         whiteDwarf: { label: "White Dwarf", hue: 205 + rng() * 20, sat: 34, coreLight: 99, midLight: 90, rimLight: 66, sizeMul: .34 + rng() * .12, glowMul: 2.45, corona: .5, flare: .08, spots: 0 },
-        redGiant: { label: "Red Giant", hue: 3 + rng() * 16, sat: 90, coreLight: 82, midLight: 48, rimLight: 22, sizeMul: 6.4 + rng() * 2.2, glowMul: 1.08, corona: .16, flare: .5, spots: 0 }
+        redGiant: { label: "Red Giant", hue: 3 + rng() * 16, sat: 90, coreLight: 82, midLight: 48, rimLight: 22, sizeMul: 11.5 + rng() * 4.2, heatMul: 1.15, glowMul: 1.08, corona: .16, flare: .5, spots: 0 }
       };
       return { kind, ...profiles[kind], seed: hash32(`${sys.name}:stellar-surface`) };
     }
@@ -3795,11 +4213,15 @@
         hp: 9999, hostile: false
       };
       const stellar = stellarProfileForSystem(sys);
-      const sunR = planetR * lerp(.65, 1.05, rng()) * stellar.sizeMul;
+      const baseSunR = planetR * lerp(.65, 1.05, rng());
+      const sunR = baseSunR * stellar.sizeMul;
       const sunDir = norm(vec((rng() - .5) * 2, (rng() - .5) * 1.1, -(1.2 + rng() * 1)));
-      const sunDist = sunR * lerp(stellar.kind === "whiteDwarf" ? 14 : stellar.kind === "redGiant" ? 1.85 : 9, stellar.kind === "whiteDwarf" ? 20 : stellar.kind === "redGiant" ? 2.65 : 14, rng());
+      const heatRadius = baseSunR * (stellar.heatMul || stellar.sizeMul);
+      const sunDist = sunR * lerp(stellar.kind === "whiteDwarf" ? 14 : stellar.kind === "redGiant" ? 2.25 : 9, stellar.kind === "whiteDwarf" ? 20 : stellar.kind === "redGiant" ? 3.05 : 14, rng());
       const sun = {
         type: "sun", name: stellar.label.toUpperCase(), pos: scale(sunDir, sunDist), r: sunR,
+        heatRadius,
+        scoopRadius: heatRadius + 220,
         stellarClass: stellar.kind,
         stellarLabel: stellar.label,
         hue: stellar.hue,
@@ -4211,10 +4633,17 @@
             game.objects = [];
             game.stars = Array.from({ length: 264 }, (_, i) => vec((Math.random() - .5) * 2600, (Math.random() - .5) * 1600, Math.random() * 2600 - 900));
             for (let i = 0; i < 4; i++) {
-              game.objects.push({
+              const stats = shipStats("thargoid");
+              const thargoid = {
                 type: "ship", model: "thargoid", name: "THARGOID", pos: vec((Math.random() - .5) * 900, (Math.random() - .5) * 500, 700 + Math.random() * 900),
-                vel: vec(0, 0, -35), rot: Math.random() * TAU, pitch: 0, r: shipStats("thargoid").r, color: shipColor("thargoid"), hp: shipStats("thargoid").hp, maxHp: shipStats("thargoid").hp, hostile: true, bounty: 250, thargoid: true
-              });
+                vel: vec(0, 0, -35), rot: Math.random() * TAU, pitch: 0, r: stats.r, color: shipColor("thargoid"),
+                hp: stats.hp, maxHp: stats.hp, hostile: true, role: "alien", bounty: 500, thargoid: true,
+                aiMode: "attack", attackClock: .35 + Math.random() * .65, wobble: Math.random() * TAU,
+                npcMissiles: npcMissileStock("thargoid", "alien", false),
+                decalSeed: hash32(`witchspace:${Date.now() >> 10}:${i}:thargoid`)
+              };
+              setNoseDirection(thargoid, sub(game.camera.pos, thargoid.pos), thargoid.roll || 0);
+              game.objects.push(thargoid);
             }
             game.docked = false;
             game.speed = 50;
@@ -4392,7 +4821,8 @@
       best.hp -= isRockTarget && game.equipment.miningLaser ? laser.damage * (laser.rockMul || 2) : laser.damage;
       eliteAudio.play("hit");
       setMessage(`${best.name} hit.`);
-      reportStationWeaponOffence(best);
+      if (best.type === "ship") reactToPlayerAttack(best);
+      else reportStationWeaponOffence(best);
       maybeHailMercy(best, game.commander, 1);
       if (best.hp <= 0) destroyObject(best);
     }
@@ -5176,6 +5606,250 @@
       ["0.1.4", "Added commander file download/upload saves, ship preview scaling and expanded source-derived ship catalogue."],
       ["0.1.0", "Initial browser experiment: deterministic galaxies, market trading, docking, hyperspace, combat, equipment, cargo scooping and classic wireframe presentation."]
     ];
+    const ABOUT_HEADINGS = new Set([
+      "An Entire Universe in Almost No Memory",
+      "Watford Electronics and the World's Least Efficient Commute",
+      "Enter the Machines",
+      "Just One More Small Feature",
+      "A Glorious Geek-Fest of Elite",
+      "Procedurally Generated Scope Creep",
+      "One Webpage, No Sensible Limits"
+    ]);
+    const ABOUT_COPY = String.raw`Five Days, Two AI Coding Agents and a Slightly Unnecessary Number of Supernovas
+
+Back in the late 1980s, like thousands of other impressionable young computer owners, I became completely addicted to a game called Elite.
+
+I first encountered it at the house of my best mate, Ronnie Barker—not, regrettably, the famous comedian, although the name did lend the whole arrangement a certain sitcom quality.
+
+It was Ronnie's BBC Micro, which meant that he was naturally the commander-in-chief and I only occasionally got a turn at the controls. Most of the time, I served as navigator, trading adviser, back-seat pilot and unsolicited expert on how he should have handled the docking approach he had just completely ruined.
+
+We staged several heroic all-night sessions, sustained by vast platefuls of ham-and-salad sandwiches made with Mighty White bread, several litres of Cherry Coke and some distinctly amateur experimentation with smoking.
+
+The soundtrack was provided by two cassettes that seemed to play in an endless loop: Dire Straits' Love Over Gold, released in September 1982, and Genesis's Invisible Touch, released in June 1986.
+
+Between them, they became the unofficial soundtrack to interstellar trading, piracy and repeated failure to dock properly. For hours, Mark Knopfler and Phil Collins took turns accompanying us around the galaxy while the cassette deck quietly prepared to play the whole lot again.
+
+It was probably not a lifestyle recommended by doctors, parents, musicians or computer manufacturers, but at the time it felt like ideal preparation for a career in interstellar commerce.
+
+For hours, we flew, traded, fought pirates and attempted to dock without converting the ship into an expensive cloud of wireframe debris. By morning, the room would be full of smoke, sandwich crumbs, cassette hiss and the glow of the television, while Ronnie and I remained completely convinced that travelling to another procedurally generated star system was far more important than sleep.
+
+A couple of years after the BBC Master was released in 1986, my parents bought me one of my own.
+
+At last, I no longer had to wait patiently for Ronnie to surrender the controls. I could now lose entire nights, crash into space stations and make catastrophic trading decisions in the comfort of my own home.
+
+Ronnie had a colour monitor.
+
+I got a green monochrome one.
+
+At the time, this felt slightly less glamorous, but I suspect it left a permanent mark on me, because the HUD in Ultra Elite is green. I did not consciously set out to recreate my old monitor, but apparently some design decisions spend forty years quietly waiting for another opportunity.
+
+An Entire Universe in Almost No Memory
+
+Elite was created by Ian Bell and David Braben and originally published by Acornsoft for the BBC Micro in 1984.
+
+It was written largely in 6502 assembly language and was an astonishing feat of software engineering. The BBC Micro had just 32KB of RAM—a quantity of memory that modern software can now consume while deciding whether a button should have rounded corners.
+
+Despite those constraints, Elite gave us fast wireframe 3D graphics, hidden-line removal, spaceships, space stations, trading, combat, docking, pirates, police, fuel scoops and the ever-present possibility of being murdered while carrying seven tonnes of luxury goods.
+
+It also contained eight procedurally generated galaxies, each with 256 star systems.
+
+Every system had its own name, economy, government, population, species and gloriously strange description. Because the generation was deterministic, everyone who played experienced the same universe. Lave was always Lave. Diso was always Diso. And somewhere out there was always a planet best known for its inhabitants' exciting new cuisine or their inexplicably passionate hatred of something very specific.
+
+It was extraordinarily clever.
+
+More than forty years later, I am still slightly baffled by what Bell and Braben managed to achieve with such limited memory and processing power. The entire game occupied less data than a fairly modest modern email attachment, yet somehow managed to make the BBC Micro feel as though it contained a complete universe.
+
+The series eventually evolved through several sequels and, much later, into Elite Dangerous: an enormous online space-trading and combat simulator with multiplayer, planetary exploration, billions of star systems and more controls than the average commercial airliner.
+
+But I have always retained enormous affection for the original.
+
+For me, Elite was an introduction to what computer games could really be.
+
+It was not merely a collection of blocks falling down a screen or a little man jumping between platforms. It felt like an actual universe—one that existed whether I was playing it or not.
+
+Watford Electronics and the World's Least Efficient Commute
+
+A few years later, at the age of sixteen, Ronnie and I ended up with Saturday jobs at Watford Electronics—one of the best-known suppliers of BBC Micro hardware, upgrades and peripherals.
+
+Getting there required a degree of commitment entirely out of proportion to the salary. We cycled roughly fifteen miles from Barnet to Watford, worked all day for the princely sum of £1.15 an hour, and then cycled fifteen miles home again.
+
+Not that much of the money ever made it home with us.
+
+Most weeks, we spent our wages in the shop before leaving the building, buying computer parts, upgrades and assorted electronic treasures. Watford Electronics had effectively invented a closed-loop payroll system in which the money briefly appeared on our payslips before returning immediately to the till.
+
+Unfortunately, they were not always the most inspiring employers.
+
+On one memorable occasion, a customer came in with a faulty computer. I managed to work out what was wrong and fix it for them, which I rather naively assumed was exactly the sort of thing a computer shop might consider useful.
+
+Instead, I got told off.
+
+Apparently, diagnosing and repairing a customer's computer showed altogether too much initiative for a sixteen-year-old Saturday employee. I had crossed some invisible boundary between "cheap shop assistant" and "person who was actually helping."
+
+So the employment package consisted of £1.15 an hour, a thirty-mile bicycle commute, the opportunity to hand most of our wages straight back to our employer, and occasional disciplinary action for being competent.
+
+Naturally, at the time, we still thought it was brilliant.
+
+Having spent our childhoods staying up all night playing with BBC computers, Ronnie and I had somehow found jobs surrounded by the machines, upgrades and electronic components we obsessed over.
+
+It was less a carefully planned career path than a failure to escape orbit.
+
+Enter the Machines
+
+With the AI coding tools now at our disposal, I recently decided to conduct a small experiment.
+
+I gave myself a few constraints.
+
+I would create my own tribute to the original Elite: a browser-based space-trading and combat game inspired by the look, feel and systems of the 1984 original.
+
+It would run in a web browser.
+
+It would be contained in a single HTML file.
+
+And I would not personally write a single line of code.
+
+Five days later—having consumed virtually all my available credits, tokens and possibly several acres of data-centre cooling water—I had produced a surprisingly faithful recreation using Anthropic's Claude Code and OpenAI Codex.
+
+Saying that it took five days is, however, slightly misleading.
+
+The basic wireframe game was working after roughly two days.
+
+The remaining three days were spent adding things that the project absolutely did not need.
+
+This process is sometimes known as "scope creep."
+
+In my case, it was less of a creep and more of a full-scale military invasion.
+
+Just One More Small Feature
+
+I began with a simple wireframe homage to Elite.
+
+Then I thought the ships might look better with proper surfaces.
+
+So I added surfaces.
+
+The surfaces looked a little plain, so I added textures.
+
+The textures looked rather flat, so I added directional lighting, reflections and glow effects.
+
+The engines still appeared slightly lifeless, so I added animated exhausts, ion trails and luminous engine flares.
+
+Then the launch sequence seemed a bit abrupt, so I added a cinematic launch sequence.
+
+Naturally, once I had a launch sequence, I needed a docking sequence.
+
+And once I had docking and launch sequences, it seemed ridiculous not to build the interiors of the station hangars.
+
+These became the game's loading and docked environments, complete with animated machinery, service vehicles, landing pads, atmospheric lighting and various pieces of equipment whose exact purpose remains a mystery even to me.
+
+I added animated cockpit displays, targeting systems, pilot radio chatter and a more sophisticated rendering engine.
+
+I added genuine 3D laser calculations, docking-computer guidance, collision detection, engine trails, weapon glows and cut-scene animations.
+
+At some point, I apparently forgot that I was making a tribute to a wireframe game from 1984.
+
+A Glorious Geek-Fest of Elite
+
+To make the underlying universe reasonably faithful, I turned to Mark Moxon's extraordinary Elite on the 6502 website.
+
+The site is a glorious geek-fest of all things Elite: original source code, detailed annotations, technical explanations, comparisons between different versions, deep dives into the game's inner workings and enough historical and programming detail to make an entire weekend disappear without warning.
+
+You can begin by reading about procedural galaxy generation and, several hours later, find yourself studying hidden-line removal, ship-drawing routines, flight mechanics and the ingenious tricks used to squeeze an entire universe into a few tens of kilobytes.
+
+It is less a website and more an archaeological excavation conducted by someone who found a 6502 processor instead of a Roman villa.
+
+For this project, it proved invaluable.
+
+Mark's research helped me understand and reconstruct the original procedural galaxy-generation system, so the familiar systems, economies, populations, governments and descriptions closely match those of the classic game.
+
+The site also documents the ship blueprints and rendering data in a form considerably more approachable than the raw assembly language.
+
+I used that information to rebuild the original vessels from their vertices and edges, creating an object library that remains recognisably faithful to the original designs.
+
+Except that my versions now have surfaces.
+
+And materials.
+
+And lights.
+
+And windows.
+
+And rather more dramatic engines.
+
+Procedurally Generated Scope Creep
+
+Then I made the mistake of thinking about planets.
+
+Obviously, an industrial planet could not look the same as an agricultural planet.
+
+Industrial worlds needed to appear darker, more urbanised and polluted. Agricultural and low-population worlds needed to look greener and bluer. Some required deserts, ice caps or cloud systems. Others needed rings or dusty, toxic atmospheres.
+
+These details are generated from the properties and descriptions of each system, so the appearance of a planet reflects the information behind it rather than being selected entirely at random.
+
+And if I was going to have different planets, I would clearly need different types and colours of stars.
+
+Once the stars had different colours, their light obviously needed to be reflected in the windows and hulls of every nearby ship.
+
+Anything less would have been completely unacceptable.
+
+The background stars also looked slightly too peaceful, so I added the occasional supernova.
+
+Again, essential.
+
+One Webpage, No Sensible Limits
+
+The resulting game, now called Ultra Elite, is entirely open source and, rather improbably, remains contained within a single webpage: one HTML file containing its JavaScript, rendering code, game logic, ship data, procedural-generation system, audio, animations and all the other machinery required to make it work.
+
+That single file is now around 500KB and contains roughly 11,500 lines of code—which is either impressively compact or evidence that I have completely lost control of the project.
+
+Despite all the textures, lighting, reflections, engine glows, atmospheric planets, supernovas and cinematic sequences, Ultra Elite still includes an old-school mode.
+
+Switch it on and the fancy bits disappear. The ships return to wireframe, the visual effects are stripped back and the game once again looks much closer to the original BBC Micro version.
+
+No textured hulls.
+
+No glowing engines.
+
+No dramatic atmospheric lighting.
+
+Just crisp wireframes, black space, a green HUD and the persistent possibility of dying because you still cannot dock properly.
+
+It felt important to preserve that mode. The modern effects are fun, but the stark wireframe look is what made the original Elite so distinctive—and, even after all these years, it still has a charm and atmosphere entirely of its own.
+
+Nothing has been copied and pasted from the original game's source code.
+
+It is a new implementation, built from scratch, but informed by research into how the original systems, ships and procedural universe worked.
+
+What I have created is not intended to replace or compete with Elite.
+
+It is a tribute to it: a celebration of the ideas, ingenuity and extraordinary technical skill behind the original.
+
+It is also an experiment in what one person can now create with modern AI coding tools, even when that person repeatedly responds to a nearly finished project by saying:
+
+"That looks good—but wouldn't it be better if the station had a fully modelled hangar?"
+
+It is not quite finished.
+
+There are still bugs to eliminate, systems to balance and features that could be improved.
+
+There are also, almost certainly, several more entirely unnecessary visual effects waiting to be added.
+
+But it is already playable, surprisingly satisfying and, considering that it runs from a single 500KB HTML file assembled in five days, I think it looks rather good.
+
+I have also tested it extremely thoroughly.
+
+By which I mean I have spent several hours flying around, trading, shooting things and repeatedly crashing into space stations while calling it software development.
+
+I even pulled a full all-nighter while building it, which felt oddly appropriate.
+
+In some respects, very little has changed since Ronnie's house.
+
+The Mighty White ham-and-salad sandwiches have gone. Cherry Coke has been replaced by Coke Zero and industrial quantities of coffee.
+
+I am, regrettably, still smoking—although I really must give some serious thought to stopping.
+
+The technology has changed beyond recognition, but the basic ingredients remain remarkably familiar: too much caffeine, not enough sleep and a complete inability to leave Elite alone.
+
+More than forty years later, I am still staying up all night because of the same game.`;
     const SAVE_KEY = "ultraEliteSave";
     const SAVE_FORMAT = "ultra-elite-commander";
     const SAVE_FIELDS = ["commander", "galaxy", "current", "target", "credits", "fuel", "kills", "legal", "playerShip", "cargoCap", "missiles", "graphicsMode", "fxLevel"];
@@ -5403,8 +6077,9 @@
           }
           else if (o.vel) o.pos = add(o.pos, scale(o.vel, dt));
           if ((o.type === "canister" || o.type === "plate") && game.equipment.fuelScoop && len(sub(o.pos, game.camera.pos)) < 38) scoopCargo(o);
-          handlePlayerCollision(o);
-          if (o.type === "sun" && game.equipment.fuelScoop && len(sub(o.pos, game.camera.pos)) < o.r + 220) {
+          if (!o._remove) handlePlayerCollision(o);
+          if (!o._remove) handlePlayerLargeCollision(o);
+          if (o.type === "sun" && game.equipment.fuelScoop && len(sub(o.pos, game.camera.pos)) < (o.scoopRadius || o.r + 220)) {
             game.fuel = clamp(game.fuel + dt * .18, 0, 7);
           }
         }
@@ -5466,11 +6141,13 @@
         const away = sub(game.camera.pos, o.pos);
         const d = len(away);
         if (d <= .001) continue;
-        const radius = (o.r || (MODELS[o.model] ? modelBoundingRadius(MODELS[o.model]) : 20) || 20) + 110;
-        const range = Math.max(230, radius * 3);
+        const radius = (o.r || (MODELS[o.model] ? modelBoundingRadius(MODELS[o.model]) : 20) || 20) + 155;
+        const range = Math.max(360, radius * 4.2);
         if (d > range) continue;
         const pressure = clamp((range - d) / range, 0, 1);
-        avoid = add(avoid, scale(norm(away), pressure * pressure));
+        const closing = dot(bodyVelocity(o), norm(away));
+        const closingBoost = closing > 12 ? clamp(closing / 120, 0, .65) : 0;
+        avoid = add(avoid, scale(norm(away), pressure * pressure * (1 + closingBoost)));
         nearest = Math.min(nearest, d - radius);
       }
       return { dir: len(avoid) > .001 ? norm(avoid) : null, nearest };
@@ -5503,23 +6180,48 @@
       const right = norm(cross(slot.up, slot.outward));
       const frontness = dot(sub(game.camera.pos, slot.center), slot.outward);
       const marshal = add(slot.center, add(scale(slot.outward, 1380), add(scale(right, 520), scale(slot.up, 210))));
+      const goSide = state.goSide || (state.goSide = Math.random() < .5 ? -1 : 1);
+      const goAround = add(slot.center, add(scale(slot.outward, 1720), add(scale(right, goSide * 760), scale(slot.up, 320))));
       const approach = add(slot.center, scale(slot.outward, 760));
       const final = add(slot.center, scale(slot.outward, 118));
       const relToAxis = sub(game.camera.pos, slot.center);
       const lateral = len(sub(relToAxis, scale(slot.outward, dot(relToAxis, slot.outward))));
       const stageTarget = state.stage === "marshal"
         ? (frontness < 420 ? marshal : approach)
-        : state.stage === "approach"
+        : state.stage === "goAround"
+          ? goAround
+          : state.stage === "approach"
           ? approach
           : state.stage === "align"
             ? final
             : slot.center;
       const toTarget = sub(stageTarget, game.camera.pos);
       const d = len(toTarget);
-      if (state.stage === "marshal" && d < 170 && frontness > 420) state.stage = "approach";
-      if (state.stage === "approach" && d < 105 && lateral < 115) state.stage = "align";
+      const slotDist = len(sub(game.camera.pos, slot.center));
+      const avoidance = dockingComputerAvoidance();
+      const trafficClose = Number.isFinite(avoidance.nearest) && avoidance.nearest < 95;
       const forward = forwardVector(game.camera);
       const alignment = dot(forward, inward);
+      const offTrajectory = state.stage !== "marshal" && state.stage !== "goAround" && (
+        (state.stage === "approach" && (lateral > 430 || frontness < 260)) ||
+        (state.stage === "align" && (lateral > 260 || frontness < 95)) ||
+        (state.stage === "final" && (lateral > 128 || frontness < -28 || alignment < .93 || trafficClose))
+      );
+      state.offTrackTime = offTrajectory ? (state.offTrackTime || 0) + dt : Math.max(0, (state.offTrackTime || 0) - dt * 1.8);
+      if (state.stage !== "goAround" && state.offTrackTime > .95) {
+        state.stage = "goAround";
+        state.offTrackTime = 0;
+        state.goSide *= -1;
+        state.announced = "";
+        commsMessage("TRAFFIC CONTROL", "Approach unstable. Go around and re-enter the lane.", "station");
+      }
+      if (state.stage === "goAround" && d < 190 && frontness > 980) {
+        state.stage = "marshal";
+        state.offTrackTime = 0;
+        state.announced = "";
+      }
+      if (state.stage === "marshal" && d < 170 && frontness > 420) state.stage = "approach";
+      if (state.stage === "approach" && d < 105 && lateral < 115) state.stage = "align";
       if (state.stage === "align" && d < 55 && alignment > .988) state.stage = "final";
 
       const freshStage = state.stage !== state.announced;
@@ -5527,6 +6229,8 @@
         state.announced = state.stage;
         const line = state.stage === "marshal"
           ? "Docking computer: acquiring front approach lane."
+          : state.stage === "goAround"
+            ? "Docking computer: go-around. Reacquiring approach."
           : state.stage === "approach"
             ? "Docking computer: lining up with station slot."
             : state.stage === "align"
@@ -5540,24 +6244,23 @@
         : state.stage === "align"
           ? norm(add(scale(inward, 3.8), scale(toTarget, .004)))
           : norm(toTarget);
-      const avoidance = dockingComputerAvoidance();
-      const avoidWeight = state.stage === "final" ? .16 : state.stage === "align" ? .28 : .48;
+      const avoidWeight = state.stage === "final" ? .28 : state.stage === "align" ? .44 : state.stage === "goAround" ? .72 : .66;
       const steeredDir = avoidance.dir ? norm(add(desiredDir, scale(avoidance.dir, avoidWeight))) : desiredDir;
       const desiredQ = quatLookRotation(steeredDir, slot.up);
-      const turnRate = state.stage === "final" ? 2.8 : state.stage === "align" ? 2.35 : 1.75;
+      const turnRate = state.stage === "final" ? 3.15 : state.stage === "align" ? 2.85 : state.stage === "goAround" ? 2.45 : 2.05;
       game.camera.q = quatSlerp(ensureCameraQuat(game.camera), desiredQ, 1 - Math.exp(-turnRate * dt));
       game.rollRate = 0;
       game.pitchRate = 0;
       game.yawRate = 0;
 
       const targetSpeed = state.stage === "marshal" ? (d > 500 ? 118 : 72)
-        : state.stage === "approach" ? (d > 260 ? 70 : 42)
+        : state.stage === "goAround" ? (d > 520 ? 108 : 76)
+          : state.stage === "approach" ? (d > 260 ? 70 : 42)
           : state.stage === "align" ? 26
             : 24;
-      const avoidSlow = avoidance.nearest < 140 ? .52 : avoidance.nearest < 260 ? .74 : 1;
+      const avoidSlow = avoidance.nearest < 115 ? .42 : avoidance.nearest < 240 ? .66 : avoidance.nearest < 380 ? .84 : 1;
       game.speed = lerp(game.speed, targetSpeed * avoidSlow, dt * (state.stage === "final" ? 1.8 : 1.25));
 
-      const slotDist = len(sub(game.camera.pos, slot.center));
       state.hud = {
         stage: state.stage,
         range: d,
@@ -5807,8 +6510,45 @@
       });
     }
 
+    function launchThargon(mothership) {
+      const stats = shipStats("thargon");
+      const forward = shipForward(mothership);
+      const side = shipRight(mothership);
+      const up = norm(cross(side, forward));
+      const offset = add(scale(forward, Math.max(58, (mothership.r || 90) * .55)), add(scale(side, (Math.random() - .5) * 90), scale(up, (Math.random() - .5) * 55)));
+      const thargon = {
+        type: "ship",
+        model: "thargon",
+        name: "THARGON",
+        pos: add(mothership.pos, offset),
+        vel: add(scale(forward, 95), scale(side, (Math.random() - .5) * 35)),
+        rot: mothership.rot || 0,
+        pitch: mothership.pitch || 0,
+        roll: Math.random() * TAU,
+        r: stats.r,
+        color: shipColor("thargon"),
+        hp: stats.hp,
+        maxHp: stats.hp,
+        hostile: true,
+        role: "alien",
+        thargon: true,
+        aiMode: "attack",
+        target: null,
+        bounty: 50,
+        attackClock: .45 + Math.random() * .75,
+        wobble: Math.random() * TAU,
+        npcMissiles: 0,
+        decalSeed: hash32(`${mothership.decalSeed || 1}:thargon:${Math.floor(Math.random() * 99999)}`)
+      };
+      setNoseDirection(thargon, sub(game.camera.pos, thargon.pos), thargon.roll);
+      game.objects.push(thargon);
+      eliteAudio.play("missile");
+      setMessage("THARGOID launches Thargon drone!", true);
+      if (Math.random() < .65) hail(mothership, hostileThreatLine(mothership));
+    }
+
     function fireAtShip(attacker, target) {
-      const dmg = attacker.thargoid ? 16 : attacker.role === "police" ? 13 : 10;
+      const dmg = npcCombatProfile(attacker).damage;
       pushEnemyLaserShot(attacker, target.pos, target.r || 50);
       eliteAudio.play("enemyLaser");
       target.hp -= dmg;
@@ -5824,6 +6564,13 @@
       if (!o._hailed && Math.random() < .5) {
         o._hailed = true;
         hail(o, hostileThreatLine(o));
+      }
+      const profile = npcCombatProfile(o);
+      const thargon = o.thargoid && (o.npcMissiles || 0) > 0 && Math.random() < profile.thargonChance;
+      if (thargon) {
+        o.npcMissiles--;
+        launchThargon(o);
+        return;
       }
       const missile = (o.npcMissiles || 0) > 0 && !o.thargoid && Math.random() < .3;
       if (missile) {
@@ -5846,7 +6593,7 @@
       else pushEnemyLaserShot(o);
       eliteAudio.play("enemyLaser");
       game.screenShake = Math.max(game.screenShake || 0, o.thargoid ? 1.65 : 1.15);
-      const arc = damagePlayer(o.thargoid ? 14 : 8, o.name, { sourcePos: o.pos });
+      const arc = damagePlayer(profile.damage, o.name, { sourcePos: o.pos });
       if (externalTarget && game.energy < energyBefore) {
         const towardAttacker = norm(sub(o.pos, game.camera.pos));
         const hitPos = add(game.camera.pos, scale(towardAttacker, playerRadius * .38));
@@ -5966,6 +6713,7 @@
       }
 
       if (o.hostile) {
+        const profile = npcCombatProfile(o);
         // Distance-banded tactics, echoing the source's tactics routine ("ships that are
         // too close turn away" / appropriately-ranged aggressive ships close in): without
         // this, ships always steered toward a point near the player's nose regardless of
@@ -5996,11 +6744,11 @@
           desired = sub(lead, o.pos);
         }
         const speedMul = shipStats(o.model).speed || 1;
-        steerVelocity(o, add(desired, avoidStation), dt, o.thargoid ? 150 : 115, (o.thargoid ? 150 : 128) * speedMul);
+        steerVelocity(o, add(desired, avoidStation), dt, profile.accel, profile.maxSpeed * speedMul);
         o.attackClock -= dt;
-        if (o.attackClock <= 0 && d > 130 && d < 900) {
-          o.attackClock = 1.3 + Math.random() * 1.5;
-          if (isAlienShip(o) && Math.random() < .32) hail(o, hostileThreatLine(o));
+        if (o.attackClock <= 0 && d > profile.minRange && d < profile.range) {
+          o.attackClock = profile.cooldownMin + Math.random() * profile.cooldownJitter;
+          if (isAlienShip(o) && Math.random() < .42) hail(o, hostileThreatLine(o));
           if (o.target) fireAtShip(o, o.target);
           else fireAtPlayer(o);
         }
@@ -6999,10 +7747,10 @@
       const p = projectFn(cam);
       return p ? { cam, u: (a.u + b.u) / 2, v: (a.v + b.v) / 2, x: p.x, y: p.y } : null;
     }
-    function subdivideTexTri(targetCtx, img, A, B, C, projectFn, depth, maxPx = TEX_SUBDIV_PX) {
+    function subdivideTexTri(targetCtx, img, A, B, C, projectFn, depth, maxPx = TEX_SUBDIV_PX, maxDepth = 5) {
       const ab = texEdgeLen(A, B), bc = texEdgeLen(B, C), ca = texEdgeLen(C, A);
       const longest = Math.max(ab, bc, ca);
-      if (depth >= 5 || longest < maxPx) {
+      if (depth >= maxDepth || longest < maxPx) {
         drawTexturedTriangle(targetCtx, img, A.x, A.y, B.x, B.y, C.x, C.y, A.u, A.v, B.u, B.v, C.u, C.v);
         return;
       }
@@ -7010,21 +7758,21 @@
       if (ab >= bc && ab >= ca) {
         m = texMid(A, B, projectFn);
         if (!m) return drawTexturedTriangle(targetCtx, img, A.x, A.y, B.x, B.y, C.x, C.y, A.u, A.v, B.u, B.v, C.u, C.v);
-        subdivideTexTri(targetCtx, img, A, m, C, projectFn, depth + 1, maxPx);
-        subdivideTexTri(targetCtx, img, m, B, C, projectFn, depth + 1, maxPx);
+        subdivideTexTri(targetCtx, img, A, m, C, projectFn, depth + 1, maxPx, maxDepth);
+        subdivideTexTri(targetCtx, img, m, B, C, projectFn, depth + 1, maxPx, maxDepth);
       } else if (bc >= ab && bc >= ca) {
         m = texMid(B, C, projectFn);
         if (!m) return drawTexturedTriangle(targetCtx, img, A.x, A.y, B.x, B.y, C.x, C.y, A.u, A.v, B.u, B.v, C.u, C.v);
-        subdivideTexTri(targetCtx, img, A, B, m, projectFn, depth + 1, maxPx);
-        subdivideTexTri(targetCtx, img, A, m, C, projectFn, depth + 1, maxPx);
+        subdivideTexTri(targetCtx, img, A, B, m, projectFn, depth + 1, maxPx, maxDepth);
+        subdivideTexTri(targetCtx, img, A, m, C, projectFn, depth + 1, maxPx, maxDepth);
       } else {
         m = texMid(C, A, projectFn);
         if (!m) return drawTexturedTriangle(targetCtx, img, A.x, A.y, B.x, B.y, C.x, C.y, A.u, A.v, B.u, B.v, C.u, C.v);
-        subdivideTexTri(targetCtx, img, A, B, m, projectFn, depth + 1, maxPx);
-        subdivideTexTri(targetCtx, img, B, C, m, projectFn, depth + 1, maxPx);
+        subdivideTexTri(targetCtx, img, A, B, m, projectFn, depth + 1, maxPx, maxDepth);
+        subdivideTexTri(targetCtx, img, B, C, m, projectFn, depth + 1, maxPx, maxDepth);
       }
     }
-    function drawUVLayerPersp(targetCtx, item, img, alpha, uv = item.uv, centered = true, maxPx = TEX_SUBDIV_PX) {
+    function drawUVLayerPersp(targetCtx, item, img, alpha, uv = item.uv, centered = true, maxPx = TEX_SUBDIV_PX, maxDepth = 5) {
       const projectFn = item.project, camV = item.camVerts;
       if (!projectFn || !camV || !uv) return;
       const off = centered ? img.width / 2 : 0;
@@ -7037,7 +7785,7 @@
       };
       for (let i = 1; i + 1 < camV.length; i++) {
         const A = mk(0), B = mk(i), C = mk(i + 1);
-        if (A && B && C) subdivideTexTri(targetCtx, img, A, B, C, projectFn, 0, maxPx);
+        if (A && B && C) subdivideTexTri(targetCtx, img, A, B, C, projectFn, 0, maxPx, maxDepth);
       }
       targetCtx.restore();
     }
@@ -7413,6 +8161,7 @@
       const stage = state.hud.stage || "AUTO";
       const stageText = {
         marshal: "ACQUIRING APPROACH LANE",
+        goAround: "GO-AROUND VECTOR",
         approach: "LINING UP WITH SLOT AXIS",
         align: "MATCHING SLOT ROTATION",
         final: "FINAL APPROACH"
@@ -7790,8 +8539,45 @@
       return out;
     }
 
+    // Clip a camera-space polygon (u/v carried) against the halfspace dot(n,p) <= 0.
+    function clipPolyHalfspace(pts, nx, ny, nz) {
+      const out = [];
+      for (let i = 0; i < pts.length; i++) {
+        const a = pts[i], b = pts[(i + 1) % pts.length];
+        const da = a.x * nx + a.y * ny + a.z * nz;
+        const db = b.x * nx + b.y * ny + b.z * nz;
+        const aIn = da <= 0, bIn = db <= 0;
+        if (aIn) out.push(a);
+        if (aIn !== bIn) {
+          const t = da / (da - db);
+          const m = vec(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t);
+          if (a.u !== undefined) {
+            m.u = a.u + (b.u - a.u) * t;
+            m.v = a.v + (b.v - a.v) * t;
+          }
+          out.push(m);
+        }
+      }
+      return out;
+    }
+
+    // Clip to the view frustum's side planes (15% margin). Without this, a wall/floor
+    // grazing the camera projects to triangles tens of thousands of px across — the
+    // subdivision depth cap leaves them visibly warped, and clipping+drawing megapixel
+    // textured triangles dozens of times per frame can hang or crash the tab.
+    function clipPolyFrustum(pts, w, h) {
+      const f = Math.min(w, h) * .82; // must match project()
+      const kx = (w / 2) / f * 1.15, ky = (h / 2) / f * 1.15;
+      let poly = clipPolyHalfspace(pts, 1, 0, -kx);
+      if (poly.length > 2) poly = clipPolyHalfspace(poly, -1, 0, -kx);
+      if (poly.length > 2) poly = clipPolyHalfspace(poly, 0, 1, -ky);
+      if (poly.length > 2) poly = clipPolyHalfspace(poly, 0, -1, -ky);
+      return poly;
+    }
+
     function hangarProjectPoly(points, view, w, h) {
-      const clipped = clipPolyNear(points.map((p) => cameraTransform(p, view)));
+      let clipped = clipPolyNear(points.map((p) => cameraTransform(p, view)));
+      if (clipped.length > 2) clipped = clipPolyFrustum(clipped, w, h);
       if (clipped.length < 3) return null;
       const pr = clipped.map((p) => project(p, w, h));
       return pr.some((p) => !p) ? null : pr;
@@ -7824,7 +8610,8 @@
         c.v = dot(rel, vAxis);
         return c;
       });
-      const clipped = clipPolyNear(camPts);
+      let clipped = clipPolyNear(camPts);
+      if (clipped.length > 2) clipped = clipPolyFrustum(clipped, w, h);
       if (clipped.length < 3) return null;
       const pr = clipped.map((p) => project(p, w, h));
       if (pr.some((p) => !p)) return null;
@@ -7844,7 +8631,7 @@
           camVerts: clipped,
           uv: clipped.map((c) => [c.u * su - texture.width / 2 + 1, c.v * sv - texture.height / 2 + 1]),
           project: (p) => project(p, w, h)
-        }, texture, clamp(alpha + .04, .4, .72), undefined, true, 130);
+        }, texture, clamp(alpha + .04, .4, .72), undefined, true, 160, 4);
       }
       ctx.fillStyle = shade;
       ctx.beginPath();
@@ -7961,6 +8748,7 @@
     function drawHangarOutsideThroughGate(view, w, h, gatePr, seed) {
       if (!gatePr) return;
       const bounds = polygonBounds(gatePr);
+      if (![bounds.minX, bounds.maxX, bounds.minY, bounds.maxY].every(Number.isFinite)) return;
       const rng = mulberry(seed || 1);
       ctx.save();
       ctx.beginPath();
@@ -8043,7 +8831,12 @@
       drawHangarOutsideThroughGate(view, w, h, gatePr, (scene?.seed || 1) ^ 0xa5a5);
       const pulse = .44 + Math.sin(performance.now() / 260) * .18;
       if (gatePr) {
-        const grad = ctx.createLinearGradient(gatePr[0].x, gatePr[0].y, gatePr[2].x, gatePr[2].y);
+        const bounds = polygonBounds(gatePr);
+        if (![bounds.minX, bounds.maxX, bounds.minY, bounds.maxY].every(Number.isFinite)) {
+          ctx.restore();
+          return;
+        }
+        const grad = ctx.createLinearGradient(bounds.minX, bounds.minY, bounds.maxX, bounds.maxY);
         grad.addColorStop(0, `rgba(86,184,255,${.22 + pulse * .12})`);
         grad.addColorStop(.5, `rgba(42,126,255,${.18 + pulse * .16})`);
         grad.addColorStop(1, `rgba(8,36,100,${.18 + pulse * .08})`);
@@ -8056,7 +8849,7 @@
         ctx.globalCompositeOperation = "lighter";
         ctx.strokeStyle = `rgba(120,196,255,${.3 + pulse * .32})`;
         ctx.lineWidth = Math.max(1.2, w / 900);
-        for (let i = 1; i < 5; i++) {
+        for (let i = 1; i < 5 && gatePr.length >= 4; i++) {
           const t = i / 5;
           ctx.beginPath();
           ctx.moveTo(lerp(gatePr[0].x, gatePr[3].x, t), lerp(gatePr[0].y, gatePr[3].y, t));
@@ -8540,13 +9333,26 @@
           });
         }
       }
-      const bursts = Array.from({ length: 90 }, () => ({
-        dir: randomSphereDir(rng),
-        size: .004 + rng() * .026,
-        alpha: .06 + rng() * .2,
-        hue: rng() < .38 ? palette[Math.floor(rng() * palette.length)][0] : 210 + rng() * 20
-      }));
-      return { clouds, bursts };
+      const stars = [];
+      for (let i = 0; i < 360; i++) {
+        const nearPlane = rng() < .46;
+        const a = rng() * TAU;
+        const lat = nearPlane ? (rng() - .5) * 1.05 : Math.asin(rng() * 2 - 1);
+        const dir = nearPlane
+          ? norm(add(
+            add(scale(planeA, Math.cos(a) * Math.cos(lat)), scale(planeB, Math.sin(a) * Math.cos(lat))),
+            scale(planeN, Math.sin(lat) * (.28 + rng() * .72))
+          ))
+          : randomSphereDir(rng);
+        const bright = rng() > .82;
+        stars.push({
+          dir,
+          size: bright ? .9 + rng() * 1.3 : .45 + rng() * .7,
+          alpha: bright ? .42 + rng() * .36 : .16 + rng() * .34,
+          glow: bright && rng() > .25
+        });
+      }
+      return { clouds, stars };
     }
 
     function galaxyBackdrop() {
@@ -8590,20 +9396,28 @@
         ctx.fill();
       }
       ctx.globalCompositeOperation = "lighter";
-      for (const burst of backdrop.bursts) {
-        const pr = toScreen(burst.dir);
+      for (const star of backdrop.stars || []) {
+        const pr = toScreen(star.dir);
         if (!pr) continue;
         const edgeFade = clamp((pr.z - .035) / .18, 0, 1);
-        const alpha = burst.alpha * edgeFade * (game.witchspace ? .38 : .82);
-        const s = clamp(f * burst.size / Math.max(.12, pr.z), 1.5, 24);
-        ctx.strokeStyle = `hsla(${burst.hue},82%,86%,${alpha})`;
-        ctx.lineWidth = clamp(s * .12, .6, 1.8);
+        const alpha = star.alpha * edgeFade * (game.witchspace ? .55 : 1);
+        if (alpha <= .025) continue;
+        const s = clamp((star.size * f * .0028) / Math.max(.18, pr.z), .45, 2.8);
+        if (star.glow) {
+          const gr = clamp(s * 4.6, 2.4, 11);
+          const g = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, gr);
+          g.addColorStop(0, `rgba(255,255,255,${alpha * .22})`);
+          g.addColorStop(.45, `rgba(210,228,255,${alpha * .1})`);
+          g.addColorStop(1, "rgba(255,255,255,0)");
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(pr.x, pr.y, gr, 0, TAU);
+          ctx.fill();
+        }
+        ctx.fillStyle = `rgba(245,250,255,${alpha})`;
         ctx.beginPath();
-        ctx.moveTo(pr.x - s * 1.7, pr.y);
-        ctx.lineTo(pr.x + s * 1.7, pr.y);
-        ctx.moveTo(pr.x, pr.y - s);
-        ctx.lineTo(pr.x, pr.y + s);
-        ctx.stroke();
+        ctx.arc(pr.x, pr.y, s, 0, TAU);
+        ctx.fill();
       }
       ctx.restore();
     }
@@ -9355,26 +10169,6 @@
       ctx.beginPath();
       ctx.arc(pr.x, pr.y, coronaR, 0, TAU);
       ctx.fill();
-
-      if (o.flare > .1 && r > 8) {
-        const rays = o.stellarClass === "redGiant" ? 18 : 12;
-        const rng = mulberry((o.textureSeed || 1) ^ 0xf1a4e);
-        ctx.save();
-        ctx.translate(pr.x, pr.y);
-        ctx.rotate((performance.now() / 8000) % TAU);
-        for (let i = 0; i < rays; i++) {
-          const a = i / rays * TAU + rng() * .18;
-          const inner = r * (.92 + rng() * .12);
-          const outer = r * (1.28 + (o.flare || .1) * (1.1 + rng()));
-          ctx.strokeStyle = `hsla(${hue}, ${sat}%, ${coreLight}%, ${(.035 + rng() * .045) * (o.flare || .1) * 3})`;
-          ctx.lineWidth = Math.max(1, r * (.006 + rng() * .01));
-          ctx.beginPath();
-          ctx.moveTo(Math.cos(a) * inner, Math.sin(a) * inner);
-          ctx.lineTo(Math.cos(a) * outer, Math.sin(a) * outer);
-          ctx.stroke();
-        }
-        ctx.restore();
-      }
 
       const g = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, glowR);
       g.addColorStop(0, `hsl(${hue}, ${Math.min(100, sat + 10)}%, ${coreLight}%)`);
@@ -10877,7 +11671,7 @@
         ${stat("Star", star.label)}
         ${stat("Species", s.species)}
       </div>
-      <div class="notice" style="margin-top:10px">${s.name} is ${s.description}.</div>
+      <div class="notice" style="margin-top:10px">${s.description}</div>
       <div class="notice save-actions">
         <button class="btn" data-save>Save Browser Save</button>
         <button class="btn" data-load ${browserSaveExists() ? "" : "disabled"}>Load Browser Save</button>
@@ -11007,23 +11801,18 @@
     }
 
     function renderAbout() {
-      return `<div class="notice about-section">
-        <strong class="about-heading">Legal Notice &amp; Credits</strong>
-      </div>
-      <div class="notice about-section">
-        This project is a non-commercial, open-source fan tribute developed solely for educational, archival, and entertainment purposes. It is a work of reverse-engineered game logic built from scratch and is not an official release.
-      </div>
-      <div class="notice about-section">
-        <strong class="about-heading">Intellectual Property</strong>
-        Elite (1984) is the property of its original creators, David Braben and Ian Bell. The broader Elite trademark and modern franchise assets are owned by Frontier Developments plc.
-      </div>
-      <div class="notice about-section">
-        <strong class="about-heading">No Affiliation</strong>
-        This project is not affiliated with, endorsed by, or sponsored by David Braben, Ian Bell, or Frontier Developments plc.
-      </div>
-      <div class="notice about-section">
-        <strong class="about-heading">Non-Commercial Status</strong>
-        This game is completely free to play. The author does not generate revenue, host advertisements, accept donations, or profit from this project in any way. All source code is shared under an educational, non-commercial open-source framework. If you enjoy this tribute, please support the creators by checking out the official, modern space simulation, Elite Dangerous, available via Frontier Developments.
+      const blocks = ABOUT_COPY.trim().split(/\n\s*\n/);
+      const title = blocks.shift() || "About Ultra Elite";
+      const copy = blocks.map((block) => {
+        const text = block.trim();
+        if (ABOUT_HEADINGS.has(text)) {
+          return `<strong class="about-heading">${escapeHtml(text)}</strong>`;
+        }
+        return `<p>${escapeHtml(text)}</p>`;
+      }).join("");
+      return `<div class="notice about-section about-copy">
+        <div class="about-title">${escapeHtml(title)}</div>
+        ${copy}
       </div>`;
     }
 
