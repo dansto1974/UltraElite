@@ -4140,9 +4140,10 @@
             noise({ dur: .1, gain: .032, highpass: 640, lowpass: 7600, endLowpass: 1800, attack: .001, bus: "weapons", pan: (Math.random() - .5) * .7 });
             return true;
           case "hit":
-            tone({ freq: 118, endFreq: 62, dur: .18, gain: .075, type: "triangle", attack: .001, release: .08, bus: "ship", lowpass: 720 });
-            noise({ dur: .18, gain: .09, highpass: 180, lowpass: 4600, endLowpass: 1300, attack: .001, release: .08, bus: "ship" });
-            sparkTicks({ count: 5, dur: .18, gain: .018, bus: "ship" });
+            noise({ dur: .98, gain: .107, highpass: 118, lowpass: 1235, endLowpass: 1324, attack: .01, release: .14, bus: "ship" });
+            tone({ freq: 96, endFreq: 77, dur: 2.2, gain: .018, type: "triangle", attack: .24, release: .7, bus: "ship", lowpass: 618, pan: -.08 });
+            noise({ dur: 3.68, gain: .009, highpass: 235, lowpass: 912, attack: .2, release: .335, bus: "ship", pan: .08, drive: 1.2 });
+            tone({ freq: 116, dur: .87, gain: .04, type: "sine", attack: .01, release: .08, bus: "ship", lowpass: 1765 });
             return true;
           case "explosion":
             noise({ dur: 1.05, gain: .15, highpass: 32, lowpass: 3235, endLowpass: 853, attack: .001, release: .34, bus: "world" });
