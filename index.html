@@ -4145,9 +4145,10 @@
             sparkTicks({ count: 5, dur: .18, gain: .018, bus: "ship" });
             return true;
           case "explosion":
-            noise({ delay: .03, dur: 1.85, gain: .15, highpass: 0, lowpass: 932, endLowpass: 299, attack: .001, release: .05, bus: "world", pan: .01, minHighpass: 1 });
-            tone({ freq: 9, endFreq: 253, dur: 2.46, gain: .11, type: "sawtooth", attack: .001, release: .28, bus: "world", lowpass: 371, drive: .4, minFreq: 1 });
-            tone({ delay: .17, freq: 54, endFreq: 12, dur: 3.24, gain: .213, type: "triangle", attack: .004, release: 1.085, bus: "world", highpass: 62, lowpass: 2059, drive: .99, minFreq: 1 });
+            noise({ dur: 1.05, gain: .15, highpass: 32, lowpass: 3235, endLowpass: 853, attack: .001, release: .34, bus: "world" });
+            tone({ delay: .05, freq: 63, endFreq: 24, dur: .28, gain: .157, type: "sawtooth", attack: .001, release: .28, bus: "world", lowpass: 1059, drive: .4 });
+            sparkTicks({ count: 9, dur: .62, gain: .002, bus: "world" });
+            rumble({ strength: .82, dur: 1.15 });
             return true;
           case "death":
             noise({ dur: 1.75, gain: .18, highpass: 18, lowpass: 1600, endLowpass: 340, attack: .001, release: .55, bus: "world" });
