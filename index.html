@@ -4118,10 +4118,7 @@
           const dockBrake = launch ? 0 : smoothstep(.08, .36, p) * (1 - smoothstep(.48, .72, p));
           pressure = (.014 + machinery * .022 + motion * .018) * fade;
           pressure += exitBlast * .038 + dockBrake * .024 + clampHum * (.012 + stationPulse * .006);
-          drive = (.006
-            + (launch ? motion * .017 + smoothstep(.42, .72, p) * .018 : motion * .004 + dockBrake * .003)
-            + exitBlast * .046
-            + clampHum * (launch ? .014 : .006)) * fade;
+          drive = 0;
           tunnel = (field * (launch ? .018 : .026) + exitBlast * .044 + dockBrake * .008 + clampHum * .005) * flutter;
           crackle = (field * .034 + exitBlast * .018 + dockBrake * .012 + clampHum * .007) * flutter;
           pressureFreq = 27 + stationPulse * 5 + (launch ? motion * 18 + exitBlast * 20 : dockBrake * 8 + clampHum * 4);
