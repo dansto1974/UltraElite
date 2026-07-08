@@ -3640,6 +3640,7 @@
       let engineBed = null;
       let flybyBed = null;
       let transitionBed = null;
+      let solarBed = null;
       const pitchScale = .62;
       const filterScale = .68;
       const BUS_LEVELS = {
@@ -4054,6 +4055,65 @@
         if (transitionBed.pan) transitionBed.pan.pan.setTargetAtTime(pan, ctx.currentTime, .12);
       }
 
+      function solarRadiationAudioLevel() {
+        if (!ultraFxEnabled() || game.docked || game.playerDestroyed) return 0;
+        const heat = clamp((game.cabinTemp || 0) / 110, 0, 1.35);
+        return clamp(smoothstep(.14, .82, heat), 0, 1);
+      }
+
+      function startSolarRadiationBed() {
+        const c = ensure();
+        if (!c || solarBed || !noiseBuffer) return;
+        const sub = c.createOscillator();
+        const body = c.createOscillator();
+        const hissSrc = c.createBufferSource();
+        const subGain = c.createGain();
+        const bodyGain = c.createGain();
+        const hissGain = c.createGain();
+        const out = c.createGain();
+        const bodyFilter = c.createBiquadFilter();
+        const hissHp = c.createBiquadFilter();
+        const hissBp = c.createBiquadFilter();
+
+        sub.type = "sine";
+        body.type = "triangle";
+        hissSrc.buffer = noiseBuffer;
+        hissSrc.loop = true;
+        bodyFilter.type = "lowpass";
+        hissHp.type = "highpass";
+        hissBp.type = "bandpass";
+        hissBp.Q.value = 2.6;
+        for (const g of [subGain, bodyGain, hissGain, out]) g.gain.value = .00001;
+
+        sub.connect(subGain).connect(out);
+        body.connect(bodyFilter).connect(bodyGain).connect(out);
+        hissSrc.connect(hissHp).connect(hissBp).connect(hissGain).connect(out);
+        out.connect(outputNode("ambience"));
+        sub.start();
+        body.start();
+        hissSrc.start();
+        solarBed = { sub, body, hissSrc, subGain, bodyGain, hissGain, out, bodyFilter, hissHp, hissBp };
+      }
+
+      function updateSolarRadiationBed(dt = 0) {
+        if (!ctx || !game.soundEnabled) return;
+        const level = solarRadiationAudioLevel();
+        if (level > .01 && !solarBed) startSolarRadiationBed();
+        if (!solarBed) return;
+        const now = ctx.currentTime;
+        const throb = .62 + Math.sin(now * (1.1 + level * 1.45)) * .22 + Math.sin(now * .37 + 1.4) * .12;
+        const shimmer = .72 + Math.sin(now * 5.1) * .14 + Math.sin(now * 13.7 + .8) * .08;
+        smoothParam(solarBed.sub.frequency, 18 + level * 9, .18);
+        smoothParam(solarBed.body.frequency, 32 + level * 21 + throb * 3, .16);
+        smoothParam(solarBed.bodyFilter.frequency, 110 + level * 520, .18);
+        smoothParam(solarBed.hissHp.frequency, 760 + level * 1180, .16);
+        smoothParam(solarBed.hissBp.frequency, 1250 + level * 3400 + Math.sin(now * 2.1) * 180, .08);
+        smoothParam(solarBed.subGain.gain, level * .018 * throb, .12);
+        smoothParam(solarBed.bodyGain.gain, level * .027 * throb, .1);
+        smoothParam(solarBed.hissGain.gain, Math.pow(level, 1.22) * .018 * shimmer, .07);
+        smoothParam(solarBed.out.gain, level > .01 ? .86 : .00001, .2);
+      }
+
       function tone({
         delay = 0, freq = 440, endFreq = null, dur = .12, gain = .08,
         type = "square", attack = .004, release = .035, bus = "cockpit",
@@ -4431,6 +4491,7 @@
           updateEngineBed(dt);
           updateFlybyBed(dt);
           updateTransitionBed(dt);
+          updateSolarRadiationBed(dt);
         },
         resume: () => { ensure(); },
         toggle: () => {
@@ -9716,6 +9777,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       drawExternalPlayerShot(w, h, flightCam);
       drawExplosions(w, h);
       drawEnemyShots(w, h);
+      drawSolarHeatOverlay(w, h);
       if (game.showShipLabels && performanceLod() < 3) drawShipLabels(w, h);
       drawPerformanceTicker(w, h);
       if (!game.docked && game.viewMode !== "fwd" && VIEW_LABELS[game.viewMode]) {
@@ -9769,6 +9831,49 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ctx.restore();
         game.camera = flightCam;
       }
+    }
+
+    function solarHeatVisualLevel() {
+      if (!ultraFxEnabled() || game.docked || game.playerDestroyed) return 0;
+      const heat = clamp((game.cabinTemp || 0) / 112, 0, 1.35);
+      return clamp(smoothstep(.18, .88, heat), 0, 1);
+    }
+
+    function drawSolarHeatOverlay(w, h) {
+      const level = solarHeatVisualLevel();
+      if (level <= .01) return;
+      const now = performance.now() * .001;
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      const grad = ctx.createRadialGradient(w * .5, h * .56, Math.min(w, h) * .08, w * .5, h * .56, Math.max(w, h) * .72);
+      grad.addColorStop(0, `rgba(255,214,122,${level * .025})`);
+      grad.addColorStop(.52, `rgba(255,126,54,${level * .06})`);
+      grad.addColorStop(1, `rgba(255,54,22,${level * .012})`);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.globalCompositeOperation = "lighter";
+      ctx.lineCap = "round";
+      ctx.lineWidth = .8 * dpr;
+      const lineCount = Math.max(5, Math.round(8 * dpr));
+      for (let i = 0; i < lineCount; i++) {
+        const y = h * (.18 + i / Math.max(1, lineCount - 1) * .66) + Math.sin(now * 1.7 + i * 1.9) * h * .012 * level;
+        const wobble = Math.sin(now * 2.3 + i) * 16 * dpr * level;
+        const alpha = level * (.026 + i / lineCount * .016);
+        ctx.strokeStyle = `rgba(255,198,92,${alpha})`;
+        ctx.beginPath();
+        ctx.moveTo(w * .08, y);
+        ctx.bezierCurveTo(w * .32, y + wobble, w * .68, y - wobble * .7, w * .92, y + Math.sin(now + i) * 7 * dpr * level);
+        ctx.stroke();
+      }
+
+      if (level > .65) {
+        ctx.globalCompositeOperation = "source-over";
+        ctx.fillStyle = `rgba(255,64,20,${(level - .65) * .08})`;
+        ctx.fillRect(0, 0, w, h);
+      }
+      ctx.restore();
     }
 
     function drawManualDockingCue(w, h) {
