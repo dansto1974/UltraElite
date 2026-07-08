@@ -3977,7 +3977,8 @@
 
       function noise({
         delay = 0, dur = .16, gain = .08, highpass = 80, lowpass = 6000,
-        endLowpass = null, attack = .004, release = .035, bus = "cockpit", pan = 0
+        endLowpass = null, attack = .004, release = .035, bus = "cockpit", pan = 0,
+        drive = 0
       }) {
         const c = ensure();
         if (!c || !noiseBuffer) return;
@@ -3994,7 +3995,15 @@
         lp.frequency.setValueAtTime(Math.max(120, lowpass * filterScale), t);
         if (endLowpass) lp.frequency.exponentialRampToValueAtTime(Math.max(120, endLowpass * filterScale), t + Math.max(.01, dur));
         envelope(amp, t, dur, gain, attack, release);
-        src.connect(hp).connect(lp).connect(amp);
+        src.connect(hp).connect(lp);
+        if (drive > 0) {
+          const shaper = c.createWaveShaper();
+          shaper.curve = distortionCurve(drive);
+          shaper.oversample = "2x";
+          lp.connect(shaper).connect(amp);
+        } else {
+          lp.connect(amp);
+        }
         connectAmp(amp, bus, pan);
         src.start(t);
         src.stop(t + dur + .05);
@@ -4114,10 +4123,10 @@
             rumble({ delay: .08, strength: .46, dur: .85, bus: "ship" });
             return true;
           case "blastOff":
-            modulatedSquare({ freq: 44, endFreq: 92, lfoFreq: 22, lfoDepth: 17, dur: .95, gain: .088, attack: .012, release: .22, bus: "ship", lowpass: 680, drive: 3.2 });
-            modulatedSquare({ delay: .05, freq: 29, endFreq: 56, lfoFreq: 11, lfoDepth: 9, dur: 1.08, gain: .052, attack: .018, release: .28, bus: "ship", lowpass: 380, drive: 4.1 });
-            noise({ delay: .035, dur: .88, gain: .043, highpass: 32, lowpass: 1850, endLowpass: 780, attack: .018, release: .28, bus: "ship" });
-            rumble({ delay: .02, strength: .58, dur: .92, bus: "ship" });
+            modulatedSquare({ freq: 32, endFreq: 24, lfoFreq: 9.9, lfoDepth: 20.6, dur: 1.28, gain: .088, attack: .001, release: .22, bus: "ship", lowpass: 565, drive: 3.2 });
+            modulatedSquare({ delay: .05, freq: 58, endFreq: 98, lfoFreq: 6.3, lfoDepth: 86.2, dur: 1.95, gain: .052, attack: .007, release: .28, bus: "ship", lowpass: 693, drive: 4.1 });
+            noise({ dur: 1.04, gain: .029, highpass: 2480, lowpass: 1131, endLowpass: 22156, attack: .03, release: 1.805, bus: "ship", drive: 2.5 });
+            rumble({ delay: .14, strength: 1.46, dur: 1.18, bus: "ship" });
             return true;
           case "hangarServo":
             tone({ freq: 82, endFreq: 132, dur: .48, gain: .046, type: "triangle", attack: .018, release: .14, bus: "world", lowpass: 780, pan: -.16 });

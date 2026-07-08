@@ -49,12 +49,12 @@ const PRESETS = {
     name: "blastOff",
     bus: "ship",
     masterGain: .9,
-    pitchScale: .62,
+    pitchScale: 1.24,
     layers: [
-      { name: "dirty square thrust", kind: "osc", wave: "square", freq: 44, endFreq: 92, gain: .088, dur: .95, attack: .012, release: .22, lowpass: 680, drive: 3.2, lfoFreq: 22, lfoDepth: 17, pan: 0 },
-      { name: "sub modulation", kind: "osc", wave: "square", delay: .05, freq: 29, endFreq: 56, gain: .052, dur: 1.08, attack: .018, release: .28, lowpass: 380, drive: 4.1, lfoFreq: 11, lfoDepth: 9, pan: 0 },
-      { name: "pressure wash", kind: "noise", delay: .035, dur: .88, gain: .043, highpass: 32, lowpass: 1850, endLowpass: 780, attack: .018, release: .28, pan: 0 },
-      { name: "floor rumble", kind: "rumble", delay: .02, strength: .58, dur: .92, pan: 0 }
+      { name: "dirty square thrust", kind: "osc", wave: "square", freq: 16, endFreq: 12, gain: .088, dur: 1.28, attack: .001, release: .22, lowpass: 310, drive: 3.2, lfoFreq: 9.9, lfoDepth: 10.3, pan: 0, delay: 0, highpass: 0 },
+      { name: "sub modulation", kind: "osc", wave: "square", delay: .05, freq: 29, endFreq: 49, gain: .052, dur: 1.95, attack: .007, release: .28, lowpass: 380, drive: 4.1, lfoFreq: 6.3, lfoDepth: 43.1, pan: 0, highpass: 0 },
+      { name: "pressure wash", kind: "noise", delay: 0, dur: 1.04, gain: .029, highpass: 1360, lowpass: 620, endLowpass: 12150, attack: .03, release: 1.805, pan: 0, drive: 2.5 },
+      { name: "floor rumble", kind: "rumble", delay: .14, strength: 1.46, dur: 1.18, pan: 0 }
     ]
   },
   "Mag Clamp": {
@@ -421,16 +421,22 @@ function updateExport() {
 }
 
 function toJsCase(patch) {
+  const gamePitchScale = .62;
+  const gameFilterScale = .68;
+  const pitchRatio = (patch.pitchScale || gamePitchScale) / gamePitchScale;
+  const filterRatio = (patch.pitchScale || gamePitchScale) / gameFilterScale;
+  const pitch = (value) => value > 0 ? value * pitchRatio : value;
+  const filter = (value) => value > 0 ? value * filterRatio : value;
   const lines = [`case "${patch.name}":`];
   patch.layers.forEach((layer) => {
     if (layer.kind === "osc") {
       const fn = layer.lfoFreq > 0 && layer.lfoDepth > 0 ? "modulatedSquare" : "tone";
       const args = compact({
         delay: layer.delay,
-        freq: layer.freq,
-        endFreq: layer.endFreq > 0 ? layer.endFreq : null,
+        freq: pitch(layer.freq),
+        endFreq: layer.endFreq > 0 ? pitch(layer.endFreq) : null,
         lfoFreq: fn === "modulatedSquare" ? layer.lfoFreq : null,
-        lfoDepth: fn === "modulatedSquare" ? layer.lfoDepth : null,
+        lfoDepth: fn === "modulatedSquare" ? pitch(layer.lfoDepth) : null,
         dur: layer.dur,
         gain: layer.gain,
         type: fn === "tone" ? layer.wave : null,
@@ -438,14 +444,14 @@ function toJsCase(patch) {
         release: layer.release,
         bus: patch.bus,
         pan: layer.pan,
-        highpass: layer.highpass > 0 ? layer.highpass : null,
-        lowpass: layer.lowpass > 0 ? layer.lowpass : null,
+        highpass: layer.highpass > 0 ? filter(layer.highpass) : null,
+        lowpass: layer.lowpass > 0 ? filter(layer.lowpass) : null,
         drive: layer.drive > 0 ? layer.drive : null
       });
       lines.push(`  ${fn}(${formatArgs(args)});`);
     }
     if (layer.kind === "noise") {
-      lines.push(`  noise(${formatArgs(compact({ delay: layer.delay, dur: layer.dur, gain: layer.gain, highpass: layer.highpass, lowpass: layer.lowpass, endLowpass: layer.endLowpass > 0 ? layer.endLowpass : null, attack: layer.attack, release: layer.release, bus: patch.bus, pan: layer.pan }))});`);
+      lines.push(`  noise(${formatArgs(compact({ delay: layer.delay, dur: layer.dur, gain: layer.gain, highpass: filter(layer.highpass), lowpass: filter(layer.lowpass), endLowpass: layer.endLowpass > 0 ? filter(layer.endLowpass) : null, attack: layer.attack, release: layer.release, bus: patch.bus, pan: layer.pan, drive: layer.drive > 0 ? layer.drive : null }))});`);
     }
     if (layer.kind === "rumble") {
       lines.push(`  rumble(${formatArgs(compact({ delay: layer.delay, strength: layer.strength, dur: layer.dur, bus: patch.bus, pan: layer.pan }))});`);
