@@ -57,6 +57,18 @@ const PRESETS = {
       { name: "floor rumble", kind: "rumble", delay: .14, strength: 1.46, dur: 1.18, pan: 0 }
     ]
   },
+  "Launch Spool": {
+    name: "launchSpool",
+    bus: "ship",
+    masterGain: .82,
+    pitchScale: .62,
+    layers: [
+      { name: "low reactor body", kind: "osc", wave: "triangle", delay: 0, freq: 42, endFreq: 58, gain: .036, dur: 1.15, attack: .12, release: .34, lowpass: 360, highpass: 0, drive: .5, lfoFreq: 3.4, lfoDepth: 2.8, pan: 0 },
+      { name: "fizzling ion hiss", kind: "noise", delay: .08, dur: 1.18, gain: .038, highpass: 760, lowpass: 3100, endLowpass: 6200, attack: .16, release: .42, pan: 0, drive: 1.4 },
+      { name: "uneven plasma crackle", kind: "ticks", delay: .18, count: 8, gain: .004, dur: .9, pan: 0 },
+      { name: "floor pressure", kind: "rumble", delay: .08, strength: .34, dur: 1.05, pan: 0 }
+    ]
+  },
   "Mag Clamp": {
     name: "clampRelease",
     bus: "ship",
@@ -409,6 +421,7 @@ function loadPatch(patch) {
 
 function suggestPatch() {
   const text = el("soundPrompt").value.toLowerCase();
+  if (text.includes("spool") || text.includes("engine") || text.includes("whine") || text.includes("launch")) return loadPatch(PRESETS["Launch Spool"]);
   if (text.includes("clamp") || text.includes("clunk")) return loadPatch(PRESETS["Mag Clamp"]);
   if (text.includes("station") || text.includes("rumble") || text.includes("hum")) return loadPatch(PRESETS["Station Rumble"]);
   if (text.includes("laser") || text.includes("beam") || text.includes("bolt")) return loadPatch(PRESETS["Pulse Laser"]);

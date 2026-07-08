@@ -4467,6 +4467,12 @@
             noise({ delay: .05, dur: .95, gain: .07, highpass: 34, lowpass: 3400, endLowpass: 1650, attack: .04, release: .26, bus: "ship" });
             rumble({ delay: .08, strength: .46, dur: .85, bus: "ship" });
             return true;
+          case "launchSpool":
+            modulatedSquare({ freq: 42, endFreq: 58, lfoFreq: 3.4, lfoDepth: 2.8, dur: 1.15, gain: .036, attack: .12, release: .34, bus: "ship", lowpass: 328, drive: .5 });
+            noise({ delay: .08, dur: 1.18, gain: .038, highpass: 693, lowpass: 2823, endLowpass: 5645, attack: .16, release: .42, bus: "ship", drive: 1.4 });
+            sparkTicks({ count: 8, dur: .9, gain: .004, bus: "ship" });
+            rumble({ delay: .08, strength: .34, dur: 1.05, bus: "ship" });
+            return true;
           case "blastOff":
             modulatedSquare({ freq: 32, endFreq: 24, lfoFreq: 9.9, lfoDepth: 20.6, dur: 1.28, gain: .088, attack: .001, release: .22, bus: "ship", lowpass: 565, drive: 3.2 });
             modulatedSquare({ delay: .05, freq: 58, endFreq: 98, lfoFreq: 6.3, lfoDepth: 86.2, dur: 1.95, gain: .052, attack: .007, release: .28, bus: "ship", lowpass: 693, drive: 4.1 });
@@ -7522,7 +7528,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           }
           if (!tr._engines && tr.t >= 2) {
             tr._engines = true;
-            eliteAudio.play("launch");
+            eliteAudio.play("launchSpool");
           }
           if (!tr._clamps && tr.t >= 3.32) {
             tr._clamps = true;
