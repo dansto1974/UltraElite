@@ -2831,6 +2831,7 @@
       showShipLabels: true,
       soundEnabled: true,
       developerMode: false,
+      godMode: false,
       transition: null,
       dockScene: null,
       jumpCountdown: null,
@@ -4841,6 +4842,13 @@
       ensureShipSystems();
       let remaining = Math.max(0, amount);
       const arc = options.arc || hitArcFromWorld(options.sourcePos);
+      if (game.godMode) {
+        game.foreShield = 100;
+        game.aftShield = 100;
+        game.shields = 100;
+        game.energy = 100;
+        return arc;
+      }
       if (!options.bypassShields) {
         if (options.shieldMode === "both") {
           for (let pass = 0; pass < 2 && remaining > .0001; pass++) {
@@ -7178,6 +7186,13 @@
       for (const g of GOODS) game.cargo[g[0]] = 0;
       game.cargo[GOODS[0][0]] = game.cargoCap;
       setMessage("Cheat: cargo hold filled.");
+      renderPanel();
+    }
+
+    function cheatToggleGodMode() {
+      game.godMode = !game.godMode;
+      if (game.godMode) restoreShipSystems();
+      setMessage(`God mode ${game.godMode ? "enabled" : "disabled"}.`);
       renderPanel();
     }
 
@@ -15028,6 +15043,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         <button class="btn mini" data-cheat="refillShip">Refill Ship</button>
         <button class="btn mini" data-cheat="fillCargo">Fill Cargo Hold</button>
         <button class="btn mini" data-cheat="cleanLegal">Clear Legal Status</button>
+        <button class="btn mini ${game.godMode ? "primary" : ""}" data-cheat="godMode">${game.godMode ? "God Mode On" : "God Mode Off"}</button>
         <button class="btn mini warn" data-cheat="armada">Deploy Armada</button>
       </div>
       <div class="grid2">
@@ -15037,6 +15053,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ${stat("Cargo", `${usedCargo()}/${game.cargoCap}t`)}
         ${stat("Missiles", game.missiles)}
         ${stat("Legal", legalStatus())}
+        ${stat("God Mode", game.godMode ? "ON" : "OFF")}
       </div>
       <div class="notice">
         Player ship
@@ -15161,6 +15178,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         else if (action === "refillShip") cheatRefillShip();
         else if (action === "fillCargo") cheatFillCargo();
         else if (action === "cleanLegal") cheatClearLegalStatus();
+        else if (action === "godMode") cheatToggleGodMode();
         else if (action === "armada") spawnArmada();
       }));
       panelBody.querySelectorAll("[data-cheat-equip]").forEach((b) => b.addEventListener("click", () => {
