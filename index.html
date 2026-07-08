@@ -4800,8 +4800,9 @@
         if (o.hp <= 0) destroyObject(o, false);
       }
       game.speed = clamp(game.speed - impact * .8, 0, game.maxSpeed);
-      eliteAudio.playAt("hit", add(game.camera.pos, scale(n, playerCollisionRadius())), { range: 1200 });
-      game.screenShake = Math.max(game.screenShake || 0, clamp(impact / 15, .8, 2.4));
+      const contactPos = add(game.camera.pos, scale(n, playerCollisionRadius()));
+      eliteAudio.playAt("hit", contactPos, { range: 1200 });
+      addImpactShake(clamp(impact / 15, .8, 2.4));
       setMessage(`${arc === "aft" ? "Aft" : "Fore"} shield collision.`);
     }
 
@@ -4830,8 +4831,9 @@
       o._playerCollisionAt = now;
       const label = o.type === "sun" ? "stellar impact" : o.type === "planet" ? "planetary impact" : `${o.name || o.type} collision`;
       const arc = damagePlayer(impact, label, { sourcePos: o.pos });
-      eliteAudio.playAt("hit", add(game.camera.pos, scale(away, -playerR)), { range: 1800, gain: o.type === "sun" || o.type === "planet" ? 1.25 : 1 });
-      game.screenShake = Math.max(game.screenShake || 0, clamp(impact / 16, 1, 3.2));
+      const contactPos = add(game.camera.pos, scale(away, -playerR));
+      eliteAudio.playAt("hit", contactPos, { range: 1800, gain: o.type === "sun" || o.type === "planet" ? 1.25 : 1 });
+      addImpactShake(clamp(impact / 16, 1, 2.4));
       setMessage(o.type === "sun" ? "STELLAR IMPACT" : o.type === "planet" ? "PLANETARY IMPACT" : `${arc === "aft" ? "Aft" : "Fore"} shield collision.`);
     }
 
@@ -5134,7 +5136,7 @@
       if (!tr._exploded && tr.t >= (tr.hadCapsule ? 1.55 : 1.08)) {
         tr._exploded = true;
         spawnExplosion(pos, 4.2);
-        game.screenShake = Math.min(game.screenShake || 0, 2.8);
+        addImpactShake(2.1);
         spawnSmokePuffs(pos, 3.1, 18);
         spawnDeathDebris(pos, 9);
         flash();
@@ -5992,6 +5994,7 @@
       const isRockTarget = best.type === "asteroid" || best.type === "boulder" || best.type === "splinter";
       best.hp -= isRockTarget && game.equipment.miningLaser ? laser.damage * (laser.rockMul || 2) : laser.damage;
       eliteAudio.playAt("hit", hitPos || best.pos, { range: 1400, gain: best.type === "ship" ? 1 : .82 });
+      addImpactShake(best.type === "ship" ? .24 : .16, hitPos || best.pos, 950);
       setMessage(`${best.name} hit.`);
       if (best.type === "ship") reactToPlayerAttack(best);
       else reportStationWeaponOffence(best);
@@ -6039,6 +6042,7 @@
 
     function detonateMissile(o) {
       eliteAudio.playAt("explosion", o.pos, { range: 1800 });
+      addImpactShake(1.05, o.pos, 1250);
       spawnExplosion(o.pos, .6);
       spawnSmokePuffs(o.pos, .8, 5);
       if (o.target) {
@@ -6048,6 +6052,7 @@
         if (o.target.hp <= 0) destroyObject(o.target, !o.hostile);
       } else {
         const arc = damagePlayer(22, o.source ? o.source.name : "missile", { sourcePos: o.source?.pos });
+        addImpactShake(1.45);
         setMessage(`${o.source ? o.source.name + " missile" : "Missile"} impact!`, true);
         if (arc === "aft") commsMessage("DAMAGE CONTROL", "AFT SHIELD STRIKE", "warning");
       }
@@ -6081,6 +6086,16 @@
       const inView = rel.z > -220 && rel.z < 1800 ? 1 : .55;
       const shake = magnitude * (.8 + near * near * 6.2 + through * through * through * 12) * inView;
       game.screenShake = Math.max(game.screenShake || 0, shake);
+    }
+
+    function addImpactShake(amount = .35, pos = null, range = 1400) {
+      if (!ultraFxEnabled()) return;
+      let strength = amount;
+      if (pos && finiteVec3(pos) && finiteVec3(game.camera?.pos)) {
+        const dist = len(sub(pos, game.camera.pos));
+        strength *= clamp(1 - dist / Math.max(1, range), 0, 1);
+      }
+      if (strength > .025) game.screenShake = Math.max(game.screenShake || 0, clamp(strength, .04, 2.4));
     }
 
     function spawnExplosionCloud(pos, magnitude = 1) {
@@ -7863,6 +7878,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       eliteAudio.playAt("enemyLaser", attacker.pos, { range: 1800 });
       target.hp -= dmg;
       eliteAudio.playAt("hit", target.pos, { range: 1400, gain: .5 });
+      addImpactShake(.14, target.pos, 850);
       spawnSmokePuffs(target.pos, clamp((target.r || 50) / 80, .45, 1.7), 2);
       if (target.hp <= 0) destroyObject(target, false);
       else {
@@ -7904,9 +7920,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (externalTarget) pushEnemyLaserShot(o, { ...game.camera.pos }, playerRadius, { impact: true });
       else pushEnemyLaserShot(o);
       eliteAudio.playAt("enemyLaser", o.pos, { range: 1800 });
-      game.screenShake = Math.max(game.screenShake || 0, o.thargoid ? 1.65 : 1.15);
       const arc = damagePlayer(profile.damage, o.name, { sourcePos: o.pos });
       eliteAudio.playAt("hit", o.pos, { range: 1700, gain: .65 });
+      addImpactShake(o.thargoid ? 1.3 : .85);
       if (externalTarget && game.energy < energyBefore) {
         const towardAttacker = norm(sub(o.pos, game.camera.pos));
         const hitPos = add(game.camera.pos, scale(towardAttacker, playerRadius * .38));
