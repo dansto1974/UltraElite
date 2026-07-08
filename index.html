@@ -603,6 +603,41 @@
       animation: splashBlink 1.6s steps(2, start) infinite;
     }
 
+    #splash .getting-started {
+      width: min(560px, calc(100vw - 48px));
+      border: 1px solid rgba(91, 255, 72, .28);
+      background: rgba(0, 0, 0, .28);
+      box-shadow: inset 0 0 18px rgba(91, 255, 72, .05), 0 0 18px rgba(91, 255, 72, .05);
+      padding: 12px 16px;
+      text-align: left;
+      color: var(--green);
+      font-size: 11px;
+      line-height: 1.45;
+      text-transform: uppercase;
+    }
+
+    #splash .getting-started[hidden] {
+      display: none;
+    }
+
+    #splash .getting-started strong {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--amber);
+      font-weight: 400;
+      letter-spacing: 2px;
+      text-align: center;
+    }
+
+    #splash .getting-started ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    #splash .getting-started li + li {
+      margin-top: 3px;
+    }
+
     #splash .splash-legal {
       position: absolute;
       left: clamp(18px, 5vw, 72px);
@@ -1199,6 +1234,16 @@
       <text x="110" y="28" text-anchor="middle" font-family="monospace" font-size="18" letter-spacing="5" fill="var(--amber)">ULTRA ELITE</text>
     </svg>
     <div class="splash-version">v<span id="splashVersion"></span></div>
+    <div class="getting-started" id="gettingStarted" hidden>
+      <strong>Getting Started</strong>
+      <ul>
+        <li>Launch from Lave Station, steer with W/A/S/D and Q/E, and use +/- for speed.</li>
+        <li>Buy cargo in Market, pick a nearby system on the chart, then use Jump when clear.</li>
+        <li>Keep an eye on shields, energy, laser heat, cabin temperature and fuel.</li>
+        <li>Dock by flying slowly through the station slot when it is aligned, or use Auto Dock if fitted.</li>
+        <li>Open the right-hand panel with the arrow tab and choose Help for full controls and the update log.</li>
+      </ul>
+    </div>
     <div class="splash-prompt">PRESS ANY KEY TO START</div>
     <div class="splash-legal">
       <strong>Legal Notice & Credits:</strong>
@@ -14821,6 +14866,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     window.addEventListener("resize", resizeCanvases);
     window.addEventListener("pointerdown", () => eliteAudio.resume(), { capture: true });
     const splashEl = byId("splash");
+    const gettingStartedEl = byId("gettingStarted");
     byId("splashVersion").textContent = GAME_VERSION;
 
     function dismissSplash() {
@@ -14904,6 +14950,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     resizeCanvases();
     (function boot() {
       const hadBrowserSave = browserSaveExists();
+      setDomHidden(gettingStartedEl, hadBrowserSave);
       const loadedBrowserSave = loadBrowserSave(true);
       resetFlightScene(false);
       if (loadedBrowserSave) setMessage("Browser commander save loaded.", true);
