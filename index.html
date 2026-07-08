@@ -3858,10 +3858,11 @@
         const transitionKind = game.transition?.kind || "";
         const hangarTransition = transitionKind === "launchHangar" || transitionKind === "dockHangar";
         const engineTransition = transitionKind === "launch" || transitionKind === "hyperspace" || transitionKind === "galactic";
-        const active = ultraFxEnabled() && !game.playerDestroyed && (!game.docked || engineTransition);
+        const externalListen = game.viewMode === "ext" || hangarTransition;
+        const active = ultraFxEnabled() && !game.playerDestroyed && !externalListen && (!game.docked || engineTransition);
         if (active && !engineBed) startEngineBed();
         if (!engineBed) return;
-        if (hangarTransition) {
+        if (!active) {
           smoothParam(engineBed.subGain.gain, .00001, .08);
           smoothParam(engineBed.bodyGain.gain, .00001, .08);
           smoothParam(engineBed.crackleGain.gain, .00001, .08);
@@ -3873,7 +3874,6 @@
         const launchHangar = transitionKind === "launchHangar";
         const dockHangar = transitionKind === "dockHangar";
         const transitionP = game.transition ? clamp((game.transition.t || 0) / Math.max(.01, game.transition.dur || 1), 0, 1) : 0;
-        const externalListen = (game.viewMode === "ext" && !game.docked) || launchHangar || dockHangar;
         const speedNorm = clamp((game.speed || 0) / Math.max(1, game.maxSpeed || 220), 0, 1.35);
         const dockEntry = dockHangar ? smoothstep(.03, .36, transitionP) * (1 - smoothstep(.42, .7, transitionP)) : 0;
         const dockSettle = dockHangar ? smoothstep(.52, .7, transitionP) * (1 - smoothstep(.74, .94, transitionP)) : 0;
@@ -3929,6 +3929,59 @@
         if (engineBed.enginePan) smoothSignedParam(engineBed.enginePan.pan, pan, .18);
       }
 
+      function cutsceneExternalEngineTarget() {
+        const tr = game.transition;
+        const kind = tr?.kind || "";
+        if (!ultraFxEnabled() || game.playerDestroyed) return null;
+        if (kind === "launchHangar") {
+          const t = tr.t || 0;
+          const p = clamp(t / Math.max(.01, tr.dur || 1), 0, 1);
+          const spool = smoothstep(2, 3, t);
+          const exit = smoothstep(4.85, 6.45, t);
+          const boost = smoothstep(4.85, 5.45, t);
+          const distanceFade = 1 - smoothstep(6.4, 8.1, t);
+          const score = clamp((spool * .22 + exit * .62 + boost * .72) * distanceFade, 0, 1.35);
+          if (score <= .01) return null;
+          return {
+            rel: vec(lerp(.08, -.72, smoothstep(5.2, 7.4, t)) * 260, 0, lerp(520, 1900, exit)),
+            speed: lerp(65, 520, boost) + exit * 280,
+            approach: -smoothstep(5.1, 7.4, t),
+            score,
+            pan: lerp(.04, -.82, smoothstep(5.1, 7.2, t)),
+            source: "hangarLaunch"
+          };
+        }
+        if (kind === "dockHangar") {
+          const t = tr.t || 0;
+          const entry = smoothstep(.05, 2.65, t) * (1 - smoothstep(3.45, 6.6, t));
+          const brake = smoothstep(2.65, 3.75, t) * (1 - smoothstep(5.9, 7.25, t));
+          const settle = smoothstep(5.4, 7.15, t) * (1 - smoothstep(7.2, 8.4, t));
+          const score = clamp(entry * .62 + brake * .35 + settle * .14, 0, 1.1);
+          if (score <= .01) return null;
+          return {
+            rel: vec(lerp(.55, .06, smoothstep(.3, 3.2, t)) * 240, 0, lerp(1900, 520, smoothstep(.05, 3.55, t))),
+            speed: lerp(460, 55, smoothstep(.1, 5.8, t)),
+            approach: smoothstep(.05, 2.8, t) * .65 - brake * .4,
+            score,
+            pan: lerp(.52, .08, smoothstep(.3, 3.4, t)),
+            source: "hangarDock"
+          };
+        }
+        if (game.viewMode === "ext" && !game.docked && !tr) {
+          const speedNorm = clamp((game.speed || 0) / Math.max(1, game.maxSpeed || 220), 0, 1.45);
+          const boost = clamp(game.playerEngineBoost || 0, 0, 1.6);
+          return {
+            rel: vec(0, 0, 420),
+            speed: (game.speed || 0) * (1 + boost * .3),
+            approach: -.15 - boost * .25,
+            score: clamp(.28 + speedNorm * .42 + boost * .36, 0, 1.12),
+            pan: 0,
+            source: "externalPlayer"
+          };
+        }
+        return null;
+      }
+
       function startFlybyBed() {
         const c = ensure();
         if (!c || flybyBed || !noiseBuffer) return;
@@ -3961,6 +4014,8 @@
       }
 
       function nearestAudibleFlyby() {
+        const cutsceneTarget = cutsceneExternalEngineTarget();
+        if (cutsceneTarget) return cutsceneTarget;
         if (!ultraFxEnabled() || game.docked || game.transition || !game.objects?.length) return null;
         let best = null;
         let bestScore = 0;
@@ -3974,7 +4029,7 @@
           const score = near * near * speedScore;
           if (score > bestScore) {
             const rel = cameraTransform(o.pos, game.camera);
-            best = { o, rel, d, speed, score };
+            best = { o, rel, d, speed, score, source: "npc" };
             bestScore = score;
           }
         }
@@ -3996,17 +4051,18 @@
         if (!flybyBed) return;
         const active = !!target;
         const score = active ? clamp(target.score, 0, 1.2) : 0;
-        const pan = active ? clamp(target.rel.x / (Math.abs(target.rel.z) * .36 + 140), -1, 1) : 0;
-        const vel = active && target.o.vel ? target.o.vel : vec();
-        const toCamera = active ? norm(sub(game.camera.pos, target.o.pos)) : vec(0, 0, 1);
-        const approach = active ? clamp(dot(vel, toCamera) / 320, -1, 1) : 0;
+        const pan = active ? (Number.isFinite(target.pan) ? clamp(target.pan, -1, 1) : clamp(target.rel.x / (Math.abs(target.rel.z) * .36 + 140), -1, 1)) : 0;
+        const vel = active && target.o?.vel ? target.o.vel : vec();
+        const toCamera = active && target.o ? norm(sub(game.camera.pos, target.o.pos)) : vec(0, 0, 1);
+        const approach = active ? (Number.isFinite(target.approach) ? clamp(target.approach, -1, 1) : clamp(dot(vel, toCamera) / 320, -1, 1)) : 0;
         const speedNorm = active ? clamp(target.speed / 260, .2, 1.5) : 0;
-        smoothParam(flybyBed.body.frequency, 54 + speedNorm * 52 + approach * 18, .09);
-        smoothParam(flybyBed.bodyFilter.frequency, 360 + speedNorm * 520, .12);
-        smoothParam(flybyBed.fizzHp.frequency, 1800 + speedNorm * 900, .12);
-        smoothParam(flybyBed.fizzBp.frequency, 2600 + speedNorm * 1500 + Math.sin(ctx.currentTime * 5.5) * 180, .07);
-        smoothParam(flybyBed.bodyGain.gain, score * .007, .08);
-        smoothParam(flybyBed.fizzGain.gain, score * .018, .055);
+        const externalPlayer = target?.source === "externalPlayer" || target?.source === "hangarLaunch" || target?.source === "hangarDock";
+        smoothParam(flybyBed.body.frequency, (externalPlayer ? 44 : 54) + speedNorm * (externalPlayer ? 46 : 52) + approach * 18, .09);
+        smoothParam(flybyBed.bodyFilter.frequency, (externalPlayer ? 280 : 360) + speedNorm * (externalPlayer ? 470 : 520), .12);
+        smoothParam(flybyBed.fizzHp.frequency, (externalPlayer ? 1550 : 1800) + speedNorm * 900, .12);
+        smoothParam(flybyBed.fizzBp.frequency, (externalPlayer ? 2200 : 2600) + speedNorm * 1500 + Math.sin(ctx.currentTime * 5.5) * 180, .07);
+        smoothParam(flybyBed.bodyGain.gain, score * (externalPlayer ? .010 : .007), .08);
+        smoothParam(flybyBed.fizzGain.gain, score * (externalPlayer ? .024 : .018), .055);
         smoothParam(flybyBed.out.gain, active ? .9 : .00001, .12);
         if (flybyBed.pan) smoothSignedParam(flybyBed.pan.pan, pan, .08);
       }
