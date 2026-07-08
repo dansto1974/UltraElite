@@ -1640,8 +1640,9 @@
       damagePx: 16,
       effectPx: 7
     };
-    const PERFORMANCE_DPR_CAP = [2, 1.5, 1.25, 1];
-    const PERFORMANCE_PARTICLE_SCALE = [1, .65, .38, .18];
+    const PERFORMANCE_DPR_CAP = [2, 1.35, 1, .8];
+    const PERFORMANCE_PARTICLE_SCALE = [1, .52, .26, .1];
+    const PERFORMANCE_LOD_LABELS = ["HIGH", "MED", "LOW", "MIN"];
 
     function ultraFxEnabled() {
       return game.fxLevel === "ultra";
@@ -1656,15 +1657,16 @@
     }
 
     function performanceThresholdMul() {
-      return 1 + performanceLod() * .9 + performanceSceneLoad() * 3.5;
+      return 1 + performanceLod() * 1.35 + performanceSceneLoad() * 4.5;
     }
 
     function performanceParticleScale() {
-      return Math.max(.12, (PERFORMANCE_PARTICLE_SCALE[performanceLod()] ?? .18) * (1 - performanceSceneLoad() * .55));
+      const floor = performanceLod() >= 3 ? .055 : .1;
+      return Math.max(floor, (PERFORMANCE_PARTICLE_SCALE[performanceLod()] ?? .1) * (1 - performanceSceneLoad() * .62));
     }
 
     function performanceParticleLimit(limit) {
-      return Math.max(18, Math.round(limit * performanceParticleScale()));
+      return Math.max(performanceLod() >= 3 ? 10 : 18, Math.round(limit * performanceParticleScale()));
     }
 
     function trimParticleStore(store, limit) {
@@ -1675,11 +1677,37 @@
     function updatePerformanceBudget(rawDt) {
       const perf = game.performance || (game.performance = { frameMs: 16.7, lod: 0 });
       const ms = clamp(rawDt * 1000, 1, 220);
-      perf.frameMs = perf.frameMs ? lerp(perf.frameMs, ms, .08) : ms;
-      const nextLod = perf.frameMs > 82 ? 3 : perf.frameMs > 46 ? 2 : perf.frameMs > 28 ? 1 : 0;
-      if (nextLod !== perf.lod) {
-        perf.lod = nextLod;
-        perf.dprCap = PERFORMANCE_DPR_CAP[nextLod] || 1;
+      perf.frameMs = perf.frameMs ? lerp(perf.frameMs, ms, .1) : ms;
+      const load = performanceSceneLoad();
+      let desired = perf.frameMs > 58 ? 3 : perf.frameMs > 36 ? 2 : perf.frameMs > 24 ? 1 : 0;
+      if (load > .88) desired = Math.max(desired, 2);
+      else if (load > .55) desired = Math.max(desired, 1);
+
+      const current = perf.lod || 0;
+      if (desired > current) {
+        perf.lodPressure = (perf.lodPressure || 0) + rawDt * (desired === 3 ? 2.4 : 1.25);
+        perf.lodRecovery = 0;
+        if (perf.lodPressure > .65) {
+          perf.lod = Math.min(3, current + 1);
+          perf.lodPressure = 0;
+        }
+      } else if (desired < current && perf.frameMs < 20 + current * 2 && load < .38) {
+        perf.lodRecovery = (perf.lodRecovery || 0) + rawDt;
+        perf.lodPressure = 0;
+        if (perf.lodRecovery > 4.2) {
+          perf.lod = Math.max(0, current - 1);
+          perf.lodRecovery = 0;
+        }
+      } else {
+        perf.lodPressure = 0;
+        perf.lodRecovery = 0;
+      }
+
+      const nextLod = perf.lod || 0;
+      perf.dprCap = PERFORMANCE_DPR_CAP[nextLod] || .8;
+      perf.qualityLabel = PERFORMANCE_LOD_LABELS[nextLod] || "MIN";
+      if (perf._appliedLod !== nextLod) {
+        perf._appliedLod = nextLod;
         resizeCanvases();
       }
     }
@@ -9614,6 +9642,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function drawEngineGlow(targetCtx, points, alpha = 1) {
       if (!ultraFxEnabled()) return;
+      if (performanceLod() >= 3 && targetCtx === ctx) alpha *= .65;
       alpha = clamp(alpha, 0, 1.85);
       if (alpha <= .01) return;
       const b = polygonBounds(points);
@@ -9754,7 +9783,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function drawShipLabels(w, h) {
       ctx.font = `13px ${UI_CANVAS_FONT}`;
       ctx.textAlign = "center";
-      const maxLabels = performanceLod() > 0 ? 4 : performanceSceneLoad() > .18 ? 5 : 7;
+      const lod = performanceLod();
+      const maxLabels = lod >= 2 ? 2 : lod > 0 ? 4 : performanceSceneLoad() > .18 ? 5 : 7;
       const candidates = [];
       for (const o of game.objects) {
         if (o.type !== "ship") continue;
@@ -9764,7 +9794,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const pr = project(rel, w, h);
         if (!pr) continue;
         const apparentR = Math.abs(o.r * pr.s);
-        if (apparentR < 16 || pr.x < -60 || pr.x > w + 60 || pr.y < -30 || pr.y > h + 30) continue;
+        if (apparentR < (lod >= 2 ? 24 : 16) || pr.x < -60 || pr.x > w + 60 || pr.y < -30 || pr.y > h + 30) continue;
         const d = len(sub(o.pos, game.camera.pos));
         const priority = (o === game.targetObject ? -10000 : 0) + (o.hostile ? -2200 : 0) + (o.police ? -900 : 0) + d;
         candidates.push({ o, pr, apparentR, d, priority });
@@ -9968,7 +9998,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const perf = game.performance;
       if (!perf || game.docked) return;
       const fps = Math.round(1000 / Math.max(1, perf.frameMs || 16.7));
-      const text = `FPS ${fps}  LOD ${perf.lod || 0}  OBJ ${perf.visibleModels || 0}`;
+      const label = perf.qualityLabel || PERFORMANCE_LOD_LABELS[perf.lod || 0] || "HIGH";
+      const text = `FPS ${fps}  AUTO ${label}  LOD ${perf.lod || 0}  OBJ ${perf.visibleModels || 0}`;
       ctx.save();
       const fontPx = Math.max(16, Math.min(24, Math.round(Math.min(w, h) * .018)));
       const padX = Math.round(fontPx * .5);
@@ -11977,6 +12008,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function drawGalaxyBackdrop(w, h) {
       if (game.fxLevel === "classic") return;
       const backdrop = galaxyBackdrop();
+      const lod = performanceLod();
       const camInv = quatConj(ensureCameraQuat(game.camera));
       const f = Math.min(w, h) * .82;
       if (!Number.isFinite(f) || f <= 0) return;
@@ -11990,7 +12022,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       };
       ctx.save();
       ctx.globalCompositeOperation = "screen";
-      const cloudStep = trajectoryTakeover ? 3 : 1;
+      const cloudStep = Math.max(1, trajectoryTakeover ? 3 : lod >= 3 ? 4 : lod >= 2 ? 3 : lod >= 1 ? 2 : 1);
       for (let ci = 0; ci < backdrop.clouds.length; ci += cloudStep) {
         const cloud = backdrop.clouds[ci];
         const pr = toScreen(cloud.dir);
@@ -12010,7 +12042,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ctx.fill();
       }
       ctx.globalCompositeOperation = "lighter";
-      for (const star of backdrop.stars || []) {
+      const starStep = lod >= 3 ? 4 : lod >= 2 ? 3 : lod >= 1 ? 2 : 1;
+      const stars = backdrop.stars || [];
+      for (let si = 0; si < stars.length; si += starStep) {
+        const star = stars[si];
         const pr = toScreen(star.dir);
         if (!pr) continue;
         const edgeFade = clamp((pr.z - .035) / .18, 0, 1);
@@ -12018,7 +12053,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         if (alpha <= .025) continue;
         const s = clamp((star.size * f * .0028) / Math.max(.18, pr.z), .45, 2.8);
         if (![pr.x, pr.y, s, alpha].every(Number.isFinite)) continue;
-        if (star.glow) {
+        if (star.glow && lod < 2) {
           const gr = clamp(s * 4.6, 2.4, 11);
           if (!Number.isFinite(gr)) continue;
           const g = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, gr);
@@ -12044,7 +12079,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const speedFrac = clamp((game.speed || 0) / (game.maxSpeed || 220), 0, 1);
       const jumpBoost = jumpDepartureStarBoost();
       const jumpTravel = jumpDepartureDustTravel();
-      for (const star of game.stars) {
+      const lod = performanceLod();
+      const starStep = jumpBoost > .05 ? 1 : lod >= 3 ? 4 : lod >= 2 ? 3 : lod >= 1 ? 2 : 1;
+      for (let si = 0; si < game.stars.length; si += starStep) {
+        const star = game.stars[si];
         let p = cameraTransform(star, camera);
         if (jumpTravel > 0) {
           const near = 26, far = 3600, span = far - near;
