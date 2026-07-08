@@ -4136,8 +4136,8 @@
             return true;
           case "clampRelease":
             tone({ freq: 56, endFreq: 38, dur: .3, gain: .082, type: "triangle", attack: .002, release: .16, bus: "ship", lowpass: 510.6 });
-            tone({ delay: .07, freq: 19, endFreq: 988, dur: 1.79, gain: .089, type: "sine", attack: .001, release: .22, bus: "ship", highpass: 36.5, minFreq: 16 });
-            noise({ delay: .006, dur: .17, gain: .078, highpass: 21.9, lowpass: 565.3, endLowpass: 136.8, attack: .001, release: .095, bus: "ship", minHighpass: 1, minLowpass: 1 });
+            tone({ delay: .16, freq: 25, endFreq: 223, dur: .42, gain: .072, type: "sine", attack: .001, release: .22, bus: "ship", minFreq: 16 });
+            noise({ delay: .006, dur: 1.73, gain: .053, highpass: 21.9, lowpass: 565.3, endLowpass: 136.8, attack: .09, release: .095, bus: "ship", minHighpass: 1, minLowpass: 1 });
             sparkTicks({ count: 3, dur: .13, gain: .009, bus: "ship" });
             return true;
           case "clampEngage":

@@ -64,8 +64,8 @@ const PRESETS = {
     pitchScale: .62,
     layers: [
       { name: "clunk body", kind: "osc", wave: "triangle", freq: 56, endFreq: 38, dur: .3, gain: .082, attack: .002, release: .16, lowpass: 560, pan: 0, delay: 0, highpass: 0, drive: 0, lfoFreq: 0, lfoDepth: 0 },
-      { name: "sub drop", kind: "osc", wave: "sine", delay: .07, freq: 19, endFreq: 988, dur: 1.79, gain: .089, attack: .001, release: .22, pan: 0, lowpass: 0, highpass: 40, drive: 0, lfoFreq: 0, lfoDepth: 0 },
-      { name: "metal release", kind: "noise", delay: .006, dur: .17, gain: .078, highpass: 24, lowpass: 620, endLowpass: 150, attack: .001, release: .095, pan: 0, drive: 0 },
+      { name: "sub drop", kind: "osc", wave: "sine", delay: .16, freq: 25, endFreq: 223, dur: .42, gain: .072, attack: .001, release: .22, pan: 0, lowpass: 0, highpass: 0, drive: 0, lfoFreq: 0, lfoDepth: 0 },
+      { name: "metal release", kind: "noise", delay: .006, dur: 1.73, gain: .053, highpass: 24, lowpass: 620, endLowpass: 150, attack: .09, release: .095, pan: 0, drive: 0 },
       { name: "electrical ticks", kind: "ticks", count: 3, dur: .13, gain: .009, pan: 0, delay: 0 }
     ]
   },
