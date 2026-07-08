@@ -4858,9 +4858,9 @@
       const alignment = dot(forwardVector(game.camera), inward);
       const slotOk = Math.abs(Math.sin(st.rot || 0)) < (capture ? .48 : .5);
       const slow = game.speed < (capture ? 82 : 75);
-      const nearDepth = capture ? depth > -125 && depth < 150 : depth > -145 && depth < 340;
-      const nearLateral = lateral < (capture ? 112 : 140);
-      const aligned = alignment > (capture ? .7 : .55);
+      const nearDepth = capture ? depth > -95 && depth < 70 : depth > -145 && depth < 340;
+      const nearLateral = lateral < (capture ? 98 : 140);
+      const aligned = alignment > (capture ? .76 : .55);
       const ok = slotOk && slow && nearDepth && nearLateral && aligned;
       const reason = !slow ? "TOO FAST"
         : !slotOk ? "SLOT ROTATION"
@@ -7847,7 +7847,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         alignment: clamp(alignment, 0, 1),
         avoidance: Number.isFinite(avoidance.nearest) ? avoidance.nearest : null
       };
-      if (state.stage === "final" && slotDist < 135 && lateral < 150 && alignment > .86) dock(true);
+      if (state.stage === "final" && slotDist < 82 && lateral < 105 && alignment > .88) dock(true);
     }
 
     function controlHoldTime(axis, input, dt) {
