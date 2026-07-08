@@ -6827,11 +6827,11 @@
       game.objects = game.objects.filter((x) => x !== o);
       if (o.type === "ship") {
         eliteAudio.playAt("explosion", o.pos, { range: 2400, gain: clamp(shipExplosionMagnitude(o) / 1.5, .65, 1.35) });
-        // A destroyed pirate/trader sometimes ejects instead of the ship (and any bounty)
-        // just vanishing outright — the pod itself can still be shot down for a small
-        // consolation bounty, or left to drift away.
-        const canEject = byPlayer && !o.thargoid && o.role !== "police" && o.role !== "pod";
-        if (canEject && Math.random() < .2) {
+        // Original Elite treats escape pods as a ship-blueprint capability
+        // rather than a universal bailout chance.
+        const behaviour = SOURCE_BEHAVIOUR[o.model] || {};
+        const canEject = byPlayer && behaviour.escapePod && !isAlienShip(o) && o.role !== "police" && o.role !== "pod";
+        if (canEject && Math.random() < .28) {
           const mag = shipExplosionMagnitude(o);
           spawnEscapePod(o.pos);
           spawnEjectFlash(o.pos);
@@ -7989,13 +7989,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function updatePlayerControls(dt) {
       const rollInput = (keys.has("KeyA") ? 1 : 0) - (keys.has("KeyD") ? 1 : 0);
       const pitchInput = (keys.has("KeyW") ? 1 : 0) - (keys.has("KeyS") ? 1 : 0);
-      const yawInput = (keys.has("KeyE") ? 1 : 0) - (keys.has("KeyQ") ? 1 : 0);
-      const rollRamp = controlRamp(controlHoldTime("roll", rollInput, dt), .32, .42);
-      const pitchRamp = controlRamp(controlHoldTime("pitch", pitchInput, dt), .2, .52);
-      const yawRamp = controlRamp(controlHoldTime("yaw", yawInput, dt), .2, .52);
-      game.rollRate = updateAxisRate(game.rollRate || 0, rollInput, dt, 4.8, 2.05, .055, rollRamp);
-      game.pitchRate = updateAxisRate(game.pitchRate || 0, pitchInput, dt, 3.5, 1.42, .055, pitchRamp);
-      game.yawRate = updateAxisRate(game.yawRate || 0, yawInput, dt, 3.2, 1.24, .055, yawRamp);
+      const yawInput = ((keys.has("KeyE") || keys.has("Period")) ? 1 : 0) - ((keys.has("KeyQ") || keys.has("Comma")) ? 1 : 0);
+      const rollRamp = controlRamp(controlHoldTime("roll", rollInput, dt), .38, .36);
+      const pitchRamp = controlRamp(controlHoldTime("pitch", pitchInput, dt), .28, .42);
+      const yawRamp = controlRamp(controlHoldTime("yaw", yawInput, dt), .28, .42);
+      game.rollRate = updateAxisRate(game.rollRate || 0, rollInput, dt, 5.6, 2.05, .055, rollRamp);
+      game.pitchRate = updateAxisRate(game.pitchRate || 0, pitchInput, dt, 4.05, 1.42, .055, pitchRamp);
+      game.yawRate = updateAxisRate(game.yawRate || 0, yawInput, dt, 3.75, 1.24, .055, yawRamp);
       if (Math.abs(game.rollRate) > .001) rotateCameraLocal(game.camera, vec(0, 0, 1), game.rollRate * dt);
       if (Math.abs(game.pitchRate) > .001) rotateCameraLocal(game.camera, vec(1, 0, 0), game.pitchRate * dt);
       if (Math.abs(game.yawRate) > .001) rotateCameraLocal(game.camera, vec(0, 1, 0), game.yawRate * dt);
