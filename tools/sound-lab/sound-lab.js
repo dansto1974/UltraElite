@@ -114,6 +114,225 @@ const PRESETS = {
       { name: "debris", kind: "ticks", count: 9, dur: .62, gain: .018 },
       { name: "sub pressure", kind: "rumble", strength: .82, dur: 1.15 }
     ]
+  },
+  "Boop UI": {
+    name: "boop",
+    bus: "cockpit",
+    masterGain: .78,
+    pitchScale: .62,
+    layers: [
+      { name: "low ui chirp", kind: "osc", wave: "sine", freq: 150, endFreq: 120, dur: .32, gain: .07, attack: .004, release: .035, pan: 0, lowpass: 0, highpass: 0, drive: 0, lfoFreq: 0, lfoDepth: 0 }
+    ]
+  },
+  "Beep UI": {
+    name: "beep",
+    bus: "cockpit",
+    masterGain: .78,
+    pitchScale: .62,
+    layers: [
+      { name: "high ui chirp", kind: "osc", wave: "sine", freq: 920, endFreq: 780, dur: .09, gain: .07, attack: .004, release: .035, pan: 0, lowpass: 0, highpass: 0, drive: 0, lfoFreq: 0, lfoDepth: 0 }
+    ]
+  },
+  "Beam Laser": {
+    name: "laserBeam",
+    bus: "weapons",
+    masterGain: .9,
+    pitchScale: .62,
+    layers: [
+      { name: "cutter body", kind: "osc", wave: "sawtooth", freq: 285, endFreq: 210, dur: .16, gain: .068, attack: .004, release: .045, lowpass: 1200, highpass: 0, drive: 0, pan: 0, lfoFreq: 0, lfoDepth: 0 },
+      { name: "electrical edge", kind: "osc", wave: "triangle", delay: .015, freq: 820, endFreq: 620, dur: .12, gain: .038, attack: .002, release: .035, highpass: 300, lowpass: 4800, drive: 0, pan: 0, lfoFreq: 0, lfoDepth: 0 },
+      { name: "beam hiss", kind: "noise", delay: .004, dur: .16, gain: .035, highpass: 520, lowpass: 7200, endLowpass: 2600, attack: .006, release: .035, pan: 0, drive: 0 }
+    ]
+  },
+  "Military Laser": {
+    name: "laserMilitary",
+    bus: "weapons",
+    masterGain: .9,
+    pitchScale: .62,
+    layers: [
+      { name: "heavy crack", kind: "osc", wave: "sawtooth", freq: 210, endFreq: 54, dur: .18, gain: .12, attack: .001, release: .055, lowpass: 1400, highpass: 0, drive: 0, pan: 0, lfoFreq: 0, lfoDepth: 0 },
+      { name: "sharp tail", kind: "osc", wave: "sawtooth", delay: .026, freq: 1180, endFreq: 190, dur: .16, gain: .052, attack: .001, release: .035, highpass: 320, lowpass: 7600, drive: 0, pan: 0, lfoFreq: 0, lfoDepth: 0 },
+      { name: "military ion noise", kind: "noise", delay: .002, dur: .18, gain: .05, highpass: 360, lowpass: 9200, endLowpass: 1700, attack: .001, release: .035, pan: 0, drive: 0 },
+      { name: "spark ticks", kind: "ticks", count: 3, dur: .14, gain: .014, pan: 0, delay: 0 }
+    ]
+  },
+  "Mining Laser": {
+    name: "laserMining",
+    bus: "weapons",
+    masterGain: .9,
+    pitchScale: .62,
+    layers: [
+      { name: "industrial cutter", kind: "osc", wave: "sawtooth", freq: 132, endFreq: 58, dur: .46, gain: .105, attack: .018, release: .12, lowpass: 900, highpass: 0, drive: 0, pan: 0, lfoFreq: 0, lfoDepth: 0 },
+      { name: "low bore", kind: "osc", wave: "triangle", delay: .055, freq: 72, endFreq: 42, dur: .42, gain: .062, attack: .028, release: .16, lowpass: 0, highpass: 0, drive: 0, pan: 0, lfoFreq: 0, lfoDepth: 0 },
+      { name: "rock dust", kind: "noise", delay: .018, dur: .42, gain: .07, highpass: 45, lowpass: 2600, endLowpass: 900, attack: .02, release: .16, pan: 0, drive: 0 },
+      { name: "debris ticks", kind: "ticks", count: 7, dur: .38, gain: .012, pan: 0, delay: 0 }
+    ]
+  },
+  "Enemy Laser Light": {
+    name: "enemyLaser",
+    bus: "weapons",
+    masterGain: .86,
+    pitchScale: .62,
+    layers: [
+      { name: "light hostile zap", kind: "osc", wave: "triangle", freq: 720, endFreq: 210, dur: .14, gain: .044, attack: .001, release: .035, highpass: 180, lowpass: 5200, drive: 0, pan: 0, lfoFreq: 0, lfoDepth: 0 },
+      { name: "hostile fizz", kind: "noise", dur: .1, gain: .022, highpass: 640, lowpass: 7600, endLowpass: 1800, attack: .001, release: .035, pan: 0, drive: 0 }
+    ]
+  },
+  "Enemy Laser Medium": {
+    name: "enemyLaser",
+    bus: "weapons",
+    masterGain: .86,
+    pitchScale: .62,
+    layers: [
+      { name: "medium hostile zap", kind: "osc", wave: "triangle", freq: 520, endFreq: 110, dur: .14, gain: .06, attack: .001, release: .035, highpass: 180, lowpass: 5200, drive: 0, pan: 0, lfoFreq: 0, lfoDepth: 0 },
+      { name: "hostile fizz", kind: "noise", dur: .1, gain: .032, highpass: 640, lowpass: 7600, endLowpass: 1800, attack: .001, release: .035, pan: 0, drive: 0 }
+    ]
+  },
+  "Enemy Laser Heavy": {
+    name: "enemyLaser",
+    bus: "weapons",
+    masterGain: .9,
+    pitchScale: .62,
+    layers: [
+      { name: "heavy hostile shot", kind: "osc", wave: "sawtooth", freq: 310, endFreq: 72, dur: .2, gain: .078, attack: .001, release: .035, highpass: 90, lowpass: 4600, drive: .8, pan: 0, lfoFreq: 0, lfoDepth: 0 },
+      { name: "sharp hostile tail", kind: "osc", wave: "sawtooth", delay: .018, freq: 1200, endFreq: 190, dur: .16, gain: .032, attack: .001, release: .035, highpass: 320, lowpass: 7600, drive: 0, pan: 0, lfoFreq: 0, lfoDepth: 0 },
+      { name: "heavy hostile fizz", kind: "noise", dur: .14, gain: .048, highpass: 640, lowpass: 7600, endLowpass: 1800, attack: .001, release: .035, pan: 0, drive: 0 }
+    ]
+  },
+  "Enemy Laser Alien": {
+    name: "enemyLaser",
+    bus: "weapons",
+    masterGain: .9,
+    pitchScale: .62,
+    layers: [
+      { name: "alien cutter", kind: "osc", wave: "triangle", freq: 420, endFreq: 820, dur: .22, gain: .07, attack: .001, release: .035, highpass: 180, lowpass: 6800, drive: 0, pan: 0, lfoFreq: 0, lfoDepth: 0 },
+      { name: "green plasma fizz", kind: "noise", dur: .16, gain: .041, highpass: 920, lowpass: 9000, endLowpass: 2600, attack: .001, release: .035, pan: 0, drive: 0 }
+    ]
+  },
+  "Shield / Hull Hit": {
+    name: "hit",
+    bus: "ship",
+    masterGain: .9,
+    pitchScale: .62,
+    layers: [
+      { name: "impact wash", kind: "noise", dur: .98, gain: .107, highpass: 118, lowpass: 1235, endLowpass: 1324, attack: .01, release: .14, pan: 0, drive: 0 },
+      { name: "body thud", kind: "osc", wave: "triangle", freq: 96, endFreq: 77, dur: 2.2, gain: .018, attack: .24, release: .7, lowpass: 618, highpass: 0, drive: 0, pan: -.08, lfoFreq: 0, lfoDepth: 0 },
+      { name: "air shudder", kind: "noise", dur: 3.68, gain: .009, highpass: 235, lowpass: 912, attack: .2, release: .335, pan: .08, drive: 1.2 },
+      { name: "hull resonance", kind: "osc", wave: "sine", freq: 116, dur: .87, gain: .04, attack: .01, release: .08, lowpass: 1765, highpass: 0, drive: 0, pan: 0, lfoFreq: 0, lfoDepth: 0 }
+    ]
+  },
+  "Death Explosion": {
+    name: "death",
+    bus: "world",
+    masterGain: .9,
+    pitchScale: .62,
+    layers: [
+      { name: "catastrophic bloom", kind: "noise", dur: 1.75, gain: .18, highpass: 18, lowpass: 1600, endLowpass: 340, attack: .001, release: .55, pan: 0, drive: 0 },
+      { name: "hull tear", kind: "osc", wave: "sawtooth", freq: 118, endFreq: 18, dur: 1.65, gain: .095, attack: .001, release: .46, lowpass: 760, highpass: 0, drive: 0, pan: 0, lfoFreq: 0, lfoDepth: 0 },
+      { name: "pressure wave", kind: "rumble", delay: .03, strength: 1.28, dur: 1.55, pan: 0 },
+      { name: "debris shower", kind: "ticks", count: 16, dur: 1.05, gain: .022, pan: 0, delay: 0 }
+    ]
+  },
+  "Missile Launch": {
+    name: "missile",
+    bus: "weapons",
+    masterGain: .86,
+    pitchScale: .62,
+    layers: [
+      { name: "missile ignition", kind: "osc", wave: "sawtooth", freq: 96, endFreq: 420, dur: .32, gain: .075, attack: .008, release: .075, lowpass: 1600, highpass: 0, drive: 0, pan: 0, lfoFreq: 0, lfoDepth: 0 },
+      { name: "missile smoke", kind: "noise", delay: .03, dur: .4, gain: .06, highpass: 80, lowpass: 4200, endLowpass: 1800, attack: .02, release: .16, pan: 0, drive: 0 }
+    ]
+  },
+  "Classic Launch": {
+    name: "launch",
+    bus: "ship",
+    masterGain: .82,
+    pitchScale: .62,
+    layers: [
+      { name: "launch rise", kind: "osc", wave: "sawtooth", freq: 72, endFreq: 260, dur: .9, gain: .075, attack: .04, release: .22, lowpass: 1050, highpass: 0, drive: 0, pan: 0, lfoFreq: 0, lfoDepth: 0 },
+      { name: "launch wash", kind: "noise", delay: .05, dur: .95, gain: .07, highpass: 34, lowpass: 3400, endLowpass: 1650, attack: .04, release: .26, pan: 0, drive: 0 },
+      { name: "launch rumble", kind: "rumble", delay: .08, strength: .46, dur: .85, pan: 0 }
+    ]
+  },
+  "Hyperspace": {
+    name: "hyperspace",
+    bus: "ambience",
+    masterGain: .9,
+    pitchScale: .62,
+    layers: [
+      { name: "charging sweep", kind: "osc", wave: "sawtooth", freq: 74, endFreq: 920, dur: 1.05, gain: .075, attack: .025, release: .14, lowpass: 2600, highpass: 0, drive: 0, pan: 0, lfoFreq: 0, lfoDepth: 0 },
+      { name: "upper vector whine", kind: "osc", wave: "triangle", delay: .14, freq: 180, endFreq: 1480, dur: .98, gain: .052, attack: .025, release: .035, highpass: 90, lowpass: 6200, drive: 0, pan: 0, lfoFreq: 0, lfoDepth: 0 },
+      { name: "jump tunnel noise", kind: "noise", delay: .02, dur: 1.18, gain: .072, highpass: 120, lowpass: 9800, endLowpass: 3400, attack: .025, release: .22, pan: 0, drive: 0 },
+      { name: "jump pressure", kind: "rumble", delay: .02, strength: .54, dur: 1.05, pan: 0 }
+    ]
+  },
+  "ECM": {
+    name: "ecm",
+    bus: "cockpit",
+    masterGain: .82,
+    pitchScale: .62,
+    layers: [
+      { name: "ecm warble low", kind: "osc", wave: "sine", freq: 740, endFreq: 1400, dur: .62, gain: .045, attack: .004, release: .035, pan: 0, lowpass: 0, highpass: 0, drive: 0, lfoFreq: 12, lfoDepth: 460 },
+      { name: "ecm warble high", kind: "osc", wave: "sine", delay: .04, freq: 1220, endFreq: 760, dur: .58, gain: .032, attack: .004, release: .035, pan: 0, lowpass: 0, highpass: 0, drive: 0, lfoFreq: 12, lfoDepth: 420 },
+      { name: "ecm hiss", kind: "noise", dur: .58, gain: .035, highpass: 1300, lowpass: 9000, attack: .004, release: .035, pan: 0, drive: 0 }
+    ]
+  },
+  "Energy Bomb": {
+    name: "bomb",
+    bus: "world",
+    masterGain: .9,
+    pitchScale: .62,
+    layers: [
+      { name: "bomb flash", kind: "noise", dur: .82, gain: .17, highpass: 70, lowpass: 9800, endLowpass: 880, attack: .001, release: .28, pan: 0, drive: 0 },
+      { name: "bomb drop", kind: "osc", wave: "sawtooth", freq: 58, endFreq: 18, dur: .9, gain: .095, attack: .001, release: .28, lowpass: 780, highpass: 0, drive: 0, pan: 0, lfoFreq: 0, lfoDepth: 0 },
+      { name: "bomb rumble", kind: "rumble", strength: 1.05, dur: 1.05, pan: 0 },
+      { name: "bomb ticks", kind: "ticks", count: 8, dur: .4, gain: .018, pan: 0, delay: 0 }
+    ]
+  },
+  "Fuel Scoop": {
+    name: "scoop",
+    bus: "ship",
+    masterGain: .75,
+    pitchScale: .62,
+    layers: [
+      { name: "scoop open", kind: "osc", wave: "sine", freq: 420, endFreq: 620, dur: .09, gain: .05, attack: .004, release: .035, pan: 0, lowpass: 0, highpass: 0, drive: 0, lfoFreq: 0, lfoDepth: 0 },
+      { name: "scoop lock", kind: "osc", wave: "sine", delay: .08, freq: 780, endFreq: 640, dur: .08, gain: .045, attack: .004, release: .035, pan: 0, lowpass: 0, highpass: 0, drive: 0, lfoFreq: 0, lfoDepth: 0 }
+    ]
+  },
+  "Cargo Scoop Pickup": {
+    name: "cargoScoop",
+    bus: "ship",
+    masterGain: .84,
+    pitchScale: .62,
+    layers: [
+      { name: "mechanical intake", kind: "osc", wave: "triangle", freq: 74, endFreq: 46, dur: .18, gain: .06, attack: .002, release: .09, lowpass: 520, highpass: 0, drive: 0, pan: 0, lfoFreq: 0, lfoDepth: 0 },
+      { name: "scoop scrape", kind: "noise", delay: .012, dur: .16, gain: .052, highpass: 28, lowpass: 740, endLowpass: 260, attack: .002, release: .08, pan: 0, drive: .9 },
+      { name: "servo catch", kind: "osc", wave: "sawtooth", delay: .11, freq: 185, endFreq: 92, dur: .34, gain: .032, attack: .012, release: .13, lowpass: 980, highpass: 0, drive: .7, pan: 0, lfoFreq: 0, lfoDepth: 0 },
+      { name: "bay pressure", kind: "noise", delay: .18, dur: .48, gain: .024, highpass: 520, lowpass: 2600, endLowpass: 880, attack: .018, release: .2, pan: 0, drive: 1.1 },
+      { name: "cargo thud", kind: "osc", wave: "triangle", delay: .32, freq: 58, endFreq: 34, dur: .26, gain: .05, attack: .004, release: .11, lowpass: 420, highpass: 0, drive: 0, pan: 0, lfoFreq: 0, lfoDepth: 0 }
+    ]
+  },
+  "Hangar Servo": {
+    name: "hangarServo",
+    bus: "world",
+    masterGain: .82,
+    pitchScale: .62,
+    layers: [
+      { name: "servo left", kind: "osc", wave: "triangle", freq: 82, endFreq: 132, dur: .48, gain: .046, attack: .018, release: .14, lowpass: 780, highpass: 0, drive: 0, pan: -.16, lfoFreq: 0, lfoDepth: 0 },
+      { name: "servo right", kind: "osc", wave: "sawtooth", delay: .045, freq: 205, endFreq: 96, dur: .42, gain: .024, attack: .018, release: .16, lowpass: 1150, highpass: 0, drive: 0, pan: .18, lfoFreq: 0, lfoDepth: 0 },
+      { name: "machinery scrape", kind: "noise", delay: .02, dur: .48, gain: .032, highpass: 55, lowpass: 1450, endLowpass: 520, attack: .018, release: .18, pan: .08, drive: 0 }
+    ]
+  },
+  "Clamp Engage": {
+    name: "clampEngage",
+    bus: "ship",
+    masterGain: .86,
+    pitchScale: .62,
+    layers: [
+      { name: "clamp bite", kind: "osc", wave: "triangle", freq: 42, endFreq: 30, dur: .36, gain: .074, attack: .001, release: .19, lowpass: 520, highpass: 0, drive: 0, pan: 0, lfoFreq: 0, lfoDepth: 0 },
+      { name: "lock scrape", kind: "noise", delay: .01, dur: .2, gain: .072, highpass: 22, lowpass: 480, endLowpass: 130, attack: .001, release: .12, pan: 0, drive: 0 },
+      { name: "station latch", kind: "osc", wave: "triangle", delay: .12, freq: 118, endFreq: 68, dur: .28, gain: .036, attack: .004, release: .12, lowpass: 820, highpass: 0, drive: 0, pan: 0, lfoFreq: 0, lfoDepth: 0 }
+    ]
   }
 };
 
@@ -125,6 +344,9 @@ let loopTimer = null;
 let snapshotA = null;
 let snapshotB = null;
 let currentSources = [];
+let bedPreview = null;
+let bedRaf = null;
+let activePresetName = "Blast Off";
 
 const el = (id) => document.getElementById(id);
 const layersEl = el("layers");
@@ -184,6 +406,16 @@ function panConnect(node, pan = 0) {
   }
 }
 
+function smoothParam(param, value, lag = .08) {
+  if (!ctx || !param) return;
+  param.setTargetAtTime(Math.max(.00001, value), ctx.currentTime, lag);
+}
+
+function smoothSignedParam(param, value, lag = .08) {
+  if (!ctx || !param) return;
+  param.setTargetAtTime(value, ctx.currentTime, lag);
+}
+
 function applyFilters(node, layer, t) {
   let out = node;
   if (layer.highpass > 0) {
@@ -212,6 +444,7 @@ function applyFilters(node, layer, t) {
 }
 
 function stopAll() {
+  stopBedPreview();
   currentSources.forEach((source) => {
     try { source.stop(); } catch {}
   });
@@ -220,6 +453,100 @@ function stopAll() {
     clearInterval(loopTimer);
     loopTimer = null;
   }
+  setTransportStatus("ONE-SHOT");
+}
+
+function stationBedLayers(patch = state) {
+  const oscLayers = patch.layers.filter((layer) => layer.kind === "osc");
+  const pressure = patch.layers.find((layer) => /pulse|pressure|deep/i.test(layer.name || "") && layer.kind === "osc") || oscLayers[0] || defaultLayer("osc");
+  const duct = patch.layers.find((layer) => /duct|hum|body/i.test(layer.name || "") && layer.kind === "osc") || oscLayers[1] || pressure;
+  const air = patch.layers.find((layer) => /air|noise|hiss/i.test(layer.name || "") && layer.kind === "noise") || patch.layers.find((layer) => layer.kind === "noise") || defaultLayer("noise");
+  return { pressure, duct, air };
+}
+
+function startBedPreview() {
+  ensureAudio();
+  if (!ctx) return;
+  stopAll();
+  master.gain.value = state.masterGain;
+  const pressure = ctx.createOscillator();
+  const duct = ctx.createOscillator();
+  const noiseSrc = ctx.createBufferSource();
+  const pressureGain = ctx.createGain();
+  const ductGain = ctx.createGain();
+  const airGain = ctx.createGain();
+  const pressureFilter = ctx.createBiquadFilter();
+  const ductFilter = ctx.createBiquadFilter();
+  const airHp = ctx.createBiquadFilter();
+  const airBp = ctx.createBiquadFilter();
+  const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+
+  pressure.type = "sine";
+  duct.type = "triangle";
+  noiseSrc.buffer = noiseBuffer;
+  noiseSrc.loop = true;
+  pressureFilter.type = "lowpass";
+  ductFilter.type = "lowpass";
+  airHp.type = "highpass";
+  airBp.type = "bandpass";
+  airBp.Q.value = 3.2;
+  for (const gain of [pressureGain, ductGain, airGain]) gain.gain.value = .00001;
+
+  pressure.connect(pressureFilter).connect(pressureGain).connect(master);
+  duct.connect(ductFilter).connect(ductGain).connect(master);
+  const airOut = pan || master;
+  noiseSrc.connect(airHp).connect(airBp).connect(airGain).connect(airOut);
+  if (pan) pan.connect(master);
+  pressure.start();
+  duct.start();
+  noiseSrc.start();
+  bedPreview = { pressure, duct, noiseSrc, pressureGain, ductGain, airGain, pressureFilter, ductFilter, airHp, airBp, pan };
+  setTransportStatus("BED LIVE");
+  updateBedPreview();
+}
+
+function stopBedPreview() {
+  if (bedRaf) {
+    cancelAnimationFrame(bedRaf);
+    bedRaf = null;
+  }
+  if (!bedPreview) return;
+  for (const source of [bedPreview.pressure, bedPreview.duct, bedPreview.noiseSrc]) {
+    try { source.stop(); } catch {}
+  }
+  bedPreview = null;
+}
+
+function updateBedPreview() {
+  if (!bedPreview || !ctx) return;
+  master.gain.value = state.masterGain;
+  const { pressure, duct, air } = stationBedLayers(state);
+  const now = ctx.currentTime;
+  const pulse = .54 + Math.sin(now * 1.85) * .22 + Math.sin(now * .47 + 2.1) * .18;
+  const ductMod = .5 + Math.sin(now * .28) * .22;
+  const airMod = .64 + Math.sin(now * .42 + 1.1) * .16;
+  const pressureFreq = (pressure.freq || 27) + ((pressure.endFreq || pressure.freq || 31) - (pressure.freq || 27)) * pulse;
+  const ductFreq = (duct.freq || 44) + ((duct.endFreq || duct.freq || 52) - (duct.freq || 44)) * ductMod;
+  const airFreq = Math.max(80, (air.lowpass || 620) * (.7 + airMod * .45));
+  const airHpFreq = Math.max(1, air.highpass || 160);
+  const level = 1.45;
+
+  smoothParam(bedPreview.pressure.frequency, Math.max(1, pressureFreq * state.pitchScale), .08);
+  smoothParam(bedPreview.duct.frequency, Math.max(1, ductFreq * state.pitchScale), .1);
+  smoothParam(bedPreview.pressureFilter.frequency, Math.max(90, (pressure.lowpass || 200) * state.pitchScale), .12);
+  smoothParam(bedPreview.ductFilter.frequency, Math.max(90, (duct.lowpass || 420) * state.pitchScale), .12);
+  smoothParam(bedPreview.airHp.frequency, airHpFreq * state.pitchScale, .14);
+  smoothParam(bedPreview.airBp.frequency, airFreq * state.pitchScale, .1);
+  smoothParam(bedPreview.pressureGain.gain, (pressure.gain || 0) * (.72 + pulse * .38) * level, .08);
+  smoothParam(bedPreview.ductGain.gain, (duct.gain || 0) * (.66 + ductMod * .42) * level, .1);
+  smoothParam(bedPreview.airGain.gain, (air.gain || 0) * (.5 + airMod * .32) * level, .12);
+  if (bedPreview.pan) smoothSignedParam(bedPreview.pan.pan, Math.sin(now * .18) * .08, .16);
+  bedRaf = requestAnimationFrame(updateBedPreview);
+}
+
+function setTransportStatus(text) {
+  const status = el("transportStatus");
+  if (status) status.textContent = text;
 }
 
 function playPatch(patch = state, allowLoop = true) {
@@ -332,6 +659,8 @@ function render() {
   el("masterGain").value = state.masterGain;
   el("busSelect").value = state.bus;
   el("pitchScale").value = state.pitchScale;
+  const presetSelect = el("presetSelect");
+  if (presetSelect && presetSelect.value !== activePresetName) presetSelect.value = activePresetName;
   el("patchSummary").textContent = `${state.layers.length} layer patch for Ultra Elite ${state.bus} bus.`;
   layersEl.innerHTML = "";
   state.layers.forEach((layer, index) => renderLayer(layer, index));
@@ -414,23 +743,37 @@ function defaultLayer(kind) {
   return { name: "osc layer", kind: "osc", wave: "sine", delay: 0, freq: 120, endFreq: 0, gain: .04, dur: .3, attack: .01, release: .08, pan: 0, lowpass: 1200, highpass: 0, drive: 0, lfoFreq: 0, lfoDepth: 0 };
 }
 
-function loadPatch(patch) {
+function syncActivePreset() {
+  if (!activePresetName) return;
+  PRESETS[activePresetName] = structuredClone(state);
+}
+
+function loadPatch(patch, presetName = null) {
+  if (presetName) activePresetName = presetName;
   Object.assign(state, structuredClone(patch));
   render();
 }
 
+function selectPreset(name) {
+  if (!PRESETS[name]) return;
+  syncActivePreset();
+  activePresetName = name;
+  loadPatch(PRESETS[name], name);
+}
+
 function suggestPatch() {
   const text = el("soundPrompt").value.toLowerCase();
-  if (text.includes("spool") || text.includes("engine") || text.includes("whine") || text.includes("launch")) return loadPatch(PRESETS["Launch Spool"]);
-  if (text.includes("clamp") || text.includes("clunk")) return loadPatch(PRESETS["Mag Clamp"]);
-  if (text.includes("station") || text.includes("rumble") || text.includes("hum")) return loadPatch(PRESETS["Station Rumble"]);
-  if (text.includes("laser") || text.includes("beam") || text.includes("bolt")) return loadPatch(PRESETS["Pulse Laser"]);
-  if (text.includes("explosion") || text.includes("boom") || text.includes("blast")) return loadPatch(PRESETS["Explosion"]);
-  return loadPatch(PRESETS["Blast Off"]);
+  if (text.includes("spool") || text.includes("engine") || text.includes("whine") || text.includes("launch")) return selectPreset("Launch Spool");
+  if (text.includes("clamp") || text.includes("clunk")) return selectPreset("Mag Clamp");
+  if (text.includes("station") || text.includes("rumble") || text.includes("hum")) return selectPreset("Station Rumble");
+  if (text.includes("laser") || text.includes("beam") || text.includes("bolt")) return selectPreset("Pulse Laser");
+  if (text.includes("explosion") || text.includes("boom") || text.includes("blast")) return selectPreset("Explosion");
+  return selectPreset("Blast Off");
 }
 
 function updateExport() {
-  exportEl.value = `${JSON.stringify(state, null, 2)}\n\n${toJsCase(state)}`;
+  syncActivePreset();
+  exportEl.value = `${JSON.stringify(state, null, 2)}\n\n${toJsCase(state)}\n\n// ALL SOUND LAB PRESETS\n${JSON.stringify(PRESETS, null, 2)}`;
 }
 
 function toJsCase(patch) {
@@ -508,12 +851,19 @@ async function copy(text) {
 
 function bind() {
   Object.entries(PRESETS).forEach(([name, patch]) => {
+    const option = document.createElement("option");
+    option.value = name;
+    option.textContent = `${name} (${patch.name})`;
+    el("presetSelect").appendChild(option);
     const button = document.createElement("button");
     button.textContent = name;
-    button.addEventListener("click", () => loadPatch(patch));
+    button.addEventListener("click", () => selectPreset(name));
     el("presetList").appendChild(button);
   });
+  el("presetSelect").value = activePresetName;
+  el("presetSelect").addEventListener("change", (e) => selectPreset(e.target.value));
   el("playBtn").addEventListener("click", () => { stopAll(); playPatch(); });
+  el("bedBtn").addEventListener("click", startBedPreview);
   el("stopBtn").addEventListener("click", stopAll);
   el("suggestBtn").addEventListener("click", suggestPatch);
   el("addLayerBtn").addEventListener("click", () => { state.layers.push(defaultLayer("osc")); render(); });
@@ -523,6 +873,7 @@ function bind() {
   el("pitchScale").addEventListener("input", (e) => { state.pitchScale = Number(e.target.value); updateExport(); });
   el("copyJson").addEventListener("click", () => copy(JSON.stringify(state, null, 2)));
   el("copyJs").addEventListener("click", () => copy(toJsCase(state)));
+  el("copyAll").addEventListener("click", () => { syncActivePreset(); copy(JSON.stringify(PRESETS, null, 2)); });
   el("storeA").addEventListener("click", () => { snapshotA = structuredClone(state); });
   el("storeB").addEventListener("click", () => { snapshotB = structuredClone(state); });
   el("playA").addEventListener("click", () => snapshotA && playPatch(snapshotA, false));

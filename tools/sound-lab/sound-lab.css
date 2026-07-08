@@ -119,6 +119,13 @@ h2 {
   color: var(--muted);
 }
 
+.transport-status {
+  min-width: 8ch;
+  color: var(--yellow);
+  font-size: .78rem;
+  text-transform: uppercase;
+}
+
 .prompt {
   margin-top: 14px;
   padding: 14px;
@@ -166,6 +173,15 @@ input[type="range"] {
   display: grid;
   gap: 8px;
   margin-top: 14px;
+}
+
+.preset-select-wrap {
+  display: grid;
+  gap: 7px;
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: .78rem;
+  text-transform: uppercase;
 }
 
 .preset-list button {
