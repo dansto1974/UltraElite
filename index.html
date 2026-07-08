@@ -2832,6 +2832,9 @@
       soundEnabled: true,
       developerMode: false,
       godMode: false,
+      devStarType: "auto",
+      devPlanetType: "auto",
+      devStationType: "auto",
       transition: null,
       dockScene: null,
       jumpCountdown: null,
@@ -5558,20 +5561,39 @@
       return Object.entries(scores).sort((a, b) => b[1] - a[1])[0][0];
     }
 
-    function stellarProfileForSystem(sys) {
+    const DEV_STAR_TYPES = [
+      ["auto", "Auto"],
+      ["redDwarf", "Red Dwarf"],
+      ["orangeDwarf", "Orange Dwarf"],
+      ["yellowDwarf", "Yellow Dwarf"],
+      ["blueWhite", "Blue-White Star"],
+      ["whiteDwarf", "White Dwarf"],
+      ["redGiant", "Red Giant"]
+    ];
+    const DEV_PLANET_TYPES = [
+      ["auto", "Auto"],
+      ["ocean", "Blue-Green Ocean"],
+      ["desert", "Desert"],
+      ["venus", "Venus-Like"],
+      ["gas", "Gas Giant"],
+      ["ice", "Ice World"],
+      ["rocky", "Rocky/Barren"],
+      ["industrial", "Industrial"]
+    ];
+    const DEV_STATION_TYPES = [
+      ["auto", "Auto"],
+      ["coriolis", "Coriolis"],
+      ["dodo", "Dodo"],
+      ["rich", "Rich/New Finish"],
+      ["poor", "Poor/Rusty Finish"]
+    ];
+
+    function stellarProfileForSystem(sys, forcedKind = null) {
       const desc = `${sys.description} ${ECONOMIES[sys.economy]}`.toLowerCase();
       const has = (words) => words.some((word) => desc.includes(word));
       const rng = mulberry(hash32(`${sys.name}:stellar`));
       const roll = rng();
       let kind = "yellowDwarf";
-      if (has(["unstable", "fabled"]) && roll < .34) kind = "blueWhite";
-      else if (has(["ancient", "bleak"]) && roll < .32) kind = "whiteDwarf";
-      else if (has(["remote", "ancient", "bleak"]) && roll < .62) kind = "redGiant";
-      else if (sys.economy >= 5 && roll < .45) kind = "redDwarf";
-      else if (sys.economy <= 2 && roll < .55) kind = "orangeDwarf";
-      else if (roll < .18) kind = "whiteDwarf";
-      else if (roll < .38) kind = "orangeDwarf";
-      else if (roll < .56) kind = "redDwarf";
       const profiles = {
         redDwarf: { label: "Red Dwarf", hue: 7 + rng() * 8, sat: 86, coreLight: 77, midLight: 52, rimLight: 25, sizeMul: .58 + rng() * .16, glowMul: 1.8, corona: .48, flare: .12, spots: .12 },
         orangeDwarf: { label: "Orange Dwarf", hue: 28 + rng() * 10, sat: 92, coreLight: 88, midLight: 65, rimLight: 38, sizeMul: .82 + rng() * .2, glowMul: 1.62, corona: .42, flare: .16, spots: .08 },
@@ -5580,6 +5602,15 @@
         whiteDwarf: { label: "White Dwarf", hue: 205 + rng() * 20, sat: 34, coreLight: 99, midLight: 90, rimLight: 66, sizeMul: .34 + rng() * .12, glowMul: 2.45, corona: .5, flare: .08, spots: 0 },
         redGiant: { label: "Red Giant", hue: 3 + rng() * 16, sat: 90, coreLight: 82, midLight: 48, rimLight: 22, sizeMul: 11.5 + rng() * 4.2, heatMul: 1.15, glowMul: 1.08, corona: .16, flare: .5, spots: 0 }
       };
+      if (forcedKind && profiles[forcedKind]) kind = forcedKind;
+      else if (has(["unstable", "fabled"]) && roll < .34) kind = "blueWhite";
+      else if (has(["ancient", "bleak"]) && roll < .32) kind = "whiteDwarf";
+      else if (has(["remote", "ancient", "bleak"]) && roll < .62) kind = "redGiant";
+      else if (sys.economy >= 5 && roll < .45) kind = "redDwarf";
+      else if (sys.economy <= 2 && roll < .55) kind = "orangeDwarf";
+      else if (roll < .18) kind = "whiteDwarf";
+      else if (roll < .38) kind = "orangeDwarf";
+      else if (roll < .56) kind = "redDwarf";
       return { kind, ...profiles[kind], seed: hash32(`${sys.name}:stellar-surface`) };
     }
 
@@ -5593,7 +5624,9 @@
       const rng = mulberry(hash32(`${sys.name}:bodies`));
       // Biome drives deterministic surface rendering. It uses the original Elite
       // system data first, with goat-soup description words as flavour hints.
-      const biome = planetBiomeForSystem(sys);
+      const biome = DEV_PLANET_TYPES.some(([id]) => id === game.devPlanetType) && game.devPlanetType !== "auto"
+        ? game.devPlanetType
+        : planetBiomeForSystem(sys);
       const planetR = lerp(900, 1900, clamp((sys.radius - 2816) / (6912 - 2816), 0, 1)) * (biome === "gas" ? 1.8 : biome === "venus" ? .88 : biome === "ice" ? 1.05 : 1);
       const highOrbit = rng() < .46;
       const orbitA = rng() * TAU;
@@ -5632,7 +5665,7 @@
         ringTilt: (ringRng() - .5) * 1.1,
         hp: 9999, hostile: false
       };
-      const stellar = stellarProfileForSystem(sys);
+      const stellar = stellarProfileForSystem(sys, game.devStarType !== "auto" ? game.devStarType : null);
       const baseSunR = planetR * lerp(.65, 1.05, rng());
       const sunR = baseSunR * stellar.sizeMul;
       let side = cross(planetDir, vec(0, 1, 0));
@@ -5686,6 +5719,38 @@
       };
     }
 
+    function devStationStyleForSystem(sys) {
+      if (game.devStationType === "rich") {
+        return {
+          wealth: .94,
+          base: "#edf3e9",
+          trim: "#d8fff2",
+          stripe: "#46dfff",
+          grime: .08,
+          shine: .94,
+          seed: hash32(`${sys.name}:station-style:dev-rich`)
+        };
+      }
+      if (game.devStationType === "poor") {
+        return {
+          wealth: .12,
+          base: "#9f927d",
+          trim: "#b56b35",
+          stripe: "#ffd33d",
+          grime: .92,
+          shine: .12,
+          seed: hash32(`${sys.name}:station-style:dev-poor`)
+        };
+      }
+      return stationStyleForSystem(sys);
+    }
+
+    function devStationModelForSystem(sys) {
+      if (game.devStationType === "dodo") return "dodoStation";
+      if (game.devStationType === "coriolis") return "coriolis";
+      return sys.tech >= 10 ? "dodoStation" : "coriolis";
+    }
+
     function stationModelFor(o) {
       return o?.model === "dodoStation" ? MODELS.dodoStation : STATION_MODEL;
     }
@@ -5720,14 +5785,14 @@
       const { planet, sun } = buildSystemBodies(sys);
       // Original NWSPS swaps the SST blueprint to a Dodo station at internal
       // tech level 10+, otherwise the station remains Coriolis.
-      const isDodo = sys.tech >= 10;
-      const stationStyle = stationStyleForSystem(sys);
+      const stationModel = devStationModelForSystem(sys);
+      const stationStyle = devStationStyleForSystem(sys);
       game.objects = [
         {
-          type: "station", model: isDodo ? "dodoStation" : "coriolis",
-          name: `${sys.name} ${isDodo ? "DODO STATION" : "STATION"}`,
+          type: "station", model: stationModel,
+          name: `${sys.name} ${stationModel === "dodoStation" ? "DODO STATION" : "STATION"}`,
           pos: vec(0, 0, 900), basePos: vec(0, 0, 900), rot: 0, rotSpeed: .34, driftPhase: rng() * TAU,
-          r: shipStats(isDodo ? "dodoStation" : "coriolis").r, color: stationStyle.base, stationStyle, hp: 9999, hostile: false
+          r: shipStats(stationModel).r, color: stationStyle.base, stationStyle, hp: 9999, hostile: false
         },
         planet,
         sun
@@ -7193,6 +7258,49 @@
       game.godMode = !game.godMode;
       if (game.godMode) restoreShipSystems();
       setMessage(`God mode ${game.godMode ? "enabled" : "disabled"}.`);
+      renderPanel();
+    }
+
+    function optionList(options, current) {
+      return options.map(([value, label]) => `<option value="${value}" ${value === current ? "selected" : ""}>${label}</option>`).join("");
+    }
+
+    function replaceSceneObject(type, replacement) {
+      const idx = game.objects.findIndex((o) => o.type === type);
+      if (idx >= 0) {
+        if (game.targetObject === game.objects[idx]) game.targetObject = replacement;
+        game.objects[idx] = replacement;
+      } else {
+        game.objects.push(replacement);
+      }
+    }
+
+    function applyDevWorldOverrides() {
+      const sys = currentSystem();
+      const { planet, sun } = buildSystemBodies(sys);
+      replaceSceneObject("planet", planet);
+      replaceSceneObject("sun", sun);
+      const stationModel = devStationModelForSystem(sys);
+      const stationStyle = devStationStyleForSystem(sys);
+      for (const st of game.objects.filter((o) => o.type === "station")) {
+        st.model = stationModel;
+        st.name = `${sys.name} ${stationModel === "dodoStation" ? "DODO STATION" : "STATION"}`;
+        st.r = shipStats(stationModel).r;
+        st.color = stationStyle.base;
+        st.stationStyle = stationStyle;
+      }
+      stationTextureCache.clear();
+    }
+
+    function cheatSetWorldOverride(kind, value) {
+      if (kind === "star" && DEV_STAR_TYPES.some(([id]) => id === value)) game.devStarType = value;
+      else if (kind === "planet" && DEV_PLANET_TYPES.some(([id]) => id === value)) game.devPlanetType = value;
+      else if (kind === "station" && DEV_STATION_TYPES.some(([id]) => id === value)) game.devStationType = value;
+      else return;
+      applyDevWorldOverrides();
+      const label = { star: "star", planet: "planet", station: "station" }[kind] || kind;
+      const option = ([...DEV_STAR_TYPES, ...DEV_PLANET_TYPES, ...DEV_STATION_TYPES].find(([id]) => id === value) || [value, value])[1];
+      setMessage(`Dev visual override: ${label} ${option}.`, true);
       renderPanel();
     }
 
@@ -15090,6 +15198,23 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         <select class="btn mini" data-cheat-ship>${shipOptions}</select>
       </div>
       <div class="notice">
+        Visual test rig
+        <div class="equipment-cheats">
+          <div class="row">
+            <span class="label">Star type</span>
+            <span class="value"><select class="btn mini" data-dev-world="star">${optionList(DEV_STAR_TYPES, game.devStarType)}</select></span>
+          </div>
+          <div class="row">
+            <span class="label">Planet type</span>
+            <span class="value"><select class="btn mini" data-dev-world="planet">${optionList(DEV_PLANET_TYPES, game.devPlanetType)}</select></span>
+          </div>
+          <div class="row">
+            <span class="label">Station type</span>
+            <span class="value"><select class="btn mini" data-dev-world="station">${optionList(DEV_STATION_TYPES, game.devStationType)}</select></span>
+          </div>
+        </div>
+      </div>
+      <div class="notice">
         Equipment
         <div class="equipment-cheats">${equipmentRows}</div>
       </div>`;
@@ -15216,6 +15341,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }));
       const cheatShip = panelBody.querySelector("[data-cheat-ship]");
       if (cheatShip) cheatShip.addEventListener("change", () => cheatChangePlayerShip(cheatShip.value));
+      panelBody.querySelectorAll("[data-dev-world]").forEach((select) => {
+        select.addEventListener("change", () => cheatSetWorldOverride(select.dataset.devWorld, select.value));
+      });
       const fuel = panelBody.querySelector("[data-fuel]");
       if (fuel) fuel.addEventListener("click", buyFuel);
       const missile = panelBody.querySelector("[data-missile]");
