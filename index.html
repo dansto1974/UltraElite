@@ -4735,10 +4735,26 @@
       let remaining = Math.max(0, amount);
       const arc = options.arc || hitArcFromWorld(options.sourcePos);
       if (!options.bypassShields) {
-        const shieldKey = arc === "aft" ? "aftShield" : "foreShield";
-        const absorbed = Math.min(game[shieldKey], remaining);
-        game[shieldKey] -= absorbed;
-        remaining -= absorbed;
+        if (options.shieldMode === "both") {
+          for (let pass = 0; pass < 2 && remaining > .0001; pass++) {
+            const activeBanks = ["foreShield", "aftShield"].filter((key) => game[key] > .0001);
+            if (!activeBanks.length) break;
+            const share = remaining / activeBanks.length;
+            let absorbedThisPass = 0;
+            for (const shieldKey of activeBanks) {
+              const absorbed = Math.min(game[shieldKey], share);
+              game[shieldKey] -= absorbed;
+              absorbedThisPass += absorbed;
+            }
+            remaining -= absorbedThisPass;
+            if (absorbedThisPass <= .0001) break;
+          }
+        } else {
+          const shieldKey = arc === "aft" ? "aftShield" : "foreShield";
+          const absorbed = Math.min(game[shieldKey], remaining);
+          game[shieldKey] -= absorbed;
+          remaining -= absorbed;
+        }
       }
       if (remaining > 0) {
         game.energy -= remaining;
@@ -5081,10 +5097,13 @@
       game.cabinTemp = clamp(game.cabinTemp, 0, 125);
       if (game.cabinTemp > 84 && !game.docked) {
         const excess = (game.cabinTemp - 84) / 16;
-        damagePlayer(dt * Math.pow(excess, 1.75) * 7.5, "hull over temperature", { bypassShields: true, arc: "fore" });
+        const shieldBefore = (game.foreShield || 0) + (game.aftShield || 0);
+        const energyBefore = game.energy || 0;
+        damagePlayer(dt * Math.pow(excess, 1.75) * 7.5, "solar over temperature", { shieldMode: "both", sourcePos: sun?.pos });
         if (!game._heatWarnAt || performance.now() - game._heatWarnAt > 1150) {
           game._heatWarnAt = performance.now();
-          setMessage("HULL OVER TEMPERATURE", true);
+          const shieldAfter = (game.foreShield || 0) + (game.aftShield || 0);
+          setMessage(shieldAfter < shieldBefore && game.energy >= energyBefore - .01 ? "SOLAR LOAD ON SHIELDS" : "HULL OVER TEMPERATURE", true);
           flash();
         }
       }
