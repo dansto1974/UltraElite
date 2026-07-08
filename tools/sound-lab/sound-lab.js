@@ -668,7 +668,6 @@ function render() {
   el("masterGain").value = state.masterGain;
   el("busSelect").value = state.bus;
   el("pitchScale").value = state.pitchScale;
-  el("bedToggle").checked = !!state.bed;
   const presetSelect = el("presetSelect");
   if (presetSelect && presetSelect.value !== activePresetName) presetSelect.value = activePresetName;
   el("patchSummary").textContent = `${state.layers.length} layer ${state.bed ? "continuous bed" : "one-shot"} patch for Ultra Elite ${state.bus} bus.`;
@@ -758,7 +757,7 @@ function normalizePatch(patch) {
   patch.bus ||= "ship";
   patch.masterGain = Number.isFinite(patch.masterGain) ? patch.masterGain : .8;
   patch.pitchScale = Number.isFinite(patch.pitchScale) ? patch.pitchScale : .62;
-  patch.bed = !!patch.bed;
+  patch.bed = patch.bed === true || String(patch.bed || "").toLowerCase() === "true" || String(patch.mode || "").toLowerCase() === "bed";
   if (!Array.isArray(patch.layers)) patch.layers = [];
   patch.layers.forEach((layer) => {
     layer.kind ||= "osc";
@@ -786,8 +785,10 @@ function loadPatch(patch, presetName = null) {
 function selectPreset(name) {
   if (!PRESETS[name]) return;
   syncActivePreset();
+  stopAll();
   activePresetName = name;
   loadPatch(PRESETS[name], name);
+  playSelectedPatch();
 }
 
 function suggestPatch() {
@@ -802,6 +803,7 @@ function suggestPatch() {
 
 function updateExport() {
   syncActivePreset();
+  el("playBtn").textContent = state.bed ? "Play Bed" : "Play Loop";
   setBankStatus(`${Object.keys(PRESETS).length} PRESETS READY.`);
 }
 
@@ -940,7 +942,6 @@ function bind() {
   el("masterGain").addEventListener("input", (e) => { state.masterGain = Number(e.target.value); updateExport(); });
   el("busSelect").addEventListener("change", (e) => { state.bus = e.target.value; updateExport(); });
   el("pitchScale").addEventListener("input", (e) => { state.pitchScale = Number(e.target.value); updateExport(); });
-  el("bedToggle").addEventListener("change", (e) => { state.bed = e.target.checked; rebuildPresetSelect(); updateExport(); });
   el("copyAll").addEventListener("click", async () => { await copy(exportBankJson()); setBankStatus("BANK COPIED."); });
   el("importAll").addEventListener("click", importBankFromClipboard);
 }

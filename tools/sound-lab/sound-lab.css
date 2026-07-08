@@ -209,7 +209,7 @@ input[type="range"] {
 
 .master-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
   padding: 12px;
   border: 1px solid rgba(81, 255, 74, .16);
@@ -223,15 +223,6 @@ input[type="range"] {
   color: var(--muted);
   font-size: .78rem;
   text-transform: uppercase;
-}
-
-.check-control {
-  align-content: end;
-}
-
-.check-control input {
-  width: auto;
-  margin-right: 8px;
 }
 
 .layers {
