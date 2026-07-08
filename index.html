@@ -5097,7 +5097,7 @@
             const clearance = baseR
               + (o.type === "sun" ? 4200
                 : o.type === "planet" ? 2200
-                  : o.type === "station" || o.type === "hermit" ? 900
+                  : o.type === "station" ? 900
                     : o.type === "ship" ? 260
                       : 180);
             const cone = clearance * (o.type === "sun" || o.type === "planet" ? 2.9 : 2.15);
@@ -5105,7 +5105,7 @@
               const severity = (1 - miss / cone) * ahead;
               const weight = o.type === "sun" ? 7.5
                 : o.type === "planet" ? 6.2
-                  : o.type === "station" || o.type === "hermit" ? 4.8
+                  : o.type === "station" ? 4.8
                     : o.type === "ship" ? 2.7
                       : 1.4;
               score -= severity * weight * clamp(12000 / dist, .35, 3.2);
@@ -5202,7 +5202,7 @@
     }
 
     function arrivalStationFacingQuat(camera = game.camera) {
-      const station = game.objects.find((o) => o.type === "station" || o.type === "hermit");
+      const station = dockableTarget();
       if (!station?.pos) return ensureCameraQuat(camera);
       return quatLookRotation(norm(sub(station.pos, camera.pos)), vec(0, 1, 0));
     }
@@ -5523,6 +5523,12 @@
       return o?.model === "dodoStation" ? MODELS.dodoStation : STATION_MODEL;
     }
 
+    const ROCK_HERMIT_SCENE_CHANCE = 0.04;
+
+    function isDockableStructure(o) {
+      return !!o && !o._remove && o.type === "station";
+    }
+
     function stationSlotFrame(st) {
       const model = stationModelFor(st);
       const slot = model.verts.slice(-4).map(([x, y, z]) => vec(x, y, z));
@@ -5545,7 +5551,9 @@
       game.jumpCountdown = null;
       const rng = mulberry(hash32(`${game.galaxy}:${game.current}:${game.kills}:${Date.now() >> 12}`));
       const { planet, sun } = buildSystemBodies(sys);
-      const isDodo = sys.government < 2;
+      // Original NWSPS swaps the SST blueprint to a Dodo station at internal
+      // tech level 10+, otherwise the station remains Coriolis.
+      const isDodo = sys.tech >= 10;
       const stationStyle = stationStyleForSystem(sys);
       game.objects = [
         {
@@ -5557,13 +5565,20 @@
         planet,
         sun
       ];
-      const hermitRng = mulberry(hash32(`${sys.name}:hermit`));
-      if (hermitRng() < .3) {
+      // BBC Elite spawns rock hermits from the asteroid/junk path rather than
+      // the SST station slot. Keep them rare and away from the station lane so
+      // the docking computer never confuses a beaconed asteroid for the main port.
+      const hermitRng = mulberry(hash32(`${sys.name}:hermit:${game.galaxy}`));
+      if (hermitRng() < ROCK_HERMIT_SCENE_CHANCE) {
         const hermitStats = shipStats("hermit");
+        const yaw = hermitRng() * TAU;
+        const pitch = (hermitRng() - .5) * .75;
+        const dir = norm(vec(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)));
+        const dist = 3600 + hermitRng() * 2200;
         game.objects.push({
           type: "hermit", model: "hermit", name: `${sys.name} ROCK HERMIT`,
-          pos: vec(-950 + hermitRng() * 200, 380 + hermitRng() * 160, 1500 + hermitRng() * 400),
-          basePos: null, rot: hermitRng() * TAU, rotSpeed: .07, driftPhase: hermitRng() * TAU,
+          pos: add(vec(0, 0, 900), scale(dir, dist)),
+          basePos: null, rot: hermitRng() * TAU, rotSpeed: .07, tumbleRot: .07, tumblePitch: .035, driftPhase: hermitRng() * TAU,
           r: hermitStats.r, color: "#b9a888", hp: 9999, hostile: false
         });
       }
@@ -5802,9 +5817,12 @@
     }
 
     function dockableTarget() {
-      const candidates = game.objects.filter((o) => o.type === "station" || o.type === "hermit");
-      if (!candidates.length) return null;
-      return candidates.reduce((a, b) => len(sub(b.pos, game.camera.pos)) < len(sub(a.pos, game.camera.pos)) ? b : a);
+      if (isDockableStructure(game.targetObject)) return game.targetObject;
+      const stations = game.objects.filter((o) => o.type === "station" && !o._remove);
+      if (stations.length) {
+        return stations.reduce((a, b) => len(sub(b.pos, game.camera.pos)) < len(sub(a.pos, game.camera.pos)) ? b : a);
+      }
+      return null;
     }
 
     function dock(auto = false) {
@@ -5999,7 +6017,7 @@
     }
 
     function nearStationSafeZone() {
-      const st = game.objects.find((o) => o.type === "station" || o.type === "hermit");
+      const st = dockableTarget();
       return !!st && len(sub(st.pos, game.camera.pos)) < 900;
     }
 
@@ -6733,9 +6751,9 @@
         return 4;
       }
       if (shipsOnly) return 99;
-      if (o.type === "station" || o.type === "hermit") return 7;
+      if (o.type === "station") return 7;
       if (o.type === "canister" || o.type === "plate") return 8;
-      if (o.type === "asteroid" || o.type === "boulder" || o.type === "splinter") return 9;
+      if (o.type === "asteroid" || o.type === "boulder" || o.type === "splinter" || o.type === "hermit") return 9;
       return 99;
     }
 
@@ -7499,7 +7517,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         if (game.commsClock <= 0) {
           game.commsClock = 16 + Math.random() * 26;
           const talkers = game.objects.filter((s) => s.type === "ship" && s.role && s.role !== "pod");
-          const station = game.objects.find((s) => s.type === "station" || s.type === "hermit");
+          const station = dockableTarget();
           if (station && (Math.random() < .32 || !talkers.length)) {
             commsMessage(`${station.name.toUpperCase()} CONTROL`, stationChatterLine(), "station");
           } else if (talkers.length) {
@@ -7536,7 +7554,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           }
         }
         for (const o of game.objects) {
-          if (o.type === "station" || o.type === "hermit") updateStation(o, dt);
+          if (o.type === "station") updateStation(o, dt);
           else if (o.type === "ship") {
             if (o.aiMode === "stationLaunch" || o.aiMode === "stationDock") updateStationTrafficShip(o, dt);
             else { updateShipAI(o, dt); clampOutsideStation(o); }
@@ -7544,7 +7562,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           }
           else if (o.type === "planet" || o.type === "sun") o.rot = (o.rot || 0) + dt * (o.rotSpeed || .06);
           else if (o.type === "missile") updateMissile(o, dt);
-          else if (o.type === "asteroid" || o.type === "boulder" || o.type === "splinter") {
+          else if (o.type === "asteroid" || o.type === "boulder" || o.type === "splinter" || o.type === "hermit") {
             o.rot = (o.rot || 0) + dt * (o.tumbleRot || .3);
             o.pitch = (o.pitch || 0) + dt * (o.tumblePitch || .2);
             if (o.vel) o.pos = add(o.pos, scale(o.vel, dt));
