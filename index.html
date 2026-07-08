@@ -5153,13 +5153,33 @@
       jc.onComplete();
     }
 
+    const FRESH_DROP_LASER_GRACE_MS = 3500;
+
+    function isProtectedDrop(o) {
+      return !!o && (
+        o.type === "canister" ||
+        o.type === "plate" ||
+        o.role === "pod" ||
+        o.model === "escapePod"
+      );
+    }
+
+    function protectFreshDropFromLaser(o, ms = FRESH_DROP_LASER_GRACE_MS) {
+      if (isProtectedDrop(o)) o._laserProtectedUntil = performance.now() + ms;
+      return o;
+    }
+
+    function freshDropLaserProtected(o, now = performance.now()) {
+      return isProtectedDrop(o) && Number.isFinite(o._laserProtectedUntil) && now < o._laserProtectedUntil;
+    }
+
     function spawnDeathDebris(pos, count = 7) {
       for (let i = 0; i < count; i++) {
         const isPlate = Math.random() < .55;
         const model = isPlate ? "plate" : "canister";
         const stats = shipStats(model);
         const dir = randomBurstDir(.7);
-        game.objects.push({
+        game.objects.push(protectFreshDropFromLaser({
           type: isPlate ? "plate" : "canister",
           model,
           name: isPlate ? "HULL PLATE" : "WRECKAGE CANISTER",
@@ -5175,7 +5195,7 @@
           hp: stats.hp,
           hostile: false,
           _deathCinematic: true
-        });
+        }));
       }
     }
 
@@ -6007,9 +6027,11 @@
       let hitDepth = null;
       let outOfRange = null;
       const w = space.width, h = space.height;
+      const damageNow = performance.now();
       for (const o of game.objects) {
         const isRock = o.type === "asteroid" || o.type === "boulder" || o.type === "splinter";
         if (o.type !== "ship" && o.type !== "canister" && o.type !== "plate" && !isRock && !(o.type === "missile" && o.hostile)) continue;
+        if (freshDropLaserProtected(o, damageNow)) continue;
         const rel = cameraTransform(o.pos, game.camera);
         if (rel.z < 30) continue;
         if (rel.z > laser.range) {
@@ -6507,11 +6529,11 @@
 
     function spawnMineralCanister(pos, parentVel, small) {
       const good = ["Minerals", "Gold", "Platinum", "Gem-Stones"][Math.floor(Math.random() * 4)];
-      game.objects.push({
+      game.objects.push(protectFreshDropFromLaser({
         type: "canister", model: "canister", name: `${good.toUpperCase()} CANISTER`, forcedGood: good,
         pos: add(pos, vec(0, 0, small ? 10 : 20)), vel: scale(parentVel || vec(), .5),
         rot: 0, pitch: 0, r: small ? 14 : 18, color: "#ffd33d", hp: small ? 6 : 8, hostile: false
-      });
+      }));
     }
 
     function spawnEscapePod(pos) {
@@ -6522,6 +6544,7 @@
         rot: 0, pitch: 0, roll: 0, r: stats.r, color: "#e9f2e4", hp: stats.hp, maxHp: stats.hp,
         hostile: false, role: "pod", bounty: 15, aiMode: "cruise", wobble: Math.random() * TAU
       };
+      protectFreshDropFromLaser(pod);
       game.objects.push(pod);
       return pod;
     }
@@ -6560,8 +6583,8 @@
           const isPlate = Math.random() < .35;
           const stats = shipStats(isPlate ? "plate" : "canister");
           game.objects.push(isPlate
-            ? { type: "plate", model: "plate", name: "ALLOY PLATE", pos: add(o.pos, vec(0, 0, 30)), vel: vec(0, 0, -12), rot: .3, pitch: .2, roll: 0, r: stats.r, color: "#9aa79a", hp: stats.hp, hostile: false }
-            : { type: "canister", model: "canister", name: "CARGO CANISTER", pos: add(o.pos, vec(0, 0, 30)), vel: vec(0, 0, -12), rot: 0, pitch: 0, r: stats.r, color: "#ffd33d", hp: stats.hp, hostile: false });
+            ? protectFreshDropFromLaser({ type: "plate", model: "plate", name: "ALLOY PLATE", pos: add(o.pos, vec(0, 0, 30)), vel: vec(0, 0, -12), rot: .3, pitch: .2, roll: 0, r: stats.r, color: "#9aa79a", hp: stats.hp, hostile: false })
+            : protectFreshDropFromLaser({ type: "canister", model: "canister", name: "CARGO CANISTER", pos: add(o.pos, vec(0, 0, 30)), vel: vec(0, 0, -12), rot: 0, pitch: 0, r: stats.r, color: "#ffd33d", hp: stats.hp, hostile: false }));
         }
         if (!byPlayer) {
           setMessage(`${o.name} destroyed.`, true);
