@@ -15,10 +15,8 @@
       </div>
       <div class="transport">
         <button id="playBtn" class="primary">Play</button>
-        <button id="bedBtn">Bed Preview</button>
         <button id="stopBtn">Stop</button>
-        <label class="toggle"><input id="loopToggle" type="checkbox"> Loop</label>
-        <span id="transportStatus" class="transport-status">ONE-SHOT</span>
+        <span id="transportStatus" class="transport-status">STOPPED</span>
       </div>
     </header>
 
@@ -36,13 +34,11 @@
         <label class="preset-select-wrap">Game Sound
           <select id="presetSelect"></select>
         </label>
-        <div id="presetList" class="preset-list"></div>
-        <div class="ab">
-          <button id="storeA">Store A</button>
-          <button id="playA">Play A</button>
-          <button id="storeB">Store B</button>
-          <button id="playB">Play B</button>
+        <div class="bank-actions">
+          <button id="copyAll">Copy Bank</button>
+          <button id="importAll">Import Bank</button>
         </div>
+        <p id="bankStatus" class="bank-status">TWEAK PRESETS, THEN COPY BANK.</p>
       </aside>
 
       <section class="panel editor">
@@ -55,7 +51,7 @@
         </div>
 
         <div class="master-grid">
-          <label>Patch Name <input id="patchName" type="text"></label>
+          <label>Game Sound Name <input id="patchName" type="text"></label>
           <label>Master Gain <input id="masterGain" type="range" min="0" max="1" step="0.01"></label>
           <label>Bus
             <select id="busSelect">
@@ -67,20 +63,11 @@
             </select>
           </label>
           <label>Pitch Scale <input id="pitchScale" type="range" min="0.25" max="1.4" step="0.01"></label>
+          <label class="check-control"><input id="bedToggle" type="checkbox"> Continuous Bed</label>
         </div>
 
         <div id="layers" class="layers"></div>
       </section>
-
-      <aside class="panel export">
-        <h2>Export</h2>
-        <div class="export-actions">
-          <button id="copyJson">Copy JSON</button>
-          <button id="copyJs">Copy JS Case</button>
-          <button id="copyAll">Copy All</button>
-        </div>
-        <textarea id="exportText" spellcheck="false"></textarea>
-      </aside>
     </section>
   </main>
 

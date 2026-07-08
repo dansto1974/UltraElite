@@ -44,7 +44,7 @@ const CONTROL_DEFS = {
   ]
 };
 
-const PRESETS = {
+let PRESETS = {
   "Blast Off": {
     name: "blastOff",
     bus: "ship",
@@ -84,6 +84,7 @@ const PRESETS = {
   "Station Rumble": {
     name: "stationRumble",
     bus: "ambience",
+    bed: true,
     masterGain: .8,
     pitchScale: .62,
     layers: [
@@ -336,13 +337,12 @@ const PRESETS = {
   }
 };
 
+normalizePresetBank(PRESETS);
 const state = structuredClone(PRESETS["Blast Off"]);
 let ctx;
 let master;
 let noiseBuffer;
 let loopTimer = null;
-let snapshotA = null;
-let snapshotB = null;
 let currentSources = [];
 let bedPreview = null;
 let bedRaf = null;
@@ -350,7 +350,6 @@ let activePresetName = "Blast Off";
 
 const el = (id) => document.getElementById(id);
 const layersEl = el("layers");
-const exportEl = el("exportText");
 
 function ensureAudio() {
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -453,7 +452,7 @@ function stopAll() {
     clearInterval(loopTimer);
     loopTimer = null;
   }
-  setTransportStatus("ONE-SHOT");
+  setTransportStatus("STOPPED");
 }
 
 function stationBedLayers(patch = state) {
@@ -563,9 +562,19 @@ function playPatch(patch = state, allowLoop = true) {
     if (layer.kind === "rumble") playRumbleLayer(layer, t);
     if (layer.kind === "ticks") playTickLayer(layer, t);
   });
-  if (allowLoop && el("loopToggle").checked && !loopTimer) {
+  if (allowLoop && !loopTimer) {
     loopTimer = setInterval(() => playPatch(patch, false), Math.max(.2, maxDur + .16) * 1000);
+    setTransportStatus("LOOPING");
   }
+}
+
+function playSelectedPatch() {
+  if (state.bed) {
+    startBedPreview();
+    return;
+  }
+  stopAll();
+  playPatch(state, true);
 }
 
 function playOscLayer(layer, t, patch) {
@@ -659,9 +668,10 @@ function render() {
   el("masterGain").value = state.masterGain;
   el("busSelect").value = state.bus;
   el("pitchScale").value = state.pitchScale;
+  el("bedToggle").checked = !!state.bed;
   const presetSelect = el("presetSelect");
   if (presetSelect && presetSelect.value !== activePresetName) presetSelect.value = activePresetName;
-  el("patchSummary").textContent = `${state.layers.length} layer patch for Ultra Elite ${state.bus} bus.`;
+  el("patchSummary").textContent = `${state.layers.length} layer ${state.bed ? "continuous bed" : "one-shot"} patch for Ultra Elite ${state.bus} bus.`;
   layersEl.innerHTML = "";
   state.layers.forEach((layer, index) => renderLayer(layer, index));
   updateExport();
@@ -743,6 +753,25 @@ function defaultLayer(kind) {
   return { name: "osc layer", kind: "osc", wave: "sine", delay: 0, freq: 120, endFreq: 0, gain: .04, dur: .3, attack: .01, release: .08, pan: 0, lowpass: 1200, highpass: 0, drive: 0, lfoFreq: 0, lfoDepth: 0 };
 }
 
+function normalizePatch(patch) {
+  patch.name ||= "customSound";
+  patch.bus ||= "ship";
+  patch.masterGain = Number.isFinite(patch.masterGain) ? patch.masterGain : .8;
+  patch.pitchScale = Number.isFinite(patch.pitchScale) ? patch.pitchScale : .62;
+  patch.bed = !!patch.bed;
+  if (!Array.isArray(patch.layers)) patch.layers = [];
+  patch.layers.forEach((layer) => {
+    layer.kind ||= "osc";
+    Object.assign(layer, { ...defaultLayer(layer.kind), ...layer });
+  });
+  return patch;
+}
+
+function normalizePresetBank(bank) {
+  Object.entries(bank).forEach(([, patch]) => normalizePatch(patch));
+  return bank;
+}
+
 function syncActivePreset() {
   if (!activePresetName) return;
   PRESETS[activePresetName] = structuredClone(state);
@@ -773,7 +802,7 @@ function suggestPatch() {
 
 function updateExport() {
   syncActivePreset();
-  exportEl.value = `${JSON.stringify(state, null, 2)}\n\n${toJsCase(state)}\n\n// ALL SOUND LAB PRESETS\n${JSON.stringify(PRESETS, null, 2)}`;
+  setBankStatus(`${Object.keys(PRESETS).length} PRESETS READY.`);
 }
 
 function toJsCase(patch) {
@@ -849,21 +878,61 @@ async function copy(text) {
   await navigator.clipboard.writeText(text);
 }
 
-function bind() {
+function setBankStatus(text) {
+  const status = el("bankStatus");
+  if (status) status.textContent = text;
+}
+
+function rebuildPresetSelect() {
+  const presetSelect = el("presetSelect");
+  presetSelect.innerHTML = "";
   Object.entries(PRESETS).forEach(([name, patch]) => {
     const option = document.createElement("option");
     option.value = name;
-    option.textContent = `${name} (${patch.name})`;
-    el("presetSelect").appendChild(option);
-    const button = document.createElement("button");
-    button.textContent = name;
-    button.addEventListener("click", () => selectPreset(name));
-    el("presetList").appendChild(button);
+    option.textContent = `${name} (${patch.name}${patch.bed ? ", bed" : ""})`;
+    presetSelect.appendChild(option);
   });
-  el("presetSelect").value = activePresetName;
+  presetSelect.value = activePresetName;
+}
+
+function exportBankJson() {
+  syncActivePreset();
+  return JSON.stringify(PRESETS, null, 2);
+}
+
+function extractJson(text) {
+  const trimmed = text.trim();
+  if (!trimmed) throw new Error("Clipboard is empty.");
+  try {
+    return JSON.parse(trimmed);
+  } catch {}
+  const marker = trimmed.indexOf("// ALL SOUND LAB PRESETS");
+  const jsonText = marker >= 0 ? trimmed.slice(marker).replace(/^\/\/ ALL SOUND LAB PRESETS\s*/, "") : trimmed.slice(trimmed.indexOf("{"), trimmed.lastIndexOf("}") + 1);
+  return JSON.parse(jsonText);
+}
+
+async function importBankFromClipboard() {
+  try {
+    const parsed = extractJson(await navigator.clipboard.readText());
+    if (parsed.layers) {
+      normalizePatch(parsed);
+      PRESETS[activePresetName] = structuredClone(parsed);
+    } else {
+      PRESETS = normalizePresetBank(parsed);
+      if (!PRESETS[activePresetName]) activePresetName = Object.keys(PRESETS)[0] || "Imported Sound";
+    }
+    rebuildPresetSelect();
+    loadPatch(PRESETS[activePresetName], activePresetName);
+    setBankStatus("BANK IMPORTED.");
+  } catch (err) {
+    setBankStatus(`IMPORT FAILED: ${err.message}`);
+  }
+}
+
+function bind() {
+  rebuildPresetSelect();
   el("presetSelect").addEventListener("change", (e) => selectPreset(e.target.value));
-  el("playBtn").addEventListener("click", () => { stopAll(); playPatch(); });
-  el("bedBtn").addEventListener("click", startBedPreview);
+  el("playBtn").addEventListener("click", playSelectedPatch);
   el("stopBtn").addEventListener("click", stopAll);
   el("suggestBtn").addEventListener("click", suggestPatch);
   el("addLayerBtn").addEventListener("click", () => { state.layers.push(defaultLayer("osc")); render(); });
@@ -871,13 +940,9 @@ function bind() {
   el("masterGain").addEventListener("input", (e) => { state.masterGain = Number(e.target.value); updateExport(); });
   el("busSelect").addEventListener("change", (e) => { state.bus = e.target.value; updateExport(); });
   el("pitchScale").addEventListener("input", (e) => { state.pitchScale = Number(e.target.value); updateExport(); });
-  el("copyJson").addEventListener("click", () => copy(JSON.stringify(state, null, 2)));
-  el("copyJs").addEventListener("click", () => copy(toJsCase(state)));
-  el("copyAll").addEventListener("click", () => { syncActivePreset(); copy(JSON.stringify(PRESETS, null, 2)); });
-  el("storeA").addEventListener("click", () => { snapshotA = structuredClone(state); });
-  el("storeB").addEventListener("click", () => { snapshotB = structuredClone(state); });
-  el("playA").addEventListener("click", () => snapshotA && playPatch(snapshotA, false));
-  el("playB").addEventListener("click", () => snapshotB && playPatch(snapshotB, false));
+  el("bedToggle").addEventListener("change", (e) => { state.bed = e.target.checked; rebuildPresetSelect(); updateExport(); });
+  el("copyAll").addEventListener("click", async () => { await copy(exportBankJson()); setBankStatus("BANK COPIED."); });
+  el("importAll").addEventListener("click", importBankFromClipboard);
 }
 
 bind();

@@ -104,8 +104,7 @@ h2 {
 .transport,
 .prompt-row,
 .section-head,
-.export-actions,
-.ab,
+.bank-actions,
 .layer-title {
   display: flex;
   align-items: center;
@@ -159,7 +158,7 @@ input[type="range"] {
 
 .workspace {
   display: grid;
-  grid-template-columns: 250px minmax(0, 1fr) 430px;
+  grid-template-columns: 250px minmax(0, 1fr);
   gap: 14px;
   margin-top: 14px;
 }
@@ -167,12 +166,6 @@ input[type="range"] {
 .panel {
   min-height: 640px;
   padding: 14px;
-}
-
-.preset-list {
-  display: grid;
-  gap: 8px;
-  margin-top: 14px;
 }
 
 .preset-select-wrap {
@@ -184,16 +177,20 @@ input[type="range"] {
   text-transform: uppercase;
 }
 
-.preset-list button {
-  width: 100%;
-  text-align: left;
-}
-
-.ab {
+.bank-actions {
   align-items: stretch;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
+  gap: 9px;
   margin-top: 16px;
+}
+
+.bank-status {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: .74rem;
+  line-height: 1.35;
+  text-transform: uppercase;
 }
 
 .editor {
@@ -212,7 +209,7 @@ input[type="range"] {
 
 .master-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
   padding: 12px;
   border: 1px solid rgba(81, 255, 74, .16);
@@ -226,6 +223,15 @@ input[type="range"] {
   color: var(--muted);
   font-size: .78rem;
   text-transform: uppercase;
+}
+
+.check-control {
+  align-content: end;
+}
+
+.check-control input {
+  width: auto;
+  margin-right: 8px;
 }
 
 .layers {
