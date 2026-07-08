@@ -1259,7 +1259,6 @@
         <div class="hud-actions" aria-label="Flight actions">
           <button class="btn mini primary" id="launchBtn">Launch</button>
           <button class="btn mini" id="jumpBtn">Jump</button>
-          <button class="btn mini" id="dockBtn">Dock</button>
           <button class="btn mini" id="autoDockBtn">Auto Dock</button>
           <button class="btn mini warn" id="galJumpBtn">Galactic</button>
           <button class="btn mini mode-toggle" id="modeSwitchBtn" aria-label="Toggle presentation mode" aria-pressed="true">Old School</button>
@@ -2779,7 +2778,6 @@
       modeSwitchBtn: byId("modeSwitchBtn"),
       launchBtn: byId("launchBtn"),
       jumpBtn: byId("jumpBtn"),
-      dockBtn: byId("dockBtn"),
       autoDockBtn: byId("autoDockBtn"),
       galJumpBtn: byId("galJumpBtn")
     };
@@ -4434,7 +4432,43 @@
       const depth = dot(rel, outward);
       const lateral = len(sub(rel, scale(outward, depth)));
       const slotFacing = Math.abs(Math.sin(st.rot || 0)) < .45;
-      return slotFacing && depth > -95 && depth < 310 && lateral < 92 && game.speed < 85;
+      return slotFacing && depth > -130 && depth < 360 && lateral < 130 && game.speed < 95;
+    }
+
+    function manualDockingStatus(st, capture = false) {
+      if (!st) return { ok: false, reason: "NO STATION" };
+      if (st.type !== "station") {
+        const rel = cameraTransform(st.pos, game.camera);
+        const dist = len(sub(st.pos, game.camera.pos));
+        const centered = Math.hypot(rel.x, rel.y) < 55;
+        const slow = game.speed < 55;
+        return {
+          ok: dist < 210 && centered && slow,
+          reason: !slow ? "TOO FAST" : !centered ? "BAD APPROACH" : "TOO FAR",
+          dist,
+          lateral: Math.hypot(rel.x, rel.y),
+          depth: dist,
+          alignment: centered ? 1 : 0
+        };
+      }
+      const slot = stationSlotFrame(st);
+      const inward = scale(slot.outward, -1);
+      const rel = sub(game.camera.pos, slot.center);
+      const depth = dot(rel, slot.outward);
+      const lateral = len(sub(rel, scale(slot.outward, depth)));
+      const alignment = dot(forwardVector(game.camera), inward);
+      const slotOk = Math.abs(Math.sin(st.rot || 0)) < (capture ? .48 : .5);
+      const slow = game.speed < (capture ? 82 : 75);
+      const nearDepth = capture ? depth > -125 && depth < 150 : depth > -145 && depth < 340;
+      const nearLateral = lateral < (capture ? 112 : 140);
+      const aligned = alignment > (capture ? .7 : .55);
+      const ok = slotOk && slow && nearDepth && nearLateral && aligned;
+      const reason = !slow ? "TOO FAST"
+        : !slotOk ? "SLOT ROTATION"
+          : !nearDepth ? "TOO FAR"
+            : !nearLateral || !aligned ? "BAD APPROACH"
+              : "TOO FAR";
+      return { ok, reason, dist: len(rel), lateral, depth, alignment };
     }
 
     function inAutoDockStationCorridor(st) {
@@ -5418,12 +5452,8 @@
       if (game.docked || game.transition || game.jumpCountdown) return;
       const st = dockableTarget();
       if (!st) return;
-      const rel = cameraTransform(st.pos, game.camera);
-      const dist = len(sub(st.pos, game.camera.pos));
-      const centered = Math.hypot(rel.x, rel.y) < 55;
-      const slotOk = st.type !== "station" || Math.abs(Math.sin(st.rot)) < .38;
-      const slow = game.speed < 55;
-      if (auto || (dist < 210 && centered && slotOk && slow)) {
+      const status = manualDockingStatus(st, auto);
+      if (auto || status.ok) {
         eliteAudio.play("beep");
         game.speed = 0;
         game.autoDock = false;
@@ -5454,12 +5484,20 @@
         if (ultraFxEnabled()) finishDockArrival();
         else startTransition("dock", 1.25, finishDockArrival);
       } else {
-        const reason = !slow ? "TOO FAST" : !centered ? "BAD APPROACH" : !slotOk ? "SLOT ROTATION" : "TOO FAR";
+        const reason = status.reason || "BAD APPROACH";
         eliteAudio.play("boop");
-        damagePlayer(12, "docking collision", { sourcePos: st.pos, arc: "fore" });
         commsMessage(`${st.name.toUpperCase()} CONTROL`, stationControllerLine("dockDeny", reason), "station");
         setMessage("Docking denied.", true);
       }
+    }
+
+    function tryManualDockingCapture() {
+      if (game.docked || game.transition || game.jumpCountdown || game.autoDock) return false;
+      const st = dockableTarget();
+      if (!st) return false;
+      if (!manualDockingStatus(st, true).ok) return false;
+      dock(true);
+      return true;
     }
 
     function startAutoDock() {
@@ -7106,6 +7144,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         if (game.autoDock) updateAutoDock(dt);
         const fwd = forwardVector(game.camera);
         game.camera.pos = add(game.camera.pos, scale(fwd, game.speed * dt));
+        tryManualDockingCapture();
         updatePlayerEngineTrails(dt);
         for (const star of game.stars) {
           const rel = cameraTransform(star, game.camera);
@@ -9516,6 +9555,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
       if (game.transition) drawTransitionEffect(w, h, game.transition);
       if (game.jumpCountdown) drawJumpCountdown(w, h, game.jumpCountdown);
+      if (!game.autoDock && !game.docked) drawManualDockingCue(w, h);
       if (game.autoDock && !game.docked) drawAutoDockHud(w, h);
       if (game.docked && !["dockHangar", "launchHangar"].includes(game.transition?.kind)) drawDockedBackdropSafe(w, h);
       } catch (err) {
@@ -9524,6 +9564,65 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ctx.restore();
         game.camera = flightCam;
       }
+    }
+
+    function drawManualDockingCue(w, h) {
+      if (game.viewMode !== "fwd" || game.transition || game.jumpCountdown) return;
+      const st = dockableTarget();
+      if (!st || st.type !== "station") return;
+      const status = manualDockingStatus(st, false);
+      const slotPhase = Math.abs(Math.sin(st.rot || 0));
+      const closeEnough = status.depth > -190 && status.depth < 560 && status.lateral < 280 && game.speed < 120 && slotPhase < .68;
+      if (!closeEnough) return;
+
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      const cx = w / 2;
+      const cy = h / 2;
+      const r = 43 * dpr;
+      const tickLen = 13 * dpr;
+      const alignScore = clamp((status.alignment - .38) / .34, 0, 1);
+      const lateralScore = clamp(1 - status.lateral / 148, 0, 1);
+      const speedScore = clamp(1 - Math.max(0, game.speed - 58) / 28, 0, 1);
+      const slotScore = clamp((.58 - slotPhase) / .23, 0, 1);
+      const ready = status.ok;
+      const checks = [
+        { a: -Math.PI / 2, score: speedScore },
+        { a: 0, score: alignScore },
+        { a: Math.PI / 2, score: slotScore },
+        { a: Math.PI, score: lateralScore }
+      ];
+
+      ctx.save();
+      ctx.lineCap = "round";
+      ctx.shadowColor = ready ? "rgba(101,255,71,.62)" : "rgba(255,211,61,.36)";
+      ctx.shadowBlur = (ready ? 9 : 5) * dpr;
+      checks.forEach((check) => {
+        const ok = check.score > .78;
+        const a = check.a;
+        const inner = r;
+        const outer = r + tickLen * (.45 + check.score * .55);
+        ctx.globalAlpha = .28 + check.score * .62;
+        ctx.strokeStyle = ok ? "rgba(101,255,71,.96)" : "rgba(255,211,61,.86)";
+        ctx.lineWidth = (ok ? 1.9 : 1.25) * dpr;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * inner, cy + Math.sin(a) * inner);
+        ctx.lineTo(cx + Math.cos(a) * outer, cy + Math.sin(a) * outer);
+        ctx.stroke();
+      });
+      if (ready) {
+        ctx.globalAlpha = .58;
+        ctx.strokeStyle = "rgba(101,255,71,.92)";
+        ctx.lineWidth = 1 * dpr;
+        ctx.shadowBlur = 7 * dpr;
+        const s = 18 * dpr;
+        ctx.beginPath();
+        ctx.moveTo(cx - s, cy - r - 8 * dpr);
+        ctx.lineTo(cx + s, cy - r - 8 * dpr);
+        ctx.moveTo(cx - s, cy + r + 8 * dpr);
+        ctx.lineTo(cx + s, cy + r + 8 * dpr);
+        ctx.stroke();
+      }
+      ctx.restore();
     }
 
     function drawAutoDockHud(w, h) {
@@ -14307,7 +14406,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       <div class="row"><span class="label"><span class="kbd">L</span></span><span class="value">Toggle ship labels</span></div>
       <div class="row"><span class="label"><span class="kbd">N</span></span><span class="value">Toggle sound</span></div>
       <div class="row"><span class="label"><span class="kbd">J</span></span><span class="value">Hyperspace</span></div>
-      <div class="row"><span class="label"><span class="kbd">O</span></span><span class="value">Dock attempt</span></div>
+      <div class="row"><span class="label">DOCK</span><span class="value">Slowly fly through the aligned station slot</span></div>
       <div class="row"><span class="label"><span class="kbd">C</span></span><span class="value">Docking computer</span></div>
       <div class="notice">
         <strong>Update Log</strong>
@@ -14648,19 +14747,16 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const jumpBusy = !!game.transition || !!game.jumpCountdown;
       const canLaunch = game.docked && !jumpBusy;
       const canJump = !game.docked && !jumpBusy;
-      const canDock = !game.docked && !jumpBusy;
       const canAutoDock = !game.docked && !jumpBusy && game.equipment.dockingComputer;
       const canGalJump = game.equipment.galacticHyperdrive && !jumpBusy;
       setDomDisabled(hudEls.launchBtn, !canLaunch);
       setDomDisabled(hudEls.jumpBtn, !canJump);
-      setDomDisabled(hudEls.dockBtn, !canDock);
       setDomDisabled(hudEls.autoDockBtn, !canAutoDock);
       setDomDisabled(hudEls.galJumpBtn, !canGalJump);
       setDomText(hudEls.autoDockBtn, game.autoDock ? "Cancel Dock" : "Auto Dock");
       toggleClass(hudEls.autoDockBtn, "primary", !!game.autoDock);
       setDomHidden(hudEls.launchBtn, !canLaunch);
       setDomHidden(hudEls.jumpBtn, !canJump);
-      setDomHidden(hudEls.dockBtn, !canDock);
       setDomHidden(hudEls.autoDockBtn, !canAutoDock && !game.autoDock);
       setDomHidden(hudEls.galJumpBtn, !canGalJump);
       setDomHidden(hudEls.modeSwitchBtn, jumpBusy);
@@ -14765,7 +14861,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (e.code === "KeyV" && !(keys.has("KeyD") && keys.has("KeyE"))) setViewMode(game.viewMode === "ext" ? "fwd" : "ext");
       if (e.code === "Space") fireLaser();
       if (e.code === "KeyJ") hyperspace();
-      if (e.code === "KeyO") dock(false);
       if (e.code === "KeyC") startAutoDock();
       if (e.code === "KeyM") fireMissile();
       if (e.code === "KeyB") useEnergyBomb();
@@ -14801,7 +14896,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     });
     byId("launchBtn").addEventListener("click", launch);
     byId("jumpBtn").addEventListener("click", hyperspace);
-    byId("dockBtn").addEventListener("click", () => dock(false));
     byId("modeSwitchBtn").addEventListener("click", () => applyPresetMode(game.fxLevel === "ultra" ? "classic" : "ultra"));
     byId("autoDockBtn").addEventListener("click", startAutoDock);
     byId("galJumpBtn").addEventListener("click", galacticJump);
