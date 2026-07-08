@@ -3854,12 +3854,14 @@
       }
 
       function updateEngineBed(dt = 0) {
-        if (!ctx || !game.soundEnabled) return;
+        if (!game.soundEnabled) return;
         const transitionKind = game.transition?.kind || "";
         const hangarTransition = transitionKind === "launchHangar" || transitionKind === "dockHangar";
         const engineTransition = transitionKind === "launch" || transitionKind === "hyperspace" || transitionKind === "galactic";
         const externalListen = game.viewMode === "ext" || hangarTransition;
         const active = ultraFxEnabled() && !game.playerDestroyed && !externalListen && (!game.docked || engineTransition);
+        if (active && !ctx) ensure();
+        if (!ctx) return;
         if (active && !engineBed) startEngineBed();
         if (!engineBed) return;
         if (!active) {
@@ -4037,8 +4039,9 @@
       }
 
       function updateFlybyBed(dt = 0) {
-        if (!ctx || !game.soundEnabled) return;
+        if (!game.soundEnabled) return;
         if (!ultraFxEnabled()) {
+          if (!ctx) return;
           if (flybyBed) {
             smoothParam(flybyBed.bodyGain.gain, .00001, .12);
             smoothParam(flybyBed.fizzGain.gain, .00001, .12);
@@ -4047,6 +4050,8 @@
           return;
         }
         const target = nearestAudibleFlyby();
+        if (target && !ctx) ensure();
+        if (!ctx) return;
         if (target && !flybyBed) startFlybyBed();
         if (!flybyBed) return;
         const active = !!target;
@@ -4061,9 +4066,9 @@
         smoothParam(flybyBed.bodyFilter.frequency, (externalPlayer ? 280 : 360) + speedNorm * (externalPlayer ? 470 : 520), .12);
         smoothParam(flybyBed.fizzHp.frequency, (externalPlayer ? 1550 : 1800) + speedNorm * 900, .12);
         smoothParam(flybyBed.fizzBp.frequency, (externalPlayer ? 2200 : 2600) + speedNorm * 1500 + Math.sin(ctx.currentTime * 5.5) * 180, .07);
-        smoothParam(flybyBed.bodyGain.gain, score * (externalPlayer ? .010 : .007), .08);
-        smoothParam(flybyBed.fizzGain.gain, score * (externalPlayer ? .024 : .018), .055);
-        smoothParam(flybyBed.out.gain, active ? .9 : .00001, .12);
+        smoothParam(flybyBed.bodyGain.gain, score * (externalPlayer ? .016 : .007), .08);
+        smoothParam(flybyBed.fizzGain.gain, score * (externalPlayer ? .034 : .018), .055);
+        smoothParam(flybyBed.out.gain, active ? (externalPlayer ? 1 : .9) : .00001, .12);
         if (flybyBed.pan) smoothSignedParam(flybyBed.pan.pan, pan, .08);
       }
 
@@ -4112,13 +4117,15 @@
       }
 
       function updateTransitionBed(dt = 0) {
-        if (!ctx || !game.soundEnabled) return;
+        if (!game.soundEnabled) return;
         const dockedStation = !game.transition && !game.jumpCountdown && game.docked && ultraFxEnabled();
         const source = game.transition || game.jumpCountdown || (dockedStation ? { kind: "stationIdle", t: (performance.now() % 9000) / 1000, dur: 9 } : null);
         const kind = source?.kind || "";
         const countdown = !game.transition && !!game.jumpCountdown && (kind === "hyperspace" || kind === "galactic");
         const transitionActive = !!game.transition && ["hyperspace", "galactic", "launchHangar", "dockHangar"].includes(kind);
         const active = ultraFxEnabled() && !!source && (countdown || transitionActive || dockedStation);
+        if (active && !ctx) ensure();
+        if (!ctx) return;
         if (active && !transitionBed) startTransitionBed();
         if (!transitionBed) return;
         const p = source ? clamp((source.t || 0) / Math.max(.01, source.dur || 1), 0, 1) : 0;
@@ -4208,10 +4215,11 @@
         smoothParam(transitionBed.tunnelBp.frequency, tunnelFreq, .08);
         smoothParam(transitionBed.crackleHp.frequency, 1450 + crackle * 26000, .08);
         smoothParam(transitionBed.crackleBp.frequency, crackleFreq, .04);
-        smoothParam(transitionBed.pressureGain.gain, fade * pressure, active ? .08 : .2);
-        smoothParam(transitionBed.driveGain.gain, fade * drive, active ? .08 : .2);
-        smoothParam(transitionBed.tunnelGain.gain, fade * tunnel, active ? .06 : .18);
-        smoothParam(transitionBed.crackleGain.gain, fade * crackle, active ? .035 : .16);
+        const transitionLevel = transitionActive || countdown ? 1.28 : 1;
+        smoothParam(transitionBed.pressureGain.gain, fade * pressure * transitionLevel, active ? .08 : .2);
+        smoothParam(transitionBed.driveGain.gain, fade * drive * transitionLevel, active ? .08 : .2);
+        smoothParam(transitionBed.tunnelGain.gain, fade * tunnel * transitionLevel, active ? .06 : .18);
+        smoothParam(transitionBed.crackleGain.gain, fade * crackle * transitionLevel, active ? .035 : .16);
         if (transitionBed.pan) transitionBed.pan.pan.setTargetAtTime(pan, ctx.currentTime, .12);
       }
 
@@ -4256,8 +4264,10 @@
       }
 
       function updateSolarRadiationBed(dt = 0) {
-        if (!ctx || !game.soundEnabled) return;
+        if (!game.soundEnabled) return;
         const level = solarRadiationAudioLevel();
+        if (level > .01 && !ctx) ensure();
+        if (!ctx) return;
         if (level > .01 && !solarBed) startSolarRadiationBed();
         if (!solarBed) return;
         const now = ctx.currentTime;
