@@ -3856,10 +3856,20 @@
       function updateEngineBed(dt = 0) {
         if (!ctx || !game.soundEnabled) return;
         const transitionKind = game.transition?.kind || "";
-        const engineTransition = transitionKind === "launch" || transitionKind === "launchHangar" || transitionKind === "hyperspace" || transitionKind === "galactic";
+        const hangarTransition = transitionKind === "launchHangar" || transitionKind === "dockHangar";
+        const engineTransition = transitionKind === "launch" || transitionKind === "hyperspace" || transitionKind === "galactic";
         const active = ultraFxEnabled() && !game.playerDestroyed && (!game.docked || engineTransition);
         if (active && !engineBed) startEngineBed();
         if (!engineBed) return;
+        if (hangarTransition) {
+          smoothParam(engineBed.subGain.gain, .00001, .08);
+          smoothParam(engineBed.bodyGain.gain, .00001, .08);
+          smoothParam(engineBed.crackleGain.gain, .00001, .08);
+          smoothParam(engineBed.rushGain.gain, .00001, .08);
+          smoothParam(engineBed.damageGain.gain, .00001, .08);
+          smoothParam(engineBed.engineOut.gain, .00001, .08);
+          return;
+        }
         const launchHangar = transitionKind === "launchHangar";
         const dockHangar = transitionKind === "dockHangar";
         const transitionP = game.transition ? clamp((game.transition.t || 0) / Math.max(.01, game.transition.dur || 1), 0, 1) : 0;
@@ -5846,7 +5856,6 @@
         eliteAudio.play("beep");
         commsMessage(stationCommsName(), "Clear for take off. Start engines and proceed through the field.", "station");
         startTransition("launchHangar", 8.2, () => {
-          eliteAudio.play("launch");
           finishLaunch(55);
         }, { scene: game.dockScene });
         renderPanel();
