@@ -2281,6 +2281,60 @@
       coriolis: { r: 160, hp: 240, speed: 0 }
     };
 
+    // BBC Elite stores ship laser strength in each blueprint's laser/missile byte.
+    // We use that source-derived power to give NPCs distinct weapon classes while
+    // keeping our role-based aggression and manoeuvring.
+    const NPC_SOURCE_LASER_POWER = {
+      cobra: 2,
+      cobra1: 2,
+      krait: 2,
+      viper: 2,
+      adder: 2,
+      gecko: 2,
+      mamba: 2,
+      sidewinder: 2,
+      worm: 1,
+      moray: 2,
+      asp: 5,
+      ferdelance: 2,
+      python: 3,
+      boa: 3,
+      anaconda: 7,
+      shuttle: 0,
+      transporter: 0,
+      thargoid: 2,
+      thargon: 2,
+      constrictor: 6,
+      cougar: 6,
+      hermit: 0
+    };
+
+    function npcLaserPower(o) {
+      return clamp(NPC_SOURCE_LASER_POWER[o?.model] ?? (o?.role === "police" ? 2 : 1), 0, 7);
+    }
+
+    function npcLaserSpec(o) {
+      const power = npcLaserPower(o);
+      const alien = isAlienShip(o);
+      const source = [
+        { cls: "none", damage: 0, range: 0, cooldownMul: 1.25, width: 1.4, dur: .14, glow: 8, forks: 0, soundClass: "light" },
+        { cls: "light", damage: 7, range: 1180, cooldownMul: 1.12, width: 1.7, dur: .16, glow: 10, forks: 1, soundClass: "light" },
+        { cls: "pulse", damage: 10, range: 1560, cooldownMul: 1, width: 2, dur: .18, glow: 13, forks: 1, soundClass: "medium" },
+        { cls: "beam", damage: 12, range: 1900, cooldownMul: .94, width: 2.25, dur: .21, glow: 15, forks: 1, soundClass: "beam" },
+        { cls: "beam", damage: 14, range: 2220, cooldownMul: .9, width: 2.45, dur: .22, glow: 17, forks: 2, soundClass: "beam" },
+        { cls: "heavy", damage: 16, range: 2600, cooldownMul: .84, width: 2.75, dur: .24, glow: 20, forks: 2, soundClass: "heavy" },
+        { cls: "military", damage: 18, range: 2920, cooldownMul: .78, width: 3.05, dur: .25, glow: 23, forks: 3, soundClass: "heavy" },
+        { cls: "military", damage: 20, range: 3260, cooldownMul: .72, width: 3.3, dur: .27, glow: 26, forks: 3, soundClass: "heavy" }
+      ][power] || {};
+      return {
+        ...source,
+        power,
+        damage: alien ? Math.max(source.damage, 12) : source.damage,
+        range: alien ? Math.max(source.range, 1800) : source.range,
+        soundClass: alien ? "alien" : source.soundClass
+      };
+    }
+
     function npcMissileStock(model, role, police = false) {
       if (model === "thargoid") return 6;
       if (ALIEN_MODELS.includes(model) || role === "trader") return 0;
@@ -2290,12 +2344,22 @@
     }
 
     function npcCombatProfile(o) {
-      if (o.thargoid) return { damage: 16, range: 1700, minRange: 95, cooldownMin: .62, cooldownJitter: .86, accel: 178, maxSpeed: 176, thargonChance: .42 };
-      if (o.model === "thargon") return { damage: 9, range: 1100, minRange: 70, cooldownMin: .72, cooldownJitter: .95, accel: 165, maxSpeed: 168 };
-      if (o.role === "police") return { damage: 13, range: 1350, minRange: 105, cooldownMin: .82, cooldownJitter: .9, accel: 156, maxSpeed: 166 };
-      if (SOURCE_BEHAVIOUR[o.model]?.bountyHunter) return { damage: 12, range: 1250, minRange: 110, cooldownMin: .92, cooldownJitter: 1.0, accel: 146, maxSpeed: 156 };
-      if (o.role === "pirate") return { damage: 10, range: 1050, minRange: 120, cooldownMin: 1.05, cooldownJitter: 1.15, accel: 122, maxSpeed: 136 };
-      return { damage: 8, range: 950, minRange: 130, cooldownMin: 1.2, cooldownJitter: 1.35, accel: 112, maxSpeed: 126 };
+      const laser = npcLaserSpec(o);
+      let base;
+      if (o.thargoid) base = { damage: 16, range: 1700, minRange: 95, cooldownMin: .62, cooldownJitter: .86, accel: 178, maxSpeed: 176, thargonChance: .42 };
+      else if (o.model === "thargon") base = { damage: 9, range: 1100, minRange: 70, cooldownMin: .72, cooldownJitter: .95, accel: 165, maxSpeed: 168 };
+      else if (o.role === "police") base = { damage: 13, range: 1350, minRange: 105, cooldownMin: .82, cooldownJitter: .9, accel: 156, maxSpeed: 166 };
+      else if (SOURCE_BEHAVIOUR[o.model]?.bountyHunter) base = { damage: 12, range: 1250, minRange: 110, cooldownMin: .92, cooldownJitter: 1.0, accel: 146, maxSpeed: 156 };
+      else if (o.role === "pirate") base = { damage: 10, range: 1050, minRange: 120, cooldownMin: 1.05, cooldownJitter: 1.15, accel: 122, maxSpeed: 136 };
+      else base = { damage: 8, range: 950, minRange: 130, cooldownMin: 1.2, cooldownJitter: 1.35, accel: 112, maxSpeed: 126 };
+      return {
+        ...base,
+        laser,
+        damage: Math.max(base.damage, laser.damage || 0),
+        range: Math.max(base.range, laser.range || 0),
+        cooldownMin: base.cooldownMin * (laser.cooldownMul || 1),
+        cooldownJitter: base.cooldownJitter * clamp(laser.cooldownMul || 1, .78, 1.12)
+      };
     }
 
     function shipName(model) {
@@ -2892,19 +2956,19 @@
     function laserPower() {
       const shotHeat = 8; // BBC Elite's LASLI adds the same gun heat per actual firing event.
       if (game.equipment.militaryLaser) return {
-        id: "military", name: "Military", damage: 14, heat: shotHeat, range: 3400,
+        id: "military", name: "Military", damage: 14, heat: shotHeat, range: 4600,
         cooldown: 72, duration: 95, width: 2.8, color: "#8fe8ff", sound: "laserMilitary"
       };
       if (game.equipment.beamLaser) return {
-        id: "beam", name: "Beam", damage: 9, heat: shotHeat, range: 2600,
+        id: "beam", name: "Beam", damage: 9, heat: shotHeat, range: 3400,
         cooldown: 72, duration: 135, width: 2.1, color: "#ffd33d", sound: "laserBeam"
       };
       if (game.equipment.miningLaser) return {
-        id: "mining", name: "Mining", damage: 18, rockMul: 3, heat: shotHeat, range: 1300,
+        id: "mining", name: "Mining", damage: 18, rockMul: 3, heat: shotHeat, range: 1700,
         cooldown: 1000, duration: 230, width: 4.6, color: "#e8f2e4", sound: "laserMining"
       };
       return {
-        id: "pulse", name: "Pulse", damage: 16, heat: shotHeat, range: 1900,
+        id: "pulse", name: "Pulse", damage: 16, heat: shotHeat, range: 2400,
         cooldown: 200, duration: 125, width: 2.4, color: "#ff6a55", sound: "laserPulse"
       };
     }
@@ -4311,8 +4375,29 @@
             sparkTicks({ count: 7, dur: .38, gain: .012 });
             return true;
           case "enemyLaser":
-            tone({ freq: 520, endFreq: 110, dur: .14, gain: .06 * spatialGain, type: "sawtooth", attack: .001, bus: "weapons", pan: opts.spatial ? jitterPan(.24) : (Math.random() - .5) * .7, highpass: 180, lowpass: 5200 });
-            noise({ dur: .1, gain: .032 * spatialGain, highpass: 640, lowpass: 7600, endLowpass: 1800, attack: .001, bus: "weapons", pan: opts.spatial ? jitterPan(.24) : (Math.random() - .5) * .7 });
+            {
+              const cls = opts.laserClass || "medium";
+              const pan = opts.spatial ? jitterPan(cls === "heavy" ? .16 : .24) : (Math.random() - .5) * .7;
+              const heavy = cls === "heavy";
+              const alien = cls === "alien";
+              const beam = cls === "beam";
+              const light = cls === "light";
+              tone({
+                freq: alien ? 420 : heavy ? 310 : beam ? 610 : light ? 720 : 520,
+                endFreq: alien ? 820 : heavy ? 72 : beam ? 330 : light ? 210 : 110,
+                dur: heavy ? .2 : beam ? .17 : alien ? .22 : .14,
+                gain: (heavy ? .078 : alien ? .07 : light ? .044 : .06) * spatialGain,
+                type: heavy || beam ? "sawtooth" : "triangle",
+                attack: .001,
+                bus: "weapons",
+                pan,
+                highpass: heavy ? 90 : 180,
+                lowpass: alien ? 6800 : heavy ? 4600 : 5200,
+                drive: heavy ? .8 : 0
+              });
+              if (heavy) tone({ delay: .018, freq: 1200, endFreq: 190, dur: .16, gain: .032 * spatialGain, type: "sawtooth", attack: .001, bus: "weapons", pan, highpass: 320, lowpass: 7600 });
+              noise({ dur: heavy ? .14 : alien ? .16 : .1, gain: (heavy ? .048 : alien ? .041 : light ? .022 : .032) * spatialGain, highpass: alien ? 920 : 640, lowpass: alien ? 9000 : 7600, endLowpass: alien ? 2600 : 1800, attack: .001, bus: "weapons", pan });
+            }
             return true;
           case "hit":
             noise({ dur: .98, gain: .107 * spatialGain, highpass: 118, lowpass: 1235, endLowpass: 1324, attack: .01, release: .14, bus: "ship", pan: spatialPan });
@@ -4423,8 +4508,13 @@
             noise({ dur: .28, gain: .048, highpass: 80, lowpass: 2400, attack: .016 });
             break;
           case "enemyLaser":
-            tone({ freq: 740, endFreq: 190, dur: .13, gain: .055 });
-            noise({ dur: .07, gain: .025, highpass: 700, lowpass: 7000 });
+            {
+              const cls = opts.laserClass || "medium";
+              const heavy = cls === "heavy" || cls === "alien";
+              const beam = cls === "beam";
+              tone({ freq: heavy ? 960 : beam ? 820 : 740, endFreq: heavy ? 120 : beam ? 260 : 190, dur: heavy ? .17 : .13, gain: heavy ? .07 : .055, type: heavy ? "sawtooth" : "square" });
+              noise({ dur: heavy ? .1 : .07, gain: heavy ? .034 : .025, highpass: 700, lowpass: heavy ? 8200 : 7000 });
+            }
             break;
           case "hit":
             noise({ dur: .2, gain: .085, highpass: 220, lowpass: 4200 });
@@ -7857,16 +7947,24 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function enemyLaserVisual(attacker) {
-      if (attacker.thargoid || isAlienShip(attacker)) {
-        return { color: "#74ffba", core: "#e7fff2", width: 2.6, glow: 18, forks: 3, jitter: 120, dur: .24 };
-      }
-      if (attacker.role === "police") {
-        return { color: "#42dfff", core: "#effcff", width: 2.2, glow: 15, forks: 1, jitter: 62, dur: .18 };
-      }
-      if (attacker.role === "pirate") {
-        return { color: "#ff4b35", core: "#ffe2b8", width: 2.5, glow: 17, forks: 2, jitter: 95, dur: .2 };
-      }
-      return { color: "#ff9b45", core: "#fff0c8", width: 2, glow: 12, forks: 1, jitter: 72, dur: .18 };
+      const spec = npcLaserSpec(attacker);
+      let palette = { color: "#ff9b45", core: "#fff0c8" };
+      if (attacker.thargoid || isAlienShip(attacker)) palette = { color: "#74ffba", core: "#e7fff2" };
+      else if (attacker.role === "police") palette = { color: "#42dfff", core: "#effcff" };
+      else if (attacker.role === "pirate") palette = { color: "#ff4b35", core: "#ffe2b8" };
+      if (spec.power >= 6 && !isAlienShip(attacker)) palette = attacker.role === "pirate"
+        ? { color: "#ff7955", core: "#fff4d4" }
+        : { color: "#8fe8ff", core: "#ffffff" };
+      return {
+        ...palette,
+        width: spec.width,
+        glow: spec.glow,
+        forks: spec.forks,
+        jitter: 54 + spec.power * 12 + (attacker.role === "pirate" ? 18 : 0),
+        dur: spec.dur,
+        soundClass: spec.soundClass,
+        laserPower: spec.power
+      };
     }
 
     function pushEnemyLaserShot(attacker, targetPos = null, targetRadius = 0, options = {}) {
@@ -7916,6 +8014,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         sparks,
         flare: !targetPos || worldImpact
       });
+      return visual;
     }
 
     function launchThargon(mothership) {
@@ -7957,9 +8056,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function fireAtShip(attacker, target) {
       if (stationBlocksLaser(attacker.pos, target.pos)) return;
-      const dmg = npcCombatProfile(attacker).damage;
-      pushEnemyLaserShot(attacker, target.pos, target.r || 50);
-      eliteAudio.playAt("enemyLaser", attacker.pos, { range: 1800 });
+      const profile = npcCombatProfile(attacker);
+      const visual = pushEnemyLaserShot(attacker, target.pos, target.r || 50);
+      const dmg = profile.damage;
+      eliteAudio.playAt("enemyLaser", attacker.pos, { range: Math.max(1800, profile.range + 420), laserClass: visual?.soundClass });
       target.hp -= dmg;
       eliteAudio.playAt("hit", target.pos, { range: 1400, gain: .5 });
       addImpactShake(.14, target.pos, 850);
@@ -8001,9 +8101,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const playerRadius = Math.max(42, modelBoundingRadius(MODELS[playerShipModel()]) || 72);
       if (stationBlocksLaser(o.pos, game.camera.pos, o)) return;
       const energyBefore = game.energy;
-      if (externalTarget) pushEnemyLaserShot(o, { ...game.camera.pos }, playerRadius, { impact: true });
-      else pushEnemyLaserShot(o);
-      eliteAudio.playAt("enemyLaser", o.pos, { range: 1800 });
+      const visual = externalTarget ? pushEnemyLaserShot(o, { ...game.camera.pos }, playerRadius, { impact: true }) : pushEnemyLaserShot(o);
+      eliteAudio.playAt("enemyLaser", o.pos, { range: Math.max(1800, profile.range + 420), laserClass: visual?.soundClass });
       const arc = damagePlayer(profile.damage, o.name, { sourcePos: o.pos });
       eliteAudio.playAt("hit", o.pos, { range: 1700, gain: .65 });
       addImpactShake(o.thargoid ? 1.3 : .85);
