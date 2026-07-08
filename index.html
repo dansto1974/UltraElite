@@ -5606,8 +5606,8 @@
         K: { label: "K CLASS ORANGE", hue: 27 + rng() * 10, sat: 82, coreLight: 90, midLight: 64, rimLight: 36, sizeMul: .78 + rng() * .18, glowMul: 1.56, corona: .4, flare: .13, spots: .07, distMin: 9.5, distMax: 14.5 },
         M: { label: "M CLASS RED DWARF", hue: 6 + rng() * 8, sat: 88, coreLight: 78, midLight: 50, rimLight: 23, sizeMul: .52 + rng() * .16, glowMul: 1.65, corona: .34, flare: .11, spots: .1, distMin: 9.5, distMax: 15 },
         whiteDwarf: { label: "White Dwarf", hue: 205 + rng() * 20, sat: 34, coreLight: 99, midLight: 90, rimLight: 66, sizeMul: .34 + rng() * .12, glowMul: 2.45, corona: .5, flare: .08, spots: 0 },
-        redGiant: { label: "M CLASS RED GIANT", hue: 3 + rng() * 16, sat: 90, coreLight: 82, midLight: 48, rimLight: 22, sizeMul: 11.5 + rng() * 4.2, heatMul: 1.15, glowMul: 1.08, corona: .16, flare: .5, spots: 0, distMin: 2.05, distMax: 2.75 },
-        redSupergiant: { label: "M CLASS RED SUPERGIANT", hue: 1 + rng() * 12, sat: 92, coreLight: 78, midLight: 43, rimLight: 18, sizeMul: 25 + rng() * 9, heatMul: 1.08, glowMul: 1.04, corona: .1, flare: .7, spots: 0, distMin: 1.42, distMax: 1.95 }
+        redGiant: { label: "M CLASS RED GIANT", hue: 3 + rng() * 16, sat: 90, coreLight: 82, midLight: 48, rimLight: 22, sizeMul: 18 + rng() * 7, heatMul: 1.15, glowMul: 1.06, corona: .14, flare: .5, spots: 0, distMin: 1.62, distMax: 2.16 },
+        redSupergiant: { label: "M CLASS RED SUPERGIANT", hue: 1 + rng() * 12, sat: 92, coreLight: 78, midLight: 43, rimLight: 18, sizeMul: 46 + rng() * 18, heatMul: 1.08, glowMul: 1.025, corona: .08, flare: .74, spots: 0, distMin: 1.03, distMax: 1.38 }
       };
       const legacyKinds = {
         redDwarf: "M",
@@ -12944,7 +12944,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.arc(pr.x, pr.y, r, 0, TAU);
       ctx.fill();
 
-      ctx.globalCompositeOperation = "lighter";
+      ctx.globalCompositeOperation = "source-over";
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
       const count = clamp(Math.round(r / 7), crackedGiant && o.stellarClass === "redSupergiant" ? 90 : 58, o.stellarClass === "redSupergiant" ? 220 : 150);
@@ -12952,17 +12952,17 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const theta = rng() * TAU;
         const lat = Math.asin((rng() - .5) * 1.72);
         let dir = norm(vec(Math.cos(lat) * Math.cos(theta), Math.sin(lat), Math.cos(lat) * Math.sin(theta)));
-        if (dot(quatRotate(q, dir), viewDir) <= .18) continue;
+        if (dot(quatRotate(q, dir), viewDir) <= -.08) continue;
         let tangent = norm(add(scale(cross(dir, axis), .72 + rng() * .6), scale(cross(dir, vec(0, 1, 0)), (rng() - .5) * .8)));
         if (len(tangent) < .001) tangent = norm(cross(dir, vec(1, 0, 0)));
-        const steps = 4 + Math.floor(rng() * 7);
-        const width = clamp(r * (.0025 + rng() * .0048), .7, 4.8);
-        const alpha = .22 + rng() * .36;
+        const steps = 6 + Math.floor(rng() * 9);
+        const width = clamp(r * (.0018 + rng() * .0038), .55, 4.2);
+        const alpha = .32 + rng() * .34;
         const runs = [];
         let pts = [];
         for (let j = 0; j < steps; j++) {
           const worldDir = quatRotate(q, dir);
-          if (dot(worldDir, viewDir) <= .12) {
+          if (dot(worldDir, viewDir) <= -.04) {
             if (pts.length > 1) runs.push(pts);
             pts = [];
           } else {
@@ -12982,13 +12982,30 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           if (run.length < 2) continue;
           const path = new Path2D();
           path.moveTo(run[0].x, run[0].y);
-          for (let j = 1; j < run.length; j++) path.lineTo(run[j].x, run[j].y);
-          ctx.strokeStyle = `hsla(${hue + 22 + rng() * 16}, 100%, ${56 + rng() * 18}%, ${alpha * .58})`;
-          ctx.lineWidth = width * (4.2 + rng() * 2.8);
+          for (let j = 1; j < run.length; j++) {
+            const prev = run[j - 1], cur = run[j];
+            const k = (rng() - .5) * width * 2.8;
+            path.lineTo(cur.x + (cur.y - prev.y) * .08 + k, cur.y - (cur.x - prev.x) * .08 - k);
+          }
+          ctx.strokeStyle = `rgba(12,4,2,${alpha * .38})`;
+          ctx.lineWidth = width * (5.4 + rng() * 2.8);
           ctx.stroke(path);
-          ctx.strokeStyle = `hsla(${hue + 32 + rng() * 12}, 100%, ${72 + rng() * 14}%, ${Math.min(.92, alpha * 1.18)})`;
-          ctx.lineWidth = width * 1.14;
+          ctx.strokeStyle = `rgba(2,1,1,${Math.min(.82, alpha * 1.18)})`;
+          ctx.lineWidth = width * (1.15 + rng() * .45);
           ctx.stroke(path);
+          if (run.length > 3 && rng() < .58) {
+            const j = 1 + Math.floor(rng() * (run.length - 2));
+            const a = run[j - 1], b = run[j], c = run[j + 1];
+            const side = rng() > .5 ? 1 : -1;
+            const bx = b.x + (c.y - a.y) * (.14 + rng() * .22) * side;
+            const by = b.y - (c.x - a.x) * (.14 + rng() * .22) * side;
+            ctx.strokeStyle = `rgba(3,1,1,${alpha * .72})`;
+            ctx.lineWidth = Math.max(.5, width * .72);
+            ctx.beginPath();
+            ctx.moveTo(b.x, b.y);
+            ctx.lineTo(bx, by);
+            ctx.stroke();
+          }
         }
       }
       ctx.restore();
@@ -13022,8 +13039,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         drawLensFlare(pr, r, hue, sat, coreLight, flareStrength * .38, w, h);
         return;
       }
-
-      drawLensFlare(pr, r, hue, sat, coreLight, flareStrength, w, h);
 
       const coronaStrength = o.corona || .4;
       const whiteDisc = ["O", "B", "A", "F", "G", "whiteDwarf"].includes(o.stellarClass);
@@ -13110,6 +13125,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.beginPath();
       ctx.arc(pr.x, pr.y, r, 0, TAU);
       ctx.stroke();
+
+      drawLensFlare(pr, r, hue, sat, coreLight, flareStrength, w, h);
     }
 
     // A ring is a real 3D circle lying in a plane fixed to the planet (via rotAxis +
