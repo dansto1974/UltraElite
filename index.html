@@ -4276,6 +4276,14 @@
             tone({ freq: 96, endFreq: 420, dur: .32, gain: .075, type: "sawtooth", attack: .008, release: .075, bus: "weapons", lowpass: 1600 });
             noise({ delay: .03, dur: .4, gain: .06, highpass: 80, lowpass: 4200, endLowpass: 1800, attack: .02, release: .16, bus: "weapons" });
             return true;
+          case "cargoScoop":
+            tone({ freq: 74, endFreq: 46, dur: .18, gain: .06, type: "triangle", attack: .002, release: .09, bus: "ship", lowpass: 520 });
+            noise({ delay: .012, dur: .16, gain: .052, highpass: 28, lowpass: 740, endLowpass: 260, attack: .002, release: .08, bus: "ship", drive: .9 });
+            tone({ delay: .11, freq: 185, endFreq: 92, dur: .34, gain: .032, type: "sawtooth", attack: .012, release: .13, bus: "ship", lowpass: 980, drive: .7 });
+            noise({ delay: .18, dur: .48, gain: .024, highpass: 520, lowpass: 2600, endLowpass: 880, attack: .018, release: .2, bus: "ship", drive: 1.1 });
+            tone({ delay: .32, freq: 58, endFreq: 34, dur: .26, gain: .05, type: "triangle", attack: .004, release: .11, bus: "ship", lowpass: 420 });
+            sparkTicks({ count: 3, dur: .22, gain: .006, bus: "ship", pan: -.08 });
+            return true;
           case "launch":
             tone({ freq: 72, endFreq: 260, dur: .9, gain: .075, type: "sawtooth", attack: .04, release: .22, bus: "ship", lowpass: 1050 });
             noise({ delay: .05, dur: .95, gain: .07, highpass: 34, lowpass: 3400, endLowpass: 1650, attack: .04, release: .26, bus: "ship" });
@@ -4395,6 +4403,11 @@
           case "scoop":
             tone({ freq: 420, endFreq: 620, dur: .09, gain: .05 });
             tone({ delay: .08, freq: 780, endFreq: 640, dur: .08, gain: .045 });
+            break;
+          case "cargoScoop":
+            noise({ dur: .13, gain: .052, highpass: 45, lowpass: 900, attack: .002 });
+            tone({ delay: .07, freq: 260, endFreq: 120, dur: .18, gain: .045, type: "triangle" });
+            tone({ delay: .21, freq: 120, endFreq: 72, dur: .14, gain: .04, type: "triangle" });
             break;
         }
       }
@@ -6516,7 +6529,7 @@
       const good = o.forcedGood || (o.type === "plate" ? "Alloys" : GOODS[Math.floor(Math.random() * (GOODS.length - 1))][0]);
       game.cargo[good]++;
       game.objects = game.objects.filter((x) => x !== o);
-      eliteAudio.play("scoop");
+      eliteAudio.play("cargoScoop");
       setMessage(`Scooped ${o.type === "plate" ? "alloy plate" : "cargo canister"}: ${good}.`);
     }
 
