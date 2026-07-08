@@ -14145,6 +14145,48 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.restore();
     }
 
+    function drawHermitBeacon(o, cam, w, h) {
+      if (!ultraFxEnabled() || o.type !== "hermit") return;
+      const roll = o.roll ?? (o.rot || 0) * .7;
+      const orient = (v) => o.quat ? quatRotate(o.quat, v) : rotateShipPoint(v, o.rot || 0, o.pitch || 0, roll);
+      const scaleFactor = o.scaleFactor ?? o.scale ?? 1;
+      const local = vec(0, 86 * scaleFactor, 16 * scaleFactor);
+      const beaconCam = add(worldDirToCam(orient(local), game.camera), cam);
+      const p = project(beaconCam, w, h);
+      if (!p) return;
+
+      const seed = hash32(`${o.name || "hermit"}:beacon`);
+      const phaseOffset = (seed & 1023) / 1023 * TAU;
+      const pulse = Math.pow(.5 + Math.sin(performance.now() / 1000 * TAU * .72 + phaseOffset) * .5, 3.2);
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      const core = clamp(2.2 * dpr + p.s * 6, 2, 7);
+      const halo = core * (5.5 + pulse * 2.4);
+
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, halo);
+      glow.addColorStop(0, `rgba(255,246,190,${.68 + pulse * .3})`);
+      glow.addColorStop(.2, `rgba(255,202,92,${.28 + pulse * .42})`);
+      glow.addColorStop(.62, `rgba(255,112,32,${.08 + pulse * .18})`);
+      glow.addColorStop(1, "rgba(255,96,0,0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, halo, 0, TAU);
+      ctx.fill();
+
+      ctx.globalCompositeOperation = "source-over";
+      ctx.fillStyle = `rgba(255,244,178,${.78 + pulse * .22})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, core * .58, 0, TAU);
+      ctx.fill();
+      ctx.strokeStyle = `rgba(255,126,32,${.44 + pulse * .38})`;
+      ctx.lineWidth = Math.max(.8, core * .22);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, core * 1.05, 0, TAU);
+      ctx.stroke();
+      ctx.restore();
+    }
+
     function drawSceneModel(o, cam, w, h) {
       const model = MODELS[o.model || "cobra"];
       if (shouldDrawSceneModelDot(o, model)) {
@@ -14165,6 +14207,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           metalAlphaMul: distanceLod ? 0 : (rock ? .82 : undefined)
         });
       }
+      drawHermitBeacon(o, cam, w, h);
       if (o === game.targetObject) {
         const c = project(cam, w, h);
         if (c) {
