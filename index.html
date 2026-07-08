@@ -3902,7 +3902,7 @@
       function tone({
         delay = 0, freq = 440, endFreq = null, dur = .12, gain = .08,
         type = "square", attack = .004, release = .035, bus = "cockpit",
-        pan = 0, highpass = null, lowpass = null, drive = 0
+        pan = 0, highpass = null, lowpass = null, drive = 0, minFreq = 24
       }) {
         const c = ensure();
         if (!c) return;
@@ -3910,9 +3910,10 @@
         const osc = c.createOscillator();
         const amp = c.createGain();
         let node = osc;
+        const floor = Math.max(1, minFreq);
         osc.type = type;
-        osc.frequency.setValueAtTime(Math.max(24, freq * pitchScale), t);
-        if (endFreq) osc.frequency.exponentialRampToValueAtTime(Math.max(24, endFreq * pitchScale), t + Math.max(.01, dur));
+        osc.frequency.setValueAtTime(Math.max(floor, freq * pitchScale), t);
+        if (endFreq) osc.frequency.exponentialRampToValueAtTime(Math.max(floor, endFreq * pitchScale), t + Math.max(.01, dur));
         if (highpass != null) {
           const hp = c.createBiquadFilter();
           hp.type = "highpass";
@@ -3978,7 +3979,7 @@
       function noise({
         delay = 0, dur = .16, gain = .08, highpass = 80, lowpass = 6000,
         endLowpass = null, attack = .004, release = .035, bus = "cockpit", pan = 0,
-        drive = 0
+        drive = 0, minHighpass = 20, minLowpass = 120
       }) {
         const c = ensure();
         if (!c || !noiseBuffer) return;
@@ -3990,10 +3991,10 @@
         src.buffer = noiseBuffer;
         src.loop = true;
         hp.type = "highpass";
-        hp.frequency.setValueAtTime(Math.max(20, highpass * filterScale), t);
+        hp.frequency.setValueAtTime(Math.max(minHighpass, highpass * filterScale), t);
         lp.type = "lowpass";
-        lp.frequency.setValueAtTime(Math.max(120, lowpass * filterScale), t);
-        if (endLowpass) lp.frequency.exponentialRampToValueAtTime(Math.max(120, endLowpass * filterScale), t + Math.max(.01, dur));
+        lp.frequency.setValueAtTime(Math.max(minLowpass, lowpass * filterScale), t);
+        if (endLowpass) lp.frequency.exponentialRampToValueAtTime(Math.max(minLowpass, endLowpass * filterScale), t + Math.max(.01, dur));
         envelope(amp, t, dur, gain, attack, release);
         src.connect(hp).connect(lp);
         if (drive > 0) {
@@ -4134,9 +4135,9 @@
             noise({ delay: .02, dur: .48, gain: .032, highpass: 55, lowpass: 1450, endLowpass: 520, attack: .018, release: .18, bus: "world", pan: .08 });
             return true;
           case "clampRelease":
-            tone({ freq: 56, endFreq: 38, dur: .3, gain: .082, type: "triangle", attack: .002, release: .16, bus: "ship", lowpass: 560 });
-            tone({ delay: .018, freq: 25, endFreq: 18, dur: .42, gain: .072, type: "sine", attack: .001, release: .22, bus: "ship" });
-            noise({ delay: .006, dur: .17, gain: .078, highpass: 24, lowpass: 620, endLowpass: 150, attack: .001, release: .095, bus: "ship" });
+            tone({ freq: 56, endFreq: 38, dur: .3, gain: .082, type: "triangle", attack: .002, release: .16, bus: "ship", lowpass: 510.6 });
+            tone({ delay: .07, freq: 19, endFreq: 988, dur: 1.79, gain: .089, type: "sine", attack: .001, release: .22, bus: "ship", highpass: 36.5, minFreq: 16 });
+            noise({ delay: .006, dur: .17, gain: .078, highpass: 21.9, lowpass: 565.3, endLowpass: 136.8, attack: .001, release: .095, bus: "ship", minHighpass: 1, minLowpass: 1 });
             sparkTicks({ count: 3, dur: .13, gain: .009, bus: "ship" });
             return true;
           case "clampEngage":

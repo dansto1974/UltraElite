@@ -63,10 +63,10 @@ const PRESETS = {
     masterGain: .92,
     pitchScale: .62,
     layers: [
-      { name: "clunk body", kind: "osc", wave: "triangle", freq: 56, endFreq: 38, dur: .3, gain: .082, attack: .002, release: .16, lowpass: 560, pan: 0 },
-      { name: "sub drop", kind: "osc", wave: "sine", delay: .018, freq: 25, endFreq: 18, dur: .42, gain: .072, attack: .001, release: .22, pan: 0 },
-      { name: "metal release", kind: "noise", delay: .006, dur: .17, gain: .078, highpass: 24, lowpass: 620, endLowpass: 150, attack: .001, release: .095, pan: 0 },
-      { name: "electrical ticks", kind: "ticks", count: 3, dur: .13, gain: .009, pan: 0 }
+      { name: "clunk body", kind: "osc", wave: "triangle", freq: 56, endFreq: 38, dur: .3, gain: .082, attack: .002, release: .16, lowpass: 560, pan: 0, delay: 0, highpass: 0, drive: 0, lfoFreq: 0, lfoDepth: 0 },
+      { name: "sub drop", kind: "osc", wave: "sine", delay: .07, freq: 19, endFreq: 988, dur: 1.79, gain: .089, attack: .001, release: .22, pan: 0, lowpass: 0, highpass: 40, drive: 0, lfoFreq: 0, lfoDepth: 0 },
+      { name: "metal release", kind: "noise", delay: .006, dur: .17, gain: .078, highpass: 24, lowpass: 620, endLowpass: 150, attack: .001, release: .095, pan: 0, drive: 0 },
+      { name: "electrical ticks", kind: "ticks", count: 3, dur: .13, gain: .009, pan: 0, delay: 0 }
     ]
   },
   "Station Rumble": {
@@ -427,6 +427,7 @@ function toJsCase(patch) {
   const filterRatio = (patch.pitchScale || gamePitchScale) / gameFilterScale;
   const pitch = (value) => value > 0 ? value * pitchRatio : value;
   const filter = (value) => value > 0 ? value * filterRatio : value;
+  const actualFilter = (value) => value > 0 ? value * (patch.pitchScale || gamePitchScale) : 0;
   const lines = [`case "${patch.name}":`];
   patch.layers.forEach((layer) => {
     if (layer.kind === "osc") {
@@ -446,12 +447,27 @@ function toJsCase(patch) {
         pan: layer.pan,
         highpass: layer.highpass > 0 ? filter(layer.highpass) : null,
         lowpass: layer.lowpass > 0 ? filter(layer.lowpass) : null,
-        drive: layer.drive > 0 ? layer.drive : null
+        drive: layer.drive > 0 ? layer.drive : null,
+        minFreq: fn === "tone" && (pitch(layer.freq) < 24 || (layer.endFreq > 0 && pitch(layer.endFreq) < 24)) ? 16 : null
       });
       lines.push(`  ${fn}(${formatArgs(args)});`);
     }
     if (layer.kind === "noise") {
-      lines.push(`  noise(${formatArgs(compact({ delay: layer.delay, dur: layer.dur, gain: layer.gain, highpass: filter(layer.highpass), lowpass: filter(layer.lowpass), endLowpass: layer.endLowpass > 0 ? filter(layer.endLowpass) : null, attack: layer.attack, release: layer.release, bus: patch.bus, pan: layer.pan, drive: layer.drive > 0 ? layer.drive : null }))});`);
+      lines.push(`  noise(${formatArgs(compact({
+        delay: layer.delay,
+        dur: layer.dur,
+        gain: layer.gain,
+        highpass: filter(layer.highpass),
+        lowpass: filter(layer.lowpass),
+        endLowpass: layer.endLowpass > 0 ? filter(layer.endLowpass) : null,
+        attack: layer.attack,
+        release: layer.release,
+        bus: patch.bus,
+        pan: layer.pan,
+        drive: layer.drive > 0 ? layer.drive : null,
+        minHighpass: actualFilter(layer.highpass) > 0 && actualFilter(layer.highpass) < 20 ? 1 : null,
+        minLowpass: (actualFilter(layer.lowpass) > 0 && actualFilter(layer.lowpass) < 120) || (actualFilter(layer.endLowpass) > 0 && actualFilter(layer.endLowpass) < 120) ? 1 : null
+      }))});`);
     }
     if (layer.kind === "rumble") {
       lines.push(`  rumble(${formatArgs(compact({ delay: layer.delay, strength: layer.strength, dur: layer.dur, bus: patch.bus, pan: layer.pan }))});`);
