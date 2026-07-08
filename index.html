@@ -5681,24 +5681,38 @@
       const biome = DEV_PLANET_TYPES.some(([id]) => id === game.devPlanetType) && game.devPlanetType !== "auto"
         ? game.devPlanetType
         : planetBiomeForSystem(sys);
-      const planetR = lerp(900, 1900, clamp((sys.radius - 2816) / (6912 - 2816), 0, 1)) * (biome === "gas" ? 1.8 : biome === "venus" ? .88 : biome === "ice" ? 1.05 : 1);
+      const basePlanetR = lerp(900, 1900, clamp((sys.radius - 2816) / (6912 - 2816), 0, 1));
+      const gasScale = biome === "gas" ? 2.55 + rng() * 1.15 : 1;
+      const planetR = basePlanetR * (biome === "gas" ? gasScale : biome === "venus" ? .88 : biome === "ice" ? 1.05 : 1);
       const highOrbit = rng() < .46;
       const orbitA = rng() * TAU;
       const planetDir = highOrbit
         ? norm(vec(Math.cos(orbitA) * (1.25 + rng() * 1.35), (rng() > .5 ? 1 : -1) * (.95 + rng() * 1.2), .55 + Math.sin(orbitA) * .55 + rng() * .7))
         : norm(vec((rng() - .5) * 2, (rng() - .5) * 1.1, 1.4 + rng() * 1.2));
-      const planetDist = planetR * ((biome === "gas" ? 4.7 : 7.5) + rng() * (biome === "gas" ? 1.7 : 3.5));
+      const planetDist = planetR * ((biome === "gas" ? 5.2 : 7.5) + rng() * (biome === "gas" ? 2.2 : 3.5));
       const ringRng = mulberry(hash32(`${sys.galaxy}:${sys.index}:${sys.name}:rings`));
       const debrisRing = biome === "industrial" && ringRng() < .62;
-      const hasRing = debrisRing || (biome === "gas" && ringRng() < .78) || (biome === "rocky" && ringRng() < .36) || (biome === "ice" && ringRng() < .24) || ringRng() < .28;
+      const gasRingRoll = ringRng();
+      const rockyRingRoll = ringRng();
+      const iceRingRoll = ringRng();
+      const ambientRingRoll = ringRng();
+      const hasRing = debrisRing
+        || (biome === "gas" && gasRingRoll < .5)
+        || (biome === "rocky" && rockyRingRoll < .36)
+        || (biome === "ice" && iceRingRoll < .24)
+        || (biome !== "gas" && ambientRingRoll < .28);
+      const hueBand = (bands) => {
+        const band = bands[Math.floor(rng() * bands.length) % bands.length];
+        return lerp(band[0], band[1], rng());
+      };
       const palette = {
-        industrial: { hue: lerp(15, 45, rng()), sat: lerp(8, 22, rng()), light: lerp(10, 20, rng()) },
-        desert: { hue: lerp(25, 42, rng()), sat: lerp(45, 62, rng()), light: lerp(46, 60, rng()) },
-        ocean: { hue: lerp(196, 214, rng()), sat: lerp(52, 70, rng()), light: lerp(28, 40, rng()) },
-        rocky: { hue: lerp(18, 42, rng()), sat: lerp(12, 28, rng()), light: lerp(28, 46, rng()) },
-        ice: { hue: lerp(190, 212, rng()), sat: lerp(18, 34, rng()), light: lerp(58, 72, rng()) },
-        venus: { hue: lerp(34, 50, rng()), sat: lerp(42, 66, rng()), light: lerp(42, 58, rng()) },
-        gas: { hue: lerp(24, 42, rng()), sat: lerp(38, 62, rng()), light: lerp(44, 62, rng()) }
+        industrial: { hue: lerp(6, 62, rng()), sat: lerp(6, 30, rng()), light: lerp(8, 24, rng()) },
+        desert: { hue: lerp(18, 52, rng()), sat: lerp(38, 72, rng()), light: lerp(40, 66, rng()) },
+        ocean: { hue: lerp(178, 224, rng()), sat: lerp(44, 78, rng()), light: lerp(24, 46, rng()) },
+        rocky: { hue: lerp(8, 58, rng()), sat: lerp(8, 38, rng()), light: lerp(22, 52, rng()) },
+        ice: { hue: lerp(176, 230, rng()), sat: lerp(12, 42, rng()), light: lerp(54, 78, rng()) },
+        venus: { hue: hueBand([[18, 58], [290, 330], [150, 188], [205, 236]]), sat: lerp(26, 88, rng()), light: lerp(30, 70, rng()) },
+        gas: { hue: hueBand([[12, 58], [320, 354], [82, 142], [184, 228], [260, 292]]), sat: lerp(30, 78, rng()), light: lerp(36, 70, rng()) }
       }[biome];
       const planet = {
         type: "planet", name: sys.name, pos: scale(planetDir, planetDist), r: planetR,
@@ -5713,9 +5727,9 @@
         hasRing,
         debrisRing,
         debrisField: debrisRing && ringRng() < .68,
-        ringInner: 1.75 + ringRng() * 0.25,
-        ringOuter: 2.55 + ringRng() * 0.85,
-        ringFlatten: .22 + ringRng() * .16,
+        ringInner: biome === "gas" ? 1.95 + ringRng() * 0.45 : 1.75 + ringRng() * 0.25,
+        ringOuter: biome === "gas" ? 3.1 + ringRng() * 1.55 : 2.55 + ringRng() * 0.85,
+        ringFlatten: biome === "gas" ? .18 + ringRng() * .12 : .22 + ringRng() * .16,
         ringTilt: (ringRng() - .5) * 1.1,
         hp: 9999, hostile: false
       };
