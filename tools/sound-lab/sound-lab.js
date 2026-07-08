@@ -87,9 +87,9 @@ const PRESETS = {
     masterGain: .8,
     pitchScale: .62,
     layers: [
-      { name: "deep pulse", kind: "osc", wave: "sine", freq: 27, endFreq: 31, dur: 2.2, gain: .032, attack: .2, release: .6, lowpass: 200, lfoFreq: 1.8, lfoDepth: 3, pan: 0 },
-      { name: "duct hum", kind: "osc", wave: "triangle", freq: 44, endFreq: 52, dur: 2.2, gain: .018, attack: .24, release: .7, lowpass: 420, lfoFreq: .5, lfoDepth: 4, pan: -.08 },
-      { name: "air system", kind: "noise", dur: 2.2, gain: .009, highpass: 160, lowpass: 620, attack: .2, release: .7, pan: .08 }
+      { name: "deep pulse", kind: "osc", wave: "sine", freq: 27, endFreq: 31, dur: 2.2, gain: .046, attack: .2, release: .6, lowpass: 200, lfoFreq: 1.8, lfoDepth: 3, pan: 0 },
+      { name: "duct hum", kind: "osc", wave: "triangle", freq: 44, endFreq: 52, dur: 2.2, gain: .026, attack: .24, release: .7, lowpass: 420, lfoFreq: .5, lfoDepth: 4, pan: -.08 },
+      { name: "air system", kind: "noise", dur: 2.2, gain: .013, highpass: 160, lowpass: 620, attack: .2, release: .7, pan: .08 }
     ]
   },
   "Pulse Laser": {
