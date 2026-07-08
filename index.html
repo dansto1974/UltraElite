@@ -10020,16 +10020,21 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const padX = Math.round(fontPx * .5);
       const padY = Math.round(fontPx * .32);
       ctx.font = `${fontPx}px ${UI_CANVAS_FONT}`;
-      ctx.textAlign = "right";
+      ctx.textAlign = "center";
       ctx.textBaseline = "top";
-      const x = w - 18, y = 14;
+      const spaceRect = space.getBoundingClientRect();
+      const scannerRect = scanner.getBoundingClientRect();
+      const scaleX = w / Math.max(1, spaceRect.width);
+      const scaleY = h / Math.max(1, spaceRect.height);
+      const x = ((scannerRect.left + scannerRect.right) * .5 - spaceRect.left) * scaleX;
+      const y = (scannerRect.bottom - spaceRect.top) * scaleY + Math.round(fontPx * .38);
       const tw = ctx.measureText(text).width;
       ctx.fillStyle = "rgba(0,0,0,.46)";
-      ctx.fillRect(x - tw - padX * 2, y - padY, tw + padX * 2, fontPx + padY * 2);
+      ctx.fillRect(x - tw * .5 - padX, y - padY, tw + padX * 2, fontPx + padY * 2);
       ctx.strokeStyle = (perf.lod || 0) >= 2 ? "rgba(255,211,61,.44)" : "rgba(101,255,71,.3)";
-      ctx.strokeRect(x - tw - padX * 2, y - padY, tw + padX * 2, fontPx + padY * 2);
+      ctx.strokeRect(x - tw * .5 - padX, y - padY, tw + padX * 2, fontPx + padY * 2);
       ctx.fillStyle = (perf.lod || 0) >= 2 ? "rgba(255,211,61,.94)" : "rgba(101,255,71,.9)";
-      ctx.fillText(text, x - padX, y);
+      ctx.fillText(text, x, y);
       ctx.restore();
     }
 
