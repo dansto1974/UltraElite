@@ -5563,12 +5563,16 @@
 
     const DEV_STAR_TYPES = [
       ["auto", "Auto"],
-      ["redDwarf", "Red Dwarf"],
-      ["orangeDwarf", "Orange Dwarf"],
-      ["yellowDwarf", "Yellow Dwarf"],
-      ["blueWhite", "Blue-White Star"],
+      ["O", "O Class Blue Giant"],
+      ["B", "B Class Blue-White"],
+      ["A", "A Class White"],
+      ["F", "F Class Yellow-White"],
+      ["G", "G Class Solar"],
+      ["K", "K Class Orange"],
+      ["M", "M Class Red Dwarf"],
       ["whiteDwarf", "White Dwarf"],
-      ["redGiant", "Red Giant"]
+      ["redGiant", "M Class Red Giant"],
+      ["redSupergiant", "M Class Red Supergiant"]
     ];
     const DEV_PLANET_TYPES = [
       ["auto", "Auto"],
@@ -5592,25 +5596,75 @@
       const desc = `${sys.description} ${ECONOMIES[sys.economy]}`.toLowerCase();
       const has = (words) => words.some((word) => desc.includes(word));
       const rng = mulberry(hash32(`${sys.name}:stellar`));
-      const roll = rng();
-      let kind = "yellowDwarf";
+      let kind = "G";
       const profiles = {
-        redDwarf: { label: "Red Dwarf", hue: 7 + rng() * 8, sat: 86, coreLight: 77, midLight: 52, rimLight: 25, sizeMul: .58 + rng() * .16, glowMul: 1.8, corona: .48, flare: .12, spots: .12 },
-        orangeDwarf: { label: "Orange Dwarf", hue: 28 + rng() * 10, sat: 92, coreLight: 88, midLight: 65, rimLight: 38, sizeMul: .82 + rng() * .2, glowMul: 1.62, corona: .42, flare: .16, spots: .08 },
-        yellowDwarf: { label: "Yellow Dwarf", hue: 43 + rng() * 10, sat: 100, coreLight: 93, midLight: 74, rimLight: 48, sizeMul: .9 + rng() * .22, glowMul: 1.55, corona: .4, flare: .14, spots: .06 },
-        blueWhite: { label: "Blue-White Star", hue: 212 + rng() * 18, sat: 68, coreLight: 98, midLight: 84, rimLight: 58, sizeMul: 1.08 + rng() * .28, glowMul: 1.95, corona: .62, flare: .32, spots: .02 },
+        O: { label: "O CLASS BLUE GIANT", hue: 220 + rng() * 14, sat: 72, coreLight: 99, midLight: 88, rimLight: 62, sizeMul: 2.7 + rng() * .85, glowMul: 2.35, corona: .82, flare: .58, spots: 0, distMin: 5.8, distMax: 8.4 },
+        B: { label: "B CLASS BLUE-WHITE", hue: 213 + rng() * 12, sat: 58, coreLight: 99, midLight: 86, rimLight: 60, sizeMul: 1.75 + rng() * .5, glowMul: 2.08, corona: .66, flare: .38, spots: .01, distMin: 7.2, distMax: 10.5 },
+        A: { label: "A CLASS WHITE", hue: 205 + rng() * 10, sat: 28, coreLight: 99, midLight: 92, rimLight: 70, sizeMul: 1.22 + rng() * .28, glowMul: 1.85, corona: .5, flare: .22, spots: .01, distMin: 8.5, distMax: 12.5 },
+        F: { label: "F CLASS YELLOW-WHITE", hue: 50 + rng() * 8, sat: 44, coreLight: 98, midLight: 86, rimLight: 62, sizeMul: 1.04 + rng() * .22, glowMul: 1.68, corona: .44, flare: .16, spots: .03, distMin: 9, distMax: 13.5 },
+        G: { label: "G CLASS SOLAR", hue: 43 + rng() * 10, sat: 72, coreLight: 96, midLight: 78, rimLight: 50, sizeMul: .92 + rng() * .22, glowMul: 1.55, corona: .4, flare: .14, spots: .05, distMin: 9, distMax: 14 },
+        K: { label: "K CLASS ORANGE", hue: 27 + rng() * 10, sat: 82, coreLight: 90, midLight: 64, rimLight: 36, sizeMul: .78 + rng() * .18, glowMul: 1.56, corona: .4, flare: .13, spots: .07, distMin: 9.5, distMax: 14.5 },
+        M: { label: "M CLASS RED DWARF", hue: 6 + rng() * 8, sat: 88, coreLight: 78, midLight: 50, rimLight: 23, sizeMul: .52 + rng() * .16, glowMul: 1.65, corona: .34, flare: .11, spots: .1, distMin: 9.5, distMax: 15 },
         whiteDwarf: { label: "White Dwarf", hue: 205 + rng() * 20, sat: 34, coreLight: 99, midLight: 90, rimLight: 66, sizeMul: .34 + rng() * .12, glowMul: 2.45, corona: .5, flare: .08, spots: 0 },
-        redGiant: { label: "Red Giant", hue: 3 + rng() * 16, sat: 90, coreLight: 82, midLight: 48, rimLight: 22, sizeMul: 11.5 + rng() * 4.2, heatMul: 1.15, glowMul: 1.08, corona: .16, flare: .5, spots: 0 }
+        redGiant: { label: "M CLASS RED GIANT", hue: 3 + rng() * 16, sat: 90, coreLight: 82, midLight: 48, rimLight: 22, sizeMul: 11.5 + rng() * 4.2, heatMul: 1.15, glowMul: 1.08, corona: .16, flare: .5, spots: 0, distMin: 2.05, distMax: 2.75 },
+        redSupergiant: { label: "M CLASS RED SUPERGIANT", hue: 1 + rng() * 12, sat: 92, coreLight: 78, midLight: 43, rimLight: 18, sizeMul: 25 + rng() * 9, heatMul: 1.08, glowMul: 1.04, corona: .1, flare: .7, spots: 0, distMin: 1.42, distMax: 1.95 }
       };
+      const legacyKinds = {
+        redDwarf: "M",
+        orangeDwarf: "K",
+        yellowDwarf: "G",
+        blueWhite: "B"
+      };
+      if (forcedKind && legacyKinds[forcedKind]) forcedKind = legacyKinds[forcedKind];
       if (forcedKind && profiles[forcedKind]) kind = forcedKind;
-      else if (has(["unstable", "fabled"]) && roll < .34) kind = "blueWhite";
-      else if (has(["ancient", "bleak"]) && roll < .32) kind = "whiteDwarf";
-      else if (has(["remote", "ancient", "bleak"]) && roll < .62) kind = "redGiant";
-      else if (sys.economy >= 5 && roll < .45) kind = "redDwarf";
-      else if (sys.economy <= 2 && roll < .55) kind = "orangeDwarf";
-      else if (roll < .18) kind = "whiteDwarf";
-      else if (roll < .38) kind = "orangeDwarf";
-      else if (roll < .56) kind = "redDwarf";
+      else {
+        const weights = {
+          O: .45,
+          B: 1.25,
+          A: 4.6,
+          F: 8.5,
+          G: 18,
+          K: 22,
+          M: 24,
+          whiteDwarf: 5.4,
+          redGiant: 6.2,
+          redSupergiant: 1.1
+        };
+        if (has(["unstable", "fabled", "vast", "mountains"])) {
+          weights.O *= 3.2;
+          weights.B *= 2.4;
+          weights.redSupergiant *= 2.2;
+        }
+        if (has(["ancient", "remote", "bleak", "notable"])) {
+          weights.whiteDwarf *= 2.4;
+          weights.redGiant *= 2.1;
+          weights.redSupergiant *= 1.7;
+        }
+        if (has(["pink", "fabled", "cursed", "unusual"])) {
+          weights.redGiant *= 1.7;
+          weights.redSupergiant *= 2.3;
+        }
+        if (sys.economy >= 5) {
+          weights.M *= 1.55;
+          weights.K *= 1.2;
+          weights.O *= .75;
+          weights.B *= .85;
+        } else if (sys.economy <= 2) {
+          weights.F *= 1.18;
+          weights.G *= 1.25;
+          weights.K *= 1.25;
+        }
+        let total = 0;
+        for (const value of Object.values(weights)) total += value;
+        let pick = rng() * total;
+        for (const [candidate, weight] of Object.entries(weights)) {
+          pick -= weight;
+          if (pick <= 0) {
+            kind = candidate;
+            break;
+          }
+        }
+      }
       return { kind, ...profiles[kind], seed: hash32(`${sys.name}:stellar-surface`) };
     }
 
@@ -5679,7 +5733,7 @@
           ? norm(add(scale(side, rng() > .5 ? 1 : -1), add(scale(upSide, (rng() - .5) * .9), scale(planetDir, (rng() - .5) * .55))))
           : norm(add(scale(planetDir, -(1.1 + rng() * .55)), add(scale(side, (rng() - .5) * .8), scale(upSide, (rng() - .5) * .55))));
       const heatRadius = baseSunR * (stellar.heatMul || stellar.sizeMul);
-      let sunDist = sunR * lerp(stellar.kind === "whiteDwarf" ? 14 : stellar.kind === "redGiant" ? 2.25 : 9, stellar.kind === "whiteDwarf" ? 20 : stellar.kind === "redGiant" ? 3.05 : 14, rng());
+      let sunDist = sunR * lerp(stellar.distMin ?? (stellar.kind === "whiteDwarf" ? 14 : 9), stellar.distMax ?? (stellar.kind === "whiteDwarf" ? 20 : 14), rng());
       if (dot(sunDir, planetDir) > .72) sunDist = Math.max(sunDist, planetDist + sunR * 2.4 + planetR);
       const sun = {
         type: "sun", name: stellar.label.toUpperCase(), pos: scale(sunDir, sunDist), r: sunR,
@@ -12870,7 +12924,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function drawRedGiantCracks(o, pr, r, hue, sat, w, h, camera = game.camera) {
-      if (o.stellarClass !== "redGiant" || r < 12) return;
+      const crackedGiant = o.stellarClass === "redGiant" || o.stellarClass === "redSupergiant";
+      if (!crackedGiant || r < 12) return;
       const rng = mulberry((o.textureSeed || 1) ^ 0xc0a1c);
       const axis = norm(vec(.18, 1, .08));
       const q = quatFromAxisAngle(axis, o.rot || 0);
@@ -12892,7 +12947,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.globalCompositeOperation = "lighter";
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
-      const count = clamp(Math.round(r / 7), 58, 150);
+      const count = clamp(Math.round(r / 7), crackedGiant && o.stellarClass === "redSupergiant" ? 90 : 58, o.stellarClass === "redSupergiant" ? 220 : 150);
       for (let i = 0; i < count; i++) {
         const theta = rng() * TAU;
         const lat = Math.asin((rng() - .5) * 1.72);
@@ -12939,7 +12994,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.restore();
     }
 
-    function drawSunBody(o, cam, w, h) {
+    function drawSunBody(o, cam, w, h, camera = game.camera) {
       const pr = project(cam, w, h);
       if (!pr) return;
       const baseR = Math.abs(o.r * pr.s);
@@ -12971,8 +13026,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       drawLensFlare(pr, r, hue, sat, coreLight, flareStrength, w, h);
 
       const coronaStrength = o.corona || .4;
-      const whiteDisc = o.stellarClass !== "redGiant" && o.stellarClass !== "redDwarf";
-      const redGiant = o.stellarClass === "redGiant";
+      const whiteDisc = ["O", "B", "A", "F", "G", "whiteDwarf"].includes(o.stellarClass);
+      const redGiant = o.stellarClass === "redGiant" || o.stellarClass === "redSupergiant";
       const coronaR = redGiant ? glowR * .94 : glowR * (1.14 + coronaStrength * .42);
       const corona = ctx.createRadialGradient(pr.x, pr.y, r * .35, pr.x, pr.y, coronaR);
       if (redGiant) {
@@ -13046,7 +13101,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.arc(pr.x, pr.y, r, 0, TAU);
       ctx.fill();
 
-      drawRedGiantCracks(o, pr, r, hue, sat, w, h, cam);
+      drawRedGiantCracks(o, pr, r, hue, sat, w, h, camera);
 
       ctx.strokeStyle = whiteDisc
         ? `rgba(255,255,255,.42)`
@@ -14135,7 +14190,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function drawObject(o, cam, w, h) {
       if (o.type === "sun") {
-        drawSunBody(o, cam, w, h);
+        drawSunBody(o, cam, w, h, game.camera);
         return;
       }
       if (o.type === "planet") {
