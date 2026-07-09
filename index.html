@@ -1136,6 +1136,10 @@
       background: #010201;
     }
 
+    .ship-diagram.library-diagram {
+      height: 230px;
+    }
+
     .blueprint-diagram {
       width: 100%;
       margin: 8px 0 10px;
@@ -15389,19 +15393,57 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function shipLore(model, personal = false) {
+      const rng = mulberry(hash32(`ship-lore:${model}:${personal ? "personal" : "library"}`));
+      const choose = (items) => items[Math.floor(rng() * items.length) % items.length];
       const stats = shipStats(model);
       const size = modelOverallSize(MODELS[model]);
       const role = shipRoleLabel(model);
       const base = personal
-        ? `Commander ${game.commander}'s ${shipName(model)} is configured as a ${role.toLowerCase()} craft with ${playerBaseCargoCap(model)}t standard cargo capacity and a ${Math.round(220 * (stats.speed || 1))}m/s rated drive.`
-        : `The ${shipName(model)} is usually filed as ${role.toLowerCase()} traffic, measuring roughly ${Math.round(size)}m across its largest axis with a ${Math.round(stats.hp)} point hull rating.`;
+        ? choose([
+          `Commander ${game.commander}'s ${shipName(model)} is configured as a ${role.toLowerCase()} craft with ${playerBaseCargoCap(model)}t standard cargo capacity and a ${Math.round(220 * (stats.speed || 1))}m/s rated drive.`,
+          `${shipName(model)} hull ${game.commander} currently flies is rated for ${Math.round(stats.hp)} hull points, ${playerBaseCargoCap(model)}t standard cargo and the usual optimistic service intervals.`,
+          `This ${shipName(model)} is the commander's working ship: fast enough for trouble, large enough for regret, and certified for ${Math.round(220 * (stats.speed || 1))}m/s under polite conditions.`
+        ])
+        : choose([
+          `The ${shipName(model)} is usually filed as ${role.toLowerCase()} traffic, measuring roughly ${Math.round(size)}m across its largest axis with a ${Math.round(stats.hp)} point hull rating.`,
+          `Library records classify the ${shipName(model)} as ${role.toLowerCase()}, with a ${Math.round(220 * (stats.speed || 1))}m/s drive profile and a ${Math.round(size)}m maximum source-model span.`,
+          `Port recognition manuals describe the ${shipName(model)} as ${role.toLowerCase()} hardware: ${Math.round(stats.hp)} hull points, ${Math.round(stats.r)}m target area and a silhouette nobody agrees how to pronounce.`
+        ]);
       const notes = [];
-      if (POLICE_MODELS.includes(model)) notes.push("Police yards favour its fast intercept profile, clean authority beacon and enough bite to make most pirates remember urgent appointments elsewhere.");
-      else if (ALIEN_MODELS.includes(model)) notes.push(model === "thargon" ? "Thargon drones are not built for comfort, negotiation or sensible insurance premiums." : "Thargoid hulls remain badly explained by human dock crews, who mostly agree that poking them is a career-limiting strategy.");
-      else if (HAULER_MODELS.includes(model)) notes.push("Hauler crews prize predictable handling, generous internal volume and paint schemes that tell customs officials exactly where to start arguing.");
-      else if (PIRATE_MODELS.includes(model) && !TRADER_MODELS.includes(model)) notes.push("Pirate captains like the small target profile and aggressive acceleration, particularly when leaving the scene of a misunderstanding.");
-      else if (TRADER_MODELS.includes(model)) notes.push("Traders value the balance of hold space, range and repairability; glamorous it is not, but glamour rarely pays docking fees.");
-      else notes.push("It occupies the awkward middle ground between respectable spacecraft and something a guidebook would advise against borrowing.");
+      if (POLICE_MODELS.includes(model)) notes.push(choose([
+        "Police yards favour its fast intercept profile, clean authority beacon and enough bite to make most pirates remember urgent appointments elsewhere.",
+        "The cockpit is cramped, the weapons bus is not, and station authorities consider that a perfectly fair trade.",
+        "Pilots report the Viper handles like a reprimand with engines attached."
+      ]));
+      else if (ALIEN_MODELS.includes(model)) notes.push(choose(model === "thargon" ? [
+        "Thargon drones are not built for comfort, negotiation or sensible insurance premiums.",
+        "Recovered fragments suggest a design philosophy somewhere between obedience, violence and kitchen appliance.",
+        "The drone has no pilot seat, no cargo bay and absolutely no interest in your paperwork."
+      ] : [
+        "Thargoid hulls remain badly explained by human dock crews, who mostly agree that poking them is a career-limiting strategy.",
+        "Sensor officers describe it as elegant, terrifying and a poor candidate for close-range tourism.",
+        "It does not so much dock as cause a port authority to reconsider its life choices."
+      ]));
+      else if (HAULER_MODELS.includes(model)) notes.push(choose([
+        "Hauler crews prize predictable handling, generous internal volume and paint schemes that tell customs officials exactly where to start arguing.",
+        "The cargo manifest is usually longer than the owner's patience, which is why the engines are serviced more often than the crew.",
+        "It is not glamorous, but a full hold has a glamour of its own if you squint at the accounts."
+      ]));
+      else if (PIRATE_MODELS.includes(model) && !TRADER_MODELS.includes(model)) notes.push(choose([
+        "Pirate captains like the small target profile and aggressive acceleration, particularly when leaving the scene of a misunderstanding.",
+        "Its reputation is mostly built from surprise, speed and witness statements with scorch marks.",
+        "Legitimate owners exist, although insurance companies keep putting quote marks around legitimate."
+      ]));
+      else if (TRADER_MODELS.includes(model)) notes.push(choose([
+        "Traders value the balance of hold space, range and repairability; glamorous it is not, but glamour rarely pays docking fees.",
+        "Most examples smell faintly of cargo straps, hot wiring and whatever the previous owner insisted was legal.",
+        "A sensible pilot can make a living in one, which is almost as dangerous as piracy but involves more receipts."
+      ]));
+      else notes.push(choose([
+        "It occupies the awkward middle ground between respectable spacecraft and something a guidebook would advise against borrowing.",
+        "Dock crews recognise it immediately, then disagree about whether that is good news.",
+        "It is one of those ships that makes more sense after two drinks and a generous maintenance budget."
+      ]));
       if (personal) {
         const fitted = [];
         if (game.equipment.fuelScoop) fitted.push("fuel scoops");
@@ -15509,7 +15551,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (!models.includes(shipDiagramState.model)) shipDiagramState.model = models[0] || "cobra";
       shipDiagramState.renderModel = null;
       const browsed = shipDiagramState.model;
-      return `<canvas class="ship-diagram" id="shipDiagram" width="500" height="160"></canvas>
+      return `<canvas class="ship-diagram library-diagram" id="shipDiagram" width="640" height="260" data-starry-preview="true"></canvas>
       <div class="notice" style="display:flex;align-items:center;justify-content:center;gap:12px">
         <button class="btn mini" data-ship-nav="-1">&lt; Prev</button>
         <strong>${modelDisplayName(browsed)}</strong>
@@ -15861,40 +15903,68 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }, { passive: false });
     }
 
+    function drawShipPreviewBackground(c, canvas, modelName, starry) {
+      c.fillStyle = "#010201";
+      c.fillRect(0, 0, canvas.width, canvas.height);
+      if (!starry) return;
+      const rng = mulberry(hash32(`ship-preview-stars:${modelName}`));
+      const cloudCount = 4;
+      for (let i = 0; i < cloudCount; i++) {
+        const x = rng() * canvas.width;
+        const y = rng() * canvas.height;
+        const r = canvas.width * (.16 + rng() * .28);
+        const hue = [204, 186, 302, 34][i % 4] + rng() * 18 - 9;
+        const g = c.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, `hsla(${hue}, ${42 + rng() * 34}%, ${35 + rng() * 24}%, ${.075 + rng() * .055})`);
+        g.addColorStop(.52, `hsla(${hue}, 42%, 24%, ${.025 + rng() * .025})`);
+        g.addColorStop(1, `hsla(${hue}, 30%, 12%, 0)`);
+        c.fillStyle = g;
+        c.beginPath();
+        c.arc(x, y, r, 0, TAU);
+        c.fill();
+      }
+      const stars = 78;
+      for (let i = 0; i < stars; i++) {
+        const x = rng() * canvas.width;
+        const y = rng() * canvas.height;
+        const twinkle = rng();
+        const r = twinkle > .92 ? 1.4 + rng() * 1.4 : .45 + rng() * .9;
+        c.fillStyle = `rgba(210,238,255,${.2 + rng() * .58})`;
+        c.beginPath();
+        c.arc(x, y, r, 0, TAU);
+        c.fill();
+        if (twinkle > .93) {
+          c.strokeStyle = `rgba(190,224,255,${.14 + rng() * .18})`;
+          c.lineWidth = .7;
+          c.beginPath();
+          c.moveTo(x - r * 4, y);
+          c.lineTo(x + r * 4, y);
+          c.moveTo(x, y - r * 3);
+          c.lineTo(x, y + r * 3);
+          c.stroke();
+        }
+      }
+    }
+
     function drawShipDiagram(canvas, dt = 0) {
       if (!shipDiagramState.dragging) shipDiagramState.yaw += dt * shipDiagramState.idleSpeed;
       const c = canvas.getContext("2d");
-      c.fillStyle = "#010201";
-      c.fillRect(0, 0, canvas.width, canvas.height);
-      const tempCam = vec(0, 0, 360);
       const modelName = shipDiagramState.renderModel || shipDiagramState.model;
       const model = MODELS[modelName];
+      const starry = canvas.dataset.starryPreview === "true";
+      drawShipPreviewBackground(c, canvas, modelName, starry);
+      if (!model) return;
+      const tempCam = vec(0, 0, starry ? 440 : 380);
       // Preview by overall extent rather than target radius; this keeps long stations and
       // cargo objects framed more honestly while leaving a little more breathing room.
-      const scaleFactor = 165 / modelOverallSize(model);
+      const targetPx = Math.min(canvas.width * (starry ? .58 : .48), canvas.height * (starry ? .72 : .68));
+      const scaleFactor = targetPx / modelOverallSize(model) * (tempCam.z / 320);
       const { yaw, pitch, roll } = shipDiagramState;
       const identityCamera = makeCamera(0);
-      const previewMesh = modelMeshForRender(model, identityCamera, canvas.width, canvas.height, {
-        scaleFactor,
-        centerCam: tempCam,
-        orient: (p) => rotateShipPoint(p, yaw, pitch, roll),
-        project: (p) => {
-          const f = 320 / p.z;
-          return { x: canvas.width / 2 + p.x * f, y: canvas.height / 2 - p.y * f };
-        }
-      });
-      const pts = previewMesh.points;
-      const previewBounds = polygonBounds(pts);
-      const previewW = Math.max(1, previewBounds.maxX - previewBounds.minX);
-      const previewH = Math.max(1, previewBounds.maxY - previewBounds.minY);
-      const previewScale = Math.min(1, (canvas.width - 40) / previewW, (canvas.height - 30) / previewH);
-      const previewCx = (previewBounds.minX + previewBounds.maxX) / 2;
-      const previewCy = (previewBounds.minY + previewBounds.maxY) / 2;
-      const fitPreviewPoint = (p) => ({
-        x: canvas.width / 2 + (p.x - previewCx) * previewScale,
-        y: canvas.height / 2 + (p.y - previewCy) * previewScale
-      });
-      for (let i = 0; i < pts.length; i++) pts[i] = fitPreviewPoint(pts[i]);
+      const detailProject = (p) => {
+        const f = 320 / p.z;
+        return { x: canvas.width / 2 + p.x * f, y: canvas.height / 2 - p.y * f };
+      };
       const rockPreview = isRockModelName(modelName);
       const hullColor = rockPreview ? "#9b927f" : shipColor(modelName, POLICE_MODELS.includes(modelName));
       const mode = game.graphicsMode;
@@ -15904,10 +15974,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       // widget is a self-contained turntable with no relation to game.camera at all, so
       // without an identity override here, detail visibility would flip randomly with
       // whichever way the player actually happens to be flying.
-      const detailProject = (p) => {
-        const f = 320 / p.z;
-        return fitPreviewPoint({ x: canvas.width / 2 + p.x * f, y: canvas.height / 2 - p.y * f });
-      };
       drawModelEntity(c, {
         camera: identityCamera,
         centerCam: tempCam,
