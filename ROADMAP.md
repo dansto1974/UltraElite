@@ -2,6 +2,8 @@
 
 Working list of targets, roughly ordered by dependency and effort. Done items stay for history.
 
+Before broad implementation, release, or refactor work, read `PROJECT_MEMORY.md` as the durable project notebook. Keep it updated when decisions, renderer rules, or fragile-system notes change.
+
 ## Done
 - Procedural ship decals (big-cat stripes: system government/wealth + role, damage bands)
 - Eject effects (NPC pod-pop ring, player capsule transition beat)
