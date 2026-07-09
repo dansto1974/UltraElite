@@ -7224,23 +7224,25 @@
 
     function buyFuel() {
       if (!game.docked) return;
-      const need = 7 - game.fuel;
-      if (need <= .01) {
+      const needTenths = Math.max(0, Math.round((7 - game.fuel) * 10));
+      if (needTenths <= 0) {
         eliteAudio.play("boop");
         setMessage("Fuel tanks already full.");
         return;
       }
-      const amount = Math.min(need, Math.floor(game.credits / 0.2) / 10 || need);
-      const cost = amount * 2;
-      if (game.credits < cost) {
+      const affordableTenths = Math.min(needTenths, Math.floor((game.credits + 0.0001) / 0.2));
+      if (affordableTenths <= 0) {
         eliteAudio.play("boop");
         setMessage("Insufficient credits for fuel.");
         return;
       }
+      const amount = affordableTenths / 10;
+      const cost = affordableTenths * 0.2;
+      const partial = affordableTenths < needTenths;
       game.credits -= cost;
       game.fuel = clamp(game.fuel + amount, 0, 7);
       eliteAudio.play("scoop");
-      setMessage(`Fuel loaded: ${fmt(amount)} LY.`);
+      setMessage(partial ? `Insufficient credits for full refuel. Partial fill: ${fmt(amount)} LY.` : `Fuel tanks filled: ${fmt(amount)} LY loaded.`);
       renderPanel();
     }
 
@@ -14927,6 +14929,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function renderMarket() {
       const disabled = game.docked ? "" : "disabled";
+      const fuelNeedTenths = Math.max(0, Math.round((7 - game.fuel) * 10));
+      const fuelFullCost = fuelNeedTenths * 0.2;
+      const fuelDisabled = !game.docked || fuelNeedTenths <= 0 || game.credits < 0.2 ? "disabled" : "";
+      const fuelLabel = fuelNeedTenths <= 0 ? "Fuel Tanks Full" : `Refuel to Full (${fmt(fuelFullCost)} CR)`;
       let rows = marketFor(currentSystem()).map((item) => {
         const cargo = game.cargo[item.name] || 0;
         return `<tr>
@@ -14939,7 +14945,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         </tr>`;
       }).join("");
       return `<div class="notice">Credits ${fmt(game.credits)} CR &nbsp; Cargo ${usedCargo()}/${game.cargoCap}t &nbsp; Fuel ${fmt(game.fuel)} LY</div>
-        <button class="btn primary" data-fuel ${disabled}>Buy Fuel (0.2 CR per 0.1 LY)</button>
+        <button class="btn primary" data-fuel ${fuelDisabled || disabled}>${fuelLabel}</button>
         <table><thead><tr><th>Goods</th><th>Price</th><th>Avail</th><th>Cargo</th><th></th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
     }
 
