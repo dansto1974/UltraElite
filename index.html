@@ -13945,6 +13945,27 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return upper.concat(lower);
     }
 
+    function gasBandPoint(lat, lon, phase, wobbleMul = 1) {
+      const wobble = (Math.sin(lon * 2.4 + phase) * .018 + Math.sin(lon * 5.1 + phase * .7) * .006) * wobbleMul;
+      return norm(vec(Math.cos(lat + wobble) * Math.cos(lon), Math.sin(lat + wobble), Math.cos(lat + wobble) * Math.sin(lon)));
+    }
+
+    function drawGasBandSegments(o, q, lat0, lat1, phase, segments, fillStyle, viewDir, w, h) {
+      for (let i = 0; i < segments; i++) {
+        const lon0 = i / segments * TAU;
+        const lon1 = (i + 1) / segments * TAU;
+        const dirs = [
+          gasBandPoint(lat0, lon0, phase),
+          gasBandPoint(lat0, lon1, phase),
+          gasBandPoint(lat1, lon1, phase, .8),
+          gasBandPoint(lat1, lon0, phase, .8)
+        ];
+        const pts = dirs.map((d) => projectSurfacePoint(o, q, d, viewDir, w, h));
+        if (pts.some((p) => !p)) continue;
+        drawProjectedPatch(pts, fillStyle);
+      }
+    }
+
     function drawVenusWeatherSurface(o, pr, r, geo, q, viewDir, w, h) {
       const rng = mulberry((o.textureSeed || 1) ^ 0x7e005);
       const hue = o.hue ?? 42;
@@ -13953,15 +13974,12 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const lat0 = Math.asin(1 - i * 2 / bands);
         const lat1 = Math.asin(1 - (i + 1) * 2 / bands);
         const phase = geo.stormPhase + i * 1.3 + (o.rot || 0) * .18;
-        const patch = projectedSurfacePatch(o, q, gasBandDirs(lat0, lat1, phase, 58), viewDir, w, h, .3);
-        if (!patch) continue;
         const light = clamp((o.light || 50) + (i % 2 ? 12 : -5) + rng() * 7, 28, 76);
-        drawProjectedPatch(patch, `hsla(${hue + (i % 2 ? 8 : -5)}, ${46 + rng() * 18}%, ${light}%, .34)`);
+        drawGasBandSegments(o, q, lat0, lat1, phase, 46, `hsla(${hue + (i % 2 ? 8 : -5)}, ${46 + rng() * 18}%, ${light}%, .34)`, viewDir, w, h);
       }
       for (let i = 0; i < 7; i++) {
         const lat = lerp(.72, -.72, i / 6);
-        const line = projectedSurfacePatch(o, q, gasBandDirs(lat + .006, lat - .006, geo.stormPhase + i * .7, 64), viewDir, w, h, .24);
-        if (line) drawProjectedPatch(line, `rgba(255,224,154,${.08 + rng() * .08})`);
+        drawGasBandSegments(o, q, lat + .006, lat - .006, geo.stormPhase + i * .7, 58, `rgba(255,224,154,${.08 + rng() * .08})`, viewDir, w, h);
       }
     }
 
@@ -13974,13 +13992,11 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const lat1 = Math.asin(1 - (i + 1) * 2 / bands);
         const sat = clamp((o.sat || 50) + (i % 2 ? 10 : -8), 18, 80);
         const light = clamp((o.light || 54) + (i % 3 - 1) * 9 + rng() * 8, 18, 82);
-        const patch = projectedSurfacePatch(o, q, gasBandDirs(lat0, lat1, geo.stormPhase + i * 1.7 + (o.rot || 0) * .22), viewDir, w, h, .28);
-        if (patch) drawProjectedPatch(patch, `hsla(${hue + (i % 2 ? 10 : -8)}, ${sat}%, ${light}%, .92)`);
+        drawGasBandSegments(o, q, lat0, lat1, geo.stormPhase + i * 1.7 + (o.rot || 0) * .22, 58, `hsla(${hue + (i % 2 ? 10 : -8)}, ${sat}%, ${light}%, .92)`, viewDir, w, h);
       }
       for (let i = 0; i < 6; i++) {
         const lat = lerp(.72, -.68, i / 5);
-        const line = projectedSurfacePatch(o, q, gasBandDirs(lat + .008, lat - .008, geo.stormPhase + i), viewDir, w, h, .25);
-        if (line) drawProjectedPatch(line, `rgba(255,255,255,${.12 + rng() * .12})`);
+        drawGasBandSegments(o, q, lat + .008, lat - .008, geo.stormPhase + i, 64, `rgba(255,255,255,${.12 + rng() * .12})`, viewDir, w, h);
       }
       const stormCenter = norm(vec(Math.cos(.18) * Math.cos(geo.stormPhase + .9), Math.sin(.18), Math.cos(.18) * Math.sin(geo.stormPhase + .9)));
       const storm = projectedSurfacePatch(o, q, surfaceEllipseDirs(stormCenter, .2, .095, -.18, 22), viewDir, w, h, .35);
@@ -14121,26 +14137,32 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function drawPlanetHaze(o, pr, r, lx, ly) {
       if (!ultraFxEnabled()) return;
       const haze = {
-        industrial: { h: 48, s: 50, l: 44, a: .095 },
-        ocean: { h: 204, s: 62, l: 70, a: .11 },
-        desert: { h: 42, s: 58, l: 66, a: .13 },
-        rocky: { h: 34, s: 28, l: 58, a: .06 },
-        ice: { h: 204, s: 48, l: 78, a: .095 },
-        venus: { h: 42, s: 72, l: 68, a: .17 },
-        gas: { h: o.hue ?? 34, s: 52, l: 66, a: .05 }
+        industrial: { h: 48, s: 46, l: 48, a: .145 },
+        ocean: { h: 204, s: 58, l: 74, a: .17 },
+        desert: { h: 42, s: 54, l: 70, a: .18 },
+        rocky: { h: 34, s: 24, l: 62, a: .105 },
+        ice: { h: 204, s: 42, l: 82, a: .145 },
+        venus: { h: 42, s: 68, l: 72, a: .235 },
+        gas: { h: o.hue ?? 34, s: 48, l: 70, a: .105 }
       }[o.biome || "ocean"] || { h: 204, s: 55, l: 68, a: .09 };
       const g = ctx.createRadialGradient(
         pr.x + lx * r * .18, pr.y + ly * r * .18, r * .08,
         pr.x - lx * r * .18, pr.y - ly * r * .18, r * 1.02
       );
-      g.addColorStop(0, `hsla(${haze.h}, ${haze.s}%, ${haze.l + 8}%, ${haze.a * .36})`);
-      g.addColorStop(.62, `hsla(${haze.h}, ${haze.s}%, ${haze.l}%, ${haze.a * .48})`);
-      g.addColorStop(.88, `hsla(${haze.h}, ${haze.s}%, ${haze.l}%, ${haze.a})`);
-      g.addColorStop(1, `hsla(${haze.h}, ${haze.s}%, ${haze.l}%, ${haze.a * .18})`);
+      g.addColorStop(0, `hsla(${haze.h}, ${haze.s}%, ${haze.l + 8}%, ${haze.a * .42})`);
+      g.addColorStop(.42, `hsla(${haze.h}, ${haze.s}%, ${haze.l + 3}%, ${haze.a * .34})`);
+      g.addColorStop(.72, `hsla(${haze.h}, ${haze.s}%, ${haze.l}%, ${haze.a * .62})`);
+      g.addColorStop(.92, `hsla(${haze.h}, ${haze.s}%, ${haze.l}%, ${haze.a * 1.08})`);
+      g.addColorStop(1, `hsla(${haze.h}, ${haze.s}%, ${haze.l}%, ${haze.a * .28})`);
       ctx.save();
       ctx.globalCompositeOperation = "screen";
       ctx.fillStyle = g;
       ctx.fillRect(pr.x - r, pr.y - r, r * 2, r * 2);
+      ctx.globalCompositeOperation = "source-over";
+      ctx.fillStyle = `hsla(${haze.h}, ${Math.max(10, haze.s - 18)}%, ${Math.min(86, haze.l + 8)}%, ${haze.a * .12})`;
+      ctx.beginPath();
+      ctx.arc(pr.x, pr.y, r, 0, TAU);
+      ctx.fill();
       ctx.restore();
     }
 
