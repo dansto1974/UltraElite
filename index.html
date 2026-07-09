@@ -936,7 +936,7 @@
 
     .missile-row {
       display: grid;
-      grid-template-columns: 27px 1fr;
+      grid-template-columns: 27px minmax(62px, 1fr) 34px;
       gap: 6px;
       align-items: center;
       margin: 3px 0 0;
@@ -946,9 +946,9 @@
     .missile-icon {
       display: flex;
       align-items: center;
-      width: 27px;
+      justify-content: center;
+      width: 100%;
       height: 12px;
-      padding-right: 5px;
       box-sizing: border-box;
       filter: drop-shadow(0 0 4px rgba(101, 255, 71, .4));
     }
@@ -962,6 +962,12 @@
       display: grid;
       grid-template-columns: repeat(4, minmax(18px, 1fr));
       gap: 5px;
+      width: 100%;
+    }
+
+    .missile-value-spacer {
+      width: 34px;
+      height: 1px;
     }
 
     .missile-slot {
@@ -1316,7 +1322,7 @@
             <div class="bar-row hud-tip" data-help="Cabin temperature. Solar heat rises sharply near the star and can damage the hull."><span>CT</span><div class="bar heat-bar"><div class="fill heat" id="barCabinTemp"></div></div><span id="txtCabinTemp">0%</span></div>
             <div class="bar-row heat-row hud-tip" data-help="Laser temperature. Original-style lasers fire normally until overheated, then wait for cooling."><span>LT</span><div class="bar heat-bar"><div class="fill heat" id="barLaserHeat"></div></div><span id="txtLaserHeat">0%</span></div>
             <div class="bar-row hud-tip" data-help="Altitude above nearest planet surface. Low altitude warns amber then red."><span>AL</span><div class="bar"><div class="fill" id="barAltitude"></div></div><span id="txtAltitude">--</span></div>
-            <div class="missile-row hud-tip" data-help="Missile bank. Bright cells are loaded missiles; dark cells are empty racks."><span class="missile-icon" aria-label="Missiles"><svg viewBox="0 0 26 12" width="26" height="12" aria-hidden="true"><g fill="var(--green)"><rect x="5" y="4" width="12" height="4"/><polygon points="17,4 24,6 17,8"/><polygon points="5,4 5,1 9,4"/><polygon points="5,8 5,11 9,8"/></g></svg></span><div class="missile-slots" id="missileSlots"><span class="missile-slot"></span><span class="missile-slot"></span><span class="missile-slot"></span><span class="missile-slot"></span></div></div>
+            <div class="missile-row hud-tip" data-help="Missile bank. Bright cells are loaded missiles; dark cells are empty racks."><span class="missile-icon" aria-label="Missiles"><svg viewBox="0 0 26 12" width="26" height="12" aria-hidden="true"><g fill="var(--green)"><rect x="5" y="4" width="12" height="4"/><polygon points="17,4 24,6 17,8"/><polygon points="5,4 5,1 9,4"/><polygon points="5,8 5,11 9,8"/></g></svg></span><div class="missile-slots" id="missileSlots"><span class="missile-slot"></span><span class="missile-slot"></span><span class="missile-slot"></span><span class="missile-slot"></span></div><span class="missile-value-spacer" aria-hidden="true"></span></div>
           </div>
           <div class="dash-section">
             <div class="scanner-wrap">
