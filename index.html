@@ -5539,13 +5539,22 @@
       return best?.o || null;
     }
 
+    function jumpBodyNavRadius(o) {
+      if (!o) return 0;
+      const fallback = o.type === "sun" ? 2800 : 1100;
+      const base = Math.max(o.r || 0, o.heatRadius || 0, fallback);
+      return base * (o.type === "sun" ? 1.28 : 1.38);
+    }
+
     function jumpShowcaseTrajectoryQuat(camera = game.camera, seed = 1) {
       const body = jumpShowcaseBody(camera);
       if (!body) return null;
       const q = ensureCameraQuat(camera);
       const forward = forwardVector(camera);
       const upHint = quatRotate(q, vec(0, 1, 0));
-      const bodyDir = norm(sub(body.pos, camera.pos));
+      const toBody = sub(body.pos, camera.pos);
+      const dist = Math.max(1, len(toBody));
+      const bodyDir = norm(toBody);
       const currentSide = sub(forward, scale(bodyDir, dot(forward, bodyDir)));
       const rng = mulberry(seed || hash32(`${body.type}:${body.name || ""}:${body.pos.x|0}:${body.pos.y|0}:${body.pos.z|0}`));
       let away = len(currentSide) > .02 ? norm(currentSide) : null;
@@ -5557,7 +5566,12 @@
       } else if (rng() < .5) {
         away = scale(away, -1);
       }
-      const targetAngle = (body.type === "sun" ? .38 : .34) + rng() * .14;
+      const angularRadius = Math.asin(clamp(jumpBodyNavRadius(body) / dist, 0, .96));
+      const targetAngle = clamp(
+        angularRadius + (body.type === "sun" ? .2 : .16) + rng() * .08,
+        body.type === "sun" ? .38 : .34,
+        1.22
+      );
       const dir = norm(add(scale(bodyDir, Math.cos(targetAngle)), scale(away, Math.sin(targetAngle))));
       return quatLookRotation(dir, upHint);
     }
@@ -5622,9 +5636,9 @@
         const along = dot(rel, dir);
         if (along <= 0) continue;
         const sideways = len(sub(rel, scale(dir, along)));
-        const radius = (o.heatRadius || o.r || (o.type === "sun" ? 2800 : 1100)) * (o.type === "sun" ? 1.35 : 1.55);
-        if (sideways > Math.max(radius * 2.25, along * .78)) continue;
-        required = Math.max(required, along + radius * 1.8);
+        const radius = jumpBodyNavRadius(o);
+        if (sideways < radius) required = Math.max(required, along + radius * 3);
+        else if (sideways < Math.max(radius * 2.25, along * .78)) required = Math.max(required, along + radius * 1.8);
       }
       return required;
     }
