@@ -14,6 +14,7 @@ Before broad implementation, release, or refactor work, read `PROJECT_MEMORY.md`
 - **V2b renderer convergence** — normal flight, external view, ship preview/library, hangar ships, cargo props and cut-scene ships now share the same `drawModelEntity` / `modelMeshForRender` path, including clipping, culling, solid/wire/detail drawing, decals, engine glows and trails. The final polish removed the last obvious hidden `game.graphicsMode` dependency from solid detail collection and documented the canonical mesh render path in code.
 
 ## Next up (small/medium)
+- **Performance sanity pass** — use `ultra-elite-performance-pass` with Armada/FPS as the stress test before adding heavier systems. Tune LOD, particles and HUD churn without losing motion cues.
 - **Hi-res sound in Ultra, ongoing polish** — `eliteAudio` now has richer Ultra synthesis, beds and transition sounds; keep tuning with Sound Lab presets while preserving Classic-style audio boundaries.
 - **Graphic cockpit, ongoing polish** — Ultra cockpit/HUD frame exists; continue small visual improvements only where they help readability or atmosphere.
 
@@ -21,7 +22,7 @@ Before broad implementation, release, or refactor work, read `PROJECT_MEMORY.md`
 - **`ultra-elite-audio-lab`** — procedural hi-fi Ultra sound design: Web Audio buses, layered lasers/explosions, engine beds, hyperspace soundscapes, station/hangar audio, voice caps and Classic-mode preservation.
 - **`ultra-elite-render-rules`** — created from the V2b close-out; preserves hard-won renderer rules: world/object-space textures, shared camera transforms, near-plane clipping, glow ordering, ring/station portal behaviour and Old School visual boundaries.
 - **`ultra-elite-performance-pass`** — repeatable optimisation workflow using armada as the stress test, with LOD, particle caps, HUD churn, Safari quirks and motion-cue preservation.
-- **`ultra-elite-original-source-reference`** — comparison workflow for original Elite source behaviour: galaxy generation, ship stats, AI aggression, lasers, legal/station rules and goat-soup descriptions.
+- **`ultra-elite-source-check`** — comparison workflow for original Elite source behaviour: galaxy generation, ship stats, AI aggression, lasers, legal/station rules and goat-soup descriptions.
 - **`ultra-elite-cinematic-sequences`** — storyboard and implementation rules for docking, launch, hyperspace, death, hangar shots and shared-renderer cutscenes.
 
 ## Big rocks (in dependency order)

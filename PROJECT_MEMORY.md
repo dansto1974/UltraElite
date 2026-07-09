@@ -24,6 +24,17 @@ Working notes for future Codex/Ronnie sessions. This is not public marketing cop
 - Prefer small checkpoint commits after broad implementation passes.
 - Public release work should update the in-game version/log only for player-visible changes.
 
+## Known Good Checks
+
+Run these after code changes unless the pass is docs-only:
+
+```bash
+node -e "const fs=require('fs'); const s=fs.readFileSync('index.html','utf8'); const m=s.match(/<script>([\s\S]*)<\/script>/); new Function(m[1]); console.log('inline script syntax ok');"
+git diff --check
+```
+
+For release/publish passes, use the release skill's multi-script parse check and verify GitHub/FTP status separately.
+
 ## Renderer Rules
 
 - Mesh objects should enter the shared renderer through `drawModelEntity` and `modelMeshForRender`.
@@ -51,6 +62,12 @@ Working notes for future Codex/Ronnie sessions. This is not public marketing cop
 - What worked: Dan's pushback prevented a cosmetic roadmap close-out; the proper finish needed evidence, a small code fix, explicit exceptions, and a durable guardrail skill.
 - What failed: the first pass treated documentation closure as equivalent to completing the work. That is not enough for architectural refactors.
 - Future note: do not remove a major roadmap refactor item until the code path, known exceptions, validation, project memory and any needed workflow skill are all aligned.
+
+### Workflow Housekeeping
+
+- Achieved: aligned the roadmap's named skills with actual installed skills, created the missing performance/cinematic guardrails, added known-good validation commands, and set local Git author identity.
+- How: kept the player-facing game untouched, updated repo docs only, then validated the new personal skills.
+- Future note: if the roadmap names a reusable skill, either make it real or rename it to the skill that actually exists.
 
 ## Performance Rules
 

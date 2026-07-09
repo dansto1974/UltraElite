@@ -36,6 +36,7 @@ Then consolidate the useful bits into project docs or skills immediately. Digita
 - Skills should be short procedural reminders, not giant memory dumps.
 - Put durable facts in repo docs, then make skills tell the agent when to read those docs.
 - A roadmap works best when paired with a workflow skill that tells the agent to check and update it. Without that habit, the roadmap becomes a stale wish list.
+- If a roadmap names reusable skills or tools, make them real or rename/remove them. Aspirational tool names are just another kind of stale TODO.
 - A good skill answers: when to trigger, what to inspect first, what rules must not be broken, how to validate, and what to report.
 - Split skills by workflow:
   - development checkpoint
