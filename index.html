@@ -1196,6 +1196,23 @@
       color: var(--green);
     }
 
+    .ship-selector-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 7px;
+    }
+
+    .ship-selector-row .label {
+      color: var(--amber);
+      flex: 0 0 auto;
+    }
+
+    .ship-selector-row select {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
     .notice {
       border: 1px solid #354635;
       padding: 8px;
@@ -15540,13 +15557,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const stats = shipStats(model);
       const base = SHIP_LORE[model] || `${modelDisplayName(model)} records are sparse, but the hull profile suggests a machine best approached with curiosity and shields online.`;
       if (!personal) return base;
-      const fitted = [];
-      if (game.equipment.fuelScoop) fitted.push("fuel scoops");
-      if (game.equipment.dockingComputer) fitted.push("docking computer");
-      if (game.equipment.ecm) fitted.push("ECM");
-      if (game.equipment.escapeCapsule) fitted.push("escape capsule");
-      const fitLine = fitted.length ? `Current notable fittings: ${fitted.join(", ")}.` : "Current notable fittings: none worth boasting about in the bar.";
-      return `Commander ${game.commander}'s ${shipName(model)} is rated for ${Math.round(stats.hp)} hull points, ${playerBaseCargoCap(model)}t standard cargo and ${Math.round(220 * (stats.speed || 1))}m/s under polite conditions. ${base} ${fitLine}`;
+      return `Commander ${game.commander}'s ${shipName(model)} is rated for ${Math.round(stats.hp)} hull points, ${playerBaseCargoCap(model)}t standard cargo and ${Math.round(220 * (stats.speed || 1))}m/s under polite conditions. ${base}`;
     }
 
     function playerHullConditionText() {
@@ -15690,21 +15701,22 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (!models.includes(shipDiagramState.model)) shipDiagramState.model = models[0] || "cobra";
       shipDiagramState.renderModel = null;
       const browsed = shipDiagramState.model;
+      const options = models.map((model) => `<option value="${model}" ${model === browsed ? "selected" : ""}>${modelDisplayName(model)}</option>`).join("");
       return `<div class="ship-panel">
       <div class="preview-wrap">
         <canvas class="ship-diagram library-diagram" id="shipDiagram" width="640" height="260" data-starry-preview="true"></canvas>
         <span class="drag-hint">Click + drag to move view</span>
       </div>
-      <div class="notice" style="display:flex;align-items:center;justify-content:center;gap:12px">
-        <button class="btn mini" data-ship-nav="-1">&lt; Prev</button>
-        <strong>${modelDisplayName(browsed)}</strong>
-        <button class="btn mini" data-ship-nav="1">Next &gt;</button>
+      <div class="ship-selector-row">
+        <span class="label">Library Hull</span>
+        <select class="btn mini" data-shipselect>${options}</select>
       </div>
       ${renderShipStats(browsed)}
       <div class="notice ship-lore">
         <strong class="about-heading">Library Notes</strong>
         <p>${escapeHtml(shipLore(browsed))}</p>
       </div>
+      ${renderShipBlueprint(browsed)}
       </div>`;
     }
 
@@ -15868,6 +15880,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       attachLocalMapDrag();
       panelBody.querySelectorAll("[data-equip]").forEach((b) => b.addEventListener("click", () => buyEquipment(b.dataset.equip)));
       panelBody.querySelectorAll("[data-ship-nav]").forEach((b) => b.addEventListener("click", () => cycleShipDiagram(Number(b.dataset.shipNav))));
+      panelBody.querySelectorAll("[data-shipselect]").forEach((select) => select.addEventListener("change", () => {
+        shipDiagramState.model = select.value;
+        renderPanel();
+      }));
       panelBody.querySelectorAll("[data-cheat]").forEach((b) => b.addEventListener("click", () => {
         const action = b.dataset.cheat;
         if (action === "credits1000") cheatAddCredits(1000);
