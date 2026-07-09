@@ -2104,41 +2104,6 @@
       return model;
     }
 
-    function buildMeshModel(data) {
-      const model = { ...data };
-      const edgeMap = new Map();
-      const edges = [];
-      const edgeFaces = [];
-      const addEdge = (a, b, faceIndex) => {
-        const key = a < b ? `${a}:${b}` : `${b}:${a}`;
-        let edgeIndex = edgeMap.get(key);
-        if (edgeIndex == null) {
-          edgeIndex = edges.length;
-          edgeMap.set(key, edgeIndex);
-          edges.push([a, b]);
-          edgeFaces.push([faceIndex, faceIndex]);
-        } else {
-          edgeFaces[edgeIndex][1] = faceIndex;
-        }
-      };
-      model.faces.forEach((face, faceIndex) => {
-        for (let i = 0; i < face.length; i++) addEdge(face[i], face[(i + 1) % face.length], faceIndex);
-      });
-      model.edges = model.edges || edges;
-      model.edgeFaces = model.edgeFaces || edgeFaces;
-      model.edgeVisibility = model.edgeVisibility || edges.map(() => 31);
-      model.normals = model.normals || model.faces.map((face) => {
-        const n = faceNormal(vec(...model.verts[face[0]]), vec(...model.verts[face[1]]), vec(...model.verts[face[2]]));
-        return [n.x, n.y, n.z];
-      });
-      model.faceByNormalIndex = model.faces.map((face) => face);
-      model.faceUV = model.faceUV || buildContinuousDecalUV(model.verts, model.faces);
-      model.decalUV = model.decalUV || buildContinuousDecalUV(model.verts, model.faces);
-      return model;
-    }
-
-    const TEST_SHIP_MESH = {"verts":[[7.23,13.81,89.9],[14.47,1.28,89.9],[11.09,-4.56,89.9],[-11.09,-4.56,89.9],[-14.47,1.28,89.9],[-7.23,13.81,89.9],[0,4.63,89.9],[-8.9,16.7,74.48],[8.9,16.7,74.48],[0,15.26,82.19],[0,1.28,-90],[0,16.7,-7.76],[-15.87,-2.07,-7.76],[-1.58,7.32,-47.87],[-17.81,1.28,74.48],[-48.96,-16.7,56.82],[-32.62,-9.02,33.36],[-48.96,-16.7,66.11],[-14.43,-4.56,74.48],[-31.76,-7.71,70.62],[-32.08,-9.59,33.36],[-14.43,-4.56,-7.76],[-11.72,8.99,82.01],[-14.45,-1.64,82.19],[-3.37,-4.56,-58.83],[-7.25,-1.64,-48.73],[-12.29,7.32,32.51],[0,16.7,33.36],[15.87,-2.07,-7.76],[1.58,7.32,-47.87],[3.37,-4.56,-58.83],[14.43,-4.56,74.48],[14.43,-4.56,-7.76],[0,-4.56,15.53],[0,-1.64,-74.41],[48.96,-16.7,56.82],[17.81,1.28,74.48],[32.62,-9.02,33.36],[48.96,-16.7,66.11],[31.76,-7.71,70.62],[32.08,-9.59,33.36],[11.72,8.99,82.01],[14.45,-1.64,82.19],[7.25,-1.64,-48.73],[12.29,7.32,32.51],[-6.05,11.76,90],[6.05,11.76,90],[12.09,1.28,90],[9.91,-2.5,90],[-9.91,-2.5,90],[-12.09,1.28,90],[0,4.63,90],[-3.43,11.85,-12.88],[-11.6,2.17,-12.88],[-3.43,3.9,-55.25],[-4.24,7.01,-33.54],[11.6,2.17,-12.88],[3.43,11.85,-12.88],[3.43,3.9,-55.25],[4.24,7.01,-33.54]],"faces":[[5,6,0],[6,1,0],[6,2,1],[2,6,3],[6,4,3],[6,5,4],[5,9,7],[9,8,7],[9,0,8],[0,9,5],[12,13,10],[13,11,10],[13,12,11],[12,16,14],[16,15,14],[16,12,15],[15,17,18],[17,19,14],[19,18,14],[19,17,18],[15,18,20],[20,18,12],[20,12,15],[18,12,21],[7,22,5],[22,4,5],[22,14,4],[14,22,7],[4,23,3],[23,18,3],[23,14,18],[14,23,4],[17,14,15],[7,12,14],[21,12,24],[12,25,24],[12,10,25],[10,24,25],[12,26,11],[26,7,11],[26,12,7],[7,27,11],[27,8,11],[27,7,8],[28,29,11],[29,10,11],[29,28,10],[32,33,30],[33,24,30],[33,21,24],[21,33,18],[33,3,18],[33,2,3],[2,33,31],[33,32,31],[10,34,24],[34,30,24],[34,10,30],[28,37,35],[37,36,35],[37,28,36],[38,35,31],[38,39,31],[39,36,31],[39,38,36],[35,28,40],[40,28,31],[40,31,35],[32,28,31],[36,41,1],[41,0,1],[41,8,0],[8,41,36],[36,42,31],[42,2,31],[42,1,2],[1,42,36],[35,36,38],[36,28,8],[32,30,28],[30,43,28],[30,10,43],[10,28,43],[28,44,8],[44,11,8],[44,28,11]],"details":[{"type":"engine","indices":[50,51,45],"color":"#f7fff7","normal":[0,0,1],"lift":2,"stroke":"#ffffff"},{"type":"engine","indices":[51,46,45],"color":"#f7fff7","normal":[0,0,1],"lift":2,"stroke":"#ffffff"},{"type":"engine","indices":[51,47,46],"color":"#f7fff7","normal":[0,0,1],"lift":2,"stroke":"#ffffff"},{"type":"engine","indices":[47,51,48],"color":"#f7fff7","normal":[0,0,1],"lift":2,"stroke":"#ffffff"},{"type":"engine","indices":[51,49,48],"color":"#f7fff7","normal":[0,0,1],"lift":2,"stroke":"#ffffff"},{"type":"engine","indices":[51,50,49],"color":"#f7fff7","normal":[0,0,1],"lift":2,"stroke":"#ffffff"},{"type":"window","indices":[54,55,52],"color":"#101915","normal":[-0.76,0.639,-0.12],"lift":1.5},{"type":"window","indices":[55,53,52],"color":"#101915","normal":[-0.759,0.64,-0.12],"lift":1.5},{"type":"window","indices":[55,54,53],"color":"#101915","normal":[-0.758,0.641,-0.12],"lift":1.5},{"type":"window","indices":[58,59,56],"color":"#101915","normal":[0.758,0.641,-0.12],"lift":1.5},{"type":"window","indices":[59,57,56],"color":"#101915","normal":[0.759,0.64,-0.12],"lift":1.5},{"type":"window","indices":[59,58,57],"color":"#101915","normal":[0.76,0.639,-0.12],"lift":1.5}]};
-
     const MODELS = {
       cobra: buildBlueprint({
         verts: [[32,0,76],[-32,0,76],[0,26,24],[-120,-3,-8],[120,-3,-8],[-88,16,-40],[88,16,-40],[128,-8,-40],[-128,-8,-40],[0,26,-40],[-32,-24,-40],[32,-24,-40],[-36,8,-40],[-8,12,-40],[8,12,-40],[36,8,-40],[36,-12,-40],[8,-16,-40],[-8,-16,-40],[-36,-12,-40],[0,0,76],[0,0,90],[-80,-6,-40],[-80,6,-40],[-88,0,-40],[80,6,-40],[88,0,-40],[80,-6,-40]],
@@ -2423,7 +2388,6 @@
         edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,31,31,31,31],
         normals: [[96,0,0],[0,41,30],[0,-18,48],[0,-51,0],[0,-18,-48],[0,41,-30],[-96,0,0]]
       }),
-      testShip: buildMeshModel(TEST_SHIP_MESH),
       // Object/station geometry below uses source-derived vertex/line data, with the
       // original BBC face metadata attached so solid shading and culling still work.
       missile: buildBlueprint({
@@ -2583,7 +2547,6 @@
       thargon: { r: 40, hp: 20, speed: 1.071 },
       constrictor: { r: 65, hp: 252, speed: 1.286 },
       cougar: { r: 70, hp: 252, speed: 1.429 },
-      testShip: { r: 92, hp: 130, speed: 1.08 },
       missile: { r: 40, hp: 2, speed: 1.571 },
       escapePod: { r: 16, hp: 17, speed: .286 },
       plate: { r: 10, hp: 16, speed: .571 },
@@ -2776,12 +2739,8 @@
       thargoid: 0, thargon: 0, constrictor: 20, cougar: 20
     };
 
-    function devPlayerShipList() {
-      return game?.developerMode ? [...SHIP_MODEL_LIST, "testShip"] : SHIP_MODEL_LIST;
-    }
-
     function playerShipModel() {
-      return devPlayerShipList().includes(game.playerShip) ? game.playerShip : "cobra";
+      return SHIP_MODEL_LIST.includes(game.playerShip) ? game.playerShip : "cobra";
     }
 
     function playerBaseCargoCap(model = playerShipModel()) {
@@ -7741,7 +7700,7 @@
     }
 
     function cheatChangePlayerShip(model) {
-      if (!devPlayerShipList().includes(model)) return;
+      if (!SHIP_MODEL_LIST.includes(model)) return;
       game.playerShip = model;
       applyPlayerShipStats();
       restoreShipSystems();
@@ -15690,7 +15649,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       thargon: "The Thargon drone is a remote weapon with no cockpit, no cargo bay and no useful conversation. If it is close enough to admire, you have left it too late.",
       constrictor: "The Constrictor is a rare military-grade menace, fast and unpleasantly purposeful, usually mentioned in bars by pilots who were not present.",
       cougar: "The Cougar is a sleek, secretive design with a reputation for vanishing acts, special equipment and owners who do not answer ordinary questions. For some reason, pilots of these vessels tend to prefer to date much younger men.",
-      testShip: "The Test Ship is an experimental imported hull with suspiciously modern curves and no official registry. It is currently stored behind the developer curtain until someone decides what story it is trying to tell."
     };
 
     const SHIP_PRICES = {
@@ -15714,8 +15672,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       thargoid: null,
       thargon: null,
       constrictor: null,
-      cougar: null,
-      testShip: null
+      cougar: null
     };
 
     function shipPriceText(modelName) {
@@ -15901,7 +15858,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function renderCheats() {
       const currentShip = playerShipModel();
-      const shipOptions = devPlayerShipList().map((model) =>
+      const shipOptions = SHIP_MODEL_LIST.map((model) =>
         `<option value="${model}" ${model === currentShip ? "selected" : ""}>${shipName(model)}</option>`
       ).join("");
       const equipmentRows = [...EQUIPMENT].sort((a, b) =>
