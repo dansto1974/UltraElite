@@ -1143,12 +1143,14 @@
     .blueprint-diagram {
       width: 100%;
       margin: 8px 0 10px;
-      border: 1px solid rgba(101, 255, 71, .26);
+      border: 1px solid rgba(165, 218, 255, .34);
       background:
-        linear-gradient(rgba(101, 255, 71, .05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(101, 255, 71, .05) 1px, transparent 1px),
-        #010401;
-      background-size: 18px 18px;
+        linear-gradient(rgba(190, 228, 255, .055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(190, 228, 255, .055) 1px, transparent 1px),
+        radial-gradient(circle at 18% 12%, rgba(75, 145, 210, .16), transparent 35%),
+        #031326;
+      background-size: 18px 18px, 18px 18px, 100% 100%, 100% 100%;
+      box-shadow: inset 0 0 24px rgba(70, 150, 220, .16), 0 0 10px rgba(110, 190, 255, .06);
     }
 
     .ship-lore {
@@ -15493,10 +15495,11 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ["FRONT", 0, 1, "X/Y"],
         ["SIDE", 2, 1, "Z/Y"]
       ];
-      const viewW = 160, viewH = 118, pad = 18;
+      const viewW = 160, viewH = 132, pad = 18;
       const size = modelOverallSize(model);
       const scaleLabel = size >= 180 ? "100m" : size >= 90 ? "50m" : "25m";
       const scaleMeters = size >= 180 ? 100 : size >= 90 ? 50 : 25;
+      const totalW = viewW * 3;
       const blocks = views.map(([label, ax, ay, axes], vi) => {
         const xs = model.verts.map((v) => v[ax]);
         const ys = model.verts.map((v) => v[ay]);
@@ -15513,27 +15516,46 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           const p2 = project(model.verts[b]);
           return `<line x1="${p1.x.toFixed(1)}" y1="${p1.y.toFixed(1)}" x2="${p2.x.toFixed(1)}" y2="${p2.y.toFixed(1)}"></line>`;
         }).join("");
-        const scalePx = Math.max(18, Math.min(viewW - pad * 2, scaleMeters * sc));
-        const scaleX = vi * viewW + pad;
-        const scaleY = viewH - 9;
         return `<g class="bp-view">
           <text x="${vi * viewW + 10}" y="16" class="bp-title">${label}</text>
           <text x="${vi * viewW + viewW - 10}" y="16" text-anchor="end" class="bp-axis">${axes}</text>
           <g class="bp-lines">${edges}</g>
-          <line class="bp-scale" x1="${scaleX}" y1="${scaleY}" x2="${scaleX + scalePx}" y2="${scaleY}"></line>
-          <line class="bp-scale" x1="${scaleX}" y1="${scaleY - 4}" x2="${scaleX}" y2="${scaleY + 4}"></line>
-          <line class="bp-scale" x1="${scaleX + scalePx}" y1="${scaleY - 4}" x2="${scaleX + scalePx}" y2="${scaleY + 4}"></line>
-          <text x="${scaleX + scalePx + 5}" y="${scaleY + 4}" class="bp-axis">${scaleLabel}</text>
         </g>`;
       }).join("");
-      return `<svg class="blueprint-diagram" viewBox="0 0 ${viewW * 3} ${viewH}" aria-label="${shipName(modelName)} blueprint">
+      const panelW = 124;
+      const panelH = 28;
+      const panelX = totalW - panelW - 8;
+      const panelY = viewH - panelH - 8;
+      const scaleW = Math.max(34, Math.min(72, scaleMeters * .72));
+      const scaleX = panelX - scaleW - 18;
+      const scaleY = panelY + panelH - 8;
+      const meta = `<g class="bp-meta">
+        <line class="bp-scale" x1="${scaleX}" y1="${scaleY}" x2="${scaleX + scaleW}" y2="${scaleY}"></line>
+        <line class="bp-scale" x1="${scaleX}" y1="${scaleY - 4}" x2="${scaleX}" y2="${scaleY + 4}"></line>
+        <line class="bp-scale" x1="${scaleX + scaleW}" y1="${scaleY - 4}" x2="${scaleX + scaleW}" y2="${scaleY + 4}"></line>
+        <text x="${scaleX + scaleW * .5}" y="${scaleY - 7}" text-anchor="middle" class="bp-small">SCALE ${scaleLabel}</text>
+        <rect class="bp-panel" x="${panelX}" y="${panelY}" width="${panelW}" height="${panelH}"></rect>
+        <line class="bp-panel-line" x1="${panelX}" y1="${panelY + 10}" x2="${panelX + panelW}" y2="${panelY + 10}"></line>
+        <line class="bp-panel-line" x1="${panelX + 34}" y1="${panelY + 10}" x2="${panelX + 34}" y2="${panelY + panelH}"></line>
+        <text x="${panelX + 5}" y="${panelY + 7}" class="bp-panel-title">ULTRA ELITE SHIP BLUEPRINT</text>
+        <text x="${panelX + 5}" y="${panelY + 20}" class="bp-small">HULL</text>
+        <text x="${panelX + 39}" y="${panelY + 20}" class="bp-small">${modelDisplayName(modelName).toUpperCase()}</text>
+        <text x="${panelX + 39}" y="${panelY + 27}" class="bp-small">SIZE ${Math.round(size)}M</text>
+      </g>`;
+      return `<svg class="blueprint-diagram" viewBox="0 0 ${totalW} ${viewH}" aria-label="${shipName(modelName)} blueprint">
         <style>
-          .bp-lines line{stroke:rgba(101,255,71,.82);stroke-width:1.05;vector-effect:non-scaling-stroke}
-          .bp-title{fill:#ffd33d;font:10px monospace}
-          .bp-axis{fill:rgba(101,255,71,.55);font:8px monospace}
-          .bp-scale{stroke:#ffd33d;stroke-width:1;vector-effect:non-scaling-stroke}
+          .bp-lines line{stroke:rgba(235,248,255,.92);stroke-width:1.05;vector-effect:non-scaling-stroke}
+          .bp-view:nth-of-type(2){opacity:.94}
+          .bp-title{fill:#ffffff;font:10px monospace;letter-spacing:.6px}
+          .bp-axis,.bp-small{fill:rgba(220,244,255,.72);font:7px monospace}
+          .bp-scale,.bp-panel-line{stroke:rgba(230,248,255,.82);stroke-width:.8;vector-effect:non-scaling-stroke}
+          .bp-panel{fill:rgba(0,18,42,.58);stroke:rgba(230,248,255,.7);stroke-width:.8;vector-effect:non-scaling-stroke}
+          .bp-panel-title{fill:rgba(255,255,255,.86);font:6px monospace;letter-spacing:.35px}
         </style>
+        <line class="bp-panel-line" x1="${viewW}" y1="8" x2="${viewW}" y2="${viewH - 8}"></line>
+        <line class="bp-panel-line" x1="${viewW * 2}" y1="8" x2="${viewW * 2}" y2="${viewH - 8}"></line>
         ${blocks}
+        ${meta}
       </svg>`;
     }
 
