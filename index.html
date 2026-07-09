@@ -5273,6 +5273,27 @@
       }
     }
 
+    function updateSolarFuelScoop(o, dt) {
+      if (!o || o.type !== "sun" || !game.equipment.fuelScoop || game.docked || game.transition) return;
+      if (game.fuel >= 7) return;
+      const dist = len(sub(o.pos, game.camera.pos));
+      const visibleRadius = largeCollisionRadius(o);
+      const clearance = dist - visibleRadius - playerCollisionRadius();
+      const heatRadius = o.heatRadius || o.r || visibleRadius;
+      const scoopBand = o.scoopBand || Math.max(560, Math.min(1800, heatRadius * .62 + 260));
+      if (clearance > scoopBand || clearance < -playerCollisionRadius() * 2) return;
+      const strength = smoothstep(scoopBand, 0, Math.max(0, clearance));
+      const before = game.fuel;
+      game.fuel = clamp(game.fuel + dt * lerp(.08, .32, strength), 0, 7);
+      if (game.fuel <= before) return;
+      const now = performance.now();
+      if (!game._solarScoopAt || now - game._solarScoopAt > 1700) {
+        game._solarScoopAt = now;
+        eliteAudio.play("scoop");
+        setMessage(`Fuel scoops active: ${fmt(game.fuel)} LY.`);
+      }
+    }
+
     // A brief, non-interactive animated beat for launch/dock/hyperspace/galactic jump,
     // instead of those all being an instant state snap. update() freezes normal flight
     // control/AI while game.transition is set and advances its timer instead; drawSpace()
@@ -5795,10 +5816,12 @@
       const heatRadius = baseSunR * (stellar.heatMul || stellar.sizeMul);
       let sunDist = sunR * lerp(stellar.distMin ?? (stellar.kind === "whiteDwarf" ? 14 : 9), stellar.distMax ?? (stellar.kind === "whiteDwarf" ? 20 : 14), rng());
       if (dot(sunDir, planetDir) > .72) sunDist = Math.max(sunDist, planetDist + sunR * 2.4 + planetR);
+      const scoopBand = Math.max(560, Math.min(1800, heatRadius * .62 + 260));
       const sun = {
         type: "sun", name: stellar.label.toUpperCase(), pos: scale(sunDir, sunDist), r: sunR,
         heatRadius,
-        scoopRadius: heatRadius + 220,
+        scoopBand,
+        scoopRadius: sunR + scoopBand + 90,
         stellarClass: stellar.kind,
         stellarLabel: stellar.label,
         hue: stellar.hue,
@@ -8018,9 +8041,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           if ((o.type === "canister" || o.type === "plate") && game.equipment.fuelScoop && len(sub(o.pos, game.camera.pos)) < 38) scoopCargo(o);
           if (!o._remove) handlePlayerCollision(o);
           if (!o._remove) handlePlayerLargeCollision(o);
-          if (o.type === "sun" && game.equipment.fuelScoop && len(sub(o.pos, game.camera.pos)) < (o.scoopRadius || o.r + 220)) {
-            game.fuel = clamp(game.fuel + dt * .18, 0, 7);
-          }
+          if (!o._remove) updateSolarFuelScoop(o, dt);
         }
         resolveObjectCollisions();
         let liveShipCount = 0;
