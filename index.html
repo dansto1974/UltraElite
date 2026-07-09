@@ -14976,7 +14976,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const dxLy = (s.x - cur.x) / 4;
         const dyLy = (s.y - cur.y) / 4;
         return { s, d: distance(cur, s), x: originX + dxLy * scalePx, y: originY + dyLy * scalePx };
-      }).filter((x) => x.s.index !== game.current && x.x >= -20 && x.x <= w + 20 && x.y >= -20 && x.y <= h + 20);
+      }).filter((x) => x.x >= -20 && x.x <= w + 20 && x.y >= -20 && x.y <= h + 20);
       const rings = [4, 8, 12, 16, 20, 24].map((ly) =>
         `<circle cx="${originX.toFixed(1)}" cy="${originY.toFixed(1)}" r="${(ly * scalePx).toFixed(1)}" class="range-ring"></circle>`
       ).join("") + `<circle cx="${originX.toFixed(1)}" cy="${originY.toFixed(1)}" r="${(7 * scalePx).toFixed(1)}" class="range-ring jump-range"></circle>`;
@@ -14984,18 +14984,18 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       // 100+ neighbours inside 24 LY), so only the closest handful get a name label
       const labelLy = Math.min(12, 8 / Math.sqrt(zoom));
       const dots = nearby.map(({ s, d, x, y }) => {
+        const isCur = s.index === game.current;
         const isTgt = s.index === game.target;
-        const label = d <= labelLy ? `<text x="${(x + 7).toFixed(1)}" y="${(y + 4).toFixed(1)}" class="map-label">${s.name}</text>` : "";
+        const label = isCur || d <= labelLy ? `<text x="${(x + 7).toFixed(1)}" y="${(y + 4).toFixed(1)}" class="map-label">${s.name}</text>` : "";
         return `<g class="map-dot" data-sys="${s.index}">
-          <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="10" class="map-hit"><title>${s.name}</title></circle>
-          <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${isTgt ? 4.4 : 3}" fill="${isTgt ? "var(--amber)" : "var(--green)"}" pointer-events="none"></circle>
+          <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${isCur ? 12 : 10}" class="map-hit"><title>${s.name}</title></circle>
+          <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${isCur || isTgt ? 4.4 : 3}" fill="${isCur ? "var(--cyan)" : isTgt ? "var(--amber)" : "var(--green)"}" pointer-events="none"></circle>
           ${label}
         </g>`;
       }).join("");
       return `<svg viewBox="0 0 ${w} ${h}" class="star-map" data-map="local">
         ${rings}
         ${dots}
-        <circle cx="${originX.toFixed(1)}" cy="${originY.toFixed(1)}" r="3.4" fill="var(--cyan)"></circle>
       </svg>`;
     }
 
@@ -15272,7 +15272,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       panelBody.querySelectorAll("[data-sell]").forEach((b) => b.addEventListener("click", () => sellGood(b.dataset.sell)));
       panelBody.querySelectorAll(".map-dot").forEach((b) => b.addEventListener("click", () => {
         game.target = Number(b.dataset.sys);
-        setMessage(`Target system: ${targetSystem().name}.`);
+        setMessage(game.target === game.current ? `Selected current system: ${targetSystem().name}.` : `Target system: ${targetSystem().name}.`);
         renderPanel();
       }));
       panelBody.querySelectorAll("[data-mapmode]").forEach((b) => b.addEventListener("click", () => {
