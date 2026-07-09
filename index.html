@@ -15498,6 +15498,44 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       cougar: "The Cougar is a sleek, secretive design with a reputation for vanishing acts, special equipment and owners who do not answer ordinary questions."
     };
 
+    const SHIP_PRICES = {
+      adder: 27000,
+      gecko: 43000,
+      worm: 33000,
+      cobra1: 90000,
+      cobra: 150000,
+      moray: 82000,
+      krait: 72000,
+      sidewinder: 42000,
+      mamba: 95000,
+      asp: 180000,
+      viper: 120000,
+      ferdelance: 485000,
+      python: 210000,
+      boa: 300000,
+      anaconda: 580000,
+      shuttle: 18000,
+      transporter: 65000,
+      thargoid: null,
+      thargon: null,
+      constrictor: null,
+      cougar: null
+    };
+
+    function shipPriceText(modelName) {
+      const price = SHIP_PRICES[modelName];
+      return Number.isFinite(price) ? `${price.toLocaleString()} CR` : "Restricted";
+    }
+
+    function playerShipValueText(modelName) {
+      const base = SHIP_PRICES[modelName];
+      if (!Number.isFinite(base)) return "Restricted";
+      const condition = clamp(Number.isFinite(game.energy) ? game.energy : 100, 0, 100) / 100;
+      const equipmentValue = EQUIPMENT.reduce((sum, item) => sum + (game.equipment[item.id] ? item.cost * .45 : 0), 0);
+      const value = Math.round((base * (.38 + condition * .52) + equipmentValue) / 100) * 100;
+      return `${value.toLocaleString()} CR`;
+    }
+
     function shipLore(model, personal = false) {
       const stats = shipStats(model);
       const base = SHIP_LORE[model] || `${modelDisplayName(model)} records are sparse, but the hull profile suggests a machine best approached with curiosity and shields online.`;
@@ -15532,27 +15570,31 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const model = MODELS[modelName];
       if (!model?.verts?.length) return "";
       const views = [
-        ["TOP", 0, 2, "X/Z"],
-        ["FRONT", 0, 1, "X/Y"],
-        ["SIDE", 2, 1, "Z/Y"]
+        ["TOP", 0, 2, "X/Z", 1],
+        ["FRONT", 0, 1, "X/Y", 2],
+        ["SIDE", 2, 1, "Z/Y", 0]
       ];
-      const viewW = 160, viewH = 132, pad = 18;
+      const viewW = 160, viewH = 146, drawingH = 112, pad = 18;
       const size = modelOverallSize(model);
       const scaleLabel = size >= 180 ? "100m" : size >= 90 ? "50m" : "25m";
       const scaleMeters = size >= 180 ? 100 : size >= 90 ? 50 : 25;
       const totalW = viewW * 3;
-      const blocks = views.map(([label, ax, ay, axes], vi) => {
+      const blocks = views.map(([label, ax, ay, axes, viewAxis], vi) => {
         const xs = model.verts.map((v) => v[ax]);
         const ys = model.verts.map((v) => v[ay]);
         const minX = Math.min(...xs), maxX = Math.max(...xs);
         const minY = Math.min(...ys), maxY = Math.max(...ys);
         const sx = (viewW - pad * 2) / Math.max(1, maxX - minX);
-        const sy = (viewH - pad * 2 - 12) / Math.max(1, maxY - minY);
+        const sy = (drawingH - pad * 2 - 12) / Math.max(1, maxY - minY);
         const sc = Math.min(sx, sy);
         const ox = vi * viewW + viewW / 2 - (minX + maxX) * .5 * sc;
-        const oy = 20 + viewH / 2 + (minY + maxY) * .5 * sc;
+        const oy = 18 + drawingH / 2 + (minY + maxY) * .5 * sc;
         const project = (v) => ({ x: ox + v[ax] * sc, y: oy - v[ay] * sc });
-        const edges = (model.edges || []).map(([a, b]) => {
+        const faceVisible = model.normals
+          ? model.normals.map((normal) => (normal?.[viewAxis] || 0) > -0.015)
+          : null;
+        const edges = (model.edges || []).map(([a, b], edgeIndex) => {
+          if (!wireEdgeVisible(model, edgeIndex, faceVisible)) return "";
           const p1 = project(model.verts[a]);
           const p2 = project(model.verts[b]);
           return `<line x1="${p1.x.toFixed(1)}" y1="${p1.y.toFixed(1)}" x2="${p2.x.toFixed(1)}" y2="${p2.y.toFixed(1)}"></line>`;
@@ -15563,10 +15605,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           <g class="bp-lines">${edges}</g>
         </g>`;
       }).join("");
-      const panelW = 124;
-      const panelH = 28;
+      const panelW = 112;
+      const panelH = 25;
       const panelX = totalW - panelW - 8;
-      const panelY = viewH - panelH - 8;
+      const panelY = viewH - panelH - 6;
       const scaleW = Math.max(34, Math.min(72, scaleMeters * .72));
       const scaleX = panelX - scaleW - 18;
       const scaleY = panelY + panelH - 8;
@@ -15581,20 +15623,20 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         <text x="${panelX + 5}" y="${panelY + 7}" class="bp-panel-title">ULTRA ELITE SHIP BLUEPRINT</text>
         <text x="${panelX + 5}" y="${panelY + 20}" class="bp-small">HULL</text>
         <text x="${panelX + 39}" y="${panelY + 20}" class="bp-small">${modelDisplayName(modelName).toUpperCase()}</text>
-        <text x="${panelX + 39}" y="${panelY + 27}" class="bp-small">SIZE ${Math.round(size)}M</text>
+        <text x="${panelX + 39}" y="${panelY + 25}" class="bp-small">SIZE ${Math.round(size)}M</text>
       </g>`;
       return `<svg class="blueprint-diagram" viewBox="0 0 ${totalW} ${viewH}" aria-label="${shipName(modelName)} blueprint">
         <style>
           .bp-lines line{stroke:rgba(235,248,255,.92);stroke-width:1.05;vector-effect:non-scaling-stroke}
           .bp-view:nth-of-type(2){opacity:.94}
-          .bp-title{fill:#ffffff;font:10px monospace;letter-spacing:.6px}
-          .bp-axis,.bp-small{fill:rgba(220,244,255,.72);font:7px monospace}
+          .bp-title{fill:#ffffff;font:8px monospace;letter-spacing:.45px}
+          .bp-axis,.bp-small{fill:rgba(220,244,255,.72);font:5.6px monospace}
           .bp-scale,.bp-panel-line{stroke:rgba(230,248,255,.82);stroke-width:.8;vector-effect:non-scaling-stroke}
           .bp-panel{fill:rgba(0,18,42,.58);stroke:rgba(230,248,255,.7);stroke-width:.8;vector-effect:non-scaling-stroke}
-          .bp-panel-title{fill:rgba(255,255,255,.86);font:6px monospace;letter-spacing:.35px}
+          .bp-panel-title{fill:rgba(255,255,255,.86);font:5.2px monospace;letter-spacing:.3px}
         </style>
-        <line class="bp-panel-line" x1="${viewW}" y1="8" x2="${viewW}" y2="${viewH - 8}"></line>
-        <line class="bp-panel-line" x1="${viewW * 2}" y1="8" x2="${viewW * 2}" y2="${viewH - 8}"></line>
+        <line class="bp-panel-line" x1="${viewW}" y1="8" x2="${viewW}" y2="${drawingH + 2}"></line>
+        <line class="bp-panel-line" x1="${viewW * 2}" y1="8" x2="${viewW * 2}" y2="${drawingH + 2}"></line>
         ${blocks}
         ${meta}
       </svg>`;
@@ -15606,6 +15648,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const speed = Math.round(220 * (stats.speed || 1));
       return `<div class="grid2">
         ${personal ? "" : stat("Role", shipRoleLabel(modelName))}
+        ${personal ? stat("Ship Value", playerShipValueText(modelName)) : stat("Price", shipPriceText(modelName))}
         ${personal ? stat("Hull Condition", playerHullConditionText()) : ""}
         ${personal ? stat("Flight Hours", `${estimatedFlightHours().toFixed(1)} est.`) : ""}
         ${stat("Hull HP", Math.round(stats.hp))}
