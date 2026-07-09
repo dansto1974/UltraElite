@@ -1136,6 +1136,25 @@
       background: #010201;
     }
 
+    .blueprint-diagram {
+      width: 100%;
+      margin: 8px 0 10px;
+      border: 1px solid rgba(101, 255, 71, .26);
+      background:
+        linear-gradient(rgba(101, 255, 71, .05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(101, 255, 71, .05) 1px, transparent 1px),
+        #010401;
+      background-size: 18px 18px;
+    }
+
+    .ship-lore {
+      color: var(--green);
+    }
+
+    .ship-lore p {
+      margin: 5px 0 0;
+    }
+
     .notice {
       border: 1px solid #354635;
       padding: 8px;
@@ -1434,6 +1453,7 @@
           <button class="btn" data-panel="equip">Equip</button>
           <button class="btn" data-panel="status">Status</button>
           <button class="btn" data-panel="ship">Ship</button>
+          <button class="btn" data-panel="library">Library</button>
           <button class="btn" data-panel="help">Help</button>
           <button class="btn active" data-panel="about">About</button>
           <button class="btn" data-panel="cheats" data-dev-only hidden>Dev</button>
@@ -8123,7 +8143,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       game.screenShake = Math.max(0, (game.screenShake || 0) - dt * 7.5);
       game.enemyShots = game.enemyShots.filter((s) => (s.t += dt) < s.dur);
       if (game.messageTimer > 0) game.messageTimer -= dt;
-      if (game.panel === "ship") {
+      if (game.panelOpen && (game.panel === "ship" || game.panel === "library")) {
         const diagram = byId("shipDiagram");
         if (diagram) drawShipDiagram(diagram, dt);
       }
@@ -15072,10 +15092,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const title = game.panel === "cheats" ? "Dev" : game.panel[0].toUpperCase() + game.panel.slice(1);
       byId("panelTitle").textContent = title;
       byId("panelSub").textContent = game.docked ? `Docked at ${game.dockedAt || currentSystem().name + " Station"}` : "In flight";
-      const map = { market: renderMarket, chart: renderChart, equip: renderEquip, status: renderStatus, ship: renderShip, help: renderHelp, about: renderAbout, cheats: renderCheats };
+      const map = { market: renderMarket, chart: renderChart, equip: renderEquip, status: renderStatus, ship: renderShip, library: renderLibrary, help: renderHelp, about: renderAbout, cheats: renderCheats };
       const panelChanged = lastRenderedPanel !== game.panel;
       panelBody.innerHTML = map[game.panel]();
-      if (panelChanged || game.panel === "ship") panelBody.scrollTop = 0;
+      if (panelChanged || game.panel === "ship" || game.panel === "library") panelBody.scrollTop = 0;
       lastRenderedPanel = game.panel;
       attachPanelEvents();
       updateReadouts();
@@ -15346,28 +15366,107 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return roles.length ? roles.join(" / ") : "—";
     }
 
+    function shipLore(model, personal = false) {
+      const stats = shipStats(model);
+      const size = modelOverallSize(MODELS[model]);
+      const role = shipRoleLabel(model);
+      const base = personal
+        ? `Commander ${game.commander}'s ${shipName(model)} is configured as a ${role.toLowerCase()} craft with ${playerBaseCargoCap(model)}t standard cargo capacity and a ${Math.round(220 * (stats.speed || 1))}m/s rated drive.`
+        : `The ${shipName(model)} is usually filed as ${role.toLowerCase()} traffic, measuring roughly ${Math.round(size)}m across its largest axis with a ${Math.round(stats.hp)} point hull rating.`;
+      const notes = [];
+      if (POLICE_MODELS.includes(model)) notes.push("Police yards favour its fast intercept profile, clean authority beacon and enough bite to make most pirates remember urgent appointments elsewhere.");
+      else if (ALIEN_MODELS.includes(model)) notes.push(model === "thargon" ? "Thargon drones are not built for comfort, negotiation or sensible insurance premiums." : "Thargoid hulls remain badly explained by human dock crews, who mostly agree that poking them is a career-limiting strategy.");
+      else if (HAULER_MODELS.includes(model)) notes.push("Hauler crews prize predictable handling, generous internal volume and paint schemes that tell customs officials exactly where to start arguing.");
+      else if (PIRATE_MODELS.includes(model) && !TRADER_MODELS.includes(model)) notes.push("Pirate captains like the small target profile and aggressive acceleration, particularly when leaving the scene of a misunderstanding.");
+      else if (TRADER_MODELS.includes(model)) notes.push("Traders value the balance of hold space, range and repairability; glamorous it is not, but glamour rarely pays docking fees.");
+      else notes.push("It occupies the awkward middle ground between respectable spacecraft and something a guidebook would advise against borrowing.");
+      if (personal) {
+        const fitted = [];
+        if (game.equipment.fuelScoop) fitted.push("fuel scoops");
+        if (game.equipment.dockingComputer) fitted.push("docking computer");
+        if (game.equipment.ecm) fitted.push("ECM");
+        if (game.equipment.escapeCapsule) fitted.push("escape capsule");
+        notes.push(fitted.length ? `Current notable fittings: ${fitted.join(", ")}.` : "Current notable fittings: none worth boasting about in the bar.");
+      }
+      return `${base} ${notes.join(" ")}`;
+    }
+
+    function renderShipBlueprint(modelName) {
+      const model = MODELS[modelName];
+      if (!model?.verts?.length) return "";
+      const views = [
+        ["TOP", 0, 2, "X/Z"],
+        ["FRONT", 0, 1, "X/Y"],
+        ["SIDE", 2, 1, "Z/Y"]
+      ];
+      const viewW = 160, viewH = 118, pad = 18;
+      const size = modelOverallSize(model);
+      const scaleLabel = size >= 180 ? "100m" : size >= 90 ? "50m" : "25m";
+      const scaleMeters = size >= 180 ? 100 : size >= 90 ? 50 : 25;
+      const blocks = views.map(([label, ax, ay, axes], vi) => {
+        const xs = model.verts.map((v) => v[ax]);
+        const ys = model.verts.map((v) => v[ay]);
+        const minX = Math.min(...xs), maxX = Math.max(...xs);
+        const minY = Math.min(...ys), maxY = Math.max(...ys);
+        const sx = (viewW - pad * 2) / Math.max(1, maxX - minX);
+        const sy = (viewH - pad * 2 - 12) / Math.max(1, maxY - minY);
+        const sc = Math.min(sx, sy);
+        const ox = vi * viewW + viewW / 2 - (minX + maxX) * .5 * sc;
+        const oy = 20 + viewH / 2 + (minY + maxY) * .5 * sc;
+        const project = (v) => ({ x: ox + v[ax] * sc, y: oy - v[ay] * sc });
+        const edges = (model.edges || []).map(([a, b]) => {
+          const p1 = project(model.verts[a]);
+          const p2 = project(model.verts[b]);
+          return `<line x1="${p1.x.toFixed(1)}" y1="${p1.y.toFixed(1)}" x2="${p2.x.toFixed(1)}" y2="${p2.y.toFixed(1)}"></line>`;
+        }).join("");
+        const scalePx = Math.max(18, Math.min(viewW - pad * 2, scaleMeters * sc));
+        const scaleX = vi * viewW + pad;
+        const scaleY = viewH - 9;
+        return `<g class="bp-view">
+          <text x="${vi * viewW + 10}" y="16" class="bp-title">${label}</text>
+          <text x="${vi * viewW + viewW - 10}" y="16" text-anchor="end" class="bp-axis">${axes}</text>
+          <g class="bp-lines">${edges}</g>
+          <line class="bp-scale" x1="${scaleX}" y1="${scaleY}" x2="${scaleX + scalePx}" y2="${scaleY}"></line>
+          <line class="bp-scale" x1="${scaleX}" y1="${scaleY - 4}" x2="${scaleX}" y2="${scaleY + 4}"></line>
+          <line class="bp-scale" x1="${scaleX + scalePx}" y1="${scaleY - 4}" x2="${scaleX + scalePx}" y2="${scaleY + 4}"></line>
+          <text x="${scaleX + scalePx + 5}" y="${scaleY + 4}" class="bp-axis">${scaleLabel}</text>
+        </g>`;
+      }).join("");
+      return `<svg class="blueprint-diagram" viewBox="0 0 ${viewW * 3} ${viewH}" aria-label="${shipName(modelName)} blueprint">
+        <style>
+          .bp-lines line{stroke:rgba(101,255,71,.82);stroke-width:1.05;vector-effect:non-scaling-stroke}
+          .bp-title{fill:#ffd33d;font:10px monospace}
+          .bp-axis{fill:rgba(101,255,71,.55);font:8px monospace}
+          .bp-scale{stroke:#ffd33d;stroke-width:1;vector-effect:non-scaling-stroke}
+        </style>
+        ${blocks}
+      </svg>`;
+    }
+
+    function renderShipStats(modelName, personal = false) {
+      const stats = shipStats(modelName);
+      const model = MODELS[modelName];
+      const speed = Math.round(220 * (stats.speed || 1));
+      return `<div class="grid2">
+        ${stat("Role", shipRoleLabel(modelName))}
+        ${stat("Hull HP", Math.round(stats.hp))}
+        ${stat("Speed", `${speed} m/s`)}
+        ${stat("Size", `${Math.round(modelOverallSize(model))} m`)}
+        ${stat("Target Area", `${Math.round(stats.r)} m`)}
+        ${stat("Cargo", `${personal ? `${usedCargo()}/` : ""}${playerBaseCargoCap(modelName)}t${personal && game.equipment.cargoBay ? " + bay" : ""}`)}
+      </div>`;
+    }
+
     function renderShip() {
-      const models = previewModelList();
-      if (!models.includes(shipDiagramState.model)) shipDiagramState.model = models[0] || "cobra";
-      const browsed = shipDiagramState.model;
-      const stats = shipStats(browsed);
-      const model = MODELS[browsed];
+      const currentShip = playerShipModel();
+      shipDiagramState.renderModel = currentShip;
       return `<canvas class="ship-diagram" id="shipDiagram" width="500" height="160"></canvas>
       <div class="notice" style="display:flex;align-items:center;justify-content:center;gap:12px">
-        <button class="btn mini" data-ship-nav="-1">&lt; Prev</button>
-        <strong>${modelDisplayName(browsed)}</strong>
-        <button class="btn mini" data-ship-nav="1">Next &gt;</button>
+        <strong>${shipName(currentShip)}</strong>
       </div>
+      ${renderShipStats(currentShip, true)}
       <div class="grid2">
-        ${stat("Role", shipRoleLabel(browsed))}
-        ${stat("Hull HP", Math.round(stats.hp))}
-        ${stat("Speed", `${stats.speed.toFixed(2)}x Cobra`)}
-        ${stat("Size", `${Math.round(modelOverallSize(model))} m`)}
-      </div>
-      <div class="grid2">
-        ${stat("Your Ship", shipName(playerShipModel()))}
         ${stat("Presentation", graphicsModeLabel(game.graphicsMode))}
-        ${stat("Cargo", `${usedCargo()}/${game.cargoCap}t`)}
         ${stat("Laser", laserPower().name)}
         ${stat("Missiles", game.missiles)}
         ${stat("Fuel Scoop", game.equipment.fuelScoop ? "Yes" : "No")}
@@ -15375,7 +15474,29 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ${stat("ECM", game.equipment.ecm ? "Yes" : "No")}
         ${stat("Extra Energy", game.equipment.extraEnergy ? "Yes" : "No")}
         ${stat("Escape Capsule", game.equipment.escapeCapsule ? "Yes" : "No")}
-        ${stat("Energy Bomb", game.equipment.energyBomb ? "Fitted" : "No")}
+      </div>
+      <div class="notice ship-lore">
+        <strong class="about-heading">Ship Notes</strong>
+        <p>${escapeHtml(shipLore(currentShip, true))}</p>
+      </div>
+      ${renderShipBlueprint(currentShip)}`;
+    }
+
+    function renderLibrary() {
+      const models = previewModelList();
+      if (!models.includes(shipDiagramState.model)) shipDiagramState.model = models[0] || "cobra";
+      shipDiagramState.renderModel = null;
+      const browsed = shipDiagramState.model;
+      return `<canvas class="ship-diagram" id="shipDiagram" width="500" height="160"></canvas>
+      <div class="notice" style="display:flex;align-items:center;justify-content:center;gap:12px">
+        <button class="btn mini" data-ship-nav="-1">&lt; Prev</button>
+        <strong>${modelDisplayName(browsed)}</strong>
+        <button class="btn mini" data-ship-nav="1">Next &gt;</button>
+      </div>
+      ${renderShipStats(browsed)}
+      <div class="notice ship-lore">
+        <strong class="about-heading">Library Notes</strong>
+        <p>${escapeHtml(shipLore(browsed))}</p>
       </div>`;
     }
 
@@ -15642,7 +15763,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }, true);
     }
 
-    const shipDiagramState = { yaw: .6, pitch: .4, roll: .2, dragging: false, lastX: 0, lastY: 0, idleSpeed: .22, model: "cobra" };
+    const shipDiagramState = { yaw: .6, pitch: .4, roll: .2, dragging: false, lastX: 0, lastY: 0, idleSpeed: .22, model: "cobra", renderModel: null };
 
     function cycleShipDiagram(dir) {
       const models = previewModelList();
@@ -15724,7 +15845,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       c.fillStyle = "#010201";
       c.fillRect(0, 0, canvas.width, canvas.height);
       const tempCam = vec(0, 0, 360);
-      const modelName = shipDiagramState.model;
+      const modelName = shipDiagramState.renderModel || shipDiagramState.model;
       const model = MODELS[modelName];
       // Preview by overall extent rather than target radius; this keeps long stations and
       // cargo objects framed more honestly while leaving a little more breathing room.
