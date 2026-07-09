@@ -1153,6 +1153,44 @@
       height: auto;
       border: 1px solid var(--soft-line);
       background: #010401;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .chart-map-wrap {
+      position: relative;
+    }
+
+    .chart-map-wrap .star-map[data-map="local"] {
+      cursor: grab;
+    }
+
+    .chart-map-wrap .star-map[data-map="local"].dragging {
+      cursor: grabbing;
+    }
+
+    .map-home {
+      position: absolute;
+      top: 7px;
+      left: 7px;
+      width: 28px;
+      height: 24px;
+      padding: 0;
+      display: inline-grid;
+      place-items: center;
+      background: rgba(0, 0, 0, .58);
+      border-radius: 6px;
+      opacity: .86;
+      z-index: 2;
+    }
+
+    .map-home svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      pointer-events: none;
     }
 
     .star-map .range-ring {
@@ -1182,14 +1220,6 @@
       fill: transparent;
       stroke: transparent;
       cursor: pointer;
-    }
-
-    .map-controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      align-items: center;
-      justify-content: center;
     }
 
     .equipment-cheats {
@@ -15027,7 +15057,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function renderLocalMap() {
       const w = 480, h = 300, cx = w / 2, cy = h / 2;
       const cur = currentSystem();
-      const zoom = clamp(game.localMapZoom || 1, .45, 4);
+      const zoom = 4;
       const maxLy = 24 / zoom;
       const scalePx = (Math.min(w, h) / 2 - 10) / maxLy;
       const originX = cx - (game.localMapPanX || 0) * scalePx;
@@ -15085,16 +15115,12 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const tgt = targetSystem();
       const mode = game.mapMode === "local" ? "local" : "galaxy";
       const rangeText = game.developerMode ? "unlimited in developer mode" : "7.0 LY";
-      const localControls = mode === "local" ? `<div class="notice map-controls">
-          <button class="btn mini" data-mapzoom="out">-</button>
-          <span>Zoom ${Math.round((game.localMapZoom || 1) * 100)}%</span>
-          <button class="btn mini" data-mapzoom="in">+</button>
-          <button class="btn mini" data-mappan="-6,0">&larr;</button>
-          <button class="btn mini" data-mappan="0,-6">&uarr;</button>
-          <button class="btn mini" data-mappan="0,6">&darr;</button>
-          <button class="btn mini" data-mappan="6,0">&rarr;</button>
-          <button class="btn mini" data-mapreset>Reset</button>
-        </div>` : "";
+      const mapHtml = mode === "galaxy"
+        ? renderGalaxyMap()
+        : `<div class="chart-map-wrap">
+            <button class="btn mini map-home" data-mapreset aria-label="Reset local chart view" title="Reset local chart view"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8L8 3l6 5"/><path d="M4.5 7.5v5h7v-5"/><path d="M6.5 12.5v-3h3v3"/></svg></button>
+            ${renderLocalMap()}
+          </div>`;
       return `<div class="notice" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
           <span>
             <button class="btn mini ${mode === "galaxy" ? "primary" : ""}" data-mapmode="galaxy">Galaxy Map</button>
@@ -15102,8 +15128,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           </span>
           <span style="font-size:11px;color:var(--muted)">Galaxy ${game.galaxy + 1}. Range ${rangeText}.</span>
         </div>
-        ${localControls}
-        ${mode === "galaxy" ? renderGalaxyMap() : renderLocalMap()}
+        ${mapHtml}
         ${renderSystemInfo(tgt, from)}`;
     }
 
@@ -15331,23 +15356,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       panelBody.querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => buyGood(b.dataset.buy)));
       panelBody.querySelectorAll("[data-sell]").forEach((b) => b.addEventListener("click", () => sellGood(b.dataset.sell)));
       panelBody.querySelectorAll(".map-dot").forEach((b) => b.addEventListener("click", () => {
+        if (performance.now() < (game.localMapSuppressClickUntil || 0)) return;
         game.target = Number(b.dataset.sys);
         setMessage(game.target === game.current ? `Selected current system: ${targetSystem().name}.` : `Target system: ${targetSystem().name}.`);
         renderPanel();
       }));
       panelBody.querySelectorAll("[data-mapmode]").forEach((b) => b.addEventListener("click", () => {
         game.mapMode = b.dataset.mapmode;
-        renderPanel();
-      }));
-      panelBody.querySelectorAll("[data-mapzoom]").forEach((b) => b.addEventListener("click", () => {
-        game.localMapZoom = clamp((game.localMapZoom || 1) * (b.dataset.mapzoom === "in" ? 1.25 : .8), .45, 4);
-        renderPanel();
-      }));
-      panelBody.querySelectorAll("[data-mappan]").forEach((b) => b.addEventListener("click", () => {
-        const [dx, dy] = b.dataset.mappan.split(",").map(Number);
-        const stepScale = 1 / Math.sqrt(game.localMapZoom || 1);
-        game.localMapPanX += dx * stepScale;
-        game.localMapPanY += dy * stepScale;
         renderPanel();
       }));
       const mapReset = panelBody.querySelector("[data-mapreset]");
@@ -15357,6 +15372,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         game.localMapPanY = 0;
         renderPanel();
       });
+      attachLocalMapDrag();
       panelBody.querySelectorAll("[data-equip]").forEach((b) => b.addEventListener("click", () => buyEquipment(b.dataset.equip)));
       panelBody.querySelectorAll("[data-ship-nav]").forEach((b) => b.addEventListener("click", () => cycleShipDiagram(Number(b.dataset.shipNav))));
       panelBody.querySelectorAll("[data-cheat]").forEach((b) => b.addEventListener("click", () => {
@@ -15408,6 +15424,59 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         drawShipDiagram(diagram);
         attachShipDiagramDrag(diagram);
       }
+    }
+
+    function attachLocalMapDrag() {
+      const svg = panelBody.querySelector('.star-map[data-map="local"]');
+      if (!svg) return;
+      let moved = false;
+      let lastX = 0;
+      let lastY = 0;
+      const start = (e) => {
+        if (e.button !== 0 || e.target.closest("[data-sys]")) return;
+        moved = false;
+        lastX = e.clientX;
+        lastY = e.clientY;
+        svg.classList.add("dragging");
+        document.addEventListener("pointermove", move);
+        document.addEventListener("pointerup", end);
+        document.addEventListener("pointercancel", end);
+        e.preventDefault();
+      };
+      const move = (e) => {
+        const activeSvg = panelBody.querySelector('.star-map[data-map="local"]') || svg;
+        const viewBox = activeSvg.viewBox.baseVal;
+        const rect = activeSvg.getBoundingClientRect();
+        const scaleX = viewBox.width / Math.max(1, rect.width);
+        const scaleY = viewBox.height / Math.max(1, rect.height);
+        const dx = (e.clientX - lastX) * scaleX;
+        const dy = (e.clientY - lastY) * scaleY;
+        if (Math.abs(dx) + Math.abs(dy) > .2) moved = true;
+        const mapScale = (Math.min(viewBox.width, viewBox.height) / 2 - 10) / (24 / 4);
+        game.localMapPanX -= dx / mapScale;
+        game.localMapPanY -= dy / mapScale;
+        lastX = e.clientX;
+        lastY = e.clientY;
+        renderPanel();
+        const nextSvg = panelBody.querySelector('.star-map[data-map="local"]');
+        if (nextSvg) nextSvg.classList.add("dragging");
+        e.preventDefault();
+      };
+      const end = (e) => {
+        const activeSvg = panelBody.querySelector('.star-map[data-map="local"]') || svg;
+        activeSvg.classList.remove("dragging");
+        if (moved) game.localMapSuppressClickUntil = performance.now() + 250;
+        document.removeEventListener("pointermove", move);
+        document.removeEventListener("pointerup", end);
+        document.removeEventListener("pointercancel", end);
+      };
+      svg.addEventListener("pointerdown", start);
+      svg.addEventListener("click", (e) => {
+        if (!moved) return;
+        e.preventDefault();
+        e.stopPropagation();
+        moved = false;
+      }, true);
     }
 
     const shipDiagramState = { yaw: .6, pitch: .4, roll: .2, dragging: false, lastX: 0, lastY: 0, idleSpeed: .22, model: "cobra" };
