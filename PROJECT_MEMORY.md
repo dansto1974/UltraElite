@@ -35,12 +35,22 @@ Working notes for future Codex/Ronnie sessions. This is not public marketing cop
 
 ## V2b Renderer Status
 
-- V2b renderer convergence is mostly landed.
-- Remaining tidy-ups:
-  - Remove hidden global render-state assumptions, especially helpers that read `game.graphicsMode` instead of render context.
+- V2b renderer convergence is complete enough to leave the roadmap. Treat future renderer work as maintenance unless a new feature deliberately needs architecture.
+- The final close-out removed the obvious hidden `game.graphicsMode` dependency from `collectSolidDetails`, added the canonical mesh-render contract beside `modelMeshForRender`, audited the remaining direct model reads, and created the global `ultra-elite-render-rules` skill so the rules survive future sessions.
+- Ongoing guardrails:
   - Document any deliberate bespoke renderer when touched.
   - Keep imported/custom ship work parked until there is a clean mesh import contract.
   - Treat blueprint SVG rendering as a technical drawing path, not the canonical flight renderer.
+
+## Checkpoint Retrospectives
+
+### V2b Renderer Close-Out
+
+- Achieved: moved V2b renderer work off the active roadmap by closing the last obvious shared-renderer leak and preserving the rules in code, docs and a dedicated skill.
+- How: audited the remaining direct model reads, confirmed live mesh render paths converge through `drawModelEntity` / `modelMeshForRender`, removed `collectSolidDetails`' hidden `game.graphicsMode` dependency, documented the canonical mesh path beside the code, and created `ultra-elite-render-rules`.
+- What worked: Dan's pushback prevented a cosmetic roadmap close-out; the proper finish needed evidence, a small code fix, explicit exceptions, and a durable guardrail skill.
+- What failed: the first pass treated documentation closure as equivalent to completing the work. That is not enough for architectural refactors.
+- Future note: do not remove a major roadmap refactor item until the code path, known exceptions, validation, project memory and any needed workflow skill are all aligned.
 
 ## Performance Rules
 

@@ -22,6 +22,7 @@ Then consolidate the useful bits into project docs or skills immediately. Digita
 - Keep a durable project notebook. Context compaction is real; store decisions, fragile systems, rejected approaches, and architectural rules in a repo file such as `PROJECT_MEMORY.md`.
 - Use a roadmap for direction, not micromanagement. `ROADMAP.md` should say what matters next and why, while implementation details can evolve.
 - Use checkpoint retrospectives. After a major pass, summarize what changed, what approach worked, what failed, and whether `ROADMAP.md`, `PROJECT_MEMORY.md`, `LESSONS.md`, or a skill should be updated.
+- Define done before removing major roadmap work. A refactor is not complete just because the roadmap says so; the code path, known exceptions, validation, durable docs, and any guardrail skills must all line up.
 - Make small scoped passes. Big rewrites became safer when broken into checkpoints that left the game playable.
 - Commit after stable passes. Local commits created rollback points and reduced fear during refactors.
 - Prefer shared systems over one-off fixes. The V2b renderer improved once ships, previews, hangar scenes, and cutscenes all used the same render path.
@@ -64,6 +65,7 @@ The useful pattern is not just "write docs"; it is "make the agent maintain the 
 - Search with `rg` first.
 - Use shared helpers and existing abstractions before inventing new ones.
 - Add abstraction only when it removes real duplication or prevents repeated bugs.
+- For architectural work, prove completion with an audit of remaining exceptions. Do not treat documentation or intent as evidence that the implementation is finished.
 - Keep manual edits scoped.
 - Validate syntax and whitespace after each pass.
 - Avoid reverting unrelated dirty files.

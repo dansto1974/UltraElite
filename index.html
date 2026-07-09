@@ -9297,7 +9297,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function collectSolidDetails(model, o, camVerts, points, w, h, scaleFactor = 1, camera = game.camera, options = {}) {
-      if (game.graphicsMode === "wire" || !model.details) return [];
+      const mode = options.mode || "both";
+      if (mode === "wire" || !model.details) return [];
       const roll = o.roll ?? (o.rot || 0) * .7;
       const orient = (v) => o.quat ? quatRotate(o.quat, v) : rotateShipPoint(v, o.rot || 0, o.pitch || 0, roll);
       const details = [];
@@ -14601,6 +14602,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.restore();
     }
 
+    // Canonical mesh render path: ships, stations, previews, hangar ships and
+    // cut-scene mesh props should enter through modelMeshForRender/drawModelEntity.
+    // Keep bespoke renderers for true non-mesh systems only: planets/rings/stars,
+    // particles, lasers, HUD/chart UI and hangar architecture panels.
     function modelMeshForRender(model, camera, w, h, opts = {}) {
       const scaleFactor = opts.scaleFactor ?? 1;
       const centerCam = opts.centerCam || cameraTransform(opts.pos || vec(), camera);
@@ -14701,9 +14706,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       });
       if (mode !== "wire") {
         if (quality.details) {
-          drawSolidItems(targetCtx, collectSolidDetails(model, renderShip, camVerts, points, w, h, scaleFactor, camera));
+          drawSolidItems(targetCtx, collectSolidDetails(model, renderShip, camVerts, points, w, h, scaleFactor, camera, { mode }));
         } else if ((renderShip.engineGlow ?? 0) > .02) {
-          drawSolidItems(targetCtx, collectSolidDetails(model, renderShip, camVerts, points, w, h, scaleFactor, camera, { enginesOnly: true }));
+          drawSolidItems(targetCtx, collectSolidDetails(model, renderShip, camVerts, points, w, h, scaleFactor, camera, { enginesOnly: true, mode }));
         }
         if (quality.damage && targetCtx === ctx) drawPlayerHullDamageMarks(renderShip, centerCam, w, h, camera, projectFn);
         if (quality.effects && renderShip.police && ultraFxEnabled()) drawPoliceStrobes(targetCtx, points);
