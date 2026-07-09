@@ -2867,6 +2867,7 @@
       comms: [],
       commsClock: 10,
       trafficClock: 6,
+      extraVesselDelay: 0,
       messageTimer: 0
     };
 
@@ -5882,9 +5883,10 @@
           r: hermitStats.r, color: "#b9a888", hp: 9999, hostile: false
         });
       }
-      const count = arrival ? 3 + Math.floor(rng() * 4) : 2 + Math.floor(rng() * 3);
-      for (let i = 0; i < count; i++) spawnShip(rng, i === 0 && (game.legal > 15 || rng() > .55));
-      game.trafficClock = 4 + rng() * 7;
+      const count = arrival ? 1 + Math.floor(rng() * 3) : 1 + Math.floor(rng() * 2);
+      for (let i = 0; i < count; i++) spawnShip(rng, false);
+      game.trafficClock = 5 + rng() * 8;
+      game.extraVesselDelay = (arrival ? 18 : 30) + rng() * 24;
       const rockCount = Math.floor(rng() * 3);
       for (let i = 0; i < rockCount; i++) spawnAsteroid(rng, vec(0, 0, 0));
       game.stars = Array.from({ length: 264 }, () => {
@@ -5898,6 +5900,52 @@
         return star;
       });
       game.targetObject = game.objects.find((o) => o.type === "station");
+    }
+
+    function extraVesselChanceForGovernment(gov) {
+      if (gov <= 0) return 1;
+      let allowed = 0;
+      for (let a = 0; a < 256; a++) {
+        if (a < 90 && ((a & 7) >= gov)) allowed++;
+      }
+      return allowed / 256;
+    }
+
+    function stationSafeZoneActive() {
+      const st = game.objects.find((o) => o.type === "station");
+      return !!st && len(sub(st.pos, game.camera.pos)) < 5200;
+    }
+
+    function spawnExtraVessels(rng = Math.random, liveShipCount = 0) {
+      if (game.legal > 15) {
+        spawnShip(rng, false);
+        game.extraVesselDelay = 10 + rng() * 14;
+        return 1;
+      }
+      const pirateGroup = rng() >= .39;
+      if (!pirateGroup) {
+        spawnShip(rng, true);
+        game.extraVesselDelay = 18 + rng() * 22;
+        return 1;
+      }
+      const count = Math.min(1 + Math.floor(rng() * 4), Math.max(1, 7 - liveShipCount));
+      for (let i = 0; i < count; i++) spawnShip(rng, true);
+      game.extraVesselDelay = 24 + count * 10 + rng() * 24;
+      return count;
+    }
+
+    function spawnAmbientEncounter(dt, liveShipCount) {
+      game.extraVesselDelay = Math.max(0, (game.extraVesselDelay || 0) - dt);
+      if (game.witchspace) return;
+      if (Math.random() >= dt * .035 || liveShipCount >= 7) return;
+      const safeZone = stationSafeZoneActive();
+      const gov = currentSystem().government;
+      const extraChance = safeZone ? 0 : extraVesselChanceForGovernment(gov);
+      if (game.extraVesselDelay <= 0 && Math.random() < extraChance) {
+        spawnExtraVessels(Math.random, liveShipCount);
+        return;
+      }
+      spawnShip(Math.random, false);
     }
 
     function spawnShip(rng = Math.random, hostile = false) {
@@ -6213,7 +6261,7 @@
         return;
       }
       if (!game.developerMode) game.fuel -= d;
-      const toWitch = Math.random() < 0.05 + (game.legal > 15 ? 0.08 : 0);
+      const toWitch = Math.random() < 0.012 + (game.legal > 15 ? 0.006 : 0);
       setMessage("Hyperspace countdown initiated.", true);
       const countdownTrajectory = ultraFxEnabled() ? {
         trajectoryControl: true,
@@ -7943,9 +7991,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           return keep;
         });
         if (game.targetObject && !game.objects.includes(game.targetObject)) game.targetObject = nearestTarget(false);
-        if (Math.random() < dt * .035 && liveShipCount < 7) {
-          spawnShip(Math.random, Math.random() > (currentSystem().government / 9 + .25));
-        }
+        spawnAmbientEncounter(dt, liveShipCount);
         if (Math.random() < dt * .012 && liveRockCount < 4) {
           spawnAsteroid(Math.random, game.camera.pos);
         }
