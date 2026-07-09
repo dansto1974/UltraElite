@@ -5513,7 +5513,58 @@
       return tr ? clamp(tr.t / tr.dur, 0, 1) : 0;
     }
 
-    function calculateJumpTrajectoryQuat(camera = game.camera) {
+    function jumpShowcaseBody(camera = game.camera) {
+      let best = null;
+      for (const o of game.objects) {
+        if (!o?.pos || (o.type !== "sun" && o.type !== "planet")) continue;
+        const cam = cameraTransform(o.pos, camera);
+        if (!Number.isFinite(cam.x) || !Number.isFinite(cam.y) || !Number.isFinite(cam.z)) continue;
+        const dist = len(sub(o.pos, camera.pos));
+        if (dist < 120 || dist > 90000) continue;
+        const sx = cam.x / cam.z;
+        const sy = cam.y / cam.z;
+        const inFrame = cam.z > 120 && Math.abs(sx) <= 1.35 && Math.abs(sy) <= 1.05;
+        const ahead = clamp(dot(norm(sub(o.pos, camera.pos)), forwardVector(camera)), -1, 1);
+        const turnPenalty = Math.acos(ahead) / Math.PI;
+        const apparent = (o.r || (o.type === "sun" ? 2200 : 900)) / Math.max(1, dist);
+        const centred = inFrame ? 1 - clamp(Math.hypot(sx / 1.35, sy / 1.05), 0, 1) : 0;
+        const distanceBias = clamp(18000 / dist, .08, 1.2);
+        const score = apparent * (o.type === "sun" ? 1.55 : 1.08)
+          + distanceBias * (o.type === "sun" ? .9 : .7)
+          + centred * .34
+          + (inFrame ? .45 : 0)
+          - turnPenalty * .38;
+        if (!best || score > best.score) best = { o, score };
+      }
+      return best?.o || null;
+    }
+
+    function jumpShowcaseTrajectoryQuat(camera = game.camera, seed = 1) {
+      const body = jumpShowcaseBody(camera);
+      if (!body) return null;
+      const q = ensureCameraQuat(camera);
+      const forward = forwardVector(camera);
+      const upHint = quatRotate(q, vec(0, 1, 0));
+      const bodyDir = norm(sub(body.pos, camera.pos));
+      const currentSide = sub(forward, scale(bodyDir, dot(forward, bodyDir)));
+      const rng = mulberry(seed || hash32(`${body.type}:${body.name || ""}:${body.pos.x|0}:${body.pos.y|0}:${body.pos.z|0}`));
+      let away = len(currentSide) > .02 ? norm(currentSide) : null;
+      if (!away) {
+        const right = norm(cross(forward, upHint));
+        const up = norm(cross(right, forward));
+        const a = rng() * TAU;
+        away = norm(add(scale(right, Math.cos(a)), scale(up, Math.sin(a))));
+      } else if (rng() < .5) {
+        away = scale(away, -1);
+      }
+      const targetAngle = (body.type === "sun" ? .38 : .34) + rng() * .14;
+      const dir = norm(add(scale(bodyDir, Math.cos(targetAngle)), scale(away, Math.sin(targetAngle))));
+      return quatLookRotation(dir, upHint);
+    }
+
+    function calculateJumpTrajectoryQuat(camera = game.camera, seed = 1) {
+      const showcase = jumpShowcaseTrajectoryQuat(camera, seed);
+      if (showcase) return showcase;
       const q = ensureCameraQuat(camera);
       const currentForward = forwardVector(camera);
       const upHint = quatRotate(q, vec(0, 1, 0));
@@ -5562,11 +5613,27 @@
       return quatLookRotation(bestDir, upHint);
     }
 
+    function jumpDepartureClearanceDistance(q = ensureCameraQuat(game.camera), camera = game.camera) {
+      const dir = forwardVector({ q });
+      let required = 0;
+      for (const o of game.objects) {
+        if (!o?.pos || (o.type !== "sun" && o.type !== "planet")) continue;
+        const rel = sub(o.pos, camera.pos);
+        const along = dot(rel, dir);
+        if (along <= 0) continue;
+        const sideways = len(sub(rel, scale(dir, along)));
+        const radius = (o.heatRadius || o.r || (o.type === "sun" ? 2800 : 1100)) * (o.type === "sun" ? 1.35 : 1.55);
+        if (sideways > Math.max(radius * 2.25, along * .78)) continue;
+        required = Math.max(required, along + radius * 1.8);
+      }
+      return required;
+    }
+
     function jumpTransitionCameraOffset(tr) {
       if (!tr || !ultraFxEnabled() || (tr.kind !== "hyperspace" && tr.kind !== "galactic")) return 0;
       const p = jumpTransitionProgress(tr);
       const bigJump = tr.kind === "galactic";
-      const maxOffset = bigJump ? 32000 : 19000;
+      const maxOffset = Math.max(bigJump ? 32000 : 19000, tr.departureClearance || 0);
       const departureEnd = tr.departureEnd ?? (bigJump ? .2 : .24);
       const arrivalAt = tr.arrivalAt ?? .74;
       if (tr._arrived) {
@@ -6536,11 +6603,12 @@
       if (!game.developerMode) game.fuel -= d;
       const toWitch = Math.random() < 0.012 + (game.legal > 15 ? 0.006 : 0);
       setMessage("Hyperspace countdown initiated.", true);
+      const jumpSeed = hash32(`jump:${game.galaxy}:${game.current}:${game.target}:${Date.now() >> 8}`);
       const countdownTrajectory = ultraFxEnabled() ? {
         trajectoryControl: true,
         fromQ: quatNorm(ensureCameraQuat(game.camera)),
-        trajectoryQ: calculateJumpTrajectoryQuat(game.camera),
-        wobbleSeed: hash32(`jump:${game.galaxy}:${game.current}:${game.target}:${Date.now() >> 8}`)
+        trajectoryQ: calculateJumpTrajectoryQuat(game.camera, jumpSeed),
+        wobbleSeed: jumpSeed
       } : {};
       startJumpCountdown("hyperspace", 5, "HYPERSPACE", () => {
         eliteAudio.play("hyperspace");
@@ -6584,6 +6652,7 @@
           arrivalAt: .74,
           fromQ: finalTrajectoryQ,
           trajectoryQ: finalTrajectoryQ,
+          departureClearance: jumpDepartureClearanceDistance(finalTrajectoryQ, game.camera),
           departureStars: captureJumpDepartureStarfield(game.camera),
           ...(toWitch ? {} : { onArrive: arrive })
         } : {};
@@ -6599,11 +6668,12 @@
         return;
       }
       setMessage("Galactic jump countdown initiated.", true);
+      const jumpSeed = hash32(`galactic:${game.galaxy}:${game.current}:${Date.now() >> 8}`);
       const countdownTrajectory = ultraFxEnabled() ? {
         trajectoryControl: true,
         fromQ: quatNorm(ensureCameraQuat(game.camera)),
-        trajectoryQ: calculateJumpTrajectoryQuat(game.camera),
-        wobbleSeed: hash32(`galactic:${game.galaxy}:${game.current}:${Date.now() >> 8}`)
+        trajectoryQ: calculateJumpTrajectoryQuat(game.camera, jumpSeed),
+        wobbleSeed: jumpSeed
       } : {};
       startJumpCountdown("galactic", 10, "GALACTIC JUMP", () => {
         eliteAudio.play("hyperspace");
@@ -6629,6 +6699,7 @@
           arrivalAt: .76,
           fromQ: finalTrajectoryQ,
           trajectoryQ: finalTrajectoryQ,
+          departureClearance: jumpDepartureClearanceDistance(finalTrajectoryQ, game.camera),
           departureStars: captureJumpDepartureStarfield(game.camera),
           onArrive: arrive
         } : {};
@@ -10943,6 +11014,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         "PHASE-LOCKING QUIRIUM INJECTOR MANIFOLD",
         "ALIGNING NAV COMPUTER TO TARGET STAR",
         "MASS-LOCK EXCLUSION CONE SCAN ACTIVE",
+        "THIS IS NOT DUSTING CROPS",
+        "AVOIDING SUPERNOVA BOUNCE VECTOR",
         "STABILISING HYPERSPACE FIELD COILS",
         "VERIFYING FUEL PLASMA FLOW RATE",
         "ARMING FRAME-SHIFT CONTAINMENT GRID"
@@ -10953,6 +11026,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         "CHARGING ONE-SHOT QUIRIUM CASCADE",
         "ALIGNING MEAN GALACTIC PLANE VECTOR",
         "VERIFYING INTERGALACTIC NAV SOLUTION",
+        "THIS IS NOT DUSTING CROPS",
+        "SUPERLUMINAL MASS-SHADOW CHECK",
         "LOCKING DEEP-WITCHSPACE EXIT ANCHOR",
         "SPINNING HYPERCOIL FIELD GYROS",
         "FINALISING GALAXY TRANSFER ENVELOPE"
