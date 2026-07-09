@@ -1162,14 +1162,38 @@
     }
 
     .ship-panel {
-      font-size: 13px;
-      line-height: 1.45;
+      font-size: 12px;
+      line-height: 1.32;
+    }
+
+    .ship-panel .grid2 {
+      gap: 4px 10px;
+      margin-bottom: 7px;
     }
 
     .ship-panel .notice,
     .ship-panel .stat-line,
     .ship-panel .row {
       font-size: inherit;
+    }
+
+    .ship-panel .notice {
+      padding: 6px;
+      margin-bottom: 7px;
+    }
+
+    .ship-panel .stat-line,
+    .ship-panel .row {
+      padding: 2px 0;
+      gap: 8px;
+    }
+
+    .ship-panel .label {
+      color: var(--amber);
+    }
+
+    .ship-panel .value {
+      color: var(--green);
     }
 
     .notice {
@@ -15487,6 +15511,23 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return `Commander ${game.commander}'s ${shipName(model)} is rated for ${Math.round(stats.hp)} hull points, ${playerBaseCargoCap(model)}t standard cargo and ${Math.round(220 * (stats.speed || 1))}m/s under polite conditions. ${base} ${fitLine}`;
     }
 
+    function playerHullConditionText() {
+      const pct = clamp(Number.isFinite(game.energy) ? game.energy : 100, 0, 100);
+      const marks = game.playerDamageMarks?.length || 0;
+      let label = "Factory fresh";
+      if (pct < 25) label = "Critical";
+      else if (pct < 55) label = "Damaged";
+      else if (pct < 82 || marks > 4) label = "Scuffed";
+      else if (marks > 0) label = "Recently polished";
+      return `${Math.round(pct)}% ${label}`;
+    }
+
+    function estimatedFlightHours() {
+      const earned = Math.max(0, game.credits - 100);
+      const activity = earned / 1450 + game.kills * .42 + Math.max(0, game.legal || 0) * .18 + (game.galaxy || 0) * 6;
+      return Math.max(.4, activity + 1.7);
+    }
+
     function renderShipBlueprint(modelName) {
       const model = MODELS[modelName];
       if (!model?.verts?.length) return "";
@@ -15564,7 +15605,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const model = MODELS[modelName];
       const speed = Math.round(220 * (stats.speed || 1));
       return `<div class="grid2">
-        ${stat("Role", shipRoleLabel(modelName))}
+        ${personal ? "" : stat("Role", shipRoleLabel(modelName))}
+        ${personal ? stat("Hull Condition", playerHullConditionText()) : ""}
+        ${personal ? stat("Flight Hours", `${estimatedFlightHours().toFixed(1)} est.`) : ""}
         ${stat("Hull HP", Math.round(stats.hp))}
         ${stat("Speed", `${speed} m/s`)}
         ${stat("Size", `${Math.round(modelOverallSize(model))} m`)}
@@ -15581,12 +15624,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         <canvas class="ship-diagram library-diagram" id="shipDiagram" width="640" height="260" data-starry-preview="true"></canvas>
         <span class="drag-hint">Click + drag to move view</span>
       </div>
-      <div class="notice" style="display:flex;align-items:center;justify-content:center;gap:12px">
-        <strong>${shipName(currentShip)}</strong>
-      </div>
       ${renderShipStats(currentShip, true)}
       <div class="grid2">
-        ${stat("Presentation", graphicsModeLabel(game.graphicsMode))}
         ${stat("Laser", laserPower().name)}
         ${stat("Missiles", game.missiles)}
         ${stat("Fuel Scoop", game.equipment.fuelScoop ? "Yes" : "No")}
