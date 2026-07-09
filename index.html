@@ -1159,6 +1159,17 @@
       margin: 5px 0 0;
     }
 
+    .ship-panel {
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .ship-panel .notice,
+    .ship-panel .stat-line,
+    .ship-panel .row {
+      font-size: inherit;
+    }
+
     .notice {
       border: 1px solid #354635;
       padding: 8px;
@@ -15392,67 +15403,41 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return roles.length ? roles.join(" / ") : "—";
     }
 
+    const SHIP_LORE = {
+      cobra: "The Cobra Mk III is the benchmark independent trader: enough cargo space to matter, enough speed to survive, and enough weapon mounts to make bad decisions feel briefly tactical.",
+      cobra1: "The Cobra Mk I is older, lighter and less forgiving than its famous successor. Pilots who love them use words like character when they mean maintenance.",
+      krait: "The Krait is a knife with engines: small, flat, fast and popular with pilots who prefer ambushes to conversations.",
+      viper: "The Viper is a police interceptor built around acceleration, weapons power and the deeply held belief that criminals should have a short working day.",
+      adder: "The Adder is cheap, compact and surprisingly useful, which is why traders, pirates and nervous beginners all pretend they chose it deliberately.",
+      gecko: "The Gecko sits in that awkward region between courier and raider, with just enough speed to start trouble and just enough hold space to explain it later.",
+      mamba: "The Mamba is all hard angles and bad intentions, a pirate favourite for quick strikes where the cargo transfer is expected to be involuntary.",
+      sidewinder: "The Sidewinder is fast, twitchy and lightly built. In pirate hands it is a wasp; in honest hands it is usually a repayment plan.",
+      worm: "The Worm is small-haul utility craftwork: modest drive, modest hold, modest dignity, and an admirable talent for being somewhere else when fighting starts.",
+      moray: "The Moray was designed for wet worlds and awkward atmospheres, but in space it has become a favourite of pilots who like their ships unusual and their insurance complicated.",
+      asp: "The Asp Mk II is a dangerous wedge of speed and firepower, respected by bounty hunters and disliked by almost everyone they have ever met.",
+      ferdelance: "The Fer-de-Lance is expensive, sleek and faintly arrogant. Its owners call it refined; its victims rarely have time to file a counterargument.",
+      python: "The Python is a working hauler with a serious hull and a serious appetite for profitable routes. It turns slowly, earns steadily and complains through its landing gear.",
+      boa: "The Boa is a long-haul bulk carrier, beloved by accountants and feared by docking crews asked to guide it through a crowded slot.",
+      anaconda: "The Anaconda is less a ship than a private economy with engines. When one arrives, traffic control clears its throat and hopes the pilot has read the manual.",
+      shuttle: "The Shuttle is station traffic made visible: practical, slow and full of people who did not expect to become part of a combat incident.",
+      transporter: "The Transporter moves freight, tools and local politics between station and surface. It is not glamorous, but neither is most civilisation.",
+      thargoid: "The Thargoid warship remains badly explained by human engineers. It is elegant, hostile and apparently built by minds that considered symmetry optional.",
+      thargon: "The Thargon drone is a remote weapon with no cockpit, no cargo bay and no useful conversation. If it is close enough to admire, you have left it too late.",
+      constrictor: "The Constrictor is a rare military-grade menace, fast and unpleasantly purposeful, usually mentioned in bars by pilots who were not present.",
+      cougar: "The Cougar is a sleek, secretive design with a reputation for vanishing acts, special equipment and owners who do not answer ordinary questions."
+    };
+
     function shipLore(model, personal = false) {
-      const rng = mulberry(hash32(`ship-lore:${model}:${personal ? "personal" : "library"}`));
-      const choose = (items) => items[Math.floor(rng() * items.length) % items.length];
       const stats = shipStats(model);
-      const size = modelOverallSize(MODELS[model]);
-      const role = shipRoleLabel(model);
-      const base = personal
-        ? choose([
-          `Commander ${game.commander}'s ${shipName(model)} is configured as a ${role.toLowerCase()} craft with ${playerBaseCargoCap(model)}t standard cargo capacity and a ${Math.round(220 * (stats.speed || 1))}m/s rated drive.`,
-          `${shipName(model)} hull ${game.commander} currently flies is rated for ${Math.round(stats.hp)} hull points, ${playerBaseCargoCap(model)}t standard cargo and the usual optimistic service intervals.`,
-          `This ${shipName(model)} is the commander's working ship: fast enough for trouble, large enough for regret, and certified for ${Math.round(220 * (stats.speed || 1))}m/s under polite conditions.`
-        ])
-        : choose([
-          `The ${shipName(model)} is usually filed as ${role.toLowerCase()} traffic, measuring roughly ${Math.round(size)}m across its largest axis with a ${Math.round(stats.hp)} point hull rating.`,
-          `Library records classify the ${shipName(model)} as ${role.toLowerCase()}, with a ${Math.round(220 * (stats.speed || 1))}m/s drive profile and a ${Math.round(size)}m maximum source-model span.`,
-          `Port recognition manuals describe the ${shipName(model)} as ${role.toLowerCase()} hardware: ${Math.round(stats.hp)} hull points, ${Math.round(stats.r)}m target area and a silhouette nobody agrees how to pronounce.`
-        ]);
-      const notes = [];
-      if (POLICE_MODELS.includes(model)) notes.push(choose([
-        "Police yards favour its fast intercept profile, clean authority beacon and enough bite to make most pirates remember urgent appointments elsewhere.",
-        "The cockpit is cramped, the weapons bus is not, and station authorities consider that a perfectly fair trade.",
-        "Pilots report the Viper handles like a reprimand with engines attached."
-      ]));
-      else if (ALIEN_MODELS.includes(model)) notes.push(choose(model === "thargon" ? [
-        "Thargon drones are not built for comfort, negotiation or sensible insurance premiums.",
-        "Recovered fragments suggest a design philosophy somewhere between obedience, violence and kitchen appliance.",
-        "The drone has no pilot seat, no cargo bay and absolutely no interest in your paperwork."
-      ] : [
-        "Thargoid hulls remain badly explained by human dock crews, who mostly agree that poking them is a career-limiting strategy.",
-        "Sensor officers describe it as elegant, terrifying and a poor candidate for close-range tourism.",
-        "It does not so much dock as cause a port authority to reconsider its life choices."
-      ]));
-      else if (HAULER_MODELS.includes(model)) notes.push(choose([
-        "Hauler crews prize predictable handling, generous internal volume and paint schemes that tell customs officials exactly where to start arguing.",
-        "The cargo manifest is usually longer than the owner's patience, which is why the engines are serviced more often than the crew.",
-        "It is not glamorous, but a full hold has a glamour of its own if you squint at the accounts."
-      ]));
-      else if (PIRATE_MODELS.includes(model) && !TRADER_MODELS.includes(model)) notes.push(choose([
-        "Pirate captains like the small target profile and aggressive acceleration, particularly when leaving the scene of a misunderstanding.",
-        "Its reputation is mostly built from surprise, speed and witness statements with scorch marks.",
-        "Legitimate owners exist, although insurance companies keep putting quote marks around legitimate."
-      ]));
-      else if (TRADER_MODELS.includes(model)) notes.push(choose([
-        "Traders value the balance of hold space, range and repairability; glamorous it is not, but glamour rarely pays docking fees.",
-        "Most examples smell faintly of cargo straps, hot wiring and whatever the previous owner insisted was legal.",
-        "A sensible pilot can make a living in one, which is almost as dangerous as piracy but involves more receipts."
-      ]));
-      else notes.push(choose([
-        "It occupies the awkward middle ground between respectable spacecraft and something a guidebook would advise against borrowing.",
-        "Dock crews recognise it immediately, then disagree about whether that is good news.",
-        "It is one of those ships that makes more sense after two drinks and a generous maintenance budget."
-      ]));
-      if (personal) {
-        const fitted = [];
-        if (game.equipment.fuelScoop) fitted.push("fuel scoops");
-        if (game.equipment.dockingComputer) fitted.push("docking computer");
-        if (game.equipment.ecm) fitted.push("ECM");
-        if (game.equipment.escapeCapsule) fitted.push("escape capsule");
-        notes.push(fitted.length ? `Current notable fittings: ${fitted.join(", ")}.` : "Current notable fittings: none worth boasting about in the bar.");
-      }
-      return `${base} ${notes.join(" ")}`;
+      const base = SHIP_LORE[model] || `${modelDisplayName(model)} records are sparse, but the hull profile suggests a machine best approached with curiosity and shields online.`;
+      if (!personal) return base;
+      const fitted = [];
+      if (game.equipment.fuelScoop) fitted.push("fuel scoops");
+      if (game.equipment.dockingComputer) fitted.push("docking computer");
+      if (game.equipment.ecm) fitted.push("ECM");
+      if (game.equipment.escapeCapsule) fitted.push("escape capsule");
+      const fitLine = fitted.length ? `Current notable fittings: ${fitted.join(", ")}.` : "Current notable fittings: none worth boasting about in the bar.";
+      return `Commander ${game.commander}'s ${shipName(model)} is rated for ${Math.round(stats.hp)} hull points, ${playerBaseCargoCap(model)}t standard cargo and ${Math.round(220 * (stats.speed || 1))}m/s under polite conditions. ${base} ${fitLine}`;
     }
 
     function renderShipBlueprint(modelName) {
@@ -15524,7 +15509,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function renderShip() {
       const currentShip = playerShipModel();
       shipDiagramState.renderModel = currentShip;
-      return `<canvas class="ship-diagram" id="shipDiagram" width="500" height="160"></canvas>
+      return `<div class="ship-panel">
+      <canvas class="ship-diagram library-diagram" id="shipDiagram" width="640" height="260" data-starry-preview="true"></canvas>
       <div class="notice" style="display:flex;align-items:center;justify-content:center;gap:12px">
         <strong>${shipName(currentShip)}</strong>
       </div>
@@ -15543,7 +15529,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         <strong class="about-heading">Ship Notes</strong>
         <p>${escapeHtml(shipLore(currentShip, true))}</p>
       </div>
-      ${renderShipBlueprint(currentShip)}`;
+      ${renderShipBlueprint(currentShip)}
+      </div>`;
     }
 
     function renderLibrary() {
@@ -15551,7 +15538,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (!models.includes(shipDiagramState.model)) shipDiagramState.model = models[0] || "cobra";
       shipDiagramState.renderModel = null;
       const browsed = shipDiagramState.model;
-      return `<canvas class="ship-diagram library-diagram" id="shipDiagram" width="640" height="260" data-starry-preview="true"></canvas>
+      return `<div class="ship-panel">
+      <canvas class="ship-diagram library-diagram" id="shipDiagram" width="640" height="260" data-starry-preview="true"></canvas>
       <div class="notice" style="display:flex;align-items:center;justify-content:center;gap:12px">
         <button class="btn mini" data-ship-nav="-1">&lt; Prev</button>
         <strong>${modelDisplayName(browsed)}</strong>
@@ -15561,6 +15549,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       <div class="notice ship-lore">
         <strong class="about-heading">Library Notes</strong>
         <p>${escapeHtml(shipLore(browsed))}</p>
+      </div>
       </div>`;
     }
 
