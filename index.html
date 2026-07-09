@@ -1120,6 +1120,15 @@
       margin-bottom: 4px;
     }
 
+    .system-briefing {
+      margin-top: 10px;
+      color: var(--green);
+    }
+
+    .system-briefing p {
+      margin: 5px 0 0;
+    }
+
     .about-copy {
       font-size: 12px;
     }
@@ -15089,9 +15098,97 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       </svg>`;
     }
 
+    function deterministicSystemBriefing(s) {
+      const rng = mulberry(hash32(`${s.galaxy}:${s.index}:${s.name}:local-briefing`));
+      const choose = (items) => items[Math.floor(rng() * items.length) % items.length];
+      const biome = planetBiomeForSystem(s);
+      const star = stellarProfileForSystem(s);
+      const economy = ECONOMIES[s.economy] || "Unclassified";
+      const government = GOVS[s.government] || "Unclassified";
+      const pop = s.population / 10;
+      const productivity = s.productivity || 0;
+      const climate = {
+        ocean: [
+          "Most settlements cling to the coasts and platform cities; anything called inland transport is usually a ferry with opinions.",
+          "The weather office tracks storms, tides and migrating customs inspectors with equal seriousness."
+        ],
+        desert: [
+          "Surface traffic follows the cooler terminator routes, and sand in the docking seals is treated as a local weather report.",
+          "Equatorial deserts make water rights the quiet second currency behind credits."
+        ],
+        venus: [
+          "Dense yellow cloud decks hide the surface for days at a time, which the tourism board calls privacy.",
+          "Atmospheric mining, pressure politics and permanent bad visibility shape most local decisions."
+        ],
+        gas: [
+          "The main world is a swollen gas giant; the advertised surface is a polite fiction maintained by the tourism board.",
+          "Most citizens live on moons, aerostat cities or service platforms, all insisting they are the real capital."
+        ],
+        ice: [
+          "Ice ranges dominate the lit hemisphere, and every landing permit includes a small-print argument about avalanches.",
+          "Polar ports run hot, loud and expensive because warmth is treated as infrastructure."
+        ],
+        rocky: [
+          "Craters are used for addresses, landmarks and, in several districts, excuses.",
+          "The surface is hard, dry and heavily mapped by people who were paid by the crater."
+        ],
+        industrial: [
+          "Night-side industry glows through the haze while civic brochures call the smoke employment weather.",
+          "Orbital traffic is dense, dock fees are inventive, and nobody admits the air tastes of machinery."
+        ]
+      };
+      const politics = [
+        "Authority is mostly theoretical outside the docking bay; pirates are best understood as an unofficial tax office.",
+        "Local nobles collect docking favours with a seriousness normally reserved for life support.",
+        "Three administrations claim to run the same streets, and all of them invoice pilots separately.",
+        "The Directorate insists that queues are voluntary, then issues medals for joining them correctly.",
+        "Public committees publish excellent production targets and less excellent explanations for missing them.",
+        "Confederal councils argue in public, which locals consider healthier than the alternatives.",
+        "Elections are frequent, audited and followed by long discussions about whether anything changed.",
+        "Corporate security is efficient, polite and keen to remind visitors that politeness is billable."
+      ][s.government] || `${government} officials are unusually proud of their forms.`;
+      const tradeNotes = [
+        `The ${economy.toLowerCase()} economy keeps the port busy with ${s.tech >= 10 ? "precision components and suspiciously clever vending machines" : "bulk cargo, spare parts and optimistic invoices"}.`,
+        productivity >= 18000
+          ? "Productivity is high enough that even the warning signs look recently serviced."
+          : "Local productivity is modest; pilots are advised to count their change and then count it again.",
+        s.economy <= 3
+          ? "Industrial guilds dominate the news feeds, mostly by owning the news feeds."
+          : "Agricultural blocs have real leverage here, especially over food, water and who gets to call something cheese."
+      ];
+      const populationNotes = pop >= 4.5
+        ? [
+          "Population pressure has turned politics into queue management with flags.",
+          "Housing, traffic and public patience are all listed as scarce strategic resources."
+        ]
+        : pop <= 2
+          ? [
+            "The population is thinly spread, giving rumours plenty of room to accelerate.",
+            "Visitors are memorable here, which is flattering until the bill arrives."
+          ]
+          : [
+            "The population is large enough for bureaucracy and small enough for everyone to know which office lost the form.",
+            "Local culture is practical, suspicious of miracles and very attached to docking schedules."
+          ];
+      const guidebookNotes = [
+        "Guidebook compilers rate the system as mostly harmless, provided you do not ask who sponsored the guidebook.",
+        "Towel hire is available on the main concourse, although the deposit is described as philosophically non-refundable.",
+        "The port maintains an improbability desk for permits that should not exist but somehow do.",
+        `${star.label} light gives the customs hall a dramatic tone that local officials have mistaken for charisma.`
+      ];
+      return [
+        choose(climate[biome] || climate.rocky),
+        politics,
+        choose(tradeNotes),
+        choose(populationNotes),
+        choose(guidebookNotes)
+      ].join(" ");
+    }
+
     function renderSystemInfo(s, from = currentSystem()) {
       const star = stellarProfileForSystem(s);
       const distanceLine = s.index === from.index ? "Current system" : `${fmt(distance(from, s))} LY from ${from.name}`;
+      const briefing = deterministicSystemBriefing(s);
       return `<div class="notice" style="margin-top:10px">
         <strong class="about-heading">Selected System</strong>
         <div class="grid2">
@@ -15107,6 +15204,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           ${stat("Species", s.species)}
         </div>
         <div style="margin-top:10px">${s.description}</div>
+        <div class="system-briefing">
+          <strong class="about-heading">Local Briefing</strong>
+          <p>${escapeHtml(briefing)}</p>
+        </div>
       </div>`;
     }
 
