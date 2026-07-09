@@ -20,6 +20,7 @@
       --muted: #91a78d;
       --shadow: rgba(101, 255, 71, .18);
       --ui-font: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      --panel-text: 12px;
       color-scheme: dark;
     }
 
@@ -1217,6 +1218,7 @@
       border: 1px solid #354635;
       padding: 8px;
       color: var(--muted);
+      font-size: var(--panel-text);
       line-height: 1.45;
       margin-bottom: 10px;
     }
@@ -1348,6 +1350,18 @@
       stroke: var(--amber);
       stroke-dasharray: 3 3;
       opacity: .7;
+    }
+
+    .star-map .max-range {
+      stroke: var(--amber);
+      stroke-dasharray: 3 3;
+      opacity: .78;
+    }
+
+    .star-map .current-range {
+      stroke: var(--red);
+      stroke-dasharray: 2 5;
+      opacity: .42;
     }
 
     .star-map .map-dot {
@@ -15313,16 +15327,17 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const dyLy = (s.y - cur.y) / 4;
         return { s, d: distance(cur, s), x: originX + dxLy * scalePx, y: originY + dyLy * scalePx };
       }).filter((x) => x.x >= -20 && x.x <= w + 20 && x.y >= -20 && x.y <= h + 20);
+      const maxRangeLy = 7;
+      const currentRangeLy = clamp(game.fuel || 0, 0, maxRangeLy);
       const rings = [4, 8, 12, 16, 20, 24].map((ly) =>
         `<circle cx="${originX.toFixed(1)}" cy="${originY.toFixed(1)}" r="${(ly * scalePx).toFixed(1)}" class="range-ring"></circle>`
-      ).join("") + `<circle cx="${originX.toFixed(1)}" cy="${originY.toFixed(1)}" r="${(7 * scalePx).toFixed(1)}" class="range-ring jump-range"></circle>`;
-      // labelling every system within range gets unreadable in dense clusters (Lave has
-      // 100+ neighbours inside 24 LY), so only the closest handful get a name label
-      const labelLy = Math.min(12, 8 / Math.sqrt(zoom));
+      ).join("")
+        + (currentRangeLy > .05 ? `<circle cx="${originX.toFixed(1)}" cy="${originY.toFixed(1)}" r="${(currentRangeLy * scalePx).toFixed(1)}" class="range-ring current-range"></circle>` : "")
+        + `<circle cx="${originX.toFixed(1)}" cy="${originY.toFixed(1)}" r="${(maxRangeLy * scalePx).toFixed(1)}" class="range-ring max-range"></circle>`;
       const dots = nearby.map(({ s, d, x, y }) => {
         const isCur = s.index === game.current;
         const isTgt = s.index === game.target;
-        const label = isCur || d <= labelLy ? `<text x="${(x + 7).toFixed(1)}" y="${(y + 4).toFixed(1)}" class="map-label">${s.name}</text>` : "";
+        const label = isCur || d <= maxRangeLy ? `<text x="${(x + 7).toFixed(1)}" y="${(y + 4).toFixed(1)}" class="map-label">${s.name}</text>` : "";
         return `<g class="map-dot" data-sys="${s.index}">
           <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${isCur ? 12 : 10}" class="map-hit"><title>${s.name}</title></circle>
           <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${isCur || isTgt ? 4.4 : 3}" fill="${isCur ? "var(--cyan)" : isTgt ? "var(--amber)" : "var(--green)"}" pointer-events="none"></circle>
@@ -15452,7 +15467,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const from = currentSystem();
       const tgt = targetSystem();
       const mode = game.mapMode === "local" ? "local" : "galaxy";
-      const rangeText = game.developerMode ? "unlimited in developer mode" : "7.0 LY";
+      const rangeText = game.developerMode ? `max unlimited. fuel ${fmt(game.fuel)} LY` : `max 7.0 LY. fuel ${fmt(game.fuel)} LY`;
       const mapHtml = mode === "galaxy"
         ? renderGalaxyMap()
         : `<div class="chart-map-wrap">
