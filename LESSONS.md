@@ -30,6 +30,7 @@ Then consolidate the useful bits into project docs or skills immediately. Digita
 - Build tools when iteration gets repetitive. The Sound Lab turned audio tuning from blind parameter guessing into a collaborative workflow.
 - Preserve known-good behaviours. Old School mode, Classic-style audio, and original Elite fidelity gave useful boundaries when Ultra features expanded.
 - Let the agent push back. Useful friction prevented some bad rabbit holes and clarified what actually needed fixing.
+- Prefer reversible experiments for uncertain visual architecture. Try the smallest test that can prove or disprove an idea, then keep the result that human eyes accept rather than defending the clever theory.
 
 ## Skill Creation Lessons
 
@@ -71,6 +72,7 @@ The useful pattern is not just "write docs"; it is "make the agent maintain the 
 - Validate syntax and whitespace after each pass.
 - Avoid reverting unrelated dirty files.
 - When a system feels repeatedly hard to change, stop and inspect the architecture instead of adding another patch.
+- When model metadata exists, use it deliberately. Do not reinterpret a marker as a behaviour rule without checking the intended rendering flow.
 
 ## Working With Visuals
 
@@ -79,6 +81,7 @@ The useful pattern is not just "write docs"; it is "make the agent maintain the 
 - Subjective look-and-feel needs fast iteration and human eyes.
 - Stable coordinate spaces matter: textures, decals, clouds, rings, and surface details should not rotate with the camera unless deliberately screen-space.
 - Reuse the game renderer for cutscenes/previews when possible. Duplicated rendering logic creates duplicated bugs.
+- Sometimes a deliberately simple visual trick is better than a mathematically grand one. Ultra Elite's Old School wireframe improved when black inset fills masked hidden lines and broke antialiased show-through, producing a more authentic retro look at low cost.
 
 ## Working With Sound
 

@@ -80,6 +80,14 @@ For release/publish passes, use the release skill's multi-script parse check and
 - What worked: using Dan's eyes, ears, and real external tester feedback is better than treating the roadmap as the source of truth.
 - Future note: when a "next up" item becomes accepted through real play testing, move it to Done promptly so planning does not orbit stale work.
 
+### Old School Hidden-Line Renderer
+
+- Achieved: locked in the Old School hidden-line renderer with black inset hull fills, close-range detail/stick LOD, marked protruding edge handling, and acceptable Cougar double-sheet artefacts while preserving excellent Armada performance.
+- How: kept the fix in the shared `drawModelEntity` / `drawProjectedModelHull` path, precomputed double-sided sheet metadata, drew candidate wire edges first, painted inset black hull masks to break antialiased show-through, skipped duplicate marked stick details, and left sheet fills behind a conservative occlusion test.
+- What worked: Dan's simple mental model was the breakthrough: protruding sticks should be drawn first and hidden by masks, not culled by orientation. Small reversible tests exposed which ordering ideas made Cougar worse without risking the stable path.
+- What failed: treating `edgeCullNormals` as a visibility rule was wrong; it is a marker for special protruding edges. The "draw sheet fills first" test restored window-through-wing artefacts and proved average-depth/order-only fixes are not enough for Cougar-style geometry.
+- Future note: for Old School wireframe, prefer cheap black masks and explicit model metadata over clever screen-space guesses. Accept tiny residual retro artefacts when the result is visually strong and performance is excellent.
+
 ## Performance Rules
 
 - Armada mode is the stress test.
