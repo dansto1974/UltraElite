@@ -4090,7 +4090,7 @@
           limiter.ratio.value = 4.2;
           limiter.attack.value = .004;
           limiter.release.value = .22;
-          master.gain.value = .26;
+          master.gain.value = .8;
           master.connect(limiter).connect(ctx.destination);
           buses = {};
           for (const [name, level] of Object.entries(BUS_LEVELS)) {
@@ -7891,8 +7891,9 @@
       renderPanel();
     }
 
-    const GAME_VERSION = "1.0.11-beta";
+    const GAME_VERSION = "1.0.12-beta";
     const UPDATE_LOG = [
+      ["1.0.12-beta", "Audio mix polish: raised the global master level so Ultra mode engines, weapons, station ambience and cinematic transitions come through more clearly."],
       ["1.0.11-beta", "Old School renderer polish: hidden-line ships now use black inset hull fills to mask rear geometry, giving wireframes a sharper, more authentic retro edge while keeping armada performance high."],
       ["1.0.10-beta", "Station lane and trading fix: hyperspace arrivals now start farther from the station, pirate encounters have room to appear, Dodo docking cues are corrected, and market/save exploits are closed."],
       ["1.0.9-beta", "Navigation and chart polish: jump countdowns now frame nearby suns or planets for cinematic flybys while calculating safe clearance, and local charts show clearer range rings and labels."],
