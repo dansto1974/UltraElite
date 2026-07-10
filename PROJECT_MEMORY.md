@@ -69,6 +69,13 @@ For release/publish passes, use the release skill's multi-script parse check and
 - How: kept the player-facing game untouched, updated repo docs only, then validated the new personal skills.
 - Future note: if the roadmap names a reusable skill, either make it real or rename it to the skill that actually exists.
 
+### Small/Medium Roadmap Close-Out
+
+- Achieved: closed out stale next-up items that were already practically done: dynamic LOD/performance testing, hyperspace dust streaks, slide-out panel font cleanup, and Sound Lab/audio polish.
+- How: Dan supplied real usage feedback, including normal 120 FPS and heavy-scene roughly 50 FPS on the development machine, plus acceptance of the hyperspace and audio work. The only small remaining cockpit issue, missile icon alignment, was fixed as a scoped CSS/layout change.
+- What worked: using Dan's eyes, ears, and real external tester feedback is better than treating the roadmap as the source of truth.
+- Future note: when a "next up" item becomes accepted through real play testing, move it to Done promptly so planning does not orbit stale work.
+
 ## Performance Rules
 
 - Armada mode is the stress test.
@@ -76,6 +83,7 @@ For release/publish passes, use the release skill's multi-script parse check and
 - Distant ships can become impostors/dots, but should retain enough glow/colour to read as ships.
 - Avoid per-frame DOM churn in HUD labels, chatter, tooltips, or debug widgets.
 - Safari can be more sensitive to HUD/info-window flicker and canvas state churn.
+- Current performance pass is considered implemented and out for external low-spec testing. Development machine baseline is roughly 120 FPS in normal play and around 50 FPS in heavy normal scenes with sun, planet and multiple ships visible.
 
 ## Audio Rules
 
@@ -95,9 +103,13 @@ For release/publish passes, use the release skill's multi-script parse check and
 
 - Planet/ring/star visuals have separate maths from the mesh renderer and can regress independently.
 - Docking/launch/hangar cameras are easy to make cinematic but hard to keep physically coherent; keep storyboard timing explicit.
+- Station slots are model-specific. Coriolis slot vertices are already in perimeter order, but Dodo station's raw slot vertices must be ordered `20-21-23-22`; using the raw last-four order draws a crossed hourglass portal and corrupts slot-frame maths.
+- BBC Elite does not place the station in the local bubble immediately after hyperspace; `SOLAR` creates planet/sun, and `NWSPS` adds the station only when the player reaches the planet station zone. Ultra Elite keeps stations targetable on arrival, but arrivals should start outside the station safe zone so the lane has room for pirates/traders before docking.
 - Autopilot/docking collision avoidance can accidentally avoid the station itself or orbit the slot.
 - Fuel scooping and collision detection interact; scoopable objects should not be treated like hard blockers when a scoop is fitted.
+- Markets use deterministic generated prices/opening stock, then a saved per-system stock overlay for transactions. Buying must decrement availability and selling must increment it.
 - Solar heat damage should respect shield/energy expectations rather than jumping straight to hull unless deliberately changed.
+- Commander saves are station-state saves, not full in-flight snapshots. Keep save/export disabled unless docked so refresh/load cannot become a free landing.
 - Custom model import from Fusion FBX/OBJ is parked. Fusion remeshed and orientation/winding/detail assumptions were not reliable enough.
 
 ## Release And Publishing

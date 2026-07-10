@@ -12,10 +12,13 @@ Before broad implementation, release, or refactor work, read `PROJECT_MEMORY.md`
 - Pirate bounties — **already in the game**: pirates spawn with 75–175 CR bounties, paid on player kills only. A richer "bounty board" with named marks belongs to Missions below.
 - View switching (fwd/rear/left/right + external chase cam)
 - **V2b renderer convergence** — normal flight, external view, ship preview/library, hangar ships, cargo props and cut-scene ships now share the same `drawModelEntity` / `modelMeshForRender` path, including clipping, culling, solid/wire/detail drawing, decals, engine glows and trails. The final polish removed the last obvious hidden `game.graphicsMode` dependency from solid detail collection and documented the canonical mesh render path in code.
+- **Performance sanity pass** — LOD and dynamic LOD are implemented and out for real-world testing. Early feedback is good: normal play holds around 120 FPS on the development machine, dropping to roughly 50 FPS only under heavy normal loads with sun, planet and multiple ships in view.
+- **Hyperspace dust streaks** — jump visuals now use the desired stretched dust/star motion and are accepted as complete.
+- **Slide-out panel text cleanup** — shared slide-out font sizing is in place and current panel text is consistent enough for now.
+- **Sound Lab / Ultra audio polish** — current sounds are accepted as good, and Sound Lab is updated enough for future preset tweaking without code-first guesswork.
+- **Cockpit missile indicator alignment** — missile icon now sits centred in the left label column and the missile rack spans the same width family as the cockpit bars.
 
 ## Next up (small/medium)
-- **Performance sanity pass** — use `ultra-elite-performance-pass` with Armada/FPS as the stress test before adding heavier systems. Tune LOD, particles and HUD churn without losing motion cues.
-- **Hi-res sound in Ultra, ongoing polish** — `eliteAudio` now has richer Ultra synthesis, beds and transition sounds; keep tuning with Sound Lab presets while preserving Classic-style audio boundaries.
 - **Graphic cockpit, ongoing polish** — Ultra cockpit/HUD frame exists; continue small visual improvements only where they help readability or atmosphere.
 
 ## Project skills / reusable memory

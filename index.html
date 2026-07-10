@@ -996,8 +996,9 @@
     }
 
     .missile-icon svg {
-      width: 100%;
-      height: auto;
+      width: 18px;
+      height: 9px;
+      transform: translateX(-9px);
     }
 
     .missile-slots {
@@ -3055,6 +3056,7 @@
       },
       cargoCap: 20,
       cargo: Object.fromEntries(GOODS.map((g) => [g[0], 0])),
+      marketStock: {},
       equipment: {
         fuelScoop: false,
         ecm: false,
@@ -3276,7 +3278,7 @@
       if (active) fitLaser(active);
     }
 
-    function marketFor(system) {
+    function baseMarketFor(system) {
       return GOODS.map(([name, basePrice, factor, baseQty, mask, unit, illegal]) => {
         const swing = system.marketRand & mask;
         const price = Math.max(1, (basePrice + swing + system.economy * factor) * 0.4);
@@ -3284,6 +3286,32 @@
         const qty = clamp(raw & 63, 0, 63);
         return { name, price, qty, unit, illegal };
       });
+    }
+
+    function marketStockKey(system) {
+      const systemIndex = Number.isFinite(system?.index) ? system.index : game.current;
+      return `${game.galaxy}:${systemIndex}`;
+    }
+
+    function marketStockFor(system) {
+      if (!game.marketStock || typeof game.marketStock !== "object") game.marketStock = {};
+      const key = marketStockKey(system);
+      if (!game.marketStock[key]) {
+        game.marketStock[key] = Object.fromEntries(baseMarketFor(system).map((item) => [item.name, item.qty]));
+      }
+      return game.marketStock[key];
+    }
+
+    function marketFor(system) {
+      const stock = marketStockFor(system);
+      return baseMarketFor(system).map((item) => ({
+        ...item,
+        qty: Math.max(0, Math.trunc(Number(stock[item.name] ?? item.qty) || 0))
+      }));
+    }
+
+    function canUseMarket() {
+      return !!game.docked && !game.transition && !game.jumpCountdown && !game.playerDestroyed;
     }
 
     // --- NPC comms chatter -------------------------------------------------------
@@ -5187,7 +5215,7 @@
       const depth = dot(rel, outward);
       const lateral = len(sub(rel, scale(outward, depth)));
       const slotFacing = Math.abs(Math.sin(st.rot || 0)) < .45;
-      return slotFacing && depth > -130 && depth < 360 && lateral < 130 && game.speed < 95;
+      return slotFacing && depth > -190 && depth < 620 && lateral < 180 && game.speed < 115;
     }
 
     function manualDockingStatus(st, capture = false) {
@@ -5214,9 +5242,9 @@
       const alignment = dot(forwardVector(game.camera), inward);
       const slotOk = Math.abs(Math.sin(st.rot || 0)) < (capture ? .48 : .5);
       const slow = game.speed < (capture ? 82 : 75);
-      const nearDepth = capture ? depth > -95 && depth < 70 : depth > -145 && depth < 340;
-      const nearLateral = lateral < (capture ? 98 : 140);
-      const aligned = alignment > (capture ? .76 : .55);
+      const nearDepth = capture ? depth > -115 && depth < 155 : depth > -145 && depth < 340;
+      const nearLateral = lateral < (capture ? 112 : 140);
+      const aligned = alignment > (capture ? .84 : .68);
       const ok = slotOk && slow && nearDepth && nearLateral && aligned;
       const reason = !slow ? "TOO FAST"
         : !slotOk ? "SLOT ROTATION"
@@ -6025,9 +6053,9 @@
       // Positions/sizes are seeded from the system itself (not the visit), so a system
       // always looks the same when you return to it — matching the original's approach
       // of deriving planet/sun placement from the system seed rather than randomising
-      // it per arrival. Station-to-body distance scales with body radius so apparent
-      // size stays roughly consistent, echoing the original's fixed radius-to-distance
-      // ratio (the planet is always ~2.67 planet-radii from the station).
+      // it per arrival. The original spawns the station later when the ship reaches the
+      // planet station zone; Ultra keeps a targetable station, but places arrivals far
+      // enough away to preserve that lane.
       const rng = mulberry(hash32(`${sys.name}:bodies`));
       // Biome drives deterministic surface rendering. It uses the original Elite
       // system data first, with goat-soup description words as flavour hints.
@@ -6178,6 +6206,14 @@
       return o?.model === "dodoStation" ? MODELS.dodoStation : STATION_MODEL;
     }
 
+    function stationSlotVertexIndices(model) {
+      // Dodo slot edges are 20-21-23-22; raw vertex order is 20-21-22-23,
+      // which draws a crossed hourglass and corrupts slot-frame maths.
+      if (model === MODELS.dodoStation) return [20, 21, 23, 22];
+      const n = model.verts.length;
+      return [n - 4, n - 3, n - 2, n - 1];
+    }
+
     const ROCK_HERMIT_SCENE_CHANCE = 0.04;
 
     function isDockableStructure(o) {
@@ -6186,7 +6222,10 @@
 
     function stationSlotFrame(st) {
       const model = stationModelFor(st);
-      const slot = model.verts.slice(-4).map(([x, y, z]) => vec(x, y, z));
+      const slot = stationSlotVertexIndices(model).map((i) => {
+        const [x, y, z] = model.verts[i];
+        return vec(x, y, z);
+      });
       const centerLocal = scale(slot.reduce((sum, p) => add(sum, p), vec()), 1 / slot.length);
       let normal = faceNormal(slot[0], slot[1], slot[2]);
       if (normal.z < 0) normal = scale(normal, -1);
@@ -6195,6 +6234,14 @@
       const outward = norm(rotatePoint(normal, 0, 0, rot));
       const up = norm(rotatePoint(vec(1, 0, 0), 0, 0, rot));
       return { center, outward, up };
+    }
+
+    function stationPositionForScene(arrival, rng) {
+      // BBC Elite does not place the station in the local bubble immediately after
+      // hyperspace; it appears only once the player reaches the planet's station
+      // zone. Ultra Elite keeps it targetable, but arrivals should still begin
+      // outside the safe zone so the planet lane has room for normal encounters.
+      return arrival ? vec(0, 0, 6600 + rng() * 1800) : vec(0, 0, 900);
     }
 
     function resetFlightScene(arrival = false) {
@@ -6210,11 +6257,12 @@
       // tech level 10+, otherwise the station remains Coriolis.
       const stationModel = devStationModelForSystem(sys);
       const stationStyle = devStationStyleForSystem(sys);
+      const stationPos = stationPositionForScene(arrival, rng);
       game.objects = [
         {
           type: "station", model: stationModel,
           name: `${sys.name} ${stationModel === "dodoStation" ? "DODO STATION" : "STATION"}`,
-          pos: vec(0, 0, 900), basePos: vec(0, 0, 900), rot: 0, rotSpeed: .34, driftPhase: rng() * TAU,
+          pos: stationPos, basePos: { ...stationPos }, rot: 0, rotSpeed: .34, driftPhase: rng() * TAU,
           r: shipStats(stationModel).r, color: stationStyle.base, stationStyle, hp: 9999, hostile: false
         },
         planet,
@@ -6232,7 +6280,7 @@
         const dist = 3600 + hermitRng() * 2200;
         game.objects.push({
           type: "hermit", model: "hermit", name: `${sys.name} ROCK HERMIT`,
-          pos: add(vec(0, 0, 900), scale(dir, dist)),
+          pos: add(stationPos, scale(dir, dist)),
           basePos: null, rot: hermitRng() * TAU, rotSpeed: .07, tumbleRot: .07, tumblePitch: .035, driftPhase: hermitRng() * TAU,
           r: hermitStats.r, color: "#b9a888", hp: 9999, hostile: false
         });
@@ -6240,7 +6288,7 @@
       const count = arrival ? 1 + Math.floor(rng() * 3) : 1 + Math.floor(rng() * 2);
       for (let i = 0; i < count; i++) spawnShip(rng, false);
       game.trafficClock = 5 + rng() * 8;
-      game.extraVesselDelay = (arrival ? 18 : 30) + rng() * 24;
+      game.extraVesselDelay = arrival ? 0 : 30 + rng() * 24;
       const rockCount = Math.floor(rng() * 3);
       for (let i = 0; i < rockCount; i++) spawnAsteroid(rng, vec(0, 0, 0));
       game.stars = Array.from({ length: 264 }, () => {
@@ -7598,9 +7646,16 @@
     }
 
     function buyGood(name) {
-      if (!game.docked) return;
-      const item = marketFor(currentSystem()).find((g) => g.name === name);
-      if (!item || item.qty <= 0) return;
+      if (!canUseMarket()) return;
+      const sys = currentSystem();
+      const stock = marketStockFor(sys);
+      const item = marketFor(sys).find((g) => g.name === name);
+      if (!item || item.qty <= 0) {
+        eliteAudio.play("boop");
+        setMessage(`${name} unavailable.`);
+        renderPanel();
+        return;
+      }
       if (usedCargo() >= game.cargoCap) {
         eliteAudio.play("boop");
         setMessage("Cargo bay full.");
@@ -7613,23 +7668,28 @@
       }
       game.credits -= item.price;
       game.cargo[name]++;
+      stock[name] = Math.max(0, (stock[name] ?? item.qty) - 1);
       eliteAudio.play("beep");
       if (item.illegal && Math.random() > .92) game.legal += 2;
       renderPanel();
     }
 
     function sellGood(name) {
-      if (!game.docked || game.cargo[name] <= 0) return;
-      const item = marketFor(currentSystem()).find((g) => g.name === name);
+      if (!canUseMarket() || game.cargo[name] <= 0) return;
+      const sys = currentSystem();
+      const stock = marketStockFor(sys);
+      const item = marketFor(sys).find((g) => g.name === name);
+      if (!item) return;
       game.cargo[name]--;
       game.credits += item.price;
+      stock[name] = Math.max(0, Math.trunc(Number(stock[name] ?? item.qty) || 0) + 1);
       eliteAudio.play("beep");
       if (item.illegal && Math.random() > .8) game.legal += 1;
       renderPanel();
     }
 
     function buyFuel() {
-      if (!game.docked) return;
+      if (!canUseMarket()) return;
       const needTenths = Math.max(0, Math.round((7 - game.fuel) * 10));
       if (needTenths <= 0) {
         eliteAudio.play("boop");
@@ -7780,8 +7840,9 @@
       renderPanel();
     }
 
-    const GAME_VERSION = "1.0.9-beta";
+    const GAME_VERSION = "1.0.10-beta";
     const UPDATE_LOG = [
+      ["1.0.10-beta", "Station lane and trading fix: hyperspace arrivals now start farther from the station, pirate encounters have room to appear, Dodo docking cues are corrected, and market/save exploits are closed."],
       ["1.0.9-beta", "Navigation and chart polish: jump countdowns now frame nearby suns or planets for cinematic flybys while calculating safe clearance, and local charts show clearer range rings and labels."],
       ["1.0.8-beta", "Ship library polish: unified current ship and library dossiers with values, cleaner lore, blueprint panels and a more readable keyboard help table."],
       ["1.0.7-beta", "Station services polish: refuelling now offers original-style full tanks, with an ashtray-coins partial fill when credits are too low."],
@@ -8059,7 +8120,7 @@ Project Links
 Source code and change history: https://github.com/dansto1974/UltraElite`;
     const SAVE_KEY = "ultraEliteSave";
     const SAVE_FORMAT = "ultra-elite-commander";
-    const SAVE_FIELDS = ["commander", "galaxy", "current", "target", "credits", "fuel", "kills", "legal", "playerShip", "cargoCap", "missiles", "graphicsMode", "fxLevel"];
+    const SAVE_FIELDS = ["commander", "galaxy", "current", "target", "credits", "fuel", "kills", "legal", "playerShip", "cargoCap", "missiles", "graphicsMode", "fxLevel", "marketStock"];
 
     function commanderSaveData() {
       return {
@@ -8067,8 +8128,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         galaxySeedVersion: 2,
         commander: game.commander, galaxy: game.galaxy, current: game.current, target: game.target,
         credits: game.credits, fuel: game.fuel, kills: game.kills, legal: game.legal, playerShip: playerShipModel(), cargoCap: game.cargoCap,
-        cargo: game.cargo, equipment: game.equipment, missiles: game.missiles, graphicsMode: game.graphicsMode, fxLevel: game.fxLevel
+        cargo: game.cargo, equipment: game.equipment, missiles: game.missiles, graphicsMode: game.graphicsMode, fxLevel: game.fxLevel,
+        marketStock: game.marketStock || {}
       };
+    }
+
+    function canSaveCommander() {
+      return !!game.docked && !game.transition && !game.jumpCountdown && !game.playerDestroyed;
     }
 
     function applyCommanderSave(data) {
@@ -8086,6 +8152,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       game.current = clamp(Math.trunc(Number(game.current) || LAVE_INDEX), 0, maxSystem);
       game.target = clamp(Math.trunc(Number(game.target) || DISO_INDEX), 0, maxSystem);
       game.cargo = { ...Object.fromEntries(GOODS.map((g) => [g[0], 0])), ...(data.cargo || {}) };
+      game.marketStock = data.marketStock && typeof data.marketStock === "object" ? data.marketStock : {};
       game.equipment = { ...Object.fromEntries(Object.keys(game.equipment).map((k) => [k, false])), ...(data.equipment || {}) };
       normalizeLaserFit();
       applyPlayerShipStats();
@@ -8107,8 +8174,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function saveGame() {
+      if (!canSaveCommander()) {
+        setMessage("Save unavailable in flight. Dock first.", true);
+        return false;
+      }
       localStorage.setItem(SAVE_KEY, JSON.stringify(commanderSaveData()));
       setMessage("Commander saved to browser storage.", true);
+      return true;
     }
 
     function browserSaveExists() {
@@ -8162,6 +8234,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function downloadCommanderFile() {
+      if (!canSaveCommander()) {
+        setMessage("Commander export unavailable in flight. Dock first.", true);
+        return;
+      }
       downloadText(saveFilename(), JSON.stringify(commanderSaveData(), null, 2));
       setMessage("Commander file downloaded.", true);
     }
@@ -10791,7 +10867,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (!st || st.type !== "station") return;
       const status = manualDockingStatus(st, false);
       const slotPhase = Math.abs(Math.sin(st.rot || 0));
-      const closeEnough = status.depth > -190 && status.depth < 560 && status.lateral < 280 && game.speed < 120 && slotPhase < .68;
+      const closeEnough = status.depth > -190 && status.depth < 560 && status.lateral < 230 && game.speed < 120 && slotPhase < .68 && status.alignment > .48;
       if (!closeEnough) return;
 
       const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
@@ -10799,8 +10875,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const cy = h / 2;
       const r = 43 * dpr;
       const tickLen = 13 * dpr;
-      const alignScore = clamp((status.alignment - .38) / .34, 0, 1);
-      const lateralScore = clamp(1 - status.lateral / 148, 0, 1);
+      const alignScore = clamp((status.alignment - .55) / .3, 0, 1);
+      const lateralScore = clamp(1 - status.lateral / 128, 0, 1);
       const speedScore = clamp(1 - Math.max(0, game.speed - 58) / 28, 0, 1);
       const slotScore = clamp((.58 - slotPhase) / .23, 0, 1);
       const ready = status.ok;
@@ -15108,7 +15184,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         metalAlphaMul: o.stationStyle?.wealth > .72 ? 1.05 : o.stationStyle?.wealth < .32 ? .82 : .95
       });
       if (!rendered) return;
-      const slotVerts = rendered.camVerts.slice(-4);
+      const slotVerts = stationSlotVertexIndices(rendered.model).map((i) => rendered.camVerts[i]);
       const [slotA, slotB, slotC, slotD] = slotVerts.map((p) => project(p, w, h));
       // The portal is painted on top of the hull (no depth buffer), so gate it on the
       // slot face actually pointing at the camera — otherwise it shows through the
@@ -15366,19 +15442,21 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function renderMarket() {
-      const disabled = game.docked ? "" : "disabled";
+      const marketOpen = canUseMarket();
+      const disabled = marketOpen ? "" : "disabled";
       const fuelNeedTenths = Math.max(0, Math.round((7 - game.fuel) * 10));
       const fuelFullCost = fuelNeedTenths * 0.2;
-      const fuelDisabled = !game.docked || fuelNeedTenths <= 0 || game.credits < 0.2 ? "disabled" : "";
+      const fuelDisabled = !marketOpen || fuelNeedTenths <= 0 || game.credits < 0.2 ? "disabled" : "";
       const fuelLabel = fuelNeedTenths <= 0 ? "Fuel Tanks Full" : `Refuel to Full (${fmt(fuelFullCost)} CR)`;
       let rows = marketFor(currentSystem()).map((item) => {
         const cargo = game.cargo[item.name] || 0;
+        const buyDisabled = disabled || item.qty <= 0 || usedCargo() >= game.cargoCap || game.credits < item.price ? "disabled" : "";
         return `<tr>
           <td class="${item.illegal ? "illegal" : ""}">${item.name}</td>
           <td>${fmt(item.price)}</td>
           <td>${item.qty}${item.unit}</td>
           <td>${cargo}</td>
-          <td><button class="btn mini" data-buy="${item.name}" ${disabled}>Buy</button></td>
+          <td><button class="btn mini" data-buy="${item.name}" ${buyDisabled}>Buy</button></td>
           <td><button class="btn mini" data-sell="${item.name}" ${disabled || cargo <= 0 ? "disabled" : ""}>Sell</button></td>
         </tr>`;
       }).join("");
@@ -15598,6 +15676,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function renderStatus() {
+      const saveDisabled = canSaveCommander() ? "" : "disabled";
       return `<div class="grid2">
         ${stat("Commander", game.commander)}
         ${stat("Rating", rankName())}
@@ -15613,10 +15692,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ${stat("Docked", game.docked ? "Yes" : "No")}
       </div>
       <div class="notice save-actions">
-        <button class="btn" data-save>Save Browser Save</button>
+        <button class="btn" data-save ${saveDisabled}>Save Browser Save</button>
         <button class="btn" data-load ${browserSaveExists() ? "" : "disabled"}>Load Browser Save</button>
         <button class="btn danger" data-delete-save ${browserSaveExists() ? "" : "disabled"}>Delete Browser Save</button>
-        <button class="btn" data-download-save>Download Commander</button>
+        <button class="btn" data-download-save ${saveDisabled}>Download Commander</button>
         <label class="btn" for="commanderFileInput">Upload Commander</label>
         <input id="commanderFileInput" type="file" accept="application/json,.json,.txt" data-upload-save style="display:none">
       </div>`;
