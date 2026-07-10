@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ultra Elite - Browser Experiment</title>
+  <style>
+__ULTRA_ELITE_CSS__
+  </style>
+</head>
+<body>
+  <div class="desktop-only-message" role="status" aria-live="polite">
+    <div class="desktop-only-box">
+      <strong>Desktop Required</strong>
+      Ultra Elite needs a desktop-sized browser with a keyboard. Please open it on a laptop or desktop machine.
+    </div>
+  </div>
+  <div id="splash" role="dialog" aria-label="Ultra Elite">
+    <svg width="440" height="92" viewBox="0 0 220 46" aria-hidden="true">
+      <line x1="4" y1="4" x2="20" y2="4" stroke="var(--green)" stroke-width="1.4"></line>
+      <line x1="4" y1="4" x2="4" y2="20" stroke="var(--green)" stroke-width="1.4"></line>
+      <line x1="216" y1="4" x2="200" y2="4" stroke="var(--green)" stroke-width="1.4"></line>
+      <line x1="216" y1="4" x2="216" y2="20" stroke="var(--green)" stroke-width="1.4"></line>
+      <line x1="4" y1="42" x2="20" y2="42" stroke="var(--green)" stroke-width="1.4"></line>
+      <line x1="4" y1="42" x2="4" y2="26" stroke="var(--green)" stroke-width="1.4"></line>
+      <line x1="216" y1="42" x2="200" y2="42" stroke="var(--green)" stroke-width="1.4"></line>
+      <line x1="216" y1="42" x2="216" y2="26" stroke="var(--green)" stroke-width="1.4"></line>
+      <text x="110" y="28" text-anchor="middle" font-family="monospace" font-size="18" letter-spacing="5" fill="var(--amber)">ULTRA ELITE</text>
+    </svg>
+    <div class="splash-version">v<span id="splashVersion"></span></div>
+    <div class="getting-started" id="gettingStarted" hidden>
+      <strong>Getting Started</strong>
+      <ul>
+        <li>Launch from Lave Station, steer with W/A/S/D and Q/E, and use +/- for speed.</li>
+        <li>Buy cargo in Market, pick a nearby system on the chart, then use Jump when clear.</li>
+        <li>Keep an eye on shields, energy, laser heat, cabin temperature and fuel.</li>
+        <li>Dock by flying slowly through the station slot when it is aligned, or use Auto Dock if fitted.</li>
+        <li>Open the right-hand panel with the arrow tab and choose Help for full controls and the update log.</li>
+      </ul>
+    </div>
+    <div class="splash-prompt">PRESS ANY KEY TO START</div>
+    <div class="splash-legal">
+      <strong>Legal Notice & Credits:</strong>
+      A non-commercial open-source fan tribute for educational, archival, and entertainment purposes.
+      Elite (1984) is the property of David Braben and Ian Bell; the Elite trademark and modern franchise assets are owned by Frontier Developments plc.
+      Not affiliated with, endorsed by, or sponsored by those parties. Source: <a href="https://github.com/dansto1974/UltraElite" target="_blank" rel="noopener">github.com/dansto1974/UltraElite</a>. Please support the official modern space simulation, Elite Dangerous.
+    </div>
+  </div>
+  <div id="app">
+    <main class="main">
+      <section class="view-wrap" aria-label="Flight view">
+        <canvas id="space" width="1280" height="720"></canvas>
+        <svg class="cockpit-frame" viewBox="0 0 1000 600" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <radialGradient id="cockpitVignette" cx="50%" cy="48%" r="72%">
+              <stop offset="54%" stop-color="#000000" stop-opacity="0"></stop>
+              <stop offset="100%" stop-color="#000000" stop-opacity=".42"></stop>
+            </radialGradient>
+            <linearGradient id="cockpitShell" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#161c18" stop-opacity=".54"></stop>
+              <stop offset=".52" stop-color="#020403" stop-opacity=".78"></stop>
+              <stop offset="1" stop-color="#000000" stop-opacity=".92"></stop>
+            </linearGradient>
+            <linearGradient id="consoleSheen" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#1e2621" stop-opacity=".58"></stop>
+              <stop offset=".38" stop-color="#000000" stop-opacity=".62"></stop>
+              <stop offset=".72" stop-color="#0e1611" stop-opacity=".7"></stop>
+              <stop offset="1" stop-color="#000000" stop-opacity=".9"></stop>
+            </linearGradient>
+          </defs>
+          <rect class="glass-vignette" x="0" y="0" width="1000" height="600"></rect>
+          <path class="shell-fill" d="M0 0 H1000 V600 H0 Z M74 58 H212 L276 108 H724 L788 58 H926 L842 472 H158 Z"></path>
+          <path class="console-fill" d="M102 600 L176 494 H824 L898 600 Z"></path>
+          <path class="rail" d="M26 26 H212 L270 74 H730 L788 26 H974"></path>
+          <path class="rail" d="M88 560 L188 430 H812 L912 560"></path>
+          <path class="rail-soft" d="M130 516 L218 414 H782 L870 516"></path>
+          <path class="rail-soft" d="M196 494 H804 M260 466 H740 M318 438 H682"></path>
+          <path class="rail-amber" d="M418 506 H582 M454 526 H546"></path>
+          <path class="rail-amber" d="M72 54 H146 M854 54 H928 M36 108 V170 M964 108 V170"></path>
+        </svg>
+        <div class="top-readout">
+          <div>
+            <div>COMMANDER <span id="roCommander">JAMESON</span></div>
+            <div>CREDITS <span id="roCredits">100.0</span></div>
+            <div>LEGAL <span id="roLegal">CLEAN</span></div>
+          </div>
+          <div class="center">
+            <div id="roLockDist">LOCK --</div>
+          </div>
+          <div class="right">
+            <div>TARGET <span id="roTarget">NONE</span></div>
+            <div>SYSTEM <span id="roSystem">LAVE</span></div>
+            <div>DIST <span id="roDistance">--</span></div>
+          </div>
+        </div>
+        <div class="crosshair" aria-hidden="true"></div>
+        <div class="comms-log" id="commsLog" aria-live="polite"></div>
+        <div class="hud-actions" aria-label="Flight actions">
+          <button class="btn mini primary" id="launchBtn">Launch</button>
+          <button class="btn mini" id="jumpBtn">Jump</button>
+          <button class="btn mini" id="autoDockBtn">Auto Dock</button>
+          <button class="btn mini warn" id="galJumpBtn">Galactic</button>
+          <button class="btn mini mode-toggle" id="modeSwitchBtn" aria-label="Toggle presentation mode" aria-pressed="true">Old School</button>
+        </div>
+        <div class="hud-settings" id="hudSettings" aria-label="Display and audio settings">
+          <div class="hud-volume" id="volumeControl" aria-label="Global volume">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 10h4l5-4v12l-5-4H4z"></path>
+              <path class="speaker-wave" d="M16 9c1 1 1 5 0 6"></path>
+              <path class="speaker-wave outer" d="M19 6c2.4 3 2.4 9 0 12"></path>
+            </svg>
+            <input id="volumeSlider" type="range" min="0" max="100" step="1" value="80" aria-label="Global volume">
+            <span class="volume-value" id="volumeValue">80</span>
+          </div>
+          <div class="hud-brightness" id="brightnessControl" aria-label="Global brightness">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="3.2"></circle>
+              <path class="brightness-ray inner" d="M12 3.5v2.1M12 18.4v2.1M3.5 12h2.1M18.4 12h2.1"></path>
+              <path class="brightness-ray outer" d="M6 6l1.5 1.5M16.5 16.5L18 18M18 6l-1.5 1.5M7.5 16.5L6 18"></path>
+            </svg>
+            <input id="brightnessSlider" type="range" min="60" max="140" step="1" value="100" aria-label="Global brightness">
+            <span class="brightness-value" id="brightnessValue">100</span>
+          </div>
+        </div>
+        <section class="dashboard" aria-label="Ship dashboard">
+          <div class="dash-section">
+            <div class="bar-row hud-tip" data-help="Forward shield strength. Hits from ahead drain this before energy banks."><span>FS</span><div class="bar"><div class="fill cyan" id="barForeShield"></div></div><span id="txtForeShield">100%</span></div>
+            <div class="bar-row hud-tip" data-help="Aft shield strength. Pursuit fire and rear missile impacts hit this bank first."><span>AF</span><div class="bar"><div class="fill cyan" id="barAftShield"></div></div><span id="txtAftShield">100%</span></div>
+            <div class="bar-row hud-tip" data-help="Fuel volume in light years. Fuel scoops refill near stars, but heat rises quickly."><span>FV</span><div class="bar"><div class="fill" id="barFuel"></div></div><span id="txtFuel">7.0</span></div>
+            <div class="bar-row hud-tip" data-help="Cabin temperature. Solar heat rises sharply near the star and can damage the hull."><span>CT</span><div class="bar heat-bar"><div class="fill heat" id="barCabinTemp"></div></div><span id="txtCabinTemp">0%</span></div>
+            <div class="bar-row heat-row hud-tip" data-help="Laser temperature. Original-style lasers fire normally until overheated, then wait for cooling."><span>LT</span><div class="bar heat-bar"><div class="fill heat" id="barLaserHeat"></div></div><span id="txtLaserHeat">0%</span></div>
+            <div class="bar-row hud-tip" data-help="Altitude above nearest planet surface. Low altitude warns amber then red."><span>AL</span><div class="bar"><div class="fill" id="barAltitude"></div></div><span id="txtAltitude">--</span></div>
+            <div class="missile-row hud-tip" data-help="Missile bank. Bright cells are loaded missiles; dark cells are empty racks."><span class="missile-icon" aria-label="Missiles"><svg viewBox="0 0 26 12" width="26" height="12" aria-hidden="true"><g fill="var(--green)"><rect x="5" y="4" width="12" height="4"/><polygon points="17,4 24,6 17,8"/><polygon points="5,4 5,1 9,4"/><polygon points="5,8 5,11 9,8"/></g></svg></span><div class="missile-slots" id="missileSlots"><span class="missile-slot"></span><span class="missile-slot"></span><span class="missile-slot"></span><span class="missile-slot"></span></div><span class="missile-value-spacer" aria-hidden="true"></span></div>
+          </div>
+          <div class="dash-section">
+            <div class="scanner-wrap">
+              <canvas id="scanner" width="520" height="104"></canvas>
+              <canvas id="foreAftRadar" width="104" height="104" aria-label="Forward and rear radar"></canvas>
+            </div>
+          </div>
+          <div class="dash-section">
+            <div class="bar-row hud-tip" data-help="Current speed as a fraction of maximum cruise speed."><span>SP</span><div class="bar"><div class="fill" id="barSpeed"></div></div><span id="txtSpeed">0</span></div>
+            <div class="bar-row hud-tip" data-help="Roll rate. The amber mark is neutral centre."><span>RL</span><div class="bar center-bar"><div class="fill center-fill" id="barRoll"></div></div><span id="txtRoll">0</span></div>
+            <div class="bar-row hud-tip" data-help="Dive/climb rate. Positive values climb, negative values dive."><span>DC</span><div class="bar center-bar"><div class="fill center-fill" id="barPitch"></div></div><span id="txtPitch">0</span></div>
+            <div class="bar-row hud-tip" data-help="Yaw rate. The amber mark is neutral centre."><span>Y</span><div class="bar center-bar"><div class="fill center-fill" id="barYaw"></div></div><span id="txtYaw">0</span></div>
+            <div class="bar-row hud-tip" data-help="Energy bank 1. Shields draw recharge power from these banks."><span>1</span><div class="bar"><div class="fill" id="barEnergy1"></div></div><span id="txtEnergy1">100</span></div>
+            <div class="bar-row hud-tip" data-help="Energy bank 2. Lower banks empty as hull energy falls."><span>2</span><div class="bar"><div class="fill" id="barEnergy2"></div></div><span id="txtEnergy2">100</span></div>
+            <div class="bar-row hud-tip" data-help="Energy bank 3. Extra Energy Unit improves recharge rate."><span>3</span><div class="bar"><div class="fill" id="barEnergy3"></div></div><span id="txtEnergy3">100</span></div>
+            <div class="bar-row hud-tip" data-help="Energy bank 4. If all banks drain, the ship is destroyed."><span>4</span><div class="bar"><div class="fill" id="barEnergy4"></div></div><span id="txtEnergy4">100</span></div>
+          </div>
+        </section>
+        <div class="screen-flash" id="flash"></div>
+      </section>
+
+      <aside class="side" id="sidePanel">
+        <button class="btn mini side-toggle" id="panelToggle" aria-expanded="false" aria-controls="panelBody" aria-label="Show panel" title="Show panel">
+          <span class="toggle-arrows" aria-hidden="true"></span>
+        </button>
+        <nav class="tabs" aria-label="Panels">
+          <button class="btn" data-panel="market">Market</button>
+          <button class="btn" data-panel="chart">Chart</button>
+          <button class="btn" data-panel="equip">Equip</button>
+          <button class="btn" data-panel="status">Status</button>
+          <button class="btn" data-panel="ship">Ship</button>
+          <button class="btn" data-panel="library">Library</button>
+          <button class="btn" data-panel="help">Help</button>
+          <button class="btn active" data-panel="about">About</button>
+          <button class="btn" data-panel="cheats" data-dev-only hidden>Dev</button>
+        </nav>
+        <section class="panel">
+          <div class="panel-head">
+            <span id="panelTitle">About</span>
+            <span id="panelSub">Docked at Lave Station</span>
+          </div>
+          <div class="panel-body" id="panelBody"></div>
+        </section>
+      </aside>
+    </main>
+
+    <footer class="message-line">
+      <span>&gt;</span>
+      <div id="message">Welcome, Commander. Trade, launch, fight, dock, and try not to become expensive wreckage.</div>
+      <div class="perf-ticker" id="perfTicker" hidden></div>
+    </footer>
+  </div>
+
+  <script>
+__ULTRA_ELITE_JS__
+  </script>
+</body>
+</html>

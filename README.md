@@ -1,11 +1,36 @@
 # Ultra Elite
 
-A browser-based, non-commercial fan tribute to the original 1984 space trading game, built as a single HTML file with a modern Ultra spin.
+A browser-based, non-commercial fan tribute to the original 1984 space trading game. Ultra Elite is developed from modular local source files and built into a single-file browser release.
 
 - Play: [www.ultraelite.co.uk](https://www.ultraelite.co.uk)
 - Source: [github.com/dansto1974/UltraElite](https://github.com/dansto1974/UltraElite)
-- Current version: `1.0.0-beta`
-- Main file: `index.html`
+- Current version: `1.0.13-beta`
+- Release file: `index.html`
+- Local dev entry: `dev.html`
+
+## Development Structure
+
+Ultra Elite still publishes as a generated single `index.html` file, but day-to-day development now uses modular local source files:
+
+- `src/main.js` contains the game logic, renderer, data, UI and audio source.
+- `src/game.css` contains the game styling.
+- `src/index.template.html` is the template used to generate the deployable single-file page.
+- `dev.html` is a generated local development shell that loads the CSS and JavaScript as separate files.
+- `tools/build/` contains the build and validation scripts.
+- `tools/ship-builder/` contains the local Ultra Elite ship authoring tool.
+- `tools/sound-lab/` contains the local procedural sound design tool.
+
+Useful commands:
+
+```bash
+npm run check
+npm run build
+npm run dev
+```
+
+`npm run check` validates the modular source and single-file build safety rules. `npm run build` regenerates both `index.html` and `dev.html`. `npm run dev` serves the project locally at [http://127.0.0.1:8765](http://127.0.0.1:8765).
+
+For local development, use `dev.html`. For release testing and publishing, use the generated `index.html`. The public website should receive only `index.html` unless a future release deliberately adds more deployable assets.
 
 ## About
 
@@ -189,9 +214,9 @@ Again, essential.
 
 ## One Webpage, No Sensible Limits
 
-The resulting game, now called Ultra Elite, is entirely open source and, rather improbably, remains contained within a single webpage: one HTML file containing its JavaScript, rendering code, game logic, ship data, procedural-generation system, audio, animations and all the other machinery required to make it work.
+The resulting game, now called Ultra Elite, is entirely open source and still publishes, rather improbably, as a single webpage: one generated HTML file containing its JavaScript, rendering code, game logic, ship data, procedural-generation system, audio, animations and all the other machinery required to make it work.
 
-That single file is now around 500KB and contains roughly 11,500 lines of code, which is either impressively compact or evidence that I have completely lost control of the project.
+The development source has since been split into normal local JavaScript, CSS and template files, because even nostalgia has limits. The release build is still a single HTML file, now around 800KB and roughly 18,000 generated lines, which is either impressively compact or evidence that I have completely lost control of the project.
 
 Despite all the textures, lighting, reflections, engine glows, atmospheric planets, supernovas and cinematic sequences, Ultra Elite still includes an old-school mode.
 
@@ -225,7 +250,7 @@ There are still bugs to eliminate, systems to balance and features that could be
 
 There are also, almost certainly, several more entirely unnecessary visual effects waiting to be added.
 
-But it is already playable, surprisingly satisfying and, considering that it runs from a single 500KB HTML file assembled in five days, I think it looks rather good.
+But it is already playable, surprisingly satisfying and, considering that the public release still runs from one generated HTML file, I think it looks rather good.
 
 I have also tested it extremely thoroughly.
 
@@ -245,11 +270,15 @@ More than forty years later, I am still staying up all night because of the same
 
 ## Running Locally
 
-Open `index.html` directly in a desktop browser, or serve the directory with a static server:
+For ordinary play, open `index.html` directly in a desktop browser.
+
+For development, use the modular local shell:
 
 ```bash
-python3 -m http.server
+npm run dev
 ```
+
+Then open [http://127.0.0.1:8765/dev.html](http://127.0.0.1:8765/dev.html). To test the exact single-file release artefact, open [http://127.0.0.1:8765/index.html](http://127.0.0.1:8765/index.html) after running `npm run build`.
 
 The game is currently designed for desktop. Mobile displays show a desktop-only message rather than trying to squeeze the cockpit into a tiny viewport.
 
@@ -258,11 +287,11 @@ The game is currently designed for desktop. Mobile displays show a desktop-only 
 - Deterministic Elite-style galaxy generation across eight galaxies and 256 systems each.
 - Original-style markets, cargo, fuel, equipment, legal status, bounties, docking, hyperspace, galactic jumps and commander saves.
 - BBC-inspired system names, economy/government/population/species data and procedural descriptions.
-- A source-informed ship roster using original-style hull data baked directly into `index.html`.
+- A source-informed ship roster using original-style hull data baked into the generated release file.
 - Ultra and Old School presentation presets: modern textured shaded rendering or crisp wireframe nostalgia.
 - Solid shaded ships, stations, planets and stars with sun-based lighting, fixed object-space hull textures and cockpit glass.
 - Procedural planets that reflect system descriptions, including agricultural worlds, industrial worlds, rocky barren worlds, gas giants, rings, debris fields, polar caps, city lights, clouds and craters.
-- Varied stars including dwarfs, giants and crackled red giants, with local lens flare and background starfields.
+- Varied stars following broad O/B/A/F/G/K/M-inspired colour and scale cues, including bright dwarfs, larger giants, local lens flare and background starfields.
 - A modern cockpit/HUD with scanner, compass, shields, energy banks, speed/steering bars, cabin temperature, laser temperature and typed comms chatter.
 - Combat with differentiated lasers, overheating, finite missiles, ECM, energy bombs, target prioritisation, ship-specific hit volumes, collision bounce and station no-fire consequences.
 - NPC AI roles for traders, pirates, police and aliens, including fleeing, police response, station traffic, docking-computer traffic avoidance and Thargoid/Thargon encounters.
@@ -271,8 +300,17 @@ The game is currently designed for desktop. Mobile displays show a desktop-only 
 - Cinematic hyperspace, galactic jumps, hangar launch/docking, escape-pod death sequences and game-over flow.
 - Local browser saves plus commander import/export, with browser-save deletion in the status tools.
 - Developer mode hidden behind the `D` + `E` + `V` key chord, with ship swapping, equipment controls, armada testing and unrestricted map jumps.
+- Local build, sound-design and ship-builder tools for developing the project without hand-editing one enormous inline HTML file.
 
 ## Change Log
+
+### 1.0.13-beta
+
+- Moved day-to-day development to modular source files while preserving the generated single-file browser release.
+- Added a local Ultra Elite ship-builder workshop for authoring project-native ship models, metadata, surface details and hidden craft.
+- Added Diamondback as the first hidden ship-builder import, replacing the earlier Boomslang test craft.
+- Improved ship-builder panel-line authoring so surface panel lines can be selected, mirrored, deleted individually and inset without leaving the workflow.
+- Updated the public README to describe the new build structure and local tools.
 
 ### 1.0.0-beta
 
@@ -312,7 +350,7 @@ The game is currently designed for desktop. Mobile displays show a desktop-only 
 - Added procedural planets tied to system data and descriptions: oceans, landmasses, ice caps, clouds, city lights, rocky worlds, industrial pollution, gas giants, storms, debris rings and asteroid/debris fields.
 - Reworked planet lighting with real sun-facing hard terminators, subtle atmosphere and world-space cloud/surface projection to prevent roll-linked texture bugs.
 - Added larger, shaded rings made from transparent 3D line bands with planet shadowing.
-- Added varied star types including red giants, white dwarfs and crackled red giants, then moved dangerous large stars farther away from stations.
+- Added varied star types including red giants, white dwarfs and larger stellar classes, then moved dangerous large stars farther away from stations.
 - Added local star lens flare, background star dots and moving space-dust streaks for speed reference.
 - Fixed starfield recycling so background motion remains stable while turning.
 
@@ -349,9 +387,7 @@ The game is currently designed for desktop. Mobile displays show a desktop-only 
 - Removed old OBJ export/external loading UI from normal play.
 - Added the Ultra Elite release skill for update-log/version/commit/publish workflow.
 
-## Roadmap
-
-Near-term ideas from `ROADMAP.md`:
+## Possible Next Directions
 
 - Higher-resolution Ultra-mode sound synthesis while keeping classic chip-style sounds available.
 - Further cockpit polish and side/rear view framing.

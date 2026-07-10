@@ -1,0 +1,10 @@
+{
+  "name": "ultra-elite",
+  "private": true,
+  "version": "1.0.13-beta",
+  "scripts": {
+    "check": "node tools/build/check.mjs",
+    "build": "node tools/build/build-single-file.mjs",
+    "dev": "python3 -m http.server 8765"
+  }
+}

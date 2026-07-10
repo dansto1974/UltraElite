@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ultra Elite Ship Builder</title>
+  <link rel="stylesheet" href="ship-builder.css">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Ultra Elite Workshop</p>
+        <h1>Ship Builder</h1>
+      </div>
+      <div class="top-actions">
+        <button id="newWedgeBtn" class="primary">New Wedge</button>
+        <div class="library-load">
+          <span>Library</span>
+          <select id="librarySelector"></select>
+          <button id="loadLibraryModelBtn">Load</button>
+        </div>
+        <button id="toggleExportBtn">Show Export</button>
+        <button id="downloadBtn">Download Ship</button>
+        <button id="copyBtn">Copy Export</button>
+      </div>
+    </header>
+
+    <section id="workspace" class="workspace export-hidden">
+      <aside id="toolsPanel" class="panel tools" data-mode="vertex">
+        <h2>Selection</h2>
+        <div id="selectionReadout" class="readout">Nothing selected</div>
+        <div class="button-grid">
+          <button data-mode="vertex" class="mode-btn active">Vertex</button>
+          <button data-mode="face" class="mode-btn">Face</button>
+          <button data-mode="edge" class="mode-btn">Edge</button>
+          <button data-mode="detail" class="mode-btn">Detail</button>
+        </div>
+        <section class="action-window">
+          <div class="mode-help mode-help-vertex">
+            <h2>Vertex Actions</h2>
+            <p>Click vertices to select/toggle them. Use sliders to move the active yellow vertex. Picked vertices are cyan.</p>
+          </div>
+          <div class="mode-help mode-help-face">
+            <h2>Face Actions</h2>
+            <p>Pick 3+ vertices to create a face, or select an existing face to flip/delete/edit its vertex list.</p>
+          </div>
+          <div class="mode-help mode-help-edge">
+            <h2>Edge Actions</h2>
+            <p>Pick 2 vertices to create a visible edge or protruding stick. Select an edge to delete it.</p>
+          </div>
+          <div class="mode-help mode-help-detail">
+            <h2>Detail Actions</h2>
+            <p>Select a face, then add a window, engine or panel mark. Select an existing detail to edit inset/colour or delete it.</p>
+          </div>
+        </section>
+
+        <div class="pick-context">
+          <div id="pickList" class="pick-list"></div>
+          <div class="button-grid compact-actions">
+            <button id="clearSelectionBtn">Clear Picks</button>
+          </div>
+        </div>
+
+        <label class="toggle mirror-toggle"><input id="mirrorNewGeometry" type="checkbox" checked> Mirror actions</label>
+
+        <div class="mode-panel mode-panel-vertex">
+          <h2>Point Controls</h2>
+          <div class="axis-grid">
+            <button data-axis="x" class="axis-btn active">X</button>
+            <button data-axis="y" class="axis-btn">Y</button>
+            <button data-axis="z" class="axis-btn">Z</button>
+          </div>
+          <div class="slider-stack">
+            <label>X <input id="xSlider" type="range" min="-240" max="240" step="1"><input id="xValue" type="number" step="1"></label>
+            <label>Y <input id="ySlider" type="range" min="-240" max="240" step="1"><input id="yValue" type="number" step="1"></label>
+            <label>Z <input id="zSlider" type="range" min="-260" max="260" step="1"><input id="zValue" type="number" step="1"></label>
+          </div>
+          <div class="button-grid">
+            <button id="addPointBtn">Add Point Pair</button>
+            <button id="addCenterPointBtn">Add Centre Point</button>
+            <button id="deleteSelectionBtn">Delete Vertex</button>
+          </div>
+        </div>
+
+        <div class="mode-panel mode-panel-face">
+          <h2>Face Tools</h2>
+          <div class="button-grid">
+            <button id="addFaceBtn">Add Face From Picks</button>
+            <button id="appendFacePointBtn">Add Picks To Face</button>
+            <button id="removeFacePointBtn">Remove Picks From Face</button>
+            <button id="flipFaceBtn">Flip Face</button>
+            <button id="deleteFaceBtn">Delete Face</button>
+          </div>
+        </div>
+
+        <div class="mode-panel mode-panel-edge">
+          <h2>Edge / Stick Tools</h2>
+          <div class="button-grid">
+            <button id="addEdgeBtn">Add Edge From Picks</button>
+            <button id="addStickBtn">Add Stick From Picks</button>
+            <button id="splitEdgeBtn">Split + Triangulate</button>
+            <button id="deleteEdgeBtn">Delete Edge</button>
+          </div>
+        </div>
+
+        <div class="mode-panel mode-panel-detail">
+          <h2>Surface Detail Tools</h2>
+          <div class="button-grid">
+            <button id="addWindowBtn">Add Window</button>
+            <button id="addEngineBtn">Add Engine</button>
+            <button id="addPanelBtn">Add Panel Line</button>
+            <button id="deleteDetailBtn">Delete Detail</button>
+          </div>
+          <div class="detail-controls">
+            <label>Detail Inset <input id="detailInset" type="range" min="0.15" max="0.9" step="0.01"></label>
+            <label>Detail Colour <input id="detailColor" type="color" value="#101915"></label>
+          </div>
+        </div>
+
+        <h2>Model</h2>
+        <label>Ship Id <input id="shipId" value="custom_wedge" spellcheck="false"></label>
+        <label>Display Name <input id="shipName" value="Custom Wedge" spellcheck="false"></label>
+        <label>Description
+          <textarea id="shipDescription" rows="4" spellcheck="true" placeholder="Short ship-library lore or mission note."></textarea>
+        </label>
+        <div class="stats">
+          <span id="vertexCount">0 vertices</span>
+          <span id="faceCount">0 faces</span>
+          <span id="edgeCount">0 edges</span>
+        </div>
+
+        <h2>Game Info</h2>
+        <label>Ship Class
+          <select id="shipClass">
+            <option value="fighter">Fighter</option>
+            <option value="trader">Trader</option>
+            <option value="hauler">Hauler</option>
+            <option value="interceptor">Interceptor</option>
+            <option value="alien">Alien</option>
+            <option value="utility">Utility</option>
+            <option value="station">Station / Outpost</option>
+            <option value="mission">Mission / Easter Egg</option>
+          </select>
+        </label>
+        <label>NPC Role
+          <select id="npcRole">
+            <option value="private">Private</option>
+            <option value="trader">Trader</option>
+            <option value="pirate">Pirate</option>
+            <option value="police">Police</option>
+            <option value="alien">Alien</option>
+            <option value="pod">Pod / Rescue</option>
+            <option value="object">Object</option>
+          </select>
+        </label>
+        <label>AI Profile
+          <select id="aiProfile">
+            <option value="standard">Standard</option>
+            <option value="timid">Timid / Flees</option>
+            <option value="trader">Trader</option>
+            <option value="pirate">Pirate</option>
+            <option value="bountyHunter">Bounty Hunter</option>
+            <option value="police">Police</option>
+            <option value="alien">Alien</option>
+            <option value="inert">Inert / Cargo</option>
+          </select>
+        </label>
+        <label>Decal Style
+          <select id="decalRole">
+            <option value="private">Private</option>
+            <option value="trader">Trader</option>
+            <option value="hauler">Commercial Hauler</option>
+            <option value="pirate">Pirate Sigils</option>
+            <option value="police">Police</option>
+            <option value="alien">Alien</option>
+            <option value="none">None</option>
+          </select>
+        </label>
+        <div class="meta-grid">
+          <label>Value CR <input id="shipValue" type="number" min="0" step="100" value="250000"></label>
+          <label>Hull HP <input id="shipHp" type="number" min="1" step="1" value="120"></label>
+          <label>Speed Mul <input id="speedMul" type="number" min="0" max="3" step="0.01" value="1.00"></label>
+          <label>Cargo t <input id="cargoTons" type="number" min="0" step="1" value="10"></label>
+          <label>Missiles <input id="missileCount" type="number" min="0" max="8" step="1" value="1"></label>
+          <label>Laser
+            <select id="laserClass">
+              <option value="none">None</option>
+              <option value="pulse">Pulse</option>
+              <option value="beam">Beam</option>
+              <option value="military">Military</option>
+              <option value="mining">Mining</option>
+              <option value="alien">Alien</option>
+            </select>
+          </label>
+        </div>
+        <div class="flag-grid">
+          <label class="toggle"><input id="flagTrader" type="checkbox" checked> Trader list</label>
+          <label class="toggle"><input id="flagPirate" type="checkbox" checked> Pirate list</label>
+          <label class="toggle"><input id="flagPolice" type="checkbox"> Police list</label>
+          <label class="toggle"><input id="flagAlien" type="checkbox"> Alien list</label>
+          <label class="toggle"><input id="flagEscapePod" type="checkbox" checked> Can eject pod</label>
+          <label class="toggle"><input id="flagHidden" type="checkbox"> Hidden until discovered</label>
+        </div>
+      </aside>
+
+      <section class="panel stage">
+        <div class="view-head">
+          <div>
+            <h2>Live Preview</h2>
+            <p>Drag the main view to rotate. Wheel to zoom. Click points/faces/edges in any view.</p>
+          </div>
+          <div class="view-actions">
+            <button id="resetViewBtn">Reset View</button>
+            <button id="fitViewBtn">Fit</button>
+          </div>
+        </div>
+        <canvas id="mainView" width="1120" height="680"></canvas>
+        <div class="ortho-grid">
+          <article>
+            <h3>Top X/Z</h3>
+            <canvas data-view="top" width="360" height="240"></canvas>
+          </article>
+          <article>
+            <h3>Front X/Y</h3>
+            <canvas data-view="front" width="360" height="240"></canvas>
+          </article>
+          <article>
+            <h3>Side Z/Y</h3>
+            <canvas data-view="side" width="360" height="240"></canvas>
+          </article>
+        </div>
+      </section>
+
+      <aside id="exportPanel" class="panel export-panel is-hidden">
+        <h2>Export</h2>
+        <p class="hint">Builder JSON keeps editable faces. Blueprint JS is the game-ready paste target.</p>
+        <label>Export Kind
+          <select id="exportKind">
+            <option value="builder">Builder JSON</option>
+            <option value="blueprint">buildBlueprint JS</option>
+          </select>
+        </label>
+        <textarea id="exportText" spellcheck="false"></textarea>
+        <div class="import-box">
+          <h2>Import</h2>
+          <textarea id="importText" placeholder="Paste builder JSON here"></textarea>
+          <button id="importBtn">Import Builder JSON</button>
+        </div>
+        <div id="status" class="status">READY.</div>
+      </aside>
+    </section>
+  </main>
+
+  <script src="game-model-library.js"></script>
+  <script src="ship-builder.js"></script>
+</body>
+</html>

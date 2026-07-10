@@ -93,6 +93,18 @@ let PRESETS = {
       { name: "air system", kind: "noise", dur: 2.2, gain: .028, highpass: 160, lowpass: 620, attack: .2, release: .7, pan: .08 }
     ]
   },
+  "Wide Low Ambient Reference": {
+    name: "wideLowAmbientReference",
+    bus: "ambience",
+    bed: true,
+    masterGain: .62,
+    pitchScale: 1,
+    layers: [
+      { name: "deep pressure carrier", kind: "osc", wave: "sine", freq: 68.5, endFreq: 71.5, dur: 2.6, gain: .075, attack: .35, release: .75, lowpass: 180, lfoFreq: .18, lfoDepth: 1.4, pan: -.12 },
+      { name: "wide body hum", kind: "osc", wave: "triangle", freq: 45.5, endFreq: 55.5, dur: 2.6, gain: .048, attack: .45, release: .8, lowpass: 260, lfoFreq: .11, lfoDepth: 2.2, pan: .14 },
+      { name: "thin upper mist", kind: "noise", dur: 2.6, gain: .018, highpass: 920, lowpass: 2400, endLowpass: 1650, attack: .4, release: .9, pan: .18, drive: .2 }
+    ]
+  },
   "Pulse Laser": {
     name: "laserPulse",
     bus: "weapons",
@@ -114,6 +126,20 @@ let PRESETS = {
       { name: "torn metal", kind: "osc", wave: "sawtooth", freq: 92, endFreq: 24, dur: 1.05, gain: .078, attack: .002, release: .28, lowpass: 720, drive: .4 },
       { name: "debris", kind: "ticks", count: 9, dur: .62, gain: .018 },
       { name: "sub pressure", kind: "rumble", strength: .82, dur: 1.15 }
+    ]
+  },
+  "Large Explosion Reference": {
+    name: "largeExplosionReference",
+    bus: "world",
+    masterGain: .78,
+    pitchScale: .62,
+    layers: [
+      { name: "clipped air crack", kind: "noise", dur: .16, gain: .09, highpass: 1400, lowpass: 12000, endLowpass: 4200, attack: .001, release: .08, drive: 1.8 },
+      { name: "fireball wall", kind: "noise", delay: .04, dur: 1.55, gain: .17, highpass: 22, lowpass: 3200, endLowpass: 520, attack: .015, release: .62, drive: 1.2 },
+      { name: "low torn body", kind: "osc", wave: "sawtooth", delay: .05, freq: 44, endFreq: 24, dur: 1.35, gain: .12, attack: .006, release: .72, lowpass: 640, drive: 1.2 },
+      { name: "sub pressure shelf", kind: "rumble", delay: .08, strength: 1.15, dur: 1.95 },
+      { name: "falling debris fizz", kind: "noise", delay: .55, dur: 2.45, gain: .045, highpass: 160, lowpass: 1800, endLowpass: 320, attack: .04, release: 1.1, drive: .7 },
+      { name: "debris spit", kind: "ticks", delay: .38, count: 18, dur: 1.6, gain: .009 }
     ]
   },
   "Boop UI": {
