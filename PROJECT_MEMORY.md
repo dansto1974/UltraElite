@@ -40,6 +40,10 @@ For release/publish passes, use the release skill's multi-script parse check and
 - Mesh objects should enter the shared renderer through `drawModelEntity` and `modelMeshForRender`.
 - Normal flight ships, stations, external view, hangar ships, cargo props, cut-scene ships, and ship preview/library should stay on that shared path.
 - The shared path owns camera transform, perspective projection, near-plane clipping, back-face/hidden-line behaviour, solid/wire/detail drawing, decals, metal texture, engine glow, ion trails, and LOD decisions.
+- Wireframe hidden-line fixes belong in the shared renderer. The current Old School path draws cheap candidate edges first, paints slightly inset main hull face masks, then front-facing inset surface details, then double-sided sheet fills only if a cheap screen-space depth test says no closer hull mask covers that sheet. Do not sort Cougar-style sheet fills together with details: average-depth sorting lets flat sheets show through the hull and can bury forward windows. Avoid per-ship wing/nose exceptions unless a blueprint genuinely needs metadata.
+- Old School line details default to surface-detail culling. Only deliberate protruding sticks/antennae should opt out with `cull: false`; otherwise transporter/panel strokes linger too long as the hull rotates away.
+- In Old School wire mode, line details that duplicate explicitly marked protruding edges are skipped during the surface-detail pass. The edge pass draws them first so hull masks can hide the covered portion; redrawing the same stick as a later detail puts it incorrectly on top of the ship. Use `edgeCullNormals` as the stick marker, not a broad "any matching edge" test.
+- Explicit wire-only edge cull normals are blueprint metadata for protruding edges, not visibility tests. When detail-edge LOD is active, marked sticks/antennae are always drawn as candidate edges; only later hull masks should hide the covered portion.
 - Special bespoke renderers are allowed for things that are not mesh objects: planet surfaces, rings, stars/lens flare, lasers, particles, smoke, explosions, galaxy backdrop, HUD/scanner/chart UI, and hangar architecture panels/forcefields.
 - Do not add another ship/object renderer because one scene feels awkward. Adapt the camera/entity input and use the shared path.
 - Texture, cloud, crackle, ring, and decal bugs are often caused by tying object-space details to the player camera. World/object-space details must remain stable when the ship rotates.
@@ -80,6 +84,7 @@ For release/publish passes, use the release skill's multi-script parse check and
 
 - Armada mode is the stress test.
 - LOD should remove expensive texture, decal, damage, ion trail, and detail work at range while preserving motion cues.
+- Ship surface details and explicit stick/detail edges are close-range readability features; they currently drop at roughly 900m, scaled by ship size using the shared model-distance LOD multiplier.
 - Distant ships can become impostors/dots, but should retain enough glow/colour to read as ships.
 - Avoid per-frame DOM churn in HUD labels, chatter, tooltips, or debug widgets.
 - Safari can be more sensitive to HUD/info-window flicker and canvas state churn.

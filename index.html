@@ -1888,6 +1888,8 @@
       texturePx: 9,
       decalPx: 12,
       detailPx: 10,
+      detailDistance: 900,
+      detailEdgeDistance: 900,
       damagePx: 16,
       effectPx: 7
     };
@@ -2094,13 +2096,39 @@
           const p = sub(vec(...model.verts[i]), c);
           return [dot(p, u), dot(p, v)];
         });
-        return { face, uv };
+        return { face, uv, normalIndex: faceIndex };
       });
       const entries = faceEntries.filter(Boolean);
+      const duplicateFaceKeys = new Set();
+      const faceKeyMap = new Map();
+      for (const entry of entries) {
+        const key = [...entry.face].sort((a, b) => a - b).join(",");
+        if (!faceKeyMap.has(key)) faceKeyMap.set(key, []);
+        faceKeyMap.get(key).push(entry);
+      }
+      for (const group of faceKeyMap.values()) {
+        if (group.length < 2) continue;
+        for (let i = 0; i < group.length; i++) {
+          for (let j = i + 1; j < group.length; j++) {
+            const a = norm(vec(...model.normals[group[i].normalIndex]));
+            const b = norm(vec(...model.normals[group[j].normalIndex]));
+            if (dot(a, b) < -.85) {
+              duplicateFaceKeys.add(group[i].normalIndex);
+              duplicateFaceKeys.add(group[j].normalIndex);
+            }
+          }
+        }
+      }
       model.faceByNormalIndex = faceEntries.map((entry) => entry ? entry.face : null);
       model.faceUVByNormalIndex = faceEntries.map((entry) => entry ? entry.uv : null);
       model.faces = entries.map((e) => e.face);
       model.faceUV = entries.map((e) => e.uv);
+      model.faceNormalIndices = entries.map((e) => e.normalIndex);
+      model.wireMaskFaces = entries.map((e) => duplicateFaceKeys.has(e.normalIndex) ? 0 : 1);
+      model.wireCullEdgeKeys = new Set(Object.keys(model.edgeCullNormals || {}).map((edgeIndex) => {
+        const edge = model.edges[Number(edgeIndex)];
+        return edge ? (edge[0] < edge[1] ? `${edge[0]},${edge[1]}` : `${edge[1]},${edge[0]}`) : "";
+      }).filter(Boolean));
       model.decalUV = buildContinuousDecalUV(model.verts, model.faces);
       return model;
     }
@@ -2109,12 +2137,13 @@
       cobra: buildBlueprint({
         verts: [[32,0,76],[-32,0,76],[0,26,24],[-120,-3,-8],[120,-3,-8],[-88,16,-40],[88,16,-40],[128,-8,-40],[-128,-8,-40],[0,26,-40],[-32,-24,-40],[32,-24,-40],[-36,8,-40],[-8,12,-40],[8,12,-40],[36,8,-40],[36,-12,-40],[8,-16,-40],[-8,-16,-40],[-36,-12,-40],[0,0,76],[0,0,90],[-80,-6,-40],[-80,6,-40],[-88,0,-40],[80,6,-40],[88,0,-40],[80,-6,-40]],
         edges: [[0,1],[0,4],[1,3],[3,8],[4,7],[6,7],[6,9],[5,9],[5,8],[2,5],[2,6],[3,5],[4,6],[1,2],[0,2],[8,10],[10,11],[7,11],[1,10],[0,11],[1,5],[0,6],[20,21],[12,13],[18,19],[14,15],[16,17],[15,16],[14,17],[13,18],[12,19],[2,9],[22,24],[23,24],[22,23],[25,26],[26,27],[25,27]],
-        edgeFaces: [[0,11],[4,12],[3,10],[7,10],[8,12],[8,9],[6,9],[5,9],[7,9],[1,5],[2,6],[3,7],[4,8],[0,1],[0,2],[9,10],[9,11],[9,12],[10,11],[11,12],[1,3],[2,4],[9,9],[9,9],[9,9],[9,9],[9,9],[9,9],[9,9],[9,9],[9,9],[5,6],[9,9],[9,9],[9,9],[9,9],[9,9],[9,9]],
+        edgeFaces: [[0,11],[4,12],[3,10],[7,10],[8,12],[8,9],[6,9],[5,9],[7,9],[1,5],[2,6],[3,7],[4,8],[0,1],[0,2],[9,10],[9,11],[9,12],[10,11],[11,12],[1,3],[2,4],[0,0],[9,9],[9,9],[9,9],[9,9],[9,9],[9,9],[9,9],[9,9],[5,6],[9,9],[9,9],[9,9],[9,9],[9,9],[9,9]],
+        edgeCullNormals: { 22: [0,0,-1] },
         edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,29,29,6,20,20,20,20,19,17,19,19,30,6,6,8,6,6,8],
         normals: [[0,62,31],[-18,55,16],[18,55,16],[-16,52,14],[16,52,14],[-14,47,0],[14,47,0],[-61,102,0],[61,102,0],[0,0,-80],[-7,-42,9],[0,-30,6],[7,-42,9]],
         details: [
           { type: "window", points: [[16,4.3,67.3],[-16,4.3,67.3],[0,17.3,41.3]], color: "#101915", normal: [0,.89,.45], lift: 1 },
-          { type: "line", indices: [20,21], color: "#cccccc", normal: [0,0,1], width: 1.2, lift: 1 },
+          { type: "line", indices: [20,21], color: "#cccccc", normal: [0,0,1], width: 1.2, lift: 1, cull: false },
           { type: "engine", indices: [12,13,18,19], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 },
           { type: "engine", indices: [14,15,16,17], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 },
           { type: "engine", indices: [22,24,23], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 },
@@ -2231,11 +2260,12 @@
         verts: [[0,-18,0],[0,-9,-45],[43,0,-45],[69,-3,0],[43,-14,28],[-43,0,-45],[-69,-3,0],[-43,-14,28],[26,-7,73],[-26,-7,73],[43,14,28],[-43,14,28],[0,9,-45],[-17,0,-45],[17,0,-45],[0,-4,-45],[0,4,-45],[0,-7,73],[0,-7,83]],
         edges: [[0,1],[0,4],[0,7],[1,2],[2,3],[3,8],[8,9],[6,9],[5,6],[1,5],[3,4],[4,8],[6,7],[7,9],[2,12],[5,12],[10,12],[11,12],[10,11],[6,11],[9,11],[3,10],[8,10],[13,15],[15,14],[14,16],[16,13],[18,17]],
         edgeFaces: [[2,1],[1,0],[2,0],[11,1],[6,1],[9,7],[4,0],[10,8],[5,2],[11,2],[7,1],[7,0],[8,2],[8,0],[11,6],[11,5],[6,3],[5,3],[4,3],[10,5],[10,4],[9,6],[9,4],[11,11],[11,11],[11,11],[11,11],[0,0]],
+        edgeCullNormals: { 27: [0,0,-1] },
         edgeVisibility: [22,22,22,31,31,16,31,16,31,31,31,31,31,31,31,31,22,22,22,31,31,31,31,10,9,8,8,10],
         normals: [[0,-35,5],[8,-38,-7],[-8,-38,-7],[0,24,-1],[0,43,19],[-6,28,-2],[6,28,-2],[59,-64,31],[-59,-64,31],[80,46,50],[-80,46,50],[0,0,-90]],
         details: [
           { type: "window", points: [[9.1,-.2,58.4],[-9.1,-.2,58.4],[-15.1,7.2,42.6],[15.1,7.2,42.6]], color: "#101915", normal: [0,.91,.4], lift: 1 },
-          { type: "line", indices: [17,18], color: "#cccccc", normal: [0,0,1], width: 1.4, lift: 1 },
+          { type: "line", indices: [17,18], color: "#cccccc", normal: [0,0,1], width: 1.4, lift: 1, cull: false },
           { type: "engine", indices: [13,15,14,16], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 }
         ]
       }),
@@ -2300,7 +2330,7 @@
         normals: [[0,41,10],[0,-27,3],[-8,46,8],[-12,-57,12],[8,46,8],[12,-57,12],[0,49,0],[0,0,-154],[-121,111,-62],[121,111,-62]],
         details: [
           { type: "window", points: [[-9,1.2,40.7],[9,1.2,40.7],[0,7.7,12.7]], color: "#101915", normal: [0,.97,.24], lift: 1 },
-          { type: "line", indices: [9,10], color: "#cccccc", normal: [0,0,1], width: 1.2, lift: 1 },
+          { type: "line", indices: [9,10], color: "#cccccc", normal: [0,0,1], width: 1.2, lift: 1, cull: false },
           { type: "engine", points: [[-36,5,-38],[-14,5,-38],[-25,-5,-38]], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 },
           { type: "engine", points: [[14,5,-38],[36,5,-38],[25,-5,-38]], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 }
         ]
@@ -3276,6 +3306,27 @@
     function normalizeLaserFit() {
       const active = ["militaryLaser", "beamLaser", "miningLaser"].find((id) => game.equipment[id]);
       if (active) fitLaser(active);
+    }
+
+    function normalizeCommanderName(name) {
+      const clean = String(name || "")
+        .toUpperCase()
+        .replace(/[^A-Z0-9 ]/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 7);
+      return clean || "JAMESON";
+    }
+
+    function askCommanderName(force = false) {
+      const current = normalizeCommanderName(game.commander);
+      const entered = window.prompt("COMMANDER NAME", current);
+      if (entered === null && !force) return false;
+      game.commander = normalizeCommanderName(entered === null ? current : entered);
+      setMessage(`Commander registered: ${game.commander}.`, true);
+      renderPanel();
+      updateReadouts();
+      return true;
     }
 
     function baseMarketFor(system) {
@@ -8120,7 +8171,72 @@ Project Links
 Source code and change history: https://github.com/dansto1974/UltraElite`;
     const SAVE_KEY = "ultraEliteSave";
     const SAVE_FORMAT = "ultra-elite-commander";
+    const SAVE_FILE_MAGIC = "UEC2";
+    const SAVE_FILE_SECRET = "ultra-elite-save-file-v2";
     const SAVE_FIELDS = ["commander", "galaxy", "current", "target", "credits", "fuel", "kills", "legal", "playerShip", "cargoCap", "missiles", "graphicsMode", "fxLevel", "marketStock"];
+
+    function bytesToBase64(bytes) {
+      let bin = "";
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        bin += String.fromCharCode(...bytes.subarray(i, i + chunk));
+      }
+      return btoa(bin);
+    }
+
+    function base64ToBytes(text) {
+      const bin = atob(text);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return bytes;
+    }
+
+    function textToBytes(text) {
+      return new TextEncoder().encode(String(text));
+    }
+
+    function bytesToText(bytes) {
+      return new TextDecoder().decode(bytes);
+    }
+
+    function xorSaveBytes(bytes, nonce) {
+      const rand = mulberry(hash32(`${SAVE_FILE_SECRET}:${nonce}`));
+      const out = new Uint8Array(bytes.length);
+      for (let i = 0; i < bytes.length; i++) out[i] = bytes[i] ^ Math.floor(rand() * 256);
+      return out;
+    }
+
+    function saveChecksum(nonce, payload) {
+      return (hash32(`${SAVE_FILE_SECRET}:${nonce}:${payload}`) >>> 0).toString(36);
+    }
+
+    function encodeCommanderSaveFile(data) {
+      const payload = JSON.stringify(data);
+      const nonce = `${Date.now().toString(36)}${Math.floor(Math.random() * 0xFFFFFF).toString(36)}`;
+      const encrypted = xorSaveBytes(textToBytes(payload), nonce);
+      const envelope = {
+        magic: SAVE_FILE_MAGIC,
+        version: 2,
+        nonce,
+        checksum: saveChecksum(nonce, payload),
+        data: bytesToBase64(encrypted)
+      };
+      return `${SAVE_FILE_MAGIC}.${bytesToBase64(textToBytes(JSON.stringify(envelope)))}`;
+    }
+
+    function decodeCommanderSaveFile(text) {
+      const raw = String(text || "").trim();
+      if (!raw.startsWith(`${SAVE_FILE_MAGIC}.`)) return JSON.parse(raw);
+      const envelope = JSON.parse(bytesToText(base64ToBytes(raw.slice(SAVE_FILE_MAGIC.length + 1))));
+      if (!envelope || envelope.magic !== SAVE_FILE_MAGIC || !envelope.nonce || !envelope.data) {
+        throw new Error("Invalid commander file envelope");
+      }
+      const payload = bytesToText(xorSaveBytes(base64ToBytes(envelope.data), envelope.nonce));
+      if (envelope.checksum !== saveChecksum(envelope.nonce, payload)) {
+        throw new Error("Commander file checksum mismatch");
+      }
+      return JSON.parse(payload);
+    }
 
     function commanderSaveData() {
       return {
@@ -8147,6 +8263,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       for (const key of SAVE_FIELDS) {
         if (key in data) game[key] = data[key];
       }
+      game.commander = normalizeCommanderName(game.commander);
       game.galaxy = clamp(Math.trunc(Number(game.galaxy) || 0), 0, galaxies.length - 1);
       const maxSystem = galaxies[game.galaxy].length - 1;
       game.current = clamp(Math.trunc(Number(game.current) || LAVE_INDEX), 0, maxSystem);
@@ -8230,7 +8347,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function saveFilename() {
       const name = String(game.commander || "commander").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "commander";
-      return `ultra-elite-${name}.json`;
+      return `ultra-elite-${name}.uelite`;
     }
 
     function downloadCommanderFile() {
@@ -8238,7 +8355,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         setMessage("Commander export unavailable in flight. Dock first.", true);
         return;
       }
-      downloadText(saveFilename(), JSON.stringify(commanderSaveData(), null, 2));
+      downloadText(saveFilename(), encodeCommanderSaveFile(commanderSaveData()));
       setMessage("Commander file downloaded.", true);
     }
 
@@ -8247,7 +8364,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const reader = new FileReader();
       reader.onload = () => {
         try {
-          const data = JSON.parse(String(reader.result || ""));
+          const data = decodeCommanderSaveFile(reader.result || "");
           applyCommanderSave(data);
           localStorage.setItem(SAVE_KEY, JSON.stringify(commanderSaveData()));
           setMessage(`Commander loaded from ${file.name}.`, true);
@@ -9307,6 +9424,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (!model.faces) return [];
       const faces = [];
       model.faces.forEach((face, faceIndex) => {
+        const normalIndex = model.faceNormalIndices ? model.faceNormalIndices[faceIndex] : faceIndex;
+        const wireMaskFace = !model.wireMaskFaces || !!model.wireMaskFaces[faceIndex];
+        if (options.wireMask && !wireMaskFace) return;
+        if (options.wireSheetFill && wireMaskFace) return;
         let projected = face.map((i) => points[i]);
         let verts = face.map((i) => camVerts[i]);
         let clipped = false;
@@ -9322,7 +9443,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const { n, center, facing: cameraFacing } = faceFacing(verts);
         if (cameraFacing <= -0.015) return;
         if (flat) {
-          faces.push({ kind: "poly", projected, avgZ, fillStyle: "#000" });
+          faces.push({ kind: "poly", projected, camVerts: verts, avgZ, fillStyle: "#000", faceIndex, normalIndex });
           return;
         }
         const facing = clamp(cameraFacing, 0, 1);
@@ -9338,6 +9459,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           project: options.project || null,
           uv: !clipped && model.faceUV && model.faceUV[faceIndex],
           decalUV: !clipped && model.decalUV && model.decalUV[faceIndex],
+          faceIndex,
+          normalIndex,
           avgZ,
           fillStyle: shadedColor(baseColor, lit * (.92 + grain * .12), alpha),
           metal: options.textures !== false,
@@ -9362,7 +9485,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       });
     }
 
-    function wireEdgeVisible(model, edgeIndex, faceVisible) {
+    function wireEdgeVisible(model, edgeIndex, faceVisible, camVerts = null, edgeCullNormalsCam = null, points = null) {
+      const edgeNormal = edgeCullNormalsCam && edgeCullNormalsCam[edgeIndex];
+      if (edgeNormal) return true;
       if (!faceVisible || !model.edgeFaces) return true;
       const faces = model.edgeFaces[edgeIndex];
       if (!faces) return true;
@@ -9374,22 +9499,24 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function collectSolidDetails(model, o, camVerts, points, w, h, scaleFactor = 1, camera = game.camera, options = {}) {
       const mode = options.mode || "both";
-      if (mode === "wire" || !model.details) return [];
+      const wireDetails = mode === "wire";
+      if ((wireDetails && options.wireDetails !== true) || !model.details) return [];
       const roll = o.roll ?? (o.rot || 0) * .7;
       const orient = (v) => o.quat ? quatRotate(o.quat, v) : rotateShipPoint(v, o.rot || 0, o.pitch || 0, roll);
       const details = [];
       for (const detail of model.details) {
         if (options.enginesOnly && detail.type !== "engine") continue;
+        const isLineDetail = detail.type === "line" || detail.type === "polyline";
         const normal = detail.normal
           ? worldDirToCam(norm(orient(vec(detail.normal[0], detail.normal[1], detail.normal[2]))), camera)
           : null;
         const vertsOnSurface = detail.indices
           ? detail.indices.map((i) => camVerts[i])
           : detail.points.map(([x, y, z]) => add(worldDirToCam(orient(vec(x * scaleFactor, y * scaleFactor, z * scaleFactor)), camera), o.cam || vec()));
-        const isLineDetail = detail.type === "line" || detail.type === "polyline";
         if (vertsOnSurface.length < (isLineDetail ? 2 : 3)) continue;
         const surfaceCenter = scale(vertsOnSurface.reduce((sum, p) => add(sum, p), vec()), 1 / vertsOnSurface.length);
-        if (normal && detail.cull !== false && -dot(normal, norm(surfaceCenter)) <= (detail.cullEpsilon ?? -.08)) continue;
+        const cullEpsilon = detail.cullEpsilon ?? (wireDetails ? .015 : -.08);
+        if (normal && detail.cull !== false && -dot(normal, norm(surfaceCenter)) <= cullEpsilon) continue;
         const lift = normal ? (detail.lift ?? (detail.type === "engine" ? 5 : 3)) * scaleFactor : 0;
         const verts = normal && lift
           ? vertsOnSurface.map((p) => add(p, scale(normal, lift)))
@@ -9397,11 +9524,16 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const projected = verts.map((p) => o.project ? o.project(p) : project(p, w, h));
         if (projected.some((p) => !p) || verts.length < (isLineDetail ? 2 : 3)) continue;
         if (isLineDetail) {
+          if (wireDetails && detail.indices?.length === 2) {
+            const [a, b] = detail.indices;
+            const edgeKey = a < b ? `${a},${b}` : `${b},${a}`;
+            if (model.wireCullEdgeKeys?.has(edgeKey)) continue;
+          }
           details.push({
             kind: "line",
             projected,
             avgZ: verts.reduce((sum, p) => sum + p.z, 0) / verts.length,
-            strokeStyle: detail.color || "#eef7ed",
+            strokeStyle: wireDetails ? (options.wireColor || "#e9f2e4") : (detail.color || "#eef7ed"),
             lineWidth: detail.width || 1.2
           });
           continue;
@@ -9409,16 +9541,18 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const engineVisual = detail.type === "engine"
           ? engineDetailVisual(o.engineGlow ?? 1, detail.stroke || "#ffffff")
           : null;
+        const wireColor = options.wireColor || "#e9f2e4";
         details.push({
           kind: "poly",
           projected,
           avgZ: verts.reduce((sum, p) => sum + p.z, 0) / verts.length,
-          fillStyle: detail.type === "engine" ? engineVisual.fill : (detail.color || "#101915"),
-          strokeStyle: detail.type === "engine" ? engineVisual.stroke : detail.stroke || null,
+          fillStyle: wireDetails ? "#000" : (detail.type === "engine" ? engineVisual.fill : (detail.color || "#101915")),
+          strokeStyle: wireDetails ? (detail.stroke || wireColor) : (detail.type === "engine" ? engineVisual.stroke : detail.stroke || null),
           lineWidth: detail.width || 1.2,
-          glow: detail.type === "engine",
-          glowAlpha: engineVisual?.glowAlpha ?? 1,
-          glass: detail.type === "window"
+          fillInset: wireDetails ? (options.wireFillInset ?? 1.1) : 0,
+          glow: !wireDetails && detail.type === "engine",
+          glowAlpha: wireDetails ? 0 : (engineVisual?.glowAlpha ?? 1),
+          glass: !wireDetails && detail.type === "window"
         });
       }
       return details;
@@ -9441,6 +9575,42 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         if (crosses && x < (b.x - a.x) * (y - a.y) / ((b.y - a.y) || 1e-6) + a.x) inside = !inside;
       }
       return inside;
+    }
+
+    function insetProjectedPolygon(points, amount) {
+      if (!points?.length) return [];
+      const center = points.reduce((sum, p) => ({ x: sum.x + p.x, y: sum.y + p.y }), { x: 0, y: 0 });
+      center.x /= points.length;
+      center.y /= points.length;
+      return points.map((p) => {
+        const dx = center.x - p.x;
+        const dy = center.y - p.y;
+        const d = Math.hypot(dx, dy);
+        const t = d > 0 ? Math.min(amount / d, .42) : 0;
+        return { x: p.x + dx * t, y: p.y + dy * t };
+      });
+    }
+
+    function itemScreenCenter(item) {
+      return item.projected.reduce((sum, p) => ({ x: sum.x + p.x, y: sum.y + p.y }), { x: 0, y: 0 });
+    }
+
+    function itemOccludedByCloserPolys(item, occluders) {
+      if (!item?.projected?.length || !occluders?.length) return false;
+      const center = itemScreenCenter(item);
+      center.x /= item.projected.length;
+      center.y /= item.projected.length;
+      for (const blocker of occluders) {
+        if (!blocker.projected?.length || blocker.avgZ >= item.avgZ - .35) continue;
+        if (pointInPolygon(center.x, center.y, blocker.projected)) return true;
+        const samples = [center, ...item.projected];
+        let hits = 0;
+        for (const sample of samples) {
+          if (pointInPolygon(sample.x, sample.y, blocker.projected)) hits++;
+        }
+        if (hits >= Math.max(1, Math.ceil(samples.length * .34))) return true;
+      }
+      return false;
     }
 
     function projectedHull(points) {
@@ -10395,11 +10565,14 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function drawSolidItems(targetCtx, items) {
       items.sort((a, b) => b.avgZ - a.avgZ);
+      const tracePoly = (projected) => {
+        targetCtx.beginPath();
+        targetCtx.moveTo(projected[0].x, projected[0].y);
+        for (let i = 1; i < projected.length; i++) targetCtx.lineTo(projected[i].x, projected[i].y);
+      };
       for (const item of items) {
         if (item.glow) drawEngineGlow(targetCtx, item.projected, item.glowAlpha ?? 1);
-        targetCtx.beginPath();
-        targetCtx.moveTo(item.projected[0].x, item.projected[0].y);
-        for (let i = 1; i < item.projected.length; i++) targetCtx.lineTo(item.projected[i].x, item.projected[i].y);
+        tracePoly(item.projected);
         if (item.kind === "line") {
           targetCtx.strokeStyle = item.strokeStyle;
           targetCtx.lineWidth = item.lineWidth || 1;
@@ -10411,10 +10584,19 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         targetCtx.closePath();
         if (item.fillStyle) {
           targetCtx.fillStyle = item.glass ? glassGradient(targetCtx, item.projected) : item.fillStyle;
+          if (item.fillInset) {
+            const inset = insetProjectedPolygon(item.projected, item.fillInset);
+            if (inset.length >= 3) {
+              tracePoly(inset);
+              targetCtx.closePath();
+            }
+          }
           targetCtx.fill();
           if (item.metal && item.uv) drawFaceTexture(targetCtx, item);
         }
         if (item.strokeStyle) {
+          tracePoly(item.projected);
+          targetCtx.closePath();
           targetCtx.strokeStyle = item.strokeStyle;
           targetCtx.lineWidth = item.lineWidth || 1;
           targetCtx.stroke();
@@ -10426,8 +10608,15 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const mode = opts.mode || game.graphicsMode;
       const color = opts.color || "#e9f2e4";
       const projectFn = opts.project || null;
+      let wireMasks = null;
+      let wireSheetFills = null;
       if (mode === "wire") {
-        drawSolidItems(targetCtx, collectSolidFaces(model, camVerts, points, "#000", 1, true, null, { project: projectFn }));
+        wireMasks = collectSolidFaces(model, camVerts, points, "#000", 1, true, null, { project: projectFn, wireMask: true });
+        wireSheetFills = collectSolidFaces(model, camVerts, points, "#000", 1, true, null, { project: projectFn, wireSheetFill: true });
+        const maskInset = Math.max(1.25, (opts.edgeWidth || 1) * 1.4);
+        const sheetInset = Math.max(.8, (opts.edgeWidth || 1) * .9);
+        wireMasks.forEach((item) => { item.fillInset = maskInset; });
+        wireSheetFills.forEach((item) => { item.fillInset = sheetInset; });
       } else {
         drawSolidItems(targetCtx, collectSolidFaces(model, camVerts, points, color, 1, false, opts.decal || null, {
           project: projectFn,
@@ -10442,7 +10631,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const faceVisible = collectWireFaceVisibility(model, camVerts);
       targetCtx.beginPath();
       for (let edgeIndex = 0; edgeIndex < model.edges.length; edgeIndex++) {
-        if (!wireEdgeVisible(model, edgeIndex, faceVisible)) continue;
+        if (opts.detailEdges === false && opts.edgeCullNormalsCam?.[edgeIndex]) continue;
+        if (!wireEdgeVisible(model, edgeIndex, faceVisible, camVerts, opts.edgeCullNormalsCam || null, points)) continue;
         const [a, b] = model.edges[edgeIndex];
         const pa = points[a], pb = points[b];
         if (!pa || !pb) continue;
@@ -10450,6 +10640,14 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         targetCtx.lineTo(pb.x, pb.y);
       }
       targetCtx.stroke();
+      const wireOccluders = mode === "wire" ? {
+        sheetFills: wireSheetFills || [],
+        hullMasks: wireMasks || []
+      } : { sheetFills: [], hullMasks: [] };
+      if (opts.deferWireOccluders) return wireOccluders;
+      if (wireOccluders.sheetFills.length) drawSolidItems(targetCtx, wireOccluders.sheetFills);
+      if (wireOccluders.hullMasks.length) drawSolidItems(targetCtx, wireOccluders.hullMasks);
+      return wireOccluders;
     }
 
     function shipStatus(o) {
@@ -12123,7 +12321,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         roll: (1 - settle) * -.12,
         alpha: clamp(fadeIn, .08, 1),
         engineGlow,
-        damageMarks: repaired ? [] : scene.preRepairMarks
+        damageMarks: []
       };
       const drawShipPass = () => {
         const entryTrail = engineGlow * (1 - smoothstep(3.35, 6.4, t)) * .95;
@@ -14714,12 +14912,16 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const camera = renderCtx.camera || game.camera;
       const damageDistance = entity.pos && camera.pos ? len(sub(entity.pos, camera.pos)) : 0;
       const damageRange = 1000 * sceneModelDistanceLodScale(model, entity);
+      const detailDistance = entity.pos && camera.pos ? len(sub(entity.pos, camera.pos)) : 0;
+      const detailRange = MODEL_RENDER_QUALITY.detailDistance * sceneModelDistanceLodScale(model, entity);
+      const detailEdgeRange = MODEL_RENDER_QUALITY.detailEdgeDistance * sceneModelDistanceLodScale(model, entity);
       const effectPx = Math.max(MODEL_RENDER_QUALITY.effectPx * thresholdMul, lerp(0, 48, load));
       return {
         pxRadius,
         textures: pxRadius > texturePx,
         decals: pxRadius > decalPx,
-        details: pxRadius > detailPx,
+        details: pxRadius > detailPx && (!detailDistance || detailDistance <= detailRange),
+        detailEdges: !detailDistance || detailDistance <= detailEdgeRange,
         damage: pxRadius > damagePx && (!damageDistance || damageDistance <= damageRange),
         effects: pxRadius > effectPx && performanceLod() < 3 && load < .92
       };
@@ -14769,7 +14971,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
       targetCtx.save();
       targetCtx.globalAlpha *= alpha;
-      drawProjectedModelHull(targetCtx, model, camVerts, points, {
+      const wireOccluders = drawProjectedModelHull(targetCtx, model, camVerts, points, {
         mode,
         color: hullColor,
         decal,
@@ -14778,9 +14980,33 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         textures: opts.textures ?? quality.textures,
         metalAlphaMul: opts.metalAlphaMul ?? (quality.textures ? 1 : 0),
         edgeColor: opts.edgeColor || hullColor,
-        edgeWidth: opts.edgeWidth ?? clamp(680 / Math.max(80, centerCam.z), .7, 2)
+        edgeWidth: opts.edgeWidth ?? clamp(680 / Math.max(80, centerCam.z), .7, 2),
+        detailEdges: quality.detailEdges !== false,
+        deferWireOccluders: mode === "wire",
+        edgeCullNormalsCam: model.edgeCullNormals
+          ? Object.fromEntries(Object.entries(model.edgeCullNormals).map(([edgeIndex, normal]) => [
+            edgeIndex,
+            worldDirToCam(norm(orient(vec(normal[0], normal[1], normal[2]))), camera)
+          ]))
+          : null
       });
-      if (mode !== "wire") {
+      if (mode === "wire") {
+        if (wireOccluders?.hullMasks?.length) drawSolidItems(targetCtx, wireOccluders.hullMasks);
+        if (quality.details) {
+          const wireDetails = collectSolidDetails(model, renderShip, camVerts, points, w, h, scaleFactor, camera, {
+            mode,
+            wireDetails: true,
+            wireColor: opts.edgeColor || hullColor
+          });
+          if (wireDetails.length) drawSolidItems(targetCtx, wireDetails);
+        }
+        if (wireOccluders?.sheetFills?.length) {
+          const visibleSheetFills = wireOccluders.sheetFills.filter((item) =>
+            !itemOccludedByCloserPolys(item, wireOccluders.hullMasks || [])
+          );
+          if (visibleSheetFills.length) drawSolidItems(targetCtx, visibleSheetFills);
+        }
+      } else {
         if (quality.details) {
           drawSolidItems(targetCtx, collectSolidDetails(model, renderShip, camVerts, points, w, h, scaleFactor, camera, { mode }));
         } else if ((renderShip.engineGlow ?? 0) > .02) {
@@ -15202,10 +15428,59 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
     }
 
+    function drawClassicDockedShip(w, h) {
+      const modelName = playerShipModel();
+      const model = MODELS[modelName];
+      if (!model) return;
+      const t = performance.now() / 1000;
+      const centerY = h * .38;
+      const focal = 900;
+      const tempCam = vec(0, 0, 1400);
+      const identityCamera = makeCamera(0);
+      const targetPx = Math.min(w * .32, h * .34);
+      const scaleFactor = targetPx / modelOverallSize(model) * (tempCam.z / focal);
+      const projectClassic = (p) => {
+        if (!Number.isFinite(p.z) || p.z <= 8) return null;
+        const f = focal / p.z;
+        return { x: w / 2 + p.x * f, y: centerY - p.y * f };
+      };
+
+      ctx.save();
+      ctx.shadowColor = "rgba(233,242,228,.22)";
+      ctx.shadowBlur = 8;
+      drawModelEntity(ctx, {
+        camera: identityCamera,
+        centerCam: tempCam,
+        w,
+        h,
+        mode: "wire",
+        project: projectClassic,
+        quality: false
+      }, {
+        type: "ship",
+        model: modelName,
+        scaleFactor,
+        rot: t * .42,
+        pitch: -.18 + Math.sin(t * .37) * .06,
+        roll: .12,
+        color: "#e9f2e4",
+        engineGlow: 0,
+        playerDamageMarks: []
+      }, {
+        decal: null,
+        textures: false,
+        metalAlphaMul: 0,
+        edgeColor: "#e9f2e4",
+        edgeWidth: 1.15
+      });
+      ctx.restore();
+    }
+
     function drawClassicDockedBackdrop(w, h, scene) {
       ctx.fillStyle = "#000";
       ctx.fillRect(0, 0, w, h);
       drawHangarCaption(w, h, scene, .9, true);
+      drawClassicDockedShip(w, h);
       ctx.save();
       ctx.textAlign = "center";
       ctx.font = `${Math.max(9, w * .0085)}px ${UI_CANVAS_FONT}`;
@@ -15692,12 +15967,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ${stat("Docked", game.docked ? "Yes" : "No")}
       </div>
       <div class="notice save-actions">
+        <button class="btn" data-rename-commander>Rename Commander</button>
         <button class="btn" data-save ${saveDisabled}>Save Browser Save</button>
         <button class="btn" data-load ${browserSaveExists() ? "" : "disabled"}>Load Browser Save</button>
         <button class="btn danger" data-delete-save ${browserSaveExists() ? "" : "disabled"}>Delete Browser Save</button>
         <button class="btn" data-download-save ${saveDisabled}>Download Commander</button>
         <label class="btn" for="commanderFileInput">Upload Commander</label>
-        <input id="commanderFileInput" type="file" accept="application/json,.json,.txt" data-upload-save style="display:none">
+        <input id="commanderFileInput" type="file" accept=".uelite,application/json,.json,.txt" data-upload-save style="display:none">
       </div>`;
     }
 
@@ -16143,6 +16419,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         saveGame();
         renderPanel();
       });
+      const renameCommander = panelBody.querySelector("[data-rename-commander]");
+      if (renameCommander) renameCommander.addEventListener("click", () => askCommanderName(false));
       const downloadSave = panelBody.querySelector("[data-download-save]");
       if (downloadSave) downloadSave.addEventListener("click", downloadCommanderFile);
       const uploadSave = panelBody.querySelector("[data-upload-save]");
@@ -16516,6 +16794,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     window.addEventListener("pointerdown", () => eliteAudio.resume(), { capture: true });
     const splashEl = byId("splash");
     const gettingStartedEl = byId("gettingStarted");
+    let shouldAskCommanderName = false;
     byId("splashVersion").textContent = GAME_VERSION;
 
     function dismissSplash() {
@@ -16524,6 +16803,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       setTimeout(() => splashEl.remove(), 600);
       if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
         document.documentElement.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
+      }
+      if (shouldAskCommanderName) {
+        shouldAskCommanderName = false;
+        setTimeout(() => askCommanderName(false), 50);
       }
       return true;
     }
@@ -16601,6 +16884,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const hadBrowserSave = browserSaveExists();
       setDomHidden(gettingStartedEl, hadBrowserSave);
       const loadedBrowserSave = loadBrowserSave(true);
+      shouldAskCommanderName = !loadedBrowserSave;
       resetFlightScene(false);
       if (loadedBrowserSave) setMessage("Browser commander save loaded.", true);
       else if (hadBrowserSave) setMessage("Browser save could not be loaded.");

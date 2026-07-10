@@ -20,6 +20,7 @@ Before broad implementation, release, or refactor work, read `PROJECT_MEMORY.md`
 
 ## Next up (small/medium)
 - **Graphic cockpit, ongoing polish** — Ultra cockpit/HUD frame exists; continue small visual improvements only where they help readability or atmosphere.
+- **Ultra mesh face hygiene** — reuse the precomputed double-sided/sheet-face metadata from the Old School hidden-line work to tidy Ultra solid rendering where thin mirrored faces, special appendages or detail panels can fight the hull/decal/detail ordering.
 
 ## Project skills / reusable memory
 - **`ultra-elite-audio-lab`** — procedural hi-fi Ultra sound design: Web Audio buses, layered lasers/explosions, engine beds, hyperspace soundscapes, station/hangar audio, voice caps and Classic-mode preservation.
