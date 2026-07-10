@@ -177,6 +177,7 @@
             <option value="none">None</option>
           </select>
         </label>
+        <label>Base Colour <input id="baseColor" type="color" value="#e9f2e4"></label>
         <div class="meta-grid">
           <label>Value CR <input id="shipValue" type="number" min="0" step="100" value="250000"></label>
           <label>Hull HP <input id="shipHp" type="number" min="1" step="1" value="120"></label>
@@ -211,6 +212,7 @@
             <p>Drag the main view to rotate. Wheel to zoom. Click points/faces/edges in any view.</p>
           </div>
           <div class="view-actions">
+            <label class="toggle"><input id="showFaceNormals" type="checkbox" checked> Normals</label>
             <button id="resetViewBtn">Reset View</button>
             <button id="fitViewBtn">Fit</button>
           </div>

@@ -522,9 +522,11 @@
       left: 50%;
       bottom: 138px;
       z-index: 8;
-      width: min(260px, 28vw);
+      width: min(300px, 32vw);
       display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
       gap: 4px;
+      align-items: center;
       transform: translateX(-50%);
       pointer-events: auto;
     }
@@ -1034,6 +1036,7 @@
       box-shadow: 0 0 8px rgba(101, 255, 71, .52);
     }
 
+    .hud-pause,
     .hud-volume,
     .hud-brightness {
       width: 100%;
@@ -1049,19 +1052,57 @@
       text-shadow: 0 0 6px rgba(101, 255, 71, .36);
     }
 
+    .hud-pause {
+      grid-row: 1 / span 2;
+      width: auto;
+      min-width: 34px;
+      align-self: stretch;
+      border: 1px solid rgba(101, 255, 71, .46);
+      border-radius: 9px;
+      padding: 3px 6px;
+      background: rgba(0, 0, 0, .2);
+      box-shadow: inset 0 0 9px rgba(101, 255, 71, .08), 0 0 9px rgba(101, 255, 71, .16);
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .hud-pause:hover,
+    .hud-pause:focus-visible {
+      opacity: .95;
+      border-color: rgba(101, 255, 71, .72);
+      box-shadow: inset 0 0 11px rgba(101, 255, 71, .12), 0 0 13px rgba(101, 255, 71, .24);
+      outline: none;
+    }
+
+    .hud-pause[aria-pressed="true"] {
+      color: var(--amber);
+      border-color: rgba(255, 207, 54, .72);
+      text-shadow: 0 0 8px rgba(255, 207, 54, .42);
+      box-shadow: inset 0 0 10px rgba(255, 207, 54, .12), 0 0 12px rgba(255, 207, 54, .22);
+    }
+
+    .hud-pause[aria-pressed="true"] svg path {
+      color: var(--amber);
+      stroke: var(--amber);
+    }
+
     .hud-volume {
+      grid-column: 2;
       margin: 0;
     }
 
     .hud-brightness {
+      grid-column: 2;
       margin: 0;
     }
 
+    .hud-pause[hidden],
     .hud-volume[hidden],
     .hud-brightness[hidden] {
       display: none;
     }
 
+    .hud-pause svg,
     .hud-volume svg,
     .hud-brightness svg {
       flex: 0 0 auto;
@@ -1070,6 +1111,7 @@
       filter: drop-shadow(0 0 4px rgba(101, 255, 71, .38));
     }
 
+    .hud-pause svg path,
     .hud-volume svg path,
     .hud-brightness svg path,
     .hud-brightness svg circle {
@@ -1078,6 +1120,20 @@
       stroke-width: 1.7;
       stroke-linecap: round;
       stroke-linejoin: round;
+    }
+
+    .hud-pause .play-mark {
+      display: none;
+      fill: currentColor;
+      stroke: none;
+    }
+
+    .hud-pause[aria-pressed="true"] .pause-bars {
+      display: none;
+    }
+
+    .hud-pause[aria-pressed="true"] .play-mark {
+      display: block;
     }
 
     .hud-volume[data-volume-state="muted"] .speaker-wave,

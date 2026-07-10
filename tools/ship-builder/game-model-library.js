@@ -3236,6 +3236,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       "npcRole": "private",
       "aiProfile": "bountyHunter",
       "decalRole": "private",
+      "baseColor": "#e9f2e4",
       "description": "The Diamondback is an off-books hunter craft: Sleek like a running shoe, over-engined and fully fitted out with the latest Sirius Cybernetics Corp. GPP technology.",
       "valueCr": 2500000,
       "stats": {
@@ -3415,18 +3416,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 20,
         "verts": [
-          17,
+          4,
           12,
-          4
+          17
         ],
         "mirrored": false
       },
       {
         "id": 21,
         "verts": [
-          5,
+          17,
           12,
-          17
+          5
         ],
         "mirrored": true
       }
@@ -3926,14 +3927,14 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -60.19
         ],
         [
-          9.44,
-          23.45,
-          96.75
+          -9.44,
+          -23.45,
+          -96.75
         ],
         [
-          -9.44,
-          23.45,
-          96.75
+          9.44,
+          -23.45,
+          -96.75
         ]
       ],
       "details": [
@@ -3941,15 +3942,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "type": "engine",
           "color": "#f7fff7",
           "normal": [
-            0.09,
-            0.23,
-            0.97
+            -0.09,
+            -0.23,
+            -0.97
           ],
           "lift": 1.5,
           "points": [
             [
-              7.11,
-              27.28,
+              67.79,
+              2.86,
               -69.31
             ],
             [
@@ -3958,8 +3959,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -63.39
             ],
             [
-              67.79,
-              2.86,
+              7.11,
+              27.28,
               -69.31
             ]
           ],
@@ -3969,15 +3970,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "type": "engine",
           "color": "#f7fff7",
           "normal": [
-            -0.09,
-            0.23,
-            0.97
+            0.09,
+            -0.23,
+            -0.97
           ],
           "lift": 1.5,
           "points": [
             [
-              -66.69,
-              3.08,
+              -7.65,
+              26.84,
               -69.25
             ],
             [
@@ -3986,8 +3987,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -63.49
             ],
             [
-              -7.65,
-              26.84,
+              -66.69,
+              3.08,
               -69.25
             ]
           ],
@@ -4291,6 +4292,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "npcRole": "private",
         "aiProfile": "bountyHunter",
         "decalRole": "private",
+        "baseColor": "#e9f2e4",
         "description": "The Diamondback is an off-books hunter craft: Sleek like a running shoe, over-engined and fully fitted out with the latest Sirius Cybernetics Corp. GPP technology.",
         "valueCr": 2500000,
         "stats": {

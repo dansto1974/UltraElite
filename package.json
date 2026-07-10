@@ -1,7 +1,7 @@
 {
   "name": "ultra-elite",
   "private": true,
-  "version": "1.0.13-beta",
+  "version": "1.0.14-beta",
   "scripts": {
     "check": "node tools/build/check.mjs",
     "build": "node tools/build/build-single-file.mjs",

@@ -4,7 +4,7 @@ A browser-based, non-commercial fan tribute to the original 1984 space trading g
 
 - Play: [www.ultraelite.co.uk](https://www.ultraelite.co.uk)
 - Source: [github.com/dansto1974/UltraElite](https://github.com/dansto1974/UltraElite)
-- Current version: `1.0.13-beta`
+- Current version: `1.0.14-beta`
 - Release file: `index.html`
 - Local dev entry: `dev.html`
 
@@ -304,11 +304,16 @@ The game is currently designed for desktop. Mobile displays show a desktop-only 
 
 ## Change Log
 
+### 1.0.14-beta
+
+- Added an in-game pause control beside the HUD sliders.
+- Raised the global audio output headroom so the volume slider has more useful range.
+- Improved the ship-builder workshop with base hull colour support and face-normal preview aids.
+
 ### 1.0.13-beta
 
 - Moved day-to-day development to modular source files while preserving the generated single-file browser release.
-- Added a local Ultra Elite ship-builder workshop for authoring project-native ship models, metadata, surface details and hidden craft.
-- Added Diamondback as the first hidden ship-builder import, replacing the earlier Boomslang test craft.
+- Added a local Ultra Elite ship-builder workshop for authoring project-native ship models, metadata, surface details and future Project X craft.
 - Improved ship-builder panel-line authoring so surface panel lines can be selected, mirrored, deleted individually and inset without leaving the workflow.
 - Updated the public README to describe the new build structure and local tools.
 

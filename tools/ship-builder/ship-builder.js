@@ -17,6 +17,7 @@ const els = {
   npcRole: document.getElementById("npcRole"),
   aiProfile: document.getElementById("aiProfile"),
   decalRole: document.getElementById("decalRole"),
+  baseColor: document.getElementById("baseColor"),
   shipValue: document.getElementById("shipValue"),
   shipHp: document.getElementById("shipHp"),
   speedMul: document.getElementById("speedMul"),
@@ -47,6 +48,7 @@ const els = {
   zValue: document.getElementById("zValue"),
   detailInset: document.getElementById("detailInset"),
   detailColor: document.getElementById("detailColor"),
+  showFaceNormals: document.getElementById("showFaceNormals"),
   mirrorNewGeometry: document.getElementById("mirrorNewGeometry")
 };
 
@@ -584,11 +586,20 @@ function faceDepth(face) {
   }, 0) / face.verts.length;
 }
 
-function shadeForNormal(n) {
+function hexToRgb(hex, fallback = { r: 233, g: 242, b: 228 }) {
+  const text = normalizeHexColor(hex);
+  const n = Number.parseInt(text.slice(1), 16);
+  return Number.isFinite(n)
+    ? { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 }
+    : fallback;
+}
+
+function shadedHullColor(n) {
   const light = norm(vec(-0.4, 0.75, 0.55));
   const d = clamp(dot(n, light), -0.25, 1);
-  const g = Math.round(70 + d * 95);
-  return `rgb(${g},${g + 6},${g})`;
+  const mul = 0.42 + (d + 0.25) / 1.25 * 0.58;
+  const base = hexToRgb(els.baseColor.value);
+  return `rgb(${Math.round(base.r * mul)},${Math.round(base.g * mul)},${Math.round(base.b * mul)})`;
 }
 
 function drawFace(ctx, pts, fill, stroke = "rgba(85,255,78,.46)", width = 1) {
@@ -602,6 +613,59 @@ function drawFace(ctx, pts, fill, stroke = "rgba(85,255,78,.46)", width = 1) {
   ctx.strokeStyle = stroke;
   ctx.lineWidth = width;
   ctx.stroke();
+}
+
+function drawArrow(ctx, a, b, color, width = 1.2) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const d = Math.hypot(dx, dy);
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = width;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.moveTo(a.x, a.y);
+  ctx.lineTo(b.x, b.y);
+  ctx.stroke();
+  if (d > 4) {
+    const ux = dx / d;
+    const uy = dy / d;
+    const head = Math.min(8, Math.max(4, d * 0.28));
+    const wing = head * 0.55;
+    ctx.beginPath();
+    ctx.moveTo(b.x, b.y);
+    ctx.lineTo(b.x - ux * head - uy * wing, b.y - uy * head + ux * wing);
+    ctx.lineTo(b.x - ux * head + uy * wing, b.y - uy * head - ux * wing);
+    ctx.closePath();
+    ctx.fill();
+  } else {
+    ctx.beginPath();
+    ctx.arc(a.x, a.y, 3.2, 0, TAU);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawFaceNormal(ctx, face, projectFn, selected = false) {
+  const center = faceCenter(face);
+  const normal = faceNormal(face);
+  const length = Math.max(18, modelRadius() * 0.16);
+  const a = projectFn(center);
+  const b = projectFn(add(center, mul(normal, length)));
+  const color = selected ? "#ffd936" : "rgba(102,232,255,.62)";
+  drawArrow(ctx, a, b, color, selected ? 2.3 : 1.1);
+}
+
+function drawFaceNormals(ctx, projectFn) {
+  if (!els.showFaceNormals?.checked) return;
+  const selectedFaceId = state.selected?.type === "face" ? state.selected.id : null;
+  for (const face of state.faces) {
+    if (face.id !== selectedFaceId) drawFaceNormal(ctx, face, projectFn, false);
+  }
+  const selected = selectedFaceId ? faceById(selectedFaceId) : null;
+  if (selected) drawFaceNormal(ctx, selected, projectFn, true);
 }
 
 function drawStars(ctx, canvas) {
@@ -629,8 +693,9 @@ function renderMain() {
     const pts = face.verts.map((id) => projected.get(id)).filter(Boolean);
     const n = faceNormal(face);
     const selected = state.selected?.type === "face" && state.selected.id === face.id;
-    drawFace(ctx, pts, selected ? "rgba(255,217,54,.24)" : shadeForNormal(n), selected ? "#ffd936" : "rgba(85,255,78,.32)", selected ? 2 : 1);
+    drawFace(ctx, pts, selected ? "rgba(255,217,54,.24)" : shadedHullColor(n), selected ? "#ffd936" : "rgba(85,255,78,.32)", selected ? 2 : 1);
   }
+  drawFaceNormals(ctx, (v) => project3d(v, canvas));
 
   for (const e of state.edges) {
     const a = projected.get(e.a), b = projected.get(e.b);
@@ -702,6 +767,7 @@ function drawOrthoCanvas(canvas, viewName) {
     const pts = face.verts.map((id) => projected.get(id)).filter(Boolean);
     drawFace(ctx, pts, "rgba(85,255,78,.06)", "rgba(85,255,78,.28)", 1);
   });
+  drawFaceNormals(ctx, (v) => orthoProject(v, canvas, viewName));
   state.edges.forEach((e) => {
     const a = projected.get(e.a), b = projected.get(e.b);
     if (!a || !b) return;
@@ -747,6 +813,12 @@ function updateUi() {
   else if (state.selected.type === "vertex") {
     const v = vertexById(state.selected.id);
     els.selectionReadout.textContent = v ? `Vertex #${v.id}  X ${round(v.x)}  Y ${round(v.y)}  Z ${round(v.z)}${v.mirrorId ? `  mirror #${v.mirrorId}` : "  centre"}` : "Missing vertex";
+  } else if (state.selected.type === "face") {
+    const face = faceById(state.selected.id);
+    const n = face ? faceNormal(face) : null;
+    els.selectionReadout.textContent = n
+      ? `Face #${state.selected.id}  normal X ${round(n.x, 2)}  Y ${round(n.y, 2)}  Z ${round(n.z, 2)}`
+      : `Face #${state.selected.id}`;
   } else {
     els.selectionReadout.textContent = `${state.selected.type.toUpperCase()} #${state.selected.id}`;
   }
@@ -1062,6 +1134,11 @@ function numberFromInput(input, fallback = 0) {
   return Number.isFinite(n) ? n : fallback;
 }
 
+function normalizeHexColor(value, fallback = "#e9f2e4") {
+  const text = String(value || "").trim();
+  return /^#[0-9a-f]{6}$/i.test(text) ? text : fallback;
+}
+
 function gameMetadata() {
   const radius = Math.round(modelRadius());
   return {
@@ -1069,6 +1146,7 @@ function gameMetadata() {
     npcRole: els.npcRole.value,
     aiProfile: els.aiProfile.value,
     decalRole: els.decalRole.value,
+    baseColor: normalizeHexColor(els.baseColor.value),
     description: els.shipDescription.value.trim(),
     valueCr: Math.max(0, Math.round(numberFromInput(els.shipValue, 0))),
     stats: {
@@ -1159,6 +1237,7 @@ function importBuilderJson() {
       if (meta.npcRole) els.npcRole.value = meta.npcRole;
       if (meta.aiProfile) els.aiProfile.value = meta.aiProfile;
       if (meta.decalRole) els.decalRole.value = meta.decalRole;
+      if (meta.baseColor) els.baseColor.value = normalizeHexColor(meta.baseColor);
       if (Number.isFinite(meta.valueCr)) els.shipValue.value = meta.valueCr;
       if (meta.stats) {
         if (Number.isFinite(meta.stats.hp)) els.shipHp.value = meta.stats.hp;
@@ -1249,6 +1328,7 @@ function loadLibraryModel(id) {
   if (meta.npcRole && [...els.npcRole.options].some((o) => o.value === meta.npcRole)) els.npcRole.value = meta.npcRole;
   if (meta.aiProfile && [...els.aiProfile.options].some((o) => o.value === meta.aiProfile)) els.aiProfile.value = meta.aiProfile;
   if (meta.decalRole && [...els.decalRole.options].some((o) => o.value === meta.decalRole)) els.decalRole.value = meta.decalRole;
+  els.baseColor.value = normalizeHexColor(meta.baseColor);
   if (Number.isFinite(meta.valueCr)) els.shipValue.value = meta.valueCr;
   if (meta.stats) {
     if (Number.isFinite(meta.stats.hp)) els.shipHp.value = meta.stats.hp;
@@ -1360,6 +1440,7 @@ function bindEvents() {
   document.getElementById("newWedgeBtn").addEventListener("click", resetWedge);
   els.loadLibraryModelBtn.addEventListener("click", () => loadLibraryModel(els.librarySelector.value));
   els.toggleExportBtn.addEventListener("click", () => setExportVisible(els.exportPanel.classList.contains("is-hidden")));
+  els.showFaceNormals.addEventListener("input", renderAll);
   document.getElementById("resetViewBtn").addEventListener("click", () => {
     state.view.rx = -0.35; state.view.ry = 0.72; fitView(); renderAll();
   });
@@ -1437,7 +1518,7 @@ function bindEvents() {
   document.getElementById("importBtn").addEventListener("click", importBuilderJson);
   els.exportKind.addEventListener("change", updateExport);
   [
-    els.shipId, els.shipName, els.shipDescription, els.shipClass, els.npcRole, els.aiProfile, els.decalRole,
+    els.shipId, els.shipName, els.shipDescription, els.shipClass, els.npcRole, els.aiProfile, els.decalRole, els.baseColor,
     els.shipValue, els.shipHp, els.speedMul, els.cargoTons, els.missileCount, els.laserClass,
     els.flagTrader, els.flagPirate, els.flagPolice, els.flagAlien, els.flagEscapePod, els.flagHidden
   ].forEach((el) => el.addEventListener("input", updateExport));

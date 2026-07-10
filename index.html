@@ -529,9 +529,11 @@
       left: 50%;
       bottom: 138px;
       z-index: 8;
-      width: min(260px, 28vw);
+      width: min(300px, 32vw);
       display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
       gap: 4px;
+      align-items: center;
       transform: translateX(-50%);
       pointer-events: auto;
     }
@@ -1041,6 +1043,7 @@
       box-shadow: 0 0 8px rgba(101, 255, 71, .52);
     }
 
+    .hud-pause,
     .hud-volume,
     .hud-brightness {
       width: 100%;
@@ -1056,19 +1059,57 @@
       text-shadow: 0 0 6px rgba(101, 255, 71, .36);
     }
 
+    .hud-pause {
+      grid-row: 1 / span 2;
+      width: auto;
+      min-width: 34px;
+      align-self: stretch;
+      border: 1px solid rgba(101, 255, 71, .46);
+      border-radius: 9px;
+      padding: 3px 6px;
+      background: rgba(0, 0, 0, .2);
+      box-shadow: inset 0 0 9px rgba(101, 255, 71, .08), 0 0 9px rgba(101, 255, 71, .16);
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .hud-pause:hover,
+    .hud-pause:focus-visible {
+      opacity: .95;
+      border-color: rgba(101, 255, 71, .72);
+      box-shadow: inset 0 0 11px rgba(101, 255, 71, .12), 0 0 13px rgba(101, 255, 71, .24);
+      outline: none;
+    }
+
+    .hud-pause[aria-pressed="true"] {
+      color: var(--amber);
+      border-color: rgba(255, 207, 54, .72);
+      text-shadow: 0 0 8px rgba(255, 207, 54, .42);
+      box-shadow: inset 0 0 10px rgba(255, 207, 54, .12), 0 0 12px rgba(255, 207, 54, .22);
+    }
+
+    .hud-pause[aria-pressed="true"] svg path {
+      color: var(--amber);
+      stroke: var(--amber);
+    }
+
     .hud-volume {
+      grid-column: 2;
       margin: 0;
     }
 
     .hud-brightness {
+      grid-column: 2;
       margin: 0;
     }
 
+    .hud-pause[hidden],
     .hud-volume[hidden],
     .hud-brightness[hidden] {
       display: none;
     }
 
+    .hud-pause svg,
     .hud-volume svg,
     .hud-brightness svg {
       flex: 0 0 auto;
@@ -1077,6 +1118,7 @@
       filter: drop-shadow(0 0 4px rgba(101, 255, 71, .38));
     }
 
+    .hud-pause svg path,
     .hud-volume svg path,
     .hud-brightness svg path,
     .hud-brightness svg circle {
@@ -1085,6 +1127,20 @@
       stroke-width: 1.7;
       stroke-linecap: round;
       stroke-linejoin: round;
+    }
+
+    .hud-pause .play-mark {
+      display: none;
+      fill: currentColor;
+      stroke: none;
+    }
+
+    .hud-pause[aria-pressed="true"] .pause-bars {
+      display: none;
+    }
+
+    .hud-pause[aria-pressed="true"] .play-mark {
+      display: block;
     }
 
     .hud-volume[data-volume-state="muted"] .speaker-wave,
@@ -1719,6 +1775,12 @@
           <button class="btn mini mode-toggle" id="modeSwitchBtn" aria-label="Toggle presentation mode" aria-pressed="true">Old School</button>
         </div>
         <div class="hud-settings" id="hudSettings" aria-label="Display and audio settings">
+          <button class="hud-pause" id="pauseBtn" type="button" aria-label="Pause game" aria-pressed="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path class="pause-bars" d="M8 6v12M16 6v12"></path>
+              <path class="play-mark" d="M9 6l9 6-9 6z"></path>
+            </svg>
+          </button>
           <div class="hud-volume" id="volumeControl" aria-label="Global volume">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M4 10h4l5-4v12l-5-4H4z"></path>
@@ -1807,12 +1869,17 @@
     const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
     const AUDIO_VOLUME_KEY = "ultraEliteAudioVolume";
     const DEFAULT_AUDIO_VOLUME = .8;
+    const AUDIO_OUTPUT_GAIN = 1.65;
     const VISUAL_BRIGHTNESS_KEY = "ultraEliteVisualBrightness";
     const DEFAULT_VISUAL_BRIGHTNESS = 1;
 
     function normalizeAudioVolume(value) {
       const n = Number(value);
       return Number.isFinite(n) ? clamp(n, 0, 1) : DEFAULT_AUDIO_VOLUME;
+    }
+
+    function effectiveAudioVolume(value) {
+      return normalizeAudioVolume(value) * AUDIO_OUTPUT_GAIN;
     }
 
     function loadAudioVolumeSetting() {
@@ -2615,655 +2682,656 @@
         ]
       }),
       diamondback: buildBlueprint({
-              "verts": [
-                      [
-                              0,
-                              0,
-                              98
-                      ],
-                      [
-                              0,
-                              46,
-                              -86
-                      ],
-                      [
-                              0,
-                              -8,
-                              -75
-                      ],
-                      [
-                              82,
-                              0,
-                              -70
-                      ],
-                      [
-                              -82,
-                              0,
-                              -70
-                      ],
-                      [
-                              0,
-                              0,
-                              -62
-                      ],
-                      [
-                              0,
-                              33,
-                              -70
-                      ],
-                      [
-                              74,
-                              0,
-                              0
-                      ],
-                      [
-                              -74,
-                              0,
-                              0
-                      ],
-                      [
-                              0,
-                              0,
-                              139
-                      ]
-              ],
-              "edges": [
-                      [
-                              0,
-                              3
-                      ],
-                      [
-                              1,
-                              3
-                      ],
-                      [
-                              0,
-                              1
-                      ],
-                      [
-                              1,
-                              4
-                      ],
-                      [
-                              0,
-                              4
-                      ],
-                      [
-                              0,
-                              2
-                      ],
-                      [
-                              2,
-                              3
-                      ],
-                      [
-                              2,
-                              4
-                      ],
-                      [
-                              3,
-                              5
-                      ],
-                      [
-                              2,
-                              5
-                      ],
-                      [
-                              4,
-                              5
-                      ],
-                      [
-                              1,
-                              6
-                      ],
-                      [
-                              3,
-                              6
-                      ],
-                      [
-                              4,
-                              6
-                      ],
-                      [
-                              5,
-                              6
-                      ],
-                      [
-                              3,
-                              7
-                      ],
-                      [
-                              4,
-                              8
-                      ],
-                      [
-                              0,
-                              9
-                      ]
-              ],
-              "edgeFaces": [
-                      [
-                              0,
-                              2
-                      ],
-                      [
-                              0,
-                              6
-                      ],
-                      [
-                              0,
-                              1
-                      ],
-                      [
-                              1,
-                              7
-                      ],
-                      [
-                              1,
-                              3
-                      ],
-                      [
-                              2,
-                              3
-                      ],
-                      [
-                              2,
-                              4
-                      ],
-                      [
-                              3,
-                              5
-                      ],
-                      [
-                              4,
-                              8
-                      ],
-                      [
-                              4,
-                              5
-                      ],
-                      [
-                              5,
-                              9
-                      ],
-                      [
-                              6,
-                              7
-                      ],
-                      [
-                              6,
-                              8
-                      ],
-                      [
-                              7,
-                              9
-                      ],
-                      [
-                              8,
-                              9
-                      ],
-                      [
-                              -1,
-                              -1
-                      ],
-                      [
-                              -1,
-                              -1
-                      ],
-                      [
-                              -1,
-                              -1
-                      ]
-              ],
-              "edgeVisibility": [
-                      31,
-                      31,
-                      31,
-                      31,
-                      31,
-                      31,
-                      31,
-                      31,
-                      31,
-                      31,
-                      31,
-                      31,
-                      31,
-                      31,
-                      31,
-                      31,
-                      31,
-                      31
-              ],
-              "normals": [
-                      [
-                              44.5,
-                              86.88,
-                              21.72
-                      ],
-                      [
-                              -44.5,
-                              86.88,
-                              21.72
-                      ],
-                      [
-                              9.42,
-                              -99.45,
-                              4.6
-                      ],
-                      [
-                              -9.42,
-                              -99.45,
-                              4.6
-                      ],
-                      [
-                              -5.11,
-                              85.05,
-                              -52.34
-                      ],
-                      [
-                              5.11,
-                              85.05,
-                              -52.34
-                      ],
-                      [
-                              -29.81,
-                              -74.08,
-                              -60.19
-                      ],
-                      [
-                              29.81,
-                              -74.08,
-                              -60.19
-                      ],
-                      [
-                              9.44,
-                              23.45,
-                              96.75
-                      ],
-                      [
-                              -9.44,
-                              23.45,
-                              96.75
-                      ]
-              ],
-              "details": [
-                      {
-                              "type": "engine",
-                              "color": "#f7fff7",
-                              "normal": [
-                                      0.09,
-                                      0.23,
-                                      0.97
-                              ],
-                              "lift": 1.5,
-                              "points": [
-                                      [
-                                              7.11,
-                                              27.28,
-                                              -69.31
-                                      ],
-                                      [
-                                              7.11,
-                                              2.86,
-                                              -63.39
-                                      ],
-                                      [
-                                              67.79,
-                                              2.86,
-                                              -69.31
-                                      ]
-                              ],
-                              "stroke": "#ffffff"
-                      },
-                      {
-                              "type": "engine",
-                              "color": "#f7fff7",
-                              "normal": [
-                                      -0.09,
-                                      0.23,
-                                      0.97
-                              ],
-                              "lift": 1.5,
-                              "points": [
-                                      [
-                                              -66.69,
-                                              3.08,
-                                              -69.25
-                                      ],
-                                      [
-                                              -7.65,
-                                              3.08,
-                                              -63.49
-                                      ],
-                                      [
-                                              -7.65,
-                                              26.84,
-                                              -69.25
-                                      ]
-                              ],
-                              "stroke": "#ffffff"
-                      },
-                      {
-                              "type": "window",
-                              "color": "#101915",
-                              "normal": [
-                                      0.44,
-                                      0.87,
-                                      0.22
-                              ],
-                              "lift": 1,
-                              "points": [
-                                      [
-                                              16.95,
-                                              9.51,
-                                              25.25
-                                      ],
-                                      [
-                                              48.11,
-                                              9.51,
-                                              -38.59
-                                      ],
-                                      [
-                                              16.95,
-                                              26.99,
-                                              -44.67
-                                      ]
-                              ]
-                      },
-                      {
-                              "type": "window",
-                              "color": "#101915",
-                              "normal": [
-                                      -0.44,
-                                      0.87,
-                                      0.22
-                              ],
-                              "lift": 1,
-                              "points": [
-                                      [
-                                              -16.95,
-                                              9.51,
-                                              25.25
-                                      ],
-                                      [
-                                              -16.95,
-                                              26.99,
-                                              -44.67
-                                      ],
-                                      [
-                                              -48.11,
-                                              9.51,
-                                              -38.59
-                                      ]
-                              ]
-                      },
-                      {
-                              "type": "window",
-                              "color": "#101915",
-                              "normal": [
-                                      -0.09,
-                                      -0.99,
-                                      0.05
-                              ],
-                              "lift": 1,
-                              "points": [
-                                      [
-                                              -22.14,
-                                              -2.16,
-                                              5.93
-                                      ],
-                                      [
-                                              -37.72,
-                                              -2.16,
-                                              -25.99
-                                      ],
-                                      [
-                                              -22.14,
-                                              -3.68,
-                                              -26.94
-                                      ]
-                              ]
-                      },
-                      {
-                              "type": "window",
-                              "color": "#101915",
-                              "normal": [
-                                      0.09,
-                                      -0.99,
-                                      0.05
-                              ],
-                              "lift": 1,
-                              "points": [
-                                      [
-                                              22.14,
-                                              -2.16,
-                                              5.93
-                                      ],
-                                      [
-                                              22.14,
-                                              -3.68,
-                                              -26.94
-                                      ],
-                                      [
-                                              37.72,
-                                              -2.16,
-                                              -25.99
-                                      ]
-                              ]
-                      },
-                      {
-                              "type": "polyline",
-                              "color": "#ffd936",
-                              "normal": [
-                                      -0.09,
-                                      -0.99,
-                                      0.05
-                              ],
-                              "lift": 1,
-                              "points": [
-                                      [
-                                              -63.41,
-                                              -0.91,
-                                              -51.53
-                                      ],
-                                      [
-                                              -9.29,
-                                              -6.19,
-                                              -54.83
-                                      ]
-                              ],
-                              "width": 1.2
-                      },
-                      {
-                              "type": "polyline",
-                              "color": "#ffd936",
-                              "normal": [
-                                      -0.09,
-                                      -0.99,
-                                      0.05
-                              ],
-                              "lift": 1,
-                              "points": [
-                                      [
-                                              -9.29,
-                                              -6.19,
-                                              -54.83
-                                      ],
-                                      [
-                                              -9.29,
-                                              -0.91,
-                                              59.35
-                                      ]
-                              ],
-                              "width": 1.2
-                      },
-                      {
-                              "type": "polyline",
-                              "color": "#ffd936",
-                              "normal": [
-                                      0.09,
-                                      -0.99,
-                                      0.05
-                              ],
-                              "lift": 1,
-                              "points": [
-                                      [
-                                              9.29,
-                                              -6.19,
-                                              -54.83
-                                      ],
-                                      [
-                                              63.41,
-                                              -0.91,
-                                              -51.53
-                                      ]
-                              ],
-                              "width": 1.2
-                      },
-                      {
-                              "type": "polyline",
-                              "color": "#ffd936",
-                              "normal": [
-                                      0.09,
-                                      -0.99,
-                                      0.05
-                              ],
-                              "lift": 1,
-                              "points": [
-                                      [
-                                              9.29,
-                                              -0.91,
-                                              59.35
-                                      ],
-                                      [
-                                              9.29,
-                                              -6.19,
-                                              -54.83
-                                      ]
-                              ],
-                              "width": 1.2
-                      },
-                      {
-                              "type": "polyline",
-                              "color": "#ffd936",
-                              "normal": [
-                                      -0.44,
-                                      0.87,
-                                      0.22
-                              ],
-                              "lift": 1,
-                              "points": [
-                                      [
-                                              -9.29,
-                                              35.57,
-                                              -63.33
-                                      ],
-                                      [
-                                              -63.41,
-                                              5.21,
-                                              -52.77
-                                      ]
-                              ],
-                              "width": 1.2
-                      },
-                      {
-                              "type": "polyline",
-                              "color": "#ffd936",
-                              "normal": [
-                                      -0.44,
-                                      0.87,
-                                      0.22
-                              ],
-                              "lift": 1,
-                              "points": [
-                                      [
-                                              -63.41,
-                                              5.21,
-                                              -52.77
-                                      ],
-                                      [
-                                              -9.29,
-                                              5.21,
-                                              58.11
-                                      ]
-                              ],
-                              "width": 1.2
-                      },
-                      {
-                              "type": "polyline",
-                              "color": "#ffd936",
-                              "normal": [
-                                      0.44,
-                                      0.87,
-                                      0.22
-                              ],
-                              "lift": 1,
-                              "points": [
-                                      [
-                                              63.41,
-                                              5.21,
-                                              -52.77
-                                      ],
-                                      [
-                                              9.29,
-                                              35.57,
-                                              -63.33
-                                      ]
-                              ],
-                              "width": 1.2
-                      },
-                      {
-                              "type": "polyline",
-                              "color": "#ffd936",
-                              "normal": [
-                                      0.44,
-                                      0.87,
-                                      0.22
-                              ],
-                              "lift": 1,
-                              "points": [
-                                      [
-                                              9.29,
-                                              5.21,
-                                              58.11
-                                      ],
-                                      [
-                                              63.41,
-                                              5.21,
-                                              -52.77
-                                      ]
-                              ],
-                              "width": 1.2
-                      }
-              ],
-              "gameMeta": {
-                      "class": "fighter",
-                      "npcRole": "private",
-                      "aiProfile": "bountyHunter",
-                      "decalRole": "private",
-                      "description": "The Diamondback is an off-books hunter craft: Sleek like a running shoe, over-engined and fully fitted out with the latest Sirius Cybernetics Corp. GPP technology.",
-                      "valueCr": 2500000,
-                      "stats": {
-                              "r": 139,
-                              "hp": 300,
-                              "speed": 2.2,
-                              "cargo": 14,
-                              "missiles": 6,
-                              "laser": "military"
-                      },
-                      "lists": {
-                              "trader": false,
-                              "pirate": false,
-                              "police": false,
-                              "alien": false
-                      },
-                      "flags": {
-                              "escapePod": true,
-                              "hiddenUntilDiscovered": true
-                      }
-              }
-      }),
+        "verts": [
+                [
+                        0,
+                        0,
+                        98
+                ],
+                [
+                        0,
+                        46,
+                        -86
+                ],
+                [
+                        0,
+                        -8,
+                        -75
+                ],
+                [
+                        82,
+                        0,
+                        -70
+                ],
+                [
+                        -82,
+                        0,
+                        -70
+                ],
+                [
+                        0,
+                        0,
+                        -62
+                ],
+                [
+                        0,
+                        33,
+                        -70
+                ],
+                [
+                        74,
+                        0,
+                        0
+                ],
+                [
+                        -74,
+                        0,
+                        0
+                ],
+                [
+                        0,
+                        0,
+                        139
+                ]
+        ],
+        "edges": [
+                [
+                        0,
+                        3
+                ],
+                [
+                        1,
+                        3
+                ],
+                [
+                        0,
+                        1
+                ],
+                [
+                        1,
+                        4
+                ],
+                [
+                        0,
+                        4
+                ],
+                [
+                        0,
+                        2
+                ],
+                [
+                        2,
+                        3
+                ],
+                [
+                        2,
+                        4
+                ],
+                [
+                        3,
+                        5
+                ],
+                [
+                        2,
+                        5
+                ],
+                [
+                        4,
+                        5
+                ],
+                [
+                        1,
+                        6
+                ],
+                [
+                        3,
+                        6
+                ],
+                [
+                        4,
+                        6
+                ],
+                [
+                        5,
+                        6
+                ],
+                [
+                        3,
+                        7
+                ],
+                [
+                        4,
+                        8
+                ],
+                [
+                        0,
+                        9
+                ]
+        ],
+        "edgeFaces": [
+                [
+                        0,
+                        2
+                ],
+                [
+                        0,
+                        6
+                ],
+                [
+                        0,
+                        1
+                ],
+                [
+                        1,
+                        7
+                ],
+                [
+                        1,
+                        3
+                ],
+                [
+                        2,
+                        3
+                ],
+                [
+                        2,
+                        4
+                ],
+                [
+                        3,
+                        5
+                ],
+                [
+                        4,
+                        8
+                ],
+                [
+                        4,
+                        5
+                ],
+                [
+                        5,
+                        9
+                ],
+                [
+                        6,
+                        7
+                ],
+                [
+                        6,
+                        8
+                ],
+                [
+                        7,
+                        9
+                ],
+                [
+                        8,
+                        9
+                ],
+                [
+                        -1,
+                        -1
+                ],
+                [
+                        -1,
+                        -1
+                ],
+                [
+                        -1,
+                        -1
+                ]
+        ],
+        "edgeVisibility": [
+                31,
+                31,
+                31,
+                31,
+                31,
+                31,
+                31,
+                31,
+                31,
+                31,
+                31,
+                31,
+                31,
+                31,
+                31,
+                31,
+                31,
+                31
+        ],
+        "normals": [
+                [
+                        44.5,
+                        86.88,
+                        21.72
+                ],
+                [
+                        -44.5,
+                        86.88,
+                        21.72
+                ],
+                [
+                        9.42,
+                        -99.45,
+                        4.6
+                ],
+                [
+                        -9.42,
+                        -99.45,
+                        4.6
+                ],
+                [
+                        -5.11,
+                        85.05,
+                        -52.34
+                ],
+                [
+                        5.11,
+                        85.05,
+                        -52.34
+                ],
+                [
+                        -29.81,
+                        -74.08,
+                        -60.19
+                ],
+                [
+                        29.81,
+                        -74.08,
+                        -60.19
+                ],
+                [
+                        -9.44,
+                        -23.45,
+                        -96.75
+                ],
+                [
+                        9.44,
+                        -23.45,
+                        -96.75
+                ]
+        ],
+        "details": [
+                {
+                        "type": "engine",
+                        "color": "#f7fff7",
+                        "normal": [
+                                -0.09,
+                                -0.23,
+                                -0.97
+                        ],
+                        "lift": 1.5,
+                        "points": [
+                                [
+                                        67.79,
+                                        2.86,
+                                        -69.31
+                                ],
+                                [
+                                        7.11,
+                                        2.86,
+                                        -63.39
+                                ],
+                                [
+                                        7.11,
+                                        27.28,
+                                        -69.31
+                                ]
+                        ],
+                        "stroke": "#ffffff"
+                },
+                {
+                        "type": "engine",
+                        "color": "#f7fff7",
+                        "normal": [
+                                0.09,
+                                -0.23,
+                                -0.97
+                        ],
+                        "lift": 1.5,
+                        "points": [
+                                [
+                                        -7.65,
+                                        26.84,
+                                        -69.25
+                                ],
+                                [
+                                        -7.65,
+                                        3.08,
+                                        -63.49
+                                ],
+                                [
+                                        -66.69,
+                                        3.08,
+                                        -69.25
+                                ]
+                        ],
+                        "stroke": "#ffffff"
+                },
+                {
+                        "type": "window",
+                        "color": "#101915",
+                        "normal": [
+                                0.44,
+                                0.87,
+                                0.22
+                        ],
+                        "lift": 1,
+                        "points": [
+                                [
+                                        16.95,
+                                        9.51,
+                                        25.25
+                                ],
+                                [
+                                        48.11,
+                                        9.51,
+                                        -38.59
+                                ],
+                                [
+                                        16.95,
+                                        26.99,
+                                        -44.67
+                                ]
+                        ]
+                },
+                {
+                        "type": "window",
+                        "color": "#101915",
+                        "normal": [
+                                -0.44,
+                                0.87,
+                                0.22
+                        ],
+                        "lift": 1,
+                        "points": [
+                                [
+                                        -16.95,
+                                        9.51,
+                                        25.25
+                                ],
+                                [
+                                        -16.95,
+                                        26.99,
+                                        -44.67
+                                ],
+                                [
+                                        -48.11,
+                                        9.51,
+                                        -38.59
+                                ]
+                        ]
+                },
+                {
+                        "type": "window",
+                        "color": "#101915",
+                        "normal": [
+                                -0.09,
+                                -0.99,
+                                0.05
+                        ],
+                        "lift": 1,
+                        "points": [
+                                [
+                                        -22.14,
+                                        -2.16,
+                                        5.93
+                                ],
+                                [
+                                        -37.72,
+                                        -2.16,
+                                        -25.99
+                                ],
+                                [
+                                        -22.14,
+                                        -3.68,
+                                        -26.94
+                                ]
+                        ]
+                },
+                {
+                        "type": "window",
+                        "color": "#101915",
+                        "normal": [
+                                0.09,
+                                -0.99,
+                                0.05
+                        ],
+                        "lift": 1,
+                        "points": [
+                                [
+                                        22.14,
+                                        -2.16,
+                                        5.93
+                                ],
+                                [
+                                        22.14,
+                                        -3.68,
+                                        -26.94
+                                ],
+                                [
+                                        37.72,
+                                        -2.16,
+                                        -25.99
+                                ]
+                        ]
+                },
+                {
+                        "type": "polyline",
+                        "color": "#ffd936",
+                        "normal": [
+                                -0.09,
+                                -0.99,
+                                0.05
+                        ],
+                        "lift": 1,
+                        "points": [
+                                [
+                                        -63.41,
+                                        -0.91,
+                                        -51.53
+                                ],
+                                [
+                                        -9.29,
+                                        -6.19,
+                                        -54.83
+                                ]
+                        ],
+                        "width": 1.2
+                },
+                {
+                        "type": "polyline",
+                        "color": "#ffd936",
+                        "normal": [
+                                -0.09,
+                                -0.99,
+                                0.05
+                        ],
+                        "lift": 1,
+                        "points": [
+                                [
+                                        -9.29,
+                                        -6.19,
+                                        -54.83
+                                ],
+                                [
+                                        -9.29,
+                                        -0.91,
+                                        59.35
+                                ]
+                        ],
+                        "width": 1.2
+                },
+                {
+                        "type": "polyline",
+                        "color": "#ffd936",
+                        "normal": [
+                                0.09,
+                                -0.99,
+                                0.05
+                        ],
+                        "lift": 1,
+                        "points": [
+                                [
+                                        9.29,
+                                        -6.19,
+                                        -54.83
+                                ],
+                                [
+                                        63.41,
+                                        -0.91,
+                                        -51.53
+                                ]
+                        ],
+                        "width": 1.2
+                },
+                {
+                        "type": "polyline",
+                        "color": "#ffd936",
+                        "normal": [
+                                0.09,
+                                -0.99,
+                                0.05
+                        ],
+                        "lift": 1,
+                        "points": [
+                                [
+                                        9.29,
+                                        -0.91,
+                                        59.35
+                                ],
+                                [
+                                        9.29,
+                                        -6.19,
+                                        -54.83
+                                ]
+                        ],
+                        "width": 1.2
+                },
+                {
+                        "type": "polyline",
+                        "color": "#ffd936",
+                        "normal": [
+                                -0.44,
+                                0.87,
+                                0.22
+                        ],
+                        "lift": 1,
+                        "points": [
+                                [
+                                        -9.29,
+                                        35.57,
+                                        -63.33
+                                ],
+                                [
+                                        -63.41,
+                                        5.21,
+                                        -52.77
+                                ]
+                        ],
+                        "width": 1.2
+                },
+                {
+                        "type": "polyline",
+                        "color": "#ffd936",
+                        "normal": [
+                                -0.44,
+                                0.87,
+                                0.22
+                        ],
+                        "lift": 1,
+                        "points": [
+                                [
+                                        -63.41,
+                                        5.21,
+                                        -52.77
+                                ],
+                                [
+                                        -9.29,
+                                        5.21,
+                                        58.11
+                                ]
+                        ],
+                        "width": 1.2
+                },
+                {
+                        "type": "polyline",
+                        "color": "#ffd936",
+                        "normal": [
+                                0.44,
+                                0.87,
+                                0.22
+                        ],
+                        "lift": 1,
+                        "points": [
+                                [
+                                        63.41,
+                                        5.21,
+                                        -52.77
+                                ],
+                                [
+                                        9.29,
+                                        35.57,
+                                        -63.33
+                                ]
+                        ],
+                        "width": 1.2
+                },
+                {
+                        "type": "polyline",
+                        "color": "#ffd936",
+                        "normal": [
+                                0.44,
+                                0.87,
+                                0.22
+                        ],
+                        "lift": 1,
+                        "points": [
+                                [
+                                        9.29,
+                                        5.21,
+                                        58.11
+                                ],
+                                [
+                                        63.41,
+                                        5.21,
+                                        -52.77
+                                ]
+                        ],
+                        "width": 1.2
+                }
+        ],
+        "gameMeta": {
+                "class": "fighter",
+                "npcRole": "private",
+                "aiProfile": "bountyHunter",
+                "decalRole": "private",
+                "baseColor": "#e9f2e4",
+                "description": "The Diamondback is an off-books hunter craft: Sleek like a running shoe, over-engined and fully fitted out with the latest Sirius Cybernetics Corp. GPP technology.",
+                "valueCr": 2500000,
+                "stats": {
+                        "r": 139,
+                        "hp": 300,
+                        "speed": 2.2,
+                        "cargo": 14,
+                        "missiles": 6,
+                        "laser": "military"
+                },
+                "lists": {
+                        "trader": false,
+                        "pirate": false,
+                        "police": false,
+                        "alien": false
+                },
+                "flags": {
+                        "escapePod": true,
+                        "hiddenUntilDiscovered": true
+                }
+        }
+}),
       thargoid: buildBlueprint({
         verts: [[32,-48,48],[32,-68,0],[32,-48,-48],[32,0,-68],[32,48,-48],[32,68,0],[32,48,48],[32,0,68],[-24,-116,116],[-24,-164,0],[-24,-116,-116],[-24,0,-164],[-24,116,-116],[-24,164,0],[-24,116,116],[-24,0,164],[-24,64,80],[-24,64,-80],[-24,-64,-80],[-24,-64,80]],
         edges: [[0,7],[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[0,8],[1,9],[2,10],[3,11],[4,12],[5,13],[6,14],[7,15],[8,15],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[16,17],[18,19]],
@@ -3410,6 +3478,11 @@
 
     function shipHiddenUntilDiscovered(model) {
       return !!(modelGameMeta(model).hiddenUntilDiscovered || modelGameMeta(model).flags?.hiddenUntilDiscovered);
+    }
+
+    function modelBaseColor(model) {
+      const color = modelGameMeta(model).baseColor;
+      return typeof color === "string" && /^#[0-9a-f]{6}$/i.test(color) ? color : null;
     }
 
     const SHIP_MODEL_LIST = Object.keys(SHIP_NAMES).filter((model) => !shipHiddenUntilDiscovered(model));
@@ -3704,6 +3777,8 @@
     }
 
     function shipColor(model, police = false) {
+      const base = modelBaseColor(model);
+      if (base) return base;
       if (police) return "#46dfff";
       if (ALIEN_MODELS.includes(model)) return "#c46bff";
       return "#e9f2e4";
@@ -4019,6 +4094,7 @@
       soundEnabled: true,
       audioVolume: loadAudioVolumeSetting(),
       visualBrightness: loadVisualBrightnessSetting(),
+      paused: false,
       developerMode: false,
       godMode: false,
       devStarType: "auto",
@@ -4107,6 +4183,8 @@
       txtLaserHeat: byId("txtLaserHeat"),
       perfTicker: byId("perfTicker"),
       missileSlots: Array.from(document.querySelectorAll("#missileSlots .missile-slot")),
+      pauseBtn: byId("pauseBtn"),
+      pauseValue: byId("pauseValue"),
       volumeControl: byId("volumeControl"),
       volumeSlider: byId("volumeSlider"),
       volumeValue: byId("volumeValue"),
@@ -4148,6 +4226,13 @@
 
     function setStyleProp(el, prop, value) {
       if (el && el.style[prop] !== value) el.style[prop] = value;
+    }
+
+    function updatePauseHud() {
+      setDomText(hudEls.pauseValue, game.paused ? "PAUSED" : "RUN");
+      setDomAttr(hudEls.pauseBtn, "aria-pressed", game.paused ? "true" : "false");
+      setDomAttr(hudEls.pauseBtn, "aria-label", game.paused ? "Resume game" : "Pause game");
+      setDomHidden(hudEls.pauseBtn, false);
     }
 
     function updateVolumeHud() {
@@ -5032,7 +5117,7 @@
           limiter.ratio.value = 4.2;
           limiter.attack.value = .004;
           limiter.release.value = .22;
-          master.gain.value = normalizeAudioVolume(game.audioVolume);
+          master.gain.value = masterTargetVolume();
           master.connect(limiter).connect(ctx.destination);
           buses = {};
           for (const [name, level] of Object.entries(BUS_LEVELS)) {
@@ -5094,7 +5179,11 @@
 
       function applyMasterVolume(lag = .035) {
         if (!ctx || !master) return;
-        master.gain.setTargetAtTime(normalizeAudioVolume(game.audioVolume), ctx.currentTime, lag);
+        master.gain.setTargetAtTime(masterTargetVolume(), ctx.currentTime, lag);
+      }
+
+      function masterTargetVolume() {
+        return game.paused ? .00001 : effectiveAudioVolume(game.audioVolume);
       }
 
       function smoothSignedParam(param, value, lag = .08) {
@@ -6009,6 +6098,10 @@
           game.audioVolume = normalizeAudioVolume(value);
           if (persist) saveAudioVolumeSetting(game.audioVolume);
           applyMasterVolume();
+        },
+        setPaused: (value) => {
+          game.paused = !!value;
+          applyMasterVolume(game.paused ? .02 : .06);
         },
         toggle: () => {
           game.soundEnabled = !game.soundEnabled;
@@ -7635,6 +7728,11 @@
         setMessage("No docking computer fitted.");
         return;
       }
+      if (!game.autoDock && !stationSafeZoneActive()) {
+        eliteAudio.play("boop");
+        setMessage("Docking computer waiting for station safe zone.");
+        return;
+      }
       game.autoDock = game.autoDock ? false : { stage: "marshal", announced: "" };
       setMessage(game.autoDock ? "Docking computer engaged." : "Docking computer disengaged.");
       commsMessage("TRAFFIC CONTROL", stationControllerLine(game.autoDock ? "autoOn" : "autoOff"), "station");
@@ -8843,9 +8941,10 @@
       renderPanel();
     }
 
-    const GAME_VERSION = "1.0.13-beta";
+    const GAME_VERSION = "1.0.14-beta";
     const UPDATE_LOG = [
-      ["1.0.13-beta", "Project structure refresh: Ultra Elite now builds from modular local source files into the single-file browser release, with a dedicated ship-builder workshop for future hidden craft."],
+      ["1.0.14-beta", "HUD and workshop polish: added an in-game pause control, increased global volume headroom and improved ship-builder preview tools for future Project X craft."],
+      ["1.0.13-beta", "Project structure refresh: Ultra Elite now builds from modular local source files into the single-file browser release, with a dedicated ship-builder workshop for future Project X craft."],
       ["1.0.12-beta", "Audio mix polish: raised the global master level so Ultra mode engines, weapons, station ambience and cinematic transitions come through more clearly."],
       ["1.0.11-beta", "Old School renderer polish: hidden-line ships now use black inset hull fills to mask rear geometry, giving wireframes a sharper, more authentic retro edge while keeping armada performance high."],
       ["1.0.10-beta", "Station lane and trading fix: hyperspace arrivals now start farther from the station, pirate encounters have room to appear, Dodo docking cues are corrected, and market/save exploits are closed."],
@@ -9332,6 +9431,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       reader.readAsText(file);
     }
 
+    function renderGameFrame() {
+      updateReadouts();
+      drawSpace();
+      drawScanner();
+      drawForeAftRadar();
+    }
+
     function update(dt) {
       updateJumpCountdown(dt);
       if (game.transition) {
@@ -9529,10 +9635,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         if (diagram) drawShipDiagram(diagram, dt);
       }
       eliteAudio.update(dt);
-      updateReadouts();
-      drawSpace();
-      drawScanner();
-      drawForeAftRadar();
+      renderGameFrame();
     }
 
     function dockingComputerAvoidance() {
@@ -12043,15 +12146,33 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.restore();
     }
 
+    function canvasHudScale(w) {
+      const rect = space.getBoundingClientRect();
+      const scale = rect.width ? w / rect.width : Math.min(window.devicePixelRatio || 1, game.performance?.dprCap || 2);
+      return Number.isFinite(scale) && scale > 0 ? scale : 1;
+    }
+
+    function canvasHudPanelMetrics(w, h, opts = {}) {
+      const dpr = canvasHudScale(w);
+      const cssW = w / dpr;
+      const cssH = h / dpr;
+      const boxWcss = Math.min(cssW * (opts.widthRatio || .34), opts.maxWidth || 360);
+      const boxHcss = opts.height || 86;
+      const bottomClearance = opts.bottomClearance || 224;
+      return {
+        dpr,
+        boxW: boxWcss * dpr,
+        boxH: boxHcss * dpr,
+        x: (cssW / 2 - boxWcss / 2) * dpr,
+        y: Math.max((opts.minTop || 76) * dpr, (cssH - bottomClearance - boxHcss) * dpr),
+        pad: (opts.pad || 10) * dpr
+      };
+    }
+
     function drawAutoDockHud(w, h) {
       const state = typeof game.autoDock === "object" ? game.autoDock : null;
       if (!state?.hud) return;
-      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-      const boxW = Math.min(w * .34, 360 * dpr);
-      const boxH = 86 * dpr;
-      const x = w / 2 - boxW / 2;
-      const y = Math.max(76 * dpr, h - 262 * dpr);
-      const pad = 10 * dpr;
+      const { dpr, boxW, boxH, x, y, pad } = canvasHudPanelMetrics(w, h);
       const stage = state.hud.stage || "AUTO";
       const stageText = {
         marshal: "ACQUIRING APPROACH LANE",
@@ -12097,12 +12218,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function drawLaunchSequenceHud(w, h, tr) {
       const p = clamp(tr.t / tr.dur, 0, 1);
-      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-      const boxW = Math.min(w * .34, 360 * dpr);
-      const boxH = 86 * dpr;
-      const x = w / 2 - boxW / 2;
-      const y = Math.max(76 * dpr, h - 262 * dpr);
-      const pad = 10 * dpr;
+      const { dpr, boxW, boxH, x, y, pad } = canvasHudPanelMetrics(w, h);
       const stage = p < .2
         ? "CLEAR FOR TAKE OFF"
         : p < .42
@@ -12148,12 +12264,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function drawDockingSequenceHud(w, h, tr) {
       const p = clamp(tr.t / tr.dur, 0, 1);
-      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-      const boxW = Math.min(w * .34, 360 * dpr);
-      const boxH = 86 * dpr;
-      const x = w / 2 - boxW / 2;
-      const y = Math.max(76 * dpr, h - 262 * dpr);
-      const pad = 10 * dpr;
+      const { dpr, boxW, boxH, x, y, pad } = canvasHudPanelMetrics(w, h);
       const stage = p < .22
         ? "FORCEFIELD ENTRY"
         : p < .5
@@ -12252,13 +12363,14 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function drawJumpCountdown(w, h, tr) {
       const remaining = Math.max(0, Math.ceil(tr.dur - tr.t));
       const p = clamp(tr.t / tr.dur, 0, 1);
-      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-      const cx = w / 2;
-      const boxW = Math.min(w * .44, 430 * dpr);
-      const boxH = 104 * dpr;
-      const boxX = cx - boxW / 2;
-      const boxY = Math.max(92 * dpr, h - 300 * dpr);
-      const pad = 11 * dpr;
+      const { dpr, boxW, boxH, x: boxX, y: boxY, pad } = canvasHudPanelMetrics(w, h, {
+        widthRatio: .44,
+        maxWidth: 430,
+        height: 104,
+        bottomClearance: 224,
+        minTop: 92,
+        pad: 11
+      });
       const lineH = 13 * dpr;
       const warning = remaining <= 3;
       const lines = JUMP_STATUS_LINES[tr.kind] || JUMP_STATUS_LINES.hyperspace;
@@ -17647,7 +17759,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const jumpBusy = !!game.transition || !!game.jumpCountdown;
       const canLaunch = game.docked && !jumpBusy;
       const canJump = !game.docked && !jumpBusy;
-      const canAutoDock = !game.docked && !jumpBusy && game.equipment.dockingComputer;
+      const canAutoDock = !game.docked && !jumpBusy && game.equipment.dockingComputer && (game.autoDock || stationSafeZoneActive());
       const canGalJump = game.equipment.galacticHyperdrive && !jumpBusy;
       setDomDisabled(hudEls.launchBtn, !canLaunch);
       setDomDisabled(hudEls.jumpBtn, !canJump);
@@ -17660,6 +17772,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       setDomHidden(hudEls.autoDockBtn, !canAutoDock && !game.autoDock);
       setDomHidden(hudEls.galJumpBtn, !canGalJump);
       setDomHidden(hudEls.modeSwitchBtn, jumpBusy);
+      updatePauseHud();
       updateVolumeHud();
       updateBrightnessHud();
       updatePerformanceTickerHud();
@@ -17712,12 +17825,22 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       renderPanel();
     }
 
+    function setGamePaused(value) {
+      const paused = !!value;
+      if (game.paused === paused) return;
+      if (paused) keys.clear();
+      eliteAudio.setPaused(paused);
+      updatePauseHud();
+      setMessage(paused ? "Game paused." : "Game resumed.", true);
+    }
+
     function loop(now) {
       const rawDt = (now - last) / 1000;
       updatePerformanceBudget(rawDt);
       const dt = Math.min(.05, rawDt);
       last = now;
-      update(dt);
+      if (game.paused) renderGameFrame();
+      else update(dt);
       requestAnimationFrame(loop);
     }
 
@@ -17758,6 +17881,16 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (devChordActive() && !devChordLatched) {
         devChordLatched = true;
         toggleDeveloperMode();
+        e.preventDefault();
+        return;
+      }
+      const gameplayKey = [
+        "Space", "KeyW", "KeyA", "KeyS", "KeyD", "KeyQ", "KeyE",
+        "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
+        "Equal", "NumpadAdd", "Minus", "NumpadSubtract",
+        "KeyJ", "KeyC", "KeyM", "KeyB", "KeyT", "KeyG", "KeyL", "KeyV"
+      ].includes(e.code);
+      if (game.paused && gameplayKey) {
         e.preventDefault();
         return;
       }
@@ -17808,6 +17941,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     byId("modeSwitchBtn").addEventListener("click", () => applyPresetMode(game.fxLevel === "ultra" ? "classic" : "ultra"));
     byId("autoDockBtn").addEventListener("click", startAutoDock);
     byId("galJumpBtn").addEventListener("click", galacticJump);
+    if (hudEls.pauseBtn) {
+      hudEls.pauseBtn.addEventListener("click", () => setGamePaused(!game.paused));
+      updatePauseHud();
+    }
     if (hudEls.volumeSlider) {
       hudEls.volumeSlider.addEventListener("input", () => {
         eliteAudio.setVolume(Number(hudEls.volumeSlider.value) / 100);
