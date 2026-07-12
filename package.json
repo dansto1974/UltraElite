@@ -4,7 +4,12 @@
   "version": "1.0.14-beta",
   "scripts": {
     "check": "node tools/build/check.mjs",
-    "build": "node tools/build/build-single-file.mjs",
+    "skins": "node tools/build/generate-bitmap-skins.mjs",
+    "skins:force": "node tools/build/generate-bitmap-skins.mjs --force",
+    "skins:recompress": "node tools/build/generate-bitmap-skins.mjs --recompress",
+    "skins:recompress:dry": "node tools/build/generate-bitmap-skins.mjs --recompress --dry-run",
+    "skin-templates": "node tools/build/generate-skin-templates.mjs",
+    "build": "node tools/build/generate-bitmap-skins.mjs && node tools/build/build-single-file.mjs",
     "dev": "python3 -m http.server 8765"
   }
 }

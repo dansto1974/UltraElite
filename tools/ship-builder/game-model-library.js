@@ -1,4 +1,29 @@
 // Generated/maintained from Ultra Elite MODELS and builder exports.
+window.ULTRA_ELITE_SHIP_DESCRIPTIONS = {
+  cobra: "The Cobra Mk III is the benchmark independent trader: enough cargo space to matter, enough speed to survive, and enough weapon mounts to make bad decisions feel briefly tactical.",
+  cobra1: "The Cobra Mk I is older, lighter and less forgiving than its famous successor. Pilots who love them use words like character when they mean maintenance.",
+  krait: "The Krait is a knife with engines: small, flat, fast and popular with pilots who prefer ambushes to conversations.",
+  viper: "The Viper is a police interceptor built around acceleration, weapons power and the deeply held belief that criminals should have a short working day.",
+  adder: "The Adder is cheap, compact and surprisingly useful, which is why traders, pirates and nervous beginners all pretend they chose it deliberately.",
+  gecko: "The Gecko sits in that awkward region between courier and raider, with just enough speed to start trouble and just enough hold space to explain it later.",
+  mamba: "The Mamba is all hard angles and bad intentions, a pirate favourite for quick strikes where the cargo transfer is expected to be involuntary.",
+  sidewinder: "The Sidewinder is fast, twitchy and lightly built. In pirate hands it is a wasp; in honest hands it is usually a repayment plan.",
+  worm: "The Worm is small-haul utility craftwork: modest drive, modest hold, modest dignity, and an admirable talent for being somewhere else when fighting starts.",
+  moray: "The Moray was designed for wet worlds and awkward atmospheres, but in space it has become a favourite of pilots who like their ships unusual and their insurance complicated.",
+  asp: "The Asp Mk II is a dangerous wedge of speed and firepower, respected by bounty hunters and disliked by almost everyone they have ever met.",
+  ferdelance: "The Fer-de-Lance is expensive, sleek and faintly arrogant. Its owners call it refined; its victims rarely have time to file a counterargument.",
+  python: "The Python is a working hauler with a serious hull and a serious appetite for profitable routes. It turns slowly, earns steadily and complains through its landing gear.",
+  boa: "The Boa is a long-haul bulk carrier, beloved by accountants and feared by docking crews asked to guide it through a crowded slot.",
+  anaconda: "The Anaconda is less a ship than a private economy with engines. When one arrives, traffic control clears its throat and hopes the pilot has read the manual. They hang in the sky in exactly the same way that bricks don't.",
+  shuttle: "The Shuttle is station traffic made visible: practical, slow and full of people who did not expect to become part of a combat incident.",
+  transporter: "The Transporter moves freight, tools and local politics between station and surface. It is not glamorous, but neither is most civilisation.",
+  thargoid: "The Thargoid warship remains badly explained by human engineers. It is elegant, hostile and apparently built by minds that considered symmetry optional.",
+  thargon: "The Thargon drone is a remote weapon with no cockpit, no cargo bay and no useful conversation. If it is close enough to admire, you have left it too late.",
+  constrictor: "The Constrictor is a rare military-grade menace, fast and unpleasantly purposeful, usually mentioned in bars by pilots who were not present.",
+  cougar: "The Cougar is a sleek, secretive design with a reputation for vanishing acts, special equipment and owners who do not answer ordinary questions. For some reason, pilots of these vessels tend to prefer to date much younger men.",
+  diamondback: "The Diamondback is an off-books hunter craft: Sleek like a running shoe, over-engined and fully fitted out with the latest Sirius Cybernetics Corp. GPP technology."
+};
+
 window.ULTRA_ELITE_MODEL_LIBRARY = {
   "adder": {
     "id": "adder",
@@ -3235,8 +3260,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       "class": "fighter",
       "npcRole": "private",
       "aiProfile": "bountyHunter",
-      "decalRole": "private",
-      "baseColor": "#e9f2e4",
+      "decalRole": "none",
+      "baseColor": "#cf9b2a",
       "description": "The Diamondback is an off-books hunter craft: Sleek like a running shoe, over-engined and fully fitted out with the latest Sirius Cybernetics Corp. GPP technology.",
       "valueCr": 2500000,
       "stats": {
@@ -3256,7 +3281,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       "flags": {
         "escapePod": true,
         "hiddenUntilDiscovered": true
-      }
+      },
+      "imageDecalTest": true
     },
     "verts": [
       {
@@ -4291,8 +4317,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "class": "fighter",
         "npcRole": "private",
         "aiProfile": "bountyHunter",
-        "decalRole": "private",
-        "baseColor": "#e9f2e4",
+        "decalRole": "none",
+        "baseColor": "#cf9b2a",
         "description": "The Diamondback is an off-books hunter craft: Sleek like a running shoe, over-engined and fully fitted out with the latest Sirius Cybernetics Corp. GPP technology.",
         "valueCr": 2500000,
         "stats": {
@@ -4312,7 +4338,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "flags": {
           "escapePod": true,
           "hiddenUntilDiscovered": true
-        }
+        },
+        "imageDecalTest": true
       }
     }
   },

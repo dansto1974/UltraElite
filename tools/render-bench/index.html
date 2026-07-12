@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ultra Elite Render Bench</title>
+  <link rel="stylesheet" href="render-bench.css">
+</head>
+<body data-ultra-elite-mode="render-bench">
+  <main class="bench">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Ultra Elite Dev Tool</p>
+        <h1>Render Bench</h1>
+      </div>
+      <div class="summary">
+        <span id="statusText">Loading renderer...</span>
+        <span id="avgFps">-- FPS</span>
+        <span id="worstFrame">-- MS</span>
+      </div>
+    </header>
+
+    <section class="controls">
+      <label>Model <select id="modelSelect"></select></label>
+      <label>Mode
+        <select id="modeSelect">
+          <option value="solid">Ultra solid</option>
+          <option value="both">Ultra + wire</option>
+          <option value="wire">Wire</option>
+        </select>
+      </label>
+      <label>FX
+        <select id="fxSelect">
+          <option value="ultra">Ultra</option>
+          <option value="classic">Old School</option>
+        </select>
+      </label>
+      <label>Detail
+        <select id="qualitySelect">
+          <option value="plain">Plain hull</option>
+          <option value="live">Live LOD</option>
+          <option value="full">Full forced</option>
+        </select>
+      </label>
+      <label>LOD
+        <select id="lodSelect">
+          <option value="0">0 high</option>
+          <option value="1">1 medium</option>
+          <option value="2">2 low</option>
+          <option value="3">3 minimum</option>
+        </select>
+      </label>
+      <label>Scale <input id="scaleSlider" type="range" min="24" max="72" step="1" value="46"></label>
+      <button id="runBtn">Run Loop</button>
+      <button id="pauseBtn">Pause</button>
+      <button id="resetBtn">Reset Stats</button>
+    </section>
+
+    <section class="stage">
+      <canvas id="benchCanvas" width="1280" height="720"></canvas>
+      <aside class="readout">
+        <h2>Sequence</h2>
+        <div id="phaseReadout">--</div>
+        <h2>Current Model</h2>
+        <div id="modelReadout">--</div>
+        <h2>Phase FPS</h2>
+        <table>
+          <thead><tr><th>Phase</th><th>Avg</th><th>Worst</th><th>Frames</th></tr></thead>
+          <tbody id="phaseStats"></tbody>
+        </table>
+        <h2>Log</h2>
+        <pre id="benchLog"></pre>
+        <pre id="summaryJson" class="summary-json" aria-hidden="true"></pre>
+      </aside>
+    </section>
+  </main>
+
+  <div class="game-stubs" aria-hidden="true">
+    <canvas id="space" width="16" height="16"></canvas>
+    <canvas id="scanner" width="16" height="16"></canvas>
+    <canvas id="foreAftRadar" width="16" height="16"></canvas>
+    <div id="panelBody"></div>
+    <div id="sidePanel"></div>
+    <button id="panelToggle"></button>
+    <div id="commsLog"></div>
+    <div id="message"></div>
+  </div>
+
+  <script>
+    window.addEventListener("error", (event) => {
+      const status = document.getElementById("statusText");
+      if (status) status.textContent = `${event.message} @ ${event.filename}:${event.lineno}`;
+    });
+    window.addEventListener("unhandledrejection", (event) => {
+      const status = document.getElementById("statusText");
+      if (status) status.textContent = `Promise rejection: ${event.reason?.message || event.reason}`;
+    });
+  </script>
+  <script src="../../src/main.js"></script>
+  <script src="render-bench.js"></script>
+</body>
+</html>

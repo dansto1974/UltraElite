@@ -9,6 +9,7 @@ const paths = {
   template: path.join(root, "src/index.template.html"),
   css: path.join(root, "src/game.css"),
   js: path.join(root, "src/main.js"),
+  generatedAssets: path.join(root, "src/generated/bitmap-skins.js"),
   output: path.join(root, "index.html"),
   devOutput: path.join(root, "dev.html"),
 };
@@ -20,8 +21,9 @@ function read(file) {
 const template = fs.readFileSync(paths.template, "utf8");
 const css = read(paths.css);
 const js = read(paths.js);
+const generatedAssets = fs.existsSync(paths.generatedAssets) ? read(paths.generatedAssets) : "globalThis.ULTRA_ELITE_BITMAP_SKINS = {};";
 
-if (!template.includes("__ULTRA_ELITE_CSS__") || !template.includes("__ULTRA_ELITE_JS__")) {
+if (!template.includes("__ULTRA_ELITE_CSS__") || !template.includes("__ULTRA_ELITE_JS__") || !template.includes("__ULTRA_ELITE_GENERATED_ASSETS__")) {
   throw new Error("Template is missing one or more build placeholders.");
 }
 
@@ -35,10 +37,12 @@ if (css.toLowerCase().includes("</style>")) {
 
 const html = template
   .replace("__ULTRA_ELITE_CSS__", css)
+  .replace("__ULTRA_ELITE_GENERATED_ASSETS__", generatedAssets)
   .replace("__ULTRA_ELITE_JS__", js);
 
 const devHtml = template
   .replace("  <style>\n__ULTRA_ELITE_CSS__\n  </style>", '  <link rel="stylesheet" href="src/game.css">')
+  .replace("  <script>\n__ULTRA_ELITE_GENERATED_ASSETS__\n  </script>", '  <script src="src/generated/bitmap-skins.js"></script>')
   .replace("  <script>\n__ULTRA_ELITE_JS__\n  </script>", '  <script src="src/main.js"></script>');
 
 fs.writeFileSync(paths.output, html);

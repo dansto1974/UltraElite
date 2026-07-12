@@ -7,6 +7,7 @@ const els = {
   shipId: document.getElementById("shipId"),
   shipName: document.getElementById("shipName"),
   shipDescription: document.getElementById("shipDescription"),
+  shipMissionLore: document.getElementById("shipMissionLore"),
   librarySelector: document.getElementById("librarySelector"),
   loadLibraryModelBtn: document.getElementById("loadLibraryModelBtn"),
   toolsPanel: document.getElementById("toolsPanel"),
@@ -49,7 +50,26 @@ const els = {
   detailInset: document.getElementById("detailInset"),
   detailColor: document.getElementById("detailColor"),
   showFaceNormals: document.getElementById("showFaceNormals"),
-  mirrorNewGeometry: document.getElementById("mirrorNewGeometry")
+  mirrorNewGeometry: document.getElementById("mirrorNewGeometry"),
+  previewRenderMode: document.getElementById("previewRenderMode"),
+  skinReadout: document.getElementById("skinReadout"),
+  mirrorHalfSkins: document.getElementById("mirrorHalfSkins"),
+  importBitmapShelf: document.getElementById("importBitmapShelf"),
+  bitmapShelfSelector: document.getElementById("bitmapShelfSelector"),
+  applyShelfTopBtn: document.getElementById("applyShelfTopBtn"),
+  applyShelfBottomBtn: document.getElementById("applyShelfBottomBtn"),
+  applyShelfBackBtn: document.getElementById("applyShelfBackBtn"),
+  clearBitmapShelfBtn: document.getElementById("clearBitmapShelfBtn"),
+  importTopSkin: document.getElementById("importTopSkin"),
+  importBottomSkin: document.getElementById("importBottomSkin"),
+  importBackSkin: document.getElementById("importBackSkin"),
+  reloadSkinBitmapsBtn: document.getElementById("reloadSkinBitmapsBtn"),
+  clearImportedSkinsBtn: document.getElementById("clearImportedSkinsBtn"),
+  templateFaceSide: document.getElementById("templateFaceSide"),
+  downloadTopTemplateBtn: document.getElementById("downloadTopTemplateBtn"),
+  downloadBottomTemplateBtn: document.getElementById("downloadBottomTemplateBtn"),
+  downloadBackTemplateBtn: document.getElementById("downloadBackTemplateBtn"),
+  downloadFaceTemplateBtn: document.getElementById("downloadFaceTemplateBtn")
 };
 
 const state = {
@@ -60,12 +80,16 @@ const state = {
   faces: [],
   edges: [],
   details: [],
+  skinImages: emptySkinBundle(),
+  bitmapShelf: [],
   selected: null,
   pick: [],
   view: { rx: -0.35, ry: 0.72, zoom: 2.9, panX: 0, panY: 0 },
   orthoScale: 1,
   drag: null
 };
+
+const TEMPLATE_SIZE = 400;
 
 function vec(x = 0, y = 0, z = 0) { return { x, y, z }; }
 function add(a, b) { return vec(a.x + b.x, a.y + b.y, a.z + b.z); }
@@ -537,6 +561,7 @@ function resetWedge() {
   addFace([top.id, right.id, left.id]);
   addFace([bottom.id, left.id, right.id]);
 
+  clearSkinBitmaps();
   setStatus("NEW SIMPLE PYRAMID WEDGE CREATED.");
   fitView();
   renderAll();
@@ -602,6 +627,14 @@ function shadedHullColor(n) {
   return `rgb(${Math.round(base.r * mul)},${Math.round(base.g * mul)},${Math.round(base.b * mul)})`;
 }
 
+function builderBitmapFill(n) {
+  const light = norm(vec(-0.35, 0.7, 0.6));
+  const d = clamp(dot(n, light), -0.4, 1);
+  const mul = 0.46 + (d + 0.4) / 1.4 * 0.54;
+  const base = hexToRgb(els.baseColor.value);
+  return `rgb(${Math.round(base.r * mul)},${Math.round(base.g * mul)},${Math.round(base.b * mul)})`;
+}
+
 function drawFace(ctx, pts, fill, stroke = "rgba(85,255,78,.46)", width = 1) {
   if (pts.length < 3) return;
   ctx.beginPath();
@@ -610,9 +643,43 @@ function drawFace(ctx, pts, fill, stroke = "rgba(85,255,78,.46)", width = 1) {
   ctx.closePath();
   ctx.fillStyle = fill;
   ctx.fill();
-  ctx.strokeStyle = stroke;
-  ctx.lineWidth = width;
-  ctx.stroke();
+  if (width > 0) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = width;
+    ctx.stroke();
+  }
+}
+
+function drawFaceTextureGuide(ctx, pts, alpha = .18) {
+  if (pts.length < 3) return;
+  const minX = Math.min(...pts.map((p) => p.x));
+  const maxX = Math.max(...pts.map((p) => p.x));
+  const minY = Math.min(...pts.map((p) => p.y));
+  const maxY = Math.max(...pts.map((p) => p.y));
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.closePath();
+  ctx.clip();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 1;
+  for (let x = minX - 80; x < maxX + 80; x += 24) {
+    ctx.beginPath();
+    ctx.moveTo(x, minY - 40);
+    ctx.lineTo(x + 80, maxY + 40);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = alpha * .7;
+  ctx.strokeStyle = "#ffd936";
+  for (let y = minY + 18; y < maxY; y += 34) {
+    ctx.beginPath();
+    ctx.moveTo(minX, y);
+    ctx.lineTo(maxX, y);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 function drawArrow(ctx, a, b, color, width = 1.2) {
@@ -681,32 +748,534 @@ function drawStars(ctx, canvas) {
   ctx.restore();
 }
 
+function templateShipId() {
+  return (els.shipId.value.trim() || "custom_ship").toLowerCase().replace(/[^a-z0-9_-]+/g, "_");
+}
+
+function mirrorHalfSkinsEnabled() {
+  return !!els.mirrorHalfSkins?.checked;
+}
+
+function mirroredTemplateU(u) {
+  const mid = TEMPLATE_SIZE / 2;
+  return clamp(mid - Math.abs(mid - u), 0, mid);
+}
+
+function emptySkinBundle(modelId = "") {
+  return {
+    modelId,
+    top: null,
+    bottom: null,
+    back: null,
+    source: { top: "", bottom: "", back: "" },
+    urls: { top: "", bottom: "", back: "" },
+    loaded: 0,
+    failed: 0
+  };
+}
+
+function skinSideMirrorX(side, img = state.skinImages?.[side]) {
+  if (!mirrorHalfSkinsEnabled()) return false;
+  const w = img?.naturalWidth || img?.width || 0;
+  const h = img?.naturalHeight || img?.height || 0;
+  return w > 0 && h > 0 && w <= TEMPLATE_SIZE * .75 && w <= h * .75;
+}
+
+function revokeSkinUrls(bundle = state.skinImages) {
+  if (!bundle?.urls) return;
+  for (const url of Object.values(bundle.urls)) {
+    if (url) URL.revokeObjectURL(url);
+  }
+}
+
+function updateSkinReadout() {
+  if (!els.skinReadout) return;
+  const skin = state.skinImages;
+  if (!skin?.modelId) {
+    els.skinReadout.textContent = "No skin bitmaps loaded.";
+    return;
+  }
+  const loaded = ["top", "bottom", "back"]
+    .filter((side) => skin[side]?.complete && skin[side].naturalWidth)
+    .map((side) => {
+      const suffix = skin.source?.[side] === "imported" || skin.source?.[side] === "shelf" ? "*" : "";
+      const mirror = skinSideMirrorX(side, skin[side]) ? " HALF" : "";
+      return `${side.toUpperCase()}${mirror}${suffix}`;
+    });
+  const missing = 3 - loaded.length;
+  const note = Object.values(skin.source || {}).some((source) => source === "imported" || source === "shelf") ? " *LOCAL" : "";
+  els.skinReadout.textContent = `${skin.modelId.toUpperCase()} SKINS: ${loaded.length ? loaded.join(" / ") : "LOADING"}${missing ? ` (${missing} missing/loading)` : ""}${note}`;
+}
+
+function skinPath(modelId, side) {
+  return `../../assets/skins/${modelId}-${side}.png`;
+}
+
+function clearSkinBitmaps() {
+  revokeSkinUrls();
+  state.skinImages = emptySkinBundle();
+  updateSkinReadout();
+  renderAll();
+}
+
+function loadSkinBitmaps(modelId = templateShipId()) {
+  const cleanId = String(modelId || "").trim().replace(/[^a-zA-Z0-9_-]+/g, "_");
+  if (!cleanId) return clearSkinBitmaps();
+  revokeSkinUrls();
+  const bundle = emptySkinBundle(cleanId);
+  state.skinImages = bundle;
+  updateSkinReadout();
+  for (const side of ["top", "bottom", "back"]) {
+    const img = new Image();
+    img.decoding = "async";
+    img.onload = () => {
+      if (state.skinImages !== bundle) return;
+      bundle.loaded++;
+      bundle.source[side] = "asset";
+      updateSkinReadout();
+      renderAll();
+    };
+    img.onerror = () => {
+      if (state.skinImages !== bundle) return;
+      bundle.failed++;
+      updateSkinReadout();
+    };
+    img.src = skinPath(cleanId, side);
+    bundle[side] = img;
+  }
+}
+
+function updateBitmapShelfSelector() {
+  if (!els.bitmapShelfSelector) return;
+  els.bitmapShelfSelector.innerHTML = "";
+  if (!state.bitmapShelf.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "No imported bitmaps";
+    els.bitmapShelfSelector.append(option);
+    return;
+  }
+  for (const item of state.bitmapShelf) {
+    const option = document.createElement("option");
+    option.value = item.id;
+    option.textContent = `${item.name} (${item.img.naturalWidth}x${item.img.naturalHeight})`;
+    els.bitmapShelfSelector.append(option);
+  }
+}
+
+function addBitmapToShelf(file, img, url) {
+  const id = `bitmap_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+  state.bitmapShelf.push({ id, name: file.name || "imported bitmap", img, url });
+  updateBitmapShelfSelector();
+  els.bitmapShelfSelector.value = id;
+  return id;
+}
+
+function clearBitmapShelf() {
+  for (const item of state.bitmapShelf) {
+    if (item.url) URL.revokeObjectURL(item.url);
+  }
+  state.bitmapShelf = [];
+  updateBitmapShelfSelector();
+  setStatus("BITMAP SHELF CLEARED.");
+}
+
+function setSkinSideFromImage(side, img, source = "imported", url = "") {
+  const oldUrl = state.skinImages.urls?.[side];
+  if (oldUrl && oldUrl !== url) URL.revokeObjectURL(oldUrl);
+  if (!state.skinImages?.modelId) {
+    state.skinImages = emptySkinBundle(templateShipId());
+  }
+  state.skinImages[side] = img;
+  state.skinImages.source[side] = source;
+  state.skinImages.urls[side] = url;
+  updateSkinReadout();
+  renderAll();
+}
+
+function applyShelfBitmap(side) {
+  const id = els.bitmapShelfSelector?.value;
+  const item = state.bitmapShelf.find((entry) => entry.id === id);
+  if (!item) {
+    setStatus("IMPORT A BITMAP FIRST.");
+    return;
+  }
+  setSkinSideFromImage(side, item.img, "shelf", "");
+  setStatus(`${item.name} APPLIED TO ${side.toUpperCase()}.`);
+}
+
+function importSkinFile(side, file, addToShelf = true) {
+  if (!file) return;
+  if (!file.type.startsWith("image/")) {
+    setStatus("SELECT AN IMAGE FILE.");
+    return;
+  }
+  if (!state.skinImages?.modelId) {
+    state.skinImages = emptySkinBundle(templateShipId());
+  }
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    const shelfId = addToShelf ? addBitmapToShelf(file, img, url) : "";
+    setSkinSideFromImage(side, img, addToShelf ? "shelf" : "imported", addToShelf ? "" : url);
+    if (shelfId) els.bitmapShelfSelector.value = shelfId;
+    updateSkinReadout();
+    setStatus(`${side.toUpperCase()} SKIN IMPORTED (${img.naturalWidth}x${img.naturalHeight}).`);
+    renderAll();
+  };
+  img.onerror = () => {
+    URL.revokeObjectURL(url);
+    setStatus(`${side.toUpperCase()} SKIN IMPORT FAILED.`);
+  };
+  img.src = url;
+}
+
+function importBitmapShelfFiles(files) {
+  const list = Array.from(files || []).filter((file) => file.type.startsWith("image/"));
+  if (!list.length) {
+    setStatus("SELECT IMAGE FILES FOR THE BITMAP SHELF.");
+    return;
+  }
+  let pending = list.length;
+  let imported = 0;
+  for (const file of list) {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      addBitmapToShelf(file, img, url);
+      imported++;
+      pending--;
+      if (!pending) setStatus(`${imported} BITMAP${imported === 1 ? "" : "S"} ADDED TO SHELF.`);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      pending--;
+      if (!pending) setStatus(`${imported} BITMAP${imported === 1 ? "" : "S"} ADDED TO SHELF.`);
+    };
+    img.src = url;
+  }
+}
+
+function templatePrimaryAxis() {
+  const id = templateShipId();
+  return id === "thargoid" || id === "thargon" ? "x" : "y";
+}
+
+function templateProjection(side) {
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, minZ = Infinity, maxZ = -Infinity;
+  for (const p of state.verts) {
+    minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+    minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+    minZ = Math.min(minZ, p.z); maxZ = Math.max(maxZ, p.z);
+  }
+  if (!state.verts.length) {
+    minX = minY = minZ = -1;
+    maxX = maxY = maxZ = 1;
+  }
+  const marginX = Math.max(1, (maxX - minX) * .08);
+  const marginY = Math.max(1, (maxY - minY) * .08);
+  const marginZ = Math.max(1, (maxZ - minZ) * .08);
+  minX -= marginX; maxX += marginX;
+  minY -= marginY; maxY += marginY;
+  minZ -= marginZ; maxZ += marginZ;
+  const rangeX = maxX - minX || 1;
+  const rangeY = maxY - minY || 1;
+  const rangeZ = maxZ - minZ || 1;
+  const primaryAxis = templatePrimaryAxis();
+  const uvFromAxes = (p, uAxis, vAxis, flipU = false, flipV = false) => {
+    const mins = [minX, minY, minZ];
+    const ranges = [rangeX, rangeY, rangeZ];
+    const coords = [p.x, p.y, p.z];
+    const rawU = ((coords[uAxis] - mins[uAxis]) / ranges[uAxis]) * TEMPLATE_SIZE;
+    const rawV = ((coords[vAxis] - mins[vAxis]) / ranges[vAxis]) * TEMPLATE_SIZE;
+    return { x: flipU ? TEMPLATE_SIZE - rawU : rawU, y: flipV ? TEMPLATE_SIZE - rawV : rawV };
+  };
+  return (p) => {
+    if (primaryAxis === "x" && side !== "back") return uvFromAxes(p, 1, 2, side === "bottom", true);
+    if (side === "back") {
+      return {
+        x: ((maxX - p.x) / rangeX) * TEMPLATE_SIZE,
+        y: ((maxY - p.y) / rangeY) * TEMPLATE_SIZE
+      };
+    }
+    const u = ((p.x - minX) / rangeX) * TEMPLATE_SIZE;
+    const v = ((maxZ - p.z) / rangeZ) * TEMPLATE_SIZE;
+    return { x: side === "bottom" ? TEMPLATE_SIZE - u : u, y: v };
+  };
+}
+
+function templateSideForFace(face) {
+  const n = faceNormal(face);
+  const absX = Math.abs(n.x), absY = Math.abs(n.y), absZ = Math.abs(n.z);
+  let side = n.z < -.42 && absZ >= absY * .86 && absZ >= absX * .65 ? "back" : n.y < 0 ? "bottom" : "top";
+  if (templatePrimaryAxis() === "x" && absX >= absY * .86 && absX >= absZ * .65) {
+    side = n.x < 0 ? "bottom" : "top";
+  }
+  return side;
+}
+
+function drawTemplateCenterline(ctx, x, top = 0, bottom = ctx.canvas.height) {
+  if (x < -1 || x > ctx.canvas.width + 1) return;
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,255,255,.48)";
+  ctx.lineWidth = 1;
+  ctx.setLineDash([7, 7]);
+  ctx.beginPath();
+  ctx.moveTo(Math.round(x) + .5, top);
+  ctx.lineTo(Math.round(x) + .5, bottom);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function traceTemplatePoly(ctx, pts, close = true) {
+  if (pts.length < 2) return;
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  if (close) ctx.closePath();
+}
+
+function drawTemplateDetail(ctx, detail, project, translate = (p) => p) {
+  const pts = detailModelPoints(detail).map(project).map(translate);
+  if (pts.length < 2) return;
+  ctx.save();
+  ctx.strokeStyle = detail.type === "window" ? "rgba(255,255,255,.86)" : detail.type === "engine" ? "#ffffff" : "rgba(255,255,255,.7)";
+  ctx.fillStyle = "rgba(255,255,255,.08)";
+  ctx.lineWidth = detail.type === "engine" ? 2 : 1;
+  if (detail.type === "panel") {
+    traceTemplatePoly(ctx, pts, false);
+    ctx.stroke();
+  } else {
+    traceTemplatePoly(ctx, pts, true);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawTemplateLabel(ctx, text) {
+  ctx.save();
+  ctx.fillStyle = "rgba(255,255,255,.72)";
+  ctx.font = "10px Andale Mono, Menlo, Consolas, monospace";
+  ctx.textBaseline = "top";
+  ctx.fillText(text.toUpperCase(), 10, 10);
+  ctx.restore();
+}
+
+function createTemplateCanvas(side, half = mirrorHalfSkinsEnabled()) {
+  const canvas = document.createElement("canvas");
+  canvas.width = half ? TEMPLATE_SIZE / 2 : TEMPLATE_SIZE;
+  canvas.height = TEMPLATE_SIZE;
+  const ctx = canvas.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const project = templateProjection(side);
+  drawTemplateCenterline(ctx, TEMPLATE_SIZE / 2);
+
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,255,255,.46)";
+  ctx.lineWidth = 1;
+  for (const face of state.faces) {
+    const pts = face.verts.map(vertexById).filter(Boolean).map(project);
+    traceTemplatePoly(ctx, pts, true);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  ctx.save();
+  for (const edge of state.edges) {
+    const a = vertexById(edge.a), b = vertexById(edge.b);
+    if (!a || !b) continue;
+    const pa = project(a), pb = project(b);
+    ctx.strokeStyle = edge.kind === "stick" ? "rgba(255,255,255,.9)" : "rgba(255,255,255,.72)";
+    ctx.lineWidth = edge.kind === "stick" ? 2 : 1;
+    ctx.beginPath();
+    ctx.moveTo(pa.x, pa.y);
+    ctx.lineTo(pb.x, pb.y);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  for (const detail of state.details) drawTemplateDetail(ctx, detail, project);
+  drawTemplateLabel(ctx, `${templateShipId()} ${side}${half ? " half" : ""}`);
+  return canvas;
+}
+
+function createSelectedFaceTemplateCanvas() {
+  const face = state.selected?.type === "face" ? faceById(state.selected.id) : null;
+  if (!face) {
+    setStatus("SELECT A FACE FIRST.");
+    return null;
+  }
+  const chosen = els.templateFaceSide?.value || "auto";
+  const side = chosen === "auto" ? templateSideForFace(face) : chosen;
+  const project = templateProjection(side);
+  const half = mirrorHalfSkinsEnabled();
+  const fold = (p) => half ? { x: mirroredTemplateU(p.x), y: p.y } : p;
+  const facePts = face.verts.map(vertexById).filter(Boolean).map(project).map(fold);
+  if (facePts.length < 3) return null;
+  const minX = Math.min(...facePts.map((p) => p.x));
+  const maxX = Math.max(...facePts.map((p) => p.x));
+  const minY = Math.min(...facePts.map((p) => p.y));
+  const maxY = Math.max(...facePts.map((p) => p.y));
+  const pad = 0;
+  const width = Math.max(16, Math.ceil(maxX - minX) + pad * 2);
+  const height = Math.max(16, Math.ceil(maxY - minY) + pad * 2);
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, width, height);
+  const translate = (p) => ({ x: p.x - minX + pad, y: p.y - minY + pad });
+  drawTemplateCenterline(ctx, TEMPLATE_SIZE / 2 - minX + pad);
+
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,255,255,.96)";
+  ctx.fillStyle = "rgba(255,255,255,.08)";
+  ctx.lineWidth = 1;
+  traceTemplatePoly(ctx, facePts.map(translate), true);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  for (const detail of state.details) {
+    if (detail.faceId === face.id) drawTemplateDetail(ctx, detail, (v) => fold(project(v)), translate);
+  }
+
+  canvas.dataset.templateSide = side;
+  canvas.dataset.templateFaceId = String(face.id);
+  canvas.dataset.templateHalf = half ? "1" : "";
+  return canvas;
+}
+
+function downloadCanvas(canvas, filename) {
+  if (!canvas) return;
+  canvas.toBlob((blob) => {
+    if (!blob) return setStatus("PNG EXPORT FAILED.");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(a.href);
+  }, "image/png");
+}
+
+function downloadTemplate(side) {
+  const half = mirrorHalfSkinsEnabled();
+  downloadCanvas(createTemplateCanvas(side, half), `${templateShipId()}-${side}${half ? "-half" : ""}-template.png`);
+  setStatus(`${side.toUpperCase()} TEMPLATE DOWNLOADED.`);
+}
+
+function downloadSelectedFaceTemplate() {
+  const canvas = createSelectedFaceTemplateCanvas();
+  if (!canvas) return;
+  const side = canvas.dataset.templateSide || "face";
+  const faceId = canvas.dataset.templateFaceId || "selected";
+  const half = canvas.dataset.templateHalf ? "-half" : "";
+  downloadCanvas(canvas, `${templateShipId()}-face-${faceId}-${side}${half}-${canvas.width}x${canvas.height}-template.png`);
+  setStatus(`FACE ${faceId} TEMPLATE DOWNLOADED (${canvas.width}x${canvas.height}).`);
+}
+
+function drawTexturedTriangle(ctx, img, p0, p1, p2, uv0, uv1, uv2) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(p0.x, p0.y);
+  ctx.lineTo(p1.x, p1.y);
+  ctx.lineTo(p2.x, p2.y);
+  ctx.closePath();
+  ctx.clip();
+
+  let u1 = uv1.x - uv0.x, v1 = uv1.y - uv0.y;
+  let u2 = uv2.x - uv0.x, v2 = uv2.y - uv0.y;
+  const x1 = p1.x - p0.x, y1 = p1.y - p0.y;
+  const x2 = p2.x - p0.x, y2 = p2.y - p0.y;
+  const det = u1 * v2 - u2 * v1;
+  if (Math.abs(det) < 1e-6) {
+    ctx.restore();
+    return;
+  }
+  const idet = 1 / det;
+  const a = (v2 * x1 - v1 * x2) * idet;
+  const b = (v2 * y1 - v1 * y2) * idet;
+  const c = (u1 * x2 - u2 * x1) * idet;
+  const d = (u1 * y2 - u2 * y1) * idet;
+  const e = p0.x - a * uv0.x - c * uv0.y;
+  const f = p0.y - b * uv0.x - d * uv0.y;
+  ctx.transform(a, b, c, d, e, f);
+  ctx.drawImage(img, 0, 0);
+  ctx.restore();
+}
+
+function drawFaceBitmapSkin(ctx, face, pts) {
+  const side = templateSideForFace(face);
+  const img = state.skinImages?.[side];
+  if (!img?.complete || !img.naturalWidth || pts.length < 3) return false;
+  const project = templateProjection(side);
+  const mirrorX = skinSideMirrorX(side, img);
+  const sx = img.naturalWidth / (mirrorX ? TEMPLATE_SIZE / 2 : TEMPLATE_SIZE);
+  const sy = img.naturalHeight / TEMPLATE_SIZE;
+  const uv = face.verts.map(vertexById).filter(Boolean).map((v) => {
+    const p = project(v);
+    const u = mirrorX ? mirroredTemplateU(p.x) : p.x;
+    return { x: u * sx, y: p.y * sy };
+  });
+  if (uv.length !== pts.length) return false;
+  ctx.save();
+  ctx.globalAlpha = .96;
+  for (let i = 1; i + 1 < pts.length; i++) {
+    drawTexturedTriangle(ctx, img, pts[0], pts[i], pts[i + 1], uv[0], uv[i], uv[i + 1]);
+  }
+  ctx.restore();
+  return true;
+}
+
 function renderMain() {
   const canvas = els.mainView;
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawStars(ctx, canvas);
   const projected = new Map(state.verts.map((v) => [v.id, project3d(v, canvas)]));
+  const previewMode = els.previewRenderMode?.value || "wireFaces";
+  const drawFaces = previewMode !== "wire";
+  const drawWire = previewMode !== "bitmap";
+  const drawBitmapGuide = previewMode === "wireBitmap" || previewMode === "bitmap";
 
-  const sortedFaces = [...state.faces].sort((a, b) => faceDepth(b) - faceDepth(a));
-  for (const face of sortedFaces) {
-    const pts = face.verts.map((id) => projected.get(id)).filter(Boolean);
-    const n = faceNormal(face);
-    const selected = state.selected?.type === "face" && state.selected.id === face.id;
-    drawFace(ctx, pts, selected ? "rgba(255,217,54,.24)" : shadedHullColor(n), selected ? "#ffd936" : "rgba(85,255,78,.32)", selected ? 2 : 1);
+  if (drawFaces) {
+    const sortedFaces = [...state.faces].sort((a, b) => faceDepth(b) - faceDepth(a));
+    for (const face of sortedFaces) {
+      const pts = face.verts.map((id) => projected.get(id)).filter(Boolean);
+      const n = faceNormal(face);
+      const selected = state.selected?.type === "face" && state.selected.id === face.id;
+      const textured = drawBitmapGuide && drawFaceBitmapSkin(ctx, face, pts);
+      drawFace(
+        ctx,
+        pts,
+        selected ? "rgba(255,217,54,.24)" : textured ? "rgba(0,0,0,0)" : drawBitmapGuide ? builderBitmapFill(n) : shadedHullColor(n),
+        selected ? "#ffd936" : drawWire ? "rgba(85,255,78,.32)" : "rgba(0,0,0,0)",
+        selected ? 2 : drawWire ? 1 : 0
+      );
+      if (drawBitmapGuide && !textured) drawFaceTextureGuide(ctx, pts, previewMode === "bitmap" ? .22 : .16);
+    }
   }
   drawFaceNormals(ctx, (v) => project3d(v, canvas));
 
-  for (const e of state.edges) {
-    const a = projected.get(e.a), b = projected.get(e.b);
-    if (!a || !b) continue;
-    const selected = state.selected?.type === "edge" && state.selected.id === e.id;
-    ctx.strokeStyle = selected ? "#ffd936" : e.kind === "stick" ? "#d9d9d9" : "rgba(85,255,78,.72)";
-    ctx.lineWidth = selected ? 3 : e.kind === "stick" ? 2.2 : 1.2;
-    ctx.beginPath();
-    ctx.moveTo(a.x, a.y);
-    ctx.lineTo(b.x, b.y);
-    ctx.stroke();
+  if (drawWire) {
+    for (const e of state.edges) {
+      const a = projected.get(e.a), b = projected.get(e.b);
+      if (!a || !b) continue;
+      const selected = state.selected?.type === "edge" && state.selected.id === e.id;
+      ctx.strokeStyle = selected ? "#ffd936" : e.kind === "stick" ? "#d9d9d9" : "rgba(85,255,78,.72)";
+      ctx.lineWidth = selected ? 3 : e.kind === "stick" ? 2.2 : 1.2;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
   }
 
   for (const detail of state.details) {
@@ -714,6 +1283,7 @@ function renderMain() {
     if (pts3.length < 2) continue;
     const pts = pts3.map((p) => project3d(p, canvas));
     const selected = state.selected?.type === "detail" && state.selected.id === detail.id;
+    if (previewMode === "wire" && !selected) continue;
     if (detail.type === "panel") {
       ctx.strokeStyle = selected ? "#ffd936" : "rgba(255,217,54,.8)";
       ctx.lineWidth = selected ? 3 : 1.4;
@@ -733,6 +1303,7 @@ function renderMain() {
     const p = projected.get(v.id);
     const picked = state.pick.includes(v.id);
     const selected = state.selected?.type === "vertex" && state.selected.id === v.id;
+    if (previewMode === "bitmap" && !picked && !selected) continue;
     if (picked) {
       ctx.strokeStyle = "#66e8ff";
       ctx.lineWidth = 2.5;
@@ -1139,8 +1710,15 @@ function normalizeHexColor(value, fallback = "#e9f2e4") {
   return /^#[0-9a-f]{6}$/i.test(text) ? text : fallback;
 }
 
+function exportedImageDecalMirrorX() {
+  const flags = {};
+  for (const side of ["top", "bottom", "back"]) flags[side] = skinSideMirrorX(side);
+  return Object.values(flags).some(Boolean) ? flags : null;
+}
+
 function gameMetadata() {
   const radius = Math.round(modelRadius());
+  const imageDecalMirrorX = exportedImageDecalMirrorX();
   return {
     class: els.shipClass.value,
     npcRole: els.npcRole.value,
@@ -1148,6 +1726,8 @@ function gameMetadata() {
     decalRole: els.decalRole.value,
     baseColor: normalizeHexColor(els.baseColor.value),
     description: els.shipDescription.value.trim(),
+    missionLore: els.shipMissionLore.value.trim(),
+    ...(imageDecalMirrorX ? { imageDecalMirrorX } : {}),
     valueCr: Math.max(0, Math.round(numberFromInput(els.shipValue, 0))),
     stats: {
       r: radius,
@@ -1232,12 +1812,14 @@ function importBuilderJson() {
     els.shipName.value = data.name || els.shipName.value;
     if (data.gameMeta) {
       const meta = data.gameMeta;
-      els.shipDescription.value = meta.description || "";
+      els.shipDescription.value = meta.description || data.description || "";
+      els.shipMissionLore.value = meta.missionLore || meta.mission || "";
       if (meta.class) els.shipClass.value = meta.class;
       if (meta.npcRole) els.npcRole.value = meta.npcRole;
       if (meta.aiProfile) els.aiProfile.value = meta.aiProfile;
       if (meta.decalRole) els.decalRole.value = meta.decalRole;
       if (meta.baseColor) els.baseColor.value = normalizeHexColor(meta.baseColor);
+      if (meta.imageDecalMirrorX && els.mirrorHalfSkins) els.mirrorHalfSkins.checked = true;
       if (Number.isFinite(meta.valueCr)) els.shipValue.value = meta.valueCr;
       if (meta.stats) {
         if (Number.isFinite(meta.stats.hp)) els.shipHp.value = meta.stats.hp;
@@ -1256,9 +1838,12 @@ function importBuilderJson() {
         els.flagEscapePod.checked = !!meta.flags.escapePod;
         els.flagHidden.checked = !!meta.flags.hiddenUntilDiscovered;
       }
+    } else if (data.description) {
+      els.shipDescription.value = data.description;
     }
     state.selected = null;
     state.pick = [];
+    loadSkinBitmaps(data.id || els.shipId.value);
     fitView();
     setStatus("BUILDER JSON IMPORTED.");
     renderAll();
@@ -1269,6 +1854,16 @@ function importBuilderJson() {
 
 function gameLibrary() {
   return window.ULTRA_ELITE_MODEL_LIBRARY || {};
+}
+
+function gameLibraryDescriptions() {
+  return window.ULTRA_ELITE_SHIP_DESCRIPTIONS || {};
+}
+
+function libraryDescription(source, id) {
+  const meta = source?.gameMeta || {};
+  const descriptions = gameLibraryDescriptions();
+  return meta.description || source?.description || descriptions[source?.id] || descriptions[id] || "";
 }
 
 function populateLibrarySelector() {
@@ -1323,7 +1918,9 @@ function loadLibraryModel(id) {
   const meta = source.gameMeta || {};
   els.shipId.value = source.id || id;
   els.shipName.value = source.name || id;
-  els.shipDescription.value = meta.description || "";
+  els.shipDescription.value = libraryDescription(source, id);
+  els.shipMissionLore.value = meta.missionLore || meta.mission || "";
+  if (meta.imageDecalMirrorX && els.mirrorHalfSkins) els.mirrorHalfSkins.checked = true;
   if (meta.class && [...els.shipClass.options].some((o) => o.value === meta.class)) els.shipClass.value = meta.class;
   if (meta.npcRole && [...els.npcRole.options].some((o) => o.value === meta.npcRole)) els.npcRole.value = meta.npcRole;
   if (meta.aiProfile && [...els.aiProfile.options].some((o) => o.value === meta.aiProfile)) els.aiProfile.value = meta.aiProfile;
@@ -1349,6 +1946,7 @@ function loadLibraryModel(id) {
   }
   state.selected = null;
   state.pick = [];
+  loadSkinBitmaps(source.id || id);
   fitView();
   setStatus(`LOADED ${els.shipName.value.toUpperCase()} FROM GAME LIBRARY.`);
   renderAll();
@@ -1388,7 +1986,20 @@ function setMode(mode, announce = true) {
   renderAll();
 }
 
+function setToolTab(tab) {
+  els.toolsPanel.dataset.toolTab = tab;
+  document.querySelectorAll(".tool-tab-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.toolTabTarget === tab);
+  });
+  document.querySelectorAll(".tool-tab-panel").forEach((panel) => {
+    panel.classList.toggle("active", panel.dataset.toolTabPanel === tab);
+  });
+}
+
 function bindEvents() {
+  document.querySelectorAll(".tool-tab-btn").forEach((btn) => btn.addEventListener("click", () => {
+    setToolTab(btn.dataset.toolTabTarget);
+  }));
   document.querySelectorAll(".mode-btn").forEach((btn) => btn.addEventListener("click", () => {
     setMode(btn.dataset.mode);
   }));
@@ -1441,6 +2052,38 @@ function bindEvents() {
   els.loadLibraryModelBtn.addEventListener("click", () => loadLibraryModel(els.librarySelector.value));
   els.toggleExportBtn.addEventListener("click", () => setExportVisible(els.exportPanel.classList.contains("is-hidden")));
   els.showFaceNormals.addEventListener("input", renderAll);
+  els.previewRenderMode.addEventListener("input", renderAll);
+  els.importBitmapShelf.addEventListener("change", (ev) => {
+    importBitmapShelfFiles(ev.target.files);
+    ev.target.value = "";
+  });
+  els.applyShelfTopBtn.addEventListener("click", () => applyShelfBitmap("top"));
+  els.applyShelfBottomBtn.addEventListener("click", () => applyShelfBitmap("bottom"));
+  els.applyShelfBackBtn.addEventListener("click", () => applyShelfBitmap("back"));
+  els.clearBitmapShelfBtn.addEventListener("click", clearBitmapShelf);
+  els.importTopSkin.addEventListener("change", (ev) => {
+    importSkinFile("top", ev.target.files?.[0]);
+    ev.target.value = "";
+  });
+  els.importBottomSkin.addEventListener("change", (ev) => {
+    importSkinFile("bottom", ev.target.files?.[0]);
+    ev.target.value = "";
+  });
+  els.importBackSkin.addEventListener("change", (ev) => {
+    importSkinFile("back", ev.target.files?.[0]);
+    ev.target.value = "";
+  });
+  els.reloadSkinBitmapsBtn.addEventListener("click", () => loadSkinBitmaps(els.shipId.value));
+  els.clearImportedSkinsBtn.addEventListener("click", clearSkinBitmaps);
+  els.mirrorHalfSkins.addEventListener("input", () => {
+    updateSkinReadout();
+    renderAll();
+  });
+  els.downloadTopTemplateBtn.addEventListener("click", () => downloadTemplate("top"));
+  els.downloadBottomTemplateBtn.addEventListener("click", () => downloadTemplate("bottom"));
+  els.downloadBackTemplateBtn.addEventListener("click", () => downloadTemplate("back"));
+  els.downloadFaceTemplateBtn.addEventListener("click", downloadSelectedFaceTemplate);
+  els.shipId.addEventListener("change", () => loadSkinBitmaps(els.shipId.value));
   document.getElementById("resetViewBtn").addEventListener("click", () => {
     state.view.rx = -0.35; state.view.ry = 0.72; fitView(); renderAll();
   });
@@ -1518,9 +2161,9 @@ function bindEvents() {
   document.getElementById("importBtn").addEventListener("click", importBuilderJson);
   els.exportKind.addEventListener("change", updateExport);
   [
-    els.shipId, els.shipName, els.shipDescription, els.shipClass, els.npcRole, els.aiProfile, els.decalRole, els.baseColor,
+    els.shipId, els.shipName, els.shipDescription, els.shipMissionLore, els.shipClass, els.npcRole, els.aiProfile, els.decalRole, els.baseColor,
     els.shipValue, els.shipHp, els.speedMul, els.cargoTons, els.missileCount, els.laserClass,
-    els.flagTrader, els.flagPirate, els.flagPolice, els.flagAlien, els.flagEscapePod, els.flagHidden
+    els.flagTrader, els.flagPirate, els.flagPolice, els.flagAlien, els.flagEscapePod, els.flagHidden, els.mirrorHalfSkins
   ].forEach((el) => el.addEventListener("input", updateExport));
 }
 
