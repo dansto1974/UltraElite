@@ -204,6 +204,17 @@ function mirroredEdgeOf(edge) {
 }
 
 function mirroredDetailOf(detail) {
+  if (detail.vertexId) {
+    const vertex = vertexById(detail.vertexId);
+    const mirrorId = vertex?.mirrorId;
+    if (!mirrorId || mirrorId === detail.vertexId) return null;
+    return state.details.find((candidate) =>
+      candidate.id !== detail.id &&
+      candidate.type === detail.type &&
+      candidate.vertexId === mirrorId
+    ) || null;
+  }
+  if (!detail.faceId) return null;
   const face = faceById(detail.faceId);
   const mirrorFace = face ? mirroredFaceOf(face) : null;
   if (!mirrorFace) return null;
@@ -448,6 +459,21 @@ function insetPointOnFace(face, vertexId, inset = 0.42) {
 }
 
 function detailModelPoints(detail) {
+  if (detail.vertexId) {
+    const v = vertexById(Number(detail.vertexId));
+    return v ? [vec(v.x, v.y, v.z)] : [];
+  }
+  if (Array.isArray(detail.points)) {
+    return detail.points
+      .map((p) => Array.isArray(p) ? vec(Number(p[0]), Number(p[1]), Number(p[2])) : vec(Number(p.x), Number(p.y), Number(p.z)))
+      .filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y) && Number.isFinite(p.z));
+  }
+  if (Array.isArray(detail.indices)) {
+    return detail.indices
+      .map((id) => vertexById(Number(id)))
+      .filter(Boolean)
+      .map((v) => vec(v.x, v.y, v.z));
+  }
   const face = faceById(detail.faceId);
   if (!face) return [];
   const inset = detail.inset || 0.45;
@@ -496,7 +522,39 @@ function addPanelDetails(face, normal) {
   return details;
 }
 
+function addBeaconDetail() {
+  const vertexId = state.selected?.type === "vertex"
+    ? state.selected.id
+    : state.pick.length === 1
+      ? state.pick[0]
+      : null;
+  const vertex = vertexId ? vertexById(vertexId) : null;
+  if (!vertex) {
+    setStatus("SELECT ONE VERTEX FIRST.");
+    return;
+  }
+  const d = {
+    id: newId(),
+    type: "beacon",
+    vertexId: vertex.id,
+    color: "#ffb642"
+  };
+  state.details.push(d);
+  if (mirrorActionsEnabled() && vertex.mirrorId && vertex.mirrorId !== vertex.id) {
+    state.details.push({ ...d, id: newId(), vertexId: vertex.mirrorId });
+  }
+  state.mode = "detail";
+  syncModeUi("detail");
+  state.selected = { type: "detail", id: d.id };
+  setStatus("BEACON DETAIL ADDED.");
+  renderAll();
+}
+
 function addDetail(type) {
+  if (type === "beacon") {
+    addBeaconDetail();
+    return;
+  }
   const face = state.selected?.type === "face" ? faceById(state.selected.id) : null;
   if (!face) {
     setStatus("SELECT A FACE FIRST.");
@@ -1103,12 +1161,32 @@ function traceTemplatePoly(ctx, pts, close = true) {
 
 function drawTemplateDetail(ctx, detail, project, translate = (p) => p) {
   const pts = detailModelPoints(detail).map(project).map(translate);
+  if (detail.type === "beacon") {
+    const p = pts[0];
+    if (!p) return;
+    ctx.save();
+    ctx.strokeStyle = "rgba(255,255,255,.86)";
+    ctx.fillStyle = "rgba(255,255,255,.35)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 4, 0, TAU);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(p.x - 7, p.y);
+    ctx.lineTo(p.x + 7, p.y);
+    ctx.moveTo(p.x, p.y - 7);
+    ctx.lineTo(p.x, p.y + 7);
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
   if (pts.length < 2) return;
   ctx.save();
   ctx.strokeStyle = detail.type === "window" ? "rgba(255,255,255,.86)" : detail.type === "engine" ? "#ffffff" : "rgba(255,255,255,.7)";
   ctx.fillStyle = "rgba(255,255,255,.08)";
   ctx.lineWidth = detail.type === "engine" ? 2 : 1;
-  if (detail.type === "panel") {
+  if (detail.type === "panel" || detail.type === "line" || detail.type === "polyline") {
     traceTemplatePoly(ctx, pts, false);
     ctx.stroke();
   } else {
@@ -1362,6 +1440,28 @@ function renderMain() {
 
   for (const detail of state.details) {
     const pts3 = detailModelPoints(detail);
+    if (detail.type === "beacon") {
+      const p = pts3[0] ? project3d(pts3[0], canvas) : null;
+      if (!p) continue;
+      const selected = state.selected?.type === "detail" && state.selected.id === detail.id;
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.fillStyle = selected ? "rgba(255,217,54,.95)" : `${detail.color || "#ffb642"}cc`;
+      ctx.strokeStyle = selected ? "#ffd936" : "rgba(255,255,255,.72)";
+      ctx.lineWidth = selected ? 2.4 : 1.2;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, selected ? 8 : 5.5, 0, TAU);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(p.x - 10, p.y);
+      ctx.lineTo(p.x + 10, p.y);
+      ctx.moveTo(p.x, p.y - 10);
+      ctx.lineTo(p.x, p.y + 10);
+      ctx.stroke();
+      ctx.restore();
+      continue;
+    }
     if (pts3.length < 2) continue;
     const pts = pts3.map((p) => project3d(p, canvas));
     const selected = state.selected?.type === "detail" && state.selected.id === detail.id;
@@ -1492,7 +1592,7 @@ function updateSliders() {
 
 function updateDetailControls() {
   const detail = state.selected?.type === "detail" ? detailById(state.selected.id) : null;
-  els.detailInset.disabled = !detail;
+  els.detailInset.disabled = !detail || !detail.faceId;
   els.detailColor.disabled = !detail;
   if (detail) {
     els.detailInset.value = detail.inset ?? 0.45;
@@ -1539,8 +1639,18 @@ function nearestDetail(point, maxLineDist = 10) {
   let bestLineDist = maxLineDist;
   for (const d of state.details) {
     const pts = detailModelPoints(d).map((p) => project3d(p, els.mainView));
+    if (d.type === "beacon") {
+      const p = pts[0];
+      if (!p) continue;
+      const dist = Math.hypot(p.x - point.x, p.y - point.y);
+      if (dist < bestLineDist) {
+        bestLineDist = dist;
+        bestDetail = d;
+      }
+      continue;
+    }
     if (pts.length < 2) continue;
-    if (d.type === "panel") {
+    if (d.type === "panel" || d.type === "line" || d.type === "polyline") {
       for (let i = 0; i < pts.length - 1; i++) {
         const dist = distToSegment(point, pts[i], pts[i + 1]);
         if (dist < bestLineDist) {
@@ -1756,7 +1866,37 @@ function derivedBlueprint() {
   });
   const edgeVisibility = edges.map(() => 31);
   const details = state.details.map((d) => {
+    if (d.type === "beacon") {
+      const index = indexById.get(Number(d.vertexId));
+      if (index === undefined) return null;
+      return {
+        type: "beacon",
+        index,
+        color: d.color || "#ffb642"
+      };
+    }
     const face = faceById(d.faceId);
+    if (!face && (Array.isArray(d.points) || Array.isArray(d.indices))) {
+      const detail = {
+        type: d.type === "panel" ? "line" : d.type,
+        color: d.color,
+        ...(d.stroke ? { stroke: d.stroke } : {}),
+        ...(d.width ? { width: d.width } : {}),
+        ...(d.lift ? { lift: d.lift } : {}),
+        ...(d.cull === false ? { cull: false } : {}),
+        ...(d.cullEpsilon !== undefined ? { cullEpsilon: d.cullEpsilon } : {}),
+        normal: Array.isArray(d.normal) ? d.normal.map((n) => round(Number(n), 3)) : [0, 0, 1]
+      };
+      if (Array.isArray(d.indices)) {
+        const mapped = d.indices
+          .map((id) => indexById.get(Number(id)))
+          .filter((i) => i !== undefined);
+        if (mapped.length >= 2) return { ...detail, indices: mapped };
+      }
+      const points = detailModelPoints(d).map(toArray);
+      if (points.length >= 2) return { ...detail, points };
+      return null;
+    }
     if (!face) return null;
     const normal = faceNormal(face);
     const points = detailModelPoints(d).map(toArray);
@@ -1884,11 +2024,15 @@ function importBuilderJson() {
       return { id: Number(e.id), a: Number(e.a), b: Number(e.b), kind: e.kind || "edge", mirrored: !!e.mirrored };
     });
     state.details = (data.details || []).map((d) => {
-      state.nextId = Math.max(state.nextId, Number(d.id) + 1);
+      const idNum = Number(d.id);
+      if (Number.isFinite(idNum)) state.nextId = Math.max(state.nextId, idNum + 1);
+      const faceId = Number(d.faceId);
       return {
         ...d,
-        id: Number(d.id),
-        faceId: Number(d.faceId),
+        id: Number.isFinite(idNum) ? idNum : newId(),
+        faceId: Number.isFinite(faceId) ? faceId : undefined,
+        vertexId: Number.isFinite(Number(d.vertexId)) ? Number(d.vertexId) : undefined,
+        indices: Array.isArray(d.indices) ? d.indices.map(Number) : undefined,
         segment: Array.isArray(d.segment) ? d.segment.map(Number) : undefined
       };
     });
@@ -1992,11 +2136,14 @@ function loadLibraryModel(id) {
   });
   state.details = (source.details || []).map((d) => {
     const idNum = Number(d.id);
-    state.nextId = Math.max(state.nextId, idNum + 1);
+    if (Number.isFinite(idNum)) state.nextId = Math.max(state.nextId, idNum + 1);
+    const faceId = Number(d.faceId);
     return {
       ...d,
-      id: idNum,
-      faceId: Number(d.faceId),
+      id: Number.isFinite(idNum) ? idNum : newId(),
+      faceId: Number.isFinite(faceId) ? faceId : undefined,
+      vertexId: Number.isFinite(Number(d.vertexId)) ? Number(d.vertexId) : undefined,
+      indices: Array.isArray(d.indices) ? d.indices.map(Number) : undefined,
       segment: Array.isArray(d.segment) ? d.segment.map(Number) : undefined
     };
   });
@@ -2225,12 +2372,13 @@ function bindEvents() {
   document.getElementById("addWindowBtn").addEventListener("click", () => addDetail("window"));
   document.getElementById("addEngineBtn").addEventListener("click", () => addDetail("engine"));
   document.getElementById("addPanelBtn").addEventListener("click", () => addDetail("panel"));
+  document.getElementById("addBeaconBtn").addEventListener("click", () => addDetail("beacon"));
   document.getElementById("deleteDetailBtn").addEventListener("click", () => {
     if (state.selected?.type === "detail") deleteSelected();
   });
   els.detailInset.addEventListener("input", () => {
     const detail = state.selected?.type === "detail" ? detailById(state.selected.id) : null;
-    if (!detail) return;
+    if (!detail || !detail.faceId) return;
     const inset = Number(els.detailInset.value);
     detail.inset = inset;
     patchMirroredDetail(detail, { inset });

@@ -748,7 +748,9 @@
         normals: [[0,39,10],[0,-39,10],[69,50,13],[69,-50,13],[30,52,0],[30,-52,0],[0,0,-160],[0,0,-160],[0,0,-160],[-30,52,0],[-30,-52,0],[-69,50,13],[-69,-50,13],[0,28,0],[0,-28,0]],
         details: [
           { type: "window", indices: [14,15,16,17], color: "#101915", normal: [0,1,.26], lift: 1 },
-          { type: "engine", points: [[12,5,-40],[-12,5,-40],[-12,-5,-40],[12,-5,-40]], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 }
+          { type: "engine", points: [[12,5,-40],[-12,5,-40],[-12,-5,-40],[12,-5,-40]], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 },
+          { type: "beacon", index: 8, color: "#ffb642" },
+          { type: "beacon", index: 9, color: "#ffb642" }
         ]
       }),
       gecko: buildBlueprint({
@@ -1688,21 +1690,36 @@
         edges: [[0,1],[0,4],[3,4],[2,3],[1,2],[1,6],[2,6],[2,5],[5,6],[0,5],[3,5],[0,6],[4,5],[1,8],[1,7],[0,7],[4,7],[3,7],[3,8],[2,8],[7,8]],
         edgeFaces: [[2,7],[6,13],[5,12],[4,11],[3,10],[2,3],[1,3],[1,4],[0,1],[0,6],[4,5],[0,2],[5,6],[8,10],[7,8],[7,13],[12,13],[9,12],[9,11],[10,11],[8,9]],
         edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31],
-        normals: [[9,66,81],[9,-66,81],[-72,64,31],[-64,-73,47],[45,-79,65],[135,15,35],[38,76,70],[-66,59,-39],[-67,-15,-80],[66,-14,-75],[-70,-80,-40],[58,-102,-51],[81,9,-67],[47,94,-63]]
+        normals: [[9,66,81],[9,-66,81],[-72,64,31],[-64,-73,47],[45,-79,65],[135,15,35],[38,76,70],[-66,59,-39],[-67,-15,-80],[66,-14,-75],[-70,-80,-40],[58,-102,-51],[81,9,-67],[47,94,-63]],
+        details: [
+          { type: "beacon", index: 0, color: "#ffb642" }
+        ]
       }),
       dodoStation: buildBlueprint({
         verts: [[0,150,196],[143,46,196],[88,-121,196],[-88,-121,196],[-143,46,196],[0,243,46],[231,75,46],[143,-196,46],[-143,-196,46],[-231,75,46],[143,196,-46],[231,-75,-46],[0,-243,-46],[-231,-75,-46],[-143,196,-46],[88,121,-196],[143,-46,-196],[0,-150,-196],[-143,-46,-196],[-88,121,-196],[-16,32,196],[-16,-32,196],[16,32,196],[16,-32,196]],
         edges: [[0,1],[1,2],[2,3],[3,4],[4,0],[5,10],[10,6],[6,11],[11,7],[7,12],[12,8],[8,13],[13,9],[9,14],[14,5],[15,16],[16,17],[17,18],[18,19],[19,15],[0,5],[1,6],[2,7],[3,8],[4,9],[10,15],[11,16],[12,17],[13,18],[14,19],[20,21],[21,23],[23,22],[22,20]],
         edgeFaces: [[1,0],[2,0],[3,0],[4,0],[5,0],[6,1],[7,1],[7,2],[8,2],[8,3],[9,3],[9,4],[10,4],[10,5],[6,5],[11,7],[11,8],[11,9],[11,10],[11,6],[5,1],[2,1],[3,2],[4,3],[5,4],[7,6],[8,7],[9,8],[10,9],[10,6],[0,0],[0,0],[0,0],[0,0]],
         edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,30,20,23,20],
-        normals: [[0,0,196],[103,142,88],[169,-55,89],[0,-176,88],[-169,-55,89],[-103,142,88],[0,176,-88],[169,55,-89],[103,-142,-88],[-103,-142,-88],[-169,55,-89],[0,0,-196]]
+        normals: [[0,0,196],[103,142,88],[169,-55,89],[0,-176,88],[-169,-55,89],[-103,142,88],[0,176,-88],[169,55,-89],[103,-142,-88],[-103,-142,-88],[-169,55,-89],[0,0,-196]],
+        details: [
+          { type: "beacon", index: 20, color: "#ffb642" },
+          { type: "beacon", index: 21, color: "#ffb642" },
+          { type: "beacon", index: 22, color: "#ffb642" },
+          { type: "beacon", index: 23, color: "#ffb642" }
+        ]
       }),
       coriolis: buildBlueprint({
         verts: [[160,0,160],[0,160,160],[-160,0,160],[0,-160,160],[160,-160,0],[160,160,0],[-160,160,0],[-160,-160,0],[160,0,-160],[0,160,-160],[-160,0,-160],[0,-160,-160],[10,-30,160],[10,30,160],[-10,30,160],[-10,-30,160]],
         edges: [[0,3],[0,1],[1,2],[2,3],[3,4],[0,4],[0,5],[5,1],[1,6],[2,6],[2,7],[3,7],[8,11],[8,9],[9,10],[10,11],[4,11],[4,8],[5,8],[5,9],[6,9],[6,10],[7,10],[7,11],[12,13],[13,14],[14,15],[15,12]],
         edgeFaces: [[0,1],[0,2],[0,3],[0,4],[1,5],[1,6],[2,6],[2,8],[3,8],[3,7],[4,7],[4,5],[10,13],[11,13],[12,13],[9,13],[5,10],[6,10],[6,11],[8,11],[8,12],[7,12],[7,9],[5,9],[0,0],[0,0],[0,0],[0,0]],
         edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,30,30,30,30],
-        normals: [[0,0,160],[107,-107,107],[107,107,107],[-107,107,107],[-107,-107,107],[0,-160,0],[160,0,0],[-160,0,0],[0,160,0],[-107,-107,-107],[107,-107,-107],[107,107,-107],[-107,107,-107],[0,0,-160]]
+        normals: [[0,0,160],[107,-107,107],[107,107,107],[-107,107,107],[-107,-107,107],[0,-160,0],[160,0,0],[-160,0,0],[0,160,0],[-107,-107,-107],[107,-107,-107],[107,107,-107],[-107,107,-107],[0,0,-160]],
+        details: [
+          { type: "beacon", index: 12, color: "#ffb642" },
+          { type: "beacon", index: 13, color: "#ffb642" },
+          { type: "beacon", index: 14, color: "#ffb642" },
+          { type: "beacon", index: 15, color: "#ffb642" }
+        ]
       })
     };
 
@@ -9050,6 +9067,28 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           : false;
         if (options.protrudingEdgesOnly && !markedProtrudingEdge) continue;
         if (options.skipProtrudingEdges && markedProtrudingEdge) continue;
+        if (detail.type === "beacon") {
+          if (wireDetails) continue;
+          const source = Number.isInteger(detail.index)
+            ? model.verts[detail.index]
+            : Array.isArray(detail.indices) && detail.indices.length
+              ? model.verts[detail.indices[0]]
+              : Array.isArray(detail.point)
+                ? detail.point
+                : null;
+          if (!source) continue;
+          const camPoint = add(worldDirToCam(orient(vec(source[0] * scaleFactor, source[1] * scaleFactor, source[2] * scaleFactor)), camera), o.cam || vec());
+          const projected = o.project ? o.project(camPoint) : project(camPoint, w, h);
+          if (!projected) continue;
+          details.push({
+            kind: "beacon",
+            projected: [projected],
+            avgZ: camPoint.z,
+            color: detail.color || "#ffb642",
+            seed: hash32(`${o.name || o.model || "model"}:${detail.index ?? 0}:beacon`)
+          });
+          continue;
+        }
         const normal = detail.normal
           ? worldDirToCam(norm(orient(vec(detail.normal[0], detail.normal[1], detail.normal[2]))), camera)
           : null;
@@ -10626,6 +10665,32 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         for (let i = 1; i < projected.length; i++) targetCtx.lineTo(projected[i].x, projected[i].y);
       };
       for (const item of items) {
+        if (item.kind === "beacon") {
+          const p = item.projected[0];
+          if (!p) continue;
+          const phaseOffset = ((item.seed || 0) & 1023) / 1023 * TAU;
+          const pulse = Math.pow(.5 + Math.sin(performance.now() / 1000 * TAU * .86 + phaseOffset) * .5, 3.2);
+          const rgb = hexToRgb(item.color || "#ffb642");
+          const core = clamp((p.s || 1) * 8, 2.2, 8.5);
+          const halo = core * (5.5 + pulse * 2.4);
+          targetCtx.save();
+          targetCtx.globalCompositeOperation = "lighter";
+          const g = targetCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, halo);
+          g.addColorStop(0, `rgba(255,250,210,${.82 + pulse * .18})`);
+          g.addColorStop(.2, `rgba(${rgb.r},${rgb.g},${rgb.b},${.54 + pulse * .28})`);
+          g.addColorStop(1, `rgba(${rgb.r},${rgb.g},${rgb.b},0)`);
+          targetCtx.fillStyle = g;
+          targetCtx.beginPath();
+          targetCtx.arc(p.x, p.y, halo, 0, TAU);
+          targetCtx.fill();
+          targetCtx.globalCompositeOperation = "source-over";
+          targetCtx.fillStyle = `rgba(255,248,188,${.8 + pulse * .2})`;
+          targetCtx.beginPath();
+          targetCtx.arc(p.x, p.y, core * .55, 0, TAU);
+          targetCtx.fill();
+          targetCtx.restore();
+          continue;
+        }
         if (item.glow) drawEngineGlow(targetCtx, item.projected, item.glowAlpha ?? 1);
         tracePoly(item.projected);
         if (item.kind === "line") {
@@ -15252,24 +15317,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       });
       ctx.restore();
 
-      // Four corner strobes: bright approach beacons anchored to the slot corners, with
-      // a slow one-second flash. The glow is screen-facing, but the positions are not.
-      ctx.save();
-      ctx.globalCompositeOperation = "lighter";
-      const phase = Math.pow(Math.max(0, Math.sin(performance.now() / 1000 * TAU)), 5);
-      [a, b, c, d].forEach((p) => {
-        const out = norm(vec(p.x - centroid.x, p.y - centroid.y, 0));
-        const x = p.x + out.x * bandW * 1.55;
-        const y = p.y + out.y * bandW * 1.55;
-        const r = Math.max(2.4, bandW * (.55 + phase * .25));
-        drawGlowSprite(ctx, x, y, r * 4.2, "amberBeacon", GLOW_SPRITES.amberBeacon, .72 + phase * .28);
-        ctx.fillStyle = `rgba(255,226,130,${.78 + phase * .22})`;
-        ctx.beginPath();
-        ctx.arc(x, y, r * .82, 0, TAU);
-        ctx.fill();
-      });
-      ctx.restore();
-
       // Blue force-field edge glow around the opening.
       const pulse = .4 + Math.max(0, Math.sin(performance.now() / 240)) * .6;
       ctx.save();
@@ -15389,40 +15436,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.restore();
     }
 
-    function drawHermitBeacon(o, cam, w, h) {
-      if (!ultraFxEnabled() || o.type !== "hermit") return;
-      const roll = o.roll ?? (o.rot || 0) * .7;
-      const orient = (v) => o.quat ? quatRotate(o.quat, v) : rotateShipPoint(v, o.rot || 0, o.pitch || 0, roll);
-      const scaleFactor = o.scaleFactor ?? o.scale ?? 1;
-      const local = vec(0, 86 * scaleFactor, 16 * scaleFactor);
-      const beaconCam = add(worldDirToCam(orient(local), game.camera), cam);
-      const p = project(beaconCam, w, h);
-      if (!p) return;
-
-      const seed = hash32(`${o.name || "hermit"}:beacon`);
-      const phaseOffset = (seed & 1023) / 1023 * TAU;
-      const pulse = Math.pow(.5 + Math.sin(performance.now() / 1000 * TAU * .72 + phaseOffset) * .5, 3.2);
-      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-      const core = clamp(2.2 * dpr + p.s * 6, 2, 7);
-      const halo = core * (5.5 + pulse * 2.4);
-
-      ctx.save();
-      ctx.globalCompositeOperation = "lighter";
-      drawGlowSprite(ctx, p.x, p.y, halo, "amberBeacon", GLOW_SPRITES.amberBeacon, .72 + pulse * .28);
-
-      ctx.globalCompositeOperation = "source-over";
-      ctx.fillStyle = `rgba(255,244,178,${.78 + pulse * .22})`;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, core * .58, 0, TAU);
-      ctx.fill();
-      ctx.strokeStyle = `rgba(255,126,32,${.44 + pulse * .38})`;
-      ctx.lineWidth = Math.max(.8, core * .22);
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, core * 1.05, 0, TAU);
-      ctx.stroke();
-      ctx.restore();
-    }
-
     function sceneModelDrawOptions(o, model, distanceLod) {
       const rock = isRockEntity(o);
       const rockSeed = o.textureSeed ?? o.decalSeed ?? hash32(`${game.galaxy}:${currentSystem().index}:${o.name || ""}:${o.model || o.type}:rock`);
@@ -15464,7 +15477,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         sceneLod: true,
         drawOptions: sceneModelDrawOptions(o, model, distanceLod)
       });
-      drawHermitBeacon(o, cam, w, h);
       if (o === game.targetObject) {
         const c = project(cam, w, h);
         if (c) {

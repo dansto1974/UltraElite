@@ -1,27 +1,27 @@
 // Generated/maintained from Ultra Elite MODELS and builder exports.
 window.ULTRA_ELITE_SHIP_DESCRIPTIONS = {
-  cobra: "The Cobra Mk III is the benchmark independent trader: enough cargo space to matter, enough speed to survive, and enough weapon mounts to make bad decisions feel briefly tactical.",
-  cobra1: "The Cobra Mk I is older, lighter and less forgiving than its famous successor. Pilots who love them use words like character when they mean maintenance.",
-  krait: "The Krait is a knife with engines: small, flat, fast and popular with pilots who prefer ambushes to conversations.",
-  viper: "The Viper is a police interceptor built around acceleration, weapons power and the deeply held belief that criminals should have a short working day.",
-  adder: "The Adder is cheap, compact and surprisingly useful, which is why traders, pirates and nervous beginners all pretend they chose it deliberately.",
-  gecko: "The Gecko sits in that awkward region between courier and raider, with just enough speed to start trouble and just enough hold space to explain it later.",
-  mamba: "The Mamba is all hard angles and bad intentions, a pirate favourite for quick strikes where the cargo transfer is expected to be involuntary.",
-  sidewinder: "The Sidewinder is fast, twitchy and lightly built. In pirate hands it is a wasp; in honest hands it is usually a repayment plan.",
-  worm: "The Worm is small-haul utility craftwork: modest drive, modest hold, modest dignity, and an admirable talent for being somewhere else when fighting starts.",
-  moray: "The Moray was designed for wet worlds and awkward atmospheres, but in space it has become a favourite of pilots who like their ships unusual and their insurance complicated.",
-  asp: "The Asp Mk II is a dangerous wedge of speed and firepower, respected by bounty hunters and disliked by almost everyone they have ever met.",
-  ferdelance: "The Fer-de-Lance is expensive, sleek and faintly arrogant. Its owners call it refined; its victims rarely have time to file a counterargument.",
-  python: "The Python is a working hauler with a serious hull and a serious appetite for profitable routes. It turns slowly, earns steadily and complains through its landing gear.",
-  boa: "The Boa is a long-haul bulk carrier, beloved by accountants and feared by docking crews asked to guide it through a crowded slot.",
-  anaconda: "The Anaconda is less a ship than a private economy with engines. When one arrives, traffic control clears its throat and hopes the pilot has read the manual. They hang in the sky in exactly the same way that bricks don't.",
-  shuttle: "The Shuttle is station traffic made visible: practical, slow and full of people who did not expect to become part of a combat incident.",
-  transporter: "The Transporter moves freight, tools and local politics between station and surface. It is not glamorous, but neither is most civilisation.",
-  thargoid: "The Thargoid warship remains badly explained by human engineers. It is elegant, hostile and apparently built by minds that considered symmetry optional.",
-  thargon: "The Thargon drone is a remote weapon with no cockpit, no cargo bay and no useful conversation. If it is close enough to admire, you have left it too late.",
-  constrictor: "The Constrictor is a rare military-grade menace, fast and unpleasantly purposeful, usually mentioned in bars by pilots who were not present.",
-  cougar: "The Cougar is a sleek, secretive design with a reputation for vanishing acts, special equipment and owners who do not answer ordinary questions. For some reason, pilots of these vessels tend to prefer to date much younger men.",
-  diamondback: "The Diamondback is an off-books hunter craft: Sleek like a running shoe, over-engined and fully fitted out with the latest Sirius Cybernetics Corp. GPP technology."
+  "cobra": "The Cobra Mk III is the benchmark independent trader: enough cargo space to matter, enough speed to survive, and enough weapon mounts to make bad decisions feel briefly tactical.",
+  "cobra1": "The Cobra Mk I is older, lighter and less forgiving than its famous successor. Pilots who love them use words like character when they mean maintenance.",
+  "krait": "The Krait is a knife with engines: small, flat, fast and popular with pilots who prefer ambushes to conversations.",
+  "viper": "The Viper is a police interceptor built around acceleration, weapons power and the deeply held belief that criminals should have a short working day.",
+  "adder": "The Adder is cheap, compact and surprisingly useful, which is why traders, pirates and nervous beginners all pretend they chose it deliberately.",
+  "gecko": "The Gecko sits in that awkward region between courier and raider, with just enough speed to start trouble and just enough hold space to explain it later.",
+  "mamba": "The Mamba is all hard angles and bad intentions, a pirate favourite for quick strikes where the cargo transfer is expected to be involuntary.",
+  "sidewinder": "The Sidewinder is fast, twitchy and lightly built. In pirate hands it is a wasp; in honest hands it is usually a repayment plan.",
+  "worm": "The Worm is small-haul utility craftwork: modest drive, modest hold, modest dignity, and an admirable talent for being somewhere else when fighting starts.",
+  "moray": "The Moray was designed for wet worlds and awkward atmospheres, but in space it has become a favourite of pilots who like their ships unusual and their insurance complicated.",
+  "asp": "The Asp Mk II is a dangerous wedge of speed and firepower, respected by bounty hunters and disliked by almost everyone they have ever met.",
+  "ferdelance": "The Fer-de-Lance is expensive, sleek and faintly arrogant. Its owners call it refined; its victims rarely have time to file a counterargument.",
+  "python": "The Python is a working hauler with a serious hull and a serious appetite for profitable routes. It turns slowly, earns steadily and complains through its landing gear.",
+  "boa": "The Boa is a long-haul bulk carrier, beloved by accountants and feared by docking crews asked to guide it through a crowded slot.",
+  "anaconda": "The Anaconda is less a ship than a private economy with engines. When one arrives, traffic control clears its throat and hopes the pilot has read the manual. They hang in the sky in exactly the same way that bricks don't.",
+  "shuttle": "The Shuttle is station traffic made visible: practical, slow and full of people who did not expect to become part of a combat incident.",
+  "transporter": "The Transporter moves freight, tools and local politics between station and surface. It is not glamorous, but neither is most civilisation.",
+  "thargoid": "The Thargoid warship remains badly explained by human engineers. It is elegant, hostile and apparently built by minds that considered symmetry optional.",
+  "thargon": "The Thargon drone is a remote weapon with no cockpit, no cargo bay and no useful conversation. If it is close enough to admire, you have left it too late.",
+  "constrictor": "The Constrictor is a rare military-grade menace, fast and unpleasantly purposeful, usually mentioned in bars by pilots who were not present.",
+  "cougar": "The Cougar is a sleek, secretive design with a reputation for vanishing acts, special equipment and owners who do not answer ordinary questions. For some reason, pilots of these vessels tend to prefer to date much younger men.",
+  "diamondback": "The Diamondback is an off-books hunter craft: Sleek like a running shoe, over-engined and fully fitted out with the latest Sirius Cybernetics Corp. GPP technology."
 };
 
 window.ULTRA_ELITE_MODEL_LIBRARY = {
@@ -350,7 +350,71 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false
       }
     ],
-    "details": []
+    "details": [
+      {
+        "id": 5029,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0,
+          1,
+          0.26
+        ],
+        "lift": 1,
+        "indices": [
+          15,
+          16,
+          17,
+          18
+        ]
+      },
+      {
+        "id": 5030,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "points": [
+          [
+            12,
+            5,
+            -40
+          ],
+          [
+            -12,
+            5,
+            -40
+          ],
+          [
+            -12,
+            -5,
+            -40
+          ],
+          [
+            12,
+            -5,
+            -40
+          ]
+        ]
+      },
+      {
+        "id": 5031,
+        "type": "beacon",
+        "vertexId": 9,
+        "color": "#ffb642"
+      },
+      {
+        "id": 5032,
+        "type": "beacon",
+        "vertexId": 10,
+        "color": "#ffb642"
+      }
+    ]
   },
   "anaconda": {
     "id": "anaconda",
@@ -602,7 +666,153 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       }
     ],
     "edges": [],
-    "details": []
+    "details": [
+      {
+        "id": 1012,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0,
+          0.98,
+          0.19
+        ],
+        "lift": 1,
+        "points": [
+          [
+            0,
+            22.9,
+            134
+          ],
+          [
+            -15.1,
+            41.5,
+            37
+          ],
+          [
+            15.1,
+            41.5,
+            37
+          ]
+        ]
+      },
+      {
+        "id": 1013,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          -0.72,
+          -0.69
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "points": [
+          [
+            0,
+            -9.3,
+            -41.3
+          ],
+          [
+            -19.4,
+            -18.3,
+            -31.8
+          ],
+          [
+            -11.7,
+            -33.6,
+            -16.5
+          ],
+          [
+            11.7,
+            -33.6,
+            -16.5
+          ],
+          [
+            19.4,
+            -18.3,
+            -31.8
+          ]
+        ]
+      },
+      {
+        "id": 1014,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          -0.5,
+          0.18,
+          -0.85
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "points": [
+          [
+            -15.5,
+            14.5,
+            -47.2
+          ],
+          [
+            -37,
+            4.5,
+            -36.7
+          ],
+          [
+            -50,
+            18.5,
+            -25.7
+          ],
+          [
+            -37,
+            37.5,
+            -29.7
+          ],
+          [
+            -15.5,
+            35,
+            -42.7
+          ]
+        ]
+      },
+      {
+        "id": 1015,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0.5,
+          0.18,
+          -0.85
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "points": [
+          [
+            15.5,
+            14.5,
+            -47.2
+          ],
+          [
+            37,
+            4.5,
+            -36.7
+          ],
+          [
+            50,
+            18.5,
+            -25.7
+          ],
+          [
+            37,
+            37.5,
+            -29.7
+          ],
+          [
+            15.5,
+            35,
+            -42.7
+          ]
+        ]
+      }
+    ]
   },
   "asp": {
     "id": "asp",
@@ -918,7 +1128,76 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false
       }
     ],
-    "details": []
+    "details": [
+      {
+        "id": 5028,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0,
+          0.91,
+          0.4
+        ],
+        "lift": 1,
+        "points": [
+          [
+            9.1,
+            -0.2,
+            58.4
+          ],
+          [
+            -9.1,
+            -0.2,
+            58.4
+          ],
+          [
+            -15.1,
+            7.2,
+            42.6
+          ],
+          [
+            15.1,
+            7.2,
+            42.6
+          ]
+        ]
+      },
+      {
+        "id": 5029,
+        "type": "line",
+        "color": "#cccccc",
+        "normal": [
+          0,
+          0,
+          1
+        ],
+        "width": 1.4,
+        "lift": 1,
+        "cull": false,
+        "indices": [
+          18,
+          19
+        ]
+      },
+      {
+        "id": 5030,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "indices": [
+          14,
+          16,
+          15,
+          17
+        ]
+      }
+    ]
   },
   "asteroid": {
     "id": "asteroid",
@@ -1366,7 +1645,65 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       }
     ],
     "edges": [],
-    "details": []
+    "details": [
+      {
+        "id": 1013,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0,
+          0.97,
+          0.25
+        ],
+        "lift": 1,
+        "points": [
+          [
+            0,
+            14.7,
+            37.3
+          ],
+          [
+            -17.1,
+            32.7,
+            -31.1
+          ],
+          [
+            17.1,
+            32.7,
+            -31.1
+          ]
+        ]
+      },
+      {
+        "id": 1014,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "points": [
+          [
+            0,
+            2.1,
+            -107
+          ],
+          [
+            7.2,
+            -6.6,
+            -107
+          ],
+          [
+            -7.2,
+            -6.6,
+            -107
+          ]
+        ]
+      }
+    ]
   },
   "boulder": {
     "id": "boulder",
@@ -2148,7 +2485,123 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false
       }
     ],
-    "details": []
+    "details": [
+      {
+        "id": 5038,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0,
+          0.89,
+          0.45
+        ],
+        "lift": 1,
+        "points": [
+          [
+            16,
+            4.3,
+            67.3
+          ],
+          [
+            -16,
+            4.3,
+            67.3
+          ],
+          [
+            0,
+            17.3,
+            41.3
+          ]
+        ]
+      },
+      {
+        "id": 5039,
+        "type": "line",
+        "color": "#cccccc",
+        "normal": [
+          0,
+          0,
+          1
+        ],
+        "width": 1.2,
+        "lift": 1,
+        "cull": false,
+        "indices": [
+          21,
+          22
+        ]
+      },
+      {
+        "id": 5040,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "indices": [
+          13,
+          14,
+          19,
+          20
+        ]
+      },
+      {
+        "id": 5041,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "indices": [
+          15,
+          16,
+          17,
+          18
+        ]
+      },
+      {
+        "id": 5042,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "indices": [
+          23,
+          25,
+          24
+        ]
+      },
+      {
+        "id": 5043,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "indices": [
+          26,
+          27,
+          28
+        ]
+      }
+    ]
   },
   "cobra1": {
     "id": "cobra1",
@@ -2348,7 +2801,111 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false
       }
     ],
-    "details": []
+    "details": [
+      {
+        "id": 5018,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0,
+          0.97,
+          0.24
+        ],
+        "lift": 1,
+        "points": [
+          [
+            -9,
+            1.2,
+            40.7
+          ],
+          [
+            9,
+            1.2,
+            40.7
+          ],
+          [
+            0,
+            7.7,
+            12.7
+          ]
+        ]
+      },
+      {
+        "id": 5019,
+        "type": "line",
+        "color": "#cccccc",
+        "normal": [
+          0,
+          0,
+          1
+        ],
+        "width": 1.2,
+        "lift": 1,
+        "cull": false,
+        "indices": [
+          10,
+          11
+        ]
+      },
+      {
+        "id": 5020,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "points": [
+          [
+            -36,
+            5,
+            -38
+          ],
+          [
+            -14,
+            5,
+            -38
+          ],
+          [
+            -25,
+            -5,
+            -38
+          ]
+        ]
+      },
+      {
+        "id": 5021,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "points": [
+          [
+            14,
+            5,
+            -38
+          ],
+          [
+            36,
+            5,
+            -38
+          ],
+          [
+            25,
+            -5,
+            -38
+          ]
+        ]
+      }
+    ]
   },
   "constrictor": {
     "id": "constrictor",
@@ -2633,7 +3190,107 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false
       }
     ],
-    "details": []
+    "details": [
+      {
+        "id": 5024,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0,
+          0.96,
+          0.26
+        ],
+        "lift": 1,
+        "points": [
+          [
+            9,
+            -1.5,
+            59.4
+          ],
+          [
+            -9,
+            -1.5,
+            59.4
+          ],
+          [
+            -9,
+            7.5,
+            25.6
+          ],
+          [
+            9,
+            7.5,
+            25.6
+          ]
+        ]
+      },
+      {
+        "id": 5025,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0,
+          -1,
+          0
+        ],
+        "lift": 1,
+        "indices": [
+          11,
+          13,
+          15
+        ]
+      },
+      {
+        "id": 5026,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0,
+          -1,
+          0
+        ],
+        "lift": 1,
+        "indices": [
+          12,
+          16,
+          14
+        ]
+      },
+      {
+        "id": 5027,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "points": [
+          [
+            -24.3,
+            -1.5,
+            -40
+          ],
+          [
+            -9,
+            7.5,
+            -40
+          ],
+          [
+            9,
+            7.5,
+            -40
+          ],
+          [
+            24.3,
+            -1.5,
+            -40
+          ]
+        ]
+      }
+    ]
   },
   "coriolis": {
     "id": "coriolis",
@@ -2932,7 +3589,32 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false
       }
     ],
-    "details": []
+    "details": [
+      {
+        "id": 1,
+        "type": "beacon",
+        "vertexId": 13,
+        "color": "#ffb642"
+      },
+      {
+        "id": 2,
+        "type": "beacon",
+        "vertexId": 14,
+        "color": "#ffb642"
+      },
+      {
+        "id": 3,
+        "type": "beacon",
+        "vertexId": 15,
+        "color": "#ffb642"
+      },
+      {
+        "id": 4,
+        "type": "beacon",
+        "vertexId": 16,
+        "color": "#ffb642"
+      }
+    ]
   },
   "cougar": {
     "id": "cougar",
@@ -3249,7 +3931,58 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false
       }
     ],
-    "details": []
+    "details": [
+      {
+        "id": 5025,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          -0.33,
+          0.94,
+          0.08
+        ],
+        "lift": 1,
+        "indices": [
+          13,
+          14,
+          12
+        ]
+      },
+      {
+        "id": 5026,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0.33,
+          0.94,
+          0.08
+        ],
+        "lift": 1,
+        "indices": [
+          12,
+          15,
+          13
+        ]
+      },
+      {
+        "id": 5027,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "indices": [
+          16,
+          17,
+          18,
+          19
+        ]
+      }
+    ]
   },
   "diamondback": {
     "format": "ultra-elite-ship-builder/v1",
@@ -4704,7 +5437,32 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false
       }
     ],
-    "details": []
+    "details": [
+      {
+        "id": 1,
+        "type": "beacon",
+        "vertexId": 21,
+        "color": "#ffb642"
+      },
+      {
+        "id": 2,
+        "type": "beacon",
+        "vertexId": 22,
+        "color": "#ffb642"
+      },
+      {
+        "id": 3,
+        "type": "beacon",
+        "vertexId": 23,
+        "color": "#ffb642"
+      },
+      {
+        "id": 4,
+        "type": "beacon",
+        "vertexId": 24,
+        "color": "#ffb642"
+      }
+    ]
   },
   "escapePod": {
     "id": "escapePod",
@@ -4782,7 +5540,37 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       }
     ],
     "edges": [],
-    "details": []
+    "details": [
+      {
+        "id": 1004,
+        "type": "engine",
+        "color": "#ffd33d",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#fff2a8",
+        "lift": 2.5,
+        "points": [
+          [
+            -7,
+            -5,
+            -12
+          ],
+          [
+            -7,
+            5,
+            -12
+          ],
+          [
+            0,
+            0,
+            -8
+          ]
+        ]
+      }
+    ]
   },
   "ferdelance": {
     "id": "ferdelance",
@@ -5104,7 +5892,90 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false
       }
     ],
-    "details": []
+    "details": [
+      {
+        "id": 5027,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0,
+          1,
+          0.25
+        ],
+        "lift": 1,
+        "indices": [
+          11,
+          12,
+          13
+        ]
+      },
+      {
+        "id": 5028,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0,
+          1,
+          0.25
+        ],
+        "lift": 1,
+        "indices": [
+          14,
+          15,
+          16
+        ]
+      },
+      {
+        "id": 5029,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0,
+          -1,
+          0
+        ],
+        "lift": 1,
+        "indices": [
+          17,
+          18,
+          19
+        ]
+      },
+      {
+        "id": 5030,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "points": [
+          [
+            6.6,
+            -2.4,
+            -52
+          ],
+          [
+            -6.6,
+            -2.4,
+            -52
+          ],
+          [
+            -6.6,
+            -10.4,
+            -52
+          ],
+          [
+            6.6,
+            -10.4,
+            -52
+          ]
+        ]
+      }
+    ]
   },
   "gecko": {
     "id": "gecko",
@@ -5309,7 +6180,160 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false
       }
     ],
-    "details": []
+    "details": [
+      {
+        "id": 5017,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0,
+          0.99,
+          0.16
+        ],
+        "lift": 1,
+        "points": [
+          [
+            0,
+            -2.5,
+            38
+          ],
+          [
+            -6,
+            3.1,
+            3
+          ],
+          [
+            6,
+            3.1,
+            3
+          ]
+        ]
+      },
+      {
+        "id": 5018,
+        "type": "line",
+        "color": "#101915",
+        "normal": [
+          0,
+          -1,
+          0.14
+        ],
+        "width": 1.4,
+        "lift": 1,
+        "indices": [
+          9,
+          11
+        ]
+      },
+      {
+        "id": 5019,
+        "type": "line",
+        "color": "#101915",
+        "normal": [
+          0,
+          -1,
+          0.14
+        ],
+        "width": 1.4,
+        "lift": 1,
+        "indices": [
+          10,
+          12
+        ]
+      },
+      {
+        "id": 5020,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "points": [
+          [
+            10,
+            4,
+            -23
+          ],
+          [
+            -10,
+            4,
+            -23
+          ],
+          [
+            -10,
+            -10,
+            -23
+          ],
+          [
+            10,
+            -10,
+            -23
+          ]
+        ]
+      },
+      {
+        "id": 5021,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0.38,
+          0.07,
+          -0.92
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "points": [
+          [
+            50,
+            -1,
+            -9.7
+          ],
+          [
+            25,
+            3,
+            -19.7
+          ],
+          [
+            27,
+            -8,
+            -19.7
+          ]
+        ]
+      },
+      {
+        "id": 5022,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          -0.38,
+          0.07,
+          -0.92
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "points": [
+          [
+            -50,
+            -1,
+            -9.7
+          ],
+          [
+            -25,
+            3,
+            -19.7
+          ],
+          [
+            -27,
+            -8,
+            -19.7
+          ]
+        ]
+      }
+    ]
   },
   "hermit": {
     "id": "hermit",
@@ -5517,7 +6541,14 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       }
     ],
     "edges": [],
-    "details": []
+    "details": [
+      {
+        "id": 1,
+        "type": "beacon",
+        "vertexId": 1,
+        "color": "#ffb642"
+      }
+    ]
   },
   "krait": {
     "id": "krait",
@@ -5802,7 +6833,108 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false
       }
     ],
-    "details": []
+    "details": [
+      {
+        "id": 5021,
+        "type": "line",
+        "color": "#cccccc",
+        "normal": [
+          0,
+          0,
+          1
+        ],
+        "width": 1.6,
+        "lift": 1,
+        "cull": false,
+        "indices": [
+          4,
+          6
+        ]
+      },
+      {
+        "id": 5022,
+        "type": "line",
+        "color": "#cccccc",
+        "normal": [
+          0,
+          0,
+          1
+        ],
+        "width": 1.6,
+        "lift": 1,
+        "cull": false,
+        "indices": [
+          5,
+          7
+        ]
+      },
+      {
+        "id": 5023,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0.12,
+          0.97,
+          0.12
+        ],
+        "lift": 1,
+        "indices": [
+          8,
+          11,
+          9
+        ]
+      },
+      {
+        "id": 5024,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          -0.12,
+          0.97,
+          0.12
+        ],
+        "lift": 1,
+        "indices": [
+          8,
+          10,
+          9
+        ]
+      },
+      {
+        "id": 5025,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "indices": [
+          12,
+          14,
+          13
+        ]
+      },
+      {
+        "id": 5026,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "indices": [
+          15,
+          16,
+          17
+        ]
+      }
+    ]
   },
   "mamba": {
     "id": "mamba",
@@ -6199,7 +7331,109 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false
       }
     ],
-    "details": []
+    "details": [
+      {
+        "id": 5026,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0,
+          1,
+          0.08
+        ],
+        "lift": 1,
+        "indices": [
+          6,
+          7,
+          8,
+          9
+        ]
+      },
+      {
+        "id": 5027,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0,
+          -1,
+          0.08
+        ],
+        "lift": 1,
+        "indices": [
+          10,
+          12,
+          13
+        ]
+      },
+      {
+        "id": 5028,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0,
+          -1,
+          0.08
+        ],
+        "lift": 1,
+        "indices": [
+          11,
+          14,
+          15
+        ]
+      },
+      {
+        "id": 5029,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "indices": [
+          16,
+          17,
+          18,
+          19
+        ]
+      },
+      {
+        "id": 5030,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "indices": [
+          20,
+          23,
+          24
+        ]
+      },
+      {
+        "id": 5031,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "indices": [
+          21,
+          22,
+          25
+        ]
+      }
+    ]
   },
   "missile": {
     "id": "missile",
@@ -6503,7 +7737,42 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       }
     ],
     "edges": [],
-    "details": []
+    "details": [
+      {
+        "id": 1017,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "points": [
+          [
+            4,
+            4,
+            -44
+          ],
+          [
+            -4,
+            4,
+            -44
+          ],
+          [
+            -4,
+            -4,
+            -44
+          ],
+          [
+            4,
+            -4,
+            -44
+          ]
+        ]
+      }
+    ]
   },
   "moray": {
     "id": "moray",
@@ -6743,7 +8012,85 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false
       }
     ],
-    "details": []
+    "details": [
+      {
+        "id": 5019,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0,
+          0.99,
+          0.16
+        ],
+        "lift": 1,
+        "points": [
+          [
+            0,
+            4.9,
+            35
+          ],
+          [
+            -6,
+            8.1,
+            15
+          ],
+          [
+            6,
+            8.1,
+            15
+          ]
+        ]
+      },
+      {
+        "id": 5020,
+        "type": "line",
+        "color": "#101915",
+        "normal": [
+          0,
+          1,
+          0.16
+        ],
+        "width": 1.4,
+        "lift": 1,
+        "indices": [
+          11,
+          12
+        ]
+      },
+      {
+        "id": 5021,
+        "type": "line",
+        "color": "#101915",
+        "normal": [
+          0,
+          1,
+          0.16
+        ],
+        "width": 1.4,
+        "lift": 1,
+        "indices": [
+          13,
+          14
+        ]
+      },
+      {
+        "id": 5022,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          -0.55,
+          -0.83
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "indices": [
+          8,
+          9,
+          10
+        ]
+      }
+    ]
   },
   "python": {
     "id": "python",
@@ -6992,7 +8339,162 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false
       }
     ],
-    "details": []
+    "details": [
+      {
+        "id": 5016,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0.55,
+          0.81,
+          0.22
+        ],
+        "lift": 1,
+        "points": [
+          [
+            17.6,
+            8.8,
+            147.7
+          ],
+          [
+            17.6,
+            30.4,
+            68.5
+          ],
+          [
+            60.8,
+            8.8,
+            39.7
+          ]
+        ]
+      },
+      {
+        "id": 5017,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          -0.55,
+          0.81,
+          0.22
+        ],
+        "lift": 1,
+        "points": [
+          [
+            -17.6,
+            8.8,
+            147.7
+          ],
+          [
+            -17.6,
+            30.4,
+            68.5
+          ],
+          [
+            -60.8,
+            8.8,
+            39.7
+          ]
+        ]
+      },
+      {
+        "id": 5018,
+        "type": "line",
+        "color": "#101915",
+        "normal": [
+          -0.52,
+          0.77,
+          -0.23
+        ],
+        "width": 1.4,
+        "lift": 1,
+        "indices": [
+          4,
+          6
+        ]
+      },
+      {
+        "id": 5019,
+        "type": "line",
+        "color": "#101915",
+        "normal": [
+          0.52,
+          0.77,
+          -0.23
+        ],
+        "width": 1.4,
+        "lift": 1,
+        "indices": [
+          3,
+          6
+        ]
+      },
+      {
+        "id": 5020,
+        "type": "line",
+        "color": "#101915",
+        "normal": [
+          0.52,
+          -0.77,
+          -0.23
+        ],
+        "width": 1.4,
+        "lift": 1,
+        "indices": [
+          3,
+          11
+        ]
+      },
+      {
+        "id": 5021,
+        "type": "line",
+        "color": "#101915",
+        "normal": [
+          -0.52,
+          -0.77,
+          -0.23
+        ],
+        "width": 1.4,
+        "lift": 1,
+        "indices": [
+          4,
+          11
+        ]
+      },
+      {
+        "id": 5022,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "points": [
+          [
+            0,
+            10.8,
+            -112
+          ],
+          [
+            21.6,
+            0,
+            -112
+          ],
+          [
+            0,
+            -10.8,
+            -112
+          ],
+          [
+            -21.6,
+            0,
+            -112
+          ]
+        ]
+      }
+    ]
   },
   "shuttle": {
     "id": "shuttle",
@@ -7343,7 +8845,26 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false
       }
     ],
-    "details": []
+    "details": [
+      {
+        "id": 5030,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "indices": [
+          9,
+          10,
+          11,
+          12
+        ]
+      }
+    ]
   },
   "sidewinder": {
     "id": "sidewinder",
@@ -7526,7 +9047,54 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false
       }
     ],
-    "details": []
+    "details": [
+      {
+        "id": 5015,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0,
+          0.97,
+          0.24
+        ],
+        "lift": 1,
+        "points": [
+          [
+            -16,
+            2.7,
+            25.3
+          ],
+          [
+            16,
+            2.7,
+            25.3
+          ],
+          [
+            0,
+            10.7,
+            -6.7
+          ]
+        ]
+      },
+      {
+        "id": 5016,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "indices": [
+          7,
+          8,
+          9,
+          10
+        ]
+      }
+    ]
   },
   "splinter": {
     "id": "splinter",
@@ -7897,7 +9465,147 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false
       }
     ],
-    "details": []
+    "details": [
+      {
+        "id": 5026,
+        "type": "line",
+        "color": "#f7fff7",
+        "normal": [
+          -1,
+          0,
+          0
+        ],
+        "width": 2,
+        "lift": 1,
+        "indices": [
+          17,
+          18
+        ]
+      },
+      {
+        "id": 5027,
+        "type": "line",
+        "color": "#f7fff7",
+        "normal": [
+          -1,
+          0,
+          0
+        ],
+        "width": 2,
+        "lift": 1,
+        "indices": [
+          19,
+          20
+        ]
+      },
+      {
+        "id": 5028,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          -1,
+          0,
+          0
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "points": [
+          [
+            -24,
+            -42.4,
+            42.4
+          ],
+          [
+            -24,
+            -60,
+            0
+          ],
+          [
+            -24,
+            -42.4,
+            -42.4
+          ],
+          [
+            -24,
+            0,
+            -60
+          ],
+          [
+            -24,
+            42.4,
+            -42.4
+          ],
+          [
+            -24,
+            60,
+            0
+          ],
+          [
+            -24,
+            42.4,
+            42.4
+          ],
+          [
+            -24,
+            0,
+            60
+          ]
+        ]
+      },
+      {
+        "id": 5029,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          1,
+          0,
+          0
+        ],
+        "lift": 1,
+        "points": [
+          [
+            32,
+            -21.2,
+            21.2
+          ],
+          [
+            32,
+            -30,
+            0
+          ],
+          [
+            32,
+            -21.2,
+            -21.2
+          ],
+          [
+            32,
+            0,
+            -30
+          ],
+          [
+            32,
+            21.2,
+            -21.2
+          ],
+          [
+            32,
+            30,
+            0
+          ],
+          [
+            32,
+            21.2,
+            21.2
+          ],
+          [
+            32,
+            0,
+            30
+          ]
+        ]
+      }
+    ]
   },
   "thargon": {
     "id": "thargon",
@@ -8059,7 +9767,85 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       }
     ],
     "edges": [],
-    "details": []
+    "details": [
+      {
+        "id": 1007,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          -1,
+          0,
+          0
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "points": [
+          [
+            -9,
+            0,
+            18
+          ],
+          [
+            -9,
+            -17.1,
+            5.4
+          ],
+          [
+            -9,
+            -10.8,
+            -14.4
+          ],
+          [
+            -9,
+            10.8,
+            -14.4
+          ],
+          [
+            -9,
+            17.1,
+            5.4
+          ]
+        ]
+      },
+      {
+        "id": 1008,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          1,
+          0,
+          0
+        ],
+        "lift": 1,
+        "points": [
+          [
+            9,
+            0,
+            -13
+          ],
+          [
+            9,
+            -5,
+            -16.5
+          ],
+          [
+            9,
+            -3,
+            -22
+          ],
+          [
+            9,
+            3,
+            -22
+          ],
+          [
+            9,
+            5,
+            -16.5
+          ]
+        ]
+      }
+    ]
   },
   "transporter": {
     "id": "transporter",
@@ -8632,7 +10418,182 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false
       }
     ],
-    "details": []
+    "details": [
+      {
+        "id": 5046,
+        "type": "line",
+        "color": "#101915",
+        "normal": [
+          -0.24,
+          0.97,
+          0.09
+        ],
+        "width": 1.2,
+        "lift": 1,
+        "indices": [
+          17,
+          18
+        ]
+      },
+      {
+        "id": 5047,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          -0.24,
+          0.97,
+          0.09
+        ],
+        "lift": 1,
+        "indices": [
+          19,
+          20,
+          21
+        ]
+      },
+      {
+        "id": 5048,
+        "type": "line",
+        "color": "#101915",
+        "normal": [
+          -0.24,
+          0.97,
+          0.09
+        ],
+        "width": 1.2,
+        "lift": 1,
+        "indices": [
+          21,
+          22
+        ]
+      },
+      {
+        "id": 5049,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0.24,
+          0.97,
+          0.09
+        ],
+        "lift": 1,
+        "indices": [
+          23,
+          24,
+          25
+        ]
+      },
+      {
+        "id": 5050,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0.24,
+          0.97,
+          0.09
+        ],
+        "lift": 1,
+        "indices": [
+          26,
+          27,
+          28
+        ]
+      },
+      {
+        "id": 5051,
+        "type": "line",
+        "color": "#101915",
+        "normal": [
+          0.24,
+          0.97,
+          0.09
+        ],
+        "width": 1.2,
+        "lift": 1,
+        "indices": [
+          28,
+          29
+        ]
+      },
+      {
+        "id": 5052,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0,
+          0,
+          1
+        ],
+        "lift": 1,
+        "points": [
+          [
+            0,
+            -3,
+            30
+          ],
+          [
+            -7,
+            -7,
+            30
+          ],
+          [
+            7,
+            -7,
+            30
+          ]
+        ]
+      },
+      {
+        "id": 5053,
+        "type": "line",
+        "color": "#101915",
+        "normal": [
+          0,
+          -1,
+          0
+        ],
+        "width": 1.4,
+        "lift": 1,
+        "indices": [
+          30,
+          31
+        ]
+      },
+      {
+        "id": 5054,
+        "type": "line",
+        "color": "#101915",
+        "normal": [
+          0,
+          -1,
+          0
+        ],
+        "width": 1.4,
+        "lift": 1,
+        "indices": [
+          32,
+          33
+        ]
+      },
+      {
+        "id": 5055,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "indices": [
+          34,
+          35,
+          36,
+          37
+        ]
+      }
+    ]
   },
   "viper": {
     "id": "viper",
@@ -8875,7 +10836,98 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false
       }
     ],
-    "details": []
+    "details": [
+      {
+        "id": 5020,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          -0.53,
+          0.8,
+          0.27
+        ],
+        "lift": 1,
+        "points": [
+          [
+            -4,
+            5.3,
+            48
+          ],
+          [
+            -4,
+            13.3,
+            24
+          ],
+          [
+            -16,
+            13.3,
+            0
+          ]
+        ]
+      },
+      {
+        "id": 5021,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0.53,
+          0.8,
+          0.27
+        ],
+        "lift": 1,
+        "points": [
+          [
+            4,
+            5.3,
+            48
+          ],
+          [
+            4,
+            13.3,
+            24
+          ],
+          [
+            16,
+            13.3,
+            0
+          ]
+        ]
+      },
+      {
+        "id": 5022,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "indices": [
+          10,
+          13,
+          14
+        ]
+      },
+      {
+        "id": 5023,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "indices": [
+          11,
+          15,
+          12
+        ]
+      }
+    ]
   },
   "worm": {
     "id": "worm",
@@ -9045,6 +11097,74 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       }
     ],
     "edges": [],
-    "details": []
+    "details": [
+      {
+        "id": 1008,
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0,
+          0.98,
+          0.2
+        ],
+        "lift": 1,
+        "points": [
+          [
+            2.5,
+            8,
+            5
+          ],
+          [
+            -2.5,
+            8,
+            5
+          ],
+          [
+            -4,
+            12,
+            -15
+          ],
+          [
+            4,
+            12,
+            -15
+          ]
+        ]
+      },
+      {
+        "id": 1009,
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "stroke": "#ffffff",
+        "lift": 1,
+        "points": [
+          [
+            4,
+            8,
+            -25
+          ],
+          [
+            -4,
+            8,
+            -25
+          ],
+          [
+            -13,
+            -4,
+            -25
+          ],
+          [
+            13,
+            -4,
+            -25
+          ]
+        ]
+      }
+    ]
   }
 };
