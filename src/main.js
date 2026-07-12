@@ -572,6 +572,7 @@
     }
 
     const DECAL_TEXTURE_SIZE = 400;
+    const IMAGE_DECAL_MAX_SIZE = 600;
     const galaxyBackdropCache = new Map();
 
     const ECONOMIES = [
@@ -2037,11 +2038,26 @@
       const rangeZ = maxZ - minZ || 1;
       const uvFromAxes = (p, uAxis, vAxis, flipU = false, flipV = false) => {
         const mins = [minX, minY, minZ];
-        const maxs = [maxX, maxY, maxZ];
         const ranges = [rangeX, rangeY, rangeZ];
         const rawU = ((p[uAxis] - mins[uAxis]) / ranges[uAxis]) * DECAL_TEXTURE_SIZE;
         const rawV = ((p[vAxis] - mins[vAxis]) / ranges[vAxis]) * DECAL_TEXTURE_SIZE;
         return [flipU ? DECAL_TEXTURE_SIZE - rawU : rawU, flipV ? DECAL_TEXTURE_SIZE - rawV : rawV];
+      };
+      const footprint = (uAxis, vAxis) => {
+        const mins = [minX, minY, minZ];
+        const ranges = [rangeX, rangeY, rangeZ];
+        const scale = IMAGE_DECAL_MAX_SIZE / Math.max(ranges[uAxis], ranges[vAxis], 1);
+        const width = Math.max(16, Math.round(ranges[uAxis] * scale));
+        const height = Math.max(16, Math.round(ranges[vAxis] * scale));
+        return {
+          w: width,
+          h: height,
+          uv: (p, flipU = false, flipV = false) => {
+            const rawU = (p[uAxis] - mins[uAxis]) * scale;
+            const rawV = (p[vAxis] - mins[vAxis]) * scale;
+            return [flipU ? width - rawU : rawU, flipV ? height - rawV : rawV];
+          }
+        };
       };
       return faces.map((face, faceIndex) => {
         const n = norm(vec(...(normals[faceNormalIndices[faceIndex] ?? faceIndex] || [0, 0, 0])));
@@ -2050,13 +2066,27 @@
         if (primaryAxis === "x" && absX >= absY * .86 && absX >= absZ * .65) {
           side = n.x < 0 ? "bottom" : "top";
         }
+        let fp = null;
+        if (primaryAxis === "x" && side !== "back") fp = footprint(1, 2);
+        else if (side === "back") fp = footprint(0, 1);
+        else fp = footprint(0, 2);
         return {
           side,
+          baseW: fp.w,
+          baseH: fp.h,
           uv: face.map((i) => {
             const p = verts[i];
             if (primaryAxis === "x" && side !== "back") {
-              return uvFromAxes(p, 1, 2, side === "bottom", true);
+              return fp.uv(p, side === "bottom", true);
             }
+            if (side === "back") {
+              return fp.uv(p, true, true);
+            }
+            return fp.uv(p, side === "bottom", true);
+          }),
+          squareUv: face.map((i) => {
+            const p = verts[i];
+            if (primaryAxis === "x" && side !== "back") return uvFromAxes(p, 1, 2, side === "bottom", true);
             if (side === "back") {
               const u = ((maxX - p[0]) / rangeX) * DECAL_TEXTURE_SIZE;
               const v = ((maxY - p[1]) / rangeY) * DECAL_TEXTURE_SIZE;
@@ -10258,6 +10288,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           back: bottom || top,
           alpha: meta.imageDecalAlpha ?? .82,
           mirrorX: meta.imageDecalMirrorX || null,
+          angle: meta.imageDecalAngle || null,
           replaceBaseTexture: !!meta.imageDecalReplaceBaseTexture
         } : null;
       }
@@ -10385,25 +10416,60 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       targetCtx.restore();
     }
 
-    function imageDecalMirrorX(imageDecals, side, img) {
+    function ratioClose(a, b, tolerance = .36) {
+      return Number.isFinite(a) && Number.isFinite(b) && a > 0 && b > 0 && Math.abs(Math.log(a / b)) <= tolerance;
+    }
+
+    function imageDecalMirrorX(imageDecals, side, img, imageProjection = null) {
       const flags = imageDecals?.mirrorX;
       if (flags === true) return true;
       if (flags && typeof flags === "object" && flags[side]) return true;
       const w = img?.width || img?.naturalWidth || 0;
       const h = img?.height || img?.naturalHeight || 0;
+      if (imageProjection?.baseW && imageProjection?.baseH) {
+        const imageRatio = w / Math.max(1, h);
+        const halfRatio = (imageProjection.baseW / 2) / Math.max(1, imageProjection.baseH);
+        if (ratioClose(imageRatio, halfRatio, .28)) return true;
+      }
       return w > 0 && h > 0 && w <= DECAL_TEXTURE_SIZE * .75 && w <= h * .75;
+    }
+
+    function imageDecalAngle(imageDecals, side) {
+      const angle = imageDecals?.angle;
+      if (Number.isFinite(angle)) return angle;
+      if (angle && typeof angle === "object" && Number.isFinite(angle[side])) return angle[side];
+      return 0;
+    }
+
+    function rotateImageDecalUv(u, v, width, height, angleDeg) {
+      if (!angleDeg) return [u, v];
+      const a = angleDeg * Math.PI / 180;
+      const c = Math.cos(a), s = Math.sin(a);
+      const cx = width / 2, cy = height / 2;
+      const dx = u - cx, dy = v - cy;
+      return [cx + dx * c - dy * s, cy + dx * s + dy * c];
     }
 
     function imageDecalDrawUv(imageProjection, imageDecals, img) {
       const side = imageProjection.side;
-      const mirrorX = imageDecalMirrorX(imageDecals, side, img);
-      const baseW = mirrorX ? DECAL_TEXTURE_SIZE / 2 : DECAL_TEXTURE_SIZE;
-      const sx = (img.width || img.naturalWidth || baseW) / baseW;
-      const sy = (img.height || img.naturalHeight || DECAL_TEXTURE_SIZE) / DECAL_TEXTURE_SIZE;
-      const mid = DECAL_TEXTURE_SIZE / 2;
-      return imageProjection.uv.map(([u, v]) => {
-        const foldedU = mirrorX ? clamp(mid - Math.abs(mid - u), 0, mid) : u;
-        return [foldedU * sx, v * sy];
+      const mirrorX = imageDecalMirrorX(imageDecals, side, img, imageProjection);
+      const imgW = img.width || img.naturalWidth || DECAL_TEXTURE_SIZE;
+      const imgH = img.height || img.naturalHeight || DECAL_TEXTURE_SIZE;
+      const footprintRatio = (imageProjection.baseW || DECAL_TEXTURE_SIZE) / Math.max(1, imageProjection.baseH || DECAL_TEXTURE_SIZE);
+      const effectiveImageRatio = (mirrorX ? imgW * 2 : imgW) / Math.max(1, imgH);
+      const useFootprint = !imageProjection.squareUv || ratioClose(effectiveImageRatio, footprintRatio, .3);
+      const sourceUv = useFootprint ? imageProjection.uv : imageProjection.squareUv;
+      const projectionBaseW = useFootprint ? (imageProjection.baseW || DECAL_TEXTURE_SIZE) : DECAL_TEXTURE_SIZE;
+      const projectionBaseH = useFootprint ? (imageProjection.baseH || DECAL_TEXTURE_SIZE) : DECAL_TEXTURE_SIZE;
+      const baseW = mirrorX ? projectionBaseW / 2 : projectionBaseW;
+      const sx = imgW / baseW;
+      const sy = imgH / projectionBaseH;
+      const mid = projectionBaseW / 2;
+      const angle = imageDecalAngle(imageDecals, side);
+      return sourceUv.map(([u, v]) => {
+        const rotated = rotateImageDecalUv(u, v, projectionBaseW, projectionBaseH, angle);
+        const foldedU = mirrorX ? clamp(mid - Math.abs(mid - rotated[0]), 0, mid) : rotated[0];
+        return [foldedU * sx, rotated[1] * sy];
       });
     }
 

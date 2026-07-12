@@ -130,9 +130,10 @@
         <section class="tool-tab-panel" data-tool-tab-panel="paint">
           <section class="template-tools">
             <h2>Paint Templates</h2>
-            <p class="hint">Download exact projection guides for bitmap skins. Top, bottom and back are 400x400 atlas guides. Selected face exports as its own correctly sized tile.</p>
+            <p class="hint">Download exact projection guides for bitmap skins. Top, bottom and back keep the ship footprint proportional with a 600px maximum dimension. Selected face exports as its own correctly sized tile.</p>
             <div id="skinReadout" class="readout compact-readout">No skin bitmaps loaded.</div>
             <label class="toggle"><input id="mirrorHalfSkins" type="checkbox" checked> Mirror half-width skins/templates</label>
+            <label>Bitmap Angle <input id="skinAngle" type="range" min="-180" max="180" step="1" value="0"><input id="skinAngleValue" type="number" min="-180" max="180" step="1" value="0"></label>
             <label>Bitmap Shelf <input id="importBitmapShelf" type="file" accept="image/png,image/*" multiple></label>
             <label>Reusable Bitmap
               <select id="bitmapShelfSelector">

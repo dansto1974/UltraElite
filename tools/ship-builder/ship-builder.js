@@ -54,6 +54,8 @@ const els = {
   previewRenderMode: document.getElementById("previewRenderMode"),
   skinReadout: document.getElementById("skinReadout"),
   mirrorHalfSkins: document.getElementById("mirrorHalfSkins"),
+  skinAngle: document.getElementById("skinAngle"),
+  skinAngleValue: document.getElementById("skinAngleValue"),
   importBitmapShelf: document.getElementById("importBitmapShelf"),
   bitmapShelfSelector: document.getElementById("bitmapShelfSelector"),
   applyShelfTopBtn: document.getElementById("applyShelfTopBtn"),
@@ -90,6 +92,7 @@ const state = {
 };
 
 const TEMPLATE_SIZE = 400;
+const TEMPLATE_MAX_SIZE = 600;
 
 function vec(x = 0, y = 0, z = 0) { return { x, y, z }; }
 function add(a, b) { return vec(a.x + b.x, a.y + b.y, a.z + b.z); }
@@ -561,6 +564,7 @@ function resetWedge() {
   addFace([top.id, right.id, left.id]);
   addFace([bottom.id, left.id, right.id]);
 
+  syncSkinAngle(0, false);
   clearSkinBitmaps();
   setStatus("NEW SIMPLE PYRAMID WEDGE CREATED.");
   fitView();
@@ -756,8 +760,43 @@ function mirrorHalfSkinsEnabled() {
   return !!els.mirrorHalfSkins?.checked;
 }
 
-function mirroredTemplateU(u) {
-  const mid = TEMPLATE_SIZE / 2;
+function ratioClose(a, b, tolerance = .36) {
+  return Number.isFinite(a) && Number.isFinite(b) && a > 0 && b > 0 && Math.abs(Math.log(a / b)) <= tolerance;
+}
+
+function skinAngleDeg() {
+  return clamp(Number(els.skinAngle?.value) || 0, -180, 180);
+}
+
+function syncSkinAngle(value, redraw = true) {
+  const n = clamp(Math.round(Number(value) || 0), -180, 180);
+  if (els.skinAngle) els.skinAngle.value = String(n);
+  if (els.skinAngleValue) els.skinAngleValue.value = String(n);
+  if (redraw) renderAll();
+}
+
+function skinAngleMetaValue(meta = {}) {
+  const angle = meta.imageDecalAngle;
+  if (Number.isFinite(angle)) return angle;
+  if (angle && typeof angle === "object") {
+    for (const side of ["top", "bottom", "back"]) {
+      if (Number.isFinite(angle[side])) return angle[side];
+    }
+  }
+  return 0;
+}
+
+function rotateTemplatePoint(p, width, height, angleDeg) {
+  if (!angleDeg) return p;
+  const a = angleDeg * Math.PI / 180;
+  const c = Math.cos(a), s = Math.sin(a);
+  const cx = width / 2, cy = height / 2;
+  const dx = p.x - cx, dy = p.y - cy;
+  return { x: cx + dx * c - dy * s, y: cy + dx * s + dy * c };
+}
+
+function mirroredTemplateU(u, baseWidth = TEMPLATE_SIZE) {
+  const mid = baseWidth / 2;
   return clamp(mid - Math.abs(mid - u), 0, mid);
 }
 
@@ -774,10 +813,14 @@ function emptySkinBundle(modelId = "") {
   };
 }
 
-function skinSideMirrorX(side, img = state.skinImages?.[side]) {
+function skinSideMirrorX(side, img = state.skinImages?.[side], projection = templateProjection(side, "footprint")) {
   if (!mirrorHalfSkinsEnabled()) return false;
   const w = img?.naturalWidth || img?.width || 0;
   const h = img?.naturalHeight || img?.height || 0;
+  if (projection?.width && projection?.height) {
+    const halfRatio = (projection.width / 2) / Math.max(1, projection.height);
+    if (ratioClose(w / Math.max(1, h), halfRatio, .28)) return true;
+  }
   return w > 0 && h > 0 && w <= TEMPLATE_SIZE * .75 && w <= h * .75;
 }
 
@@ -799,8 +842,9 @@ function updateSkinReadout() {
     .filter((side) => skin[side]?.complete && skin[side].naturalWidth)
     .map((side) => {
       const suffix = skin.source?.[side] === "imported" || skin.source?.[side] === "shelf" ? "*" : "";
-      const mirror = skinSideMirrorX(side, skin[side]) ? " HALF" : "";
-      return `${side.toUpperCase()}${mirror}${suffix}`;
+      const projection = templateProjection(side, "footprint");
+      const mirror = skinSideMirrorX(side, skin[side], projection) ? " HALF" : "";
+      return `${side.toUpperCase()} ${skin[side].naturalWidth}x${skin[side].naturalHeight}${mirror}${suffix}`;
     });
   const missing = 3 - loaded.length;
   const note = Object.values(skin.source || {}).some((source) => source === "imported" || source === "shelf") ? " *LOCAL" : "";
@@ -961,7 +1005,7 @@ function templatePrimaryAxis() {
   return id === "thargoid" || id === "thargon" ? "x" : "y";
 }
 
-function templateProjection(side) {
+function templateProjection(side, mode = "footprint") {
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, minZ = Infinity, maxZ = -Infinity;
   for (const p of state.verts) {
     minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
@@ -982,7 +1026,7 @@ function templateProjection(side) {
   const rangeY = maxY - minY || 1;
   const rangeZ = maxZ - minZ || 1;
   const primaryAxis = templatePrimaryAxis();
-  const uvFromAxes = (p, uAxis, vAxis, flipU = false, flipV = false) => {
+  const squareFromAxes = (p, uAxis, vAxis, flipU = false, flipV = false) => {
     const mins = [minX, minY, minZ];
     const ranges = [rangeX, rangeY, rangeZ];
     const coords = [p.x, p.y, p.z];
@@ -990,18 +1034,40 @@ function templateProjection(side) {
     const rawV = ((coords[vAxis] - mins[vAxis]) / ranges[vAxis]) * TEMPLATE_SIZE;
     return { x: flipU ? TEMPLATE_SIZE - rawU : rawU, y: flipV ? TEMPLATE_SIZE - rawV : rawV };
   };
-  return (p) => {
-    if (primaryAxis === "x" && side !== "back") return uvFromAxes(p, 1, 2, side === "bottom", true);
-    if (side === "back") {
-      return {
-        x: ((maxX - p.x) / rangeX) * TEMPLATE_SIZE,
-        y: ((maxY - p.y) / rangeY) * TEMPLATE_SIZE
-      };
-    }
-    const u = ((p.x - minX) / rangeX) * TEMPLATE_SIZE;
-    const v = ((maxZ - p.z) / rangeZ) * TEMPLATE_SIZE;
-    return { x: side === "bottom" ? TEMPLATE_SIZE - u : u, y: v };
+  const squareProject = (p) => {
+    if (primaryAxis === "x" && side !== "back") return squareFromAxes(p, 1, 2, side === "bottom", true);
+    if (side === "back") return squareFromAxes(p, 0, 1, true, true);
+    return squareFromAxes(p, 0, 2, side === "bottom", true);
   };
+  squareProject.width = TEMPLATE_SIZE;
+  squareProject.height = TEMPLATE_SIZE;
+  squareProject.centerlineX = TEMPLATE_SIZE / 2;
+  squareProject.mode = "square";
+  if (mode === "square") return squareProject;
+
+  const footprintFromAxes = (uAxis, vAxis, flipU = false, flipV = false) => {
+    const mins = [minX, minY, minZ];
+    const ranges = [rangeX, rangeY, rangeZ];
+    const scale = TEMPLATE_MAX_SIZE / Math.max(ranges[uAxis], ranges[vAxis], 1);
+    const width = Math.max(16, Math.round(ranges[uAxis] * scale));
+    const height = Math.max(16, Math.round(ranges[vAxis] * scale));
+    const centerU = (0 - mins[uAxis]) * scale;
+    const project = (p) => {
+      const coords = [p.x, p.y, p.z];
+      const rawU = (coords[uAxis] - mins[uAxis]) * scale;
+      const rawV = (coords[vAxis] - mins[vAxis]) * scale;
+      return { x: flipU ? width - rawU : rawU, y: flipV ? height - rawV : rawV };
+    };
+    project.width = width;
+    project.height = height;
+    project.centerlineX = flipU ? width - centerU : centerU;
+    project.mode = "footprint";
+    return project;
+  };
+
+  if (primaryAxis === "x" && side !== "back") return footprintFromAxes(1, 2, side === "bottom", true);
+  if (side === "back") return footprintFromAxes(0, 1, true, true);
+  return footprintFromAxes(0, 2, side === "bottom", true);
 }
 
 function templateSideForFace(face) {
@@ -1063,15 +1129,16 @@ function drawTemplateLabel(ctx, text) {
 }
 
 function createTemplateCanvas(side, half = mirrorHalfSkinsEnabled()) {
+  const project = templateProjection(side, "footprint");
+  const centerX = project.centerlineX ?? project.width / 2;
   const canvas = document.createElement("canvas");
-  canvas.width = half ? TEMPLATE_SIZE / 2 : TEMPLATE_SIZE;
-  canvas.height = TEMPLATE_SIZE;
+  canvas.width = half ? Math.max(16, Math.ceil(centerX)) : project.width;
+  canvas.height = project.height;
   const ctx = canvas.getContext("2d");
   ctx.imageSmoothingEnabled = false;
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  const project = templateProjection(side);
-  drawTemplateCenterline(ctx, TEMPLATE_SIZE / 2);
+  drawTemplateCenterline(ctx, centerX);
 
   ctx.save();
   ctx.strokeStyle = "rgba(255,255,255,.46)";
@@ -1110,9 +1177,9 @@ function createSelectedFaceTemplateCanvas() {
   }
   const chosen = els.templateFaceSide?.value || "auto";
   const side = chosen === "auto" ? templateSideForFace(face) : chosen;
-  const project = templateProjection(side);
+  const project = templateProjection(side, "footprint");
   const half = mirrorHalfSkinsEnabled();
-  const fold = (p) => half ? { x: mirroredTemplateU(p.x), y: p.y } : p;
+  const fold = (p) => half ? { x: mirroredTemplateU(p.x, project.width), y: p.y } : p;
   const facePts = face.verts.map(vertexById).filter(Boolean).map(project).map(fold);
   if (facePts.length < 3) return null;
   const minX = Math.min(...facePts.map((p) => p.x));
@@ -1130,7 +1197,7 @@ function createSelectedFaceTemplateCanvas() {
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, width, height);
   const translate = (p) => ({ x: p.x - minX + pad, y: p.y - minY + pad });
-  drawTemplateCenterline(ctx, TEMPLATE_SIZE / 2 - minX + pad);
+  drawTemplateCenterline(ctx, (project.centerlineX ?? project.width / 2) - minX + pad);
 
   ctx.save();
   ctx.strokeStyle = "rgba(255,255,255,.96)";
@@ -1167,8 +1234,9 @@ function downloadCanvas(canvas, filename) {
 
 function downloadTemplate(side) {
   const half = mirrorHalfSkinsEnabled();
-  downloadCanvas(createTemplateCanvas(side, half), `${templateShipId()}-${side}${half ? "-half" : ""}-template.png`);
-  setStatus(`${side.toUpperCase()} TEMPLATE DOWNLOADED.`);
+  const canvas = createTemplateCanvas(side, half);
+  downloadCanvas(canvas, `${templateShipId()}-${side}${half ? "-half" : ""}-${canvas.width}x${canvas.height}-template.png`);
+  setStatus(`${side.toUpperCase()} TEMPLATE DOWNLOADED (${canvas.width}x${canvas.height}).`);
 }
 
 function downloadSelectedFaceTemplate() {
@@ -1211,17 +1279,31 @@ function drawTexturedTriangle(ctx, img, p0, p1, p2, uv0, uv1, uv2) {
   ctx.restore();
 }
 
+function skinProjectionForImage(side, img) {
+  const footprint = templateProjection(side, "footprint");
+  const square = templateProjection(side, "square");
+  const w = img?.naturalWidth || img?.width || 0;
+  const h = img?.naturalHeight || img?.height || 0;
+  const mirrorX = skinSideMirrorX(side, img, footprint);
+  const footprintRatio = footprint.width / Math.max(1, footprint.height);
+  const imageRatio = (mirrorX ? w * 2 : w) / Math.max(1, h);
+  const useFootprint = mirrorX || ratioClose(imageRatio, footprintRatio, .3);
+  return { project: useFootprint ? footprint : square, mirrorX, useFootprint };
+}
+
 function drawFaceBitmapSkin(ctx, face, pts) {
   const side = templateSideForFace(face);
   const img = state.skinImages?.[side];
   if (!img?.complete || !img.naturalWidth || pts.length < 3) return false;
-  const project = templateProjection(side);
-  const mirrorX = skinSideMirrorX(side, img);
-  const sx = img.naturalWidth / (mirrorX ? TEMPLATE_SIZE / 2 : TEMPLATE_SIZE);
-  const sy = img.naturalHeight / TEMPLATE_SIZE;
+  const { project, mirrorX } = skinProjectionForImage(side, img);
+  const angle = skinAngleDeg();
+  const baseW = project.width || TEMPLATE_SIZE;
+  const baseH = project.height || TEMPLATE_SIZE;
+  const sx = img.naturalWidth / (mirrorX ? baseW / 2 : baseW);
+  const sy = img.naturalHeight / baseH;
   const uv = face.verts.map(vertexById).filter(Boolean).map((v) => {
-    const p = project(v);
-    const u = mirrorX ? mirroredTemplateU(p.x) : p.x;
+    const p = rotateTemplatePoint(project(v), baseW, baseH, angle);
+    const u = mirrorX ? mirroredTemplateU(p.x, baseW) : p.x;
     return { x: u * sx, y: p.y * sy };
   });
   if (uv.length !== pts.length) return false;
@@ -1712,13 +1794,14 @@ function normalizeHexColor(value, fallback = "#e9f2e4") {
 
 function exportedImageDecalMirrorX() {
   const flags = {};
-  for (const side of ["top", "bottom", "back"]) flags[side] = skinSideMirrorX(side);
+  for (const side of ["top", "bottom", "back"]) flags[side] = skinSideMirrorX(side, state.skinImages?.[side], templateProjection(side, "footprint"));
   return Object.values(flags).some(Boolean) ? flags : null;
 }
 
 function gameMetadata() {
   const radius = Math.round(modelRadius());
   const imageDecalMirrorX = exportedImageDecalMirrorX();
+  const imageDecalAngle = skinAngleDeg();
   return {
     class: els.shipClass.value,
     npcRole: els.npcRole.value,
@@ -1728,6 +1811,7 @@ function gameMetadata() {
     description: els.shipDescription.value.trim(),
     missionLore: els.shipMissionLore.value.trim(),
     ...(imageDecalMirrorX ? { imageDecalMirrorX } : {}),
+    ...(imageDecalAngle ? { imageDecalAngle: { top: imageDecalAngle, bottom: imageDecalAngle, back: imageDecalAngle } } : {}),
     valueCr: Math.max(0, Math.round(numberFromInput(els.shipValue, 0))),
     stats: {
       r: radius,
@@ -1820,6 +1904,7 @@ function importBuilderJson() {
       if (meta.decalRole) els.decalRole.value = meta.decalRole;
       if (meta.baseColor) els.baseColor.value = normalizeHexColor(meta.baseColor);
       if (meta.imageDecalMirrorX && els.mirrorHalfSkins) els.mirrorHalfSkins.checked = true;
+      syncSkinAngle(skinAngleMetaValue(meta), false);
       if (Number.isFinite(meta.valueCr)) els.shipValue.value = meta.valueCr;
       if (meta.stats) {
         if (Number.isFinite(meta.stats.hp)) els.shipHp.value = meta.stats.hp;
@@ -1921,6 +2006,7 @@ function loadLibraryModel(id) {
   els.shipDescription.value = libraryDescription(source, id);
   els.shipMissionLore.value = meta.missionLore || meta.mission || "";
   if (meta.imageDecalMirrorX && els.mirrorHalfSkins) els.mirrorHalfSkins.checked = true;
+  syncSkinAngle(skinAngleMetaValue(meta), false);
   if (meta.class && [...els.shipClass.options].some((o) => o.value === meta.class)) els.shipClass.value = meta.class;
   if (meta.npcRole && [...els.npcRole.options].some((o) => o.value === meta.npcRole)) els.npcRole.value = meta.npcRole;
   if (meta.aiProfile && [...els.aiProfile.options].some((o) => o.value === meta.aiProfile)) els.aiProfile.value = meta.aiProfile;
@@ -2079,6 +2165,8 @@ function bindEvents() {
     updateSkinReadout();
     renderAll();
   });
+  els.skinAngle?.addEventListener("input", (ev) => syncSkinAngle(ev.target.value));
+  els.skinAngleValue?.addEventListener("change", (ev) => syncSkinAngle(ev.target.value));
   els.downloadTopTemplateBtn.addEventListener("click", () => downloadTemplate("top"));
   els.downloadBottomTemplateBtn.addEventListener("click", () => downloadTemplate("bottom"));
   els.downloadBackTemplateBtn.addEventListener("click", () => downloadTemplate("back"));
@@ -2163,7 +2251,7 @@ function bindEvents() {
   [
     els.shipId, els.shipName, els.shipDescription, els.shipMissionLore, els.shipClass, els.npcRole, els.aiProfile, els.decalRole, els.baseColor,
     els.shipValue, els.shipHp, els.speedMul, els.cargoTons, els.missileCount, els.laserClass,
-    els.flagTrader, els.flagPirate, els.flagPolice, els.flagAlien, els.flagEscapePod, els.flagHidden, els.mirrorHalfSkins
+    els.flagTrader, els.flagPirate, els.flagPolice, els.flagAlien, els.flagEscapePod, els.flagHidden, els.mirrorHalfSkins, els.skinAngle, els.skinAngleValue
   ].forEach((el) => el.addEventListener("input", updateExport));
 }
 
