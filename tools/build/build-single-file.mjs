@@ -9,7 +9,8 @@ const paths = {
   template: path.join(root, "src/index.template.html"),
   css: path.join(root, "src/game.css"),
   js: path.join(root, "src/main.js"),
-  generatedAssets: path.join(root, "src/generated/bitmap-skins.js"),
+  generatedModels: path.join(root, "src/generated/model-library.js"),
+  generatedSkins: path.join(root, "src/generated/bitmap-skins.js"),
   output: path.join(root, "index.html"),
   devOutput: path.join(root, "dev.html"),
 };
@@ -21,7 +22,10 @@ function read(file) {
 const template = fs.readFileSync(paths.template, "utf8");
 const css = read(paths.css);
 const js = read(paths.js);
-const generatedAssets = fs.existsSync(paths.generatedAssets) ? read(paths.generatedAssets) : "globalThis.ULTRA_ELITE_BITMAP_SKINS = {};";
+const generatedModels = fs.existsSync(paths.generatedModels) ? read(paths.generatedModels) : "globalThis.ULTRA_ELITE_MODEL_BLUEPRINTS = {}; globalThis.ULTRA_ELITE_MODEL_NAMES = {};";
+const generatedSkins = fs.existsSync(paths.generatedSkins) ? read(paths.generatedSkins) : "globalThis.ULTRA_ELITE_BITMAP_SKINS = {};";
+const generatedAssets = `${generatedModels}\n${generatedSkins}`;
+const devStamp = Date.now().toString(36);
 
 if (!template.includes("__ULTRA_ELITE_CSS__") || !template.includes("__ULTRA_ELITE_JS__") || !template.includes("__ULTRA_ELITE_GENERATED_ASSETS__")) {
   throw new Error("Template is missing one or more build placeholders.");
@@ -41,9 +45,12 @@ const html = template
   .replace("__ULTRA_ELITE_JS__", js);
 
 const devHtml = template
-  .replace("  <style>\n__ULTRA_ELITE_CSS__\n  </style>", '  <link rel="stylesheet" href="src/game.css">')
-  .replace("  <script>\n__ULTRA_ELITE_GENERATED_ASSETS__\n  </script>", '  <script src="src/generated/bitmap-skins.js"></script>')
-  .replace("  <script>\n__ULTRA_ELITE_JS__\n  </script>", '  <script src="src/main.js"></script>');
+  .replace("  <style>\n__ULTRA_ELITE_CSS__\n  </style>", `  <link rel="stylesheet" href="src/game.css?v=${devStamp}">`)
+  .replace("  <script>\n__ULTRA_ELITE_GENERATED_ASSETS__\n  </script>", [
+    `  <script src="src/generated/model-library.js?v=${devStamp}"></script>`,
+    `  <script src="src/generated/bitmap-skins.js?v=${devStamp}"></script>`
+  ].join("\n"))
+  .replace("  <script>\n__ULTRA_ELITE_JS__\n  </script>", `  <script src="src/main.js?v=${devStamp}"></script>`);
 
 fs.writeFileSync(paths.output, html);
 fs.writeFileSync(paths.devOutput, devHtml);

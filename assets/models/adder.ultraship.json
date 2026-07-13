@@ -1,0 +1,954 @@
+{
+  "format": "ultra-elite-ship-builder/v1",
+  "id": "adder",
+  "name": "Adder",
+  "symmetry": "x-locked",
+  "gameMeta": {
+    "class": "fighter",
+    "npcRole": "private",
+    "aiProfile": "standard",
+    "decalRole": "private",
+    "baseColor": "#e9f2e4",
+    "description": "The Adder is cheap, compact and surprisingly useful, which is why traders, pirates and nervous beginners all pretend they chose it deliberately.",
+    "missionLore": "",
+    "imageDecalMirrorX": {
+      "top": true,
+      "bottom": true,
+      "back": false
+    },
+    "valueCr": 250000,
+    "stats": {
+      "r": 50,
+      "hp": 120,
+      "speed": 1,
+      "cargo": 10,
+      "missiles": 1,
+      "laser": "none"
+    },
+    "lists": {
+      "trader": true,
+      "pirate": true,
+      "police": false,
+      "alien": false
+    },
+    "flags": {
+      "escapePod": true,
+      "hiddenUntilDiscovered": false
+    }
+  },
+  "verts": [
+    {
+      "id": 1,
+      "x": -18,
+      "y": 0,
+      "z": 40,
+      "mirrorId": 2,
+      "center": false
+    },
+    {
+      "id": 2,
+      "x": 18,
+      "y": 0,
+      "z": 40,
+      "mirrorId": 1,
+      "center": false
+    },
+    {
+      "id": 3,
+      "x": 30,
+      "y": 0,
+      "z": -24,
+      "mirrorId": 8,
+      "center": false
+    },
+    {
+      "id": 4,
+      "x": 30,
+      "y": 0,
+      "z": -40,
+      "mirrorId": 7,
+      "center": false
+    },
+    {
+      "id": 5,
+      "x": 18,
+      "y": -7,
+      "z": -40,
+      "mirrorId": 6,
+      "center": false
+    },
+    {
+      "id": 6,
+      "x": -18,
+      "y": -7,
+      "z": -40,
+      "mirrorId": 5,
+      "center": false
+    },
+    {
+      "id": 7,
+      "x": -30,
+      "y": 0,
+      "z": -40,
+      "mirrorId": 4,
+      "center": false
+    },
+    {
+      "id": 8,
+      "x": -30,
+      "y": 0,
+      "z": -24,
+      "mirrorId": 3,
+      "center": false
+    },
+    {
+      "id": 9,
+      "x": -18,
+      "y": 7,
+      "z": -40,
+      "mirrorId": 10,
+      "center": false
+    },
+    {
+      "id": 10,
+      "x": 18,
+      "y": 7,
+      "z": -40,
+      "mirrorId": 9,
+      "center": false
+    },
+    {
+      "id": 11,
+      "x": -18,
+      "y": 7,
+      "z": 13,
+      "mirrorId": 12,
+      "center": false
+    },
+    {
+      "id": 12,
+      "x": 18,
+      "y": 7,
+      "z": 13,
+      "mirrorId": 11,
+      "center": false
+    },
+    {
+      "id": 13,
+      "x": -18,
+      "y": -7,
+      "z": 13,
+      "mirrorId": 14,
+      "center": false
+    },
+    {
+      "id": 14,
+      "x": 18,
+      "y": -7,
+      "z": 13,
+      "mirrorId": 13,
+      "center": false
+    },
+    {
+      "id": 15,
+      "x": -11,
+      "y": 3,
+      "z": 29,
+      "mirrorId": 16,
+      "center": false
+    },
+    {
+      "id": 16,
+      "x": 11,
+      "y": 3,
+      "z": 29,
+      "mirrorId": 15,
+      "center": false
+    },
+    {
+      "id": 17,
+      "x": 11,
+      "y": 4,
+      "z": 24,
+      "mirrorId": 18,
+      "center": false
+    },
+    {
+      "id": 18,
+      "x": -11,
+      "y": 4,
+      "z": 24,
+      "mirrorId": 17,
+      "center": false
+    }
+  ],
+  "faces": [
+    {
+      "id": 1000,
+      "verts": [
+        2,
+        12,
+        11,
+        1
+      ],
+      "mirrored": false
+    },
+    {
+      "id": 1001,
+      "verts": [
+        14,
+        2,
+        1,
+        13
+      ],
+      "mirrored": false
+    },
+    {
+      "id": 1002,
+      "verts": [
+        12,
+        2,
+        3
+      ],
+      "mirrored": false
+    },
+    {
+      "id": 1003,
+      "verts": [
+        3,
+        2,
+        14
+      ],
+      "mirrored": false
+    },
+    {
+      "id": 1004,
+      "verts": [
+        10,
+        12,
+        3,
+        4
+      ],
+      "mirrored": false
+    },
+    {
+      "id": 1005,
+      "verts": [
+        4,
+        3,
+        14,
+        5
+      ],
+      "mirrored": false
+    },
+    {
+      "id": 1006,
+      "verts": [
+        10,
+        4,
+        5
+      ],
+      "mirrored": false
+    },
+    {
+      "id": 1007,
+      "verts": [
+        9,
+        10,
+        5,
+        6
+      ],
+      "mirrored": false
+    },
+    {
+      "id": 1008,
+      "verts": [
+        7,
+        9,
+        6
+      ],
+      "mirrored": false
+    },
+    {
+      "id": 1009,
+      "verts": [
+        11,
+        9,
+        7,
+        8
+      ],
+      "mirrored": false
+    },
+    {
+      "id": 1010,
+      "verts": [
+        8,
+        7,
+        6,
+        13
+      ],
+      "mirrored": false
+    },
+    {
+      "id": 1011,
+      "verts": [
+        11,
+        8,
+        1
+      ],
+      "mirrored": false
+    },
+    {
+      "id": 1012,
+      "verts": [
+        1,
+        8,
+        13
+      ],
+      "mirrored": false
+    },
+    {
+      "id": 1013,
+      "verts": [
+        12,
+        10,
+        9,
+        11
+      ],
+      "mirrored": false
+    },
+    {
+      "id": 1014,
+      "verts": [
+        5,
+        14,
+        13,
+        6
+      ],
+      "mirrored": false
+    }
+  ],
+  "edges": [
+    {
+      "id": 5025,
+      "a": 15,
+      "b": 16,
+      "kind": "edge",
+      "mirrored": false
+    },
+    {
+      "id": 5026,
+      "a": 16,
+      "b": 17,
+      "kind": "edge",
+      "mirrored": false
+    },
+    {
+      "id": 5027,
+      "a": 17,
+      "b": 18,
+      "kind": "edge",
+      "mirrored": false
+    },
+    {
+      "id": 5028,
+      "a": 18,
+      "b": 15,
+      "kind": "edge",
+      "mirrored": false
+    }
+  ],
+  "details": [
+    {
+      "id": 5029,
+      "type": "window",
+      "color": "#101915",
+      "normal": [
+        0,
+        1,
+        0.26
+      ],
+      "lift": 1,
+      "indices": [
+        15,
+        16,
+        17,
+        18
+      ]
+    },
+    {
+      "id": 5030,
+      "type": "engine",
+      "color": "#f7fff7",
+      "normal": [
+        0,
+        0,
+        -1
+      ],
+      "stroke": "#ffffff",
+      "lift": 1,
+      "points": [
+        [
+          12,
+          5,
+          -40
+        ],
+        [
+          -12,
+          5,
+          -40
+        ],
+        [
+          -12,
+          -5,
+          -40
+        ],
+        [
+          12,
+          -5,
+          -40
+        ]
+      ]
+    }
+  ],
+  "blueprint": {
+    "verts": [
+      [
+        -18,
+        0,
+        40
+      ],
+      [
+        18,
+        0,
+        40
+      ],
+      [
+        30,
+        0,
+        -24
+      ],
+      [
+        30,
+        0,
+        -40
+      ],
+      [
+        18,
+        -7,
+        -40
+      ],
+      [
+        -18,
+        -7,
+        -40
+      ],
+      [
+        -30,
+        0,
+        -40
+      ],
+      [
+        -30,
+        0,
+        -24
+      ],
+      [
+        -18,
+        7,
+        -40
+      ],
+      [
+        18,
+        7,
+        -40
+      ],
+      [
+        -18,
+        7,
+        13
+      ],
+      [
+        18,
+        7,
+        13
+      ],
+      [
+        -18,
+        -7,
+        13
+      ],
+      [
+        18,
+        -7,
+        13
+      ],
+      [
+        -11,
+        3,
+        29
+      ],
+      [
+        11,
+        3,
+        29
+      ],
+      [
+        11,
+        4,
+        24
+      ],
+      [
+        -11,
+        4,
+        24
+      ]
+    ],
+    "edges": [
+      [
+        1,
+        11
+      ],
+      [
+        10,
+        11
+      ],
+      [
+        0,
+        10
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        13
+      ],
+      [
+        0,
+        12
+      ],
+      [
+        12,
+        13
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        11
+      ],
+      [
+        2,
+        13
+      ],
+      [
+        9,
+        11
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        9
+      ],
+      [
+        4,
+        13
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        4,
+        9
+      ],
+      [
+        8,
+        9
+      ],
+      [
+        4,
+        5
+      ],
+      [
+        5,
+        8
+      ],
+      [
+        6,
+        8
+      ],
+      [
+        5,
+        6
+      ],
+      [
+        8,
+        10
+      ],
+      [
+        6,
+        7
+      ],
+      [
+        7,
+        10
+      ],
+      [
+        5,
+        12
+      ],
+      [
+        7,
+        12
+      ],
+      [
+        0,
+        7
+      ],
+      [
+        14,
+        15
+      ],
+      [
+        15,
+        16
+      ],
+      [
+        16,
+        17
+      ],
+      [
+        14,
+        17
+      ]
+    ],
+    "edgeFaces": [
+      [
+        0,
+        2
+      ],
+      [
+        0,
+        13
+      ],
+      [
+        0,
+        11
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        3
+      ],
+      [
+        1,
+        12
+      ],
+      [
+        1,
+        14
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        2,
+        4
+      ],
+      [
+        3,
+        5
+      ],
+      [
+        4,
+        13
+      ],
+      [
+        4,
+        5
+      ],
+      [
+        4,
+        6
+      ],
+      [
+        5,
+        14
+      ],
+      [
+        5,
+        6
+      ],
+      [
+        6,
+        7
+      ],
+      [
+        7,
+        13
+      ],
+      [
+        7,
+        14
+      ],
+      [
+        7,
+        8
+      ],
+      [
+        8,
+        9
+      ],
+      [
+        8,
+        10
+      ],
+      [
+        9,
+        13
+      ],
+      [
+        9,
+        10
+      ],
+      [
+        9,
+        11
+      ],
+      [
+        10,
+        14
+      ],
+      [
+        10,
+        12
+      ],
+      [
+        11,
+        12
+      ],
+      [
+        -1,
+        -1
+      ],
+      [
+        -1,
+        -1
+      ],
+      [
+        -1,
+        -1
+      ],
+      [
+        -1,
+        -1
+      ]
+    ],
+    "edgeVisibility": [
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31
+    ],
+    "normals": [
+      [
+        0,
+        96.8,
+        25.1
+      ],
+      [
+        0,
+        -96.8,
+        25.1
+      ],
+      [
+        80.11,
+        57.94,
+        15.02
+      ],
+      [
+        80.11,
+        -57.94,
+        15.02
+      ],
+      [
+        50.39,
+        86.38,
+        0
+      ],
+      [
+        50.39,
+        -86.38,
+        0
+      ],
+      [
+        0,
+        0,
+        -100
+      ],
+      [
+        0,
+        0,
+        -100
+      ],
+      [
+        0,
+        0,
+        -100
+      ],
+      [
+        -50.39,
+        86.38,
+        0
+      ],
+      [
+        -50.39,
+        -86.38,
+        0
+      ],
+      [
+        -80.11,
+        57.94,
+        15.02
+      ],
+      [
+        -80.11,
+        -57.94,
+        15.02
+      ],
+      [
+        0,
+        100,
+        0
+      ],
+      [
+        0,
+        -100,
+        0
+      ]
+    ],
+    "details": [
+      {
+        "type": "window",
+        "color": "#101915",
+        "lift": 1,
+        "normal": [
+          0,
+          1,
+          0.26
+        ],
+        "indices": [
+          14,
+          15,
+          16,
+          17
+        ]
+      },
+      {
+        "type": "engine",
+        "color": "#f7fff7",
+        "stroke": "#ffffff",
+        "lift": 1,
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "points": [
+          [
+            12,
+            5,
+            -40
+          ],
+          [
+            -12,
+            5,
+            -40
+          ],
+          [
+            -12,
+            -5,
+            -40
+          ],
+          [
+            12,
+            -5,
+            -40
+          ]
+        ]
+      }
+    ],
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "private",
+      "baseColor": "#e9f2e4",
+      "description": "The Adder is cheap, compact and surprisingly useful, which is why traders, pirates and nervous beginners all pretend they chose it deliberately.",
+      "missionLore": "",
+      "imageDecalMirrorX": {
+        "top": true,
+        "bottom": true,
+        "back": false
+      },
+      "valueCr": 250000,
+      "stats": {
+        "r": 50,
+        "hp": 120,
+        "speed": 1,
+        "cargo": 10,
+        "missiles": 1,
+        "laser": "none"
+      },
+      "lists": {
+        "trader": true,
+        "pirate": true,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": false
+      }
+    }
+  }
+}

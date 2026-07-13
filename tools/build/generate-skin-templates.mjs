@@ -6,9 +6,10 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "../..");
+const modelDir = path.join(root, "assets/models");
 const sourcePath = path.join(root, "src/main.js");
 const outDir = path.join(root, "assets/templates");
-const size = 400;
+const maxTemplateSize = 600;
 
 function extractBalancedObject(source, marker) {
   const markerIndex = source.indexOf(marker);
@@ -39,6 +40,20 @@ function extractBalancedObject(source, marker) {
 }
 
 function loadModelLibrary() {
+  if (fs.existsSync(modelDir)) {
+    const library = {};
+    for (const file of fs.readdirSync(modelDir).filter((name) => name.endsWith(".ultraship.json")).sort((a, b) => a.localeCompare(b))) {
+      const filePath = path.join(modelDir, file);
+      const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+      if (data.id && data.blueprint?.verts?.length && data.blueprint?.edges?.length) {
+        library[data.id] = {
+          ...data.blueprint,
+          name: data.name || data.id
+        };
+      }
+    }
+    if (Object.keys(library).length) return library;
+  }
   const source = fs.readFileSync(sourcePath, "utf8");
   const objectSource = extractBalancedObject(source, "const MODELS =");
   const ctx = {};
@@ -83,7 +98,7 @@ function chunk(type, data) {
   return out;
 }
 
-function pngEncode(rgba, width = size, height = size) {
+function pngEncode(rgba, width, height) {
   const stride = width * 4;
   const raw = Buffer.alloc((stride + 1) * height);
   const prev = Buffer.alloc(stride);
@@ -132,18 +147,22 @@ function pngEncode(rgba, width = size, height = size) {
   ]);
 }
 
-function fill(buf, x, y, color) {
-  x = Math.round(x);
-  y = Math.round(y);
-  if (x < 0 || x >= size || y < 0 || y >= size) return;
-  const i = (y * size + x) * 4;
-  buf[i] = color[0];
-  buf[i + 1] = color[1];
-  buf[i + 2] = color[2];
-  buf[i + 3] = color[3];
+function makeBitmap(width, height) {
+  return { buf: Buffer.alloc(width * height * 4), width, height };
 }
 
-function drawLine(buf, x0, y0, x1, y1, color = [255, 255, 255, 255], width = 1) {
+function fill(bitmap, x, y, color) {
+  x = Math.round(x);
+  y = Math.round(y);
+  if (x < 0 || x >= bitmap.width || y < 0 || y >= bitmap.height) return;
+  const i = (y * bitmap.width + x) * 4;
+  bitmap.buf[i] = color[0];
+  bitmap.buf[i + 1] = color[1];
+  bitmap.buf[i + 2] = color[2];
+  bitmap.buf[i + 3] = color[3];
+}
+
+function drawLine(bitmap, x0, y0, x1, y1, color = [255, 255, 255, 255], width = 1) {
   const steps = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) * 1.5));
   const r = Math.max(.5, width / 2);
   for (let i = 0; i <= steps; i++) {
@@ -152,24 +171,24 @@ function drawLine(buf, x0, y0, x1, y1, color = [255, 255, 255, 255], width = 1) 
     const y = y0 + (y1 - y0) * t;
     for (let yy = Math.floor(y - r); yy <= Math.ceil(y + r); yy++) {
       for (let xx = Math.floor(x - r); xx <= Math.ceil(x + r); xx++) {
-        if ((xx - x) ** 2 + (yy - y) ** 2 <= r * r) fill(buf, xx, yy, color);
+        if ((xx - x) ** 2 + (yy - y) ** 2 <= r * r) fill(bitmap, xx, yy, color);
       }
     }
   }
 }
 
-function drawDashedLine(buf, x0, y0, x1, y1, color = [255, 255, 255, 125], width = 1, dash = 7, gap = 7) {
+function drawDashedLine(bitmap, x0, y0, x1, y1, color = [255, 255, 255, 125], width = 1, dash = 7, gap = 7) {
   const length = Math.hypot(x1 - x0, y1 - y0);
   if (!length) return;
   const ux = (x1 - x0) / length;
   const uy = (y1 - y0) / length;
   for (let d = 0; d < length; d += dash + gap) {
     const end = Math.min(length, d + dash);
-    drawLine(buf, x0 + ux * d, y0 + uy * d, x0 + ux * end, y0 + uy * end, color, width);
+    drawLine(bitmap, x0 + ux * d, y0 + uy * d, x0 + ux * end, y0 + uy * end, color, width);
   }
 }
 
-function drawText(buf, text, x, y, color = [255, 255, 255, 180], scale = 2) {
+function drawText(bitmap, text, x, y, color = [255, 255, 255, 180], scale = 2) {
   const glyphs = {
     A: ["111", "101", "111", "101", "101"], B: ["110", "101", "110", "101", "110"], C: ["111", "100", "100", "100", "111"],
     D: ["110", "101", "101", "101", "110"], E: ["111", "100", "110", "100", "111"], F: ["111", "100", "110", "100", "100"],
@@ -191,7 +210,7 @@ function drawText(buf, text, x, y, color = [255, 255, 255, 180], scale = 2) {
     for (let yy = 0; yy < rows.length; yy++) {
       for (let xx = 0; xx < rows[yy].length; xx++) {
         if (rows[yy][xx] === "1") {
-          for (let sy = 0; sy < scale; sy++) for (let sx = 0; sx < scale; sx++) fill(buf, cx + xx * scale + sx, y + yy * scale + sy, color);
+          for (let sy = 0; sy < scale; sy++) for (let sx = 0; sx < scale; sx++) fill(bitmap, cx + xx * scale + sx, y + yy * scale + sy, color);
         }
       }
     }
@@ -215,25 +234,27 @@ function projectionFor(modelId, side, verts) {
   minZ -= marginZ; maxZ += marginZ;
   const ranges = [maxX - minX || 1, maxY - minY || 1, maxZ - minZ || 1];
   const mins = [minX, minY, minZ];
-  const maxs = [maxX, maxY, maxZ];
-  const uvFromAxes = (p, uAxis, vAxis, flipU = false, flipV = false) => {
-    const rawU = ((p[uAxis] - mins[uAxis]) / ranges[uAxis]) * size;
-    const rawV = ((p[vAxis] - mins[vAxis]) / ranges[vAxis]) * size;
-    return {
-      x: flipU ? size - rawU : rawU,
-      y: flipV ? size - rawV : rawV
+  const footprintFromAxes = (uAxis, vAxis, flipU = false, flipV = false) => {
+    const scale = maxTemplateSize / Math.max(ranges[uAxis], ranges[vAxis], 1);
+    const width = Math.max(16, Math.round(ranges[uAxis] * scale));
+    const height = Math.max(16, Math.round(ranges[vAxis] * scale));
+    const centerU = (0 - mins[uAxis]) * scale;
+    const project = (p) => {
+      const rawU = (p[uAxis] - mins[uAxis]) * scale;
+      const rawV = (p[vAxis] - mins[vAxis]) * scale;
+      return {
+        x: flipU ? width - rawU : rawU,
+        y: flipV ? height - rawV : rawV
+      };
     };
+    project.width = width;
+    project.height = height;
+    project.centerlineX = flipU ? width - centerU : centerU;
+    return project;
   };
-  return (p) => {
-    if (primaryAxis === "x" && side !== "back") return uvFromAxes(p, 1, 2, side === "bottom", true);
-    if (side === "back") return {
-      x: ((maxs[0] - p[0]) / ranges[0]) * size,
-      y: ((maxs[1] - p[1]) / ranges[1]) * size
-    };
-    const u = ((p[0] - mins[0]) / ranges[0]) * size;
-    const v = ((maxs[2] - p[2]) / ranges[2]) * size;
-    return { x: side === "bottom" ? size - u : u, y: v };
-  };
+  if (primaryAxis === "x" && side !== "back") return footprintFromAxes(1, 2, side === "bottom", true);
+  if (side === "back") return footprintFromAxes(0, 1, true, true);
+  return footprintFromAxes(0, 2, side === "bottom", true);
 }
 
 function detailPoints(detail, verts) {
@@ -243,18 +264,18 @@ function detailPoints(detail, verts) {
 }
 
 function drawTemplate(modelId, model, side) {
-  const buf = Buffer.alloc(size * size * 4);
-  for (let i = 0; i < buf.length; i += 4) buf[i + 3] = 255;
   const verts = model.verts || [];
   const project = projectionFor(modelId, side, verts);
+  const bitmap = makeBitmap(project.width, project.height);
+  for (let i = 0; i < bitmap.buf.length; i += 4) bitmap.buf[i + 3] = 255;
   const point = (index) => verts[index] ? project(verts[index]) : null;
-  drawDashedLine(buf, size / 2, 0, size / 2, size, [255, 255, 255, 120], 1);
+  drawDashedLine(bitmap, project.centerlineX ?? project.width / 2, 0, project.centerlineX ?? project.width / 2, project.height, [255, 255, 255, 120], 1);
 
   for (const face of model.faces || []) {
     for (let i = 0; i < face.length; i++) {
       const a = point(face[i]), b = point(face[(i + 1) % face.length]);
       if (!a || !b) continue;
-      drawLine(buf, a.x, a.y, b.x, b.y, [230, 242, 255, 125], 1);
+      drawLine(bitmap, a.x, a.y, b.x, b.y, [230, 242, 255, 125], 1);
     }
   }
 
@@ -263,7 +284,7 @@ function drawTemplate(modelId, model, side) {
     const bIndex = Array.isArray(edge) ? edge[1] : edge.b;
     const a = point(aIndex), b = point(bIndex);
     if (!a || !b) continue;
-    drawLine(buf, a.x, a.y, b.x, b.y, [230, 242, 255, 255], 1);
+    drawLine(bitmap, a.x, a.y, b.x, b.y, [230, 242, 255, 255], 1);
   }
 
   for (const detail of model.details || []) {
@@ -273,14 +294,14 @@ function drawTemplate(modelId, model, side) {
     for (let i = 0; i < pts.length; i++) {
       const a = pts[i], b = pts[(i + 1) % pts.length];
       if (detail.type === "line" && i > 0) break;
-      drawLine(buf, a.x, a.y, b.x, b.y, color, detail.type === "engine" ? 1.5 : 1);
+      drawLine(bitmap, a.x, a.y, b.x, b.y, color, detail.type === "engine" ? 1.5 : 1);
     }
   }
 
-  drawText(buf, `${model.name || modelId} ${side}`, 14, 14, [255, 255, 255, 150], 2);
-  drawLine(buf, 14, size - 20, 114, size - 20, [255, 255, 255, 130], 1);
-  drawText(buf, "TEMPLATE", 122, size - 27, [255, 255, 255, 120], 1);
-  return buf;
+  drawText(bitmap, `${model.name || modelId} ${side}`, 14, 14, [255, 255, 255, 150], 2);
+  drawLine(bitmap, 14, project.height - 20, Math.min(114, project.width - 14), project.height - 20, [255, 255, 255, 130], 1);
+  drawText(bitmap, "TEMPLATE", Math.min(122, project.width - 72), project.height - 27, [255, 255, 255, 120], 1);
+  return bitmap;
 }
 
 fs.mkdirSync(outDir, { recursive: true });
@@ -290,7 +311,8 @@ for (const [modelId, model] of Object.entries(library).sort(([a], [b]) => a.loca
   if (!model.verts?.length || !model.edges?.length) continue;
   for (const side of ["top", "bottom", "back"]) {
     const outPath = path.join(outDir, `${modelId}-${side}-template.png`);
-    fs.writeFileSync(outPath, pngEncode(drawTemplate(modelId, model, side)));
+    const bitmap = drawTemplate(modelId, model, side);
+    fs.writeFileSync(outPath, pngEncode(bitmap.buf, bitmap.width, bitmap.height));
     count++;
   }
 }

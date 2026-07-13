@@ -1,0 +1,209 @@
+{
+  "format": "ultra-elite-ship-builder/v1",
+  "id": "plate",
+  "name": "Alloy Plate",
+  "symmetry": "free",
+  "gameMeta": {
+    "class": "cargo",
+    "npcRole": "cargo",
+    "aiProfile": "inert",
+    "decalRole": "cargo",
+    "baseColor": "#cfe9c8",
+    "description": "A battered alloy plate drifting loose in space. Valuable only to commanders with a fuel scoop and a relaxed attitude to where things have been.",
+    "missionLore": "",
+    "valueCr": 12,
+    "stats": {
+      "r": 10,
+      "hp": 16,
+      "speed": 0.571
+    },
+    "lists": {
+      "trader": false,
+      "pirate": false,
+      "police": false,
+      "alien": false
+    },
+    "flags": {
+      "escapePod": false,
+      "hiddenUntilDiscovered": false
+    },
+    "imageDecalMirrorX": {
+      "top": false,
+      "bottom": false,
+      "back": false
+    }
+  },
+  "verts": [
+    [
+      -15,
+      -22,
+      -9
+    ],
+    [
+      -15,
+      38,
+      -9
+    ],
+    [
+      19,
+      32,
+      11
+    ],
+    [
+      10,
+      -46,
+      6
+    ]
+  ],
+  "faces": [
+    {
+      "id": 1000,
+      "verts": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "mirrored": false,
+      "bitmapFaceKey": "plate_panel",
+      "bitmapSide": "top"
+    },
+    {
+      "id": 1001,
+      "verts": [
+        3,
+        2,
+        1,
+        0
+      ],
+      "mirrored": false,
+      "bitmapFaceKey": "plate_panel",
+      "bitmapSide": "bottom"
+    }
+  ],
+  "edges": [
+    [
+      0,
+      1
+    ],
+    [
+      1,
+      2
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      3,
+      0
+    ]
+  ],
+  "details": [],
+  "blueprint": {
+    "verts": [
+      [
+        -15,
+        -22,
+        -9
+      ],
+      [
+        -15,
+        38,
+        -9
+      ],
+      [
+        19,
+        32,
+        11
+      ],
+      [
+        10,
+        -46,
+        6
+      ]
+    ],
+    "edges": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        0
+      ]
+    ],
+    "edgeFaces": [
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        1
+      ]
+    ],
+    "edgeVisibility": [
+      31,
+      16,
+      20,
+      16
+    ],
+    "normals": [
+      [
+        -1410,
+        20,
+        2040
+      ],
+      [
+        1410,
+        -20,
+        -2040
+      ]
+    ],
+    "imageProjection": {
+      "faceSides": [
+        "top",
+        "bottom"
+      ]
+    },
+    "gameMeta": {
+      "class": "cargo",
+      "npcRole": "cargo",
+      "aiProfile": "inert",
+      "decalRole": "cargo",
+      "baseColor": "#cfe9c8",
+      "stats": {
+        "r": 10,
+        "hp": 16,
+        "speed": 0.571
+      },
+      "lists": {
+        "trader": false,
+        "pirate": false,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": false,
+        "hiddenUntilDiscovered": false
+      }
+    }
+  }
+}

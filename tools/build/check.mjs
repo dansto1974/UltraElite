@@ -10,7 +10,8 @@ const files = {
   template: path.join(root, "src/index.template.html"),
   css: path.join(root, "src/game.css"),
   js: path.join(root, "src/main.js"),
-  generatedAssets: path.join(root, "src/generated/bitmap-skins.js"),
+  generatedModels: path.join(root, "src/generated/model-library.js"),
+  generatedSkins: path.join(root, "src/generated/bitmap-skins.js"),
 };
 
 function read(file) {
@@ -24,14 +25,18 @@ for (const file of Object.values(files)) {
 }
 
 const devHtml = read(files.devHtml);
+const normalizedDevHtml = devHtml.replace(/\?v=[^"]+/g, "");
 const template = read(files.template);
 const css = read(files.css);
 const js = read(files.js);
 
-if (!devHtml.includes('href="src/game.css"') || !devHtml.includes('src="src/main.js"')) {
+if (!normalizedDevHtml.includes('href="src/game.css"') || !normalizedDevHtml.includes('src="src/main.js"')) {
   throw new Error("dev.html is not loading the modular CSS/JS sources.");
 }
-if (!devHtml.includes('src="src/generated/bitmap-skins.js"')) {
+if (!normalizedDevHtml.includes('src="src/generated/model-library.js"')) {
+  throw new Error("dev.html is not loading the generated model manifest.");
+}
+if (!normalizedDevHtml.includes('src="src/generated/bitmap-skins.js"')) {
   throw new Error("dev.html is not loading the generated bitmap skin manifest.");
 }
 
@@ -44,10 +49,10 @@ if (cssPlaceholders !== 1 || jsPlaceholders !== 1 || assetPlaceholders !== 1) {
 
 const expectedDevHtml = template
   .replace("  <style>\n__ULTRA_ELITE_CSS__\n  </style>", '  <link rel="stylesheet" href="src/game.css">')
-  .replace("  <script>\n__ULTRA_ELITE_GENERATED_ASSETS__\n  </script>", '  <script src="src/generated/bitmap-skins.js"></script>')
+  .replace("  <script>\n__ULTRA_ELITE_GENERATED_ASSETS__\n  </script>", '  <script src="src/generated/model-library.js"></script>\n  <script src="src/generated/bitmap-skins.js"></script>')
   .replace("  <script>\n__ULTRA_ELITE_JS__\n  </script>", '  <script src="src/main.js"></script>');
 
-if (devHtml !== expectedDevHtml) {
+if (normalizedDevHtml !== expectedDevHtml) {
   throw new Error("dev.html is out of sync with src/index.template.html; run npm run build.");
 }
 
@@ -59,11 +64,27 @@ if (css.toLowerCase().includes("</style>")) {
   throw new Error("src/game.css contains </style>, which would break inline builds.");
 }
 
-if (!fs.existsSync(files.generatedAssets)) {
+const protrudingEdgeGuards = [
+  ["protruding-edge hull occlusion helper", "function protrudingEdgeTouchesCloserHull"],
+  ["protruding-edge front pass occluder option", "frontOccluders"],
+  ["protruding-edge base pass before hull", 'drawProtrudingEdges("behind")'],
+  ["protruding-edge front pass with hull occluders", 'drawProtrudingEdges("front", protrudingHullOccluders)'],
+];
+for (const [label, marker] of protrudingEdgeGuards) {
+  if (!js.includes(marker)) {
+    throw new Error(`Missing renderer guard: ${label}. Protruding sticks must draw under hull first and only repaint in front when not hull-occluded.`);
+  }
+}
+
+if (!fs.existsSync(files.generatedModels)) {
+  throw new Error("Missing src/generated/model-library.js; run npm run models or npm run build.");
+}
+if (!fs.existsSync(files.generatedSkins)) {
   throw new Error("Missing src/generated/bitmap-skins.js; run npm run skins or npm run build.");
 }
 
 new Function(js);
-new Function(read(files.generatedAssets));
+new Function(read(files.generatedModels));
+new Function(read(files.generatedSkins));
 
 console.log("Ultra Elite modular source check passed");

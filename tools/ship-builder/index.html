@@ -38,12 +38,6 @@
         <section class="tool-tab-panel active" data-tool-tab-panel="edit">
         <h2>Selection</h2>
         <div id="selectionReadout" class="readout">Nothing selected</div>
-        <div class="button-grid">
-          <button data-mode="vertex" class="mode-btn active">Vertex</button>
-          <button data-mode="face" class="mode-btn">Face</button>
-          <button data-mode="edge" class="mode-btn">Edge</button>
-          <button data-mode="detail" class="mode-btn">Detail</button>
-        </div>
         <section class="action-window">
           <div class="mode-help mode-help-vertex">
             <h2>Vertex Actions</h2>
@@ -63,12 +57,7 @@
           </div>
         </section>
 
-        <div class="pick-context">
-          <div id="pickList" class="pick-list"></div>
-          <div class="button-grid compact-actions">
-            <button id="clearSelectionBtn">Clear Picks</button>
-          </div>
-        </div>
+        <div id="pickList" class="pick-list is-hidden"></div>
 
         <label class="toggle mirror-toggle"><input id="mirrorNewGeometry" type="checkbox" checked> Mirror actions</label>
 
@@ -88,6 +77,8 @@
             <button id="addPointBtn">Add Point Pair</button>
             <button id="addCenterPointBtn">Add Centre Point</button>
             <button id="deleteSelectionBtn">Delete Vertex</button>
+            <button id="addVertexBeaconBtn">Add Beacon</button>
+            <button id="removeVertexBeaconBtn">Remove Beacon</button>
           </div>
         </div>
 
@@ -133,7 +124,8 @@
             <h2>Paint Templates</h2>
             <p class="hint">Download exact projection guides for bitmap skins. Top, bottom and back keep the ship footprint proportional with a 600px maximum dimension. Selected face exports as its own correctly sized tile.</p>
             <div id="skinReadout" class="readout compact-readout">No skin bitmaps loaded.</div>
-            <label class="toggle"><input id="mirrorHalfSkins" type="checkbox" checked> Mirror half-width skins/templates</label>
+            <label class="toggle"><input id="mirrorHalfSkins" type="checkbox" checked> Download half-width templates</label>
+            <label class="toggle"><input id="importMirroredSkin" type="checkbox"> Import/apply bitmap as mirrored half UV</label>
             <label>Bitmap Angle <input id="skinAngle" type="range" min="-180" max="180" step="1" value="0"><input id="skinAngleValue" type="number" min="-180" max="180" step="1" value="0"></label>
             <label>Bitmap Shelf <input id="importBitmapShelf" type="file" accept="image/png,image/*" multiple></label>
             <label>Reusable Bitmap
@@ -145,19 +137,22 @@
               <button id="applyShelfTopBtn">Use On Top</button>
               <button id="applyShelfBottomBtn">Use On Bottom</button>
               <button id="applyShelfBackBtn">Use On Back</button>
+              <button id="applyShelfFaceBtn">Use On Selected Face</button>
               <button id="clearBitmapShelfBtn">Clear Shelf</button>
             </div>
             <div class="skin-import-grid">
               <label>Import Top PNG <input id="importTopSkin" type="file" accept="image/png,image/*"></label>
               <label>Import Bottom PNG <input id="importBottomSkin" type="file" accept="image/png,image/*"></label>
               <label>Import Back PNG <input id="importBackSkin" type="file" accept="image/png,image/*"></label>
+              <label>Import Selected Face PNG <input id="importFaceSkin" type="file" accept="image/png,image/*"></label>
             </div>
-            <p class="hint">Imports update the live preview. To make them permanent, save the PNGs into assets/skins with the matching ship id and rebuild.</p>
+            <p class="hint">Imports update the live preview. To make them permanent, save object skins as assets/skins/id-side.png and face skins as assets/skins/id-face-key.png, then rebuild.</p>
             <div class="button-grid compact-actions">
               <button id="reloadSkinBitmapsBtn">Reload Asset Skins</button>
               <button id="clearImportedSkinsBtn">Clear Preview Skins</button>
+              <button id="clearFaceSkinBtn">Clear Selected Face Skin</button>
             </div>
-            <label>Selected Face Side
+            <label>Selected Face Bitmap Side
               <select id="templateFaceSide">
                 <option value="auto">Auto from normal</option>
                 <option value="top">Top</option>
@@ -275,6 +270,13 @@
             <p>Drag the main view to rotate. Wheel to zoom. Click points/faces/edges in any view.</p>
           </div>
           <div class="view-actions">
+            <div class="preview-mode-toolbar" aria-label="Selection tools">
+              <button data-mode="vertex" class="mode-btn active" type="button" title="Vertex select">V</button>
+              <button data-mode="face" class="mode-btn" type="button" title="Face select">F</button>
+              <button data-mode="edge" class="mode-btn" type="button" title="Edge or stick select">E</button>
+              <button data-mode="detail" class="mode-btn" type="button" title="Detail select">D</button>
+              <button id="clearSelectionBtn" type="button" title="Clear selection">×</button>
+            </div>
             <label class="toggle"><input id="showFaceNormals" type="checkbox" checked> Normals</label>
             <label class="view-mode-label">View
               <select id="previewRenderMode">

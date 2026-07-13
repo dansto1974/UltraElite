@@ -728,6 +728,73 @@
       50% { opacity: .15; }
     }
 
+    .commander-dialog {
+      position: fixed;
+      inset: 0;
+      z-index: 56;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(0, 0, 0, .32);
+      backdrop-filter: blur(2px);
+    }
+
+    .commander-dialog[hidden] {
+      display: none;
+    }
+
+    .commander-dialog-box {
+      width: min(360px, calc(100vw - 48px));
+      border: 1px solid rgba(101, 255, 71, .62);
+      background:
+        linear-gradient(180deg, rgba(6, 18, 8, .94), rgba(0, 0, 0, .94)),
+        #020402;
+      box-shadow:
+        inset 0 0 24px rgba(101, 255, 71, .08),
+        0 0 32px rgba(101, 255, 71, .16);
+      padding: 18px;
+      text-transform: uppercase;
+    }
+
+    .commander-dialog-kicker {
+      color: var(--amber);
+      font-size: 11px;
+      letter-spacing: 2px;
+      margin-bottom: 6px;
+    }
+
+    .commander-dialog-title {
+      color: var(--green);
+      font-size: 22px;
+      margin-bottom: 14px;
+      text-shadow: 0 0 12px rgba(101, 255, 71, .28);
+    }
+
+    #commanderNameInput {
+      width: 100%;
+      height: 42px;
+      border: 1px solid rgba(101, 255, 71, .48);
+      background: rgba(0, 0, 0, .7);
+      color: var(--green);
+      padding: 7px 10px;
+      font-size: 21px;
+      text-transform: uppercase;
+      outline: none;
+      box-shadow: inset 0 0 12px rgba(101, 255, 71, .08);
+    }
+
+    #commanderNameInput:focus {
+      border-color: var(--green);
+      box-shadow: inset 0 0 12px rgba(101, 255, 71, .12), 0 0 12px rgba(101, 255, 71, .12);
+    }
+
+    .commander-dialog-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
     .panel {
       min-width: 0;
       min-height: 0;

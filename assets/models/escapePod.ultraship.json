@@ -1,0 +1,260 @@
+{
+  "format": "ultra-elite-ship-builder/v1",
+  "id": "escapePod",
+  "name": "Escape Pod",
+  "verts": [
+    {
+      "id": 1,
+      "x": -7,
+      "y": 0,
+      "z": 36,
+      "mirrorId": null,
+      "center": false
+    },
+    {
+      "id": 2,
+      "x": -7,
+      "y": -14,
+      "z": -12,
+      "mirrorId": null,
+      "center": false
+    },
+    {
+      "id": 3,
+      "x": -7,
+      "y": 14,
+      "z": -12,
+      "mirrorId": null,
+      "center": false
+    },
+    {
+      "id": 4,
+      "x": 21,
+      "y": 0,
+      "z": 0,
+      "mirrorId": null,
+      "center": false
+    }
+  ],
+  "faces": [
+    {
+      "id": 1000,
+      "verts": [
+        3,
+        4,
+        2
+      ],
+      "mirrored": false,
+      "bitmapFaceKey": "pod_panel",
+      "bitmapSide": "top"
+    },
+    {
+      "id": 1001,
+      "verts": [
+        4,
+        3,
+        1
+      ],
+      "mirrored": false,
+      "bitmapFaceKey": "pod_panel",
+      "bitmapSide": "top"
+    },
+    {
+      "id": 1002,
+      "verts": [
+        4,
+        1,
+        2
+      ],
+      "mirrored": false,
+      "bitmapFaceKey": "pod_panel",
+      "bitmapSide": "top"
+    },
+    {
+      "id": 1003,
+      "verts": [
+        1,
+        3,
+        2
+      ],
+      "mirrored": false,
+      "bitmapFaceKey": "pod_panel",
+      "bitmapSide": "top"
+    }
+  ],
+  "edges": [],
+  "details": [
+    {
+      "id": 1004,
+      "type": "engine",
+      "color": "#ffd33d",
+      "normal": [
+        0,
+        0,
+        -1
+      ],
+      "stroke": "#fff2a8",
+      "lift": 2.5,
+      "points": [
+        [
+          -7,
+          -5,
+          -12
+        ],
+        [
+          -7,
+          5,
+          -12
+        ],
+        [
+          0,
+          0,
+          -8
+        ]
+      ]
+    }
+  ],
+  "blueprint": {
+    "verts": [
+      [
+        -7,
+        0,
+        36
+      ],
+      [
+        -7,
+        -14,
+        -12
+      ],
+      [
+        -7,
+        14,
+        -12
+      ],
+      [
+        21,
+        0,
+        0
+      ]
+    ],
+    "edges": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        0
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        3,
+        1
+      ]
+    ],
+    "edgeFaces": [
+      [
+        3,
+        2
+      ],
+      [
+        3,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        3,
+        1
+      ],
+      [
+        2,
+        0
+      ]
+    ],
+    "edgeVisibility": [
+      31,
+      31,
+      31,
+      31,
+      31,
+      31
+    ],
+    "normals": [
+      [
+        52,
+        0,
+        -122
+      ],
+      [
+        39,
+        103,
+        30
+      ],
+      [
+        39,
+        -103,
+        30
+      ],
+      [
+        -112,
+        0,
+        0
+      ]
+    ],
+    "details": [
+      {
+        "type": "engine",
+        "points": [
+          [
+            -7,
+            -5,
+            -12
+          ],
+          [
+            -7,
+            5,
+            -12
+          ],
+          [
+            0,
+            0,
+            -8
+          ]
+        ],
+        "color": "#ffd33d",
+        "stroke": "#fff2a8",
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "lift": 2.5
+      }
+    ]
+  },
+  "gameMeta": {
+    "imageDecalMirrorX": {
+      "top": false,
+      "bottom": false,
+      "back": false
+    }
+  }
+}

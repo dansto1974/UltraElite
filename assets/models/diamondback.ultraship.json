@@ -1,0 +1,1097 @@
+{
+  "format": "ultra-elite-ship-builder/v1",
+  "id": "diamondback",
+  "name": "Diamondback",
+  "symmetry": "x-locked",
+  "gameMeta": {
+    "class": "fighter",
+    "npcRole": "private",
+    "aiProfile": "bountyHunter",
+    "decalRole": "none",
+    "baseColor": "#cf9b2a",
+    "description": "The Diamondback is an off-books hunter craft: Sleek like a running shoe, over-engined and fully fitted out with the latest Sirius Cybernetics Corp. GPP technology.",
+    "valueCr": 2500000,
+    "stats": {
+      "r": 139,
+      "hp": 300,
+      "speed": 2.2,
+      "cargo": 14,
+      "missiles": 6,
+      "laser": "military"
+    },
+    "lists": {
+      "trader": false,
+      "pirate": false,
+      "police": false,
+      "alien": false
+    },
+    "flags": {
+      "escapePod": true,
+      "hiddenUntilDiscovered": true
+    },
+    "imageDecalTest": true,
+    "imageDecalMirrorX": {
+      "top": true,
+      "bottom": true,
+      "back": false
+    }
+  },
+  "verts": [
+    {
+      "id": 1,
+      "x": 0,
+      "y": 0,
+      "z": 98,
+      "mirrorId": null,
+      "center": true
+    },
+    {
+      "id": 2,
+      "x": 0,
+      "y": 46,
+      "z": -86,
+      "mirrorId": null,
+      "center": true
+    },
+    {
+      "id": 3,
+      "x": 0,
+      "y": -8,
+      "z": -75,
+      "mirrorId": null,
+      "center": true
+    },
+    {
+      "id": 4,
+      "x": 82,
+      "y": 0,
+      "z": -70,
+      "mirrorId": 5,
+      "center": false
+    },
+    {
+      "id": 5,
+      "x": -82,
+      "y": 0,
+      "z": -70,
+      "mirrorId": 4,
+      "center": false
+    },
+    {
+      "id": 12,
+      "x": 0,
+      "y": 0,
+      "z": -62,
+      "mirrorId": null,
+      "center": true
+    },
+    {
+      "id": 17,
+      "x": 0,
+      "y": 33,
+      "z": -70,
+      "mirrorId": null,
+      "center": true
+    },
+    {
+      "id": 32,
+      "x": 74,
+      "y": 0,
+      "z": 0,
+      "mirrorId": 33,
+      "center": false
+    },
+    {
+      "id": 33,
+      "x": -74,
+      "y": 0,
+      "z": 0,
+      "mirrorId": 32,
+      "center": false
+    },
+    {
+      "id": 38,
+      "x": 0,
+      "y": 0,
+      "z": 139,
+      "mirrorId": null,
+      "center": true
+    }
+  ],
+  "faces": [
+    {
+      "id": 6,
+      "verts": [
+        1,
+        4,
+        2
+      ],
+      "mirrored": false
+    },
+    {
+      "id": 7,
+      "verts": [
+        1,
+        2,
+        5
+      ],
+      "mirrored": false
+    },
+    {
+      "id": 8,
+      "verts": [
+        1,
+        3,
+        4
+      ],
+      "mirrored": false
+    },
+    {
+      "id": 9,
+      "verts": [
+        1,
+        5,
+        3
+      ],
+      "mirrored": false
+    },
+    {
+      "id": 13,
+      "verts": [
+        12,
+        4,
+        3
+      ],
+      "mirrored": false
+    },
+    {
+      "id": 14,
+      "verts": [
+        3,
+        5,
+        12
+      ],
+      "mirrored": true
+    },
+    {
+      "id": 18,
+      "verts": [
+        17,
+        2,
+        4
+      ],
+      "mirrored": false
+    },
+    {
+      "id": 19,
+      "verts": [
+        5,
+        2,
+        17
+      ],
+      "mirrored": true
+    },
+    {
+      "id": 20,
+      "verts": [
+        4,
+        12,
+        17
+      ],
+      "mirrored": false
+    },
+    {
+      "id": 21,
+      "verts": [
+        17,
+        12,
+        5
+      ],
+      "mirrored": true
+    }
+  ],
+  "edges": [
+    {
+      "id": 34,
+      "a": 32,
+      "b": 4,
+      "kind": "stick",
+      "mirrored": false
+    },
+    {
+      "id": 35,
+      "a": 33,
+      "b": 5,
+      "kind": "stick",
+      "mirrored": true
+    },
+    {
+      "id": 36,
+      "a": 2,
+      "b": 1,
+      "kind": "edge",
+      "mirrored": false
+    },
+    {
+      "id": 39,
+      "a": 1,
+      "b": 38,
+      "kind": "stick",
+      "mirrored": false
+    }
+  ],
+  "details": [
+    {
+      "id": 22,
+      "type": "engine",
+      "faceId": 20,
+      "inset": 0.74,
+      "color": "#f7fff7",
+      "normal": [
+        0.09,
+        0.23,
+        0.97
+      ]
+    },
+    {
+      "id": 23,
+      "type": "engine",
+      "faceId": 21,
+      "inset": 0.72,
+      "color": "#f7fff7",
+      "normal": [
+        -0.09,
+        0.23,
+        0.97
+      ]
+    },
+    {
+      "id": 28,
+      "type": "window",
+      "faceId": 6,
+      "inset": 0.38,
+      "color": "#101915",
+      "normal": [
+        0.44,
+        0.87,
+        0.22
+      ]
+    },
+    {
+      "id": 29,
+      "type": "window",
+      "faceId": 7,
+      "inset": 0.38,
+      "color": "#101915",
+      "normal": [
+        -0.44,
+        0.87,
+        0.22
+      ]
+    },
+    {
+      "id": 46,
+      "type": "window",
+      "faceId": 9,
+      "inset": 0.19,
+      "color": "#101915",
+      "normal": [
+        -0.09,
+        -0.99,
+        0.05
+      ]
+    },
+    {
+      "id": 47,
+      "type": "window",
+      "faceId": 8,
+      "inset": 0.19,
+      "color": "#101915",
+      "normal": [
+        0.09,
+        -0.99,
+        0.05
+      ]
+    },
+    {
+      "id": 49,
+      "type": "panel",
+      "faceId": 9,
+      "inset": 0.66,
+      "color": "#ffd936",
+      "normal": [
+        -0.09,
+        -0.99,
+        0.05
+      ],
+      "segment": [
+        5,
+        3
+      ]
+    },
+    {
+      "id": 50,
+      "type": "panel",
+      "faceId": 9,
+      "inset": 0.66,
+      "color": "#ffd936",
+      "normal": [
+        -0.09,
+        -0.99,
+        0.05
+      ],
+      "segment": [
+        3,
+        1
+      ]
+    },
+    {
+      "id": 52,
+      "type": "panel",
+      "faceId": 8,
+      "inset": 0.66,
+      "color": "#ffd936",
+      "normal": [
+        0.09,
+        -0.99,
+        0.05
+      ],
+      "segment": [
+        3,
+        4
+      ]
+    },
+    {
+      "id": 53,
+      "type": "panel",
+      "faceId": 8,
+      "inset": 0.66,
+      "color": "#ffd936",
+      "normal": [
+        0.09,
+        -0.99,
+        0.05
+      ],
+      "segment": [
+        1,
+        3
+      ]
+    },
+    {
+      "id": 61,
+      "type": "panel",
+      "faceId": 7,
+      "inset": 0.66,
+      "color": "#ffd936",
+      "normal": [
+        -0.44,
+        0.87,
+        0.22
+      ],
+      "segment": [
+        2,
+        5
+      ]
+    },
+    {
+      "id": 62,
+      "type": "panel",
+      "faceId": 7,
+      "inset": 0.66,
+      "color": "#ffd936",
+      "normal": [
+        -0.44,
+        0.87,
+        0.22
+      ],
+      "segment": [
+        5,
+        1
+      ]
+    },
+    {
+      "id": 64,
+      "type": "panel",
+      "faceId": 6,
+      "inset": 0.66,
+      "color": "#ffd936",
+      "normal": [
+        0.44,
+        0.87,
+        0.22
+      ],
+      "segment": [
+        4,
+        2
+      ]
+    },
+    {
+      "id": 65,
+      "type": "panel",
+      "faceId": 6,
+      "inset": 0.66,
+      "color": "#ffd936",
+      "normal": [
+        0.44,
+        0.87,
+        0.22
+      ],
+      "segment": [
+        1,
+        4
+      ]
+    }
+  ],
+  "blueprint": {
+    "verts": [
+      [
+        0,
+        0,
+        98
+      ],
+      [
+        0,
+        46,
+        -86
+      ],
+      [
+        0,
+        -8,
+        -75
+      ],
+      [
+        82,
+        0,
+        -70
+      ],
+      [
+        -82,
+        0,
+        -70
+      ],
+      [
+        0,
+        0,
+        -62
+      ],
+      [
+        0,
+        33,
+        -70
+      ],
+      [
+        74,
+        0,
+        0
+      ],
+      [
+        -74,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        139
+      ]
+    ],
+    "edges": [
+      [
+        0,
+        3
+      ],
+      [
+        1,
+        3
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        4
+      ],
+      [
+        0,
+        4
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        2,
+        4
+      ],
+      [
+        3,
+        5
+      ],
+      [
+        2,
+        5
+      ],
+      [
+        4,
+        5
+      ],
+      [
+        1,
+        6
+      ],
+      [
+        3,
+        6
+      ],
+      [
+        4,
+        6
+      ],
+      [
+        5,
+        6
+      ],
+      [
+        3,
+        7
+      ],
+      [
+        4,
+        8
+      ],
+      [
+        0,
+        9
+      ]
+    ],
+    "edgeFaces": [
+      [
+        0,
+        2
+      ],
+      [
+        0,
+        6
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        7
+      ],
+      [
+        1,
+        3
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        2,
+        4
+      ],
+      [
+        3,
+        5
+      ],
+      [
+        4,
+        8
+      ],
+      [
+        4,
+        5
+      ],
+      [
+        5,
+        9
+      ],
+      [
+        6,
+        7
+      ],
+      [
+        6,
+        8
+      ],
+      [
+        7,
+        9
+      ],
+      [
+        8,
+        9
+      ],
+      [
+        -1,
+        -1
+      ],
+      [
+        -1,
+        -1
+      ],
+      [
+        -1,
+        -1
+      ]
+    ],
+    "edgeVisibility": [
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31
+    ],
+    "normals": [
+      [
+        44.5,
+        86.88,
+        21.72
+      ],
+      [
+        -44.5,
+        86.88,
+        21.72
+      ],
+      [
+        9.42,
+        -99.45,
+        4.6
+      ],
+      [
+        -9.42,
+        -99.45,
+        4.6
+      ],
+      [
+        -5.11,
+        85.05,
+        -52.34
+      ],
+      [
+        5.11,
+        85.05,
+        -52.34
+      ],
+      [
+        -29.81,
+        -74.08,
+        -60.19
+      ],
+      [
+        29.81,
+        -74.08,
+        -60.19
+      ],
+      [
+        -9.44,
+        -23.45,
+        -96.75
+      ],
+      [
+        9.44,
+        -23.45,
+        -96.75
+      ]
+    ],
+    "details": [
+      {
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          -0.09,
+          -0.23,
+          -0.97
+        ],
+        "lift": 1.5,
+        "points": [
+          [
+            67.79,
+            2.86,
+            -69.31
+          ],
+          [
+            7.11,
+            2.86,
+            -63.39
+          ],
+          [
+            7.11,
+            27.28,
+            -69.31
+          ]
+        ],
+        "stroke": "#ffffff"
+      },
+      {
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0.09,
+          -0.23,
+          -0.97
+        ],
+        "lift": 1.5,
+        "points": [
+          [
+            -7.65,
+            26.84,
+            -69.25
+          ],
+          [
+            -7.65,
+            3.08,
+            -63.49
+          ],
+          [
+            -66.69,
+            3.08,
+            -69.25
+          ]
+        ],
+        "stroke": "#ffffff"
+      },
+      {
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0.44,
+          0.87,
+          0.22
+        ],
+        "lift": 1,
+        "points": [
+          [
+            16.95,
+            9.51,
+            25.25
+          ],
+          [
+            48.11,
+            9.51,
+            -38.59
+          ],
+          [
+            16.95,
+            26.99,
+            -44.67
+          ]
+        ]
+      },
+      {
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          -0.44,
+          0.87,
+          0.22
+        ],
+        "lift": 1,
+        "points": [
+          [
+            -16.95,
+            9.51,
+            25.25
+          ],
+          [
+            -16.95,
+            26.99,
+            -44.67
+          ],
+          [
+            -48.11,
+            9.51,
+            -38.59
+          ]
+        ]
+      },
+      {
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          -0.09,
+          -0.99,
+          0.05
+        ],
+        "lift": 1,
+        "points": [
+          [
+            -22.14,
+            -2.16,
+            5.93
+          ],
+          [
+            -37.72,
+            -2.16,
+            -25.99
+          ],
+          [
+            -22.14,
+            -3.68,
+            -26.94
+          ]
+        ]
+      },
+      {
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0.09,
+          -0.99,
+          0.05
+        ],
+        "lift": 1,
+        "points": [
+          [
+            22.14,
+            -2.16,
+            5.93
+          ],
+          [
+            22.14,
+            -3.68,
+            -26.94
+          ],
+          [
+            37.72,
+            -2.16,
+            -25.99
+          ]
+        ]
+      },
+      {
+        "type": "polyline",
+        "color": "#ffd936",
+        "normal": [
+          -0.09,
+          -0.99,
+          0.05
+        ],
+        "lift": 1,
+        "points": [
+          [
+            -63.41,
+            -0.91,
+            -51.53
+          ],
+          [
+            -9.29,
+            -6.19,
+            -54.83
+          ]
+        ],
+        "width": 1.2
+      },
+      {
+        "type": "polyline",
+        "color": "#ffd936",
+        "normal": [
+          -0.09,
+          -0.99,
+          0.05
+        ],
+        "lift": 1,
+        "points": [
+          [
+            -9.29,
+            -6.19,
+            -54.83
+          ],
+          [
+            -9.29,
+            -0.91,
+            59.35
+          ]
+        ],
+        "width": 1.2
+      },
+      {
+        "type": "polyline",
+        "color": "#ffd936",
+        "normal": [
+          0.09,
+          -0.99,
+          0.05
+        ],
+        "lift": 1,
+        "points": [
+          [
+            9.29,
+            -6.19,
+            -54.83
+          ],
+          [
+            63.41,
+            -0.91,
+            -51.53
+          ]
+        ],
+        "width": 1.2
+      },
+      {
+        "type": "polyline",
+        "color": "#ffd936",
+        "normal": [
+          0.09,
+          -0.99,
+          0.05
+        ],
+        "lift": 1,
+        "points": [
+          [
+            9.29,
+            -0.91,
+            59.35
+          ],
+          [
+            9.29,
+            -6.19,
+            -54.83
+          ]
+        ],
+        "width": 1.2
+      },
+      {
+        "type": "polyline",
+        "color": "#ffd936",
+        "normal": [
+          -0.44,
+          0.87,
+          0.22
+        ],
+        "lift": 1,
+        "points": [
+          [
+            -9.29,
+            35.57,
+            -63.33
+          ],
+          [
+            -63.41,
+            5.21,
+            -52.77
+          ]
+        ],
+        "width": 1.2
+      },
+      {
+        "type": "polyline",
+        "color": "#ffd936",
+        "normal": [
+          -0.44,
+          0.87,
+          0.22
+        ],
+        "lift": 1,
+        "points": [
+          [
+            -63.41,
+            5.21,
+            -52.77
+          ],
+          [
+            -9.29,
+            5.21,
+            58.11
+          ]
+        ],
+        "width": 1.2
+      },
+      {
+        "type": "polyline",
+        "color": "#ffd936",
+        "normal": [
+          0.44,
+          0.87,
+          0.22
+        ],
+        "lift": 1,
+        "points": [
+          [
+            63.41,
+            5.21,
+            -52.77
+          ],
+          [
+            9.29,
+            35.57,
+            -63.33
+          ]
+        ],
+        "width": 1.2
+      },
+      {
+        "type": "polyline",
+        "color": "#ffd936",
+        "normal": [
+          0.44,
+          0.87,
+          0.22
+        ],
+        "lift": 1,
+        "points": [
+          [
+            9.29,
+            5.21,
+            58.11
+          ],
+          [
+            63.41,
+            5.21,
+            -52.77
+          ]
+        ],
+        "width": 1.2
+      }
+    ],
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "bountyHunter",
+      "decalRole": "none",
+      "baseColor": "#cf9b2a",
+      "description": "The Diamondback is an off-books hunter craft: Sleek like a running shoe, over-engined and fully fitted out with the latest Sirius Cybernetics Corp. GPP technology.",
+      "valueCr": 2500000,
+      "stats": {
+        "r": 139,
+        "hp": 300,
+        "speed": 2.2,
+        "cargo": 14,
+        "missiles": 6,
+        "laser": "military"
+      },
+      "lists": {
+        "trader": false,
+        "pirate": false,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": true
+      },
+      "imageDecalTest": true
+    }
+  }
+}

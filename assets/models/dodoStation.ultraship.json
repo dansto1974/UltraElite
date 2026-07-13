@@ -1,0 +1,940 @@
+{
+  "format": "ultra-elite-ship-builder/v1",
+  "id": "dodoStation",
+  "name": "Dodo Station",
+  "verts": [
+    {
+      "id": 1,
+      "x": 0,
+      "y": 150,
+      "z": 196,
+      "mirrorId": null,
+      "center": true
+    },
+    {
+      "id": 2,
+      "x": 143,
+      "y": 46,
+      "z": 196,
+      "mirrorId": 5,
+      "center": false
+    },
+    {
+      "id": 3,
+      "x": 88,
+      "y": -121,
+      "z": 196,
+      "mirrorId": 4,
+      "center": false
+    },
+    {
+      "id": 4,
+      "x": -88,
+      "y": -121,
+      "z": 196,
+      "mirrorId": 3,
+      "center": false
+    },
+    {
+      "id": 5,
+      "x": -143,
+      "y": 46,
+      "z": 196,
+      "mirrorId": 2,
+      "center": false
+    },
+    {
+      "id": 6,
+      "x": 0,
+      "y": 243,
+      "z": 46,
+      "mirrorId": null,
+      "center": true
+    },
+    {
+      "id": 7,
+      "x": 231,
+      "y": 75,
+      "z": 46,
+      "mirrorId": 10,
+      "center": false
+    },
+    {
+      "id": 8,
+      "x": 143,
+      "y": -196,
+      "z": 46,
+      "mirrorId": 9,
+      "center": false
+    },
+    {
+      "id": 9,
+      "x": -143,
+      "y": -196,
+      "z": 46,
+      "mirrorId": 8,
+      "center": false
+    },
+    {
+      "id": 10,
+      "x": -231,
+      "y": 75,
+      "z": 46,
+      "mirrorId": 7,
+      "center": false
+    },
+    {
+      "id": 11,
+      "x": 143,
+      "y": 196,
+      "z": -46,
+      "mirrorId": 15,
+      "center": false
+    },
+    {
+      "id": 12,
+      "x": 231,
+      "y": -75,
+      "z": -46,
+      "mirrorId": 14,
+      "center": false
+    },
+    {
+      "id": 13,
+      "x": 0,
+      "y": -243,
+      "z": -46,
+      "mirrorId": null,
+      "center": true
+    },
+    {
+      "id": 14,
+      "x": -231,
+      "y": -75,
+      "z": -46,
+      "mirrorId": 12,
+      "center": false
+    },
+    {
+      "id": 15,
+      "x": -143,
+      "y": 196,
+      "z": -46,
+      "mirrorId": 11,
+      "center": false
+    },
+    {
+      "id": 16,
+      "x": 88,
+      "y": 121,
+      "z": -196,
+      "mirrorId": 20,
+      "center": false
+    },
+    {
+      "id": 17,
+      "x": 143,
+      "y": -46,
+      "z": -196,
+      "mirrorId": 19,
+      "center": false
+    },
+    {
+      "id": 18,
+      "x": 0,
+      "y": -150,
+      "z": -196,
+      "mirrorId": null,
+      "center": true
+    },
+    {
+      "id": 19,
+      "x": -143,
+      "y": -46,
+      "z": -196,
+      "mirrorId": 17,
+      "center": false
+    },
+    {
+      "id": 20,
+      "x": -88,
+      "y": 121,
+      "z": -196,
+      "mirrorId": 16,
+      "center": false
+    },
+    {
+      "id": 21,
+      "x": -16,
+      "y": 32,
+      "z": 196,
+      "mirrorId": 23,
+      "center": false
+    },
+    {
+      "id": 22,
+      "x": -16,
+      "y": -32,
+      "z": 196,
+      "mirrorId": 24,
+      "center": false
+    },
+    {
+      "id": 23,
+      "x": 16,
+      "y": 32,
+      "z": 196,
+      "mirrorId": 21,
+      "center": false
+    },
+    {
+      "id": 24,
+      "x": 16,
+      "y": -32,
+      "z": 196,
+      "mirrorId": 22,
+      "center": false
+    }
+  ],
+  "faces": [
+    {
+      "id": 1000,
+      "verts": [
+        2,
+        1,
+        5,
+        4,
+        3
+      ],
+      "mirrored": false,
+      "bitmapFaceKey": "station_entrance",
+      "bitmapSide": "top"
+    },
+    {
+      "id": 1001,
+      "verts": [
+        11,
+        6,
+        1,
+        2,
+        7
+      ],
+      "mirrored": false,
+      "bitmapFaceKey": "station_panel",
+      "bitmapSide": "top"
+    },
+    {
+      "id": 1002,
+      "verts": [
+        7,
+        2,
+        3,
+        8,
+        12
+      ],
+      "mirrored": false,
+      "bitmapFaceKey": "station_panel",
+      "bitmapSide": "top"
+    },
+    {
+      "id": 1003,
+      "verts": [
+        3,
+        4,
+        9,
+        13,
+        8
+      ],
+      "mirrored": false,
+      "bitmapFaceKey": "station_panel",
+      "bitmapSide": "top"
+    },
+    {
+      "id": 1004,
+      "verts": [
+        5,
+        10,
+        14,
+        9,
+        4
+      ],
+      "mirrored": false,
+      "bitmapFaceKey": "station_panel",
+      "bitmapSide": "top"
+    },
+    {
+      "id": 1005,
+      "verts": [
+        1,
+        6,
+        15,
+        10,
+        5
+      ],
+      "mirrored": false,
+      "bitmapFaceKey": "station_panel",
+      "bitmapSide": "top"
+    },
+    {
+      "id": 1006,
+      "verts": [
+        15,
+        6,
+        11,
+        16,
+        20
+      ],
+      "mirrored": false,
+      "bitmapFaceKey": "station_panel",
+      "bitmapSide": "top"
+    },
+    {
+      "id": 1007,
+      "verts": [
+        16,
+        11,
+        7,
+        12,
+        17
+      ],
+      "mirrored": false,
+      "bitmapFaceKey": "station_panel",
+      "bitmapSide": "top"
+    },
+    {
+      "id": 1008,
+      "verts": [
+        17,
+        12,
+        8,
+        13,
+        18
+      ],
+      "mirrored": false,
+      "bitmapFaceKey": "station_panel",
+      "bitmapSide": "top"
+    },
+    {
+      "id": 1009,
+      "verts": [
+        14,
+        19,
+        18,
+        13,
+        9
+      ],
+      "mirrored": false,
+      "bitmapFaceKey": "station_panel",
+      "bitmapSide": "top"
+    },
+    {
+      "id": 1010,
+      "verts": [
+        10,
+        15,
+        20,
+        19,
+        14
+      ],
+      "mirrored": false,
+      "bitmapFaceKey": "station_panel",
+      "bitmapSide": "top"
+    },
+    {
+      "id": 1011,
+      "verts": [
+        20,
+        16,
+        17,
+        18,
+        19
+      ],
+      "mirrored": false,
+      "bitmapFaceKey": "station_panel",
+      "bitmapSide": "top"
+    }
+  ],
+  "edges": [
+    {
+      "id": 5030,
+      "a": 21,
+      "b": 22,
+      "kind": "edge",
+      "mirrored": false
+    },
+    {
+      "id": 5031,
+      "a": 22,
+      "b": 24,
+      "kind": "edge",
+      "mirrored": false
+    },
+    {
+      "id": 5032,
+      "a": 24,
+      "b": 23,
+      "kind": "edge",
+      "mirrored": false
+    },
+    {
+      "id": 5033,
+      "a": 23,
+      "b": 21,
+      "kind": "edge",
+      "mirrored": false
+    }
+  ],
+  "details": [
+    {
+      "id": 1,
+      "type": "beacon",
+      "vertexId": 21,
+      "color": "#ffb642"
+    },
+    {
+      "id": 2,
+      "type": "beacon",
+      "vertexId": 22,
+      "color": "#ffb642"
+    },
+    {
+      "id": 3,
+      "type": "beacon",
+      "vertexId": 23,
+      "color": "#ffb642"
+    },
+    {
+      "id": 4,
+      "type": "beacon",
+      "vertexId": 24,
+      "color": "#ffb642"
+    }
+  ],
+  "blueprint": {
+    "verts": [
+      [
+        0,
+        150,
+        196
+      ],
+      [
+        143,
+        46,
+        196
+      ],
+      [
+        88,
+        -121,
+        196
+      ],
+      [
+        -88,
+        -121,
+        196
+      ],
+      [
+        -143,
+        46,
+        196
+      ],
+      [
+        0,
+        243,
+        46
+      ],
+      [
+        231,
+        75,
+        46
+      ],
+      [
+        143,
+        -196,
+        46
+      ],
+      [
+        -143,
+        -196,
+        46
+      ],
+      [
+        -231,
+        75,
+        46
+      ],
+      [
+        143,
+        196,
+        -46
+      ],
+      [
+        231,
+        -75,
+        -46
+      ],
+      [
+        0,
+        -243,
+        -46
+      ],
+      [
+        -231,
+        -75,
+        -46
+      ],
+      [
+        -143,
+        196,
+        -46
+      ],
+      [
+        88,
+        121,
+        -196
+      ],
+      [
+        143,
+        -46,
+        -196
+      ],
+      [
+        0,
+        -150,
+        -196
+      ],
+      [
+        -143,
+        -46,
+        -196
+      ],
+      [
+        -88,
+        121,
+        -196
+      ],
+      [
+        -16,
+        32,
+        196
+      ],
+      [
+        -16,
+        -32,
+        196
+      ],
+      [
+        16,
+        32,
+        196
+      ],
+      [
+        16,
+        -32,
+        196
+      ]
+    ],
+    "edges": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        4,
+        0
+      ],
+      [
+        5,
+        10
+      ],
+      [
+        10,
+        6
+      ],
+      [
+        6,
+        11
+      ],
+      [
+        11,
+        7
+      ],
+      [
+        7,
+        12
+      ],
+      [
+        12,
+        8
+      ],
+      [
+        8,
+        13
+      ],
+      [
+        13,
+        9
+      ],
+      [
+        9,
+        14
+      ],
+      [
+        14,
+        5
+      ],
+      [
+        15,
+        16
+      ],
+      [
+        16,
+        17
+      ],
+      [
+        17,
+        18
+      ],
+      [
+        18,
+        19
+      ],
+      [
+        19,
+        15
+      ],
+      [
+        0,
+        5
+      ],
+      [
+        1,
+        6
+      ],
+      [
+        2,
+        7
+      ],
+      [
+        3,
+        8
+      ],
+      [
+        4,
+        9
+      ],
+      [
+        10,
+        15
+      ],
+      [
+        11,
+        16
+      ],
+      [
+        12,
+        17
+      ],
+      [
+        13,
+        18
+      ],
+      [
+        14,
+        19
+      ],
+      [
+        20,
+        21
+      ],
+      [
+        21,
+        23
+      ],
+      [
+        23,
+        22
+      ],
+      [
+        22,
+        20
+      ]
+    ],
+    "edgeFaces": [
+      [
+        1,
+        0
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        3,
+        0
+      ],
+      [
+        4,
+        0
+      ],
+      [
+        5,
+        0
+      ],
+      [
+        6,
+        1
+      ],
+      [
+        7,
+        1
+      ],
+      [
+        7,
+        2
+      ],
+      [
+        8,
+        2
+      ],
+      [
+        8,
+        3
+      ],
+      [
+        9,
+        3
+      ],
+      [
+        9,
+        4
+      ],
+      [
+        10,
+        4
+      ],
+      [
+        10,
+        5
+      ],
+      [
+        6,
+        5
+      ],
+      [
+        11,
+        7
+      ],
+      [
+        11,
+        8
+      ],
+      [
+        11,
+        9
+      ],
+      [
+        11,
+        10
+      ],
+      [
+        11,
+        6
+      ],
+      [
+        5,
+        1
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        3,
+        2
+      ],
+      [
+        4,
+        3
+      ],
+      [
+        5,
+        4
+      ],
+      [
+        7,
+        6
+      ],
+      [
+        8,
+        7
+      ],
+      [
+        9,
+        8
+      ],
+      [
+        10,
+        9
+      ],
+      [
+        10,
+        6
+      ],
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        0
+      ]
+    ],
+    "edgeVisibility": [
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      30,
+      20,
+      23,
+      20
+    ],
+    "normals": [
+      [
+        0,
+        0,
+        196
+      ],
+      [
+        103,
+        142,
+        88
+      ],
+      [
+        169,
+        -55,
+        89
+      ],
+      [
+        0,
+        -176,
+        88
+      ],
+      [
+        -169,
+        -55,
+        89
+      ],
+      [
+        -103,
+        142,
+        88
+      ],
+      [
+        0,
+        176,
+        -88
+      ],
+      [
+        169,
+        55,
+        -89
+      ],
+      [
+        103,
+        -142,
+        -88
+      ],
+      [
+        -103,
+        -142,
+        -88
+      ],
+      [
+        -169,
+        55,
+        -89
+      ],
+      [
+        0,
+        0,
+        -196
+      ]
+    ],
+    "details": [
+      {
+        "type": "beacon",
+        "index": 20,
+        "color": "#ffb642"
+      },
+      {
+        "type": "beacon",
+        "index": 21,
+        "color": "#ffb642"
+      },
+      {
+        "type": "beacon",
+        "index": 22,
+        "color": "#ffb642"
+      },
+      {
+        "type": "beacon",
+        "index": 23,
+        "color": "#ffb642"
+      }
+    ]
+  },
+  "gameMeta": {
+    "imageDecalMirrorX": {
+      "top": false,
+      "bottom": false,
+      "back": false
+    }
+  }
+}

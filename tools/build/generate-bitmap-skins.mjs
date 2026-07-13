@@ -6,20 +6,43 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "../..");
 const outDir = path.join(root, "assets/skins");
+const modelDir = path.join(root, "assets/models");
+const photoshopSourceDir = path.join(root, "Photoshop Assets");
 const manifestPath = path.join(root, "src/generated/bitmap-skins.js");
-const size = 400;
+const DEFAULT_SKIN_SIZE = 400;
+let size = DEFAULT_SKIN_SIZE;
 const force = process.argv.includes("--force");
 const recompress = process.argv.includes("--recompress");
 const dryRun = process.argv.includes("--dry-run");
+const preserveForceSkins = new Set(["adder", "cobra"]);
 
-const models = [
+function loadModelAssets() {
+  if (!fs.existsSync(modelDir)) return new Map();
+  const entries = fs.readdirSync(modelDir)
+    .filter((file) => file.endsWith(".ultraship.json"))
+    .sort((a, b) => a.localeCompare(b))
+    .map((file) => {
+      const filePath = path.join(modelDir, file);
+      try {
+        const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+        return [data.id || path.basename(file, ".ultraship.json"), data];
+      } catch (error) {
+        throw new Error(`Could not read ${path.relative(root, filePath)}: ${error.message}`);
+      }
+    });
+  return new Map(entries);
+}
+
+const modelAssets = loadModelAssets();
+const fallbackModels = [
   "cobra", "krait", "viper", "adder", "gecko", "mamba", "sidewinder", "worm", "moray", "asp",
   "ferdelance", "python", "boa", "anaconda", "cobra1", "shuttle", "transporter", "constrictor",
   "cougar", "diamondback", "thargoid", "thargon", "canister", "missile", "escapePod", "plate",
   "asteroid", "boulder", "splinter", "hermit", "dodoStation", "coriolis"
 ];
+const models = modelAssets.size ? [...modelAssets.keys()].sort((a, b) => a.localeCompare(b)) : fallbackModels;
 
-const displayNames = {
+const fallbackDisplayNames = {
   cobra: "COBRA MK III",
   krait: "KRAIT",
   viper: "VIPER",
@@ -52,6 +75,13 @@ const displayNames = {
   hermit: "ROCK HERMIT",
   dodoStation: "DODO STATION",
   coriolis: "CORIOLIS STATION"
+};
+const displayNames = {
+  ...fallbackDisplayNames,
+  ...Object.fromEntries([...modelAssets].map(([id, data]) => [
+    id,
+    String(data.name || fallbackDisplayNames[id] || id).replace(/([a-z])([A-Z])/g, "$1 $2").replace(/[_-]+/g, " ").trim().toUpperCase()
+  ]))
 };
 
 const sets = {
@@ -90,6 +120,77 @@ function roleFor(model) {
   if (sets.pirate.has(model) && !sets.trader.has(model)) return "pirate";
   if (sets.hauler.has(model)) return "hauler";
   return "trader";
+}
+
+function modelMeta(model) {
+  return modelAssets.get(model)?.gameMeta || {};
+}
+
+function modelAsset(model) {
+  return modelAssets.get(model) || null;
+}
+
+function modelExtents(model) {
+  const data = modelAsset(model);
+  const verts = data?.verts || [];
+  if (!verts.length) return { x: 120, y: 40, z: 120, max: 120 };
+  const xs = verts.map((v) => Number(v.x ?? v[0] ?? 0));
+  const ys = verts.map((v) => Number(v.y ?? v[1] ?? 0));
+  const zs = verts.map((v) => Number(v.z ?? v[2] ?? 0));
+  const x = Math.max(...xs) - Math.min(...xs);
+  const y = Math.max(...ys) - Math.min(...ys);
+  const z = Math.max(...zs) - Math.min(...zs);
+  return { x, y, z, max: Math.max(x, y, z, 1) };
+}
+
+function clampNumber(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function generatedSkinSize(model) {
+  const role = roleFor(model);
+  if (["station", "rock", "cargo", "missile"].includes(role)) return DEFAULT_SKIN_SIZE;
+  const ext = modelExtents(model);
+  return Math.round(clampNumber(304 + (ext.max - 80) * 1.05, 320, 640));
+}
+
+function sourceZoomForModel(model, role) {
+  const ext = modelExtents(model);
+  const scale = clampNumber(ext.max / 95, .72, role === "station" ? 4.2 : 3.4);
+  return scale;
+}
+
+function cleanBitmapKey(value) {
+  return String(value || "").trim().replace(/[^a-zA-Z0-9_-]+/g, "_").replace(/^_+|_+$/g, "");
+}
+
+function modelFaceTextureKeys(model) {
+  const data = modelAssets.get(model);
+  if (!data?.faces?.length) return [];
+  return [...new Set(data.faces.map((face) => cleanBitmapKey(face?.bitmapFaceKey)).filter(Boolean))];
+}
+
+function pngHeaderSize(filePath) {
+  if (!fs.existsSync(filePath)) return null;
+  const fd = fs.openSync(filePath, "r");
+  try {
+    const header = Buffer.alloc(24);
+    if (fs.readSync(fd, header, 0, 24, 0) !== 24) return null;
+    if (!header.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) return null;
+    return { width: header.readUInt32BE(16), height: header.readUInt32BE(20) };
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+function modelSideMirrorX(model, side) {
+  return !!modelMeta(model).imageDecalMirrorX?.[side];
+}
+
+function skinManifestEntry(model, side, dataUrl, filePath) {
+  const mirrorX = modelSideMirrorX(model, side);
+  const relPath = path.relative(root, filePath).replaceAll(path.sep, "/");
+  return { src: dataUrl, path: relPath, ...(mirrorX ? { mirrorX: true } : {}) };
 }
 
 function hash32(str) {
@@ -166,6 +267,15 @@ function fillRect(buf, x, y, w, h, color, alpha = 1) {
   }
 }
 
+function cropLeftHalfRgba(rgba, width = size, height = size) {
+  const outW = Math.ceil(width / 2);
+  const out = Buffer.alloc(outW * height * 4);
+  for (let y = 0; y < height; y++) {
+    rgba.copy(out, y * outW * 4, y * width * 4, y * width * 4 + outW * 4);
+  }
+  return { rgba: out, width: outW, height };
+}
+
 function drawPanel(buf, x, y, w, h, color, alpha = .25) {
   const cut = Math.min(w, h) * .18;
   drawLine(buf, x + cut, y, x + w, y, color, 1.5, alpha);
@@ -176,115 +286,246 @@ function drawPanel(buf, x, y, w, h, color, alpha = .25) {
   drawLine(buf, x, y + cut, x + cut, y, color, 1.5, alpha);
 }
 
-function drawAscii(buf, text, x, y, color, scale = 2, alpha = .62) {
-  const glyphs = {
-    A: ["111", "101", "111", "101", "101"], B: ["110", "101", "110", "101", "110"], C: ["111", "100", "100", "100", "111"],
-    D: ["110", "101", "101", "101", "110"], E: ["111", "100", "110", "100", "111"], F: ["111", "100", "110", "100", "100"],
-    G: ["111", "100", "101", "101", "111"], H: ["101", "101", "111", "101", "101"], I: ["111", "010", "010", "010", "111"],
-    J: ["001", "001", "001", "101", "111"], K: ["101", "101", "110", "101", "101"], L: ["100", "100", "100", "100", "111"],
-    M: ["101", "111", "111", "101", "101"], N: ["101", "111", "111", "111", "101"], O: ["111", "101", "101", "101", "111"],
-    P: ["111", "101", "111", "100", "100"], Q: ["111", "101", "101", "111", "001"], R: ["111", "101", "111", "110", "101"],
-    S: ["111", "100", "111", "001", "111"], T: ["111", "010", "010", "010", "010"], U: ["101", "101", "101", "101", "111"],
-    V: ["101", "101", "101", "101", "010"], W: ["101", "101", "111", "111", "101"], X: ["101", "101", "010", "101", "101"],
-    Y: ["101", "101", "010", "010", "010"], Z: ["111", "001", "010", "100", "111"], "0": ["111", "101", "101", "101", "111"],
-    "1": ["010", "110", "010", "010", "111"], "2": ["111", "001", "111", "100", "111"], "3": ["111", "001", "111", "001", "111"],
-    "4": ["101", "101", "111", "001", "001"], "5": ["111", "100", "111", "001", "111"], "6": ["111", "100", "111", "101", "111"],
-    "7": ["111", "001", "001", "010", "010"], "8": ["111", "101", "111", "101", "111"], "9": ["111", "101", "111", "001", "111"],
-    "-": ["000", "000", "111", "000", "000"], " ": ["000", "000", "000", "000", "000"]
-  };
-  let cx = x;
-  for (const ch of text) {
-    const rows = glyphs[ch] || glyphs[" "];
-    for (let yy = 0; yy < rows.length; yy++) {
-      for (let xx = 0; xx < rows[yy].length; xx++) {
-        if (rows[yy][xx] === "1") fillRect(buf, cx + xx * scale, y + yy * scale, scale, scale, color, alpha);
+const sourceTextureCache = new Map();
+const sourceTextureFiles = {
+  top: "top.png",
+  bottom: "Bottom.png",
+  back: "High Res Back texture.png",
+  rock: "asteroids.png",
+  alien: "alien.png",
+  missile: "missile.png",
+  pirate: "pirate decals.png",
+  stationEntrance: "Space station entrance.png",
+  hazard: "Hazard symbols.png"
+};
+
+function sourceTexture(name) {
+  if (sourceTextureCache.has(name)) return sourceTextureCache.get(name);
+  const file = sourceTextureFiles[name];
+  if (!file) return null;
+  const filePath = path.join(photoshopSourceDir, file);
+  if (!fs.existsSync(filePath)) {
+    sourceTextureCache.set(name, null);
+    return null;
+  }
+  const decoded = pngDecodeRgba(fs.readFileSync(filePath));
+  sourceTextureCache.set(name, decoded);
+  return decoded;
+}
+
+function sourceTextureFor(role, side) {
+  if (role === "alien") return sourceTexture("alien") || sourceTexture(side);
+  if (role === "rock") return sourceTexture("rock") || sourceTexture(side);
+  if (role === "missile") return sourceTexture("missile") || sourceTexture(side);
+  if (side === "back") return sourceTexture("back") || sourceTexture("top");
+  return sourceTexture(side) || sourceTexture("top") || sourceTexture("back");
+}
+
+function sampleTexture(texture, u, v, seed = 0) {
+  if (!texture) return null;
+  const x = Math.max(0, Math.min(texture.width - 1, Math.floor((((u % 1) + 1) % 1) * texture.width)));
+  const y = Math.max(0, Math.min(texture.height - 1, Math.floor((((v % 1) + 1) % 1) * texture.height)));
+  const i = (y * texture.width + x) * 4;
+  const jitter = (hash32(`${seed}:${x >> 4}:${y >> 4}`) & 15) - 7;
+  return [
+    Math.max(0, Math.min(255, texture.rgba[i] + jitter)),
+    Math.max(0, Math.min(255, texture.rgba[i + 1] + jitter)),
+    Math.max(0, Math.min(255, texture.rgba[i + 2] + jitter)),
+    texture.rgba[i + 3]
+  ];
+}
+
+function drawHazardStamp(buf, rng, accent, dark, scale = 1) {
+  const hazard = sourceTexture("hazard");
+  if (!hazard) return;
+  const cx = size * (.18 + rng() * .64);
+  const cy = size * (.16 + rng() * .68);
+  const w = Math.floor((32 + rng() * 42) * scale);
+  const h = Math.floor(w * (.45 + rng() * .35));
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const p = sampleTexture(hazard, x / w * .6 + rng() * .001, y / h * .6 + rng() * .001, x + y * 17);
+      if (!p) continue;
+      const luma = (p[0] + p[1] + p[2]) / 3;
+      if (luma < 110) blend(buf, cx + x - w / 2, cy + y - h / 2, dark, .24);
+      else if (luma > 185) blend(buf, cx + x - w / 2, cy + y - h / 2, accent, .28);
+    }
+  }
+}
+
+function drawSourceStamp(buf, sourceName, rng, accent, dark, scale = 1, alpha = .35) {
+  const source = sourceTexture(sourceName);
+  if (!source) return;
+  const cx = size * (.24 + rng() * .52);
+  const cy = size * (.2 + rng() * .48);
+  const w = Math.floor((28 + rng() * 34) * scale);
+  const h = Math.floor(w * (.45 + rng() * .35));
+  const srcU = rng() * .58;
+  const srcV = rng() * .62;
+  const srcScale = .28 + rng() * .22;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const p = sampleTexture(source, srcU + x / w * srcScale, srcV + y / h * srcScale, x * 19 + y * 7);
+      if (!p || p[3] < 12) continue;
+      const luma = (p[0] + p[1] + p[2]) / 3;
+      if (luma < 70) blend(buf, cx + x - w / 2, cy + y - h / 2, dark, alpha * .85);
+      else if (luma < 160) blend(buf, cx + x - w / 2, cy + y - h / 2, accent, alpha * .3);
+    }
+  }
+}
+
+function faceTextureSourceFor(key, role) {
+  if (key.includes("entrance")) return sourceTexture("stationEntrance") || sourceTexture("back") || sourceTexture("top");
+  if (key.includes("rock")) return sourceTexture("rock") || sourceTexture("top");
+  if (key.includes("missile")) return sourceTexture("missile") || sourceTexture("back") || sourceTexture("top");
+  if (key.includes("station")) return sourceTexture("back") || sourceTexture("top");
+  return sourceTextureFor(role, key.includes("back") || key.includes("end") ? "back" : "top");
+}
+
+function renderFaceSkin(model, key) {
+  const oldSize = size;
+  size = DEFAULT_SKIN_SIZE;
+  try {
+    const role = roleFor(model);
+    const [baseHex, accentHex, darkHex, lineHex] = palettes[role];
+    const base = hex(baseHex);
+    const accent = hex(accentHex);
+    const dark = hex(darkHex);
+    const line = hex(lineHex);
+    const rng = rngFor(hash32(`${model}:face:${key}`));
+    const source = faceTextureSourceFor(key, role);
+    const sourceSeed = hash32(`${model}:face:${key}:source`);
+    const stationZoom = key.includes("station") ? 1.45 : 1;
+    const zoom = (.42 + rng() * .32) * stationZoom;
+    const offsetU = rng() * .74;
+    const offsetV = rng() * .74;
+    const tintStrength = key.includes("entrance") ? .08 : key.includes("rock") ? .12 : .24;
+    const buf = Buffer.alloc(size * size * 4);
+    const light = mix(base, [255, 255, 255, 255], .28);
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const diagonal = (x + y) / (size * 2);
+        const sampled = sampleTexture(source, offsetU + x / size * zoom, offsetV + y / size * zoom, sourceSeed);
+        let c = sampled ? mix(sampled, base, tintStrength) : mix(light, base, diagonal * .5);
+        c = mix(c, dark, Math.min(1, Math.hypot(x - size / 2, y - size / 2) / (size * .9)) * .2);
+        const i = (y * size + x) * 4;
+        buf[i] = c[0]; buf[i + 1] = c[1]; buf[i + 2] = c[2]; buf[i + 3] = 255;
       }
     }
-    cx += 4 * scale;
+    if (key.includes("entrance")) {
+      fillRect(buf, size * .2, size * .27, size * .6, size * .46, dark, .86);
+      drawLine(buf, size * .18, size * .25, size * .82, size * .25, accent, 9, .72);
+      drawLine(buf, size * .82, size * .25, size * .82, size * .75, accent, 9, .72);
+      drawLine(buf, size * .82, size * .75, size * .18, size * .75, accent, 9, .72);
+      drawLine(buf, size * .18, size * .75, size * .18, size * .25, accent, 9, .72);
+      for (let i = -4; i < 12; i++) drawLine(buf, i * 44, size * .18, i * 44 + 120, size * .08, i % 2 ? dark : accent, 10, .78);
+    } else if (key.includes("end")) {
+      const cx = size / 2, cy = size / 2;
+      for (let r = size * .08; r < size * .42; r += size * .08) {
+        for (let a = 0; a < Math.PI * 2; a += .04) blend(buf, cx + Math.cos(a) * r, cy + Math.sin(a) * r, line, .24);
+      }
+      fillRect(buf, size * .42, size * .42, size * .16, size * .16, dark, .5);
+    } else if (key.includes("missile")) {
+      drawLine(buf, size * .12, size * .22, size * .88, size * .22, accent, 18, .45);
+      drawLine(buf, size * .12, size * .78, size * .88, size * .78, accent, 18, .45);
+    } else if (key.includes("rock")) {
+      for (let i = 0; i < 70; i++) {
+        const x = rng() * size, y = rng() * size, r = 3 + rng() * 22;
+        drawLine(buf, x - r, y, x + r * .8, y + (rng() - .5) * r, dark, 2 + rng() * 2, .22);
+        drawLine(buf, x - r * .25, y - r * .25, x + r * .35, y + r * .12, line, 1.3, .16);
+      }
+    } else {
+      for (let i = 0; i < 18; i++) drawPanel(buf, rng() * size, rng() * size, size * (.08 + rng() * .22), size * (.04 + rng() * .14), line, .22);
+    }
+    return { rgba: buf, width: size, height: size };
+  } finally {
+    size = oldSize;
   }
 }
 
 function renderSkin(model, side) {
+  const oldSize = size;
+  size = generatedSkinSize(model);
   const role = roleFor(model);
-  const [baseHex, accentHex, darkHex, lineHex] = palettes[role];
-  const base = hex(baseHex);
-  const accent = hex(accentHex);
-  const dark = hex(darkHex);
-  const line = hex(lineHex);
-  const rng = rngFor(hash32(`${model}:${role}:${side}`));
-  const buf = Buffer.alloc(size * size * 4);
-  const light = mix(base, [255, 255, 255, 255], .34);
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const diagonal = (x + y) / (size * 2);
-      const cx = (x - size * .48) / (size * .62);
-      const cy = (y - size * .44) / (size * .62);
-      const vignette = Math.min(1, Math.sqrt(cx * cx + cy * cy));
-      const noisy = (hash32(`${model}:${side}:${x >> 2}:${y >> 2}`) & 31) / 255;
-      let c = mix(light, base, diagonal * .58 + .18);
-      c = mix(c, dark, vignette * .42 + noisy);
-      const i = (y * size + x) * 4;
-      buf[i] = c[0]; buf[i + 1] = c[1]; buf[i + 2] = c[2]; buf[i + 3] = 255;
-    }
-  }
-
-  for (let i = 0; i < 24; i++) {
-    drawPanel(buf, rng() * size, rng() * size, size * (.08 + rng() * .24), size * (.04 + rng() * .16), line, role === "rock" ? .15 : .28);
-  }
-  for (let i = 0; i < 80; i++) {
-    const x = rng() * size, y = rng() * size;
-    drawLine(buf, x, y, x + size * (.03 + rng() * .18), y + (rng() - .5) * size * .04, dark, .8 + rng() * 1.4, .18);
-  }
-  if (role === "station" || role === "hauler" || role === "cargo") {
-    for (let i = -8; i <= 18; i++) {
-      const c = i % 2 ? dark : accent;
-      drawLine(buf, i * 28, side === "top" ? 54 : 330, i * 28 + 170, side === "top" ? 20 : 366, c, 15, .75);
-    }
-  }
-  if (side === "back" && role !== "rock") {
-    const engineY = size * .48;
-    for (let i = -1; i <= 1; i++) {
-      const x = size * (.5 + i * .18);
-      fillRect(buf, x - size * .055, engineY - size * .04, size * .11, size * .08, dark, .68);
-      drawPanel(buf, x - size * .075, engineY - size * .06, size * .15, size * .12, line, .36);
-    }
-    drawLine(buf, size * .16, size * .68, size * .84, size * .68, accent, 7, .36);
-    drawLine(buf, size * .2, size * .74, size * .8, size * .74, line, 3, .28);
-  }
-  if (role === "pirate") {
-    drawLine(buf, 150, 145, 250, 255, accent, 12, .58);
-    drawLine(buf, 250, 145, 150, 255, accent, 12, .58);
-  }
-  if (role === "police") {
-    drawLine(buf, 80, 140, 200, 178, accent, 18, .42);
-    drawLine(buf, 320, 140, 200, 178, accent, 18, .42);
-    drawLine(buf, 95, 225, 200, 255, accent, 12, .32);
-    drawLine(buf, 305, 225, 200, 255, accent, 12, .32);
-  }
-  if (role === "alien") {
-    for (let y = 90; y <= 310; y += 34) {
-      let prev = [0, y];
-      for (let x = 20; x <= size; x += 20) {
-        const p = [x, y + Math.sin((x + hash32(model)) * .04) * 28];
-        drawLine(buf, prev[0], prev[1], p[0], p[1], accent, 3.5, .28);
-        prev = p;
+  try {
+    const [baseHex, accentHex, darkHex, lineHex] = palettes[role];
+    const base = hex(baseHex);
+    const accent = hex(accentHex);
+    const dark = hex(darkHex);
+    const line = hex(lineHex);
+    const rng = rngFor(hash32(`${model}:${role}:${side}`));
+    const source = sourceTextureFor(role, side);
+    const sourceSeed = hash32(`${model}:${side}:source`);
+    const offsetU = rng() * .72;
+    const offsetV = rng() * .72;
+    const zoom = clampNumber((.16 + rng() * .16) * sourceZoomForModel(model, role), .14, role === "station" ? 1.35 : .9);
+    const tintStrength = role === "rock" ? .18 : role === "station" ? .22 : .34;
+    const buf = Buffer.alloc(size * size * 4);
+    const light = mix(base, [255, 255, 255, 255], .34);
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const diagonal = (x + y) / (size * 2);
+        const cx = (x - size * .48) / (size * .62);
+        const cy = (y - size * .44) / (size * .62);
+        const vignette = Math.min(1, Math.sqrt(cx * cx + cy * cy));
+        const noisy = (hash32(`${model}:${side}:${x >> 2}:${y >> 2}`) & 31) / 255;
+        const sampled = sampleTexture(source, offsetU + x / size * zoom, offsetV + y / size * zoom, sourceSeed);
+        let c = sampled ? mix(sampled, base, tintStrength) : mix(light, base, diagonal * .58 + .18);
+        c = mix(c, light, Math.max(0, .2 - diagonal) * .34);
+        c = mix(c, dark, vignette * .42 + noisy);
+        const i = (y * size + x) * 4;
+        buf[i] = c[0]; buf[i + 1] = c[1]; buf[i + 2] = c[2]; buf[i + 3] = 255;
       }
     }
-  }
-  if (role === "project") {
-    drawLine(buf, 48, side === "top" ? 388 : 20, 278, side === "top" ? 0 : 390, accent, 60, .38);
-    drawLine(buf, 98, side === "top" ? 388 : 20, 338, side === "top" ? 0 : 390, [255, 255, 255, 255], 18, .5);
-  }
-  if (role === "rock") {
-    for (let i = 0; i < 60; i++) {
-      const x = rng() * size, y = rng() * size, r = 4 + rng() * 18;
-      drawLine(buf, x - r, y, x + r, y + rng() * r * .5, dark, 2 + rng() * 3, .22);
-      drawLine(buf, x - r * .4, y - r * .4, x + r * .4, y + r * .2, line, 1.5, .18);
+
+    for (let i = 0; i < 24; i++) {
+      drawPanel(buf, rng() * size, rng() * size, size * (.08 + rng() * .24), size * (.04 + rng() * .16), line, role === "rock" ? .15 : .28);
     }
+    for (let i = 0; i < 80; i++) {
+      const x = rng() * size, y = rng() * size;
+      drawLine(buf, x, y, x + size * (.03 + rng() * .18), y + (rng() - .5) * size * .04, dark, .8 + rng() * 1.4, .18);
+    }
+    if (side !== "back" && (role === "station" || role === "hauler" || role === "cargo")) {
+      for (let i = -8; i <= 18; i++) {
+        const c = i % 2 ? dark : accent;
+        drawLine(buf, i * 28, side === "top" ? size * .14 : size * .82, i * 28 + size * .42, side === "top" ? size * .05 : size * .92, c, size * .038, .75);
+      }
+      for (let i = 0; i < (role === "station" ? 6 : 3); i++) drawHazardStamp(buf, rng, accent, dark, role === "station" ? 1.1 : .78);
+    }
+    if (side === "back" && role !== "rock") {
+      const engineY = size * .48;
+      for (let i = -1; i <= 1; i++) {
+        const x = size * (.5 + i * .18);
+        fillRect(buf, x - size * .055, engineY - size * .04, size * .11, size * .08, dark, .68);
+        drawPanel(buf, x - size * .075, engineY - size * .06, size * .15, size * .12, line, .36);
+      }
+      drawLine(buf, size * .16, size * .68, size * .84, size * .68, accent, 7, .36);
+      drawLine(buf, size * .2, size * .74, size * .8, size * .74, line, 3, .28);
+    }
+    // Pirate glyphs need face-aware placement or they end up stamped across rear
+    // panels and awkward folds. Keep the release skins clean until the authoring
+    // path can place sigils deliberately per face.
+    if (side !== "back" && role === "police") {
+      drawLine(buf, size * .2, size * .35, size * .5, size * .45, accent, size * .045, .42);
+      drawLine(buf, size * .8, size * .35, size * .5, size * .45, accent, size * .045, .42);
+      drawLine(buf, size * .24, size * .56, size * .5, size * .64, accent, size * .03, .32);
+      drawLine(buf, size * .76, size * .56, size * .5, size * .64, accent, size * .03, .32);
+    }
+    if (side !== "back" && role === "project") {
+      drawLine(buf, size * .12, side === "top" ? size * .97 : size * .05, size * .7, side === "top" ? 0 : size * .97, accent, size * .15, .38);
+      drawLine(buf, size * .25, side === "top" ? size * .97 : size * .05, size * .85, side === "top" ? 0 : size * .97, [255, 255, 255, 255], size * .045, .5);
+    }
+    if (role === "rock") {
+      for (let i = 0; i < 60; i++) {
+        const x = rng() * size, y = rng() * size, r = 4 + rng() * 18;
+        drawLine(buf, x - r, y, x + r, y + rng() * r * .5, dark, 2 + rng() * 3, .22);
+        drawLine(buf, x - r * .4, y - r * .4, x + r * .4, y + r * .2, line, 1.5, .18);
+      }
+    }
+    return { rgba: buf, width: size, height: size };
+  } finally {
+    size = oldSize;
   }
-  const label = (displayNames[model] || model.toUpperCase()).replace(/[^A-Z0-9 -]/g, "").slice(0, 13);
-  if (role !== "rock") drawAscii(buf, label, 200 - label.length * 6, side === "top" ? 210 : 176, line, 3, .52);
-  return buf;
 }
 
 const crcTable = new Uint32Array(256);
@@ -396,28 +637,39 @@ function pngDecodeRgba(png) {
       break;
     }
   }
-  if (bitDepth !== 8 || colorType !== 6 || interlace !== 0 || !width || !height || !idat.length) return null;
+  if (bitDepth !== 8 || ![2, 6].includes(colorType) || interlace !== 0 || !width || !height || !idat.length) return null;
   const inflated = zlib.inflateSync(Buffer.concat(idat));
-  const stride = width * 4;
-  const rgba = Buffer.alloc(stride * height);
-  const prev = Buffer.alloc(stride);
+  const bpp = colorType === 6 ? 4 : 3;
+  const srcStride = width * bpp;
+  const outStride = width * 4;
+  const rgba = Buffer.alloc(outStride * height);
+  const rowDecoded = Buffer.alloc(srcStride);
+  const prev = Buffer.alloc(srcStride);
   for (let y = 0; y < height; y++) {
-    const src = y * (stride + 1);
+    const src = y * (srcStride + 1);
     const filter = inflated[src];
-    for (let x = 0; x < stride; x++) {
+    for (let x = 0; x < srcStride; x++) {
       const value = inflated[src + 1 + x];
-      const left = x >= 4 ? rgba[y * stride + x - 4] : 0;
+      const left = x >= bpp ? rowDecoded[x - bpp] : 0;
       const up = prev[x];
-      const upLeft = x >= 4 ? prev[x - 4] : 0;
+      const upLeft = x >= bpp ? prev[x - bpp] : 0;
       let decoded = value;
       if (filter === 1) decoded = value + left;
       else if (filter === 2) decoded = value + up;
       else if (filter === 3) decoded = value + ((left + up) >> 1);
       else if (filter === 4) decoded = value + paeth(left, up, upLeft);
       else if (filter !== 0) return null;
-      rgba[y * stride + x] = decoded & 255;
+      rowDecoded[x] = decoded & 255;
     }
-    rgba.copy(prev, 0, y * stride, (y + 1) * stride);
+    for (let x = 0; x < width; x++) {
+      const srcI = x * bpp;
+      const outI = y * outStride + x * 4;
+      rgba[outI] = rowDecoded[srcI];
+      rgba[outI + 1] = rowDecoded[srcI + 1];
+      rgba[outI + 2] = rowDecoded[srcI + 2];
+      rgba[outI + 3] = colorType === 6 ? rowDecoded[srcI + 3] : 255;
+    }
+    rowDecoded.copy(prev);
   }
   return { width, height, rgba };
 }
@@ -447,8 +699,23 @@ for (const model of models) {
   for (const side of ["top", "bottom", "back"]) {
     const file = `${model}-${side}.png`;
     const filePath = path.join(outDir, file);
-    if (force || !fs.existsSync(filePath)) {
-      const png = pngEncode(renderSkin(model, side));
+    const sizeInfo = pngHeaderSize(filePath);
+    const expectedSize = generatedSkinSize(model);
+    const preserveExisting = force && preserveForceSkins.has(model) && fs.existsSync(filePath);
+    const mirrorX = modelSideMirrorX(model, side);
+    const needsMirrorRegen = mirrorX
+      && !preserveForceSkins.has(model)
+      && !!sizeInfo
+      && sizeInfo.width > Math.ceil(expectedSize / 2) + 4;
+    if ((force && !preserveExisting) || !fs.existsSync(filePath) || needsMirrorRegen) {
+      let { rgba, width, height } = renderSkin(model, side);
+      if (mirrorX) {
+        const cropped = cropLeftHalfRgba(rgba, width, height);
+        rgba = cropped.rgba;
+        width = cropped.width;
+        height = cropped.height;
+      }
+      const png = pngEncode(rgba, width, height);
       fs.writeFileSync(filePath, png);
       generatedCount++;
     }
@@ -462,12 +729,39 @@ for (const model of models) {
     pngFiles.push(filePath);
     manifest[model][side] = `assets/skins/${file}`;
   }
+  const faceEntries = {};
+  for (const key of modelFaceTextureKeys(model)) {
+    const file = `${model}-face-${key}.png`;
+    const filePath = path.join(outDir, file);
+    if (force || !fs.existsSync(filePath)) {
+      const { rgba, width, height } = renderFaceSkin(model, key);
+      fs.writeFileSync(filePath, pngEncode(rgba, width, height));
+      generatedCount++;
+    }
+    if (!fs.existsSync(filePath)) continue;
+    if (recompress) {
+      const result = recompressPngFile(filePath);
+      recompressBeforeBytes += result.before;
+      recompressAfterBytes += result.after;
+      if (result.skipped) recompressSkippedCount++;
+      else if (result.after < result.before) recompressedCount++;
+    }
+    pngFiles.push(filePath);
+    faceEntries[key] = `assets/skins/${file}`;
+  }
+  if (Object.keys(faceEntries).length) manifest[model].faces = faceEntries;
 }
 
 const manifestMissing = !fs.existsSync(manifestPath);
 const manifestMtime = manifestMissing ? 0 : fs.statSync(manifestPath).mtimeMs;
 const newestPngMtime = Math.max(...pngFiles.map((file) => fs.statSync(file).mtimeMs));
-const shouldWriteManifest = force || manifestMissing || generatedCount > 0 || newestPngMtime > manifestMtime;
+const modelAssetFiles = fs.existsSync(modelDir)
+  ? fs.readdirSync(modelDir).filter((file) => file.endsWith(".ultraship.json")).map((file) => path.join(modelDir, file))
+  : [];
+const newestModelMtime = modelAssetFiles.length ? Math.max(...modelAssetFiles.map((file) => fs.statSync(file).mtimeMs)) : 0;
+const generatorMtime = fs.statSync(fileURLToPath(import.meta.url)).mtimeMs;
+const newestInputMtime = Math.max(newestPngMtime, newestModelMtime, generatorMtime);
+const shouldWriteManifest = !dryRun;
 
 if (!shouldWriteManifest) {
   if (recompress) {
@@ -482,8 +776,17 @@ if (!shouldWriteManifest) {
 const entries = Object.fromEntries(Object.entries(manifest).map(([model, sides]) => [
   model,
   Object.fromEntries(Object.entries(sides).map(([side, rel]) => {
+    if (side === "faces" && rel && typeof rel === "object") {
+      return [side, Object.fromEntries(Object.entries(rel).map(([key, faceRel]) => {
+        const data = fs.readFileSync(path.join(root, faceRel)).toString("base64");
+        return [key, {
+          src: `data:image/png;base64,${data}`,
+          path: faceRel.replaceAll(path.sep, "/")
+        }];
+      }))];
+    }
     const data = fs.readFileSync(path.join(root, rel)).toString("base64");
-    return [side, `data:image/png;base64,${data}`];
+    return [side, skinManifestEntry(model, side, `data:image/png;base64,${data}`, path.join(root, rel))];
   }))
 ]));
 
