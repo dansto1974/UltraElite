@@ -6016,6 +6016,16 @@
       return [n - 4, n - 3, n - 2, n - 1];
     }
 
+    function stationSlotEdgeIndices(model) {
+      if (!model?.edges?.length) return null;
+      const slot = new Set(stationSlotVertexIndices(model));
+      const indices = [];
+      model.edges.forEach((edge, edgeIndex) => {
+        if (slot.has(edge[0]) && slot.has(edge[1])) indices.push(edgeIndex);
+      });
+      return indices.length ? new Set(indices) : null;
+    }
+
     function stationSlotNormalForModel(model) {
       if (!model?.verts?.length) return null;
       const slot = stationSlotVertexIndices(model).map((i) => {
@@ -9597,6 +9607,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const items = [];
       const frontThreshold = options.frontThreshold ?? -.08;
       for (let edgeIndex = 0; edgeIndex < model.edges.length; edgeIndex++) {
+        if (options.skipEdgeIndices?.has(edgeIndex)) continue;
         const marked = !!model.edgeCullNormals?.[edgeIndex] || model.edgeFaces?.[edgeIndex]?.[0] < 0;
         if (!marked) continue;
         const frontFacing = protrudingEdgeFacingScore(model, edgeIndex, camVerts, options.edgeCullNormalsCam || null) > frontThreshold;
@@ -10863,6 +10874,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const faceVisible = collectWireFaceVisibility(model, camVerts);
       targetCtx.beginPath();
       for (let edgeIndex = 0; edgeIndex < model.edges.length; edgeIndex++) {
+        if (opts.skipEdgeIndices?.has(edgeIndex)) continue;
         // edgeCullNormals marks deliberate protruding geometry such as Cobra/Asp
         // nose sticks. Those are model structure, not disposable surface detail;
         // hull masks decide how much of them is hidden.
@@ -12084,14 +12096,15 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function drawHangarShipShadow(w, h, view, modelName, pos, scaleFactor, alpha = 1) {
       if (!ultraFxEnabled()) return;
+      if (pos.z > HANGAR_GATE_Z + 70) return;
       const floor = -175;
       const height = Math.max(0, pos.y - floor);
       const fade = clamp(1 - height / 260, 0, 1);
       if (fade <= .02) return;
       const r = Math.max(52, modelBoundingRadius(MODELS[modelName] || MODELS.cobra) * scaleFactor);
-      drawHangarFloorEllipse(w, h, view, vec(pos.x, floor + 2, pos.z), r * .82, r * 1.18, [
-        [0, `rgba(0,0,0,${.36 * fade * alpha})`],
-        [.48, `rgba(0,0,0,${.16 * fade * alpha})`],
+      drawHangarFloorEllipse(w, h, view, vec(pos.x, floor + 2, pos.z), r * .95, r * 1.34, [
+        [0, `rgba(0,0,0,${.54 * fade * alpha})`],
+        [.46, `rgba(0,0,0,${.24 * fade * alpha})`],
         [1, "rgba(0,0,0,0)"]
       ], 38);
     }
@@ -12221,6 +12234,18 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return hangarProjectPoly(hangarGatePoints(), view, w, h);
     }
 
+    function hangarGateBeaconPoints() {
+      const side = 22;
+      const inset = 18;
+      const z = HANGAR_GATE_Z - 8;
+      return [
+        vec(-HANGAR_GATE_W - side, HANGAR_GATE_H - inset, z),
+        vec(HANGAR_GATE_W + side, HANGAR_GATE_H - inset, z),
+        vec(-HANGAR_GATE_W - side, -HANGAR_GATE_H + inset, z),
+        vec(HANGAR_GATE_W + side, -HANGAR_GATE_H + inset, z)
+      ];
+    }
+
     function withHangarGateClip(view, w, h, drawFn) {
       const gatePr = hangarGateProjection(view, w, h);
       if (!gatePr || gatePr.length < 3) return drawFn();
@@ -12237,38 +12262,11 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function drawHangarForcefieldSheet(w, h, scene, view, intensity = 1) {
       const gatePr = hangarGateProjection(view, w, h);
       if (!gatePr || gatePr.length < 4 || intensity <= .01) return;
-      const bounds = polygonBounds(gatePr);
-      if (![bounds.minX, bounds.maxX, bounds.minY, bounds.maxY].every(Number.isFinite)) return;
-      const pulse = .55 + Math.sin(performance.now() / 220 + (scene?.seed || 1)) * .16;
-      ctx.save();
-      const grad = ctx.createLinearGradient(bounds.minX, bounds.minY, bounds.maxX, bounds.maxY);
-      grad.addColorStop(0, `rgba(112,205,255,${(.22 + pulse * .1) * intensity})`);
-      grad.addColorStop(.5, `rgba(45,124,255,${(.2 + pulse * .11) * intensity})`);
-      grad.addColorStop(1, `rgba(6,22,72,${(.2 + pulse * .08) * intensity})`);
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.moveTo(gatePr[0].x, gatePr[0].y);
-      gatePr.slice(1).forEach((pt) => ctx.lineTo(pt.x, pt.y));
-      ctx.closePath();
-      ctx.fill();
-      ctx.globalCompositeOperation = "lighter";
-      ctx.strokeStyle = `rgba(148,214,255,${(.24 + pulse * .34) * intensity})`;
-      ctx.lineWidth = Math.max(1.2, w / 850) * (1 + intensity * .55);
-      for (let i = 1; i < 5; i++) {
-        const t = i / 5;
-        ctx.beginPath();
-        ctx.moveTo(lerp(gatePr[0].x, gatePr[3].x, t), lerp(gatePr[0].y, gatePr[3].y, t));
-        ctx.lineTo(lerp(gatePr[1].x, gatePr[2].x, t), lerp(gatePr[1].y, gatePr[2].y, t));
-        ctx.stroke();
-      }
-      ctx.strokeStyle = `rgba(210,240,255,${.32 * intensity})`;
-      ctx.lineWidth = Math.max(1, w / 1200);
-      ctx.beginPath();
-      ctx.moveTo(gatePr[0].x, gatePr[0].y);
-      gatePr.slice(1).forEach((pt) => ctx.lineTo(pt.x, pt.y));
-      ctx.closePath();
-      ctx.stroke();
-      ctx.restore();
+      drawStationForcefieldQuad(ctx, gatePr, {
+        rot: (scene?.seed || 1) * .001,
+        intensity,
+        interior: false
+      });
     }
 
     function hangarGateCrossingIntensity(z) {
@@ -12321,45 +12319,22 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       drawHangarLightPools(w, h, view, floor, ceil);
       drawHangarCargoStacks(w, h, scene, view, floor);
 
-      const gateW = HANGAR_GATE_W, gateH = HANGAR_GATE_H;
       const gate = hangarGatePoints();
       const gatePr = hangarPoly(gate, view, w, h, "rgba(0,0,0,.92)", "rgba(120,185,255,.36)");
       drawHangarOutsideThroughGate(view, w, h, gatePr, (scene?.seed || 1) ^ 0xa5a5);
-      const pulse = .44 + Math.sin(performance.now() / 260) * .18;
       if (gatePr) {
-        const bounds = polygonBounds(gatePr);
-        if (![bounds.minX, bounds.maxX, bounds.minY, bounds.maxY].every(Number.isFinite)) {
-          ctx.restore();
-          return;
-        }
-        const grad = ctx.createLinearGradient(bounds.minX, bounds.minY, bounds.maxX, bounds.maxY);
-        grad.addColorStop(0, `rgba(86,184,255,${.22 + pulse * .12})`);
-        grad.addColorStop(.5, `rgba(42,126,255,${.18 + pulse * .16})`);
-        grad.addColorStop(1, `rgba(8,36,100,${.18 + pulse * .08})`);
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.moveTo(gatePr[0].x, gatePr[0].y);
-        gatePr.slice(1).forEach((pt) => ctx.lineTo(pt.x, pt.y));
-        ctx.closePath();
-        ctx.fill();
-        ctx.globalCompositeOperation = "lighter";
-        ctx.strokeStyle = `rgba(120,196,255,${.3 + pulse * .32})`;
-        ctx.lineWidth = Math.max(1.2, w / 900);
-        for (let i = 1; i < 5 && gatePr.length >= 4; i++) {
-          const t = i / 5;
-          ctx.beginPath();
-          ctx.moveTo(lerp(gatePr[0].x, gatePr[3].x, t), lerp(gatePr[0].y, gatePr[3].y, t));
-          ctx.lineTo(lerp(gatePr[1].x, gatePr[2].x, t), lerp(gatePr[1].y, gatePr[2].y, t));
-          ctx.stroke();
-        }
-        ctx.globalCompositeOperation = "source-over";
+        drawStationForcefieldQuad(ctx, gatePr, {
+          rot: (scene?.seed || 1) * .001,
+          intensity: 1,
+          interior: false
+        });
       }
 
       for (let i = -2; i <= 2; i++) {
         const strip = [p(i * 125 - 24, ceil - 4, 260), p(i * 125 + 24, ceil - 4, 260), p(i * 125 + 24, ceil - 4, 730), p(i * 125 - 24, ceil - 4, 730)];
         hangarPoly(strip, view, w, h, "rgba(255,244,204,.68)");
       }
-      for (const b of [p(-gateW - 34, gateH + 28, far - 8), p(gateW + 34, gateH + 28, far - 8), p(-gateW - 34, -gateH - 28, far - 8), p(gateW + 34, -gateH - 28, far - 8)]) {
+      for (const b of hangarGateBeaconPoints()) {
         const pr = hangarProject(b, view, w, h);
         if (!pr) continue;
         const blink = .4 + Math.max(0, Math.sin(performance.now() / 1000 * TAU + b.x * .01)) * .6;
@@ -12392,7 +12367,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const model = MODELS[modelName];
       if (!model) return;
       const shipObj = hangarSceneShip(scene, opts);
-      drawHangarShipShadow(w, h, view, modelName, shipObj.pos, shipObj.scaleFactor, opts.alpha ?? 1);
+      if (opts.shadow !== false) drawHangarShipShadow(w, h, view, modelName, shipObj.pos, shipObj.scaleFactor, opts.alpha ?? 1);
       drawModelEntity(ctx, { camera: view, w, h, mode: game.graphicsMode }, shipObj, {
         alpha: opts.alpha ?? 1,
         decal: null,
@@ -12505,9 +12480,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       };
       const drawShipPass = () => {
         const exitTrail = spool * smoothstep(4.95, 5.45, t) * (1 + exit * 2.25);
-        drawHangarShipWithWorldEffects(w, h, scene, view, { ...shipOpts, trail: exitTrail });
+        drawHangarShipWithWorldEffects(w, h, scene, view, { ...shipOpts, trail: exitTrail, shadow: false });
       };
       const forcefieldInFront = shipPos.z > HANGAR_GATE_Z - 12;
+      drawHangarShipShadow(w, h, view, modelName, shipPos, shipOpts.scaleFactor, 1);
       if (!forcefieldInFront) drawHangarForcefieldSheet(w, h, scene, view, hangarGateCrossingIntensity(shipPos.z));
       if (forcefieldInFront) withHangarGateClip(view, w, h, drawShipPass);
       else drawShipPass();
@@ -12581,9 +12557,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       };
       const drawShipPass = () => {
         const entryTrail = engineGlow * (1 - smoothstep(3.35, 6.4, t)) * .95;
-        drawHangarShipWithWorldEffects(w, h, scene, view, { ...shipOpts, trail: entryTrail });
+        drawHangarShipWithWorldEffects(w, h, scene, view, { ...shipOpts, trail: entryTrail, shadow: false });
       };
       const forcefieldInFront = shipZ > HANGAR_GATE_Z - 12;
+      drawHangarShipShadow(w, h, view, modelName, shipOpts.pos, shipOpts.scaleFactor, shipOpts.alpha ?? 1);
       if (!forcefieldInFront) drawHangarForcefieldSheet(w, h, scene, view, hangarGateCrossingIntensity(shipZ));
       if (forcefieldInFront) withHangarGateClip(view, w, h, drawShipPass);
       else drawShipPass();
@@ -15250,7 +15227,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           points,
           opts.edgeColor || hullColor,
           opts.edgeWidth ?? clamp(680 / Math.max(80, centerCam.z), .7, 2),
-          { phase, edgeCullNormalsCam, frontOccluders }
+          { phase, edgeCullNormalsCam, frontOccluders, skipEdgeIndices: opts.skipEdgeIndices }
         );
         if (protrudingEdges.length) drawSolidItems(targetCtx, protrudingEdges);
       };
@@ -15329,12 +15306,17 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (items.length) drawSolidItems(targetCtx, items);
     }
 
-    function drawDockPortal(targetCtx, points, station) {
-      if (points.some((p) => !p)) return;
+    function drawStationForcefieldQuad(targetCtx, points, options = {}) {
+      if (!points || points.length < 4 || points.some((p) => !p) || !ultraFxEnabled()) return;
       const portalCtx = targetCtx || ctx;
       const [a, b, c, d] = points;
       const bounds = polygonBounds(points);
+      if (![bounds.minX, bounds.maxX, bounds.minY, bounds.maxY].every(Number.isFinite)) return;
       const span = Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY);
+      if (!Number.isFinite(span) || span <= 0) return;
+      const intensity = clamp(options.intensity ?? 1, 0, 1.5);
+      if (intensity <= .01) return;
+      const rot = options.rot || 0;
       const quadPoint = (u, v) => ({
         x: lerp(lerp(a.x, b.x, u), lerp(d.x, c.x, u), v),
         y: lerp(lerp(a.y, b.y, u), lerp(d.y, c.y, u), v)
@@ -15351,72 +15333,101 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       portalCtx.save();
       quadPath();
       portalCtx.clip();
-      const interior = portalCtx.createLinearGradient(bounds.minX, bounds.minY, bounds.maxX, bounds.maxY);
-      interior.addColorStop(0, "rgba(0,4,10,.78)");
-      interior.addColorStop(.52, "rgba(0,11,24,.9)");
-      interior.addColorStop(1, "rgba(0,2,8,.82)");
-      portalCtx.fillStyle = interior;
-      quadPath();
-      portalCtx.fill();
-      const throat = .16;
-      const q0 = quadPoint(throat, throat);
-      const q1 = quadPoint(1 - throat, throat);
-      const q2 = quadPoint(1 - throat, 1 - throat);
-      const q3 = quadPoint(throat, 1 - throat);
-      portalCtx.fillStyle = "rgba(0,0,0,.42)";
-      portalCtx.beginPath();
-      portalCtx.moveTo(q0.x, q0.y);
-      portalCtx.lineTo(q1.x, q1.y);
-      portalCtx.lineTo(q2.x, q2.y);
-      portalCtx.lineTo(q3.x, q3.y);
-      portalCtx.closePath();
-      portalCtx.fill();
-      if (ultraFxEnabled()) {
-        // Keep every seal feature in slot UV coordinates. Screen-space gradients/lines
-        // look fine until the station rotates, then they visibly swim across the portal.
-        const shimmer = .42 + Math.max(0, Math.sin(performance.now() / 430 + (station?.rot || 0))) * .38;
-        for (let i = 0; i < 6; i++) {
-          const inset = i * .07;
-          const p0 = quadPoint(inset, inset);
-          const p1 = quadPoint(1 - inset, inset);
-          const p2 = quadPoint(1 - inset, 1 - inset);
-          const p3 = quadPoint(inset, 1 - inset);
-          portalCtx.fillStyle = `rgba(58,128,255,${(.018 + i * .008) * shimmer})`;
-          portalCtx.beginPath();
-          portalCtx.moveTo(p0.x, p0.y);
-          portalCtx.lineTo(p1.x, p1.y);
-          portalCtx.lineTo(p2.x, p2.y);
-          portalCtx.lineTo(p3.x, p3.y);
-          portalCtx.closePath();
-          portalCtx.fill();
-        }
-        portalCtx.globalCompositeOperation = "lighter";
-        portalCtx.strokeStyle = `rgba(120,180,255,${.10 * shimmer})`;
-        portalCtx.lineWidth = Math.max(1, span * .012);
-        for (let i = 1; i < 5; i++) {
-          const v = clamp(i / 5 + Math.sin(performance.now() / 260 + i + (station?.rot || 0)) * .018, .04, .96);
-          const p0 = quadPoint(.04, v);
-          const p1 = quadPoint(.96, v);
-          portalCtx.beginPath();
-          portalCtx.moveTo(p0.x, p0.y);
-          portalCtx.lineTo(p1.x, p1.y);
-          portalCtx.stroke();
-        }
+      if (options.interior !== false) {
+        const interior = portalCtx.createLinearGradient(bounds.minX, bounds.minY, bounds.maxX, bounds.maxY);
+        interior.addColorStop(0, `rgba(0,4,10,${.78 * intensity})`);
+        interior.addColorStop(.52, `rgba(0,11,24,${.9 * intensity})`);
+        interior.addColorStop(1, `rgba(0,2,8,${.82 * intensity})`);
+        portalCtx.fillStyle = interior;
+        quadPath();
+        portalCtx.fill();
+        const throat = .16;
+        const q0 = quadPoint(throat, throat);
+        const q1 = quadPoint(1 - throat, throat);
+        const q2 = quadPoint(1 - throat, 1 - throat);
+        const q3 = quadPoint(throat, 1 - throat);
+        portalCtx.fillStyle = `rgba(0,0,0,${.42 * intensity})`;
+        portalCtx.beginPath();
+        portalCtx.moveTo(q0.x, q0.y);
+        portalCtx.lineTo(q1.x, q1.y);
+        portalCtx.lineTo(q2.x, q2.y);
+        portalCtx.lineTo(q3.x, q3.y);
+        portalCtx.closePath();
+        portalCtx.fill();
+      }
+
+      // Keep every seal feature in slot UV coordinates. Screen-space gradients/lines
+      // look fine until the station rotates, then they visibly swim across the portal.
+      const shimmer = (.42 + Math.max(0, Math.sin(performance.now() / 430 + rot)) * .38) * intensity;
+      for (let i = 0; i < 6; i++) {
+        const inset = i * .07;
+        const p0 = quadPoint(inset, inset);
+        const p1 = quadPoint(1 - inset, inset);
+        const p2 = quadPoint(1 - inset, 1 - inset);
+        const p3 = quadPoint(inset, 1 - inset);
+        portalCtx.fillStyle = `rgba(58,128,255,${(.018 + i * .008) * shimmer})`;
+        portalCtx.beginPath();
+        portalCtx.moveTo(p0.x, p0.y);
+        portalCtx.lineTo(p1.x, p1.y);
+        portalCtx.lineTo(p2.x, p2.y);
+        portalCtx.lineTo(p3.x, p3.y);
+        portalCtx.closePath();
+        portalCtx.fill();
+      }
+      portalCtx.globalCompositeOperation = "lighter";
+      portalCtx.strokeStyle = `rgba(120,180,255,${.10 * shimmer})`;
+      portalCtx.lineWidth = Math.max(1, span * .012);
+      for (let i = 1; i < 5; i++) {
+        const v = clamp(i / 5 + Math.sin(performance.now() / 260 + i + rot) * .018, .04, .96);
+        const p0 = quadPoint(.04, v);
+        const p1 = quadPoint(.96, v);
+        portalCtx.beginPath();
+        portalCtx.moveTo(p0.x, p0.y);
+        portalCtx.lineTo(p1.x, p1.y);
+        portalCtx.stroke();
       }
       portalCtx.restore();
-      if (!ultraFxEnabled()) return;
 
-      // Blue force-field edge glow around the opening.
-      const pulse = .4 + Math.max(0, Math.sin(performance.now() / 240)) * .6;
+      // Keep the field itself alive without repainting a bright mesh-like border.
+      const pulse = .4 + Math.max(0, Math.sin(performance.now() / 240 + rot)) * .6;
       portalCtx.save();
       portalCtx.globalCompositeOperation = "lighter";
-      portalCtx.strokeStyle = `rgba(90,160,255,${.24 * pulse})`;
-      portalCtx.lineWidth = Math.max(1.5, span * .018);
-      portalCtx.shadowColor = "rgba(90,160,255,.9)";
-      portalCtx.shadowBlur = span * .1;
+      portalCtx.strokeStyle = `rgba(90,160,255,${.055 * pulse * intensity})`;
+      portalCtx.lineWidth = Math.max(.7, span * .006);
       quadPath();
       portalCtx.stroke();
       portalCtx.restore();
+    }
+
+    function drawDockPortal(targetCtx, points, station) {
+      if (points.some((p) => !p)) return;
+      const portalCtx = targetCtx || ctx;
+      const [a, b, c, d] = points;
+      const bounds = polygonBounds(points);
+      const span = Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY);
+      const quadPath = () => {
+        portalCtx.beginPath();
+        portalCtx.moveTo(a.x, a.y);
+        portalCtx.lineTo(b.x, b.y);
+        portalCtx.lineTo(c.x, c.y);
+        portalCtx.lineTo(d.x, d.y);
+        portalCtx.closePath();
+      };
+      const portalMode = station?.mode || game.graphicsMode;
+
+      if (portalMode === "wire") {
+        portalCtx.save();
+        portalCtx.globalCompositeOperation = "source-over";
+        portalCtx.strokeStyle = "#ffd33d";
+        portalCtx.lineWidth = Math.max(1.2, span * .012);
+        quadPath();
+        portalCtx.stroke();
+        portalCtx.restore();
+        return;
+      }
+      if (!ultraFxEnabled()) return;
+
+      drawStationForcefieldQuad(portalCtx, points, { rot: station?.rot || 0, intensity: 1 });
     }
 
     function projectedModelRadius(model, centerCam, w, h, scaleFactor = 1) {
@@ -15861,7 +15872,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           edgeWidth: Number(opts.edgeWidth) || undefined,
           textures: qualityMode === "plain" ? false : undefined,
           metalAlphaMul: qualityMode === "plain" ? 0 : undefined,
-          skipBeacons: stationPreview
+          skipBeacons: stationPreview,
+          skipEdgeIndices: stationPreview ? stationSlotEdgeIndices(model) : null
         }
       });
       const result = routed.result;
@@ -15869,7 +15881,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const slotVerts = stationSlotVertexIndices(result.model || model).map((i) => result.camVerts[i]);
         const slotPoints = slotVerts.map((p) => p ? result.project(p) : null);
         if (slotPoints.every(Boolean) && faceFacing(slotVerts).facing > .02) {
-          drawDockPortal(targetCtx, slotPoints, { rot: renderBenchEntity.rot || 0 });
+          drawDockPortal(targetCtx, slotPoints, { rot: renderBenchEntity.rot || 0, mode: game.graphicsMode });
         }
         drawRenderedModelBeacons(targetCtx, result, renderBenchEntity, w, h, { mode: game.graphicsMode });
       }
@@ -15929,7 +15941,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         edgeWidth: clamp(800 / Math.max(110, cam.z), .7, 2),
         texture: getStationTexture(o.stationStyle || stationStyleForSystem(currentSystem())),
         metalAlphaMul: o.stationStyle?.wealth > .72 ? 1.05 : o.stationStyle?.wealth < .32 ? .82 : .95,
-        skipBeacons: true
+        skipBeacons: true,
+        skipEdgeIndices: stationSlotEdgeIndices(stationModelFor(o))
       });
       if (!rendered) return;
       const slotVerts = stationSlotVertexIndices(rendered.model).map((i) => rendered.camVerts[i]);
@@ -15938,7 +15951,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       // slot face actually pointing at the camera — otherwise it shows through the
       // station from the back and sides.
       if (slotA && slotB && slotC && slotD && faceFacing(slotVerts).facing > .02) {
-        drawDockPortal(ctx, [slotA, slotB, slotC, slotD], o);
+        drawDockPortal(ctx, [slotA, slotB, slotC, slotD], { ...o, mode: game.graphicsMode });
       }
       drawRenderedModelBeacons(ctx, rendered, stationEntity, w, h, { mode: game.graphicsMode });
     }
