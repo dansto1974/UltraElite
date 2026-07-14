@@ -13,6 +13,7 @@
     "skin-templates": "node tools/build/generate-skin-templates.mjs",
     "build": "node tools/build/generate-model-library.mjs && node tools/build/generate-bitmap-skins.mjs && node tools/build/build-single-file.mjs",
     "publish:site": "node tools/publish-site.mjs",
+    "tools": "node tools/open-tool.mjs /tools/",
     "dev": "python3 -m http.server 8765",
     "dev:tools": "node tools/local-dev-server.mjs"
   }

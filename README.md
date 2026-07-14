@@ -26,9 +26,10 @@ Useful commands:
 npm run check
 npm run build
 npm run dev
+npm run tools
 ```
 
-`npm run check` validates the modular source and single-file build safety rules. `npm run build` regenerates both `index.html` and `dev.html`. `npm run dev` serves the project locally at [http://127.0.0.1:8765](http://127.0.0.1:8765).
+`npm run check` validates the modular source and single-file build safety rules. `npm run build` regenerates both `index.html` and `dev.html`. `npm run dev` serves the project locally at [http://127.0.0.1:8765](http://127.0.0.1:8765). `npm run tools` starts the local Node tool server if needed and opens the tools hub.
 
 For local development, use `dev.html`. For release testing and publishing, use the generated `index.html`. The public website should receive only `index.html` unless a future release deliberately adds more deployable assets.
 
