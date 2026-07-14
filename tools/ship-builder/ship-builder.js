@@ -105,6 +105,7 @@ const state = {
   bitmapShelf: [],
   toolServer: { available: false, skins: [], version: 0 },
   assetVersion: Date.now(),
+  previewSkinVersion: Date.now(),
   selected: null,
   pick: [],
   view: { rx: -0.35, ry: 0.72, zoom: 2.9, panX: 0, panY: 0 },
@@ -116,6 +117,7 @@ const TEMPLATE_SIZE = 400;
 const TEMPLATE_MAX_SIZE = 600;
 const BITMAP_FACE_SIDES = new Set(["top", "bottom", "back"]);
 let gamePreviewTimer = 0;
+const previewImageDataUrlCache = new WeakMap();
 
 function vec(x = 0, y = 0, z = 0) { return { x, y, z }; }
 function add(a, b) { return vec(a.x + b.x, a.y + b.y, a.z + b.z); }
@@ -200,6 +202,10 @@ function sourceEdge(edge, index) {
 
 function setStatus(text) {
   els.status.textContent = text;
+}
+
+function confirmWrite(message) {
+  return window.confirm(`${message}\n\nThis writes to the local project files.`);
 }
 
 function setLocalServerReadout(text, ok = state.toolServer.available) {
@@ -1109,6 +1115,10 @@ function faceSkinCount() {
   return Object.values(state.faceSkinImages || {}).filter((img) => img?.complete && img.naturalWidth).length;
 }
 
+function markPreviewSkinsDirty() {
+  state.previewSkinVersion = Date.now();
+}
+
 function updateSkinReadout() {
   if (!els.skinReadout) return;
   const skin = state.skinImages;
@@ -1145,6 +1155,7 @@ function clearSkinBitmaps() {
   state.skinImages = emptySkinBundle();
   state.faceSkinImages = {};
   state.faceSkinSources = {};
+  markPreviewSkinsDirty();
   updateSkinReadout();
   renderAll();
 }
@@ -1158,6 +1169,7 @@ function loadSkinBitmaps(modelId = templateShipId(), mirrorX = null) {
   state.skinImages = bundle;
   state.faceSkinImages = {};
   state.faceSkinSources = {};
+  markPreviewSkinsDirty();
   updateSkinReadout();
   for (const side of ["top", "bottom", "back"]) {
     const img = new Image();
@@ -1166,6 +1178,7 @@ function loadSkinBitmaps(modelId = templateShipId(), mirrorX = null) {
       if (state.skinImages !== bundle) return;
       bundle.loaded++;
       bundle.source[side] = "asset";
+      markPreviewSkinsDirty();
       updateSkinReadout();
       renderAll();
     };
@@ -1184,6 +1197,7 @@ function loadSkinBitmaps(modelId = templateShipId(), mirrorX = null) {
     img.onload = () => {
       if (state.skinImages !== bundle) return;
       state.faceSkinSources[key] = "asset";
+      markPreviewSkinsDirty();
       updateSkinReadout();
       renderAll();
     };
@@ -1302,6 +1316,7 @@ function setSkinSideFromImage(side, img, source = "imported", url = "", mirrorX 
   state.skinImages.mirrorX[side] = mirrorX == null ? !!currentModelMirrorFlags()[side] : !!mirrorX;
   state.skinImages.source[side] = source;
   state.skinImages.urls[side] = url;
+  markPreviewSkinsDirty();
   updateSkinReadout();
   renderAll();
 }
@@ -1326,6 +1341,7 @@ function setSelectedFaceSkinFromImage(img, source = "imported", url = "", name =
   state.faceSkinImages[key] = img;
   state.faceSkinSources[key] = source;
   if (url) state.faceSkinUrls[key] = url;
+  markPreviewSkinsDirty();
   updateSkinReadout();
   setStatus(`${name} APPLIED TO FACE #${face.id} AS ${key}. SAVE AS ${templateShipId()}-face-${key}.png TO MAKE PERMANENT.`);
   renderAll();
@@ -1340,6 +1356,7 @@ function clearSelectedFaceSkin() {
   const key = cleanBitmapKey(face.bitmapFaceKey);
   delete face.bitmapFaceKey;
   if (mirrorActionsEnabled()) syncMirroredFace(face);
+  markPreviewSkinsDirty();
   setStatus(key ? `FACE TEXTURE ${key} CLEARED FROM FACE #${face.id}.` : "SELECTED FACE HAS NO FACE TEXTURE.");
   renderAll();
 }
@@ -2116,12 +2133,48 @@ function renderAll() {
   scheduleGamePreviewSync();
 }
 
+function cachedPreviewImageDataUrl(img) {
+  if (!img?.naturalWidth || !img?.naturalHeight) return "";
+  const cached = previewImageDataUrlCache.get(img);
+  if (cached) return cached;
+  const dataUrl = imageToPngDataUrl(img);
+  previewImageDataUrlCache.set(img, dataUrl);
+  return dataUrl;
+}
+
+function gamePreviewBitmapSkins() {
+  const skins = {
+    version: state.previewSkinVersion,
+    mirrorX: state.skinImages?.mirrorX || emptyMirrorFlags(false),
+    replaceBaseTexture: true,
+    alpha: .96
+  };
+  let count = 0;
+  for (const side of ["top", "bottom", "back"]) {
+    const img = state.skinImages?.[side];
+    if (!img?.naturalWidth) continue;
+    skins[side] = cachedPreviewImageDataUrl(img);
+    count++;
+  }
+  const faces = {};
+  for (const [key, img] of Object.entries(state.faceSkinImages || {})) {
+    if (!img?.naturalWidth) continue;
+    faces[key] = cachedPreviewImageDataUrl(img);
+    count++;
+  }
+  if (Object.keys(faces).length) skins.faces = faces;
+  const angle = skinAngleDeg();
+  if (angle) skins.angle = { top: angle, bottom: angle, back: angle };
+  return count ? skins : null;
+}
+
 function gamePreviewPayload() {
   return {
     id: templateShipId(),
     name: els.shipName.value.trim() || templateShipId(),
     blueprint: derivedBlueprint(),
     gameMeta: gameMetadata(),
+    bitmapSkins: gamePreviewBitmapSkins(),
     view: { rx: state.view.rx, ry: state.view.ry, roll: 0 },
     mode: "solid",
     quality: "full",
@@ -2852,6 +2905,10 @@ async function saveModelAsset() {
     if (!await requireToolServer()) return;
     const data = builderExport();
     const cleanId = cleanBitmapKey(data.id, "custom_ship");
+    if (!confirmWrite(`Overwrite assets/models/${cleanId}.ultraship.json and regenerate model libraries?`)) {
+      setStatus("MODEL SAVE CANCELLED.");
+      return;
+    }
     setStatus(`SAVING ${cleanId.toUpperCase()} MODEL...`);
     const result = await apiJson(`/api/models/${encodeURIComponent(cleanId)}`, {
       method: "POST",
@@ -2877,6 +2934,10 @@ async function uploadSkinSide(side) {
       return;
     }
     const model = templateShipId();
+    if (!confirmWrite(`Overwrite assets/skins/${model}-${side}.png and regenerate bitmap skins?`)) {
+      setStatus("SKIN UPLOAD CANCELLED.");
+      return;
+    }
     setStatus(`UPLOADING ${model.toUpperCase()} ${side.toUpperCase()} SKIN...`);
     const result = await apiJson("/api/skins", {
       method: "POST",
@@ -2913,6 +2974,10 @@ async function uploadSelectedFaceSkin() {
     face.bitmapFaceKey = key;
     if (mirrorActionsEnabled()) syncMirroredFace(face);
     const model = templateShipId();
+    if (!confirmWrite(`Overwrite assets/skins/${model}-face-${key}.png and regenerate bitmap skins?`)) {
+      setStatus("FACE SKIN UPLOAD CANCELLED.");
+      return;
+    }
     setStatus(`UPLOADING ${model.toUpperCase()} FACE ${key}...`);
     const result = await apiJson("/api/skins", {
       method: "POST",
@@ -2935,6 +3000,10 @@ async function uploadSelectedFaceSkin() {
 async function rebuildGameFiles() {
   try {
     if (!await requireToolServer()) return;
+    if (!confirmWrite("Regenerate model libraries, bitmap skin manifest, dev.html, and index.html?")) {
+      setStatus("REBUILD CANCELLED.");
+      return;
+    }
     setStatus("REBUILDING MODEL/SKIN/GAME FILES...");
     const result = await apiJson("/api/rebuild", {
       method: "POST",

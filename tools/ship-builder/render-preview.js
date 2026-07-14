@@ -26,6 +26,7 @@ function render(payload = latest) {
   const info = api.renderFrame(canvas, {
     model: payload.id || "builder_preview",
     blueprint: payload.blueprint,
+    bitmapSkins: payload.bitmapSkins || null,
     mode: payload.mode || "solid",
     fxLevel: "ultra",
     quality: payload.quality || "full",

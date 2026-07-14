@@ -10317,6 +10317,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return allowPending || (entry.img.complete && entry.img.naturalWidth) ? entry.img : null;
     }
 
+    function cleanBitmapSkinKey(value) {
+      return String(value || "").trim().replace(/[^a-zA-Z0-9_-]+/g, "_").replace(/^_+|_+$/g, "");
+    }
+
     function bitmapSkinRole(o) {
       const modelName = o?.model || "";
       if (o?.type === "station" || o?.type === "hermit" || modelName === "coriolis" || modelName === "dodoStation") return "station";
@@ -15581,7 +15585,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function drawModelEntity(targetCtx, renderCtx, entity, opts = {}) {
       const modelName = entity.model || "cobra";
-      const model = MODELS[modelName];
+      const model = opts.model || MODELS[modelName];
       if (!model) return null;
       const camera = renderCtx.camera || game.camera;
       const w = renderCtx.w, h = renderCtx.h;
@@ -15994,7 +15998,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         }
       }
 
-      const result = drawModelEntity(targetCtx, renderCtx, entity, opts.drawOptions || opts);
+      const result = drawModelEntity(targetCtx, renderCtx, entity, opts.drawOptions ? { ...opts.drawOptions, model: opts.model } : opts);
       return { route: "mesh", result };
     }
 
@@ -16073,6 +16077,42 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         effects: false
       } : undefined;
 
+      const benchImageDecals = (() => {
+        const skins = opts.bitmapSkins;
+        if (!skins || typeof skins !== "object") return undefined;
+        const version = cleanBitmapSkinKey(skins.version || opts.assetVersion || "live") || "live";
+        const out = {
+          alpha: Number.isFinite(Number(skins.alpha)) ? Number(skins.alpha) : .96,
+          replaceBaseTexture: skins.replaceBaseTexture !== false,
+          mirrorX: skins.mirrorX || null,
+          angle: skins.angle || null
+        };
+        let count = 0;
+        for (const side of ["top", "bottom", "back"]) {
+          const url = typeof skins[side] === "string" ? skins[side] : skins[side]?.src;
+          const img = getProjectedImageDecalSource(`bench:${modelName}:${version}:${side}`, url, true);
+          if (img) {
+            out[side] = img;
+            count++;
+          }
+        }
+        if (skins.faces && typeof skins.faces === "object") {
+          const faces = {};
+          for (const [faceKey, entry] of Object.entries(skins.faces)) {
+            const cleanKey = cleanBitmapSkinKey(faceKey);
+            if (!cleanKey) continue;
+            const url = typeof entry === "string" ? entry : entry?.src;
+            const img = getProjectedImageDecalSource(`bench:${modelName}:${version}:face:${cleanKey}`, url, true);
+            if (img) {
+              faces[cleanKey] = img;
+              count++;
+            }
+          }
+          if (Object.keys(faces).length) out.faces = faces;
+        }
+        return count ? out : undefined;
+      })();
+
       targetCtx.save();
       targetCtx.clearRect(0, 0, w, h);
       targetCtx.fillStyle = "#000";
@@ -16120,6 +16160,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         quality,
         drawOptions: {
           quality,
+          imageDecals: benchImageDecals,
           edgeColor: opts.edgeColor || (game.fxLevel === "classic" ? "#e9f2e4" : undefined),
           edgeWidth: Number(opts.edgeWidth) || undefined,
           textures: qualityMode === "plain" ? false : undefined,

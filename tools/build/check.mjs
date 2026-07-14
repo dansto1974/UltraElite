@@ -187,7 +187,9 @@ const builderToolGuards = [
   ["builder direct model save", "async function saveModelAsset"],
   ["builder direct skin side upload", "async function uploadSkinSide"],
   ["builder direct face skin upload", "async function uploadSelectedFaceSkin"],
-  ["builder asset shelf API load", "async function loadAssetShelf"]
+  ["builder asset shelf API load", "async function loadAssetShelf"],
+  ["builder write confirmation", "function confirmWrite"],
+  ["builder transient preview skin bundle", "function gamePreviewBitmapSkins"]
 ];
 for (const [label, marker] of builderToolGuards) {
   if (!builderJs.includes(marker)) {
@@ -210,11 +212,14 @@ assertGeneratedAssetsBeforeMain(builderRenderPreviewHtml, "Ship Builder game-ren
 if (!renderQaJs.includes("window.UltraEliteRenderBench") || !renderQaJs.includes("api.renderFrame")) {
   throw new Error("Render QA must use the shared UltraEliteRenderBench renderer hook.");
 }
-if (!builderRenderPreviewJs.includes("window.UltraEliteRenderBench") || !builderRenderPreviewJs.includes("blueprint: payload.blueprint")) {
+if (!builderRenderPreviewJs.includes("window.UltraEliteRenderBench") || !builderRenderPreviewJs.includes("blueprint: payload.blueprint") || !builderRenderPreviewJs.includes("bitmapSkins: payload.bitmapSkins")) {
   throw new Error("Ship Builder game-render preview must use the shared UltraEliteRenderBench renderer hook with a builder blueprint.");
 }
-if (!js.includes("const customBlueprint = opts.blueprint") || !js.includes("buildBlueprint(cloneGeneratedModelBlueprint(customBlueprint))")) {
+if (!js.includes("const customBlueprint = opts.blueprint") || !js.includes("buildBlueprint(cloneGeneratedModelBlueprint(customBlueprint))") || !js.includes("const model = opts.model || MODELS[modelName]")) {
   throw new Error("Render bench hook must accept custom builder blueprints for Ship Builder game-render preview.");
+}
+if (!js.includes("const benchImageDecals") || !js.includes("opts.bitmapSkins")) {
+  throw new Error("Render bench hook must accept transient bitmap skins for Ship Builder game-render preview.");
 }
 
 function cleanBitmapKey(value) {
