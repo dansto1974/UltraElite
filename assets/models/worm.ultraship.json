@@ -2,6 +2,40 @@
   "format": "ultra-elite-ship-builder/v1",
   "id": "worm",
   "name": "Worm",
+  "symmetry": "x-locked",
+  "gameMeta": {
+    "class": "fighter",
+    "npcRole": "private",
+    "aiProfile": "standard",
+    "decalRole": "private",
+    "baseColor": "#e9f2e4",
+    "description": "",
+    "missionLore": "",
+    "imageDecalMirrorX": {
+      "top": true,
+      "bottom": true,
+      "back": false
+    },
+    "valueCr": 250000,
+    "stats": {
+      "r": 38,
+      "hp": 120,
+      "speed": 1,
+      "cargo": 10,
+      "missiles": 1,
+      "laser": "none"
+    },
+    "lists": {
+      "trader": true,
+      "pirate": true,
+      "police": false,
+      "alien": false
+    },
+    "flags": {
+      "escapePod": true,
+      "hiddenUntilDiscovered": false
+    }
+  },
   "verts": [
     {
       "id": 1,
@@ -93,7 +127,8 @@
         2,
         1
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#6e6952"
     },
     {
       "id": 1001,
@@ -103,7 +138,8 @@
         10,
         4
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#6d6d63"
     },
     {
       "id": 1002,
@@ -112,7 +148,8 @@
         1,
         5
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#6f6c5e"
     },
     {
       "id": 1003,
@@ -121,7 +158,8 @@
         6,
         2
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#6f6c5e"
     },
     {
       "id": 1004,
@@ -131,7 +169,8 @@
         5,
         7
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#6a695e"
     },
     {
       "id": 1005,
@@ -141,7 +180,8 @@
         8,
         6
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#6a695e"
     },
     {
       "id": 1006,
@@ -151,7 +191,8 @@
         7,
         8
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#524f3c"
     },
     {
       "id": 1007,
@@ -163,44 +204,12 @@
         6,
         8
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#6a664d"
     }
   ],
   "edges": [],
   "details": [
-    {
-      "id": 1008,
-      "type": "window",
-      "color": "#101915",
-      "normal": [
-        0,
-        0.98,
-        0.2
-      ],
-      "lift": 1,
-      "points": [
-        [
-          2.5,
-          8,
-          5
-        ],
-        [
-          -2.5,
-          8,
-          5
-        ],
-        [
-          -4,
-          12,
-          -15
-        ],
-        [
-          4,
-          12,
-          -15
-        ]
-      ]
-    },
     {
       "id": 1009,
       "type": "engine",
@@ -211,7 +220,7 @@
         -1
       ],
       "stroke": "#ffffff",
-      "lift": 1,
+      "lift": 0.5,
       "points": [
         [
           4,
@@ -233,6 +242,18 @@
           -4,
           -25
         ]
+      ]
+    },
+    {
+      "id": 1010,
+      "type": "window",
+      "faceId": 1000,
+      "inset": 0.78,
+      "color": "#101915",
+      "normal": [
+        0,
+        0.78,
+        0.62
       ]
     }
   ],
@@ -291,44 +312,20 @@
     ],
     "edges": [
       [
+        2,
+        3
+      ],
+      [
+        1,
+        3
+      ],
+      [
         0,
         1
       ],
       [
-        1,
-        5
-      ],
-      [
-        5,
-        7
-      ],
-      [
-        7,
-        6
-      ],
-      [
-        6,
-        4
-      ],
-      [
-        4,
-        0
-      ],
-      [
         0,
         2
-      ],
-      [
-        1,
-        3
-      ],
-      [
-        4,
-        2
-      ],
-      [
-        5,
-        3
       ],
       [
         2,
@@ -336,89 +333,113 @@
       ],
       [
         8,
-        6
+        9
       ],
       [
         3,
         9
       ],
       [
-        9,
-        7
-      ],
-      [
-        2,
-        3
-      ],
-      [
-        8,
-        9
-      ]
-    ],
-    "edgeFaces": [
-      [
-        7,
-        0
-      ],
-      [
-        7,
-        3
-      ],
-      [
-        7,
-        5
-      ],
-      [
-        7,
-        6
-      ],
-      [
-        7,
+        0,
         4
       ],
       [
-        7,
-        2
-      ],
-      [
         2,
-        0
+        4
       ],
       [
         3,
-        0
-      ],
-      [
-        4,
-        2
-      ],
-      [
-        5,
-        3
-      ],
-      [
-        4,
-        1
-      ],
-      [
-        6,
-        4
-      ],
-      [
-        5,
-        1
-      ],
-      [
-        6,
         5
       ],
       [
         1,
-        0
+        5
+      ],
+      [
+        4,
+        6
       ],
       [
         6,
+        8
+      ],
+      [
+        7,
+        9
+      ],
+      [
+        5,
+        7
+      ],
+      [
+        6,
+        7
+      ]
+    ],
+    "edgeFaces": [
+      [
+        0,
         1
+      ],
+      [
+        0,
+        3
+      ],
+      [
+        0,
+        7
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        1,
+        4
+      ],
+      [
+        1,
+        6
+      ],
+      [
+        1,
+        5
+      ],
+      [
+        2,
+        7
+      ],
+      [
+        2,
+        4
+      ],
+      [
+        3,
+        5
+      ],
+      [
+        3,
+        7
+      ],
+      [
+        4,
+        7
+      ],
+      [
+        4,
+        6
+      ],
+      [
+        5,
+        6
+      ],
+      [
+        5,
+        7
+      ],
+      [
+        6,
+        7
       ]
     ],
     "edgeVisibility": [
@@ -442,80 +463,56 @@
     "normals": [
       [
         0,
-        88,
-        70
+        78.09,
+        62.47
       ],
       [
         0,
-        69,
-        14
+        98.06,
+        19.61
       ],
       [
-        70,
-        66,
-        35
+        68.54,
+        64.25,
+        34.27
       ],
       [
-        -70,
-        66,
-        35
+        -68.54,
+        64.25,
+        34.27
       ],
       [
-        64,
-        49,
-        14
+        78.04,
+        59.93,
+        17.84
       ],
       [
-        -64,
-        49,
-        14
-      ],
-      [
-        0,
-        0,
-        -200
+        -78.73,
+        59.05,
+        17.72
       ],
       [
         0,
-        -80,
+        0,
+        -100
+      ],
+      [
+        0,
+        -100,
         0
       ]
     ],
     "details": [
       {
-        "type": "window",
-        "points": [
-          [
-            2.5,
-            8,
-            5
-          ],
-          [
-            -2.5,
-            8,
-            5
-          ],
-          [
-            -4,
-            12,
-            -15
-          ],
-          [
-            4,
-            12,
-            -15
-          ]
-        ],
-        "color": "#101915",
+        "type": "engine",
+        "color": "#f7fff7",
+        "stroke": "#ffffff",
+        "lift": 0.5,
         "normal": [
           0,
-          0.98,
-          0.2
+          0,
+          -1
         ],
-        "lift": 1
-      },
-      {
-        "type": "engine",
         "points": [
           [
             4,
@@ -537,23 +534,85 @@
             -4,
             -25
           ]
-        ],
-        "color": "#f7fff7",
-        "stroke": "#ffffff",
+        ]
+      },
+      {
+        "type": "window",
+        "color": "#101915",
         "normal": [
           0,
-          0,
-          -1
+          0.78,
+          0.62
         ],
-        "lift": 1
+        "lift": 0.5,
+        "points": [
+          [
+            3.9,
+            4.24,
+            17.2
+          ],
+          [
+            -3.9,
+            4.24,
+            17.2
+          ],
+          [
+            -7.8,
+            -8.24,
+            32.8
+          ],
+          [
+            7.8,
+            -8.24,
+            32.8
+          ]
+        ]
       }
-    ]
-  },
-  "gameMeta": {
-    "imageDecalMirrorX": {
-      "top": true,
-      "bottom": true,
-      "back": false
+    ],
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "private",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "imageDecalMirrorX": {
+        "top": true,
+        "bottom": true,
+        "back": false
+      },
+      "valueCr": 250000,
+      "stats": {
+        "r": 38,
+        "hp": 120,
+        "speed": 1,
+        "cargo": 10,
+        "missiles": 1,
+        "laser": "none"
+      },
+      "lists": {
+        "trader": true,
+        "pirate": true,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": false
+      }
+    },
+    "imageProjection": {
+      "faceColors": [
+        "#6e6952",
+        "#6d6d63",
+        "#6f6c5e",
+        "#6f6c5e",
+        "#6a695e",
+        "#6a695e",
+        "#524f3c",
+        "#6a664d"
+      ]
     }
   }
 }

@@ -165,7 +165,8 @@
         6,
         1
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#424246"
     },
     {
       "id": 1001,
@@ -174,7 +175,8 @@
         2,
         1
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#434246"
     },
     {
       "id": 1002,
@@ -186,7 +188,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "side_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#6f727b"
     },
     {
       "id": 1003,
@@ -196,7 +199,8 @@
         4,
         3
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#352e2e"
     },
     {
       "id": 1004,
@@ -208,7 +212,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "side_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#6f727b"
     },
     {
       "id": 1005,
@@ -217,7 +222,8 @@
         1,
         5
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#434246"
     },
     {
       "id": 1006,
@@ -226,7 +232,8 @@
         10,
         7
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#4a494c"
     },
     {
       "id": 1007,
@@ -235,7 +242,8 @@
         8,
         7
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#434347"
     },
     {
       "id": 1008,
@@ -244,7 +252,8 @@
         9,
         8
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#49494c"
     },
     {
       "id": 1009,
@@ -255,7 +264,8 @@
         2,
         3
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#4c4d4f"
     }
   ],
   "edges": [
@@ -333,7 +343,7 @@
         1,
         0.25
       ],
-      "lift": 1,
+      "lift": 0.5,
       "indices": [
         11,
         12,
@@ -349,7 +359,7 @@
         1,
         0.25
       ],
-      "lift": 1,
+      "lift": 0.5,
       "indices": [
         14,
         15,
@@ -365,7 +375,7 @@
         -1,
         0
       ],
-      "lift": 1,
+      "lift": 0.5,
       "indices": [
         17,
         18,
@@ -382,7 +392,7 @@
         -1
       ],
       "stroke": "#ffffff",
-      "lift": 1,
+      "lift": 0.5,
       "points": [
         [
           6.6,
@@ -820,7 +830,7 @@
           1,
           0.25
         ],
-        "lift": 1
+        "lift": 0.5
       },
       {
         "type": "window",
@@ -835,7 +845,7 @@
           1,
           0.25
         ],
-        "lift": 1
+        "lift": 0.5
       },
       {
         "type": "window",
@@ -850,7 +860,7 @@
           -1,
           0
         ],
-        "lift": 1
+        "lift": 0.5
       },
       {
         "type": "engine",
@@ -883,9 +893,47 @@
           0,
           -1
         ],
-        "lift": 1
+        "lift": 0.5
       }
-    ]
+    ],
+    "imageProjection": {
+      "faceColors": [
+        "#424246",
+        "#434246",
+        "#6f727b",
+        "#352e2e",
+        "#6f727b",
+        "#434246",
+        "#4a494c",
+        "#434347",
+        "#49494c",
+        "#4c4d4f"
+      ],
+      "faceSides": [
+        null,
+        null,
+        "top",
+        null,
+        "top",
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "faceTextures": [
+        null,
+        null,
+        "side_panel",
+        null,
+        "side_panel",
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    }
   },
   "gameMeta": {
     "imageDecalMirrorX": {

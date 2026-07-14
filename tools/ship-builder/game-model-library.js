@@ -227,7 +227,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           11,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#838c97"
       },
       {
         "id": 1001,
@@ -237,7 +238,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           13
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#9fabb8"
       },
       {
         "id": 1002,
@@ -246,7 +248,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           3
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#77818f"
       },
       {
         "id": 1003,
@@ -255,7 +258,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           14
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#616a76"
       },
       {
         "id": 1004,
@@ -265,7 +269,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           4
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#76808d"
       },
       {
         "id": 1005,
@@ -275,7 +280,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           14,
           5
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#69747e"
       },
       {
         "id": 1006,
@@ -284,7 +290,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4,
           5
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#4f575b"
       },
       {
         "id": 1007,
@@ -294,7 +301,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5,
           6
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#606466"
       },
       {
         "id": 1008,
@@ -303,7 +311,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9,
           6
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#4c5459"
       },
       {
         "id": 1009,
@@ -313,7 +322,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7,
           8
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#77808e"
       },
       {
         "id": 1010,
@@ -323,7 +333,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6,
           13
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#69747f"
       },
       {
         "id": 1011,
@@ -332,7 +343,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#788290"
       },
       {
         "id": 1012,
@@ -341,7 +353,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8,
           13
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#656f7b"
       },
       {
         "id": 1013,
@@ -351,7 +364,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9,
           11
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#808b96"
       },
       {
         "id": 1014,
@@ -361,7 +375,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           13,
           6
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#85909d"
       }
     ],
     "edges": [
@@ -404,7 +419,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           0.26
         ],
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           15,
           16,
@@ -422,7 +437,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             12,
@@ -906,7 +921,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         {
           "type": "window",
           "color": "#101915",
-          "lift": 1,
+          "lift": 0.5,
           "normal": [
             0,
             1,
@@ -923,7 +938,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "type": "engine",
           "color": "#f7fff7",
           "stroke": "#ffffff",
-          "lift": 1,
+          "lift": 0.5,
           "normal": [
             0,
             0,
@@ -985,6 +1000,25 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "escapePod": true,
           "hiddenUntilDiscovered": false
         }
+      },
+      "imageProjection": {
+        "faceColors": [
+          "#838c97",
+          "#9fabb8",
+          "#77818f",
+          "#616a76",
+          "#76808d",
+          "#69747e",
+          "#4f575b",
+          "#606466",
+          "#4c5459",
+          "#77808e",
+          "#69747f",
+          "#788290",
+          "#656f7b",
+          "#808b96",
+          "#85909d"
+        ]
       }
     }
   },
@@ -1158,7 +1192,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4,
           3
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#464331"
       },
       {
         "id": 1001,
@@ -1169,7 +1204,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           7
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#423f32"
       },
       {
         "id": 1002,
@@ -1180,7 +1216,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           8
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#534d30"
       },
       {
         "id": 1003,
@@ -1191,7 +1228,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8,
           3
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#626157"
       },
       {
         "id": 1004,
@@ -1202,7 +1240,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9,
           4
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#534c30"
       },
       {
         "id": 1005,
@@ -1213,7 +1252,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#3b3627"
       },
       {
         "id": 1006,
@@ -1222,7 +1262,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6,
           11
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#605b4e"
       },
       {
         "id": 1007,
@@ -1232,7 +1273,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           12,
           13
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#555349"
       },
       {
         "id": 1008,
@@ -1241,7 +1283,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           12,
           8
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#606057"
       },
       {
         "id": 1009,
@@ -1250,7 +1293,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           13,
           9
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#606057"
       },
       {
         "id": 1010,
@@ -1260,7 +1304,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           14,
           10
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#555349"
       },
       {
         "id": 1011,
@@ -1269,7 +1314,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           11,
           13
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#625e51"
       }
     ],
     "edges": [],
@@ -1283,7 +1329,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.98,
           0.19
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             0,
@@ -1312,7 +1358,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -0.69
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             0,
@@ -1351,7 +1397,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -0.85
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             -15.5,
@@ -1390,7 +1436,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -0.85
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             15.5,
@@ -1795,7 +1841,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         {
           "type": "window",
           "color": "#101915",
-          "lift": 1,
+          "lift": 0.5,
           "normal": [
             0,
             0.98,
@@ -1823,7 +1869,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "type": "engine",
           "color": "#f7fff7",
           "stroke": "#ffffff",
-          "lift": 1,
+          "lift": 0.5,
           "normal": [
             0,
             -0.72,
@@ -1861,7 +1907,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "type": "engine",
           "color": "#f7fff7",
           "stroke": "#ffffff",
-          "lift": 1,
+          "lift": 0.5,
           "normal": [
             -0.5,
             0.18,
@@ -1899,7 +1945,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "type": "engine",
           "color": "#f7fff7",
           "stroke": "#ffffff",
-          "lift": 1,
+          "lift": 0.5,
           "normal": [
             0.5,
             0.18,
@@ -1962,6 +2008,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           false,
           false,
           false
+        ],
+        "faceColors": [
+          "#464331",
+          "#423f32",
+          "#534d30",
+          "#626157",
+          "#534c30",
+          "#3b3627",
+          "#605b4e",
+          "#555349",
+          "#606057",
+          "#606057",
+          "#555349",
+          "#625e51"
         ]
       },
       "gameMeta": {
@@ -2167,7 +2227,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#808186"
       },
       {
         "id": 1001,
@@ -2178,7 +2239,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           2
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#64666c"
       },
       {
         "id": 1002,
@@ -2189,7 +2251,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7,
           6
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#64676c"
       },
       {
         "id": 1003,
@@ -2198,7 +2261,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           13,
           12
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#515158"
       },
       {
         "id": 1004,
@@ -2208,7 +2272,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           12,
           10
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#4a4a50"
       },
       {
         "id": 1005,
@@ -2218,7 +2283,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7,
           12
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#535359"
       },
       {
         "id": 1006,
@@ -2228,7 +2294,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           13
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#535359"
       },
       {
         "id": 1007,
@@ -2237,7 +2304,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9,
           5
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#65676c"
       },
       {
         "id": 1008,
@@ -2246,7 +2314,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7,
           8
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#66686d"
       },
       {
         "id": 1009,
@@ -2255,7 +2324,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9,
           4
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#595960"
       },
       {
         "id": 1010,
@@ -2264,7 +2334,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7,
           10
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#5a5961"
       },
       {
         "id": 1011,
@@ -2274,7 +2345,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           2
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#333435"
       }
     ],
     "edges": [
@@ -2324,7 +2396,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.91,
           0.4
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             9.1,
@@ -2358,7 +2430,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1
         ],
         "width": 1.4,
-        "lift": 1,
+        "lift": 0.5,
         "cull": false,
         "indices": [
           18,
@@ -2375,7 +2447,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           14,
           16,
@@ -2840,7 +2912,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.91,
             0.4
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "line",
@@ -2855,7 +2927,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             1
           ],
           "width": 1.4,
-          "lift": 1,
+          "lift": 0.5,
           "cull": false
         },
         {
@@ -2873,9 +2945,25 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 1
+          "lift": 0.5
         }
-      ]
+      ],
+      "imageProjection": {
+        "faceColors": [
+          "#808186",
+          "#64666c",
+          "#64676c",
+          "#515158",
+          "#4a4a50",
+          "#535359",
+          "#535359",
+          "#65676c",
+          "#66686d",
+          "#595960",
+          "#5a5961",
+          "#333435"
+        ]
+      }
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -2889,6 +2977,35 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
     "format": "ultra-elite-ship-builder/v1",
     "id": "asteroid",
     "name": "Asteroid",
+    "symmetry": "x-locked",
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "private",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "valueCr": 250000,
+      "stats": {
+        "r": 81,
+        "hp": 120,
+        "speed": 1,
+        "cargo": 10,
+        "missiles": 1,
+        "laser": "none"
+      },
+      "lists": {
+        "trader": true,
+        "pirate": true,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": false
+      }
+    },
     "verts": [
       {
         "id": 1,
@@ -2972,8 +3089,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6
         ],
         "mirrored": false,
+        "faceColor": "#5b5b61",
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1001,
@@ -2983,8 +3102,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3
         ],
         "mirrored": false,
+        "faceColor": "#5b5b61",
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1002,
@@ -2994,8 +3115,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7
         ],
         "mirrored": false,
+        "faceColor": "#5b5b61",
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1003,
@@ -3005,8 +3128,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3
         ],
         "mirrored": false,
+        "faceColor": "#5b5b61",
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1004,
@@ -3016,8 +3141,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3
         ],
         "mirrored": false,
+        "faceColor": "#5b5b61",
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1005,
@@ -3027,8 +3154,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4
         ],
         "mirrored": false,
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#5b5b61"
       },
       {
         "id": 1006,
@@ -3038,8 +3166,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6
         ],
         "mirrored": false,
+        "faceColor": "#5b5b61",
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1007,
@@ -3049,8 +3179,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2
         ],
         "mirrored": false,
+        "faceColor": "#5b5b61",
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1008,
@@ -3060,8 +3192,11 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2
         ],
         "mirrored": false,
+        "faceColor": "#5b5b61",
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "bitmapAngle": 60,
+        "bitmapMirrorX": true
       },
       {
         "id": 1009,
@@ -3071,8 +3206,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9
         ],
         "mirrored": false,
+        "faceColor": "#5b5b61",
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1010,
@@ -3082,8 +3219,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3
         ],
         "mirrored": false,
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true,
+        "faceColor": "#5b5b61"
       },
       {
         "id": 1011,
@@ -3093,8 +3232,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3
         ],
         "mirrored": false,
+        "faceColor": "#5b5b61",
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1012,
@@ -3104,8 +3245,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4
         ],
         "mirrored": false,
+        "faceColor": "#5b5b61",
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1013,
@@ -3115,8 +3258,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8
         ],
         "mirrored": false,
+        "faceColor": "#5b5b61",
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       }
     ],
     "edges": [],
@@ -3172,157 +3317,157 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       "edges": [
         [
           0,
-          1
+          6
+        ],
+        [
+          5,
+          6
         ],
         [
           0,
-          4
-        ],
-        [
-          3,
-          4
+          5
         ],
         [
           2,
-          3
+          6
+        ],
+        [
+          2,
+          5
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          6
         ],
         [
           1,
           2
         ],
         [
-          1,
-          6
-        ],
-        [
-          2,
-          6
-        ],
-        [
-          2,
-          5
-        ],
-        [
-          5,
-          6
-        ],
-        [
-          0,
-          5
-        ],
-        [
           3,
           5
         ],
         [
-          0,
-          6
+          2,
+          3
         ],
         [
           4,
           5
         ],
         [
-          1,
-          8
+          3,
+          4
         ],
         [
-          1,
-          7
+          0,
+          4
         ],
         [
           0,
           7
         ],
         [
-          4,
+          1,
           7
-        ],
-        [
-          3,
-          7
-        ],
-        [
-          3,
-          8
-        ],
-        [
-          2,
-          8
         ],
         [
           7,
           8
+        ],
+        [
+          1,
+          8
+        ],
+        [
+          3,
+          7
+        ],
+        [
+          3,
+          8
+        ],
+        [
+          2,
+          8
+        ],
+        [
+          4,
+          7
         ]
       ],
       "edgeFaces": [
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          6
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          1,
+          4
+        ],
         [
           2,
           7
         ],
         [
-          6,
-          13
+          2,
+          3
         ],
         [
-          5,
-          12
+          3,
+          10
+        ],
+        [
+          4,
+          5
         ],
         [
           4,
           11
         ],
         [
-          3,
-          10
-        ],
-        [
-          2,
-          3
-        ],
-        [
-          1,
-          3
-        ],
-        [
-          1,
-          4
-        ],
-        [
-          0,
-          1
-        ],
-        [
-          0,
-          6
-        ],
-        [
-          4,
-          5
-        ],
-        [
-          0,
-          2
-        ],
-        [
           5,
           6
         ],
         [
-          8,
-          10
+          5,
+          12
+        ],
+        [
+          6,
+          13
+        ],
+        [
+          7,
+          13
         ],
         [
           7,
           8
         ],
         [
-          7,
-          13
+          8,
+          9
         ],
         [
-          12,
-          13
+          8,
+          10
         ],
         [
           9,
@@ -3337,8 +3482,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           11
         ],
         [
-          8,
-          9
+          12,
+          13
         ]
       ],
       "edgeVisibility": [
@@ -3366,76 +3511,77 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       ],
       "normals": [
         [
-          9,
-          66,
-          81
+          8.56,
+          63.15,
+          77.06
         ],
         [
-          9,
-          -66,
-          81
+          8.56,
+          -63.15,
+          77.06
         ],
         [
-          -72,
-          64,
-          31
+          -70.93,
+          63.05,
+          31.52
         ],
         [
-          -64,
-          -73,
-          47
+          -59.28,
+          -67.75,
+          43.55
         ],
         [
-          45,
-          -79,
-          65
+          39.8,
+          -69.65,
+          59.7
         ],
         [
-          135,
-          15,
-          35
+          96.24,
+          10.69,
+          24.95
         ],
         [
-          38,
-          76,
-          70
+          34.58,
+          69.17,
+          63.4
         ],
         [
-          -66,
-          59,
-          -39
+          -68.34,
+          60.74,
+          -40.5
         ],
         [
-          -67,
-          -15,
-          -80
+          -63.83,
+          -14.19,
+          -75.66
         ],
         [
-          66,
-          -14,
-          -75
+          65.58,
+          -13.91,
+          -74.2
         ],
         [
-          -70,
-          -80,
-          -40
+          -61.63,
+          -70.44,
+          -35.22
         ],
         [
-          58,
-          -102,
-          -51
+          45.51,
+          -79.64,
+          -39.82
         ],
         [
-          81,
-          9,
-          -67
+          76.68,
+          8.52,
+          -63.62
         ],
         [
-          47,
-          94,
-          -63
+          38.41,
+          76.82,
+          -51.21
         ]
       ],
+      "details": [],
       "imageProjection": {
         "faceSides": [
           "top",
@@ -3484,14 +3630,67 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#5b5b61",
           "#5b5b61",
           "#5b5b61"
+        ],
+        "faceAngles": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          60,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "faceMirrorX": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          false,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
         ]
-      }
-    },
-    "gameMeta": {
-      "imageDecalMirrorX": {
-        "top": false,
-        "bottom": false,
-        "back": false
+      },
+      "gameMeta": {
+        "class": "fighter",
+        "npcRole": "private",
+        "aiProfile": "standard",
+        "decalRole": "private",
+        "baseColor": "#e9f2e4",
+        "description": "",
+        "missionLore": "",
+        "valueCr": 250000,
+        "stats": {
+          "r": 81,
+          "hp": 120,
+          "speed": 1,
+          "cargo": 10,
+          "missiles": 1,
+          "laser": "none"
+        },
+        "lists": {
+          "trader": true,
+          "pirate": true,
+          "police": false,
+          "alien": false
+        },
+        "flags": {
+          "escapePod": true,
+          "hiddenUntilDiscovered": false
+        }
       }
     }
   },
@@ -3616,7 +3815,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           12,
           11
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#484639"
       },
       {
         "id": 1001,
@@ -3628,7 +3828,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8,
           9
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#595744"
       },
       {
         "id": 1002,
@@ -3640,7 +3841,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4,
           10
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#585749"
       },
       {
         "id": 1003,
@@ -3649,7 +3851,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           5
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#64635b"
       },
       {
         "id": 1004,
@@ -3658,7 +3861,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7,
           8
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#83773c"
       },
       {
         "id": 1005,
@@ -3667,7 +3871,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4,
           9
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#84773c"
       },
       {
         "id": 1006,
@@ -3676,7 +3881,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#848277"
       },
       {
         "id": 1007,
@@ -3685,7 +3891,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           10,
           9
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#6d6b60"
       },
       {
         "id": 1008,
@@ -3694,7 +3901,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           8
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#6d6b61"
       },
       {
         "id": 1009,
@@ -3703,7 +3911,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           10,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#858376"
       },
       {
         "id": 1010,
@@ -3712,7 +3921,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           9
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#716d61"
       },
       {
         "id": 1011,
@@ -3721,7 +3931,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           7
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#858377"
       },
       {
         "id": 1012,
@@ -3730,7 +3941,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           12,
           13
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#5b594a"
       }
     ],
     "edges": [],
@@ -3744,7 +3956,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.97,
           0.25
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             0,
@@ -3773,7 +3985,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             0,
@@ -4176,7 +4388,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.97,
             0.25
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "engine",
@@ -4204,9 +4416,26 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 1
+          "lift": 0.5
         }
-      ]
+      ],
+      "imageProjection": {
+        "faceColors": [
+          "#484639",
+          "#595744",
+          "#585749",
+          "#64635b",
+          "#83773c",
+          "#84773c",
+          "#848277",
+          "#6d6b60",
+          "#6d6b61",
+          "#858376",
+          "#716d61",
+          "#858377",
+          "#5b594a"
+        ]
+      }
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -4220,6 +4449,35 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
     "format": "ultra-elite-ship-builder/v1",
     "id": "boulder",
     "name": "Boulder",
+    "symmetry": "x-locked",
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "private",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "valueCr": 250000,
+      "stats": {
+        "r": 53,
+        "hp": 120,
+        "speed": 1,
+        "cargo": 10,
+        "missiles": 1,
+        "laser": "none"
+      },
+      "lists": {
+        "trader": true,
+        "pirate": true,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": false
+      }
+    },
     "verts": [
       {
         "id": 1,
@@ -4287,8 +4545,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6
         ],
         "mirrored": false,
-        "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#928c89",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "rock_panel-1004"
       },
       {
         "id": 1001,
@@ -4298,8 +4557,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2
         ],
         "mirrored": false,
-        "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#928c89",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "rock_panel-1004"
       },
       {
         "id": 1002,
@@ -4309,8 +4569,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3
         ],
         "mirrored": false,
-        "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#928c89",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "rock_panel-1004"
       },
       {
         "id": 1003,
@@ -4320,8 +4581,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4
         ],
         "mirrored": false,
-        "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#928c89",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "rock_panel-1004",
+        "bitmapMirrorX": true
       },
       {
         "id": 1004,
@@ -4331,8 +4594,11 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6
         ],
         "mirrored": false,
-        "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#928c89",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "rock_panel-1004",
+        "bitmapAngle": -30,
+        "bitmapMirrorX": true
       },
       {
         "id": 1005,
@@ -4342,8 +4608,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7
         ],
         "mirrored": false,
-        "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#928c89",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "rock_panel-1004",
+        "bitmapMirrorX": true
       },
       {
         "id": 1006,
@@ -4353,8 +4621,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3
         ],
         "mirrored": false,
-        "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#928c89",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "rock_panel-1004",
+        "bitmapMirrorX": true
       },
       {
         "id": 1007,
@@ -4364,8 +4634,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4
         ],
         "mirrored": false,
-        "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#928c89",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "rock_panel-1004",
+        "bitmapMirrorX": true
       },
       {
         "id": 1008,
@@ -4375,8 +4647,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4
         ],
         "mirrored": false,
-        "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#928c89",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "rock_panel-1004"
       },
       {
         "id": 1009,
@@ -4386,8 +4659,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7
         ],
         "mirrored": false,
-        "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#928c89",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "rock_panel-1004"
       }
     ],
     "edges": [],
@@ -4433,11 +4707,35 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       "edges": [
         [
           0,
+          4
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          0,
+          5
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          0,
           1
+        ],
+        [
+          2,
+          5
         ],
         [
           1,
           2
+        ],
+        [
+          3,
+          5
         ],
         [
           2,
@@ -4448,35 +4746,11 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4
         ],
         [
-          4,
-          0
-        ],
-        [
-          0,
-          5
-        ],
-        [
           1,
-          5
-        ],
-        [
-          2,
-          5
-        ],
-        [
-          3,
-          5
-        ],
-        [
-          4,
-          5
-        ],
-        [
-          0,
           6
         ],
         [
-          1,
+          0,
           6
         ],
         [
@@ -4494,64 +4768,64 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       ],
       "edgeFaces": [
         [
-          5,
-          1
+          0,
+          9
         ],
         [
-          6,
-          2
-        ],
-        [
-          7,
-          3
-        ],
-        [
-          8,
+          0,
           4
         ],
         [
-          9,
-          0
-        ],
-        [
-          1,
-          0
-        ],
-        [
-          2,
+          0,
           1
         ],
         [
-          3,
+          1,
           2
         ],
         [
-          4,
+          1,
+          5
+        ],
+        [
+          2,
           3
         ],
         [
-          4,
-          0
-        ],
-        [
-          9,
-          5
-        ],
-        [
-          6,
-          5
-        ],
-        [
-          7,
+          2,
           6
         ],
         [
-          8,
+          3,
+          4
+        ],
+        [
+          3,
           7
         ],
         [
-          9,
+          4,
           8
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          5,
+          9
+        ],
+        [
+          6,
+          7
+        ],
+        [
+          7,
+          8
+        ],
+        [
+          8,
+          9
         ]
       ],
       "edgeVisibility": [
@@ -4573,56 +4847,57 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       ],
       "normals": [
         [
-          -15,
-          -3,
-          8
+          -85.95,
+          -17.55,
+          48.01
         ],
         [
-          -7,
-          12,
-          30
+          -20.94,
+          36.15,
+          90.86
         ],
         [
-          32,
-          -47,
-          24
+          52.74,
+          -75.23,
+          39.49
         ],
         [
-          -3,
-          -39,
-          -7
+          -7.25,
+          -98.02,
+          -18.43
         ],
         [
-          -5,
-          -4,
-          -1
+          -75.79,
+          -64.74,
+          -8.08
         ],
         [
-          49,
-          84,
-          8
+          49.77,
+          86.3,
+          8.7
         ],
         [
-          112,
-          21,
-          -21
+          96.55,
+          18.19,
+          -18.66
         ],
         [
-          76,
-          -35,
-          -82
+          64.32,
+          -31.05,
+          -69.99
         ],
         [
-          22,
-          56,
-          -137
+          12.62,
+          35.64,
+          -92.58
         ],
         [
-          40,
-          110,
-          -38
+          31.75,
+          89.66,
+          -30.87
         ]
       ],
+      "details": [],
       "imageProjection": {
         "faceSides": [
           "top",
@@ -4637,36 +4912,81 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "top"
         ],
         "faceTextures": [
-          "rock_panel",
-          "rock_panel",
-          "rock_panel",
-          "rock_panel",
-          "rock_panel",
-          "rock_panel",
-          "rock_panel",
-          "rock_panel",
-          "rock_panel",
-          "rock_panel"
+          "rock_panel-1004",
+          "rock_panel-1004",
+          "rock_panel-1004",
+          "rock_panel-1004",
+          "rock_panel-1004",
+          "rock_panel-1004",
+          "rock_panel-1004",
+          "rock_panel-1004",
+          "rock_panel-1004",
+          "rock_panel-1004"
         ],
         "faceColors": [
-          "#5a5b61",
-          "#5a5b61",
-          "#5a5b61",
-          "#5a5b61",
-          "#5a5b61",
-          "#5a5b61",
-          "#5a5b61",
-          "#5a5b61",
-          "#5a5b61",
-          "#5a5b61"
+          "#928c89",
+          "#928c89",
+          "#928c89",
+          "#928c89",
+          "#928c89",
+          "#928c89",
+          "#928c89",
+          "#928c89",
+          "#928c89",
+          "#928c89"
+        ],
+        "faceAngles": [
+          null,
+          null,
+          null,
+          null,
+          -30,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "faceMirrorX": [
+          false,
+          false,
+          false,
+          true,
+          true,
+          true,
+          true,
+          true,
+          false,
+          false
         ]
-      }
-    },
-    "gameMeta": {
-      "imageDecalMirrorX": {
-        "top": false,
-        "bottom": false,
-        "back": false
+      },
+      "gameMeta": {
+        "class": "fighter",
+        "npcRole": "private",
+        "aiProfile": "standard",
+        "decalRole": "private",
+        "baseColor": "#e9f2e4",
+        "description": "",
+        "missionLore": "",
+        "valueCr": 250000,
+        "stats": {
+          "r": 53,
+          "hp": 120,
+          "speed": 1,
+          "cargo": 10,
+          "missiles": 1,
+          "laser": "none"
+        },
+        "lists": {
+          "trader": true,
+          "pirate": true,
+          "police": false,
+          "alien": false
+        },
+        "flags": {
+          "escapePod": true,
+          "hiddenUntilDiscovered": false
+        }
       }
     }
   },
@@ -4768,7 +5088,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "end_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#4b4635"
       },
       {
         "id": 1001,
@@ -4778,7 +5099,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7,
           2
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#706545"
       },
       {
         "id": 1002,
@@ -4788,7 +5110,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8,
           3
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#736c5a"
       },
       {
         "id": 1003,
@@ -4798,7 +5121,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8,
           9
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#827a67"
       },
       {
         "id": 1004,
@@ -4808,7 +5132,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4,
           9
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#524931"
       },
       {
         "id": 1005,
@@ -4818,7 +5143,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5,
           10
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#5d533f"
       },
       {
         "id": 1006,
@@ -4831,7 +5157,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "end_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#4b4635"
       }
     ],
     "edges": [],
@@ -5068,6 +5395,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ]
       ],
       "imageProjection": {
+        "faceColors": [
+          "#4b4635",
+          "#706545",
+          "#736c5a",
+          "#827a67",
+          "#524931",
+          "#5d533f",
+          "#4b4635"
+        ],
         "faceSides": [
           "top",
           null,
@@ -5085,15 +5421,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           null,
           null,
           "end_panel"
-        ],
-        "faceColors": [
-          "#4b4635",
-          null,
-          null,
-          null,
-          null,
-          null,
-          "#4b4635"
         ]
       }
     },
@@ -5343,7 +5670,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#828c8e"
       },
       {
         "id": 1001,
@@ -5352,7 +5680,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           6
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#919ba8"
       },
       {
         "id": 1002,
@@ -5361,7 +5690,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#919ba8"
       },
       {
         "id": 1003,
@@ -5370,7 +5700,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6,
           4
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#79828c"
       },
       {
         "id": 1004,
@@ -5379,7 +5710,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#79828c"
       },
       {
         "id": 1005,
@@ -5388,7 +5720,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           10,
           6
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#7c8590"
       },
       {
         "id": 1006,
@@ -5397,7 +5730,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           10,
           3
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#7c8590"
       },
       {
         "id": 1007,
@@ -5406,7 +5740,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9,
           4
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#676f78"
       },
       {
         "id": 1008,
@@ -5415,7 +5750,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5,
           8
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#676f78"
       },
       {
         "id": 1009,
@@ -5428,7 +5764,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           11,
           9
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#5a6368"
       },
       {
         "id": 1010,
@@ -5438,7 +5775,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4,
           9
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#98a0ad"
       },
       {
         "id": 1011,
@@ -5448,7 +5786,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           11
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#babfc3"
       },
       {
         "id": 1012,
@@ -5458,7 +5797,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           12
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#9ba6b5"
       }
     ],
     "edges": [
@@ -5578,7 +5918,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.89,
           0.45
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             16,
@@ -5607,7 +5947,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1
         ],
         "width": 1.2,
-        "lift": 1,
+        "lift": 0.5,
         "cull": false,
         "indices": [
           21,
@@ -5624,7 +5964,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           13,
           14,
@@ -5642,7 +5982,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           15,
           16,
@@ -5660,7 +6000,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           23,
           25,
@@ -5677,7 +6017,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           26,
           27,
@@ -6276,7 +6616,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.89,
             0.45
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "line",
@@ -6291,7 +6631,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             1
           ],
           "width": 1.2,
-          "lift": 1,
+          "lift": 0.5,
           "cull": false
         },
         {
@@ -6309,7 +6649,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "engine",
@@ -6326,7 +6666,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "engine",
@@ -6342,7 +6682,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "engine",
@@ -6358,9 +6698,26 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 1
+          "lift": 0.5
         }
-      ]
+      ],
+      "imageProjection": {
+        "faceColors": [
+          "#828c8e",
+          "#919ba8",
+          "#919ba8",
+          "#79828c",
+          "#79828c",
+          "#7c8590",
+          "#7c8590",
+          "#676f78",
+          "#676f78",
+          "#5a6368",
+          "#98a0ad",
+          "#babfc3",
+          "#9ba6b5"
+        ]
+      }
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -6472,7 +6829,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#55616a"
       },
       {
         "id": 1001,
@@ -6482,7 +6840,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           7
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#5b666a"
       },
       {
         "id": 1002,
@@ -6492,7 +6851,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5,
           3
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#636e77"
       },
       {
         "id": 1003,
@@ -6501,7 +6861,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           7
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#596468"
       },
       {
         "id": 1004,
@@ -6511,7 +6872,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9,
           2
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#636e77"
       },
       {
         "id": 1005,
@@ -6520,7 +6882,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4,
           2
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#596468"
       },
       {
         "id": 1006,
@@ -6529,7 +6892,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5,
           9
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#545f66"
       },
       {
         "id": 1007,
@@ -6539,7 +6903,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8,
           7
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#515d5b"
       },
       {
         "id": 1008,
@@ -6548,7 +6913,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5,
           7
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#3c4447"
       },
       {
         "id": 1009,
@@ -6557,7 +6923,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4,
           8
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#3c4447"
       }
     ],
     "edges": [
@@ -6579,7 +6946,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.97,
           0.24
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             -9,
@@ -6608,7 +6975,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1
         ],
         "width": 1.2,
-        "lift": 1,
+        "lift": 0.5,
         "cull": false,
         "indices": [
           10,
@@ -6625,7 +6992,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             -36,
@@ -6654,7 +7021,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             14,
@@ -6978,7 +7345,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.97,
             0.24
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "line",
@@ -6993,7 +7360,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             1
           ],
           "width": 1.2,
-          "lift": 1,
+          "lift": 0.5,
           "cull": false
         },
         {
@@ -7022,7 +7389,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "engine",
@@ -7050,9 +7417,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 1
+          "lift": 0.5
         }
-      ]
+      ],
+      "imageProjection": {
+        "faceColors": [
+          "#55616a",
+          "#5b666a",
+          "#636e77",
+          "#596468",
+          "#636e77",
+          "#596468",
+          "#545f66",
+          "#515d5b",
+          "#3c4447",
+          "#3c4447"
+        ]
+      }
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -7213,7 +7594,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           10,
           2
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#706868"
       },
       {
         "id": 1001,
@@ -7222,7 +7604,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           10,
           3
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#5b585b"
       },
       {
         "id": 1002,
@@ -7231,7 +7614,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#5b585b"
       },
       {
         "id": 1003,
@@ -7240,7 +7624,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8,
           7
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#505054"
       },
       {
         "id": 1004,
@@ -7249,7 +7634,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4,
           3
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#505054"
       },
       {
         "id": 1005,
@@ -7258,7 +7644,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5,
           4
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#525153"
       },
       {
         "id": 1006,
@@ -7268,7 +7655,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5,
           10
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#5f5d5f"
       },
       {
         "id": 1007,
@@ -7277,7 +7665,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9,
           7
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#525153"
       },
       {
         "id": 1008,
@@ -7287,7 +7676,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7,
           4
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#373333"
       },
       {
         "id": 1009,
@@ -7299,7 +7689,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           4
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#464544"
       }
     ],
     "edges": [
@@ -7356,7 +7747,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.96,
           0.26
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             9,
@@ -7389,7 +7780,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1,
           0
         ],
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           11,
           13,
@@ -7405,7 +7796,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1,
           0
         ],
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           12,
           16,
@@ -7422,7 +7813,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             -24.3,
@@ -7840,7 +8231,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.96,
             0.26
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "window",
@@ -7855,7 +8246,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -1,
             0
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "window",
@@ -7870,7 +8261,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -1,
             0
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "engine",
@@ -7903,9 +8294,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 1
+          "lift": 0.5
         }
-      ]
+      ],
+      "imageProjection": {
+        "faceColors": [
+          "#706868",
+          "#5b585b",
+          "#5b585b",
+          "#505054",
+          "#505054",
+          "#525153",
+          "#5f5d5f",
+          "#525153",
+          "#373333",
+          "#464544"
+        ]
+      }
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -7919,6 +8324,35 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
     "format": "ultra-elite-ship-builder/v1",
     "id": "coriolis",
     "name": "Coriolis",
+    "symmetry": "x-locked",
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "private",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "valueCr": 250000,
+      "stats": {
+        "r": 226,
+        "hp": 120,
+        "speed": 1,
+        "cargo": 10,
+        "missiles": 1,
+        "laser": "none"
+      },
+      "lists": {
+        "trader": true,
+        "pirate": true,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": false
+      }
+    },
     "verts": [
       {
         "id": 1,
@@ -8059,8 +8493,11 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1
         ],
         "mirrored": false,
-        "bitmapFaceKey": "station_entrance",
-        "bitmapSide": "top"
+        "faceColor": "#495053",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "station_panel",
+        "bitmapAngle": 90,
+        "bitmapMirrorX": true
       },
       {
         "id": 1001,
@@ -8070,8 +8507,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5
         ],
         "mirrored": false,
+        "faceColor": "#495053",
+        "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1002,
@@ -8081,30 +8520,36 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1
         ],
         "mirrored": false,
+        "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true,
+        "faceColor": "#495053"
       },
       {
         "id": 1003,
         "verts": [
+          3,
           2,
-          7,
-          3
+          7
         ],
         "mirrored": false,
+        "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true,
+        "faceColor": "#495053"
       },
       {
         "id": 1004,
         "verts": [
-          3,
           8,
-          4
+          4,
+          3
         ],
         "mirrored": false,
+        "faceColor": "#495053",
+        "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1005,
@@ -8115,8 +8560,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8
         ],
         "mirrored": false,
+        "faceColor": "#495053",
+        "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1006,
@@ -8127,20 +8574,24 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9
         ],
         "mirrored": false,
+        "faceColor": "#495053",
+        "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1007,
         "verts": [
-          3,
-          7,
           11,
-          8
+          8,
+          3,
+          7
         ],
         "mirrored": false,
+        "faceColor": "#495053",
+        "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1008,
@@ -8151,19 +8602,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2
         ],
         "mirrored": false,
+        "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true,
+        "faceColor": "#495053"
       },
       {
         "id": 1009,
         "verts": [
-          11,
           12,
-          8
+          8,
+          11
         ],
         "mirrored": false,
+        "faceColor": "#495053",
+        "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1010,
@@ -8173,19 +8628,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           12
         ],
         "mirrored": false,
+        "faceColor": "#495053",
+        "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1011,
         "verts": [
+          9,
           10,
-          6,
-          9
+          6
         ],
         "mirrored": false,
+        "faceColor": "#495053",
+        "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1012,
@@ -8195,8 +8654,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           11
         ],
         "mirrored": false,
+        "faceColor": "#495053",
+        "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1013,
@@ -8207,8 +8668,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           12
         ],
         "mirrored": false,
+        "faceColor": "#495053",
+        "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       }
     ],
     "edges": [
@@ -8352,14 +8815,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       ],
       "edges": [
         [
-          0,
-          3
-        ],
-        [
-          0,
-          1
-        ],
-        [
           1,
           2
         ],
@@ -8368,6 +8823,14 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3
         ],
         [
+          0,
+          3
+        ],
+        [
+          0,
+          1
+        ],
+        [
           3,
           4
         ],
@@ -8376,12 +8839,12 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4
         ],
         [
-          0,
+          1,
           5
         ],
         [
-          5,
-          1
+          0,
+          5
         ],
         [
           1,
@@ -8392,12 +8855,48 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6
         ],
         [
+          3,
+          7
+        ],
+        [
           2,
           7
         ],
         [
-          3,
-          7
+          4,
+          11
+        ],
+        [
+          7,
+          11
+        ],
+        [
+          4,
+          8
+        ],
+        [
+          5,
+          8
+        ],
+        [
+          7,
+          10
+        ],
+        [
+          6,
+          10
+        ],
+        [
+          5,
+          9
+        ],
+        [
+          6,
+          9
+        ],
+        [
+          10,
+          11
         ],
         [
           8,
@@ -8410,42 +8909,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         [
           9,
           10
-        ],
-        [
-          10,
-          11
-        ],
-        [
-          4,
-          11
-        ],
-        [
-          4,
-          8
-        ],
-        [
-          5,
-          8
-        ],
-        [
-          5,
-          9
-        ],
-        [
-          6,
-          9
-        ],
-        [
-          6,
-          10
-        ],
-        [
-          7,
-          10
-        ],
-        [
-          7,
-          11
         ],
         [
           12,
@@ -8460,19 +8923,11 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           15
         ],
         [
-          15,
-          12
+          12,
+          15
         ]
       ],
       "edgeFaces": [
-        [
-          0,
-          1
-        ],
-        [
-          0,
-          2
-        ],
         [
           0,
           3
@@ -8482,6 +8937,14 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4
         ],
         [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ],
+        [
           1,
           5
         ],
@@ -8491,11 +8954,11 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           2,
-          6
+          8
         ],
         [
           2,
-          8
+          6
         ],
         [
           3,
@@ -8507,11 +8970,47 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           4,
-          7
+          5
         ],
         [
           4,
-          5
+          7
+        ],
+        [
+          5,
+          10
+        ],
+        [
+          5,
+          9
+        ],
+        [
+          6,
+          10
+        ],
+        [
+          6,
+          11
+        ],
+        [
+          7,
+          9
+        ],
+        [
+          7,
+          12
+        ],
+        [
+          8,
+          11
+        ],
+        [
+          8,
+          12
+        ],
+        [
+          9,
+          13
         ],
         [
           10,
@@ -8526,56 +9025,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           13
         ],
         [
-          9,
-          13
+          -1,
+          -1
         ],
         [
-          5,
-          10
+          -1,
+          -1
         ],
         [
-          6,
-          10
+          -1,
+          -1
         ],
         [
-          6,
-          11
-        ],
-        [
-          8,
-          11
-        ],
-        [
-          8,
-          12
-        ],
-        [
-          7,
-          12
-        ],
-        [
-          7,
-          9
-        ],
-        [
-          5,
-          9
-        ],
-        [
-          0,
-          0
-        ],
-        [
-          0,
-          0
-        ],
-        [
-          0,
-          0
-        ],
-        [
-          0,
-          0
+          -1,
+          -1
         ]
       ],
       "edgeVisibility": [
@@ -8603,103 +9066,123 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         31,
         31,
         31,
-        30,
-        30,
-        30,
-        30
+        31,
+        31,
+        31,
+        31
       ],
       "normals": [
         [
           0,
           0,
-          160
+          100
         ],
         [
-          107,
-          -107,
-          107
+          57.74,
+          -57.74,
+          57.74
         ],
         [
-          107,
-          107,
-          107
+          57.74,
+          57.74,
+          57.74
         ],
         [
-          -107,
-          107,
-          107
+          -57.74,
+          57.74,
+          57.74
         ],
         [
-          -107,
-          -107,
-          107
+          -57.74,
+          -57.74,
+          57.74
         ],
         [
           0,
-          -160,
+          -100,
           0
         ],
         [
-          160,
-          0,
-          0
-        ],
-        [
-          -160,
+          100,
           0,
           0
         ],
         [
+          -100,
           0,
-          160,
           0
         ],
         [
-          -107,
-          -107,
-          -107
+          0,
+          100,
+          0
         ],
         [
-          107,
-          -107,
-          -107
+          -57.74,
+          -57.74,
+          -57.74
         ],
         [
-          107,
-          107,
-          -107
+          57.74,
+          -57.74,
+          -57.74
         ],
         [
-          -107,
-          107,
-          -107
+          57.74,
+          57.74,
+          -57.74
+        ],
+        [
+          -57.74,
+          57.74,
+          -57.74
         ],
         [
           0,
           0,
-          -160
+          -100
         ]
       ],
       "details": [
         {
           "type": "beacon",
           "index": 12,
-          "color": "#ffb642"
+          "color": "#ffb642",
+          "normal": [
+            0,
+            0,
+            1
+          ]
         },
         {
           "type": "beacon",
           "index": 13,
-          "color": "#ffb642"
+          "color": "#ffb642",
+          "normal": [
+            0,
+            0,
+            1
+          ]
         },
         {
           "type": "beacon",
           "index": 14,
-          "color": "#ffb642"
+          "color": "#ffb642",
+          "normal": [
+            0,
+            0,
+            1
+          ]
         },
         {
           "type": "beacon",
           "index": 15,
-          "color": "#ffb642"
+          "color": "#ffb642",
+          "normal": [
+            0,
+            0,
+            1
+          ]
         }
       ],
       "imageProjection": {
@@ -8720,7 +9203,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "top"
         ],
         "faceTextures": [
-          "station_entrance",
+          "station_panel",
           "station_panel",
           "station_panel",
           "station_panel",
@@ -8736,28 +9219,81 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "station_panel"
         ],
         "faceColors": [
-          "#5a5f5f",
-          "#3f4647",
-          "#3f4647",
-          "#3f4647",
-          "#3f4647",
-          "#3f4647",
-          "#3f4647",
-          "#3f4647",
-          "#3f4647",
-          "#3f4647",
-          "#3f4647",
-          "#3f4647",
-          "#3f4647",
-          "#3f4647"
+          "#495053",
+          "#495053",
+          "#495053",
+          "#495053",
+          "#495053",
+          "#495053",
+          "#495053",
+          "#495053",
+          "#495053",
+          "#495053",
+          "#495053",
+          "#495053",
+          "#495053",
+          "#495053"
+        ],
+        "faceAngles": [
+          90,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "faceMirrorX": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
         ]
-      }
-    },
-    "gameMeta": {
-      "imageDecalMirrorX": {
-        "top": false,
-        "bottom": false,
-        "back": false
+      },
+      "gameMeta": {
+        "class": "fighter",
+        "npcRole": "private",
+        "aiProfile": "standard",
+        "decalRole": "private",
+        "baseColor": "#e9f2e4",
+        "description": "",
+        "missionLore": "",
+        "valueCr": 250000,
+        "stats": {
+          "r": 226,
+          "hp": 120,
+          "speed": 1,
+          "cargo": 10,
+          "missiles": 1,
+          "laser": "none"
+        },
+        "lists": {
+          "trader": true,
+          "pirate": true,
+          "police": false,
+          "alien": false
+        },
+        "flags": {
+          "escapePod": true,
+          "hiddenUntilDiscovered": false
+        }
       }
     }
   },
@@ -8928,7 +9464,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           2
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#64656b"
       },
       {
         "id": 1001,
@@ -8937,7 +9474,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           3
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#514f4e"
       },
       {
         "id": 1002,
@@ -8947,7 +9485,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           5
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#4b4a4d"
       },
       {
         "id": 1003,
@@ -8956,7 +9495,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6,
           5
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#575556"
       },
       {
         "id": 1004,
@@ -8966,7 +9506,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#4a494f"
       },
       {
         "id": 1005,
@@ -8976,7 +9517,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7,
           5
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#3c393a"
       },
       {
         "id": 1006,
@@ -8986,7 +9528,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           9
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#747270"
       },
       {
         "id": 1007,
@@ -8996,7 +9539,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9,
           3
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#474544"
       },
       {
         "id": 1008,
@@ -9006,7 +9550,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6,
           10
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#484a51"
       },
       {
         "id": 1009,
@@ -9016,7 +9561,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           10,
           6
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#545254"
       }
     ],
     "edges": [
@@ -9087,7 +9633,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.94,
           0.08
         ],
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           13,
           14,
@@ -9103,7 +9649,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.94,
           0.08
         ],
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           12,
           15,
@@ -9120,7 +9666,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           16,
           17,
@@ -9524,7 +10070,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.94,
             0.08
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "window",
@@ -9539,7 +10085,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.94,
             0.08
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "engine",
@@ -9556,9 +10102,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 1
+          "lift": 0.5
         }
-      ]
+      ],
+      "imageProjection": {
+        "faceColors": [
+          "#64656b",
+          "#514f4e",
+          "#4b4a4d",
+          "#575556",
+          "#4a494f",
+          "#3c393a",
+          "#747270",
+          "#474544",
+          "#484a51",
+          "#545254"
+        ]
+      }
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -9695,7 +10255,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4,
           2
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#d35080"
       },
       {
         "id": 7,
@@ -9704,7 +10265,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           5
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#d3507f"
       },
       {
         "id": 8,
@@ -9713,7 +10275,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           4
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#a16469"
       },
       {
         "id": 9,
@@ -9722,7 +10285,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5,
           3
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#a26469"
       },
       {
         "id": 13,
@@ -9731,7 +10295,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4,
           3
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#996169"
       },
       {
         "id": 14,
@@ -9740,7 +10305,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5,
           12
         ],
-        "mirrored": true
+        "mirrored": true,
+        "faceColor": "#996169"
       },
       {
         "id": 18,
@@ -9749,7 +10315,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           4
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#786e5a"
       },
       {
         "id": 19,
@@ -9758,7 +10325,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           17
         ],
-        "mirrored": true
+        "mirrored": true,
+        "faceColor": "#786f5a"
       },
       {
         "id": 20,
@@ -9767,7 +10335,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           12,
           17
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#513e26"
       },
       {
         "id": 21,
@@ -9776,7 +10345,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           12,
           5
         ],
-        "mirrored": true
+        "mirrored": true,
+        "faceColor": "#55422b"
       }
     ],
     "edges": [
@@ -10293,7 +10863,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -0.23,
             -0.97
           ],
-          "lift": 1.5,
+          "lift": 0.5,
           "points": [
             [
               67.79,
@@ -10321,7 +10891,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -0.23,
             -0.97
           ],
-          "lift": 1.5,
+          "lift": 0.5,
           "points": [
             [
               -7.65,
@@ -10349,7 +10919,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.87,
             0.22
           ],
-          "lift": 1,
+          "lift": 0.5,
           "points": [
             [
               16.95,
@@ -10376,7 +10946,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.87,
             0.22
           ],
-          "lift": 1,
+          "lift": 0.5,
           "points": [
             [
               -16.95,
@@ -10403,7 +10973,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -0.99,
             0.05
           ],
-          "lift": 1,
+          "lift": 0.5,
           "points": [
             [
               -22.14,
@@ -10430,7 +11000,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -0.99,
             0.05
           ],
-          "lift": 1,
+          "lift": 0.5,
           "points": [
             [
               22.14,
@@ -10457,7 +11027,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -0.99,
             0.05
           ],
-          "lift": 1,
+          "lift": 0.5,
           "points": [
             [
               -63.41,
@@ -10480,7 +11050,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -0.99,
             0.05
           ],
-          "lift": 1,
+          "lift": 0.5,
           "points": [
             [
               -9.29,
@@ -10503,7 +11073,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -0.99,
             0.05
           ],
-          "lift": 1,
+          "lift": 0.5,
           "points": [
             [
               9.29,
@@ -10526,7 +11096,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -0.99,
             0.05
           ],
-          "lift": 1,
+          "lift": 0.5,
           "points": [
             [
               9.29,
@@ -10549,7 +11119,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.87,
             0.22
           ],
-          "lift": 1,
+          "lift": 0.5,
           "points": [
             [
               -9.29,
@@ -10572,7 +11142,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.87,
             0.22
           ],
-          "lift": 1,
+          "lift": 0.5,
           "points": [
             [
               -63.41,
@@ -10595,7 +11165,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.87,
             0.22
           ],
-          "lift": 1,
+          "lift": 0.5,
           "points": [
             [
               63.41,
@@ -10618,7 +11188,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.87,
             0.22
           ],
-          "lift": 1,
+          "lift": 0.5,
           "points": [
             [
               9.29,
@@ -10660,6 +11230,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "escapePod": true,
           "hiddenUntilDiscovered": true
         }
+      },
+      "imageProjection": {
+        "faceColors": [
+          "#d35080",
+          "#d3507f",
+          "#a16469",
+          "#a26469",
+          "#996169",
+          "#996169",
+          "#786e5a",
+          "#786f5a",
+          "#513e26",
+          "#55422b"
+        ]
       }
     }
   },
@@ -10667,6 +11251,35 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
     "format": "ultra-elite-ship-builder/v1",
     "id": "dodoStation",
     "name": "Dodo Station",
+    "symmetry": "x-locked",
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "private",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "valueCr": 250000,
+      "stats": {
+        "r": 247,
+        "hp": 120,
+        "speed": 1,
+        "cargo": 10,
+        "missiles": 1,
+        "laser": "none"
+      },
+      "lists": {
+        "trader": true,
+        "pirate": true,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": false
+      }
+    },
     "verts": [
       {
         "id": 1,
@@ -10872,8 +11485,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3
         ],
         "mirrored": false,
-        "bitmapFaceKey": "station_entrance",
-        "bitmapSide": "top"
+        "faceColor": "#495053",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "station_panel",
+        "bitmapMirrorX": true
       },
       {
         "id": 1001,
@@ -10885,21 +11500,25 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7
         ],
         "mirrored": false,
+        "faceColor": "#495053",
+        "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1002,
         "verts": [
-          7,
-          2,
           3,
           8,
-          12
+          12,
+          7,
+          2
         ],
         "mirrored": false,
+        "faceColor": "#495053",
+        "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1003,
@@ -10911,8 +11530,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8
         ],
         "mirrored": false,
+        "faceColor": "#495053",
+        "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1004,
@@ -10924,21 +11545,25 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4
         ],
         "mirrored": false,
+        "faceColor": "#495053",
+        "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1005,
         "verts": [
+          10,
+          5,
           1,
           6,
-          15,
-          10,
-          5
+          15
         ],
         "mirrored": false,
+        "faceColor": "#495053",
+        "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1006,
@@ -10950,34 +11575,40 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           20
         ],
         "mirrored": false,
+        "faceColor": "#495053",
+        "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1007,
         "verts": [
+          12,
+          17,
           16,
           11,
-          7,
-          12,
-          17
+          7
         ],
         "mirrored": false,
+        "faceColor": "#495053",
+        "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1008,
         "verts": [
-          17,
-          12,
           8,
           13,
-          18
+          18,
+          17,
+          12
         ],
         "mirrored": false,
+        "faceColor": "#495053",
+        "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1009,
@@ -10989,8 +11620,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9
         ],
         "mirrored": false,
+        "faceColor": "#495053",
+        "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1010,
@@ -11002,8 +11635,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           14
         ],
         "mirrored": false,
+        "faceColor": "#495053",
+        "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       },
       {
         "id": 1011,
@@ -11015,8 +11650,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           19
         ],
         "mirrored": false,
+        "faceColor": "#495053",
+        "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapSide": "top"
+        "bitmapMirrorX": true
       }
     ],
     "edges": [
@@ -11204,80 +11841,24 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1
         ],
         [
-          1,
-          2
-        ],
-        [
-          2,
-          3
+          0,
+          4
         ],
         [
           3,
           4
         ],
         [
-          4,
-          0
+          2,
+          3
+        ],
+        [
+          1,
+          2
         ],
         [
           5,
           10
-        ],
-        [
-          10,
-          6
-        ],
-        [
-          6,
-          11
-        ],
-        [
-          11,
-          7
-        ],
-        [
-          7,
-          12
-        ],
-        [
-          12,
-          8
-        ],
-        [
-          8,
-          13
-        ],
-        [
-          13,
-          9
-        ],
-        [
-          9,
-          14
-        ],
-        [
-          14,
-          5
-        ],
-        [
-          15,
-          16
-        ],
-        [
-          16,
-          17
-        ],
-        [
-          17,
-          18
-        ],
-        [
-          18,
-          19
-        ],
-        [
-          19,
-          15
         ],
         [
           0,
@@ -11288,23 +11869,71 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6
         ],
         [
+          6,
+          10
+        ],
+        [
           2,
           7
+        ],
+        [
+          7,
+          11
+        ],
+        [
+          6,
+          11
         ],
         [
           3,
           8
         ],
         [
+          8,
+          12
+        ],
+        [
+          7,
+          12
+        ],
+        [
           4,
           9
+        ],
+        [
+          9,
+          13
+        ],
+        [
+          8,
+          13
+        ],
+        [
+          5,
+          14
+        ],
+        [
+          9,
+          14
         ],
         [
           10,
           15
         ],
         [
+          15,
+          19
+        ],
+        [
+          14,
+          19
+        ],
+        [
           11,
+          16
+        ],
+        [
+          15,
           16
         ],
         [
@@ -11312,11 +11941,19 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           17
         ],
         [
+          16,
+          17
+        ],
+        [
           13,
           18
         ],
         [
-          14,
+          17,
+          18
+        ],
+        [
+          18,
           19
         ],
         [
@@ -11328,150 +11965,150 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           23
         ],
         [
-          23,
-          22
+          22,
+          23
         ],
         [
-          22,
-          20
+          20,
+          22
         ]
       ],
       "edgeFaces": [
         [
+          0,
+          1
+        ],
+        [
+          0,
+          5
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          0,
+          2
+        ],
+        [
           1,
-          0
+          6
         ],
         [
-          2,
-          0
-        ],
-        [
-          3,
-          0
-        ],
-        [
-          4,
-          0
-        ],
-        [
-          5,
-          0
-        ],
-        [
-          6,
-          1
-        ],
-        [
-          7,
-          1
-        ],
-        [
-          7,
-          2
-        ],
-        [
-          8,
-          2
-        ],
-        [
-          8,
-          3
-        ],
-        [
-          9,
-          3
-        ],
-        [
-          9,
-          4
-        ],
-        [
-          10,
-          4
-        ],
-        [
-          10,
+          1,
           5
         ],
         [
-          6,
-          5
+          1,
+          2
         ],
         [
-          11,
+          1,
           7
         ],
         [
-          11,
+          2,
+          3
+        ],
+        [
+          2,
           8
         ],
         [
-          11,
+          2,
+          7
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
           9
         ],
         [
-          11,
+          3,
+          8
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          4,
           10
         ],
         [
-          11,
-          6
-        ],
-        [
-          5,
-          1
-        ],
-        [
-          2,
-          1
-        ],
-        [
-          3,
-          2
-        ],
-        [
           4,
-          3
-        ],
-        [
-          5,
-          4
-        ],
-        [
-          7,
-          6
-        ],
-        [
-          8,
-          7
-        ],
-        [
-          9,
-          8
-        ],
-        [
-          10,
           9
         ],
         [
-          10,
+          5,
           6
         ],
         [
-          0,
-          0
+          5,
+          10
         ],
         [
-          0,
-          0
+          6,
+          7
         ],
         [
-          0,
-          0
+          6,
+          11
         ],
         [
-          0,
-          0
+          6,
+          10
+        ],
+        [
+          7,
+          8
+        ],
+        [
+          7,
+          11
+        ],
+        [
+          8,
+          9
+        ],
+        [
+          8,
+          11
+        ],
+        [
+          9,
+          10
+        ],
+        [
+          9,
+          11
+        ],
+        [
+          10,
+          11
+        ],
+        [
+          -1,
+          -1
+        ],
+        [
+          -1,
+          -1
+        ],
+        [
+          -1,
+          -1
+        ],
+        [
+          -1,
+          -1
         ]
       ],
       "edgeVisibility": [
@@ -11505,93 +12142,113 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         31,
         31,
         31,
-        30,
-        20,
-        23,
-        20
+        31,
+        31,
+        31,
+        31
       ],
       "normals": [
         [
           0,
           0,
-          196
+          100
         ],
         [
-          103,
-          142,
-          88
+          52.59,
+          72.29,
+          44.82
         ],
         [
-          169,
-          -55,
-          89
-        ],
-        [
-          0,
-          -176,
-          88
-        ],
-        [
-          -169,
-          -55,
-          89
-        ],
-        [
-          -103,
-          142,
-          88
+          84.95,
+          -27.61,
+          44.95
         ],
         [
           0,
-          176,
-          -88
+          -89.44,
+          44.72
         ],
         [
-          169,
-          55,
-          -89
+          -85.17,
+          -27.4,
+          44.67
         ],
         [
-          103,
-          -142,
-          -88
+          -52.58,
+          72.29,
+          44.82
         ],
         [
-          -103,
-          -142,
-          -88
+          0,
+          89.05,
+          -45.49
         ],
         [
-          -169,
-          55,
-          -89
+          85.06,
+          28.02,
+          -44.49
+        ],
+        [
+          52.59,
+          -72.29,
+          -44.82
+        ],
+        [
+          -52.58,
+          -72.29,
+          -44.82
+        ],
+        [
+          -84.95,
+          27.61,
+          -44.95
         ],
         [
           0,
           0,
-          -196
+          -100
         ]
       ],
       "details": [
         {
           "type": "beacon",
           "index": 20,
-          "color": "#ffb642"
+          "color": "#ffb642",
+          "normal": [
+            0,
+            0,
+            1
+          ]
         },
         {
           "type": "beacon",
           "index": 21,
-          "color": "#ffb642"
+          "color": "#ffb642",
+          "normal": [
+            0,
+            0,
+            1
+          ]
         },
         {
           "type": "beacon",
           "index": 22,
-          "color": "#ffb642"
+          "color": "#ffb642",
+          "normal": [
+            0,
+            0,
+            1
+          ]
         },
         {
           "type": "beacon",
           "index": 23,
-          "color": "#ffb642"
+          "color": "#ffb642",
+          "normal": [
+            0,
+            0,
+            1
+          ]
         }
       ],
       "imageProjection": {
@@ -11610,7 +12267,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "top"
         ],
         "faceTextures": [
-          "station_entrance",
+          "station_panel",
           "station_panel",
           "station_panel",
           "station_panel",
@@ -11624,26 +12281,61 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "station_panel"
         ],
         "faceColors": [
-          "#595e5e",
-          "#3f4647",
-          "#3f4647",
-          "#3f4647",
-          "#3f4647",
-          "#3f4647",
-          "#3f4647",
-          "#3f4647",
-          "#3f4647",
-          "#3f4647",
-          "#3f4647",
-          "#3f4647"
+          "#495053",
+          "#495053",
+          "#495053",
+          "#495053",
+          "#495053",
+          "#495053",
+          "#495053",
+          "#495053",
+          "#495053",
+          "#495053",
+          "#495053",
+          "#495053"
+        ],
+        "faceMirrorX": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
         ]
-      }
-    },
-    "gameMeta": {
-      "imageDecalMirrorX": {
-        "top": false,
-        "bottom": false,
-        "back": false
+      },
+      "gameMeta": {
+        "class": "fighter",
+        "npcRole": "private",
+        "aiProfile": "standard",
+        "decalRole": "private",
+        "baseColor": "#e9f2e4",
+        "description": "",
+        "missionLore": "",
+        "valueCr": 250000,
+        "stats": {
+          "r": 247,
+          "hp": 120,
+          "speed": 1,
+          "cargo": 10,
+          "missiles": 1,
+          "laser": "none"
+        },
+        "lists": {
+          "trader": true,
+          "pirate": true,
+          "police": false,
+          "alien": false
+        },
+        "flags": {
+          "escapePod": true,
+          "hiddenUntilDiscovered": false
+        }
       }
     }
   },
@@ -11695,7 +12387,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "pod_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#7b7568"
       },
       {
         "id": 1001,
@@ -11706,7 +12399,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "pod_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#7b7568"
       },
       {
         "id": 1002,
@@ -11717,7 +12411,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "pod_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#7b7568"
       },
       {
         "id": 1003,
@@ -11728,7 +12423,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "pod_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#7b7568"
       }
     ],
     "edges": [],
@@ -11743,7 +12439,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#fff2a8",
-        "lift": 2.5,
+        "lift": 0.5,
         "points": [
           [
             -7,
@@ -11895,10 +12591,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 2.5
+          "lift": 0.5
         }
       ],
       "imageProjection": {
+        "faceColors": [
+          "#7b7568",
+          "#7b7568",
+          "#7b7568",
+          "#7b7568"
+        ],
         "faceSides": [
           "top",
           "top",
@@ -11910,12 +12612,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "pod_panel",
           "pod_panel",
           "pod_panel"
-        ],
-        "faceColors": [
-          "#7b7568",
-          "#7b7568",
-          "#7b7568",
-          "#7b7568"
         ]
       }
     },
@@ -12094,7 +12790,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#424246"
       },
       {
         "id": 1001,
@@ -12103,7 +12800,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#434246"
       },
       {
         "id": 1002,
@@ -12115,7 +12813,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "side_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#6f727b"
       },
       {
         "id": 1003,
@@ -12125,7 +12824,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4,
           3
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#352e2e"
       },
       {
         "id": 1004,
@@ -12137,7 +12837,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "side_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#6f727b"
       },
       {
         "id": 1005,
@@ -12146,7 +12847,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           5
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#434246"
       },
       {
         "id": 1006,
@@ -12155,7 +12857,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           10,
           7
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#4a494c"
       },
       {
         "id": 1007,
@@ -12164,7 +12867,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8,
           7
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#434347"
       },
       {
         "id": 1008,
@@ -12173,7 +12877,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9,
           8
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#49494c"
       },
       {
         "id": 1009,
@@ -12184,7 +12889,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           3
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#4c4d4f"
       }
     ],
     "edges": [
@@ -12262,7 +12968,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           0.25
         ],
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           11,
           12,
@@ -12278,7 +12984,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           0.25
         ],
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           14,
           15,
@@ -12294,7 +13000,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1,
           0
         ],
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           17,
           18,
@@ -12311,7 +13017,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             6.6,
@@ -12749,7 +13455,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             1,
             0.25
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "window",
@@ -12764,7 +13470,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             1,
             0.25
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "window",
@@ -12779,7 +13485,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -1,
             0
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "engine",
@@ -12812,10 +13518,22 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 1
+          "lift": 0.5
         }
       ],
       "imageProjection": {
+        "faceColors": [
+          "#424246",
+          "#434246",
+          "#6f727b",
+          "#352e2e",
+          "#6f727b",
+          "#434246",
+          "#4a494c",
+          "#434347",
+          "#49494c",
+          "#4c4d4f"
+        ],
         "faceSides": [
           null,
           null,
@@ -12834,18 +13552,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "side_panel",
           null,
           "side_panel",
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "faceColors": [
-          null,
-          null,
-          "#6f727b",
-          null,
-          "#6f727b",
           null,
           null,
           null,
@@ -12973,7 +13679,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#515a5c"
       },
       {
         "id": 1001,
@@ -12982,7 +13689,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4,
           2
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#555d5f"
       },
       {
         "id": 1002,
@@ -12991,7 +13699,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           8
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#697277"
       },
       {
         "id": 1003,
@@ -13001,7 +13710,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           7
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#636c72"
       },
       {
         "id": 1004,
@@ -13010,7 +13720,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           5
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#697277"
       },
       {
         "id": 1005,
@@ -13019,7 +13730,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           5
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#555d5f"
       },
       {
         "id": 1006,
@@ -13028,7 +13740,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           7
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#525e5c"
       },
       {
         "id": 1007,
@@ -13038,7 +13751,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8,
           7
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#475351"
       },
       {
         "id": 1008,
@@ -13047,7 +13761,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6,
           8
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#414d4c"
       }
     ],
     "edges": [
@@ -13076,7 +13791,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.99,
           0.16
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             0,
@@ -13105,7 +13820,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.14
         ],
         "width": 1.4,
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           9,
           11
@@ -13121,7 +13836,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.14
         ],
         "width": 1.4,
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           10,
           12
@@ -13137,7 +13852,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             10,
@@ -13171,7 +13886,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -0.92
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             50,
@@ -13200,7 +13915,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -0.92
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             -50,
@@ -13515,7 +14230,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.99,
             0.16
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "line",
@@ -13530,7 +14245,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.14
           ],
           "width": 1.4,
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "line",
@@ -13545,7 +14260,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.14
           ],
           "width": 1.4,
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "engine",
@@ -13578,7 +14293,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "engine",
@@ -13606,7 +14321,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.07,
             -0.92
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "engine",
@@ -13634,9 +14349,22 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.07,
             -0.92
           ],
-          "lift": 1
+          "lift": 0.5
         }
-      ]
+      ],
+      "imageProjection": {
+        "faceColors": [
+          "#515a5c",
+          "#555d5f",
+          "#697277",
+          "#636c72",
+          "#697277",
+          "#555d5f",
+          "#525e5c",
+          "#475351",
+          "#414d4c"
+        ]
+      }
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -13650,6 +14378,35 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
     "format": "ultra-elite-ship-builder/v1",
     "id": "hermit",
     "name": "Hermit",
+    "symmetry": "x-locked",
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "private",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "valueCr": 250000,
+      "stats": {
+        "r": 81,
+        "hp": 120,
+        "speed": 1,
+        "cargo": 10,
+        "missiles": 1,
+        "laser": "none"
+      },
+      "lists": {
+        "trader": true,
+        "pirate": true,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": false
+      }
+    },
     "verts": [
       {
         "id": 1,
@@ -13733,8 +14490,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6
         ],
         "mirrored": false,
-        "bitmapFaceKey": "station_entrance",
-        "bitmapSide": "top"
+        "faceColor": "#495053",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "station_panel",
+        "bitmapMirrorX": true
       },
       {
         "id": 1001,
@@ -13744,8 +14503,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3
         ],
         "mirrored": false,
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#494d55"
       },
       {
         "id": 1002,
@@ -13755,8 +14515,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7
         ],
         "mirrored": false,
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#494d55"
       },
       {
         "id": 1003,
@@ -13766,8 +14527,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3
         ],
         "mirrored": false,
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#494d55"
       },
       {
         "id": 1004,
@@ -13777,8 +14539,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3
         ],
         "mirrored": false,
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#494d55"
       },
       {
         "id": 1005,
@@ -13788,8 +14551,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4
         ],
         "mirrored": false,
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#494d55"
       },
       {
         "id": 1006,
@@ -13799,8 +14563,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6
         ],
         "mirrored": false,
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#494d55"
       },
       {
         "id": 1007,
@@ -13810,8 +14575,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2
         ],
         "mirrored": false,
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#494d55"
       },
       {
         "id": 1008,
@@ -13821,8 +14587,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2
         ],
         "mirrored": false,
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#494d55"
       },
       {
         "id": 1009,
@@ -13832,8 +14599,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9
         ],
         "mirrored": false,
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#494d55"
       },
       {
         "id": 1010,
@@ -13843,8 +14611,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3
         ],
         "mirrored": false,
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#494d55"
       },
       {
         "id": 1011,
@@ -13854,8 +14623,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3
         ],
         "mirrored": false,
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#494d55"
       },
       {
         "id": 1012,
@@ -13865,8 +14635,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4
         ],
         "mirrored": false,
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#494d55"
       },
       {
         "id": 1013,
@@ -13876,8 +14647,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8
         ],
         "mirrored": false,
+        "bitmapSide": "top",
         "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#494d55"
       }
     ],
     "edges": [],
@@ -13940,157 +14712,157 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       "edges": [
         [
           0,
-          1
+          6
+        ],
+        [
+          5,
+          6
         ],
         [
           0,
-          4
-        ],
-        [
-          3,
-          4
+          5
         ],
         [
           2,
-          3
+          6
+        ],
+        [
+          2,
+          5
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          6
         ],
         [
           1,
           2
         ],
         [
-          1,
-          6
-        ],
-        [
-          2,
-          6
-        ],
-        [
-          2,
-          5
-        ],
-        [
-          5,
-          6
-        ],
-        [
-          0,
-          5
-        ],
-        [
           3,
           5
         ],
         [
-          0,
-          6
+          2,
+          3
         ],
         [
           4,
           5
         ],
         [
-          1,
-          8
+          3,
+          4
         ],
         [
-          1,
-          7
+          0,
+          4
         ],
         [
           0,
           7
         ],
         [
-          4,
+          1,
           7
-        ],
-        [
-          3,
-          7
-        ],
-        [
-          3,
-          8
-        ],
-        [
-          2,
-          8
         ],
         [
           7,
           8
+        ],
+        [
+          1,
+          8
+        ],
+        [
+          3,
+          7
+        ],
+        [
+          3,
+          8
+        ],
+        [
+          2,
+          8
+        ],
+        [
+          4,
+          7
         ]
       ],
       "edgeFaces": [
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          6
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          1,
+          4
+        ],
         [
           2,
           7
         ],
         [
-          6,
-          13
+          2,
+          3
         ],
         [
-          5,
-          12
+          3,
+          10
+        ],
+        [
+          4,
+          5
         ],
         [
           4,
           11
         ],
         [
-          3,
-          10
-        ],
-        [
-          2,
-          3
-        ],
-        [
-          1,
-          3
-        ],
-        [
-          1,
-          4
-        ],
-        [
-          0,
-          1
-        ],
-        [
-          0,
-          6
-        ],
-        [
-          4,
-          5
-        ],
-        [
-          0,
-          2
-        ],
-        [
           5,
           6
         ],
         [
-          8,
-          10
+          5,
+          12
+        ],
+        [
+          6,
+          13
+        ],
+        [
+          7,
+          13
         ],
         [
           7,
           8
         ],
         [
-          7,
-          13
+          8,
+          9
         ],
         [
-          12,
-          13
+          8,
+          10
         ],
         [
           9,
@@ -14105,8 +14877,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           11
         ],
         [
-          8,
-          9
+          12,
+          13
         ]
       ],
       "edgeVisibility": [
@@ -14134,74 +14906,74 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       ],
       "normals": [
         [
-          9,
-          66,
-          81
+          8.56,
+          63.15,
+          77.06
         ],
         [
-          9,
-          -66,
-          81
+          8.56,
+          -63.15,
+          77.06
         ],
         [
-          -72,
-          64,
-          31
+          -70.93,
+          63.05,
+          31.52
         ],
         [
-          -64,
-          -73,
-          47
+          -59.28,
+          -67.75,
+          43.55
         ],
         [
-          45,
-          -79,
-          65
+          39.8,
+          -69.65,
+          59.7
         ],
         [
-          135,
-          15,
-          35
+          96.24,
+          10.69,
+          24.95
         ],
         [
-          38,
-          76,
-          70
+          34.58,
+          69.17,
+          63.4
         ],
         [
-          -66,
-          59,
-          -39
+          -68.34,
+          60.74,
+          -40.5
         ],
         [
-          -67,
-          -15,
-          -80
+          -63.83,
+          -14.19,
+          -75.66
         ],
         [
-          66,
-          -14,
-          -75
+          65.58,
+          -13.91,
+          -74.2
         ],
         [
-          -70,
-          -80,
-          -40
+          -61.63,
+          -70.44,
+          -35.22
         ],
         [
-          58,
-          -102,
-          -51
+          45.51,
+          -79.64,
+          -39.82
         ],
         [
-          81,
-          9,
-          -67
+          76.68,
+          8.52,
+          -63.62
         ],
         [
-          47,
-          94,
-          -63
+          38.41,
+          76.82,
+          -51.21
         ]
       ],
       "details": [
@@ -14229,7 +15001,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "top"
         ],
         "faceTextures": [
-          "station_entrance",
+          "station_panel",
           "rock_panel",
           "rock_panel",
           "rock_panel",
@@ -14245,7 +15017,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "rock_panel"
         ],
         "faceColors": [
-          "#5b6061",
+          "#495053",
           "#494d55",
           "#494d55",
           "#494d55",
@@ -14259,14 +15031,51 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#494d55",
           "#494d55",
           "#494d55"
+        ],
+        "faceMirrorX": [
+          true,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
         ]
-      }
-    },
-    "gameMeta": {
-      "imageDecalMirrorX": {
-        "top": false,
-        "bottom": false,
-        "back": false
+      },
+      "gameMeta": {
+        "class": "fighter",
+        "npcRole": "private",
+        "aiProfile": "standard",
+        "decalRole": "private",
+        "baseColor": "#e9f2e4",
+        "description": "",
+        "missionLore": "",
+        "valueCr": 250000,
+        "stats": {
+          "r": 81,
+          "hp": 120,
+          "speed": 1,
+          "cargo": 10,
+          "missiles": 1,
+          "laser": "none"
+        },
+        "lists": {
+          "trader": true,
+          "pirate": true,
+          "police": false,
+          "alien": false
+        },
+        "flags": {
+          "escapePod": true,
+          "hiddenUntilDiscovered": false
+        }
       }
     }
   },
@@ -14420,7 +15229,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#494a4e"
       },
       {
         "id": 1001,
@@ -14429,7 +15239,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           3
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#57585e"
       },
       {
         "id": 1002,
@@ -14438,7 +15249,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           5
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#57585e"
       },
       {
         "id": 1003,
@@ -14447,7 +15259,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           5
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#494a4e"
       },
       {
         "id": 1004,
@@ -14456,7 +15269,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4,
           3
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#2e2a2a"
       },
       {
         "id": 1005,
@@ -14465,7 +15279,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           3
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#262120"
       }
     ],
     "edges": [
@@ -14565,7 +15380,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1
         ],
         "width": 1.6,
-        "lift": 1,
+        "lift": 0.5,
         "cull": false,
         "indices": [
           4,
@@ -14582,7 +15397,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1
         ],
         "width": 1.6,
-        "lift": 1,
+        "lift": 0.5,
         "cull": false,
         "indices": [
           5,
@@ -14598,7 +15413,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.97,
           0.12
         ],
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           8,
           11,
@@ -14614,7 +15429,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.97,
           0.12
         ],
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           8,
           10,
@@ -14631,7 +15446,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           12,
           14,
@@ -14648,7 +15463,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           15,
           16,
@@ -14986,7 +15801,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             1
           ],
           "width": 1.6,
-          "lift": 1,
+          "lift": 0.5,
           "cull": false
         },
         {
@@ -15002,7 +15817,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             1
           ],
           "width": 1.6,
-          "lift": 1,
+          "lift": 0.5,
           "cull": false
         },
         {
@@ -15018,7 +15833,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.97,
             0.12
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "window",
@@ -15033,7 +15848,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.97,
             0.12
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "engine",
@@ -15049,7 +15864,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "engine",
@@ -15065,9 +15880,19 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 1
+          "lift": 0.5
         }
-      ]
+      ],
+      "imageProjection": {
+        "faceColors": [
+          "#494a4e",
+          "#57585e",
+          "#57585e",
+          "#494a4e",
+          "#2e2a2a",
+          "#262120"
+        ]
+      }
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -15291,7 +16116,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           2
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#616469"
       },
       {
         "id": 1001,
@@ -15300,7 +16126,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#6e7177"
       },
       {
         "id": 1002,
@@ -15309,7 +16136,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#717277"
       },
       {
         "id": 1003,
@@ -15318,7 +16146,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           5
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#717277"
       },
       {
         "id": 1004,
@@ -15328,7 +16157,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5,
           2
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#2e2c2d"
       }
     ],
     "edges": [
@@ -15483,7 +16313,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           0.08
         ],
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           6,
           7,
@@ -15500,7 +16330,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1,
           0.08
         ],
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           10,
           12,
@@ -15516,7 +16346,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1,
           0.08
         ],
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           11,
           14,
@@ -15533,7 +16363,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           16,
           17,
@@ -15551,7 +16381,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           20,
           23,
@@ -15568,7 +16398,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           21,
           22,
@@ -16004,7 +16834,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             1,
             0.08
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "window",
@@ -16019,7 +16849,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -1,
             0.08
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "window",
@@ -16034,7 +16864,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -1,
             0.08
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "engine",
@@ -16051,7 +16881,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "engine",
@@ -16067,7 +16897,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "engine",
@@ -16083,9 +16913,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 1
+          "lift": 0.5
         }
-      ]
+      ],
+      "imageProjection": {
+        "faceColors": [
+          "#616469",
+          "#6e7177",
+          "#717277",
+          "#717277",
+          "#2e2c2d"
+        ]
+      }
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -16247,7 +17086,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "missile_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#a9545a"
       },
       {
         "id": 1001,
@@ -16258,7 +17098,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "missile_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#a9545a"
       },
       {
         "id": 1002,
@@ -16269,7 +17110,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "missile_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#a9545a"
       },
       {
         "id": 1003,
@@ -16280,7 +17122,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "missile_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#a9545a"
       },
       {
         "id": 1004,
@@ -16292,7 +17135,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "missile_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#a9545a"
       },
       {
         "id": 1005,
@@ -16304,7 +17148,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "missile_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#a9545a"
       },
       {
         "id": 1006,
@@ -16316,7 +17161,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "missile_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#a9545a"
       },
       {
         "id": 1007,
@@ -16328,7 +17174,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "missile_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#a9545a"
       },
       {
         "id": 1008,
@@ -16340,7 +17187,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "missile_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#a9545a"
       },
       {
         "id": 1009,
@@ -16351,7 +17199,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "missile_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#a9545a"
       },
       {
         "id": 1010,
@@ -16362,7 +17211,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "missile_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#a9545a"
       },
       {
         "id": 1011,
@@ -16373,7 +17223,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "missile_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#a9545a"
       },
       {
         "id": 1012,
@@ -16384,7 +17235,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "missile_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#a9545a"
       },
       {
         "id": 1013,
@@ -16395,7 +17247,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "missile_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#a9545a"
       },
       {
         "id": 1014,
@@ -16406,7 +17259,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "missile_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#a9545a"
       },
       {
         "id": 1015,
@@ -16417,7 +17271,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "missile_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#a9545a"
       },
       {
         "id": 1016,
@@ -16428,7 +17283,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "missile_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#a9545a"
       }
     ],
     "edges": [],
@@ -16443,7 +17299,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             4,
@@ -16897,10 +17753,29 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 1
+          "lift": 0.5
         }
       ],
       "imageProjection": {
+        "faceColors": [
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a"
+        ],
         "faceSides": [
           "top",
           "top",
@@ -16938,25 +17813,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "missile_panel",
           "missile_panel",
           "missile_panel"
-        ],
-        "faceColors": [
-          "#a9545a",
-          "#a9545a",
-          "#a9545a",
-          "#a9545a",
-          "#a9545a",
-          "#a9545a",
-          "#a9545a",
-          "#a9545a",
-          "#a9545a",
-          "#a9545a",
-          "#a9545a",
-          "#a9545a",
-          "#a9545a",
-          "#a9545a",
-          "#a9545a",
-          "#a9545a",
-          "#a9545a"
         ]
       }
     },
@@ -17094,7 +17950,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           2
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#657077"
       },
       {
         "id": 1001,
@@ -17103,7 +17960,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           4
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#555f64"
       },
       {
         "id": 1002,
@@ -17112,7 +17970,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#555f64"
       },
       {
         "id": 1003,
@@ -17121,7 +17980,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           7
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#3c4745"
       },
       {
         "id": 1004,
@@ -17130,7 +17990,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6,
           7
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#45514e"
       },
       {
         "id": 1005,
@@ -17139,7 +18000,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5,
           6
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#505c5a"
       },
       {
         "id": 1006,
@@ -17148,7 +18010,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4,
           7
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#70797d"
       },
       {
         "id": 1007,
@@ -17158,7 +18021,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           7
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#707a7d"
       },
       {
         "id": 1008,
@@ -17167,7 +18031,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           6
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#70797d"
       }
     ],
     "edges": [
@@ -17217,7 +18082,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.99,
           0.16
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             0,
@@ -17246,7 +18111,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.16
         ],
         "width": 1.4,
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           11,
           12
@@ -17262,7 +18127,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.16
         ],
         "width": 1.4,
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           13,
           14
@@ -17278,7 +18143,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -0.83
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           8,
           9,
@@ -17610,7 +18475,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.99,
             0.16
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "line",
@@ -17625,7 +18490,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.16
           ],
           "width": 1.4,
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "line",
@@ -17640,7 +18505,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.16
           ],
           "width": 1.4,
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "engine",
@@ -17656,9 +18521,22 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -0.55,
             -0.83
           ],
-          "lift": 1
+          "lift": 0.5
         }
-      ]
+      ],
+      "imageProjection": {
+        "faceColors": [
+          "#657077",
+          "#555f64",
+          "#555f64",
+          "#3c4745",
+          "#45514e",
+          "#505c5a",
+          "#70797d",
+          "#707a7d",
+          "#70797d"
+        ]
+      }
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -17736,7 +18614,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "plate_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#8b877c"
       },
       {
         "id": 1001,
@@ -17748,7 +18627,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "plate_panel",
-        "bitmapSide": "bottom"
+        "bitmapSide": "bottom",
+        "faceColor": "#8b877c"
       }
     ],
     "edges": [
@@ -17987,7 +18867,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#6d6d64"
       },
       {
         "id": 1001,
@@ -17996,7 +18877,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           3
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#6e6e65"
       },
       {
         "id": 1002,
@@ -18005,7 +18887,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4,
           9
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#676253"
       },
       {
         "id": 1003,
@@ -18014,7 +18897,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           9
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#676253"
       },
       {
         "id": 1004,
@@ -18023,7 +18907,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5,
           4
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#75756d"
       },
       {
         "id": 1005,
@@ -18032,7 +18917,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           3
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#75756e"
       },
       {
         "id": 1006,
@@ -18041,7 +18927,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           10,
           9
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#726f64"
       },
       {
         "id": 1007,
@@ -18050,7 +18937,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9,
           10
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#726f64"
       },
       {
         "id": 1008,
@@ -18060,7 +18948,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7,
           4
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#5e5d54"
       },
       {
         "id": 1009,
@@ -18070,7 +18959,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           8
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#5e5d54"
       },
       {
         "id": 1010,
@@ -18080,7 +18970,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           10,
           11
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#80774c"
       },
       {
         "id": 1011,
@@ -18090,7 +18981,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           11,
           10
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#80764d"
       },
       {
         "id": 1012,
@@ -18100,7 +18992,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8,
           11
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#4f4d3e"
       }
     ],
     "edges": [
@@ -18143,7 +19036,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.81,
           0.22
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             17.6,
@@ -18171,7 +19064,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.81,
           0.22
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             -17.6,
@@ -18200,7 +19093,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -0.23
         ],
         "width": 1.4,
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           4,
           6
@@ -18216,7 +19109,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -0.23
         ],
         "width": 1.4,
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           3,
           6
@@ -18232,7 +19125,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -0.23
         ],
         "width": 1.4,
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           3,
           11
@@ -18248,7 +19141,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -0.23
         ],
         "width": 1.4,
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           4,
           11
@@ -18264,7 +19157,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             0,
@@ -18680,7 +19573,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.81,
             0.22
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "window",
@@ -18707,7 +19600,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.81,
             0.22
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "line",
@@ -18722,7 +19615,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -0.23
           ],
           "width": 1.4,
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "line",
@@ -18737,7 +19630,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -0.23
           ],
           "width": 1.4,
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "line",
@@ -18752,7 +19645,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -0.23
           ],
           "width": 1.4,
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "line",
@@ -18767,7 +19660,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -0.23
           ],
           "width": 1.4,
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "engine",
@@ -18800,9 +19693,26 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 1
+          "lift": 0.5
         }
-      ]
+      ],
+      "imageProjection": {
+        "faceColors": [
+          "#6d6d64",
+          "#6e6e65",
+          "#676253",
+          "#676253",
+          "#75756d",
+          "#75756e",
+          "#726f64",
+          "#726f64",
+          "#5e5d54",
+          "#5e5d54",
+          "#80774c",
+          "#80764d",
+          "#4f4d3e"
+        ]
+      }
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -18978,7 +19888,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           13
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#66645b"
       },
       {
         "id": 1001,
@@ -18987,7 +19898,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           5
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#726c4d"
       },
       {
         "id": 1002,
@@ -18996,7 +19908,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#6d6b60"
       },
       {
         "id": 1003,
@@ -19007,7 +19920,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "side_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#767772"
       },
       {
         "id": 1004,
@@ -19016,7 +19930,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6,
           2
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#78786e"
       },
       {
         "id": 1005,
@@ -19025,7 +19940,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6,
           3
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#75746b"
       },
       {
         "id": 1006,
@@ -19034,7 +19950,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           4
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#78776e"
       },
       {
         "id": 1007,
@@ -19045,7 +19962,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "side_panel",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "faceColor": "#767772"
       },
       {
         "id": 1008,
@@ -19054,7 +19972,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           8
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#6c6a5f"
       },
       {
         "id": 1009,
@@ -19064,7 +19983,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8,
           5
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#4e4c3b"
       },
       {
         "id": 1010,
@@ -19073,7 +19993,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           13
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#696759"
       },
       {
         "id": 1011,
@@ -19082,7 +20003,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           13,
           4
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#696859"
       },
       {
         "id": 1012,
@@ -19091,7 +20013,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           13,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#66645b"
       }
     ],
     "edges": [
@@ -19177,7 +20100,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           9,
           10,
@@ -19643,10 +20566,25 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 1
+          "lift": 0.5
         }
       ],
       "imageProjection": {
+        "faceColors": [
+          "#66645b",
+          "#726c4d",
+          "#6d6b60",
+          "#767772",
+          "#78786e",
+          "#75746b",
+          "#78776e",
+          "#767772",
+          "#6c6a5f",
+          "#4e4c3b",
+          "#696759",
+          "#696859",
+          "#66645b"
+        ],
         "faceSides": [
           null,
           null,
@@ -19671,21 +20609,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           null,
           null,
           "side_panel",
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "faceColors": [
-          null,
-          null,
-          null,
-          "#767772",
-          null,
-          null,
-          null,
-          "#767772",
           null,
           null,
           null,
@@ -19796,7 +20719,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#63676e"
       },
       {
         "id": 1001,
@@ -19805,7 +20729,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5,
           4
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#505359"
       },
       {
         "id": 1002,
@@ -19814,7 +20739,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5,
           2
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#515359"
       },
       {
         "id": 1003,
@@ -19824,7 +20750,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           6
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#4d494a"
       },
       {
         "id": 1004,
@@ -19833,7 +20760,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           4
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#514f51"
       },
       {
         "id": 1005,
@@ -19842,7 +20770,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           6
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#5f5e62"
       },
       {
         "id": 1006,
@@ -19851,7 +20780,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           6
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#514f51"
       }
     ],
     "edges": [
@@ -19894,7 +20824,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.97,
           0.24
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             -16,
@@ -19923,7 +20853,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           7,
           8,
@@ -20189,7 +21119,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.97,
             0.24
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "engine",
@@ -20206,9 +21136,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 1
+          "lift": 0.5
         }
-      ]
+      ],
+      "imageProjection": {
+        "faceColors": [
+          "#63676e",
+          "#505359",
+          "#515359",
+          "#4d494a",
+          "#514f51",
+          "#5f5e62",
+          "#514f51"
+        ]
+      }
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -20222,6 +21163,35 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
     "format": "ultra-elite-ship-builder/v1",
     "id": "splinter",
     "name": "Splinter",
+    "symmetry": "x-locked",
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "private",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "valueCr": 250000,
+      "stats": {
+        "r": 44,
+        "hp": 120,
+        "speed": 1,
+        "cargo": 10,
+        "missiles": 1,
+        "laser": "none"
+      },
+      "lists": {
+        "trader": true,
+        "pirate": true,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": false
+      }
+    },
     "verts": [
       {
         "id": 1,
@@ -20265,8 +21235,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2
         ],
         "mirrored": false,
-        "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#928c89",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "rock_panel-1004",
+        "bitmapMirrorX": true
       },
       {
         "id": 1001,
@@ -20276,8 +21248,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3
         ],
         "mirrored": false,
-        "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#928c89",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "rock_panel-1004",
+        "bitmapMirrorX": true
       },
       {
         "id": 1002,
@@ -20287,19 +21261,22 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1
         ],
         "mirrored": false,
-        "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#928c89",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "rock_panel-1004"
       },
       {
         "id": 1003,
         "verts": [
-          2,
+          3,
           1,
-          3
+          2
         ],
         "mirrored": false,
-        "bitmapFaceKey": "rock_panel",
-        "bitmapSide": "top"
+        "faceColor": "#928c89",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "rock_panel-1004",
+        "bitmapMirrorX": true
       }
     ],
     "edges": [],
@@ -20329,54 +21306,54 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       ],
       "edges": [
         [
-          0,
-          1
+          2,
+          3
         ],
         [
           1,
           2
         ],
         [
-          2,
+          1,
           3
         ],
         [
-          3,
-          0
+          0,
+          3
         ],
         [
           0,
           2
         ],
         [
-          3,
+          0,
           1
         ]
       ],
       "edgeFaces": [
         [
-          3,
+          0,
+          1
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          0,
           2
         ],
         [
-          3,
-          0
+          1,
+          2
         ],
         [
           1,
-          0
+          3
         ],
         [
           2,
-          1
-        ],
-        [
-          3,
-          1
-        ],
-        [
-          2,
-          0
+          3
         ]
       ],
       "edgeVisibility": [
@@ -20389,26 +21366,27 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       ],
       "normals": [
         [
-          35,
-          0,
-          4
+          77.24,
+          4.99,
+          -63.32
         ],
         [
-          3,
-          4,
-          8
+          41.7,
+          -10.28,
+          90.31
         ],
         [
-          1,
-          8,
-          12
+          -87.72,
+          44.83,
+          -17.18
         ],
         [
-          18,
-          12,
-          0
+          -2.36,
+          -56.45,
+          -82.51
         ]
       ],
+      "details": [],
       "imageProjection": {
         "faceSides": [
           "top",
@@ -20417,24 +21395,51 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "top"
         ],
         "faceTextures": [
-          "rock_panel",
-          "rock_panel",
-          "rock_panel",
-          "rock_panel"
+          "rock_panel-1004",
+          "rock_panel-1004",
+          "rock_panel-1004",
+          "rock_panel-1004"
         ],
         "faceColors": [
-          "#58595f",
-          "#58595f",
-          "#58595f",
-          "#58595f"
+          "#928c89",
+          "#928c89",
+          "#928c89",
+          "#928c89"
+        ],
+        "faceMirrorX": [
+          true,
+          true,
+          false,
+          true
         ]
-      }
-    },
-    "gameMeta": {
-      "imageDecalMirrorX": {
-        "top": false,
-        "bottom": false,
-        "back": false
+      },
+      "gameMeta": {
+        "class": "fighter",
+        "npcRole": "private",
+        "aiProfile": "standard",
+        "decalRole": "private",
+        "baseColor": "#e9f2e4",
+        "description": "",
+        "missionLore": "",
+        "valueCr": 250000,
+        "stats": {
+          "r": 44,
+          "hp": 120,
+          "speed": 1,
+          "cargo": 10,
+          "missiles": 1,
+          "laser": "none"
+        },
+        "lists": {
+          "trader": true,
+          "pirate": true,
+          "police": false,
+          "alien": false
+        },
+        "flags": {
+          "escapePod": true,
+          "hiddenUntilDiscovered": false
+        }
       }
     }
   },
@@ -20442,6 +21447,35 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
     "format": "ultra-elite-ship-builder/v1",
     "id": "thargoid",
     "name": "Thargoid",
+    "symmetry": "x-locked",
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "private",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "valueCr": 250000,
+      "stats": {
+        "r": 166,
+        "hp": 120,
+        "speed": 1,
+        "cargo": 10,
+        "missiles": 1,
+        "laser": "none"
+      },
+      "lists": {
+        "trader": true,
+        "pirate": true,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": false
+      }
+    },
     "verts": [
       {
         "id": 1,
@@ -20613,7 +21647,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9,
           10
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#321462"
       },
       {
         "id": 1001,
@@ -20623,7 +21658,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           10,
           11
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#2f155d"
       },
       {
         "id": 1002,
@@ -20633,7 +21669,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           11
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#321760"
       },
       {
         "id": 1003,
@@ -20643,7 +21680,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4,
           12
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#311660"
       },
       {
         "id": 1004,
@@ -20657,7 +21695,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           4
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#331665"
       },
       {
         "id": 1005,
@@ -20667,7 +21706,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6,
           5
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#301561"
       },
       {
         "id": 1006,
@@ -20677,7 +21717,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7,
           6
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#36156d"
       },
       {
         "id": 1007,
@@ -20687,7 +21728,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           16,
           8
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#36156b"
       },
       {
         "id": 1008,
@@ -20697,7 +21739,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#351567"
       },
       {
         "id": 1009,
@@ -20711,7 +21754,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           10,
           9
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#421c79"
       }
     ],
     "edges": [
@@ -20741,7 +21785,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0
         ],
         "width": 2,
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           17,
           18
@@ -20757,7 +21801,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0
         ],
         "width": 2,
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           19,
           20
@@ -20773,7 +21817,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             -24,
@@ -20826,7 +21870,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0,
           0
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             32,
@@ -20872,9 +21916,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       }
     ],
     "blueprint": {
-      "imageProjection": {
-        "primaryAxis": "x"
-      },
       "verts": [
         [
           32,
@@ -20980,23 +22021,55 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       "edges": [
         [
           0,
-          7
+          1
         ],
         [
           0,
-          1
+          8
+        ],
+        [
+          8,
+          9
+        ],
+        [
+          1,
+          9
         ],
         [
           1,
           2
         ],
         [
+          9,
+          10
+        ],
+        [
+          2,
+          10
+        ],
+        [
+          3,
+          11
+        ],
+        [
           2,
           3
         ],
         [
+          10,
+          11
+        ],
+        [
+          4,
+          12
+        ],
+        [
           3,
           4
+        ],
+        [
+          11,
+          12
         ],
         [
           4,
@@ -21012,58 +22085,14 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           0,
-          8
-        ],
-        [
-          1,
-          9
-        ],
-        [
-          2,
-          10
-        ],
-        [
-          3,
-          11
-        ],
-        [
-          4,
-          12
-        ],
-        [
-          5,
-          13
-        ],
-        [
-          6,
-          14
-        ],
-        [
-          7,
-          15
-        ],
-        [
-          8,
-          15
-        ],
-        [
-          8,
-          9
-        ],
-        [
-          9,
-          10
-        ],
-        [
-          10,
-          11
-        ],
-        [
-          11,
-          12
+          7
         ],
         [
           12,
+          13
+        ],
+        [
+          5,
           13
         ],
         [
@@ -21071,7 +22100,19 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           14
         ],
         [
+          6,
+          14
+        ],
+        [
           14,
+          15
+        ],
+        [
+          7,
+          15
+        ],
+        [
+          8,
           15
         ],
         [
@@ -21085,44 +22126,28 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       ],
       "edgeFaces": [
         [
-          4,
+          0,
+          4
+        ],
+        [
+          0,
           8
         ],
         [
           0,
-          4
+          9
+        ],
+        [
+          0,
+          1
         ],
         [
           1,
           4
         ],
         [
-          2,
-          4
-        ],
-        [
-          3,
-          4
-        ],
-        [
-          4,
-          5
-        ],
-        [
-          4,
-          6
-        ],
-        [
-          4,
-          7
-        ],
-        [
-          0,
-          8
-        ],
-        [
-          0,
-          1
+          1,
+          9
         ],
         [
           1,
@@ -21133,8 +22158,44 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3
         ],
         [
+          2,
+          4
+        ],
+        [
+          2,
+          9
+        ],
+        [
           3,
           5
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          9
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          4,
+          6
+        ],
+        [
+          4,
+          7
+        ],
+        [
+          4,
+          8
+        ],
+        [
+          5,
+          9
         ],
         [
           5,
@@ -21142,7 +22203,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           6,
+          9
+        ],
+        [
+          6,
           7
+        ],
+        [
+          7,
+          9
         ],
         [
           7,
@@ -21153,90 +22222,90 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9
         ],
         [
-          0,
-          9
+          -1,
+          -1
         ],
         [
-          1,
-          9
-        ],
-        [
-          2,
-          9
-        ],
-        [
-          3,
-          9
-        ],
-        [
-          5,
-          9
-        ],
-        [
-          6,
-          9
-        ],
-        [
-          7,
-          9
-        ],
-        [
-          9,
-          9
-        ],
-        [
-          9,
-          9
+          -1,
+          -1
         ]
+      ],
+      "edgeVisibility": [
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31
       ],
       "normals": [
         [
-          103,
-          -60,
-          25
+          84.62,
+          -49.19,
+          20.5
         ],
         [
-          103,
-          -60,
-          -25
+          84.53,
+          -49.31,
+          -20.55
         ],
         [
-          103,
-          -25,
-          -60
+          84.53,
+          -20.55,
+          -49.31
         ],
         [
-          103,
-          25,
-          -60
+          84.62,
+          20.5,
+          -49.19
         ],
         [
-          64,
+          100,
           0,
           0
         ],
         [
-          103,
-          60,
-          -25
+          84.56,
+          49.33,
+          -20.41
         ],
         [
-          103,
-          60,
-          25
+          84.59,
+          49.28,
+          20.39
         ],
         [
-          103,
-          25,
-          60
+          84.59,
+          20.39,
+          49.28
         ],
         [
-          103,
-          -25,
-          60
+          84.56,
+          -20.41,
+          49.33
         ],
         [
-          -48,
+          -100,
           0,
           0
         ]
@@ -21244,36 +22313,44 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       "details": [
         {
           "type": "line",
+          "color": "#f7fff7",
+          "width": 2,
+          "lift": 0.5,
+          "normal": [
+            -1,
+            0,
+            0
+          ],
           "indices": [
             16,
             17
-          ],
-          "color": "#f7fff7",
-          "normal": [
-            -1,
-            0,
-            0
-          ],
-          "width": 2,
-          "lift": 1
+          ]
         },
         {
           "type": "line",
-          "indices": [
-            18,
-            19
-          ],
           "color": "#f7fff7",
+          "width": 2,
+          "lift": 0.5,
           "normal": [
             -1,
             0,
             0
           ],
-          "width": 2,
-          "lift": 1
+          "indices": [
+            18,
+            19
+          ]
         },
         {
           "type": "engine",
+          "color": "#f7fff7",
+          "stroke": "#ffffff",
+          "lift": 0.5,
+          "normal": [
+            -1,
+            0,
+            0
+          ],
           "points": [
             [
               -24,
@@ -21315,18 +22392,17 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               0,
               60
             ]
-          ],
-          "color": "#f7fff7",
-          "stroke": "#ffffff",
-          "normal": [
-            -1,
-            0,
-            0
-          ],
-          "lift": 1
+          ]
         },
         {
           "type": "window",
+          "color": "#101915",
+          "lift": 0.5,
+          "normal": [
+            1,
+            0,
+            0
+          ],
           "points": [
             [
               32,
@@ -21368,22 +22444,51 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               0,
               30
             ]
-          ],
-          "color": "#101915",
-          "normal": [
-            1,
-            0,
-            0
-          ],
-          "lift": 1
+          ]
         }
-      ]
-    },
-    "gameMeta": {
-      "imageDecalMirrorX": {
-        "top": true,
-        "bottom": true,
-        "back": false
+      ],
+      "imageProjection": {
+        "primaryAxis": "x",
+        "faceColors": [
+          "#321462",
+          "#2f155d",
+          "#321760",
+          "#311660",
+          "#331665",
+          "#301561",
+          "#36156d",
+          "#36156b",
+          "#351567",
+          "#421c79"
+        ]
+      },
+      "gameMeta": {
+        "class": "fighter",
+        "npcRole": "private",
+        "aiProfile": "standard",
+        "decalRole": "private",
+        "baseColor": "#e9f2e4",
+        "description": "",
+        "missionLore": "",
+        "valueCr": 250000,
+        "stats": {
+          "r": 166,
+          "hp": 120,
+          "speed": 1,
+          "cargo": 10,
+          "missiles": 1,
+          "laser": "none"
+        },
+        "lists": {
+          "trader": true,
+          "pirate": true,
+          "police": false,
+          "alien": false
+        },
+        "flags": {
+          "escapePod": true,
+          "hiddenUntilDiscovered": false
+        }
       }
     }
   },
@@ -21391,6 +22496,35 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
     "format": "ultra-elite-ship-builder/v1",
     "id": "thargon",
     "name": "Thargon",
+    "symmetry": "x-locked",
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "private",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "valueCr": 250000,
+      "stats": {
+        "r": 41,
+        "hp": 120,
+        "speed": 1,
+        "cargo": 10,
+        "missiles": 1,
+        "laser": "none"
+      },
+      "lists": {
+        "trader": true,
+        "pirate": true,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": false
+      }
+    },
     "verts": [
       {
         "id": 1,
@@ -21483,7 +22617,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           2
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#441e7a"
       },
       {
         "id": 1001,
@@ -21493,7 +22628,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           2
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#361767"
       },
       {
         "id": 1002,
@@ -21503,7 +22639,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           3
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#331660"
       },
       {
         "id": 1003,
@@ -21513,7 +22650,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8,
           3
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#3b1d71"
       },
       {
         "id": 1004,
@@ -21523,7 +22661,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           10,
           9
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#3a1873"
       },
       {
         "id": 1005,
@@ -21533,7 +22672,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6,
           10
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#3d1b74"
       },
       {
         "id": 1006,
@@ -21544,7 +22684,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7,
           8
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#361668"
       }
     ],
     "edges": [],
@@ -21559,7 +22700,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             -9,
@@ -21597,7 +22738,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0,
           0
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             9,
@@ -21628,9 +22769,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       }
     ],
     "blueprint": {
-      "imageProjection": {
-        "primaryAxis": "x"
-      },
       "verts": [
         [
           -9,
@@ -21686,23 +22824,27 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       "edges": [
         [
           0,
-          1
-        ],
-        [
-          1,
-          2
-        ],
-        [
-          2,
-          3
+          4
         ],
         [
           3,
           4
         ],
         [
+          2,
+          3
+        ],
+        [
+          1,
+          2
+        ],
+        [
           0,
-          4
+          1
+        ],
+        [
+          5,
+          6
         ],
         [
           0,
@@ -21710,22 +22852,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           1,
-          6
-        ],
-        [
-          2,
-          7
-        ],
-        [
-          3,
-          8
-        ],
-        [
-          4,
-          9
-        ],
-        [
-          5,
           6
         ],
         [
@@ -21733,30 +22859,34 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7
         ],
         [
+          2,
+          7
+        ],
+        [
+          3,
+          8
+        ],
+        [
           7,
           8
+        ],
+        [
+          4,
+          9
         ],
         [
           8,
           9
         ],
         [
-          9,
-          5
+          5,
+          9
         ]
       ],
       "edgeFaces": [
         [
           0,
-          1
-        ],
-        [
-          0,
-          2
-        ],
-        [
-          0,
-          3
+          5
         ],
         [
           0,
@@ -21764,7 +22894,19 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           0,
-          5
+          3
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          6
         ],
         [
           1,
@@ -21776,27 +22918,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           2,
+          6
+        ],
+        [
+          2,
           3
         ],
         [
           3,
           4
+        ],
+        [
+          3,
+          6
         ],
         [
           4,
           5
-        ],
-        [
-          1,
-          6
-        ],
-        [
-          2,
-          6
-        ],
-        [
-          3,
-          6
         ],
         [
           4,
@@ -21826,37 +22964,37 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       ],
       "normals": [
         [
-          -36,
+          -100,
           0,
           0
         ],
         [
-          20,
-          -5,
-          7
+          90.93,
+          -23.87,
+          34.1
         ],
         [
-          46,
-          -42,
-          -14
+          68.85,
+          -68.16,
+          -24.79
         ],
         [
-          36,
+          31.62,
           0,
-          -104
+          -94.87
         ],
         [
-          46,
-          42,
-          -14
+          71.66,
+          66.46,
+          -21.15
         ],
         [
-          20,
-          5,
-          7
+          90.65,
+          25.05,
+          33.99
         ],
         [
-          36,
+          100,
           0,
           0
         ]
@@ -21864,6 +23002,14 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       "details": [
         {
           "type": "engine",
+          "color": "#f7fff7",
+          "stroke": "#ffffff",
+          "lift": 0.5,
+          "normal": [
+            -1,
+            0,
+            0
+          ],
           "points": [
             [
               -9,
@@ -21890,18 +23036,17 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               17.1,
               5.4
             ]
-          ],
-          "color": "#f7fff7",
-          "stroke": "#ffffff",
-          "normal": [
-            -1,
-            0,
-            0
-          ],
-          "lift": 1
+          ]
         },
         {
           "type": "window",
+          "color": "#101915",
+          "lift": 0.5,
+          "normal": [
+            1,
+            0,
+            0
+          ],
           "points": [
             [
               9,
@@ -21928,22 +23073,48 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               5,
               -16.5
             ]
-          ],
-          "color": "#101915",
-          "normal": [
-            1,
-            0,
-            0
-          ],
-          "lift": 1
+          ]
         }
-      ]
-    },
-    "gameMeta": {
-      "imageDecalMirrorX": {
-        "top": true,
-        "bottom": true,
-        "back": false
+      ],
+      "imageProjection": {
+        "primaryAxis": "x",
+        "faceColors": [
+          "#441e7a",
+          "#361767",
+          "#331660",
+          "#3b1d71",
+          "#3a1873",
+          "#3d1b74",
+          "#361668"
+        ]
+      },
+      "gameMeta": {
+        "class": "fighter",
+        "npcRole": "private",
+        "aiProfile": "standard",
+        "decalRole": "private",
+        "baseColor": "#e9f2e4",
+        "description": "",
+        "missionLore": "",
+        "valueCr": 250000,
+        "stats": {
+          "r": 41,
+          "hp": 120,
+          "speed": 1,
+          "cargo": 10,
+          "missiles": 1,
+          "laser": "none"
+        },
+        "lists": {
+          "trader": true,
+          "pirate": true,
+          "police": false,
+          "alien": false
+        },
+        "flags": {
+          "escapePod": true,
+          "hiddenUntilDiscovered": false
+        }
       }
     }
   },
@@ -22261,7 +23432,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4,
           3
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#514f3d"
       },
       {
         "id": 1001,
@@ -22271,7 +23443,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           10
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#74726b"
       },
       {
         "id": 1002,
@@ -22280,7 +23453,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4,
           10
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#6a6342"
       },
       {
         "id": 1003,
@@ -22292,7 +23466,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           10,
           4
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#5c5843"
       },
       {
         "id": 1004,
@@ -22301,7 +23476,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           11,
           5
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#736b45"
       },
       {
         "id": 1005,
@@ -22311,7 +23487,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           11,
           6
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#74736b"
       },
       {
         "id": 1006,
@@ -22321,7 +23498,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           8
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#686258"
       },
       {
         "id": 1007,
@@ -22331,7 +23509,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           9
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#686258"
       },
       {
         "id": 1008,
@@ -22340,7 +23519,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8,
           9
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#5c5951"
       },
       {
         "id": 1009,
@@ -22350,7 +23530,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           10,
           14
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#5f5a4a"
       },
       {
         "id": 1010,
@@ -22360,7 +23541,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           15,
           11
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#5d5847"
       },
       {
         "id": 1011,
@@ -22369,7 +23551,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8,
           16
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#5c5951"
       },
       {
         "id": 1012,
@@ -22378,7 +23561,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8,
           13
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#524c34"
       },
       {
         "id": 1013,
@@ -22390,7 +23574,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "bitmapFaceKey": "front_panel",
-        "bitmapSide": "back"
+        "bitmapSide": "back",
+        "faceColor": "#7f807c"
       }
     ],
     "edges": [
@@ -22532,7 +23717,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.09
         ],
         "width": 1.2,
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           17,
           18
@@ -22547,7 +23732,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.97,
           0.09
         ],
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           19,
           20,
@@ -22564,7 +23749,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.09
         ],
         "width": 1.2,
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           21,
           22
@@ -22579,7 +23764,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.97,
           0.09
         ],
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           23,
           24,
@@ -22595,7 +23780,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.97,
           0.09
         ],
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           26,
           27,
@@ -22612,7 +23797,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.09
         ],
         "width": 1.2,
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           28,
           29
@@ -22627,7 +23812,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0,
           1
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             0,
@@ -22656,7 +23841,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0
         ],
         "width": 1.4,
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           30,
           31
@@ -22672,7 +23857,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0
         ],
         "width": 1.4,
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           32,
           33
@@ -22688,7 +23873,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           34,
           35,
@@ -23391,7 +24576,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.09
           ],
           "width": 1.2,
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "window",
@@ -23406,7 +24591,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.97,
             0.09
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "line",
@@ -23421,7 +24606,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.09
           ],
           "width": 1.2,
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "window",
@@ -23436,7 +24621,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.97,
             0.09
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "window",
@@ -23451,7 +24636,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.97,
             0.09
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "line",
@@ -23466,7 +24651,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.09
           ],
           "width": 1.2,
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "window",
@@ -23493,7 +24678,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             1
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "line",
@@ -23508,7 +24693,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0
           ],
           "width": 1.4,
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "line",
@@ -23523,7 +24708,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0
           ],
           "width": 1.4,
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "engine",
@@ -23540,10 +24725,26 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 1
+          "lift": 0.5
         }
       ],
       "imageProjection": {
+        "faceColors": [
+          "#514f3d",
+          "#74726b",
+          "#6a6342",
+          "#5c5843",
+          "#736b45",
+          "#74736b",
+          "#686258",
+          "#686258",
+          "#5c5951",
+          "#5f5a4a",
+          "#5d5847",
+          "#5c5951",
+          "#524c34",
+          "#7f807c"
+        ],
         "faceSides": [
           null,
           null,
@@ -23575,22 +24776,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           null,
           null,
           "front_panel"
-        ],
-        "faceColors": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          "#7f807c"
         ]
       }
     },
@@ -23736,7 +24921,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9,
           2
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#314654"
       },
       {
         "id": 1001,
@@ -23746,7 +24932,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#526d7c"
       },
       {
         "id": 1002,
@@ -23756,7 +24943,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           4
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#526d7b"
       },
       {
         "id": 1003,
@@ -23766,7 +24954,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7,
           3
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#4f6e80"
       },
       {
         "id": 1004,
@@ -23776,7 +24965,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           6
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#4f6e80"
       },
       {
         "id": 1005,
@@ -23785,7 +24975,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3,
           7
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#435c6c"
       },
       {
         "id": 1006,
@@ -23797,7 +24988,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6,
           7
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#324752"
       }
     ],
     "edges": [
@@ -23854,7 +25046,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.8,
           0.27
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             -4,
@@ -23882,7 +25074,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0.8,
           0.27
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             4,
@@ -23911,7 +25103,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           10,
           13,
@@ -23928,7 +25120,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "indices": [
           11,
           15,
@@ -24263,7 +25455,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.8,
             0.27
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "window",
@@ -24290,7 +25482,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.8,
             0.27
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "engine",
@@ -24306,7 +25498,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 1
+          "lift": 0.5
         },
         {
           "type": "engine",
@@ -24322,9 +25514,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 1
+          "lift": 0.5
         }
-      ]
+      ],
+      "imageProjection": {
+        "faceColors": [
+          "#314654",
+          "#526d7c",
+          "#526d7b",
+          "#4f6e80",
+          "#4f6e80",
+          "#435c6c",
+          "#324752"
+        ]
+      }
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -24338,6 +25541,40 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
     "format": "ultra-elite-ship-builder/v1",
     "id": "worm",
     "name": "Worm",
+    "symmetry": "x-locked",
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "private",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "imageDecalMirrorX": {
+        "top": true,
+        "bottom": true,
+        "back": false
+      },
+      "valueCr": 250000,
+      "stats": {
+        "r": 38,
+        "hp": 120,
+        "speed": 1,
+        "cargo": 10,
+        "missiles": 1,
+        "laser": "none"
+      },
+      "lists": {
+        "trader": true,
+        "pirate": true,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": false
+      }
+    },
     "verts": [
       {
         "id": 1,
@@ -24429,7 +25666,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2,
           1
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#6e6952"
       },
       {
         "id": 1001,
@@ -24439,7 +25677,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           10,
           4
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#6d6d63"
       },
       {
         "id": 1002,
@@ -24448,7 +25687,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1,
           5
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#6f6c5e"
       },
       {
         "id": 1003,
@@ -24457,7 +25697,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6,
           2
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#6f6c5e"
       },
       {
         "id": 1004,
@@ -24467,7 +25708,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5,
           7
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#6a695e"
       },
       {
         "id": 1005,
@@ -24477,7 +25719,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8,
           6
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#6a695e"
       },
       {
         "id": 1006,
@@ -24487,7 +25730,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7,
           8
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#524f3c"
       },
       {
         "id": 1007,
@@ -24499,44 +25743,12 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6,
           8
         ],
-        "mirrored": false
+        "mirrored": false,
+        "faceColor": "#6a664d"
       }
     ],
     "edges": [],
     "details": [
-      {
-        "id": 1008,
-        "type": "window",
-        "color": "#101915",
-        "normal": [
-          0,
-          0.98,
-          0.2
-        ],
-        "lift": 1,
-        "points": [
-          [
-            2.5,
-            8,
-            5
-          ],
-          [
-            -2.5,
-            8,
-            5
-          ],
-          [
-            -4,
-            12,
-            -15
-          ],
-          [
-            4,
-            12,
-            -15
-          ]
-        ]
-      },
       {
         "id": 1009,
         "type": "engine",
@@ -24547,7 +25759,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -1
         ],
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             4,
@@ -24569,6 +25781,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -4,
             -25
           ]
+        ]
+      },
+      {
+        "id": 1010,
+        "type": "window",
+        "faceId": 1000,
+        "inset": 0.78,
+        "color": "#101915",
+        "normal": [
+          0,
+          0.78,
+          0.62
         ]
       }
     ],
@@ -24627,44 +25851,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       ],
       "edges": [
         [
+          2,
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
           0,
           1
         ],
         [
-          1,
-          5
-        ],
-        [
-          5,
-          7
-        ],
-        [
-          7,
-          6
-        ],
-        [
-          6,
-          4
-        ],
-        [
-          4,
-          0
-        ],
-        [
           0,
           2
-        ],
-        [
-          1,
-          3
-        ],
-        [
-          4,
-          2
-        ],
-        [
-          5,
-          3
         ],
         [
           2,
@@ -24672,89 +25872,113 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           8,
-          6
+          9
         ],
         [
           3,
           9
         ],
         [
-          9,
-          7
-        ],
-        [
-          2,
-          3
-        ],
-        [
-          8,
-          9
-        ]
-      ],
-      "edgeFaces": [
-        [
-          7,
-          0
-        ],
-        [
-          7,
-          3
-        ],
-        [
-          7,
-          5
-        ],
-        [
-          7,
-          6
-        ],
-        [
-          7,
+          0,
           4
         ],
         [
-          7,
-          2
-        ],
-        [
           2,
-          0
+          4
         ],
         [
           3,
-          0
-        ],
-        [
-          4,
-          2
-        ],
-        [
-          5,
-          3
-        ],
-        [
-          4,
-          1
-        ],
-        [
-          6,
-          4
-        ],
-        [
-          5,
-          1
-        ],
-        [
-          6,
           5
         ],
         [
           1,
-          0
+          5
+        ],
+        [
+          4,
+          6
         ],
         [
           6,
+          8
+        ],
+        [
+          7,
+          9
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          6,
+          7
+        ]
+      ],
+      "edgeFaces": [
+        [
+          0,
           1
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          0,
+          7
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          1,
+          6
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          2,
+          7
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          5
+        ],
+        [
+          3,
+          7
+        ],
+        [
+          4,
+          7
+        ],
+        [
+          4,
+          6
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          6,
+          7
         ]
       ],
       "edgeVisibility": [
@@ -24778,80 +26002,56 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       "normals": [
         [
           0,
-          88,
-          70
+          78.09,
+          62.47
         ],
         [
           0,
-          69,
-          14
+          98.06,
+          19.61
         ],
         [
-          70,
-          66,
-          35
+          68.54,
+          64.25,
+          34.27
         ],
         [
-          -70,
-          66,
-          35
+          -68.54,
+          64.25,
+          34.27
         ],
         [
-          64,
-          49,
-          14
+          78.04,
+          59.93,
+          17.84
         ],
         [
-          -64,
-          49,
-          14
-        ],
-        [
-          0,
-          0,
-          -200
+          -78.73,
+          59.05,
+          17.72
         ],
         [
           0,
-          -80,
+          0,
+          -100
+        ],
+        [
+          0,
+          -100,
           0
         ]
       ],
       "details": [
         {
-          "type": "window",
-          "points": [
-            [
-              2.5,
-              8,
-              5
-            ],
-            [
-              -2.5,
-              8,
-              5
-            ],
-            [
-              -4,
-              12,
-              -15
-            ],
-            [
-              4,
-              12,
-              -15
-            ]
-          ],
-          "color": "#101915",
+          "type": "engine",
+          "color": "#f7fff7",
+          "stroke": "#ffffff",
+          "lift": 0.5,
           "normal": [
             0,
-            0.98,
-            0.2
+            0,
+            -1
           ],
-          "lift": 1
-        },
-        {
-          "type": "engine",
           "points": [
             [
               4,
@@ -24873,23 +26073,85 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -4,
               -25
             ]
-          ],
-          "color": "#f7fff7",
-          "stroke": "#ffffff",
+          ]
+        },
+        {
+          "type": "window",
+          "color": "#101915",
           "normal": [
             0,
-            0,
-            -1
+            0.78,
+            0.62
           ],
-          "lift": 1
+          "lift": 0.5,
+          "points": [
+            [
+              3.9,
+              4.24,
+              17.2
+            ],
+            [
+              -3.9,
+              4.24,
+              17.2
+            ],
+            [
+              -7.8,
+              -8.24,
+              32.8
+            ],
+            [
+              7.8,
+              -8.24,
+              32.8
+            ]
+          ]
         }
-      ]
-    },
-    "gameMeta": {
-      "imageDecalMirrorX": {
-        "top": true,
-        "bottom": true,
-        "back": false
+      ],
+      "gameMeta": {
+        "class": "fighter",
+        "npcRole": "private",
+        "aiProfile": "standard",
+        "decalRole": "private",
+        "baseColor": "#e9f2e4",
+        "description": "",
+        "missionLore": "",
+        "imageDecalMirrorX": {
+          "top": true,
+          "bottom": true,
+          "back": false
+        },
+        "valueCr": 250000,
+        "stats": {
+          "r": 38,
+          "hp": 120,
+          "speed": 1,
+          "cargo": 10,
+          "missiles": 1,
+          "laser": "none"
+        },
+        "lists": {
+          "trader": true,
+          "pirate": true,
+          "police": false,
+          "alien": false
+        },
+        "flags": {
+          "escapePod": true,
+          "hiddenUntilDiscovered": false
+        }
+      },
+      "imageProjection": {
+        "faceColors": [
+          "#6e6952",
+          "#6d6d63",
+          "#6f6c5e",
+          "#6f6c5e",
+          "#6a695e",
+          "#6a695e",
+          "#524f3c",
+          "#6a664d"
+        ]
       }
     }
   }

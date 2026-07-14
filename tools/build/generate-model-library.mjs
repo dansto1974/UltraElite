@@ -290,11 +290,29 @@ function sourceImageProjection(data) {
   return imageProjection.primaryAxis || imageProjection.faceSides || imageProjection.faceTextures || imageProjection.faceColors || imageProjection.faceAngles || imageProjection.faceMirrorX || imageProjection.faceDecals ? imageProjection : null;
 }
 
+function normalizeBlueprintDetails(data, blueprint) {
+  if (!Array.isArray(blueprint.details)) return;
+  const stationSlotBeacon = data.id === "coriolis" || data.id === "dodoStation";
+  blueprint.details = blueprint.details.map((detail) => {
+    if (detail?.type !== "beacon") return detail;
+    const normal = Array.isArray(detail.normal)
+      ? toArray(vec(detail.normal), 3)
+      : stationSlotBeacon
+        ? [0, 0, 1]
+        : null;
+    return {
+      ...detail,
+      ...(normal ? { normal } : {})
+    };
+  });
+}
+
 function deriveBlueprint(data) {
   if (data.blueprint && typeof data.blueprint === "object") {
     const blueprint = JSON.parse(JSON.stringify(data.blueprint));
     const imageProjection = sourceImageProjection(data);
     if (imageProjection) blueprint.imageProjection = { ...(blueprint.imageProjection || {}), ...imageProjection };
+    normalizeBlueprintDetails(data, blueprint);
     return blueprint;
   }
   const { sourceFaces, indexById, verts, faceById, faceNormal, detailModelPoints } = buildStateHelpers(data);
@@ -336,10 +354,18 @@ function deriveBlueprint(data) {
     if (detail.type === "beacon") {
       const sourceIndex = detail.index !== undefined ? Number(detail.index) : indexById.get(Number(detail.vertexId));
       if (!Number.isFinite(sourceIndex)) return null;
+      const slotBeacon = (data.id === "coriolis" || data.id === "dodoStation") && sourceIndex >= verts.length - 4;
+      const normal = Array.isArray(detail.normal)
+        ? toArray(vec(detail.normal), 3)
+        : slotBeacon
+          ? [0, 0, 1]
+          : null;
       return {
         type: "beacon",
         index: sourceIndex,
-        color: detail.color || "#ffb642"
+        color: detail.color || "#ffb642",
+        ...(normal ? { normal } : {}),
+        ...(detail.lift !== undefined ? { lift: round(Number(detail.lift)) } : {})
       };
     }
     const face = faceById(detail.faceId);

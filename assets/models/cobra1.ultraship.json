@@ -100,7 +100,8 @@
         9,
         1
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#55616a"
     },
     {
       "id": 1001,
@@ -110,7 +111,8 @@
         1,
         7
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#5b666a"
     },
     {
       "id": 1002,
@@ -120,7 +122,8 @@
         5,
         3
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#636e77"
     },
     {
       "id": 1003,
@@ -129,7 +132,8 @@
         3,
         7
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#596468"
     },
     {
       "id": 1004,
@@ -139,7 +143,8 @@
         9,
         2
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#636e77"
     },
     {
       "id": 1005,
@@ -148,7 +153,8 @@
         4,
         2
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#596468"
     },
     {
       "id": 1006,
@@ -157,7 +163,8 @@
         5,
         9
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#545f66"
     },
     {
       "id": 1007,
@@ -167,7 +174,8 @@
         8,
         7
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#515d5b"
     },
     {
       "id": 1008,
@@ -176,7 +184,8 @@
         5,
         7
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#3c4447"
     },
     {
       "id": 1009,
@@ -185,7 +194,8 @@
         4,
         8
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#3c4447"
     }
   ],
   "edges": [
@@ -207,7 +217,7 @@
         0.97,
         0.24
       ],
-      "lift": 1,
+      "lift": 0.5,
       "points": [
         [
           -9,
@@ -236,7 +246,7 @@
         1
       ],
       "width": 1.2,
-      "lift": 1,
+      "lift": 0.5,
       "cull": false,
       "indices": [
         10,
@@ -253,7 +263,7 @@
         -1
       ],
       "stroke": "#ffffff",
-      "lift": 1,
+      "lift": 0.5,
       "points": [
         [
           -36,
@@ -282,7 +292,7 @@
         -1
       ],
       "stroke": "#ffffff",
-      "lift": 1,
+      "lift": 0.5,
       "points": [
         [
           14,
@@ -606,7 +616,7 @@
           0.97,
           0.24
         ],
-        "lift": 1
+        "lift": 0.5
       },
       {
         "type": "line",
@@ -621,7 +631,7 @@
           1
         ],
         "width": 1.2,
-        "lift": 1,
+        "lift": 0.5,
         "cull": false
       },
       {
@@ -650,7 +660,7 @@
           0,
           -1
         ],
-        "lift": 1
+        "lift": 0.5
       },
       {
         "type": "engine",
@@ -678,9 +688,23 @@
           0,
           -1
         ],
-        "lift": 1
+        "lift": 0.5
       }
-    ]
+    ],
+    "imageProjection": {
+      "faceColors": [
+        "#55616a",
+        "#5b666a",
+        "#636e77",
+        "#596468",
+        "#636e77",
+        "#596468",
+        "#545f66",
+        "#515d5b",
+        "#3c4447",
+        "#3c4447"
+      ]
+    }
   },
   "gameMeta": {
     "imageDecalMirrorX": {

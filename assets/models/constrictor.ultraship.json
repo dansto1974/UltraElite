@@ -149,7 +149,8 @@
         10,
         2
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#706868"
     },
     {
       "id": 1001,
@@ -158,7 +159,8 @@
         10,
         3
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#5b585b"
     },
     {
       "id": 1002,
@@ -167,7 +169,8 @@
         9,
         1
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#5b585b"
     },
     {
       "id": 1003,
@@ -176,7 +179,8 @@
         8,
         7
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#505054"
     },
     {
       "id": 1004,
@@ -185,7 +189,8 @@
         4,
         3
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#505054"
     },
     {
       "id": 1005,
@@ -194,7 +199,8 @@
         5,
         4
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#525153"
     },
     {
       "id": 1006,
@@ -204,7 +210,8 @@
         5,
         10
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#5f5d5f"
     },
     {
       "id": 1007,
@@ -213,7 +220,8 @@
         9,
         7
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#525153"
     },
     {
       "id": 1008,
@@ -223,7 +231,8 @@
         7,
         4
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#373333"
     },
     {
       "id": 1009,
@@ -235,7 +244,8 @@
         3,
         4
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#464544"
     }
   ],
   "edges": [
@@ -292,7 +302,7 @@
         0.96,
         0.26
       ],
-      "lift": 1,
+      "lift": 0.5,
       "points": [
         [
           9,
@@ -325,7 +335,7 @@
         -1,
         0
       ],
-      "lift": 1,
+      "lift": 0.5,
       "indices": [
         11,
         13,
@@ -341,7 +351,7 @@
         -1,
         0
       ],
-      "lift": 1,
+      "lift": 0.5,
       "indices": [
         12,
         16,
@@ -358,7 +368,7 @@
         -1
       ],
       "stroke": "#ffffff",
-      "lift": 1,
+      "lift": 0.5,
       "points": [
         [
           -24.3,
@@ -776,7 +786,7 @@
           0.96,
           0.26
         ],
-        "lift": 1
+        "lift": 0.5
       },
       {
         "type": "window",
@@ -791,7 +801,7 @@
           -1,
           0
         ],
-        "lift": 1
+        "lift": 0.5
       },
       {
         "type": "window",
@@ -806,7 +816,7 @@
           -1,
           0
         ],
-        "lift": 1
+        "lift": 0.5
       },
       {
         "type": "engine",
@@ -839,9 +849,23 @@
           0,
           -1
         ],
-        "lift": 1
+        "lift": 0.5
       }
-    ]
+    ],
+    "imageProjection": {
+      "faceColors": [
+        "#706868",
+        "#5b585b",
+        "#5b585b",
+        "#505054",
+        "#505054",
+        "#525153",
+        "#5f5d5f",
+        "#525153",
+        "#373333",
+        "#464544"
+      ]
+    }
   },
   "gameMeta": {
     "imageDecalMirrorX": {

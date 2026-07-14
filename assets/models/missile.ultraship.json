@@ -150,7 +150,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "missile_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#a9545a"
     },
     {
       "id": 1001,
@@ -161,7 +162,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "missile_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#a9545a"
     },
     {
       "id": 1002,
@@ -172,7 +174,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "missile_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#a9545a"
     },
     {
       "id": 1003,
@@ -183,7 +186,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "missile_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#a9545a"
     },
     {
       "id": 1004,
@@ -195,7 +199,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "missile_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#a9545a"
     },
     {
       "id": 1005,
@@ -207,7 +212,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "missile_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#a9545a"
     },
     {
       "id": 1006,
@@ -219,7 +225,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "missile_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#a9545a"
     },
     {
       "id": 1007,
@@ -231,7 +238,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "missile_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#a9545a"
     },
     {
       "id": 1008,
@@ -243,7 +251,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "missile_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#a9545a"
     },
     {
       "id": 1009,
@@ -254,7 +263,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "missile_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#a9545a"
     },
     {
       "id": 1010,
@@ -265,7 +275,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "missile_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#a9545a"
     },
     {
       "id": 1011,
@@ -276,7 +287,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "missile_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#a9545a"
     },
     {
       "id": 1012,
@@ -287,7 +299,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "missile_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#a9545a"
     },
     {
       "id": 1013,
@@ -298,7 +311,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "missile_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#a9545a"
     },
     {
       "id": 1014,
@@ -309,7 +323,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "missile_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#a9545a"
     },
     {
       "id": 1015,
@@ -320,7 +335,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "missile_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#a9545a"
     },
     {
       "id": 1016,
@@ -331,7 +347,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "missile_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#a9545a"
     }
   ],
   "edges": [],
@@ -346,7 +363,7 @@
         -1
       ],
       "stroke": "#ffffff",
-      "lift": 1,
+      "lift": 0.5,
       "points": [
         [
           4,
@@ -800,9 +817,68 @@
           0,
           -1
         ],
-        "lift": 1
+        "lift": 0.5
       }
-    ]
+    ],
+    "imageProjection": {
+      "faceColors": [
+        "#a9545a",
+        "#a9545a",
+        "#a9545a",
+        "#a9545a",
+        "#a9545a",
+        "#a9545a",
+        "#a9545a",
+        "#a9545a",
+        "#a9545a",
+        "#a9545a",
+        "#a9545a",
+        "#a9545a",
+        "#a9545a",
+        "#a9545a",
+        "#a9545a",
+        "#a9545a",
+        "#a9545a"
+      ],
+      "faceSides": [
+        "top",
+        "top",
+        "top",
+        "top",
+        "top",
+        "top",
+        "top",
+        "top",
+        "top",
+        "top",
+        "top",
+        "top",
+        "top",
+        "top",
+        "top",
+        "top",
+        "top"
+      ],
+      "faceTextures": [
+        "missile_panel",
+        "missile_panel",
+        "missile_panel",
+        "missile_panel",
+        "missile_panel",
+        "missile_panel",
+        "missile_panel",
+        "missile_panel",
+        "missile_panel",
+        "missile_panel",
+        "missile_panel",
+        "missile_panel",
+        "missile_panel",
+        "missile_panel",
+        "missile_panel",
+        "missile_panel",
+        "missile_panel"
+      ]
+    }
   },
   "gameMeta": {
     "imageDecalMirrorX": {

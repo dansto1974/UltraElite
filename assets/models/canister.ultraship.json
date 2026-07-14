@@ -96,7 +96,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "end_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#4b4635"
     },
     {
       "id": 1001,
@@ -106,7 +107,8 @@
         7,
         2
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#706545"
     },
     {
       "id": 1002,
@@ -116,7 +118,8 @@
         8,
         3
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#736c5a"
     },
     {
       "id": 1003,
@@ -126,7 +129,8 @@
         8,
         9
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#827a67"
     },
     {
       "id": 1004,
@@ -136,7 +140,8 @@
         4,
         9
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#524931"
     },
     {
       "id": 1005,
@@ -146,7 +151,8 @@
         5,
         10
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#5d533f"
     },
     {
       "id": 1006,
@@ -159,7 +165,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "end_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#4b4635"
     }
   ],
   "edges": [],
@@ -394,7 +401,36 @@
         0,
         0
       ]
-    ]
+    ],
+    "imageProjection": {
+      "faceColors": [
+        "#4b4635",
+        "#706545",
+        "#736c5a",
+        "#827a67",
+        "#524931",
+        "#5d533f",
+        "#4b4635"
+      ],
+      "faceSides": [
+        "top",
+        null,
+        null,
+        null,
+        null,
+        null,
+        "top"
+      ],
+      "faceTextures": [
+        "end_panel",
+        null,
+        null,
+        null,
+        null,
+        null,
+        "end_panel"
+      ]
+    }
   },
   "gameMeta": {
     "imageDecalMirrorX": {

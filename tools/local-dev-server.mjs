@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
+import crypto from "node:crypto";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
@@ -117,7 +118,9 @@ function listSkinAssets() {
   return files.map((file) => {
     const face = file.match(/^(.+)-face-(.+)\.png$/);
     const side = file.match(/^(.+)-(top|bottom|back)\.png$/);
-    const stat = fs.statSync(path.join(skinDir, file));
+    const filePath = path.join(skinDir, file);
+    const stat = fs.statSync(filePath);
+    const hash = crypto.createHash("sha256").update(fs.readFileSync(filePath)).digest("hex");
     if (face) {
       return {
         file,
@@ -126,6 +129,7 @@ function listSkinAssets() {
         key: face[2],
         category: face[2].split("_")[0] || "face",
         bytes: stat.size,
+        hash,
         url: `/assets/skins/${file}`
       };
     }
@@ -137,6 +141,7 @@ function listSkinAssets() {
         side: side[2],
         category: side[2],
         bytes: stat.size,
+        hash,
         url: `/assets/skins/${file}`
       };
     }
@@ -146,6 +151,7 @@ function listSkinAssets() {
       kind: "other",
       category: "other",
       bytes: stat.size,
+      hash,
       url: `/assets/skins/${file}`
     };
   });
@@ -158,7 +164,8 @@ function listDecalAssets() {
     ? fs.readdirSync(decalDir).filter((file) => allowed.has(path.extname(file).toLowerCase())).sort((a, b) => a.localeCompare(b))
     : [];
   return files.map((file) => {
-    const stat = fs.statSync(path.join(decalDir, file));
+    const filePath = path.join(decalDir, file);
+    const stat = fs.statSync(filePath);
     const key = cleanKey(path.basename(file, path.extname(file)));
     return {
       file,
@@ -167,6 +174,7 @@ function listDecalAssets() {
       key,
       category: "decal",
       bytes: stat.size,
+      hash: crypto.createHash("sha256").update(fs.readFileSync(filePath)).digest("hex"),
       url: `/assets/decals/${file}`
     };
   });

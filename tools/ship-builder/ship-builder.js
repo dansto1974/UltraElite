@@ -51,6 +51,7 @@ const els = {
   syncGamePreviewBtn: document.getElementById("syncGamePreviewBtn"),
   benchmarkRendererBtn: document.getElementById("benchmarkRendererBtn"),
   spinPreviewBtn: document.getElementById("spinPreviewBtn"),
+  toggleBlueprintBtn: document.getElementById("toggleBlueprintBtn"),
   spinPreviewModal: document.getElementById("spinPreviewModal"),
   spinPreviewFrame: document.getElementById("spinPreviewFrame"),
   closeSpinPreviewBtn: document.getElementById("closeSpinPreviewBtn"),
@@ -121,6 +122,16 @@ const els = {
   downloadFaceTemplateBtn: document.getElementById("downloadFaceTemplateBtn")
 };
 
+const BLUEPRINT_VISIBLE_STORAGE_KEY = "ultraEliteShipBuilderBlueprintVisible";
+
+function readBlueprintVisiblePreference() {
+  try {
+    return localStorage.getItem(BLUEPRINT_VISIBLE_STORAGE_KEY) !== "0";
+  } catch (error) {
+    return true;
+  }
+}
+
 const state = {
   mode: "vertex",
   axis: "x",
@@ -146,6 +157,7 @@ const state = {
   pick: [],
   view: { rx: STANDARD_VIEW.rx, ry: STANDARD_VIEW.ry, zoom: 2.9, panX: 0, panY: 0 },
   orthoScale: 1,
+  showBlueprints: readBlueprintVisiblePreference(),
   drag: null
 };
 
@@ -1028,7 +1040,8 @@ function gameRendererOverlayMode(value = els.previewRenderMode?.value || "gameOv
 }
 
 function gamePreviewRendererMode(value = els.previewRenderMode?.value || "gameOverlay") {
-  return gameRendererOverlayMode(value) ? "both" : "solid";
+  // Game renderer preview stays solid; the editor canvas owns wire/selection diagnostics.
+  return "solid";
 }
 
 function gamePreviewFxLevel(value = els.previewRenderMode?.value || "gameOverlay") {
@@ -1048,6 +1061,25 @@ function previewModeLabel(value = els.previewRenderMode?.value || "gameOverlay")
 function setDefaultPreviewRenderMode() {
   if (!els.previewRenderMode) return;
   els.previewRenderMode.value = DEFAULT_PREVIEW_RENDER_MODE;
+}
+
+function setBlueprintsVisible(visible, options = {}) {
+  state.showBlueprints = !!visible;
+  const stage = els.mainPreviewStack?.closest(".stage");
+  stage?.classList.toggle("blueprints-hidden", !state.showBlueprints);
+  if (els.toggleBlueprintBtn) {
+    els.toggleBlueprintBtn.classList.toggle("active", state.showBlueprints);
+    els.toggleBlueprintBtn.classList.toggle("is-off", !state.showBlueprints);
+    els.toggleBlueprintBtn.setAttribute("aria-pressed", state.showBlueprints ? "true" : "false");
+    els.toggleBlueprintBtn.textContent = state.showBlueprints ? "Blueprints On" : "Blueprints Off";
+  }
+  if (options.persist) {
+    try {
+      localStorage.setItem(BLUEPRINT_VISIBLE_STORAGE_KEY, state.showBlueprints ? "1" : "0");
+    } catch (error) {
+      // Non-fatal: the toggle still works for this session.
+    }
+  }
 }
 
 function previewProjectionPointToCanvas(point, canvas) {
@@ -1129,7 +1161,7 @@ function updatePreviewTrustUi() {
   const uvText = summary.missingUv
     ? `${summary.missingUv} UV gap${summary.missingUv === 1 ? "" : "s"}`
     : `${summary.faceTextureRefs} face UV${summary.faceTextureRefs === 1 ? "" : "s"}`;
-  const overlayText = overlay ? "overlay on | renderer hidden-line" : "overlay off | solid";
+  const overlayText = overlay ? "overlay on | renderer solid" : "overlay off | solid";
   els.previewTrustReadout.textContent = `${summary.visibleFaces}/${summary.faces} visible faces | ${summary.projectedPoints} points | ${uvText} | ${overlayText}`;
 }
 
@@ -1155,6 +1187,14 @@ function previewDetailForBuilderDetail(detail) {
   if (!gameRendererOverlayMode() || !state.gamePreviewProjection?.details?.length) return null;
   const index = state.details.indexOf(detail);
   return index >= 0 ? state.gamePreviewProjection.details[index] || null : null;
+}
+
+function projectedDetailPointsForMain(detail, canvas = els.mainView) {
+  const previewDetail = previewDetailForBuilderDetail(detail);
+  if (previewDetail?.points?.length) {
+    return previewDetail.points.map((point) => previewProjectionPointToCanvas(point, canvas)).filter(Boolean);
+  }
+  return detailModelPoints(detail).map((p) => project3d(p, canvas)).filter(Boolean);
 }
 
 function orthoProject(v, canvas, viewName) {
@@ -1520,7 +1560,8 @@ function setSelectedFaceUvAngle(value, redraw = true, statusText = "") {
 
 function rotateSelectedFaceUvAngle(delta) {
   const face = selectedFace();
-  const next = normalizeBitmapAngle((face ? face.bitmapAngle : 0) + Number(delta || 0));
+  const current = normalizeBitmapAngle(face ? face.bitmapAngle : 0);
+  const next = normalizeBitmapAngle(current + Number(delta || 0));
   setSelectedFaceUvAngle(next, true, `FACE UV ANGLE ${next} DEGREES.`);
 }
 
@@ -1754,9 +1795,16 @@ function bitmapShelfItemMeta(item) {
     ? `${item.img.naturalWidth}x${item.img.naturalHeight}`
     : "";
   if (item.source === "imported") return ["Imported", dims].filter(Boolean).join(" | ");
+  const shared = Array.isArray(item.asset?.aliases) && item.asset.aliases.length > 1
+    ? `shared x${item.asset.aliases.length}`
+    : "";
+  const models = Array.isArray(item.asset?.aliases)
+    ? [...new Set(item.asset.aliases.map((asset) => asset.model).filter(Boolean))].join(", ")
+    : item.asset?.model || "shared";
   const bits = [
-    item.asset?.model || "shared",
+    models || "shared",
     bitmapShelfItemTarget(item).toUpperCase(),
+    shared,
     dims
   ].filter(Boolean);
   return bits.join(" | ");
@@ -1771,7 +1819,10 @@ function bitmapShelfItemSearchText(item) {
     item?.asset?.kind,
     item?.asset?.key,
     item?.asset?.side,
-    item?.asset?.category
+    item?.asset?.category,
+    ...(Array.isArray(item?.asset?.aliases)
+      ? item.asset.aliases.flatMap((asset) => [asset.file, asset.model, asset.key, asset.side, asset.category])
+      : [])
   ].filter(Boolean).join(" ").toLowerCase();
 }
 
@@ -1825,7 +1876,66 @@ function skinAssetMatchesFilters(asset, filters = bitmapShelfFilters()) {
 }
 
 function shelfHasAsset(asset) {
-  return !!asset?.file && state.bitmapShelf.some((item) => item.asset?.file === asset.file);
+  if (!asset?.file) return false;
+  return state.bitmapShelf.some((item) => {
+    if (item.asset?.file === asset.file) return true;
+    return Array.isArray(item.asset?.aliases) && item.asset.aliases.some((alias) => alias.file === asset.file);
+  });
+}
+
+function assetAliasSummary(asset) {
+  return {
+    file: asset.file,
+    model: asset.model,
+    kind: asset.kind,
+    key: asset.key,
+    side: asset.side,
+    category: asset.category,
+    bytes: asset.bytes,
+    hash: asset.hash,
+    url: asset.url
+  };
+}
+
+function skinAssetDuplicateGroupKey(asset) {
+  if (!asset?.hash || asset.kind === "decal") return "";
+  const target = asset.kind === "face"
+    ? `face:${asset.key || ""}`
+    : asset.kind === "side"
+      ? `side:${asset.side || ""}`
+      : asset.kind || "other";
+  return `${target}:${asset.hash}`;
+}
+
+function collapseDuplicateSkinAssets(assets) {
+  const groups = new Map();
+  const passthrough = [];
+  for (const asset of assets) {
+    const key = skinAssetDuplicateGroupKey(asset);
+    if (!key) {
+      passthrough.push(asset);
+      continue;
+    }
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(asset);
+  }
+  const currentModel = templateShipId();
+  const collapsed = [...groups.values()].map((group) => {
+    const sorted = [...group].sort((a, b) => {
+      const aCurrent = a.model === currentModel ? 0 : 1;
+      const bCurrent = b.model === currentModel ? 0 : 1;
+      return aCurrent - bCurrent || a.file.localeCompare(b.file);
+    });
+    if (sorted.length === 1) return sorted[0];
+    const aliases = sorted.map(assetAliasSummary);
+    return {
+      ...sorted[0],
+      aliases,
+      duplicateCount: sorted.length,
+      duplicateFiles: aliases.map((asset) => asset.file)
+    };
+  });
+  return [...collapsed, ...passthrough].sort((a, b) => (a.file || "").localeCompare(b.file || ""));
 }
 
 function updateSelectedBitmapReadout() {
@@ -1986,6 +2096,12 @@ function addBitmapAssetToShelf(asset) {
   });
 }
 
+function assetAliasForCurrentModel(asset) {
+  if (!asset || !Array.isArray(asset.aliases)) return asset;
+  const currentModel = templateShipId();
+  return asset.aliases.find((alias) => alias.model === currentModel) || asset;
+}
+
 function populateAssetCategorySelector(categories = []) {
   if (!els.assetShelfCategory) return;
   const current = els.assetShelfCategory.value || "all";
@@ -2018,7 +2134,7 @@ async function loadAssetShelf() {
     const skins = await refreshAvailableSkinAssets();
     if (!skins) return;
     const filters = bitmapShelfFilters();
-    const selected = skins.filter((skin) => skinAssetMatchesFilters(skin, filters));
+    const selected = collapseDuplicateSkinAssets(skins.filter((skin) => skinAssetMatchesFilters(skin, filters)));
     let loaded = 0;
     let skipped = 0;
     for (const asset of selected) {
@@ -2088,6 +2204,30 @@ function selectedFaceSkinKey(face) {
   return cleanBitmapKey(face.bitmapFaceKey, fallback);
 }
 
+function faceSkinKeyUsage(key, excludeFace = null) {
+  const cleanKey = cleanBitmapKey(key);
+  if (!cleanKey) return 0;
+  return state.faces.filter((face) => face !== excludeFace && cleanBitmapKey(face.bitmapFaceKey) === cleanKey).length;
+}
+
+function uniqueFaceSkinKey(face, preferred = "") {
+  const base = cleanBitmapKey(preferred || `face-${face?.id || Date.now()}`, `face-${face?.id || Date.now()}`);
+  if (!faceSkinKeyUsage(base, face)) return base;
+  const faceSuffix = cleanBitmapKey(`${base}-${face?.id || "copy"}`, base);
+  if (!faceSkinKeyUsage(faceSuffix, face)) return faceSuffix;
+  let i = 2;
+  while (faceSkinKeyUsage(`${faceSuffix}-${i}`, face)) i++;
+  return `${faceSuffix}-${i}`;
+}
+
+function selectedFaceSkinTargetKey(face, options = {}) {
+  const requested = cleanBitmapKey(options.key);
+  if (requested) return options.shareKey ? requested : uniqueFaceSkinKey(face, requested);
+  const current = selectedFaceSkinKey(face);
+  // Face import/update is face-only by default; shared assets stay shared only when deliberately selected.
+  return faceSkinKeyUsage(current, face) ? uniqueFaceSkinKey(face) : current;
+}
+
 function setSelectedFaceSkinFromImage(img, source = "imported", url = "", name = "bitmap", options = {}) {
   const face = selectedFace();
   if (!face) {
@@ -2095,7 +2235,9 @@ function setSelectedFaceSkinFromImage(img, source = "imported", url = "", name =
     setStatus("SELECT A FACE FIRST.");
     return;
   }
-  const key = selectedFaceSkinKey(face);
+  const previousKey = cleanBitmapKey(face.bitmapFaceKey);
+  const key = selectedFaceSkinTargetKey(face, options);
+  const forked = previousKey && previousKey !== key;
   const mirrorX = options.mirrorX == null ? importMirroredSkinEnabled() : !!options.mirrorX;
   face.bitmapFaceKey = key;
   if (mirrorX) face.bitmapMirrorX = true;
@@ -2115,7 +2257,8 @@ function setSelectedFaceSkinFromImage(img, source = "imported", url = "", name =
   updateFaceUvAngleControls();
   const angleText = options.orientToView ? ", FACE ORIENTED TO VIEW" : "";
   const colorText = averageColor ? `, COLOUR ${averageColor}` : "";
-  setStatus(`${name} APPLIED TO FACE #${face.id} AS ${key}${mirrorX ? " AS MIRRORED HALF UV" : ""}${angleText}${colorText}. SAVE AS ${templateShipId()}-face-${key}.png TO MAKE PERMANENT.`);
+  const forkText = forked ? `, FACE-ONLY COPY OF ${previousKey}` : "";
+  setStatus(`${name} APPLIED TO FACE #${face.id} AS ${key}${forkText}${mirrorX ? " AS MIRRORED HALF UV" : ""}${angleText}${colorText}. SAVE AS ${templateShipId()}-face-${key}.png TO MAKE PERMANENT.`);
   renderAll();
 }
 
@@ -2154,7 +2297,14 @@ function applyShelfBitmapToSelectedFace(options = {}) {
     setStatus("SELECT A UV THUMBNAIL FIRST.");
     return;
   }
-  setSelectedFaceSkinFromImage(item.img, "shelf", "", item.name, options);
+  const asset = item.source === "asset" ? assetAliasForCurrentModel(item.asset) : null;
+  const assetKey = asset?.kind === "face" ? cleanBitmapKey(asset.key) : "";
+  const sameModelAsset = !!asset && asset.model === templateShipId();
+  const source = sameModelAsset ? "asset" : item.source === "asset" ? "shelf" : "imported";
+  setSelectedFaceSkinFromImage(item.img, source, "", item.name, {
+    ...options,
+    ...(assetKey ? { key: assetKey, shareKey: sameModelAsset } : {})
+  });
 }
 
 function selectedFaceDecals(face = selectedFace()) {
@@ -2444,6 +2594,10 @@ function polygonArea2d(pts) {
 
 function faceTextureProjection(face, fallbackProject) {
   const verts = face.verts.map(vertexById).filter(Boolean);
+  if (cleanBitmapKey(face.bitmapFaceKey) || cleanFaceDecals(face.bitmapDecals).length) {
+    const local = faceLocalTextureProjection(face);
+    if (local) return local;
+  }
   const fallbackPts = verts.map(fallbackProject);
   if (!cleanBitmapKey(face.bitmapFaceKey) || polygonArea2d(fallbackPts) >= 1) return fallbackProject;
   const n = faceNormal(face);
@@ -2451,6 +2605,43 @@ function faceTextureProjection(face, fallbackProject) {
   if (absZ >= absX && absZ >= absY) return templateProjectionFromAxes(0, 1, n.z < 0, true);
   if (absX >= absY && absX >= absZ) return templateProjectionFromAxes(2, 1, n.x > 0, true);
   return templateProjectionFromAxes(0, 2, n.y < 0, true);
+}
+
+function faceLocalTextureProjection(face) {
+  const verts = face.verts.map(vertexById).filter(Boolean);
+  if (verts.length < 3) return null;
+  const n = faceNormal(face);
+  let longest = null;
+  for (let i = 0; i < verts.length; i++) {
+    const a = verts[i];
+    const b = verts[(i + 1) % verts.length];
+    const edge = { x: b.x - a.x, y: b.y - a.y, z: b.z - a.z };
+    const edgeLen = Math.hypot(edge.x, edge.y, edge.z);
+    if (edgeLen > (longest?.edgeLen || 0)) longest = { edge, edgeLen };
+  }
+  if (!longest || longest.edgeLen < .001) return null;
+  const uAxis = norm(longest.edge);
+  const vAxis = norm(cross(n, uAxis));
+  if (len(vAxis) < .001) return null;
+  const coords = verts.map((p) => ({ id: p.id, u: dot(p, uAxis), v: dot(p, vAxis) }));
+  const minU = Math.min(...coords.map((p) => p.u));
+  const maxU = Math.max(...coords.map((p) => p.u));
+  const minV = Math.min(...coords.map((p) => p.v));
+  const maxV = Math.max(...coords.map((p) => p.v));
+  const rangeU = maxU - minU;
+  const rangeV = maxV - minV;
+  if (rangeU < .001 || rangeV < .001) return null;
+  const scale = TEMPLATE_MAX_SIZE / Math.max(rangeU, rangeV, 1);
+  const uvById = new Map(coords.map((p) => [
+    p.id,
+    { x: (p.u - minU) * scale, y: (maxV - p.v) * scale }
+  ]));
+  const project = (p) => uvById.get(p.id) || { x: 0, y: 0 };
+  project.width = Math.max(16, Math.round(rangeU * scale));
+  project.height = Math.max(16, Math.round(rangeV * scale));
+  project.centerlineX = project.width / 2;
+  project.mode = "face-local";
+  return project;
 }
 
 function autoTemplateSideForFace(face) {
@@ -2467,16 +2658,37 @@ function templateSideForFace(face) {
   return validBitmapFaceSide(face?.bitmapSide) || autoTemplateSideForFace(face);
 }
 
-function drawTemplateCenterline(ctx, x, top = 0, bottom = ctx.canvas.height) {
+function drawTemplateCenterline(ctx, x, top = 0, bottom = ctx.canvas.height, options = {}) {
   if (x < -1 || x > ctx.canvas.width + 1) return;
+  const active = !!options.active;
   ctx.save();
-  ctx.strokeStyle = "rgba(255,255,255,.48)";
-  ctx.lineWidth = 1;
+  if (active) {
+    ctx.strokeStyle = "rgba(0,0,0,.72)";
+    ctx.lineWidth = 5;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(Math.round(x) + .5, top);
+    ctx.lineTo(Math.round(x) + .5, bottom);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = active ? "#ff5ec4" : "rgba(255,255,255,.48)";
+  ctx.lineWidth = active ? 2 : 1;
   ctx.setLineDash([7, 7]);
   ctx.beginPath();
   ctx.moveTo(Math.round(x) + .5, top);
   ctx.lineTo(Math.round(x) + .5, bottom);
   ctx.stroke();
+  if (active && options.label) {
+    ctx.setLineDash([]);
+    const labelX = Math.max(4, Math.min(Math.max(4, ctx.canvas.width - 84), x + 7));
+    const labelY = Math.max(4, top + 5);
+    ctx.fillStyle = "rgba(0,0,0,.82)";
+    ctx.fillRect(labelX, labelY, 76, 17);
+    ctx.fillStyle = "#ff5ec4";
+    ctx.font = "10px Andale Mono, Menlo, Consolas, monospace";
+    ctx.textBaseline = "top";
+    ctx.fillText(String(options.label).toUpperCase(), labelX + 4, labelY + 3);
+  }
   ctx.restore();
 }
 
@@ -2545,7 +2757,7 @@ function createTemplateCanvas(side, half = mirrorHalfSkinsEnabled()) {
   ctx.imageSmoothingEnabled = false;
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  drawTemplateCenterline(ctx, centerX);
+  drawTemplateCenterline(ctx, centerX, 0, canvas.height, { active: half || skinSideMirrorX(side), label: "mirror" });
 
   ctx.save();
   ctx.strokeStyle = "rgba(255,255,255,.46)";
@@ -2593,7 +2805,8 @@ function createSelectedFaceTemplateCanvas() {
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, width, height);
   const translate = (p) => ({ x: p.x - minX + pad, y: p.y - minY + pad });
-  drawTemplateCenterline(ctx, (project.centerlineX ?? project.width / 2) - minX + pad);
+  const faceMirror = faceTextureMirrorX(face);
+  drawTemplateCenterline(ctx, width / 2, 0, height, { active: faceMirror, label: faceMirror ? "mirror" : "" });
 
   ctx.save();
   ctx.strokeStyle = "rgba(255,255,255,.96)";
@@ -2627,8 +2840,16 @@ function selectedFaceTextureMapping(face, options = {}) {
   const height = Math.max(24, Math.ceil(maxY - minY + pad * 2));
   const rawUv = pts.map((p) => ({ x: p.x - minX + pad, y: p.y - minY + pad }));
   const angle = options.applyAngle === false ? 0 : normalizeBitmapAngle(face.bitmapAngle);
-  const uv = angle ? rawUv.map((p) => rotateTemplatePoint(p, width, height, angle)) : rawUv;
-  return { side, project, uv, rawUv, angle, width, height, minX, minY, pad };
+  if (!angle) return { side, project, uv: rawUv, rawUv, angle, width, height, minX, minY, pad };
+  const rotatedUv = rawUv.map((p) => rotateTemplatePoint(p, width, height, angle));
+  const minRotX = Math.min(...rotatedUv.map((p) => p.x));
+  const maxRotX = Math.max(...rotatedUv.map((p) => p.x));
+  const minRotY = Math.min(...rotatedUv.map((p) => p.y));
+  const maxRotY = Math.max(...rotatedUv.map((p) => p.y));
+  const fittedWidth = Math.max(24, Math.ceil(maxRotX - minRotX + pad * 2));
+  const fittedHeight = Math.max(24, Math.ceil(maxRotY - minRotY + pad * 2));
+  const uv = rotatedUv.map((p) => ({ x: p.x - minRotX + pad, y: p.y - minRotY + pad }));
+  return { side, project, uv, rawUv, angle, width: fittedWidth, height: fittedHeight, minX, minY, pad };
 }
 
 function faceTextureMirrorX(face) {
@@ -2835,6 +3056,68 @@ function drawFaceBitmapDecals(ctx, face, pts) {
   return drawn;
 }
 
+function faceMirrorSeamPoints(face, pts) {
+  if (!faceTextureMirrorX(face) || !pts || pts.length < 3) return [];
+  const mapping = selectedFaceTextureMapping(face);
+  if (!mapping || mapping.uv.length !== pts.length) return [];
+  const seamX = mapping.width / 2;
+  const eps = 1e-5;
+  const poly = mapping.uv.map((tex, i) => ({ screen: pts[i], tex }));
+  const seam = [];
+  const addPoint = (screen, texY) => {
+    if (!screen || !Number.isFinite(screen.x) || !Number.isFinite(screen.y)) return;
+    if (seam.some((p) => Math.hypot(p.screen.x - screen.x, p.screen.y - screen.y) < .5)) return;
+    seam.push({ screen, texY });
+  };
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i];
+    const b = poly[(i + 1) % poly.length];
+    const da = a.tex.x - seamX;
+    const db = b.tex.x - seamX;
+    if (Math.abs(da) <= eps) addPoint(a.screen, a.tex.y);
+    if (da * db < 0) {
+      const t = Math.max(0, Math.min(1, -da / (db - da)));
+      addPoint(lerp2(a.screen, b.screen, t), a.tex.y + (b.tex.y - a.tex.y) * t);
+    }
+    if (Math.abs(db) <= eps) addPoint(b.screen, b.tex.y);
+  }
+  return seam.sort((a, b) => a.texY - b.texY).map((p) => p.screen);
+}
+
+function drawFaceMirrorSeam(ctx, face, pts) {
+  const seam = faceMirrorSeamPoints(face, pts);
+  if (seam.length < 2) return;
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = "rgba(0,0,0,.82)";
+  ctx.lineWidth = 6;
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(seam[0].x, seam[0].y);
+  for (let i = 1; i < seam.length; i++) ctx.lineTo(seam[i].x, seam[i].y);
+  ctx.stroke();
+  ctx.strokeStyle = "#ff5ec4";
+  ctx.lineWidth = 2.4;
+  ctx.setLineDash([8, 5]);
+  ctx.beginPath();
+  ctx.moveTo(seam[0].x, seam[0].y);
+  for (let i = 1; i < seam.length; i++) ctx.lineTo(seam[i].x, seam[i].y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  for (const p of seam) {
+    ctx.fillStyle = "rgba(0,0,0,.82)";
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 4.5, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = "#ff5ec4";
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 2.4, 0, TAU);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
 function derivedFaceEdges() {
   const seen = new Set();
   const edges = [];
@@ -2888,6 +3171,7 @@ function renderMain() {
             selected ? "#ffd936" : "rgba(85,255,78,.32)",
             selected ? 2 : 1
           );
+          if (selected) drawFaceMirrorSeam(ctx, face, pts);
         }
       } else {
         drawFace(
@@ -2897,6 +3181,7 @@ function renderMain() {
           selected ? "#ffd936" : drawWire ? "rgba(85,255,78,.32)" : "rgba(0,0,0,0)",
           selected ? 2 : drawWire ? 1 : 0
         );
+        if (selected) drawFaceMirrorSeam(ctx, face, pts);
       }
     }
   }
@@ -2948,20 +3233,17 @@ function renderMain() {
     const pts = face?.verts.map((id) => projected.get(id)).filter(Boolean) || [];
     if (face && pts.length >= 3) {
       drawFace(ctx, pts, "rgba(255,217,54,.13)", "#ffd936", 2);
+      drawFaceMirrorSeam(ctx, face, pts);
     }
   }
 
   for (const detail of state.details) {
-    const previewDetail = previewDetailForBuilderDetail(detail);
-    const pts3 = previewDetail ? [] : detailModelPoints(detail);
-    const pts = previewDetail
-      ? previewDetail.points.map((point) => previewProjectionPointToCanvas(point, canvas)).filter(Boolean)
-      : pts3.map((p) => project3d(p, canvas));
+    const pts = projectedDetailPointsForMain(detail, canvas);
     if (detail.type === "beacon") {
       const p = pts[0] || null;
       if (!p) continue;
       const selected = state.selected?.type === "detail" && state.selected.id === detail.id;
-      if (gameOverlay && !selected) continue;
+      if (gameOverlay && state.mode !== "detail" && !selected) continue;
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
       ctx.fillStyle = selected ? "rgba(255,217,54,.95)" : `${detail.color || "#ffb642"}cc`;
@@ -2982,7 +3264,7 @@ function renderMain() {
     }
     if (pts.length < 2) continue;
     const selected = state.selected?.type === "detail" && state.selected.id === detail.id;
-    if (gameOverlay && !selected) continue;
+    if (gameOverlay && state.mode !== "detail" && !selected) continue;
     if (previewMode === "wire" && !selected) continue;
     if (detail.type === "panel") {
       ctx.strokeStyle = selected ? "#ffd936" : "rgba(255,217,54,.8)";
@@ -3073,7 +3355,9 @@ function renderAll() {
   updateSelectedBitmapReadout();
   updateFaceDecalControls();
   renderMain();
-  document.querySelectorAll(".ortho-grid canvas").forEach((canvas) => drawOrthoCanvas(canvas, canvas.dataset.view));
+  if (state.showBlueprints) {
+    document.querySelectorAll(".ortho-grid canvas").forEach((canvas) => drawOrthoCanvas(canvas, canvas.dataset.view));
+  }
   updateExport();
   scheduleGamePreviewSync();
 }
@@ -3638,7 +3922,7 @@ function nearestDetail(point, maxLineDist = 10) {
   let bestDetail = null;
   let bestLineDist = maxLineDist;
   for (const d of state.details) {
-    const pts = detailModelPoints(d).map((p) => project3d(p, els.mainView));
+    const pts = projectedDetailPointsForMain(d, els.mainView);
     if (d.type === "beacon") {
       const p = pts[0];
       if (!p) continue;
@@ -3920,7 +4204,7 @@ function derivedBlueprint() {
       type: d.type === "panel" ? "line" : d.type,
       color: d.color,
       normal: toArray(normal),
-      lift: d.type === "engine" ? 1.5 : 1
+      lift: 0.5
     };
     if (d.type === "panel") {
       return { ...base, type: "polyline", points, width: 1.2 };
@@ -4291,14 +4575,47 @@ function imageToPngDataUrl(img) {
   return canvas.toDataURL("image/png");
 }
 
+function referencedLocalFaceSkinUploads() {
+  const keys = [...new Set(state.faces.map((face) => cleanBitmapKey(face.bitmapFaceKey)).filter(Boolean))];
+  return keys.map((key) => {
+    const img = state.faceSkinImages?.[key];
+    const source = state.faceSkinSources?.[key];
+    if (!img?.naturalWidth || source === "asset") return null;
+    if (source !== "imported" && source !== "shelf") return null;
+    return { key, img };
+  }).filter(Boolean);
+}
+
+async function uploadFaceSkinAsset(model, key, img) {
+  return apiJson("/api/skins", {
+    method: "POST",
+    body: JSON.stringify({
+      kind: "face",
+      model,
+      key,
+      dataUrl: imageToPngDataUrl(img)
+    })
+  });
+}
+
 async function saveModelAsset() {
   try {
     if (!await requireToolServer()) return;
     const data = builderExport();
     const cleanId = cleanBitmapKey(data.id, "custom_ship");
-    if (!confirmWrite(`Overwrite assets/models/${cleanId}.ultraship.json and regenerate model libraries?`)) {
+    const localFaceSkins = referencedLocalFaceSkinUploads();
+    const skinText = localFaceSkins.length
+      ? ` Also overwrite ${localFaceSkins.length} referenced local face PNG${localFaceSkins.length === 1 ? "" : "s"} in assets/skins/ first?`
+      : "";
+    if (!confirmWrite(`Overwrite assets/models/${cleanId}.ultraship.json and regenerate model libraries?${skinText}`)) {
       setStatus("MODEL SAVE CANCELLED.");
       return;
+    }
+    for (let i = 0; i < localFaceSkins.length; i++) {
+      const skin = localFaceSkins[i];
+      setStatus(`SAVING ${cleanId.toUpperCase()} FACE ${skin.key} (${i + 1}/${localFaceSkins.length})...`);
+      await uploadFaceSkinAsset(cleanId, skin.key, skin.img);
+      state.faceSkinSources[skin.key] = "asset";
     }
     setStatus(`SAVING ${cleanId.toUpperCase()} MODEL...`);
     const result = await apiJson(`/api/models/${encodeURIComponent(cleanId)}`, {
@@ -4310,7 +4627,8 @@ async function saveModelAsset() {
     populateLibrarySelector();
     if (els.librarySelector) els.librarySelector.value = cleanId;
     state.assetVersion = Date.now();
-    setStatus(`MODEL UPDATED: ${result.path}.`);
+    if (localFaceSkins.length) await refreshAvailableSkinAssets();
+    setStatus(`MODEL UPDATED: ${result.path}${localFaceSkins.length ? `; ${localFaceSkins.length} FACE PNG${localFaceSkins.length === 1 ? "" : "S"} SAVED.` : "."}`);
   } catch (error) {
     setStatus(`MODEL SAVE FAILED: ${error.message}`);
   }
@@ -4365,20 +4683,17 @@ async function uploadSelectedFaceSkin() {
     face.bitmapFaceKey = key;
     if (mirrorActionsEnabled()) syncMirroredFace(face);
     const model = templateShipId();
-    if (!confirmWrite(`Overwrite assets/skins/${model}-face-${key}.png and regenerate bitmap skins?`)) {
+    const sharedCount = faceSkinKeyUsage(key, face);
+    const sharedText = sharedCount
+      ? `\n\nGlobal asset update: texture key ${key} is also used by ${sharedCount} other face${sharedCount === 1 ? "" : "s"} in this model. This overwrite will update all of them.`
+      : "";
+    if (!confirmWrite(`Overwrite assets/skins/${model}-face-${key}.png and regenerate bitmap skins?${sharedText}`)) {
       setStatus("FACE SKIN UPLOAD CANCELLED.");
       return;
     }
     setStatus(`UPLOADING ${model.toUpperCase()} FACE ${key}...`);
-    const result = await apiJson("/api/skins", {
-      method: "POST",
-      body: JSON.stringify({
-        kind: "face",
-        model,
-        key,
-        dataUrl: imageToPngDataUrl(img)
-      })
-    });
+    const result = await uploadFaceSkinAsset(model, key, img);
+    state.faceSkinSources[key] = "asset";
     state.assetVersion = Date.now();
     loadSkinBitmaps(model, state.skinImages?.mirrorX || currentModelMirrorFlags());
     await refreshAvailableSkinAssets();
@@ -4512,6 +4827,11 @@ function bindEvents() {
   els.rebuildGameTopBtn?.addEventListener("click", rebuildGameFiles);
   els.showFaceNormals.addEventListener("input", renderAll);
   els.previewRenderMode.addEventListener("input", renderAll);
+  els.toggleBlueprintBtn?.addEventListener("click", () => {
+    setBlueprintsVisible(!state.showBlueprints, { persist: true });
+    renderAll();
+    setStatus(state.showBlueprints ? "BLUEPRINT VIEW SHOWN." : "BLUEPRINT VIEW HIDDEN.");
+  });
   els.spinPreviewBtn?.addEventListener("click", openSpinPreviewWindow);
   els.closeSpinPreviewBtn?.addEventListener("click", closeSpinPreviewWindow);
   els.spinPreviewModal?.addEventListener("click", (event) => {
@@ -4716,6 +5036,7 @@ function bindEvents() {
 
 bindEvents();
 setDefaultPreviewRenderMode();
+setBlueprintsVisible(state.showBlueprints);
 populateLibrarySelector();
 resetWedge();
 kickInitialGamePreviewSync();

@@ -66,7 +66,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "plate_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#8b877c"
     },
     {
       "id": 1001,
@@ -78,7 +79,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "plate_panel",
-      "bitmapSide": "bottom"
+      "bitmapSide": "bottom",
+      "faceColor": "#8b877c"
     }
   ],
   "edges": [
@@ -181,6 +183,14 @@
       "faceSides": [
         "top",
         "bottom"
+      ],
+      "faceTextures": [
+        "plate_panel",
+        "plate_panel"
+      ],
+      "faceColors": [
+        "#8b877c",
+        "#8b877c"
       ]
     },
     "gameMeta": {

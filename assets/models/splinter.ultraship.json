@@ -2,6 +2,35 @@
   "format": "ultra-elite-ship-builder/v1",
   "id": "splinter",
   "name": "Splinter",
+  "symmetry": "x-locked",
+  "gameMeta": {
+    "class": "fighter",
+    "npcRole": "private",
+    "aiProfile": "standard",
+    "decalRole": "private",
+    "baseColor": "#e9f2e4",
+    "description": "",
+    "missionLore": "",
+    "valueCr": 250000,
+    "stats": {
+      "r": 44,
+      "hp": 120,
+      "speed": 1,
+      "cargo": 10,
+      "missiles": 1,
+      "laser": "none"
+    },
+    "lists": {
+      "trader": true,
+      "pirate": true,
+      "police": false,
+      "alien": false
+    },
+    "flags": {
+      "escapePod": true,
+      "hiddenUntilDiscovered": false
+    }
+  },
   "verts": [
     {
       "id": 1,
@@ -45,8 +74,10 @@
         2
       ],
       "mirrored": false,
-      "bitmapFaceKey": "rock_panel",
-      "bitmapSide": "top"
+      "faceColor": "#928c89",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "rock_panel-1004",
+      "bitmapMirrorX": true
     },
     {
       "id": 1001,
@@ -56,8 +87,10 @@
         3
       ],
       "mirrored": false,
-      "bitmapFaceKey": "rock_panel",
-      "bitmapSide": "top"
+      "faceColor": "#928c89",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "rock_panel-1004",
+      "bitmapMirrorX": true
     },
     {
       "id": 1002,
@@ -67,19 +100,22 @@
         1
       ],
       "mirrored": false,
-      "bitmapFaceKey": "rock_panel",
-      "bitmapSide": "top"
+      "faceColor": "#928c89",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "rock_panel-1004"
     },
     {
       "id": 1003,
       "verts": [
-        2,
+        3,
         1,
-        3
+        2
       ],
       "mirrored": false,
-      "bitmapFaceKey": "rock_panel",
-      "bitmapSide": "top"
+      "faceColor": "#928c89",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "rock_panel-1004",
+      "bitmapMirrorX": true
     }
   ],
   "edges": [],
@@ -109,54 +145,54 @@
     ],
     "edges": [
       [
-        0,
-        1
+        2,
+        3
       ],
       [
         1,
         2
       ],
       [
-        2,
+        1,
         3
       ],
       [
-        3,
-        0
+        0,
+        3
       ],
       [
         0,
         2
       ],
       [
-        3,
+        0,
         1
       ]
     ],
     "edgeFaces": [
       [
-        3,
+        0,
+        1
+      ],
+      [
+        0,
+        3
+      ],
+      [
+        0,
         2
       ],
       [
-        3,
-        0
+        1,
+        2
       ],
       [
         1,
-        0
+        3
       ],
       [
         2,
-        1
-      ],
-      [
-        3,
-        1
-      ],
-      [
-        2,
-        0
+        3
       ]
     ],
     "edgeVisibility": [
@@ -169,32 +205,80 @@
     ],
     "normals": [
       [
-        35,
-        0,
-        4
+        77.24,
+        4.99,
+        -63.32
       ],
       [
-        3,
-        4,
-        8
+        41.7,
+        -10.28,
+        90.31
       ],
       [
-        1,
-        8,
-        12
+        -87.72,
+        44.83,
+        -17.18
       ],
       [
-        18,
-        12,
-        0
+        -2.36,
+        -56.45,
+        -82.51
       ]
-    ]
-  },
-  "gameMeta": {
-    "imageDecalMirrorX": {
-      "top": false,
-      "bottom": false,
-      "back": false
+    ],
+    "details": [],
+    "imageProjection": {
+      "faceSides": [
+        "top",
+        "top",
+        "top",
+        "top"
+      ],
+      "faceTextures": [
+        "rock_panel-1004",
+        "rock_panel-1004",
+        "rock_panel-1004",
+        "rock_panel-1004"
+      ],
+      "faceColors": [
+        "#928c89",
+        "#928c89",
+        "#928c89",
+        "#928c89"
+      ],
+      "faceMirrorX": [
+        true,
+        true,
+        false,
+        true
+      ]
+    },
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "private",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "valueCr": 250000,
+      "stats": {
+        "r": 44,
+        "hp": 120,
+        "speed": 1,
+        "cargo": 10,
+        "missiles": 1,
+        "laser": "none"
+      },
+      "lists": {
+        "trader": true,
+        "pirate": true,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": false
+      }
     }
   }
 }

@@ -100,7 +100,8 @@
         4,
         1
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#6d6d64"
     },
     {
       "id": 1001,
@@ -109,7 +110,8 @@
         1,
         3
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#6e6e65"
     },
     {
       "id": 1002,
@@ -118,7 +120,8 @@
         4,
         9
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#676253"
     },
     {
       "id": 1003,
@@ -127,7 +130,8 @@
         1,
         9
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#676253"
     },
     {
       "id": 1004,
@@ -136,7 +140,8 @@
         5,
         4
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#75756d"
     },
     {
       "id": 1005,
@@ -145,7 +150,8 @@
         2,
         3
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#75756e"
     },
     {
       "id": 1006,
@@ -154,7 +160,8 @@
         10,
         9
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#726f64"
     },
     {
       "id": 1007,
@@ -163,7 +170,8 @@
         9,
         10
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#726f64"
     },
     {
       "id": 1008,
@@ -173,7 +181,8 @@
         7,
         4
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#5e5d54"
     },
     {
       "id": 1009,
@@ -183,7 +192,8 @@
         3,
         8
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#5e5d54"
     },
     {
       "id": 1010,
@@ -193,7 +203,8 @@
         10,
         11
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#80774c"
     },
     {
       "id": 1011,
@@ -203,7 +214,8 @@
         11,
         10
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#80764d"
     },
     {
       "id": 1012,
@@ -213,7 +225,8 @@
         8,
         11
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#4f4d3e"
     }
   ],
   "edges": [
@@ -256,7 +269,7 @@
         0.81,
         0.22
       ],
-      "lift": 1,
+      "lift": 0.5,
       "points": [
         [
           17.6,
@@ -284,7 +297,7 @@
         0.81,
         0.22
       ],
-      "lift": 1,
+      "lift": 0.5,
       "points": [
         [
           -17.6,
@@ -313,7 +326,7 @@
         -0.23
       ],
       "width": 1.4,
-      "lift": 1,
+      "lift": 0.5,
       "indices": [
         4,
         6
@@ -329,7 +342,7 @@
         -0.23
       ],
       "width": 1.4,
-      "lift": 1,
+      "lift": 0.5,
       "indices": [
         3,
         6
@@ -345,7 +358,7 @@
         -0.23
       ],
       "width": 1.4,
-      "lift": 1,
+      "lift": 0.5,
       "indices": [
         3,
         11
@@ -361,7 +374,7 @@
         -0.23
       ],
       "width": 1.4,
-      "lift": 1,
+      "lift": 0.5,
       "indices": [
         4,
         11
@@ -377,7 +390,7 @@
         -1
       ],
       "stroke": "#ffffff",
-      "lift": 1,
+      "lift": 0.5,
       "points": [
         [
           0,
@@ -793,7 +806,7 @@
           0.81,
           0.22
         ],
-        "lift": 1
+        "lift": 0.5
       },
       {
         "type": "window",
@@ -820,7 +833,7 @@
           0.81,
           0.22
         ],
-        "lift": 1
+        "lift": 0.5
       },
       {
         "type": "line",
@@ -835,7 +848,7 @@
           -0.23
         ],
         "width": 1.4,
-        "lift": 1
+        "lift": 0.5
       },
       {
         "type": "line",
@@ -850,7 +863,7 @@
           -0.23
         ],
         "width": 1.4,
-        "lift": 1
+        "lift": 0.5
       },
       {
         "type": "line",
@@ -865,7 +878,7 @@
           -0.23
         ],
         "width": 1.4,
-        "lift": 1
+        "lift": 0.5
       },
       {
         "type": "line",
@@ -880,7 +893,7 @@
           -0.23
         ],
         "width": 1.4,
-        "lift": 1
+        "lift": 0.5
       },
       {
         "type": "engine",
@@ -913,9 +926,26 @@
           0,
           -1
         ],
-        "lift": 1
+        "lift": 0.5
       }
-    ]
+    ],
+    "imageProjection": {
+      "faceColors": [
+        "#6d6d64",
+        "#6e6e65",
+        "#676253",
+        "#676253",
+        "#75756d",
+        "#75756e",
+        "#726f64",
+        "#726f64",
+        "#5e5d54",
+        "#5e5d54",
+        "#80774c",
+        "#80764d",
+        "#4f4d3e"
+      ]
+    }
   },
   "gameMeta": {
     "imageDecalMirrorX": {

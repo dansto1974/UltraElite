@@ -315,7 +315,6 @@
     // flight view is rendered from, swapped in for the duration of drawSpace.
     const VIEW_YAW = { rear: Math.PI, left: -Math.PI / 2, right: Math.PI / 2 };
     const VIEW_LABELS = { fwd: "", rear: "REAR VIEW", left: "LEFT VIEW", right: "RIGHT VIEW", ext: "EXTERNAL VIEW" };
-    const ULTRA_WIRE_STROKE = "rgba(61,61,61,.5)";
     const MODEL_RENDER_QUALITY = {
       texturePx: 9,
       decalPx: 12,
@@ -703,12 +702,12 @@
         edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,29,29,6,20,20,20,20,19,17,19,19,30,6,6,8,6,6,8],
         normals: [[0,62,31],[-18,55,16],[18,55,16],[-16,52,14],[16,52,14],[-14,47,0],[14,47,0],[-61,102,0],[61,102,0],[0,0,-80],[-7,-42,9],[0,-30,6],[7,-42,9]],
         details: [
-          { type: "window", points: [[16,4.3,67.3],[-16,4.3,67.3],[0,17.3,41.3]], color: "#101915", normal: [0,.89,.45], lift: 1 },
-          { type: "line", indices: [20,21], color: "#cccccc", normal: [0,0,1], width: 1.2, lift: 1, cull: false },
-          { type: "engine", indices: [12,13,18,19], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 },
-          { type: "engine", indices: [14,15,16,17], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 },
-          { type: "engine", indices: [22,24,23], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 },
-          { type: "engine", indices: [25,26,27], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 }
+          { type: "window", points: [[16,4.3,67.3],[-16,4.3,67.3],[0,17.3,41.3]], color: "#101915", normal: [0,.89,.45], lift: .5 },
+          { type: "line", indices: [20,21], color: "#cccccc", normal: [0,0,1], width: 1.2, lift: .5, cull: false },
+          { type: "engine", indices: [12,13,18,19], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 },
+          { type: "engine", indices: [14,15,16,17], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 },
+          { type: "engine", indices: [22,24,23], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 },
+          { type: "engine", indices: [25,26,27], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 }
         ]
       }),
       krait: buildBlueprint({
@@ -719,12 +718,12 @@
         hullVisibility: 31,
         normals: [[3,24,3],[3,-24,3],[-3,-24,3],[-3,24,3],[38,0,-77],[-38,0,-77]],
         details: [
-          { type: "line", indices: [3,5], color: "#cccccc", normal: [0,0,1], width: 1.6, lift: 1, cull: false },
-          { type: "line", indices: [4,6], color: "#cccccc", normal: [0,0,1], width: 1.6, lift: 1, cull: false },
-          { type: "window", indices: [7,10,8], color: "#101915", normal: [.12,.97,.12], lift: 1 },
-          { type: "window", indices: [7,9,8], color: "#101915", normal: [-.12,.97,.12], lift: 1 },
-          { type: "engine", indices: [11,13,12], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 },
-          { type: "engine", indices: [14,15,16], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 }
+          { type: "line", indices: [3,5], color: "#cccccc", normal: [0,0,1], width: 1.6, lift: .5, cull: false },
+          { type: "line", indices: [4,6], color: "#cccccc", normal: [0,0,1], width: 1.6, lift: .5, cull: false },
+          { type: "window", indices: [7,10,8], color: "#101915", normal: [.12,.97,.12], lift: .5 },
+          { type: "window", indices: [7,9,8], color: "#101915", normal: [-.12,.97,.12], lift: .5 },
+          { type: "engine", indices: [11,13,12], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 },
+          { type: "engine", indices: [14,15,16], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 }
         ]
       }),
       viper: buildBlueprint({
@@ -734,10 +733,10 @@
         edgeVisibility: [31,30,30,31,30,30,30,30,31,30,31,30,31,30,19,18,19,18,16,16],
         normals: [[0,32,0],[-22,33,11],[22,33,11],[-22,-33,11],[22,-33,11],[0,-32,0],[0,0,-48]],
         details: [
-          { type: "window", points: [[-4,5.3,48],[-4,13.3,24],[-16,13.3,0]], color: "#101915", normal: [-.53,.8,.27], lift: 1 },
-          { type: "window", points: [[4,5.3,48],[4,13.3,24],[16,13.3,0]], color: "#101915", normal: [.53,.8,.27], lift: 1 },
-          { type: "engine", indices: [9,12,13], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 },
-          { type: "engine", indices: [10,14,11], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 }
+          { type: "window", points: [[-4,5.3,48],[-4,13.3,24],[-16,13.3,0]], color: "#101915", normal: [-.53,.8,.27], lift: .5 },
+          { type: "window", points: [[4,5.3,48],[4,13.3,24],[16,13.3,0]], color: "#101915", normal: [.53,.8,.27], lift: .5 },
+          { type: "engine", indices: [9,12,13], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 },
+          { type: "engine", indices: [10,14,11], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 }
         ]
       }),
       adder: buildBlueprint({
@@ -748,8 +747,8 @@
         edgeVisibility: [31,7,31,31,31,31,31,7,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,5,3,4,3],
         normals: [[0,39,10],[0,-39,10],[69,50,13],[69,-50,13],[30,52,0],[30,-52,0],[0,0,-160],[0,0,-160],[0,0,-160],[-30,52,0],[-30,-52,0],[-69,50,13],[-69,-50,13],[0,28,0],[0,-28,0]],
         details: [
-          { type: "window", indices: [14,15,16,17], color: "#101915", normal: [0,1,.26], lift: 1 },
-          { type: "engine", points: [[12,5,-40],[-12,5,-40],[-12,-5,-40],[12,-5,-40]], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 },
+          { type: "window", indices: [14,15,16,17], color: "#101915", normal: [0,1,.26], lift: .5 },
+          { type: "engine", points: [[12,5,-40],[-12,5,-40],[-12,-5,-40],[12,-5,-40]], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 },
           { type: "beacon", index: 8, color: "#ffb642" },
           { type: "beacon", index: 9, color: "#ffb642" }
         ]
@@ -761,12 +760,12 @@
         edgeVisibility: [31,31,31,31,31,31,31,31,31,29,30,29,30,20,20,16,17],
         normals: [[0,31,5],[4,45,8],[25,-108,19],[0,-84,12],[-25,-108,19],[-4,45,8],[-88,16,-214],[0,0,-187],[88,16,-214]],
         details: [
-          { type: "window", points: [[0,-2.5,38],[-6,3.1,3],[6,3.1,3]], color: "#101915", normal: [0,.99,.16], lift: 1 },
-          { type: "line", indices: [8,10], color: "#101915", normal: [0,-1,.14], width: 1.4, lift: 1 },
-          { type: "line", indices: [9,11], color: "#101915", normal: [0,-1,.14], width: 1.4, lift: 1 },
-          { type: "engine", points: [[10,4,-23],[-10,4,-23],[-10,-10,-23],[10,-10,-23]], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 },
-          { type: "engine", points: [[50,-1,-9.7],[25,3,-19.7],[27,-8,-19.7]], color: "#f7fff7", stroke: "#ffffff", normal: [.38,.07,-.92], lift: 1 },
-          { type: "engine", points: [[-50,-1,-9.7],[-25,3,-19.7],[-27,-8,-19.7]], color: "#f7fff7", stroke: "#ffffff", normal: [-.38,.07,-.92], lift: 1 }
+          { type: "window", points: [[0,-2.5,38],[-6,3.1,3],[6,3.1,3]], color: "#101915", normal: [0,.99,.16], lift: .5 },
+          { type: "line", indices: [8,10], color: "#101915", normal: [0,-1,.14], width: 1.4, lift: .5 },
+          { type: "line", indices: [9,11], color: "#101915", normal: [0,-1,.14], width: 1.4, lift: .5 },
+          { type: "engine", points: [[10,4,-23],[-10,4,-23],[-10,-10,-23],[10,-10,-23]], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 },
+          { type: "engine", points: [[50,-1,-9.7],[25,3,-19.7],[27,-8,-19.7]], color: "#f7fff7", stroke: "#ffffff", normal: [.38,.07,-.92], lift: .5 },
+          { type: "engine", points: [[-50,-1,-9.7],[-25,3,-19.7],[-27,-8,-19.7]], color: "#f7fff7", stroke: "#ffffff", normal: [-.38,.07,-.92], lift: .5 }
         ]
       }),
       mamba: buildBlueprint({
@@ -776,12 +775,12 @@
         edgeVisibility: [31,31,31,30,30,30,14,12,13,12,20,16,16,20,14,14,13,14,12,12,7,5,5,7,5,5,30,30],
         normals: [[0,-24,2],[0,24,2],[-32,64,16],[32,64,16],[0,0,-127]],
         details: [
-          { type: "window", indices: [5,6,7,8], color: "#101915", normal: [0,1,.08], lift: 1 },
-          { type: "window", indices: [9,11,12], color: "#101915", normal: [0,-1,.08], lift: 1 },
-          { type: "window", indices: [10,13,14], color: "#101915", normal: [0,-1,.08], lift: 1 },
-          { type: "engine", indices: [15,16,17,18], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 },
-          { type: "engine", indices: [19,22,23], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 },
-          { type: "engine", indices: [20,21,24], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 }
+          { type: "window", indices: [5,6,7,8], color: "#101915", normal: [0,1,.08], lift: .5 },
+          { type: "window", indices: [9,11,12], color: "#101915", normal: [0,-1,.08], lift: .5 },
+          { type: "window", indices: [10,13,14], color: "#101915", normal: [0,-1,.08], lift: .5 },
+          { type: "engine", indices: [15,16,17,18], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 },
+          { type: "engine", indices: [19,22,23], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 },
+          { type: "engine", indices: [20,21,24], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 }
         ]
       }),
       sidewinder: buildBlueprint({
@@ -791,8 +790,8 @@
         edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,15,12,12,12],
         normals: [[0,32,8],[-12,47,6],[12,47,6],[0,0,-112],[-12,-47,6],[0,-32,8],[12,-47,6]],
         details: [
-          { type: "window", points: [[-16,2.7,25.3],[16,2.7,25.3],[0,10.7,-6.7]], color: "#101915", normal: [0,.97,.24], lift: 1 },
-          { type: "engine", indices: [6,7,8,9], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 }
+          { type: "window", points: [[-16,2.7,25.3],[16,2.7,25.3],[0,10.7,-6.7]], color: "#101915", normal: [0,.97,.24], lift: .5 },
+          { type: "engine", indices: [6,7,8,9], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 }
         ]
       }),
       worm: buildBlueprint({
@@ -802,8 +801,8 @@
         edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31],
         normals: [[0,88,70],[0,69,14],[70,66,35],[-70,66,35],[64,49,14],[-64,49,14],[0,0,-200],[0,-80,0]],
         details: [
-          { type: "window", points: [[2.5,8,5],[-2.5,8,5],[-4,12,-15],[4,12,-15]], color: "#101915", normal: [0,.98,.2], lift: 1 },
-          { type: "engine", points: [[4,8,-25],[-4,8,-25],[-13,-4,-25],[13,-4,-25]], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 }
+          { type: "window", points: [[2.5,8,5],[-2.5,8,5],[-4,12,-15],[4,12,-15]], color: "#101915", normal: [0,.98,.2], lift: .5 },
+          { type: "engine", points: [[4,8,-25],[-4,8,-25],[-13,-4,-25],[13,-4,-25]], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 }
         ]
       }),
       moray: buildBlueprint({
@@ -814,10 +813,10 @@
         hullVisibility: 24,
         normals: [[0,43,7],[-10,49,7],[10,49,7],[-59,-28,-101],[0,-52,-78],[59,-28,-101],[-72,-99,50],[0,-83,30],[72,-99,50]],
         details: [
-          { type: "window", points: [[0,4.9,35],[-6,8.1,15],[6,8.1,15]], color: "#101915", normal: [0,.99,.16], lift: 1 },
-          { type: "line", indices: [10,11], color: "#101915", normal: [0,1,.16], width: 1.4, lift: 1 },
-          { type: "line", indices: [12,13], color: "#101915", normal: [0,1,.16], width: 1.4, lift: 1 },
-          { type: "engine", indices: [7,8,9], color: "#f7fff7", stroke: "#ffffff", normal: [0,-.55,-.83], lift: 1 }
+          { type: "window", points: [[0,4.9,35],[-6,8.1,15],[6,8.1,15]], color: "#101915", normal: [0,.99,.16], lift: .5 },
+          { type: "line", indices: [10,11], color: "#101915", normal: [0,1,.16], width: 1.4, lift: .5 },
+          { type: "line", indices: [12,13], color: "#101915", normal: [0,1,.16], width: 1.4, lift: .5 },
+          { type: "engine", indices: [7,8,9], color: "#f7fff7", stroke: "#ffffff", normal: [0,-.55,-.83], lift: .5 }
         ]
       }),
       asp: buildBlueprint({
@@ -828,9 +827,9 @@
         edgeVisibility: [22,22,22,31,31,16,31,16,31,31,31,31,31,31,31,31,22,22,22,31,31,31,31,10,9,8,8,10],
         normals: [[0,-35,5],[8,-38,-7],[-8,-38,-7],[0,24,-1],[0,43,19],[-6,28,-2],[6,28,-2],[59,-64,31],[-59,-64,31],[80,46,50],[-80,46,50],[0,0,-90]],
         details: [
-          { type: "window", points: [[9.1,-.2,58.4],[-9.1,-.2,58.4],[-15.1,7.2,42.6],[15.1,7.2,42.6]], color: "#101915", normal: [0,.91,.4], lift: 1 },
-          { type: "line", indices: [17,18], color: "#cccccc", normal: [0,0,1], width: 1.4, lift: 1, cull: false },
-          { type: "engine", indices: [13,15,14,16], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 }
+          { type: "window", points: [[9.1,-.2,58.4],[-9.1,-.2,58.4],[-15.1,7.2,42.6],[15.1,7.2,42.6]], color: "#101915", normal: [0,.91,.4], lift: .5 },
+          { type: "line", indices: [17,18], color: "#cccccc", normal: [0,0,1], width: 1.4, lift: .5, cull: false },
+          { type: "engine", indices: [13,15,14,16], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 }
         ]
       }),
       ferdelance: buildBlueprint({
@@ -840,10 +839,10 @@
         edgeVisibility: [31,31,31,31,31,28,28,28,28,28,15,11,11,15,14,14,14,14,8,9,11,8,9,11,12,12,8],
         normals: [[0,24,6],[-68,0,24],[-63,0,-37],[0,0,-104],[63,0,-37],[68,0,24],[-12,46,-19],[0,45,-22],[12,46,-19],[0,-28,0]],
         details: [
-          { type: "window", indices: [10,11,12], color: "#101915", normal: [0,1,.25], lift: 1 },
-          { type: "window", indices: [13,14,15], color: "#101915", normal: [0,1,.25], lift: 1 },
-          { type: "window", indices: [16,17,18], color: "#101915", normal: [0,-1,0], lift: 1 },
-          { type: "engine", points: [[6.6,-2.4,-52],[-6.6,-2.4,-52],[-6.6,-10.4,-52],[6.6,-10.4,-52]], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 }
+          { type: "window", indices: [10,11,12], color: "#101915", normal: [0,1,.25], lift: .5 },
+          { type: "window", indices: [13,14,15], color: "#101915", normal: [0,1,.25], lift: .5 },
+          { type: "window", indices: [16,17,18], color: "#101915", normal: [0,-1,0], lift: .5 },
+          { type: "engine", points: [[6.6,-2.4,-52],[-6.6,-2.4,-52],[-6.6,-10.4,-52],[6.6,-10.4,-52]], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 }
         ]
       }),
       python: buildBlueprint({
@@ -853,13 +852,13 @@
         edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,31,7,7,7,7,31,31,31,31,31,31,31,31,31,31],
         normals: [[-27,40,11],[27,40,11],[-27,-40,11],[27,-40,11],[-19,38,0],[19,38,0],[-19,-38,0],[19,-38,0],[-25,37,-11],[25,37,-11],[25,-37,-11],[-25,-37,-11],[0,0,-112]],
         details: [
-          { type: "window", points: [[17.6,8.8,147.7],[17.6,30.4,68.5],[60.8,8.8,39.7]], color: "#101915", normal: [.55,.81,.22], lift: 1 },
-          { type: "window", points: [[-17.6,8.8,147.7],[-17.6,30.4,68.5],[-60.8,8.8,39.7]], color: "#101915", normal: [-.55,.81,.22], lift: 1 },
-          { type: "line", indices: [3,5], color: "#101915", normal: [-.52,.77,-.23], width: 1.4, lift: 1 },
-          { type: "line", indices: [2,5], color: "#101915", normal: [.52,.77,-.23], width: 1.4, lift: 1 },
-          { type: "line", indices: [2,10], color: "#101915", normal: [.52,-.77,-.23], width: 1.4, lift: 1 },
-          { type: "line", indices: [3,10], color: "#101915", normal: [-.52,-.77,-.23], width: 1.4, lift: 1 },
-          { type: "engine", points: [[0,10.8,-112],[21.6,0,-112],[0,-10.8,-112],[-21.6,0,-112]], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 }
+          { type: "window", points: [[17.6,8.8,147.7],[17.6,30.4,68.5],[60.8,8.8,39.7]], color: "#101915", normal: [.55,.81,.22], lift: .5 },
+          { type: "window", points: [[-17.6,8.8,147.7],[-17.6,30.4,68.5],[-60.8,8.8,39.7]], color: "#101915", normal: [-.55,.81,.22], lift: .5 },
+          { type: "line", indices: [3,5], color: "#101915", normal: [-.52,.77,-.23], width: 1.4, lift: .5 },
+          { type: "line", indices: [2,5], color: "#101915", normal: [.52,.77,-.23], width: 1.4, lift: .5 },
+          { type: "line", indices: [2,10], color: "#101915", normal: [.52,-.77,-.23], width: 1.4, lift: .5 },
+          { type: "line", indices: [3,10], color: "#101915", normal: [-.52,-.77,-.23], width: 1.4, lift: .5 },
+          { type: "engine", points: [[0,10.8,-112],[21.6,0,-112],[0,-10.8,-112],[-21.6,0,-112]], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 }
         ]
       }),
       boa: buildBlueprint({
@@ -869,8 +868,8 @@
         edgeVisibility: [31,31,31,29,29,29,31,31,31,31,31,31,24,24,24,24,24,24,22,22,22,14,14,14],
         normals: [[43,37,-60],[0,-45,-89],[-43,37,-60],[0,40,0],[62,-32,-20],[-62,-32,-20],[0,23,6],[-23,-15,9],[23,-15,9],[-26,13,10],[0,-31,12],[26,13,10],[0,0,-107]],
         details: [
-          { type: "window", points: [[0,14.7,37.3],[-17.1,32.7,-31.1],[17.1,32.7,-31.1]], color: "#101915", normal: [0,.97,.25], lift: 1 },
-          { type: "engine", points: [[0,2.1,-107],[7.2,-6.6,-107],[-7.2,-6.6,-107]], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 }
+          { type: "window", points: [[0,14.7,37.3],[-17.1,32.7,-31.1],[17.1,32.7,-31.1]], color: "#101915", normal: [0,.97,.25], lift: .5 },
+          { type: "engine", points: [[0,2.1,-107],[7.2,-6.6,-107],[-7.2,-6.6,-107]], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 }
         ]
       }),
       anaconda: buildBlueprint({
@@ -880,10 +879,10 @@
         edgeVisibility: [30,30,30,30,30,29,29,29,29,29,30,30,30,30,31,31,30,30,30,30,30,31,31,31,31],
         normals: [[0,-51,-49],[-51,18,-87],[-77,-57,-19],[0,-90,16],[77,-57,-19],[51,18,-87],[0,111,-20],[-97,72,24],[-108,-68,34],[108,-68,34],[97,72,24],[0,94,18]],
         details: [
-          { type: "window", points: [[0,22.9,134],[-15.1,41.5,37],[15.1,41.5,37]], color: "#101915", normal: [0,.98,.19], lift: 1 },
-          { type: "engine", points: [[0,-9.3,-41.3],[-19.4,-18.3,-31.8],[-11.7,-33.6,-16.5],[11.7,-33.6,-16.5],[19.4,-18.3,-31.8]], color: "#f7fff7", stroke: "#ffffff", normal: [0,-.72,-.69], lift: 1 },
-          { type: "engine", points: [[-15.5,14.5,-47.2],[-37,4.5,-36.7],[-50,18.5,-25.7],[-37,37.5,-29.7],[-15.5,35,-42.7]], color: "#f7fff7", stroke: "#ffffff", normal: [-.5,.18,-.85], lift: 1 },
-          { type: "engine", points: [[15.5,14.5,-47.2],[37,4.5,-36.7],[50,18.5,-25.7],[37,37.5,-29.7],[15.5,35,-42.7]], color: "#f7fff7", stroke: "#ffffff", normal: [.5,.18,-.85], lift: 1 }
+          { type: "window", points: [[0,22.9,134],[-15.1,41.5,37],[15.1,41.5,37]], color: "#101915", normal: [0,.98,.19], lift: .5 },
+          { type: "engine", points: [[0,-9.3,-41.3],[-19.4,-18.3,-31.8],[-11.7,-33.6,-16.5],[11.7,-33.6,-16.5],[19.4,-18.3,-31.8]], color: "#f7fff7", stroke: "#ffffff", normal: [0,-.72,-.69], lift: .5 },
+          { type: "engine", points: [[-15.5,14.5,-47.2],[-37,4.5,-36.7],[-50,18.5,-25.7],[-37,37.5,-29.7],[-15.5,35,-42.7]], color: "#f7fff7", stroke: "#ffffff", normal: [-.5,.18,-.85], lift: .5 },
+          { type: "engine", points: [[15.5,14.5,-47.2],[37,4.5,-36.7],[50,18.5,-25.7],[37,37.5,-29.7],[15.5,35,-42.7]], color: "#f7fff7", stroke: "#ffffff", normal: [.5,.18,-.85], lift: .5 }
         ]
       }),
       cobra1: buildBlueprint({
@@ -893,10 +892,10 @@
         edgeVisibility: [31,31,31,31,31,31,31,31,31,20,20,16,16,31,31,20,20,2],
         normals: [[0,41,10],[0,-27,3],[-8,46,8],[-12,-57,12],[8,46,8],[12,-57,12],[0,49,0],[0,0,-154],[-121,111,-62],[121,111,-62]],
         details: [
-          { type: "window", points: [[-9,1.2,40.7],[9,1.2,40.7],[0,7.7,12.7]], color: "#101915", normal: [0,.97,.24], lift: 1 },
-          { type: "line", indices: [9,10], color: "#cccccc", normal: [0,0,1], width: 1.2, lift: 1, cull: false },
-          { type: "engine", points: [[-36,5,-38],[-14,5,-38],[-25,-5,-38]], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 },
-          { type: "engine", points: [[14,5,-38],[36,5,-38],[25,-5,-38]], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 }
+          { type: "window", points: [[-9,1.2,40.7],[9,1.2,40.7],[0,7.7,12.7]], color: "#101915", normal: [0,.97,.24], lift: .5 },
+          { type: "line", indices: [9,10], color: "#cccccc", normal: [0,0,1], width: 1.2, lift: .5, cull: false },
+          { type: "engine", points: [[-36,5,-38],[-14,5,-38],[-25,-5,-38]], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 },
+          { type: "engine", points: [[14,5,-38],[36,5,-38],[25,-5,-38]], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 }
         ]
       }),
       shuttle: buildBlueprint({
@@ -906,7 +905,7 @@
         edgeVisibility: [31,31,31,31,31,24,31,24,31,12,31,24,31,31,31,31,16,16,16,16,16,7,9,7,5,8,7,5,8,7],
         normals: [[-55,-55,40],[0,-74,4],[-51,-51,23],[-74,0,4],[-51,51,23],[0,74,4],[51,51,23],[74,0,4],[51,-51,23],[0,0,-107],[-41,41,90],[41,41,90],[55,-55,40]],
 	      details: [
-	        { type: "engine", indices: [8,9,10,11], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 }
+	        { type: "engine", indices: [8,9,10,11], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 }
 	      ]
       }),
       transporter: buildBlueprint({
@@ -916,16 +915,16 @@
         edgeVisibility: [31,31,31,31,31,31,31,16,31,11,31,31,11,31,17,17,17,17,19,19,16,31,31,16,31,31,31,31,7,7,7,7,7,7,7,7,7,7,7,7,6,6,8,5,5,5],
         normals: [[0,0,-103],[-111,48,-7],[-105,-63,-21],[0,-34,0],[105,-63,-21],[111,48,-7],[8,32,3],[-8,32,3],[-8,34,11],[-75,32,79],[75,32,79],[8,34,11],[0,38,17],[0,0,121]],
         details: [
-          { type: "line", indices: [16,17], color: "#101915", normal: [-.24,.97,.09], width: 1.2, lift: 1 },
-          { type: "window", indices: [18,19,20], color: "#101915", normal: [-.24,.97,.09], lift: 1 },
-          { type: "line", indices: [20,21], color: "#101915", normal: [-.24,.97,.09], width: 1.2, lift: 1 },
-          { type: "window", indices: [22,23,24], color: "#101915", normal: [.24,.97,.09], lift: 1 },
-          { type: "window", indices: [25,26,27], color: "#101915", normal: [.24,.97,.09], lift: 1 },
-          { type: "line", indices: [27,28], color: "#101915", normal: [.24,.97,.09], width: 1.2, lift: 1 },
-          { type: "window", points: [[0,-3,30],[-7,-7,30],[7,-7,30]], color: "#101915", normal: [0,0,1], lift: 1 },
-          { type: "line", indices: [29,30], color: "#101915", normal: [0,-1,0], width: 1.4, lift: 1 },
-          { type: "line", indices: [31,32], color: "#101915", normal: [0,-1,0], width: 1.4, lift: 1 },
-          { type: "engine", indices: [33,34,35,36], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 }
+          { type: "line", indices: [16,17], color: "#101915", normal: [-.24,.97,.09], width: 1.2, lift: .5 },
+          { type: "window", indices: [18,19,20], color: "#101915", normal: [-.24,.97,.09], lift: .5 },
+          { type: "line", indices: [20,21], color: "#101915", normal: [-.24,.97,.09], width: 1.2, lift: .5 },
+          { type: "window", indices: [22,23,24], color: "#101915", normal: [.24,.97,.09], lift: .5 },
+          { type: "window", indices: [25,26,27], color: "#101915", normal: [.24,.97,.09], lift: .5 },
+          { type: "line", indices: [27,28], color: "#101915", normal: [.24,.97,.09], width: 1.2, lift: .5 },
+          { type: "window", points: [[0,-3,30],[-7,-7,30],[7,-7,30]], color: "#101915", normal: [0,0,1], lift: .5 },
+          { type: "line", indices: [29,30], color: "#101915", normal: [0,-1,0], width: 1.4, lift: .5 },
+          { type: "line", indices: [31,32], color: "#101915", normal: [0,-1,0], width: 1.4, lift: .5 },
+          { type: "engine", indices: [33,34,35,36], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 }
         ]
       }),
       constrictor: buildBlueprint({
@@ -935,10 +934,10 @@
         edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,18,5,10,10,5,18],
         normals: [[0,55,15],[-24,75,20],[24,75,20],[44,75,0],[-44,75,0],[-44,75,0],[0,53,0],[44,75,0],[0,0,-160],[0,-27,0]],
         details: [
-          { type: "window", points: [[9,-1.5,59.4],[-9,-1.5,59.4],[-9,7.5,25.6],[9,7.5,25.6]], color: "#101915", normal: [0,.96,.26], lift: 1 },
-          { type: "window", indices: [10,12,14], color: "#101915", normal: [0,-1,0], lift: 1 },
-          { type: "window", indices: [11,15,13], color: "#101915", normal: [0,-1,0], lift: 1 },
-          { type: "engine", points: [[-24.3,-1.5,-40],[-9,7.5,-40],[9,7.5,-40],[24.3,-1.5,-40]], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 }
+          { type: "window", points: [[9,-1.5,59.4],[-9,-1.5,59.4],[-9,7.5,25.6],[9,7.5,25.6]], color: "#101915", normal: [0,.96,.26], lift: .5 },
+          { type: "window", indices: [10,12,14], color: "#101915", normal: [0,-1,0], lift: .5 },
+          { type: "window", indices: [11,15,13], color: "#101915", normal: [0,-1,0], lift: .5 },
+          { type: "engine", points: [[-24.3,-1.5,-40],[-9,7.5,-40],[9,7.5,-40],[24.3,-1.5,-40]], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 }
         ]
       }),
       cougar: buildBlueprint({
@@ -948,9 +947,9 @@
         edgeVisibility: [31,31,31,31,30,30,30,30,31,31,31,31,27,27,27,26,26,20,18,18,20,18,20,18,20],
         normals: [[-16,46,4],[-16,-46,4],[0,-27,5],[16,-46,4],[16,46,4],[0,0,-160],[0,30,0],[0,-30,0],[0,30,0],[0,-30,0]],
         details: [
-          { type: "window", indices: [12,13,11], color: "#101915", normal: [-.33,.94,.08], lift: 1 },
-          { type: "window", indices: [11,14,12], color: "#101915", normal: [.33,.94,.08], lift: 1 },
-          { type: "engine", indices: [15,16,17,18], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 }
+          { type: "window", indices: [12,13,11], color: "#101915", normal: [-.33,.94,.08], lift: .5 },
+          { type: "window", indices: [11,14,12], color: "#101915", normal: [.33,.94,.08], lift: .5 },
+          { type: "engine", indices: [15,16,17,18], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 }
         ]
       }),
       diamondback: buildBlueprint({
@@ -1235,7 +1234,7 @@
                                       -0.23,
                                       -0.97
                               ],
-                              "lift": 1.5,
+                              "lift": 0.5,
                               "points": [
                                       [
                                               67.79,
@@ -1263,7 +1262,7 @@
                                       -0.23,
                                       -0.97
                               ],
-                              "lift": 1.5,
+                              "lift": 0.5,
                               "points": [
                                       [
                                               -7.65,
@@ -1291,7 +1290,7 @@
                                       0.87,
                                       0.22
                               ],
-                              "lift": 1,
+                              "lift": 0.5,
                               "points": [
                                       [
                                               16.95,
@@ -1318,7 +1317,7 @@
                                       0.87,
                                       0.22
                               ],
-                              "lift": 1,
+                              "lift": 0.5,
                               "points": [
                                       [
                                               -16.95,
@@ -1345,7 +1344,7 @@
                                       -0.99,
                                       0.05
                               ],
-                              "lift": 1,
+                              "lift": 0.5,
                               "points": [
                                       [
                                               -22.14,
@@ -1372,7 +1371,7 @@
                                       -0.99,
                                       0.05
                               ],
-                              "lift": 1,
+                              "lift": 0.5,
                               "points": [
                                       [
                                               22.14,
@@ -1399,7 +1398,7 @@
                                       -0.99,
                                       0.05
                               ],
-                              "lift": 1,
+                              "lift": 0.5,
                               "points": [
                                       [
                                               -63.41,
@@ -1422,7 +1421,7 @@
                                       -0.99,
                                       0.05
                               ],
-                              "lift": 1,
+                              "lift": 0.5,
                               "points": [
                                       [
                                               -9.29,
@@ -1445,7 +1444,7 @@
                                       -0.99,
                                       0.05
                               ],
-                              "lift": 1,
+                              "lift": 0.5,
                               "points": [
                                       [
                                               9.29,
@@ -1468,7 +1467,7 @@
                                       -0.99,
                                       0.05
                               ],
-                              "lift": 1,
+                              "lift": 0.5,
                               "points": [
                                       [
                                               9.29,
@@ -1491,7 +1490,7 @@
                                       0.87,
                                       0.22
                               ],
-                              "lift": 1,
+                              "lift": 0.5,
                               "points": [
                                       [
                                               -9.29,
@@ -1514,7 +1513,7 @@
                                       0.87,
                                       0.22
                               ],
-                              "lift": 1,
+                              "lift": 0.5,
                               "points": [
                                       [
                                               -63.41,
@@ -1537,7 +1536,7 @@
                                       0.87,
                                       0.22
                               ],
-                              "lift": 1,
+                              "lift": 0.5,
                               "points": [
                                       [
                                               63.41,
@@ -1560,7 +1559,7 @@
                                       0.87,
                                       0.22
                               ],
-                              "lift": 1,
+                              "lift": 0.5,
                               "points": [
                                       [
                                               9.29,
@@ -1611,10 +1610,10 @@
         edgeFaces: [[4,8],[0,4],[1,4],[2,4],[3,4],[4,5],[4,6],[4,7],[0,8],[0,1],[1,2],[2,3],[3,5],[5,6],[6,7],[7,8],[8,9],[0,9],[1,9],[2,9],[3,9],[5,9],[6,9],[7,9],[9,9],[9,9]],
         normals: [[103,-60,25],[103,-60,-25],[103,-25,-60],[103,25,-60],[64,0,0],[103,60,-25],[103,60,25],[103,25,60],[103,-25,60],[-48,0,0]],
         details: [
-          { type: "line", indices: [16,17], color: "#f7fff7", normal: [-1,0,0], width: 2, lift: 1 },
-          { type: "line", indices: [18,19], color: "#f7fff7", normal: [-1,0,0], width: 2, lift: 1 },
-          { type: "engine", points: [[-24,-42.4,42.4],[-24,-60,0],[-24,-42.4,-42.4],[-24,0,-60],[-24,42.4,-42.4],[-24,60,0],[-24,42.4,42.4],[-24,0,60]], color: "#f7fff7", stroke: "#ffffff", normal: [-1,0,0], lift: 1 },
-          { type: "window", points: [[32,-21.2,21.2],[32,-30,0],[32,-21.2,-21.2],[32,0,-30],[32,21.2,-21.2],[32,30,0],[32,21.2,21.2],[32,0,30]], color: "#101915", normal: [1,0,0], lift: 1 }
+          { type: "line", indices: [16,17], color: "#f7fff7", normal: [-1,0,0], width: 2, lift: .5 },
+          { type: "line", indices: [18,19], color: "#f7fff7", normal: [-1,0,0], width: 2, lift: .5 },
+          { type: "engine", points: [[-24,-42.4,42.4],[-24,-60,0],[-24,-42.4,-42.4],[-24,0,-60],[-24,42.4,-42.4],[-24,60,0],[-24,42.4,42.4],[-24,0,60]], color: "#f7fff7", stroke: "#ffffff", normal: [-1,0,0], lift: .5 },
+          { type: "window", points: [[32,-21.2,21.2],[32,-30,0],[32,-21.2,-21.2],[32,0,-30],[32,21.2,-21.2],[32,30,0],[32,21.2,21.2],[32,0,30]], color: "#101915", normal: [1,0,0], lift: .5 }
         ]
       }),
       thargon: buildBlueprint({
@@ -1625,8 +1624,8 @@
         edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,31,31,31,31],
         normals: [[-36,0,0],[20,-5,7],[46,-42,-14],[36,0,-104],[46,42,-14],[20,5,7],[36,0,0]],
         details: [
-          { type: "engine", points: [[-9,0,18],[-9,-17.1,5.4],[-9,-10.8,-14.4],[-9,10.8,-14.4],[-9,17.1,5.4]], color: "#f7fff7", stroke: "#ffffff", normal: [-1,0,0], lift: 1 },
-          { type: "window", points: [[9,0,-13],[9,-5,-16.5],[9,-3,-22],[9,3,-22],[9,5,-16.5]], color: "#101915", normal: [1,0,0], lift: 1 }
+          { type: "engine", points: [[-9,0,18],[-9,-17.1,5.4],[-9,-10.8,-14.4],[-9,10.8,-14.4],[-9,17.1,5.4]], color: "#f7fff7", stroke: "#ffffff", normal: [-1,0,0], lift: .5 },
+          { type: "window", points: [[9,0,-13],[9,-5,-16.5],[9,-3,-22],[9,3,-22],[9,5,-16.5]], color: "#101915", normal: [1,0,0], lift: .5 }
         ]
       }),
       canister: buildBlueprint({
@@ -1645,7 +1644,7 @@
         edgeVisibility: [31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,8,8,8,8,8,8,8,8],
         normals: [[-64,0,16],[0,-64,16],[64,0,16],[0,64,16],[32,0,0],[0,-32,0],[-32,0,0],[0,32,0],[0,0,-176],[32,-32,0],[-32,32,0],[32,32,0],[-32,-32,0],[32,32,0],[-32,-32,0],[32,-32,0],[-32,32,0]],
         details: [
-          { type: "engine", points: [[4,4,-44],[-4,4,-44],[-4,-4,-44],[4,-4,-44]], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: 1 }
+          { type: "engine", points: [[4,4,-44],[-4,4,-44],[-4,-4,-44],[4,-4,-44]], color: "#f7fff7", stroke: "#ffffff", normal: [0,0,-1], lift: .5 }
         ]
       }),
       escapePod: buildBlueprint({
@@ -1655,7 +1654,7 @@
         edgeVisibility: [31,31,31,31,31,31],
         normals: [[52,0,-122],[39,103,30],[39,-103,30],[-112,0,0]],
         details: [
-          { type: "engine", points: [[-7,-5,-12],[-7,5,-12],[0,0,-8]], color: "#ffd33d", stroke: "#fff2a8", normal: [0,0,-1], lift: 2.5 }
+          { type: "engine", points: [[-7,-5,-12],[-7,5,-12],[0,0,-8]], color: "#ffd33d", stroke: "#fff2a8", normal: [0,0,-1], lift: .5 }
         ]
       }),
       plate: {
@@ -2066,6 +2065,10 @@
       });
     }
 
+    function hasProjectionFaceSlot(items, index) {
+      return Array.isArray(items) && Object.prototype.hasOwnProperty.call(items, index);
+    }
+
     function buildProjectedImageDecalUV(verts, faces, faceNormalIndices = [], normals = [], options = {}) {
       if (!verts?.length || !faces?.length) return [];
       const primaryAxis = options.primaryAxis || "y";
@@ -2074,7 +2077,6 @@
       const faceAngles = Array.isArray(options.faceAngles) ? options.faceAngles : [];
       const faceMirrorX = Array.isArray(options.faceMirrorX) ? options.faceMirrorX : [];
       const faceDecals = Array.isArray(options.faceDecals) ? options.faceDecals : [];
-      const hasProjectionFaceSlot = (items, index) => Array.isArray(items) && Object.prototype.hasOwnProperty.call(items, index);
       const validFaceSide = (side) => (side === "top" || side === "bottom" || side === "back") ? side : "";
       const cleanFaceTextureKey = (value) => String(value || "").trim().replace(/[^a-zA-Z0-9_-]+/g, "_").replace(/^_+|_+$/g, "");
       const cleanFaceAngle = (value) => {
@@ -2105,6 +2107,50 @@
           const dx = u - cx, dy = v - cy;
           return [cx + dx * c - dy * s, cy + dx * s + dy * c];
         });
+      };
+      const fitRotatedFaceUv = (uv, width, height, angleDeg, pad = 24) => {
+        if (!angleDeg) return { uv, width, height };
+        const rotated = rotateFaceUv(uv, width, height, angleDeg);
+        const xs = rotated.map((p) => p[0]);
+        const ys = rotated.map((p) => p[1]);
+        const minRotX = Math.min(...xs);
+        const maxRotX = Math.max(...xs);
+        const minRotY = Math.min(...ys);
+        const maxRotY = Math.max(...ys);
+        const fittedW = Math.max(24, Math.ceil(maxRotX - minRotX + pad * 2));
+        const fittedH = Math.max(24, Math.ceil(maxRotY - minRotY + pad * 2));
+        return {
+          uv: rotated.map(([u, v]) => [u - minRotX + pad, v - minRotY + pad]),
+          width: fittedW,
+          height: fittedH
+        };
+      };
+      const faceLocalTextureUv = (face) => {
+        const faceVerts = face.map((i) => vec(...verts[i]));
+        if (faceVerts.length < 3) return null;
+        const n = faceNormal(faceVerts[0], faceVerts[1], faceVerts[2]);
+        let longest = null;
+        for (let i = 0; i < faceVerts.length; i++) {
+          const a = faceVerts[i];
+          const b = faceVerts[(i + 1) % faceVerts.length];
+          const edge = sub(b, a);
+          const edgeLen = len(edge);
+          if (edgeLen > (longest?.edgeLen || 0)) longest = { edge, edgeLen };
+        }
+        if (!longest || longest.edgeLen < .001) return null;
+        const uAxis = norm(longest.edge);
+        const vAxis = norm(cross(n, uAxis));
+        if (len(vAxis) < .001) return null;
+        const coords = faceVerts.map((p) => ({ u: dot(p, uAxis), v: dot(p, vAxis) }));
+        const minU = Math.min(...coords.map((p) => p.u));
+        const maxU = Math.max(...coords.map((p) => p.u));
+        const minV = Math.min(...coords.map((p) => p.v));
+        const maxV = Math.max(...coords.map((p) => p.v));
+        const rangeU = maxU - minU;
+        const rangeV = maxV - minV;
+        if (rangeU < .001 || rangeV < .001) return null;
+        const scale = IMAGE_DECAL_MAX_SIZE / Math.max(rangeU, rangeV, 1);
+        return coords.map(({ u, v }) => [(u - minU) * scale, (maxV - v) * scale]);
       };
       let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, minZ = Infinity, maxZ = -Infinity;
       for (const p of verts) {
@@ -2192,7 +2238,10 @@
           ? cleanFaceDecals(faceDecals[faceIndex])
           : cleanFaceDecals(faceDecals[normalIndex]);
         const faceTextureUv = (() => {
-          if (!(faceKey || decalsForFace.length) || uvPolygonArea(uv) >= 1) return uv;
+          if (!(faceKey || decalsForFace.length)) return uv;
+          const localUv = faceLocalTextureUv(face);
+          if (localUv && uvPolygonArea(localUv) >= 1) return localUv;
+          if (uvPolygonArea(uv) >= 1) return uv;
           let tfp = fp;
           let tFlipU = flipU;
           let tFlipV = flipV;
@@ -2231,7 +2280,10 @@
           faceBaseW = Math.max(24, Math.ceil(maxFaceX - minFaceX + pad * 2));
           faceBaseH = Math.max(24, Math.ceil(maxFaceY - minFaceY + pad * 2));
           faceUv = faceTextureUv.map(([u, v]) => [u - minFaceX + pad, v - minFaceY + pad]);
-          faceUv = rotateFaceUv(faceUv, faceBaseW, faceBaseH, faceAngle);
+          const fitted = fitRotatedFaceUv(faceUv, faceBaseW, faceBaseH, faceAngle, pad);
+          faceUv = fitted.uv;
+          faceBaseW = fitted.width;
+          faceBaseH = fitted.height;
         }
         return {
           side,
@@ -5959,9 +6011,35 @@
     function stationSlotVertexIndices(model) {
       // Dodo slot edges are 20-21-23-22; raw vertex order is 20-21-22-23,
       // which draws a crossed hourglass and corrupts slot-frame maths.
-      if (model === MODELS.dodoStation) return [20, 21, 23, 22];
+      if (model === MODELS.dodoStation || model?.id === "dodoStation") return [20, 21, 23, 22];
       const n = model.verts.length;
       return [n - 4, n - 3, n - 2, n - 1];
+    }
+
+    function stationSlotNormalForModel(model) {
+      if (!model?.verts?.length) return null;
+      const slot = stationSlotVertexIndices(model).map((i) => {
+        const v = model.verts[i];
+        return Array.isArray(v) ? vec(v[0], v[1], v[2]) : null;
+      });
+      if (slot.some((p) => !p)) return null;
+      let normal = faceNormal(slot[0], slot[1], slot[2]);
+      if (normal.z < 0) normal = scale(normal, -1);
+      return len(normal) > .001 ? normal : null;
+    }
+
+    function stationSlotBeaconNormal(model, sourceIndex, entity) {
+      if (!model?.verts?.length || !Number.isInteger(sourceIndex)) return null;
+      const stationLike = entity?.type === "station"
+        || entity?.model === "coriolis"
+        || entity?.model === "dodoStation"
+        || model?.id === "coriolis"
+        || model?.id === "dodoStation"
+        || model === MODELS.coriolis
+        || model === MODELS.dodoStation;
+      if (!stationLike) return null;
+      if (!stationSlotVertexIndices(model).includes(sourceIndex)) return null;
+      return stationSlotNormalForModel(model);
     }
 
     const ROCK_HERMIT_SCENE_CHANCE = 0.04;
@@ -5977,8 +6055,7 @@
         return vec(x, y, z);
       });
       const centerLocal = scale(slot.reduce((sum, p) => add(sum, p), vec()), 1 / slot.length);
-      let normal = faceNormal(slot[0], slot[1], slot[2]);
-      if (normal.z < 0) normal = scale(normal, -1);
+      const normal = stationSlotNormalForModel(model) || vec(0, 0, 1);
       const rot = st?.rot || 0;
       const center = add(st.pos, rotatePoint(centerLocal, 0, 0, rot));
       const outward = norm(rotatePoint(normal, 0, 0, rot));
@@ -7059,7 +7136,7 @@
         if (!localPoints.length) continue;
         const center = scale(localPoints.reduce((sum, p) => add(sum, vec(p[0] * scaleFactor, p[1] * scaleFactor, p[2] * scaleFactor)), vec()), 1 / localPoints.length);
         const normal = detail.normal ? norm(vec(...detail.normal)) : vec(0, 0, -1);
-        const lift = (detail.lift ?? 1) * scaleFactor;
+        const lift = (detail.lift ?? .5) * scaleFactor;
         anchors.push({
           pos: add(o.pos, orient(add(center, scale(normal, lift)))),
           aft: norm(orient(vec(0, 0, -1)))
@@ -9260,11 +9337,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return { n, center, facing: -dot(n, norm(center)) };
     }
 
-    // One engine for both graphics modes: wireframe is these same face polygons with a
+    // One engine for the two graphics modes: wireframe is these same face polygons with a
     // flat black fill (occluding whatever is behind, exactly like a solid fill would)
-    // instead of the lit/textured one, so "wire", "solid" and "both" (lit fill + edges
-    // on top) all share one fill path instead of wireframe keeping a separate bespoke
-    // black-occluder pass.
+    // instead of the lit/textured one, so "wire" and "solid" share one fill path
+    // instead of wireframe keeping a separate bespoke black-occluder pass.
     function collectSolidFaces(model, camVerts, points, baseColor, alpha = 1, flat = false, decal = null, options = {}) {
       if (!model.faces) return [];
       const faces = [];
@@ -9364,6 +9440,18 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return false;
     }
 
+    function modelVertexSurfaceNormal(model, sourceIndex) {
+      if (!model?.faces || !model?.verts || !Number.isInteger(sourceIndex)) return null;
+      let n = vec();
+      for (const face of model.faces) {
+        if (!face.includes(sourceIndex) || face.length < 3) continue;
+        const a = model.verts[face[0]], b = model.verts[face[1]], c = model.verts[face[2]];
+        if (!a || !b || !c) continue;
+        n = add(n, faceNormal(vec(...a), vec(...b), vec(...c)));
+      }
+      return len(n) > .001 ? norm(n) : null;
+    }
+
     function collectSolidDetails(model, o, camVerts, points, w, h, scaleFactor = 1, camera = game.camera, options = {}) {
       const mode = options.mode || "solid";
       const wireDetails = mode === "wire";
@@ -9372,11 +9460,14 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const orient = options.orient || o.orient || ((v) => o.quat ? quatRotate(o.quat, v) : rotateShipPoint(v, o.rot || 0, o.pitch || 0, roll));
       const details = [];
       for (const detail of model.details) {
+        if (options.beaconsOnly && detail.type !== "beacon") continue;
+        if (options.skipBeacons && detail.type === "beacon") continue;
         if (options.enginesOnly && detail.type !== "engine") continue;
         const isLineDetail = detail.type === "line" || detail.type === "polyline";
         const markedProtrudingEdge = isLineDetail && detail.indices?.length === 2
           ? model.wireCullEdgeKeys?.has(detail.indices[0] < detail.indices[1] ? `${detail.indices[0]},${detail.indices[1]}` : `${detail.indices[1]},${detail.indices[0]}`)
           : false;
+        if (!wireDetails && isLineDetail) continue;
         if (options.protrudingEdgesOnly && !markedProtrudingEdge) continue;
         if (options.skipProtrudingEdges && markedProtrudingEdge) continue;
         if (detail.type === "beacon") {
@@ -9394,10 +9485,18 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
                 ? detail.point
                 : null;
           if (!source) continue;
-          const camPoint = add(worldDirToCam(orient(vec(source[0] * scaleFactor, source[1] * scaleFactor, source[2] * scaleFactor)), camera), o.cam || vec());
+          const surfaceNormal = detail.normal
+            ? norm(vec(detail.normal[0], detail.normal[1], detail.normal[2]))
+            : stationSlotBeaconNormal(model, sourceIndex, o) || modelVertexSurfaceNormal(model, sourceIndex);
+          const normal = surfaceNormal
+            ? worldDirToCam(norm(orient(surfaceNormal)), camera)
+            : null;
+          const baseCamPoint = add(worldDirToCam(orient(vec(source[0] * scaleFactor, source[1] * scaleFactor, source[2] * scaleFactor)), camera), o.cam || vec());
+          const lift = normal ? (detail.lift ?? .5) * scaleFactor : 0;
+          const camPoint = lift ? add(baseCamPoint, scale(normal, lift)) : baseCamPoint;
           const projected = o.project ? o.project(camPoint) : project(camPoint, w, h);
           if (!projected) continue;
-          if (modelPointOccludedByHull(model, camVerts, points, sourceIndex, camPoint, projected)) continue;
+          if (modelPointOccludedByHull(model, camVerts, points, sourceIndex, baseCamPoint, projected)) continue;
           details.push({
             kind: "beacon",
             projected: [projected],
@@ -9417,7 +9516,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const surfaceCenter = scale(vertsOnSurface.reduce((sum, p) => add(sum, p), vec()), 1 / vertsOnSurface.length);
         const cullEpsilon = detail.cullEpsilon ?? (wireDetails ? .015 : -.08);
         if (normal && detail.cull !== false && -dot(normal, norm(surfaceCenter)) <= cullEpsilon) continue;
-        const lift = normal ? (detail.lift ?? (detail.type === "engine" ? 5 : 3)) * scaleFactor : 0;
+        const lift = normal ? (detail.lift ?? .5) * scaleFactor : 0;
         const verts = normal && lift
           ? vertsOnSurface.map((p) => add(p, scale(normal, lift)))
           : vertsOnSurface;
@@ -10678,22 +10777,24 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           const phaseOffset = ((item.seed || 0) & 1023) / 1023 * TAU;
           const pulse = Math.pow(.5 + Math.sin(performance.now() / 1000 * TAU * .86 + phaseOffset) * .5, 3.2);
           const rgb = hexToRgb(item.color || "#ffb642");
-          const core = clamp((p.s || 1) * 8, 2.2, 8.5);
-          const halo = core * (5.5 + pulse * 2.4);
+          const core = clamp((p.s || 1) * 6.2, 1.8, 6.6);
+          const halo = core * (4.4 + pulse * 1.7);
           targetCtx.save();
           targetCtx.globalCompositeOperation = "lighter";
           const g = targetCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, halo);
-          g.addColorStop(0, `rgba(255,250,210,${.82 + pulse * .18})`);
-          g.addColorStop(.2, `rgba(${rgb.r},${rgb.g},${rgb.b},${.54 + pulse * .28})`);
+          g.addColorStop(0, `rgba(255,255,255,${.82 + pulse * .12})`);
+          g.addColorStop(.12, `rgba(255,255,255,${.36 + pulse * .12})`);
+          g.addColorStop(.34, `rgba(${rgb.r},${rgb.g},${rgb.b},${.22 + pulse * .16})`);
+          g.addColorStop(.72, `rgba(${rgb.r},${rgb.g},${rgb.b},${.06 + pulse * .08})`);
           g.addColorStop(1, `rgba(${rgb.r},${rgb.g},${rgb.b},0)`);
           targetCtx.fillStyle = g;
           targetCtx.beginPath();
           targetCtx.arc(p.x, p.y, halo, 0, TAU);
           targetCtx.fill();
           targetCtx.globalCompositeOperation = "source-over";
-          targetCtx.fillStyle = `rgba(255,248,188,${.8 + pulse * .2})`;
+          targetCtx.fillStyle = `rgba(255,255,255,${.76 + pulse * .18})`;
           targetCtx.beginPath();
-          targetCtx.arc(p.x, p.y, core * .55, 0, TAU);
+          targetCtx.arc(p.x, p.y, core * .42, 0, TAU);
           targetCtx.fill();
           targetCtx.restore();
           continue;
@@ -10734,7 +10835,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function drawProjectedModelHull(targetCtx, model, camVerts, points, opts = {}) {
-      const mode = opts.mode || game.graphicsMode;
+      const mode = (opts.mode || game.graphicsMode) === "wire" ? "wire" : "solid";
       const color = opts.color || "#e9f2e4";
       const projectFn = opts.project || null;
       let wireMasks = null;
@@ -10757,7 +10858,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         }));
       }
       if (mode === "solid") return;
-      targetCtx.strokeStyle = mode === "both" ? ULTRA_WIRE_STROKE : (opts.edgeColor || color);
+      targetCtx.strokeStyle = opts.edgeColor || color;
       targetCtx.lineWidth = opts.edgeWidth || 1;
       const faceVisible = collectWireFaceVisibility(model, camVerts);
       targetCtx.beginPath();
@@ -12263,13 +12364,22 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         if (!pr) continue;
         const blink = .4 + Math.max(0, Math.sin(performance.now() / 1000 * TAU + b.x * .01)) * .6;
         ctx.globalCompositeOperation = "lighter";
-        const r = Math.max(2, pr.s * 9);
-        const beacon = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, r * 5);
-        beacon.addColorStop(0, `rgba(255,222,120,${.72 * blink})`);
-        beacon.addColorStop(1, "rgba(255,120,20,0)");
+        const r = Math.max(1.8, pr.s * 6.2);
+        const halo = r * 4.8;
+        const beacon = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, halo);
+        beacon.addColorStop(0, `rgba(255,255,255,${.76 * blink})`);
+        beacon.addColorStop(.14, `rgba(255,255,255,${.32 * blink})`);
+        beacon.addColorStop(.4, `rgba(255,182,66,${.2 * blink})`);
+        beacon.addColorStop(.82, `rgba(255,182,66,${.06 * blink})`);
+        beacon.addColorStop(1, "rgba(255,182,66,0)");
         ctx.fillStyle = beacon;
         ctx.beginPath();
-        ctx.arc(pr.x, pr.y, r * 5, 0, TAU);
+        ctx.arc(pr.x, pr.y, halo, 0, TAU);
+        ctx.fill();
+        ctx.globalCompositeOperation = "source-over";
+        ctx.fillStyle = `rgba(255,255,255,${.72 * blink})`;
+        ctx.beginPath();
+        ctx.arc(pr.x, pr.y, r * .45, 0, TAU);
         ctx.fill();
         ctx.globalCompositeOperation = "source-over";
       }
@@ -15167,7 +15277,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           const wireDetails = collectSolidDetails(model, renderShip, camVerts, points, w, h, scaleFactor, camera, {
             mode,
             wireDetails: true,
-            wireColor: opts.edgeColor || hullColor
+            wireColor: opts.edgeColor || hullColor,
+            skipBeacons: opts.skipBeacons
           });
           if (wireDetails.length) drawSolidItems(targetCtx, wireDetails);
         }
@@ -15182,7 +15293,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         if (quality.details) {
           drawSolidItems(targetCtx, collectSolidDetails(model, renderShip, camVerts, points, w, h, scaleFactor, camera, {
             mode,
-            skipProtrudingEdges: true
+            skipProtrudingEdges: true,
+            skipBeacons: opts.skipBeacons
           }));
         } else if ((renderShip.engineGlow ?? 0) > .02) {
           drawSolidItems(targetCtx, collectSolidDetails(model, renderShip, camVerts, points, w, h, scaleFactor, camera, { enginesOnly: true, mode }));
@@ -15195,8 +15307,31 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return { model, points, camVerts, centerCam, project: projectFn, orient, camera, scaleFactor };
     }
 
-    function drawDockPortal(points, station) {
+    function drawRenderedModelBeacons(targetCtx, rendered, entity, w, h, options = {}) {
+      if (!rendered?.model?.details?.length || !rendered.camVerts || !rendered.points) return;
+      const beaconEntity = {
+        ...(entity || {}),
+        orient: rendered.orient,
+        cam: rendered.centerCam,
+        project: rendered.project
+      };
+      const items = collectSolidDetails(
+        rendered.model,
+        beaconEntity,
+        rendered.camVerts,
+        rendered.points,
+        w,
+        h,
+        rendered.scaleFactor || 1,
+        rendered.camera || game.camera,
+        { mode: options.mode || "solid", beaconsOnly: true }
+      );
+      if (items.length) drawSolidItems(targetCtx, items);
+    }
+
+    function drawDockPortal(targetCtx, points, station) {
       if (points.some((p) => !p)) return;
+      const portalCtx = targetCtx || ctx;
       const [a, b, c, d] = points;
       const bounds = polygonBounds(points);
       const span = Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY);
@@ -15205,17 +15340,37 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         y: lerp(lerp(a.y, b.y, u), lerp(d.y, c.y, u), v)
       });
       const quadPath = () => {
-        ctx.beginPath();
-        ctx.moveTo(a.x, a.y);
-        ctx.lineTo(b.x, b.y);
-        ctx.lineTo(c.x, c.y);
-        ctx.lineTo(d.x, d.y);
-        ctx.closePath();
+        portalCtx.beginPath();
+        portalCtx.moveTo(a.x, a.y);
+        portalCtx.lineTo(b.x, b.y);
+        portalCtx.lineTo(c.x, c.y);
+        portalCtx.lineTo(d.x, d.y);
+        portalCtx.closePath();
       };
 
-      ctx.save();
+      portalCtx.save();
       quadPath();
-      ctx.clip();
+      portalCtx.clip();
+      const interior = portalCtx.createLinearGradient(bounds.minX, bounds.minY, bounds.maxX, bounds.maxY);
+      interior.addColorStop(0, "rgba(0,4,10,.78)");
+      interior.addColorStop(.52, "rgba(0,11,24,.9)");
+      interior.addColorStop(1, "rgba(0,2,8,.82)");
+      portalCtx.fillStyle = interior;
+      quadPath();
+      portalCtx.fill();
+      const throat = .16;
+      const q0 = quadPoint(throat, throat);
+      const q1 = quadPoint(1 - throat, throat);
+      const q2 = quadPoint(1 - throat, 1 - throat);
+      const q3 = quadPoint(throat, 1 - throat);
+      portalCtx.fillStyle = "rgba(0,0,0,.42)";
+      portalCtx.beginPath();
+      portalCtx.moveTo(q0.x, q0.y);
+      portalCtx.lineTo(q1.x, q1.y);
+      portalCtx.lineTo(q2.x, q2.y);
+      portalCtx.lineTo(q3.x, q3.y);
+      portalCtx.closePath();
+      portalCtx.fill();
       if (ultraFxEnabled()) {
         // Keep every seal feature in slot UV coordinates. Screen-space gradients/lines
         // look fine until the station rotates, then they visibly swim across the portal.
@@ -15226,42 +15381,42 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           const p1 = quadPoint(1 - inset, inset);
           const p2 = quadPoint(1 - inset, 1 - inset);
           const p3 = quadPoint(inset, 1 - inset);
-          ctx.fillStyle = `rgba(58,128,255,${(.018 + i * .008) * shimmer})`;
-          ctx.beginPath();
-          ctx.moveTo(p0.x, p0.y);
-          ctx.lineTo(p1.x, p1.y);
-          ctx.lineTo(p2.x, p2.y);
-          ctx.lineTo(p3.x, p3.y);
-          ctx.closePath();
-          ctx.fill();
+          portalCtx.fillStyle = `rgba(58,128,255,${(.018 + i * .008) * shimmer})`;
+          portalCtx.beginPath();
+          portalCtx.moveTo(p0.x, p0.y);
+          portalCtx.lineTo(p1.x, p1.y);
+          portalCtx.lineTo(p2.x, p2.y);
+          portalCtx.lineTo(p3.x, p3.y);
+          portalCtx.closePath();
+          portalCtx.fill();
         }
-        ctx.globalCompositeOperation = "lighter";
-        ctx.strokeStyle = `rgba(120,180,255,${.10 * shimmer})`;
-        ctx.lineWidth = Math.max(1, span * .012);
+        portalCtx.globalCompositeOperation = "lighter";
+        portalCtx.strokeStyle = `rgba(120,180,255,${.10 * shimmer})`;
+        portalCtx.lineWidth = Math.max(1, span * .012);
         for (let i = 1; i < 5; i++) {
           const v = clamp(i / 5 + Math.sin(performance.now() / 260 + i + (station?.rot || 0)) * .018, .04, .96);
           const p0 = quadPoint(.04, v);
           const p1 = quadPoint(.96, v);
-          ctx.beginPath();
-          ctx.moveTo(p0.x, p0.y);
-          ctx.lineTo(p1.x, p1.y);
-          ctx.stroke();
+          portalCtx.beginPath();
+          portalCtx.moveTo(p0.x, p0.y);
+          portalCtx.lineTo(p1.x, p1.y);
+          portalCtx.stroke();
         }
       }
-      ctx.restore();
+      portalCtx.restore();
       if (!ultraFxEnabled()) return;
 
       // Blue force-field edge glow around the opening.
       const pulse = .4 + Math.max(0, Math.sin(performance.now() / 240)) * .6;
-      ctx.save();
-      ctx.globalCompositeOperation = "lighter";
-      ctx.strokeStyle = `rgba(90,160,255,${.24 * pulse})`;
-      ctx.lineWidth = Math.max(1.5, span * .018);
-      ctx.shadowColor = "rgba(90,160,255,.9)";
-      ctx.shadowBlur = span * .1;
+      portalCtx.save();
+      portalCtx.globalCompositeOperation = "lighter";
+      portalCtx.strokeStyle = `rgba(90,160,255,${.24 * pulse})`;
+      portalCtx.lineWidth = Math.max(1.5, span * .018);
+      portalCtx.shadowColor = "rgba(90,160,255,.9)";
+      portalCtx.shadowBlur = span * .1;
       quadPath();
-      ctx.stroke();
-      ctx.restore();
+      portalCtx.stroke();
+      portalCtx.restore();
     }
 
     function projectedModelRadius(model, centerCam, w, h, scaleFactor = 1) {
@@ -15592,8 +15747,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         effects: false
       } : undefined;
 
+      const stationPreview = modelName === "coriolis" || modelName === "dodoStation" || model?.id === "coriolis" || model?.id === "dodoStation";
       const renderBenchEntity = {
-        type: "ship",
+        type: stationPreview ? "station" : "ship",
         model: modelName,
         scaleFactor: Number(opts.scaleFactor) || 1,
         rot: Number(opts.yaw) || 0,
@@ -15704,10 +15860,19 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           edgeColor: opts.edgeColor || (game.fxLevel === "classic" ? "#e9f2e4" : undefined),
           edgeWidth: Number(opts.edgeWidth) || undefined,
           textures: qualityMode === "plain" ? false : undefined,
-          metalAlphaMul: qualityMode === "plain" ? 0 : undefined
+          metalAlphaMul: qualityMode === "plain" ? 0 : undefined,
+          skipBeacons: stationPreview
         }
       });
       const result = routed.result;
+      if (result && stationPreview) {
+        const slotVerts = stationSlotVertexIndices(result.model || model).map((i) => result.camVerts[i]);
+        const slotPoints = slotVerts.map((p) => p ? result.project(p) : null);
+        if (slotPoints.every(Boolean) && faceFacing(slotVerts).facing > .02) {
+          drawDockPortal(targetCtx, slotPoints, { rot: renderBenchEntity.rot || 0 });
+        }
+        drawRenderedModelBeacons(targetCtx, result, renderBenchEntity, w, h, { mode: game.graphicsMode });
+      }
       targetCtx.restore();
 
       game.fxLevel = previousFx;
@@ -15750,19 +15915,21 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function drawStation(o, cam, w, h) {
-      const rendered = drawModelEntity(ctx, { camera: game.camera, w, h, centerCam: cam, mode: game.graphicsMode }, {
+      const stationEntity = {
         type: "station",
         model: o.model || "coriolis",
         pos: o.pos,
         rot: o.rot || 0,
         color: o.color || "#d8ded4",
         engineGlow: 0
-      }, {
+      };
+      const rendered = drawModelEntity(ctx, { camera: game.camera, w, h, centerCam: cam, mode: game.graphicsMode }, stationEntity, {
         orient: (v) => rotatePoint(v, 0, 0, o.rot),
         edgeColor: "#d8ded4",
         edgeWidth: clamp(800 / Math.max(110, cam.z), .7, 2),
         texture: getStationTexture(o.stationStyle || stationStyleForSystem(currentSystem())),
-        metalAlphaMul: o.stationStyle?.wealth > .72 ? 1.05 : o.stationStyle?.wealth < .32 ? .82 : .95
+        metalAlphaMul: o.stationStyle?.wealth > .72 ? 1.05 : o.stationStyle?.wealth < .32 ? .82 : .95,
+        skipBeacons: true
       });
       if (!rendered) return;
       const slotVerts = stationSlotVertexIndices(rendered.model).map((i) => rendered.camVerts[i]);
@@ -15771,8 +15938,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       // slot face actually pointing at the camera — otherwise it shows through the
       // station from the back and sides.
       if (slotA && slotB && slotC && slotD && faceFacing(slotVerts).facing > .02) {
-        drawDockPortal([slotA, slotB, slotC, slotD], o);
+        drawDockPortal(ctx, [slotA, slotB, slotC, slotD], o);
       }
+      drawRenderedModelBeacons(ctx, rendered, stationEntity, w, h, { mode: game.graphicsMode });
     }
 
     function drawClassicDockedShip(w, h) {
@@ -16706,7 +16874,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function graphicsModeLabel(mode) {
       if (mode === "wire") return "Old School Wire";
-      if (mode === "both") return "Ultra Shaded + Wire";
       return "Ultra Shaded";
     }
 

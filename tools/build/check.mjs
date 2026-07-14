@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "../..");
+const fix = process.argv.includes("--fix");
+const fixes = [];
 
 const files = {
   packageJson: path.join(root, "package.json"),
@@ -29,6 +31,10 @@ const modelDir = path.join(root, "assets/models");
 
 function read(file) {
   return fs.readFileSync(file, "utf8");
+}
+
+function writeJson(file, data) {
+  fs.writeFileSync(file, `${JSON.stringify(data, null, 2)}\n`);
 }
 
 for (const file of Object.values(files)) {
@@ -119,6 +125,7 @@ const bitmapProjectionGuards = [
   ["face-side lookup must not fall through authored null face slots", "hasProjectionFaceSlot(faceSides, faceIndex)"],
   ["face-texture lookup must not fall through authored null face slots", "hasProjectionFaceSlot(faceTextures, faceIndex)"],
   ["face-mirror lookup must not fall through authored null face slots", "hasProjectionFaceSlot(faceMirrorX, faceIndex)"],
+  ["face-texture local projection", "faceLocalTextureUv"],
   ["face-texture collapsed UV fallback", "faceTextureUv"],
   ["face-texture UV area check", "uvPolygonArea(uv)"],
 ];
@@ -144,7 +151,27 @@ for (const [label, marker] of retiredRuntimeSkinMarkers) {
   }
 }
 
+const retiredSolidWireMarkers = [
+  ["shared renderer solid-plus-wire mode", 'mode === "both"'],
+  ["shared renderer solid-plus-wire label", "Ultra Shaded + Wire"],
+];
+for (const [label, marker] of retiredSolidWireMarkers) {
+  if (js.includes(marker)) {
+    throw new Error(`Retired renderer mode still present: ${label}. Ultra bitmap/solid rendering must not procedurally ink mesh edges.`);
+  }
+}
+if (renderBenchHtml.includes('value="both"') || renderQaHtml.includes('value="both"')) {
+  throw new Error('Retired "both" renderer mode still appears in render tools.');
+}
+if (!js.includes("if (!wireDetails && isLineDetail) continue;")) {
+  throw new Error("Solid/Ultra rendering must not draw model line/polyline details over bitmap hulls.");
+}
+if (!js.includes("detail.lift ?? .5") || !builderJs.includes("lift: 0.5")) {
+  throw new Error("Model detail lift defaults must stay at 0.5 so editor/game details sit close to bitmap hulls.");
+}
+
 const builderBitmapGuards = [
+  ["builder face-texture local projection", "function faceLocalTextureProjection"],
   ["builder face-texture collapsed UV fallback", "function faceTextureProjection"],
   ["builder face-texture UV area check", "polygonArea2d(fallbackPts)"],
 ];
@@ -213,7 +240,8 @@ const builderToolGuards = [
   ["builder direct face skin upload", "async function uploadSelectedFaceSkin"],
   ["builder asset shelf API load", "async function loadAssetShelf"],
   ["builder write confirmation", "function confirmWrite"],
-  ["builder transient preview skin bundle", "function gamePreviewBitmapSkins"]
+  ["builder transient preview skin bundle", "function gamePreviewBitmapSkins"],
+  ["builder trusted preview keeps real renderer solid", "Game renderer preview stays solid"]
 ];
 for (const [label, marker] of builderToolGuards) {
   if (!builderJs.includes(marker)) {
@@ -244,6 +272,9 @@ if (!js.includes("const customBlueprint = opts.blueprint") || !js.includes("buil
 }
 if (!js.includes("const benchImageDecals") || !js.includes("opts.bitmapSkins")) {
   throw new Error("Render bench hook must accept transient bitmap skins for Ship Builder game-render preview.");
+}
+if (!js.includes("function modelFaceBaseColor") || !js.includes("function hasProjectionFaceSlot")) {
+  throw new Error("Per-face colour fallback must use a shared projection slot helper visible to collectSolidFaces.");
 }
 
 function cleanBitmapKey(value) {
@@ -389,12 +420,38 @@ if (fs.existsSync(modelDir)) {
     if (hasFaceDecals && JSON.stringify(generatedProjection.faceDecals) !== JSON.stringify(faceDecals)) {
       throw new Error(`${path.relative(root, filePath)} bitmap faceDecals are out of sync with src/generated/model-library.js; run npm run models or npm run build.`);
     }
+    const blueprintProjection = data.blueprint?.imageProjection;
+    const blueprintBitmapFields = [
+      ["faceSides", hasFaceSides, faceSides],
+      ["faceTextures", hasFaceTextures, faceTextures],
+      ["faceColors", hasAuthoredFaceColors, authoredFaceColors],
+      ["faceAngles", hasFaceAngles, faceAngles],
+      ["faceMirrorX", hasFaceMirrorX, faceMirrorX],
+      ["faceDecals", hasFaceDecals, faceDecals],
+    ];
+    const staleBlueprintFields = blueprintProjection
+      ? blueprintBitmapFields.filter(([field, hasField, expected]) => hasField && JSON.stringify(blueprintProjection[field]) !== JSON.stringify(expected))
+      : [];
+    if (staleBlueprintFields.length) {
+      if (fix) {
+        data.blueprint.imageProjection = { ...(data.blueprint.imageProjection || {}) };
+        for (const [field, , expected] of staleBlueprintFields) data.blueprint.imageProjection[field] = expected;
+        writeJson(filePath, data);
+        fixes.push(`${path.relative(root, filePath)} refreshed embedded blueprint ${staleBlueprintFields.map(([field]) => field).join(", ")} from editable face metadata.`);
+        continue;
+      }
+      throw new Error(`${path.relative(root, filePath)} embedded blueprint bitmap metadata (${staleBlueprintFields.map(([field]) => field).join(", ")}) is stale; run npm run check:fix.`);
+    }
     for (const decalKey of [...new Set(faceDecals.flatMap((decals) => (decals || []).map((decal) => decal.key)))]) {
       if (!bitmapEntrySource(generatedDecals[decalKey])) {
         throw new Error(`${path.relative(root, filePath)} declares bitmap decal ${decalKey}, but src/generated/bitmap-skins.js does not include it; run npm run skins or npm run build.`);
       }
     }
     const uniqueFaceKeys = [...new Set(faceTextures.filter(Boolean))];
+    const faceTextureCounts = faceTextures.reduce((counts, key) => {
+      if (key) counts.set(key, (counts.get(key) || 0) + 1);
+      return counts;
+    }, new Map());
     const seenFaceTextureHashes = new Map();
     for (const key of uniqueFaceKeys) {
       const entry = generatedSkins[modelId]?.faces?.[key];
@@ -408,6 +465,24 @@ if (fs.existsSync(modelDir)) {
       const hash = bitmapSourceHash(src);
       const existingKey = seenFaceTextureHashes.get(hash);
       if (existingKey && existingKey !== key) {
+        if (fix) {
+          const existingCount = faceTextureCounts.get(existingKey) || 0;
+          const keyCount = faceTextureCounts.get(key) || 0;
+          const keepKey = keyCount > existingCount ? key : existingKey;
+          const replaceKey = keepKey === key ? existingKey : key;
+          let changed = 0;
+          for (const face of sourceFaces) {
+            if (cleanBitmapKey(face?.bitmapFaceKey) === replaceKey) {
+              face.bitmapFaceKey = keepKey;
+              changed++;
+            }
+          }
+          if (changed) {
+            writeJson(filePath, data);
+            fixes.push(`${path.relative(root, filePath)} rewrote ${changed} face${changed === 1 ? "" : "s"} from duplicate bitmapFaceKey ${replaceKey} to ${keepKey}.`);
+          }
+          break;
+        }
         throw new Error(`${path.relative(root, filePath)} maps distinct bitmap faces ${existingKey} and ${key} to identical image data. Reuse the same bitmapFaceKey for intentional sharing, or fix the source PNGs.`);
       }
       seenFaceTextureHashes.set(hash, key);
@@ -420,6 +495,13 @@ if (fs.existsSync(modelDir)) {
       }
     }
   }
+}
+
+if (fixes.length) {
+  console.log("Ultra Elite source cleanup applied:");
+  for (const item of fixes) console.log(`- ${item}`);
+  console.log("Run npm run build, then npm run check to refresh generated assets and validate.");
+  process.exit(0);
 }
 
 console.log("Ultra Elite modular source check passed");

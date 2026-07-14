@@ -125,7 +125,8 @@
         4,
         2
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#d35080"
     },
     {
       "id": 7,
@@ -134,7 +135,8 @@
         2,
         5
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#d3507f"
     },
     {
       "id": 8,
@@ -143,7 +145,8 @@
         3,
         4
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#a16469"
     },
     {
       "id": 9,
@@ -152,7 +155,8 @@
         5,
         3
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#a26469"
     },
     {
       "id": 13,
@@ -161,7 +165,8 @@
         4,
         3
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#996169"
     },
     {
       "id": 14,
@@ -170,7 +175,8 @@
         5,
         12
       ],
-      "mirrored": true
+      "mirrored": true,
+      "faceColor": "#996169"
     },
     {
       "id": 18,
@@ -179,7 +185,8 @@
         2,
         4
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#786e5a"
     },
     {
       "id": 19,
@@ -188,7 +195,8 @@
         2,
         17
       ],
-      "mirrored": true
+      "mirrored": true,
+      "faceColor": "#786f5a"
     },
     {
       "id": 20,
@@ -197,7 +205,8 @@
         12,
         17
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#513e26"
     },
     {
       "id": 21,
@@ -206,7 +215,8 @@
         12,
         5
       ],
-      "mirrored": true
+      "mirrored": true,
+      "faceColor": "#55422b"
     }
   ],
   "edges": [
@@ -723,7 +733,7 @@
           -0.23,
           -0.97
         ],
-        "lift": 1.5,
+        "lift": 0.5,
         "points": [
           [
             67.79,
@@ -751,7 +761,7 @@
           -0.23,
           -0.97
         ],
-        "lift": 1.5,
+        "lift": 0.5,
         "points": [
           [
             -7.65,
@@ -779,7 +789,7 @@
           0.87,
           0.22
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             16.95,
@@ -806,7 +816,7 @@
           0.87,
           0.22
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             -16.95,
@@ -833,7 +843,7 @@
           -0.99,
           0.05
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             -22.14,
@@ -860,7 +870,7 @@
           -0.99,
           0.05
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             22.14,
@@ -887,7 +897,7 @@
           -0.99,
           0.05
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             -63.41,
@@ -910,7 +920,7 @@
           -0.99,
           0.05
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             -9.29,
@@ -933,7 +943,7 @@
           -0.99,
           0.05
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             9.29,
@@ -956,7 +966,7 @@
           -0.99,
           0.05
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             9.29,
@@ -979,7 +989,7 @@
           0.87,
           0.22
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             -9.29,
@@ -1002,7 +1012,7 @@
           0.87,
           0.22
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             -63.41,
@@ -1025,7 +1035,7 @@
           0.87,
           0.22
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             63.41,
@@ -1048,7 +1058,7 @@
           0.87,
           0.22
         ],
-        "lift": 1,
+        "lift": 0.5,
         "points": [
           [
             9.29,
@@ -1090,6 +1100,20 @@
         "escapePod": true,
         "hiddenUntilDiscovered": true
       }
+    },
+    "imageProjection": {
+      "faceColors": [
+        "#d35080",
+        "#d3507f",
+        "#a16469",
+        "#a26469",
+        "#996169",
+        "#996169",
+        "#786e5a",
+        "#786f5a",
+        "#513e26",
+        "#55422b"
+      ]
     }
   }
 }

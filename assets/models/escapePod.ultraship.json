@@ -46,7 +46,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "pod_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#7b7568"
     },
     {
       "id": 1001,
@@ -57,7 +58,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "pod_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#7b7568"
     },
     {
       "id": 1002,
@@ -68,7 +70,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "pod_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#7b7568"
     },
     {
       "id": 1003,
@@ -79,7 +82,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "pod_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#7b7568"
     }
   ],
   "edges": [],
@@ -94,7 +98,7 @@
         -1
       ],
       "stroke": "#fff2a8",
-      "lift": 2.5,
+      "lift": 0.5,
       "points": [
         [
           -7,
@@ -246,9 +250,29 @@
           0,
           -1
         ],
-        "lift": 2.5
+        "lift": 0.5
       }
-    ]
+    ],
+    "imageProjection": {
+      "faceColors": [
+        "#7b7568",
+        "#7b7568",
+        "#7b7568",
+        "#7b7568"
+      ],
+      "faceSides": [
+        "top",
+        "top",
+        "top",
+        "top"
+      ],
+      "faceTextures": [
+        "pod_panel",
+        "pod_panel",
+        "pod_panel",
+        "pod_panel"
+      ]
+    }
   },
   "gameMeta": {
     "imageDecalMirrorX": {

@@ -2,6 +2,35 @@
   "format": "ultra-elite-ship-builder/v1",
   "id": "boulder",
   "name": "Boulder",
+  "symmetry": "x-locked",
+  "gameMeta": {
+    "class": "fighter",
+    "npcRole": "private",
+    "aiProfile": "standard",
+    "decalRole": "private",
+    "baseColor": "#e9f2e4",
+    "description": "",
+    "missionLore": "",
+    "valueCr": 250000,
+    "stats": {
+      "r": 53,
+      "hp": 120,
+      "speed": 1,
+      "cargo": 10,
+      "missiles": 1,
+      "laser": "none"
+    },
+    "lists": {
+      "trader": true,
+      "pirate": true,
+      "police": false,
+      "alien": false
+    },
+    "flags": {
+      "escapePod": true,
+      "hiddenUntilDiscovered": false
+    }
+  },
   "verts": [
     {
       "id": 1,
@@ -69,8 +98,9 @@
         6
       ],
       "mirrored": false,
-      "bitmapFaceKey": "rock_panel",
-      "bitmapSide": "top"
+      "faceColor": "#928c89",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "rock_panel-1004"
     },
     {
       "id": 1001,
@@ -80,8 +110,9 @@
         2
       ],
       "mirrored": false,
-      "bitmapFaceKey": "rock_panel",
-      "bitmapSide": "top"
+      "faceColor": "#928c89",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "rock_panel-1004"
     },
     {
       "id": 1002,
@@ -91,8 +122,9 @@
         3
       ],
       "mirrored": false,
-      "bitmapFaceKey": "rock_panel",
-      "bitmapSide": "top"
+      "faceColor": "#928c89",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "rock_panel-1004"
     },
     {
       "id": 1003,
@@ -102,8 +134,10 @@
         4
       ],
       "mirrored": false,
-      "bitmapFaceKey": "rock_panel",
-      "bitmapSide": "top"
+      "faceColor": "#928c89",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "rock_panel-1004",
+      "bitmapMirrorX": true
     },
     {
       "id": 1004,
@@ -113,8 +147,11 @@
         6
       ],
       "mirrored": false,
-      "bitmapFaceKey": "rock_panel",
-      "bitmapSide": "top"
+      "faceColor": "#928c89",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "rock_panel-1004",
+      "bitmapAngle": -30,
+      "bitmapMirrorX": true
     },
     {
       "id": 1005,
@@ -124,8 +161,10 @@
         7
       ],
       "mirrored": false,
-      "bitmapFaceKey": "rock_panel",
-      "bitmapSide": "top"
+      "faceColor": "#928c89",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "rock_panel-1004",
+      "bitmapMirrorX": true
     },
     {
       "id": 1006,
@@ -135,8 +174,10 @@
         3
       ],
       "mirrored": false,
-      "bitmapFaceKey": "rock_panel",
-      "bitmapSide": "top"
+      "faceColor": "#928c89",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "rock_panel-1004",
+      "bitmapMirrorX": true
     },
     {
       "id": 1007,
@@ -146,8 +187,10 @@
         4
       ],
       "mirrored": false,
-      "bitmapFaceKey": "rock_panel",
-      "bitmapSide": "top"
+      "faceColor": "#928c89",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "rock_panel-1004",
+      "bitmapMirrorX": true
     },
     {
       "id": 1008,
@@ -157,8 +200,9 @@
         4
       ],
       "mirrored": false,
-      "bitmapFaceKey": "rock_panel",
-      "bitmapSide": "top"
+      "faceColor": "#928c89",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "rock_panel-1004"
     },
     {
       "id": 1009,
@@ -168,8 +212,9 @@
         7
       ],
       "mirrored": false,
-      "bitmapFaceKey": "rock_panel",
-      "bitmapSide": "top"
+      "faceColor": "#928c89",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "rock_panel-1004"
     }
   ],
   "edges": [],
@@ -215,11 +260,35 @@
     "edges": [
       [
         0,
+        4
+      ],
+      [
+        4,
+        5
+      ],
+      [
+        0,
+        5
+      ],
+      [
+        1,
+        5
+      ],
+      [
+        0,
         1
+      ],
+      [
+        2,
+        5
       ],
       [
         1,
         2
+      ],
+      [
+        3,
+        5
       ],
       [
         2,
@@ -230,35 +299,11 @@
         4
       ],
       [
-        4,
-        0
-      ],
-      [
-        0,
-        5
-      ],
-      [
         1,
-        5
-      ],
-      [
-        2,
-        5
-      ],
-      [
-        3,
-        5
-      ],
-      [
-        4,
-        5
-      ],
-      [
-        0,
         6
       ],
       [
-        1,
+        0,
         6
       ],
       [
@@ -276,64 +321,64 @@
     ],
     "edgeFaces": [
       [
-        5,
-        1
+        0,
+        9
       ],
       [
-        6,
-        2
-      ],
-      [
-        7,
-        3
-      ],
-      [
-        8,
+        0,
         4
       ],
       [
-        9,
-        0
-      ],
-      [
-        1,
-        0
-      ],
-      [
-        2,
+        0,
         1
       ],
       [
-        3,
+        1,
         2
       ],
       [
-        4,
+        1,
+        5
+      ],
+      [
+        2,
         3
       ],
       [
-        4,
-        0
-      ],
-      [
-        9,
-        5
-      ],
-      [
-        6,
-        5
-      ],
-      [
-        7,
+        2,
         6
       ],
       [
-        8,
+        3,
+        4
+      ],
+      [
+        3,
         7
       ],
       [
-        9,
+        4,
         8
+      ],
+      [
+        5,
+        6
+      ],
+      [
+        5,
+        9
+      ],
+      [
+        6,
+        7
+      ],
+      [
+        7,
+        8
+      ],
+      [
+        8,
+        9
       ]
     ],
     "edgeVisibility": [
@@ -355,62 +400,146 @@
     ],
     "normals": [
       [
-        -15,
-        -3,
-        8
+        -85.95,
+        -17.55,
+        48.01
       ],
       [
-        -7,
-        12,
-        30
+        -20.94,
+        36.15,
+        90.86
       ],
       [
-        32,
-        -47,
-        24
+        52.74,
+        -75.23,
+        39.49
       ],
       [
-        -3,
-        -39,
-        -7
+        -7.25,
+        -98.02,
+        -18.43
       ],
       [
-        -5,
-        -4,
-        -1
+        -75.79,
+        -64.74,
+        -8.08
       ],
       [
-        49,
-        84,
-        8
+        49.77,
+        86.3,
+        8.7
       ],
       [
-        112,
-        21,
-        -21
+        96.55,
+        18.19,
+        -18.66
       ],
       [
-        76,
-        -35,
-        -82
+        64.32,
+        -31.05,
+        -69.99
       ],
       [
-        22,
-        56,
-        -137
+        12.62,
+        35.64,
+        -92.58
       ],
       [
-        40,
-        110,
-        -38
+        31.75,
+        89.66,
+        -30.87
       ]
-    ]
-  },
-  "gameMeta": {
-    "imageDecalMirrorX": {
-      "top": false,
-      "bottom": false,
-      "back": false
+    ],
+    "details": [],
+    "imageProjection": {
+      "faceSides": [
+        "top",
+        "top",
+        "top",
+        "top",
+        "top",
+        "top",
+        "top",
+        "top",
+        "top",
+        "top"
+      ],
+      "faceTextures": [
+        "rock_panel-1004",
+        "rock_panel-1004",
+        "rock_panel-1004",
+        "rock_panel-1004",
+        "rock_panel-1004",
+        "rock_panel-1004",
+        "rock_panel-1004",
+        "rock_panel-1004",
+        "rock_panel-1004",
+        "rock_panel-1004"
+      ],
+      "faceColors": [
+        "#928c89",
+        "#928c89",
+        "#928c89",
+        "#928c89",
+        "#928c89",
+        "#928c89",
+        "#928c89",
+        "#928c89",
+        "#928c89",
+        "#928c89"
+      ],
+      "faceAngles": [
+        null,
+        null,
+        null,
+        null,
+        -30,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "faceMirrorX": [
+        false,
+        false,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        false,
+        false
+      ]
+    },
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "private",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "valueCr": 250000,
+      "stats": {
+        "r": 53,
+        "hp": 120,
+        "speed": 1,
+        "cargo": 10,
+        "missiles": 1,
+        "laser": "none"
+      },
+      "lists": {
+        "trader": true,
+        "pirate": true,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": false
+      }
     }
   }
 }

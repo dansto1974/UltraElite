@@ -119,7 +119,8 @@
         12,
         11
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#484639"
     },
     {
       "id": 1001,
@@ -131,7 +132,8 @@
         8,
         9
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#595744"
     },
     {
       "id": 1002,
@@ -143,7 +145,8 @@
         4,
         10
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#585749"
     },
     {
       "id": 1003,
@@ -152,7 +155,8 @@
         2,
         5
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#64635b"
     },
     {
       "id": 1004,
@@ -161,7 +165,8 @@
         7,
         8
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#83773c"
     },
     {
       "id": 1005,
@@ -170,7 +175,8 @@
         4,
         9
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#84773c"
     },
     {
       "id": 1006,
@@ -179,7 +185,8 @@
         5,
         1
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#848277"
     },
     {
       "id": 1007,
@@ -188,7 +195,8 @@
         10,
         9
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#6d6b60"
     },
     {
       "id": 1008,
@@ -197,7 +205,8 @@
         1,
         8
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#6d6b61"
     },
     {
       "id": 1009,
@@ -206,7 +215,8 @@
         10,
         1
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#858376"
     },
     {
       "id": 1010,
@@ -215,7 +225,8 @@
         1,
         9
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#716d61"
     },
     {
       "id": 1011,
@@ -224,7 +235,8 @@
         1,
         7
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#858377"
     },
     {
       "id": 1012,
@@ -233,7 +245,8 @@
         12,
         13
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#5b594a"
     }
   ],
   "edges": [],
@@ -247,7 +260,7 @@
         0.97,
         0.25
       ],
-      "lift": 1,
+      "lift": 0.5,
       "points": [
         [
           0,
@@ -276,7 +289,7 @@
         -1
       ],
       "stroke": "#ffffff",
-      "lift": 1,
+      "lift": 0.5,
       "points": [
         [
           0,
@@ -679,7 +692,7 @@
           0.97,
           0.25
         ],
-        "lift": 1
+        "lift": 0.5
       },
       {
         "type": "engine",
@@ -707,9 +720,26 @@
           0,
           -1
         ],
-        "lift": 1
+        "lift": 0.5
       }
-    ]
+    ],
+    "imageProjection": {
+      "faceColors": [
+        "#484639",
+        "#595744",
+        "#585749",
+        "#64635b",
+        "#83773c",
+        "#84773c",
+        "#848277",
+        "#6d6b60",
+        "#6d6b61",
+        "#858376",
+        "#716d61",
+        "#858377",
+        "#5b594a"
+      ]
+    }
   },
   "gameMeta": {
     "imageDecalMirrorX": {

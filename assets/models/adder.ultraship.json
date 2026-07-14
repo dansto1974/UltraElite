@@ -191,7 +191,8 @@
         11,
         1
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#838c97"
     },
     {
       "id": 1001,
@@ -201,7 +202,8 @@
         1,
         13
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#9fabb8"
     },
     {
       "id": 1002,
@@ -210,7 +212,8 @@
         2,
         3
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#77818f"
     },
     {
       "id": 1003,
@@ -219,7 +222,8 @@
         2,
         14
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#616a76"
     },
     {
       "id": 1004,
@@ -229,7 +233,8 @@
         3,
         4
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#76808d"
     },
     {
       "id": 1005,
@@ -239,7 +244,8 @@
         14,
         5
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#69747e"
     },
     {
       "id": 1006,
@@ -248,7 +254,8 @@
         4,
         5
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#4f575b"
     },
     {
       "id": 1007,
@@ -258,7 +265,8 @@
         5,
         6
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#606466"
     },
     {
       "id": 1008,
@@ -267,7 +275,8 @@
         9,
         6
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#4c5459"
     },
     {
       "id": 1009,
@@ -277,7 +286,8 @@
         7,
         8
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#77808e"
     },
     {
       "id": 1010,
@@ -287,7 +297,8 @@
         6,
         13
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#69747f"
     },
     {
       "id": 1011,
@@ -296,7 +307,8 @@
         8,
         1
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#788290"
     },
     {
       "id": 1012,
@@ -305,7 +317,8 @@
         8,
         13
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#656f7b"
     },
     {
       "id": 1013,
@@ -315,7 +328,8 @@
         9,
         11
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#808b96"
     },
     {
       "id": 1014,
@@ -325,7 +339,8 @@
         13,
         6
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#85909d"
     }
   ],
   "edges": [
@@ -368,7 +383,7 @@
         1,
         0.26
       ],
-      "lift": 1,
+      "lift": 0.5,
       "indices": [
         15,
         16,
@@ -386,7 +401,7 @@
         -1
       ],
       "stroke": "#ffffff",
-      "lift": 1,
+      "lift": 0.5,
       "points": [
         [
           12,
@@ -870,7 +885,7 @@
       {
         "type": "window",
         "color": "#101915",
-        "lift": 1,
+        "lift": 0.5,
         "normal": [
           0,
           1,
@@ -887,7 +902,7 @@
         "type": "engine",
         "color": "#f7fff7",
         "stroke": "#ffffff",
-        "lift": 1,
+        "lift": 0.5,
         "normal": [
           0,
           0,
@@ -949,6 +964,25 @@
         "escapePod": true,
         "hiddenUntilDiscovered": false
       }
+    },
+    "imageProjection": {
+      "faceColors": [
+        "#838c97",
+        "#9fabb8",
+        "#77818f",
+        "#616a76",
+        "#76808d",
+        "#69747e",
+        "#4f575b",
+        "#606466",
+        "#4c5459",
+        "#77808e",
+        "#69747f",
+        "#788290",
+        "#656f7b",
+        "#808b96",
+        "#85909d"
+      ]
     }
   }
 }

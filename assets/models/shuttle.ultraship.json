@@ -164,7 +164,8 @@
         1,
         13
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#66645b"
     },
     {
       "id": 1001,
@@ -173,7 +174,8 @@
         1,
         5
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#726c4d"
     },
     {
       "id": 1002,
@@ -182,7 +184,8 @@
         5,
         1
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#6d6b60"
     },
     {
       "id": 1003,
@@ -193,7 +196,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "side_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#767772"
     },
     {
       "id": 1004,
@@ -202,7 +206,8 @@
         6,
         2
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#78786e"
     },
     {
       "id": 1005,
@@ -211,7 +216,8 @@
         6,
         3
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#75746b"
     },
     {
       "id": 1006,
@@ -220,7 +226,8 @@
         3,
         4
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#78776e"
     },
     {
       "id": 1007,
@@ -231,7 +238,8 @@
       ],
       "mirrored": false,
       "bitmapFaceKey": "side_panel",
-      "bitmapSide": "top"
+      "bitmapSide": "top",
+      "faceColor": "#767772"
     },
     {
       "id": 1008,
@@ -240,7 +248,8 @@
         1,
         8
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#6c6a5f"
     },
     {
       "id": 1009,
@@ -250,7 +259,8 @@
         8,
         5
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#4e4c3b"
     },
     {
       "id": 1010,
@@ -259,7 +269,8 @@
         2,
         13
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#696759"
     },
     {
       "id": 1011,
@@ -268,7 +279,8 @@
         13,
         4
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#696859"
     },
     {
       "id": 1012,
@@ -277,7 +289,8 @@
         13,
         1
       ],
-      "mirrored": false
+      "mirrored": false,
+      "faceColor": "#66645b"
     }
   ],
   "edges": [
@@ -363,7 +376,7 @@
         -1
       ],
       "stroke": "#ffffff",
-      "lift": 1,
+      "lift": 0.5,
       "indices": [
         9,
         10,
@@ -829,9 +842,56 @@
           0,
           -1
         ],
-        "lift": 1
+        "lift": 0.5
       }
-    ]
+    ],
+    "imageProjection": {
+      "faceColors": [
+        "#66645b",
+        "#726c4d",
+        "#6d6b60",
+        "#767772",
+        "#78786e",
+        "#75746b",
+        "#78776e",
+        "#767772",
+        "#6c6a5f",
+        "#4e4c3b",
+        "#696759",
+        "#696859",
+        "#66645b"
+      ],
+      "faceSides": [
+        null,
+        null,
+        null,
+        "top",
+        null,
+        null,
+        null,
+        "top",
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "faceTextures": [
+        null,
+        null,
+        null,
+        "side_panel",
+        null,
+        null,
+        null,
+        "side_panel",
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    }
   },
   "gameMeta": {
     "imageDecalMirrorX": {
