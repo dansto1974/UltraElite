@@ -7812,8 +7812,9 @@
       renderPanel();
     }
 
-    const GAME_VERSION = "1.0.17-beta";
+    const GAME_VERSION = "1.0.18-beta";
     const UPDATE_LOG = [
+      ["1.0.18-beta", "Launch loading now gates the cockpit until assets are ready, Safari planet shadows are safer, and station/police beacons have clearer sequenced strobe behaviour."],
       ["1.0.17-beta", "Station render polish: bitmap faces, entrance forcefields, beacons and hangar transitions now line up more cleanly."],
       ["1.0.16-beta", "Escape capsule fix: ejecting now clears your legal status properly when you are recovered at Lave."],
       ["1.0.15-beta", "Ship and station surface polish: fixed missing bitmap faces on station models, including Dodo front/back panels, and improved workshop preview consistency."],
