@@ -65,6 +65,11 @@ const els = {
   skinAngleValue: document.getElementById("skinAngleValue"),
   importBitmapShelf: document.getElementById("importBitmapShelf"),
   bitmapShelfSelector: document.getElementById("bitmapShelfSelector"),
+  bitmapAssetGrid: document.getElementById("bitmapAssetGrid"),
+  selectedBitmapReadout: document.getElementById("selectedBitmapReadout"),
+  assetShelfKind: document.getElementById("assetShelfKind"),
+  assetShelfModel: document.getElementById("assetShelfModel"),
+  assetShelfSearch: document.getElementById("assetShelfSearch"),
   applyShelfTopBtn: document.getElementById("applyShelfTopBtn"),
   applyShelfBottomBtn: document.getElementById("applyShelfBottomBtn"),
   applyShelfBackBtn: document.getElementById("applyShelfBackBtn"),
@@ -1330,14 +1335,234 @@ function loadSkinBitmaps(modelId = templateShipId(), mirrorX = null) {
   }
 }
 
+function bitmapShelfItemById(id) {
+  return state.bitmapShelf.find((entry) => entry.id === id) || null;
+}
+
+function selectedBitmapShelfItem() {
+  return bitmapShelfItemById(els.bitmapShelfSelector?.value);
+}
+
+function bitmapShelfItemKind(item) {
+  if (!item) return "";
+  if (item.source === "imported") return "imported";
+  return item.asset?.kind || "other";
+}
+
+function bitmapShelfItemCategory(item) {
+  if (item?.source === "imported") return "imported";
+  return item?.asset?.category || "other";
+}
+
+function bitmapShelfItemModel(item) {
+  return item?.asset?.model || "";
+}
+
+function bitmapShelfItemTarget(item) {
+  if (!item) return "";
+  if (item.source === "imported") return "import";
+  if (item.asset?.kind === "face") return "face";
+  if (item.asset?.kind === "side") return item.asset.side || "side";
+  return item.asset?.kind || "other";
+}
+
+function bitmapShelfItemTitle(item) {
+  if (!item) return "UV asset";
+  if (item.source === "imported") return item.name || "Imported UV";
+  if (item.asset?.kind === "face") return item.asset.key || item.name || "face";
+  if (item.asset?.kind === "side") return item.asset.side || item.name || "side";
+  return item.name || item.asset?.file || "UV asset";
+}
+
+function bitmapShelfItemMeta(item) {
+  if (!item) return "";
+  const dims = item.img?.naturalWidth && item.img?.naturalHeight
+    ? `${item.img.naturalWidth}x${item.img.naturalHeight}`
+    : "";
+  if (item.source === "imported") return ["Imported", dims].filter(Boolean).join(" | ");
+  const bits = [
+    item.asset?.model || "shared",
+    bitmapShelfItemTarget(item).toUpperCase(),
+    dims
+  ].filter(Boolean);
+  return bits.join(" | ");
+}
+
+function bitmapShelfItemSearchText(item) {
+  return [
+    item?.name,
+    item?.source,
+    item?.asset?.file,
+    item?.asset?.model,
+    item?.asset?.kind,
+    item?.asset?.key,
+    item?.asset?.side,
+    item?.asset?.category
+  ].filter(Boolean).join(" ").toLowerCase();
+}
+
+function bitmapShelfFilters() {
+  return {
+    category: els.assetShelfCategory?.value || "all",
+    kind: els.assetShelfKind?.value || "all",
+    model: els.assetShelfModel?.value || "all",
+    query: (els.assetShelfSearch?.value || "").trim().toLowerCase()
+  };
+}
+
+function bitmapShelfItemMatchesFilters(item, filters = bitmapShelfFilters()) {
+  if (!item) return false;
+  if (filters.category !== "all" && bitmapShelfItemCategory(item) !== filters.category) return false;
+  const kind = bitmapShelfItemKind(item);
+  const target = bitmapShelfItemTarget(item);
+  if (filters.kind === "imported" && item.source !== "imported") return false;
+  if (filters.kind === "face" && kind !== "face") return false;
+  if (filters.kind === "side" && kind !== "side") return false;
+  if (["top", "bottom", "back"].includes(filters.kind) && target !== filters.kind) return false;
+  if (filters.model === "current") {
+    const model = bitmapShelfItemModel(item);
+    if (model && model !== templateShipId()) return false;
+  } else if (filters.model !== "all") {
+    if (bitmapShelfItemModel(item) !== filters.model) return false;
+  }
+  if (filters.query && !bitmapShelfItemSearchText(item).includes(filters.query)) return false;
+  return true;
+}
+
+function skinAssetMatchesFilters(asset, filters = bitmapShelfFilters()) {
+  if (!asset) return false;
+  if (filters.category !== "all" && asset.category !== filters.category) return false;
+  if (filters.kind === "imported") return false;
+  if (filters.kind === "face" && asset.kind !== "face") return false;
+  if (filters.kind === "side" && asset.kind !== "side") return false;
+  if (["top", "bottom", "back"].includes(filters.kind) && asset.side !== filters.kind) return false;
+  if (filters.model === "current" && asset.model && asset.model !== templateShipId()) return false;
+  if (filters.model !== "all" && filters.model !== "current" && asset.model !== filters.model) return false;
+  if (filters.query) {
+    const text = [asset.file, asset.model, asset.kind, asset.key, asset.side, asset.category]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    if (!text.includes(filters.query)) return false;
+  }
+  return true;
+}
+
+function shelfHasAsset(asset) {
+  return !!asset?.file && state.bitmapShelf.some((item) => item.asset?.file === asset.file);
+}
+
+function updateSelectedBitmapReadout() {
+  if (!els.selectedBitmapReadout) return;
+  const item = selectedBitmapShelfItem();
+  if (!item) {
+    els.selectedBitmapReadout.textContent = state.bitmapShelf.length
+      ? "No UV selected."
+      : "Load project UVs or add PNGs to start.";
+    return;
+  }
+  const face = selectedFace();
+  const target = face ? `FACE #${face.id}` : "NO FACE SELECTED";
+  els.selectedBitmapReadout.textContent = `${bitmapShelfItemTitle(item)} | ${bitmapShelfItemMeta(item)} | TARGET ${target}`;
+}
+
+function updateBitmapAssetGrid() {
+  if (!els.bitmapAssetGrid) return;
+  const filters = bitmapShelfFilters();
+  const items = state.bitmapShelf.filter((item) => bitmapShelfItemMatchesFilters(item, filters));
+  let selectedId = els.bitmapShelfSelector?.value || "";
+  if (items.length && !items.some((item) => item.id === selectedId)) {
+    selectedId = items[0].id;
+    if (els.bitmapShelfSelector) els.bitmapShelfSelector.value = selectedId;
+  }
+  els.bitmapAssetGrid.replaceChildren();
+  if (!items.length) {
+    const empty = document.createElement("div");
+    empty.className = "bitmap-asset-empty";
+    empty.textContent = state.bitmapShelf.length ? "No loaded UVs match these filters." : "No UV thumbnails loaded.";
+    els.bitmapAssetGrid.append(empty);
+    updateSelectedBitmapReadout();
+    return;
+  }
+  for (const item of items) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `bitmap-asset-card${item.id === selectedId ? " selected" : ""}`;
+    button.dataset.shelfId = item.id;
+    button.title = item.name || item.asset?.file || "UV asset";
+
+    const thumb = document.createElement("span");
+    thumb.className = "bitmap-asset-thumb";
+    const img = document.createElement("img");
+    img.alt = "";
+    img.decoding = "async";
+    img.src = item.img?.currentSrc || item.img?.src || item.asset?.url || "";
+    thumb.append(img);
+
+    const title = document.createElement("span");
+    title.className = "bitmap-asset-title";
+    title.textContent = bitmapShelfItemTitle(item);
+
+    const meta = document.createElement("span");
+    meta.className = "bitmap-asset-meta";
+    meta.textContent = bitmapShelfItemMeta(item);
+
+    const tag = document.createElement("span");
+    tag.className = `bitmap-asset-tag bitmap-asset-tag-${bitmapShelfItemTarget(item)}`;
+    tag.textContent = bitmapShelfItemTarget(item).toUpperCase();
+
+    button.append(thumb, title, meta, tag);
+    els.bitmapAssetGrid.append(button);
+  }
+  updateSelectedBitmapReadout();
+}
+
+function selectBitmapShelfItem(id) {
+  if (!els.bitmapShelfSelector || !id) return;
+  els.bitmapShelfSelector.value = id;
+  updateBitmapAssetGrid();
+  updateSelectedBitmapReadout();
+}
+
+function populateAssetModelSelector(skins = state.toolServer.skins) {
+  if (!els.assetShelfModel) return;
+  const current = els.assetShelfModel.value || "all";
+  const models = [...new Set([
+    ...skins.map((skin) => skin.model).filter(Boolean),
+    ...state.bitmapShelf.map((item) => item.asset?.model).filter(Boolean)
+  ])].sort((a, b) => a.localeCompare(b));
+  els.assetShelfModel.innerHTML = "";
+  const base = [
+    ["all", "All models"],
+    ["current", "Current model"]
+  ];
+  for (const [value, label] of base) {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    els.assetShelfModel.append(option);
+  }
+  for (const model of models) {
+    const option = document.createElement("option");
+    option.value = model;
+    option.textContent = model;
+    els.assetShelfModel.append(option);
+  }
+  if ([...els.assetShelfModel.options].some((option) => option.value === current)) {
+    els.assetShelfModel.value = current;
+  }
+}
+
 function updateBitmapShelfSelector() {
   if (!els.bitmapShelfSelector) return;
+  const current = els.bitmapShelfSelector.value;
   els.bitmapShelfSelector.innerHTML = "";
   if (!state.bitmapShelf.length) {
     const option = document.createElement("option");
     option.value = "";
     option.textContent = "No imported bitmaps";
     els.bitmapShelfSelector.append(option);
+    updateBitmapAssetGrid();
     return;
   }
   for (const item of state.bitmapShelf) {
@@ -1346,13 +1571,15 @@ function updateBitmapShelfSelector() {
     option.textContent = `${item.name} (${item.img.naturalWidth}x${item.img.naturalHeight})`;
     els.bitmapShelfSelector.append(option);
   }
+  if (current && bitmapShelfItemById(current)) els.bitmapShelfSelector.value = current;
+  updateBitmapAssetGrid();
 }
 
 function addBitmapToShelf(file, img, url) {
   const id = `bitmap_${Date.now()}_${Math.random().toString(16).slice(2)}`;
   state.bitmapShelf.push({ id, name: file.name || "imported bitmap", img, url, source: "imported" });
   updateBitmapShelfSelector();
-  els.bitmapShelfSelector.value = id;
+  selectBitmapShelfItem(id);
   return id;
 }
 
@@ -1383,10 +1610,18 @@ function addBitmapAssetToShelf(asset) {
 function populateAssetCategorySelector(categories = []) {
   if (!els.assetShelfCategory) return;
   const current = els.assetShelfCategory.value || "all";
-  const options = ["all", ...categories.filter((cat) => cat && cat !== "all")];
-  els.assetShelfCategory.innerHTML = options.map((category) =>
-    `<option value="${category}">${category === "all" ? "All assets" : category}</option>`
-  ).join("");
+  const options = ["all", "imported", ...categories.filter((cat) => cat && cat !== "all" && cat !== "imported")];
+  els.assetShelfCategory.innerHTML = "";
+  for (const category of options) {
+    const option = document.createElement("option");
+    option.value = category;
+    option.textContent = category === "all"
+      ? "All assets"
+      : category === "imported"
+        ? "Imported"
+        : category;
+    els.assetShelfCategory.append(option);
+  }
   if (options.includes(current)) els.assetShelfCategory.value = current;
 }
 
@@ -1395,6 +1630,7 @@ async function refreshAvailableSkinAssets() {
   const data = await apiJson("/api/skins", { method: "GET" });
   state.toolServer.skins = Array.isArray(data.skins) ? data.skins : [];
   populateAssetCategorySelector(data.categories || []);
+  populateAssetModelSelector(state.toolServer.skins);
   return state.toolServer.skins;
 }
 
@@ -1402,14 +1638,21 @@ async function loadAssetShelf() {
   try {
     const skins = await refreshAvailableSkinAssets();
     if (!skins) return;
-    const category = els.assetShelfCategory?.value || "all";
-    const selected = skins.filter((skin) => category === "all" || skin.category === category);
+    const filters = bitmapShelfFilters();
+    const selected = skins.filter((skin) => skinAssetMatchesFilters(skin, filters));
     let loaded = 0;
+    let skipped = 0;
     for (const asset of selected) {
+      if (shelfHasAsset(asset)) {
+        skipped++;
+        continue;
+      }
       if (await addBitmapAssetToShelf(asset)) loaded++;
     }
     updateBitmapShelfSelector();
-    setStatus(`${loaded} ${category === "all" ? "" : `${category.toUpperCase()} `}ASSET BITMAP${loaded === 1 ? "" : "S"} LOADED TO SHELF.`);
+    if (!selectedBitmapShelfItem() && state.bitmapShelf[0]) selectBitmapShelfItem(state.bitmapShelf[0].id);
+    const skippedText = skipped ? `, ${skipped} ALREADY LOADED` : "";
+    setStatus(`${loaded} MATCHING UV${loaded === 1 ? "" : "S"} LOADED${skippedText}.`);
   } catch (error) {
     setStatus(`ASSET SHELF LOAD FAILED: ${error.message}`);
   }
@@ -1421,6 +1664,7 @@ function clearBitmapShelf() {
   }
   state.bitmapShelf = [];
   updateBitmapShelfSelector();
+  populateAssetModelSelector();
   setStatus("BITMAP SHELF CLEARED.");
 }
 
@@ -1481,10 +1725,9 @@ function clearSelectedFaceSkin() {
 }
 
 function applyShelfBitmap(side) {
-  const id = els.bitmapShelfSelector?.value;
-  const item = state.bitmapShelf.find((entry) => entry.id === id);
+  const item = selectedBitmapShelfItem();
   if (!item) {
-    setStatus("IMPORT A BITMAP FIRST.");
+    setStatus("SELECT A UV THUMBNAIL FIRST.");
     return;
   }
   clearEditorSelection();
@@ -1494,10 +1737,9 @@ function applyShelfBitmap(side) {
 }
 
 function applyShelfBitmapToSelectedFace() {
-  const id = els.bitmapShelfSelector?.value;
-  const item = state.bitmapShelf.find((entry) => entry.id === id);
+  const item = selectedBitmapShelfItem();
   if (!item) {
-    setStatus("IMPORT A BITMAP FIRST.");
+    setStatus("SELECT A UV THUMBNAIL FIRST.");
     return;
   }
   setSelectedFaceSkinFromImage(item.img, "shelf", "", item.name);
@@ -1519,7 +1761,7 @@ function importSkinFile(side, file, addToShelf = true) {
     const shelfId = addToShelf ? addBitmapToShelf(file, img, url) : "";
     const mirrored = importMirroredSkinEnabled();
     setSkinSideFromImage(side, img, addToShelf ? "shelf" : "imported", addToShelf ? "" : url, mirrored);
-    if (shelfId) els.bitmapShelfSelector.value = shelfId;
+    if (shelfId) selectBitmapShelfItem(shelfId);
     updateSkinReadout();
     setStatus(`${side.toUpperCase()} SKIN IMPORTED (${img.naturalWidth}x${img.naturalHeight})${mirrored ? " AS MIRRORED HALF UV" : ""}.`);
     renderAll();
@@ -1546,7 +1788,7 @@ function importSelectedFaceSkinFile(file, addToShelf = true) {
   img.onload = () => {
     const shelfId = addToShelf ? addBitmapToShelf(file, img, url) : "";
     setSelectedFaceSkinFromImage(img, addToShelf ? "shelf" : "imported", addToShelf ? "" : url, file.name || "FACE PNG");
-    if (shelfId) els.bitmapShelfSelector.value = shelfId;
+    if (shelfId) selectBitmapShelfItem(shelfId);
     renderAll();
   };
   img.onerror = () => {
@@ -2260,6 +2502,7 @@ function drawOrthoCanvas(canvas, viewName) {
 
 function renderAll() {
   updateUi();
+  updateSelectedBitmapReadout();
   renderMain();
   document.querySelectorAll(".ortho-grid canvas").forEach((canvas) => drawOrthoCanvas(canvas, canvas.dataset.view));
   updateExport();
@@ -3269,6 +3512,17 @@ function bindEvents() {
     importBitmapShelfFiles(ev.target.files);
     ev.target.value = "";
   });
+  els.bitmapAssetGrid?.addEventListener("click", (ev) => {
+    const card = ev.target.closest("[data-shelf-id]");
+    if (!card) return;
+    selectBitmapShelfItem(card.dataset.shelfId);
+    const item = selectedBitmapShelfItem();
+    if (item) setStatus(`${bitmapShelfItemTitle(item)} SELECTED.`);
+  });
+  els.bitmapShelfSelector?.addEventListener("change", () => {
+    updateBitmapAssetGrid();
+    updateSelectedBitmapReadout();
+  });
   els.applyShelfTopBtn.addEventListener("click", () => applyShelfBitmap("top"));
   els.applyShelfBottomBtn.addEventListener("click", () => applyShelfBitmap("bottom"));
   els.applyShelfBackBtn.addEventListener("click", () => applyShelfBitmap("back"));
@@ -3282,8 +3536,12 @@ function bindEvents() {
   els.uploadBackSkinBtn?.addEventListener("click", () => uploadSkinSide("back"));
   els.uploadFaceSkinBtn?.addEventListener("click", uploadSelectedFaceSkin);
   els.assetShelfCategory?.addEventListener("change", () => {
+    updateBitmapAssetGrid();
     if (state.toolServer.skins.length) setStatus(`${els.assetShelfCategory.value.toUpperCase()} ASSET CATEGORY SELECTED.`);
   });
+  els.assetShelfKind?.addEventListener("change", updateBitmapAssetGrid);
+  els.assetShelfModel?.addEventListener("change", updateBitmapAssetGrid);
+  els.assetShelfSearch?.addEventListener("input", updateBitmapAssetGrid);
   els.importTopSkin.addEventListener("change", (ev) => {
     importSkinFile("top", ev.target.files?.[0]);
     ev.target.value = "";

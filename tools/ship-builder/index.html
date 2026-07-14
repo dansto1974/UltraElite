@@ -127,32 +127,58 @@
             <section class="local-toolbox">
               <h2>Project Assets</h2>
               <div id="localServerReadout" class="readout compact-readout">Checking local server...</div>
-              <label>Asset Category
-                <select id="assetShelfCategory">
-                  <option value="all">All assets</option>
-                </select>
-              </label>
+              <div class="asset-filter-grid">
+                <label>Category
+                  <select id="assetShelfCategory">
+                    <option value="all">All assets</option>
+                  </select>
+                </label>
+                <label>Kind
+                  <select id="assetShelfKind">
+                    <option value="all">All UVs</option>
+                    <option value="face">Face tiles</option>
+                    <option value="top">Top skins</option>
+                    <option value="bottom">Bottom skins</option>
+                    <option value="back">Back skins</option>
+                    <option value="side">Any side skin</option>
+                    <option value="imported">Imported</option>
+                  </select>
+                </label>
+                <label>Model
+                  <select id="assetShelfModel">
+                    <option value="all">All models</option>
+                    <option value="current">Current model</option>
+                  </select>
+                </label>
+                <label>Search
+                  <input id="assetShelfSearch" type="search" spellcheck="false" placeholder="panel, entrance, top">
+                </label>
+              </div>
               <div class="button-grid compact-actions">
-                <button id="refreshAssetShelfBtn">Load Asset Shelf</button>
+                <button id="refreshAssetShelfBtn">Load Matching UVs</button>
                 <button id="reloadSkinBitmapsBtn">Reload Model Skins</button>
               </div>
             </section>
 
             <section class="paint-group">
-              <h2>Bitmap Shelf</h2>
-              <label>Add PNGs <input id="importBitmapShelf" type="file" accept="image/png,image/*" multiple></label>
-              <label>Selected Bitmap
+              <h2>UV Picker</h2>
+              <div id="selectedBitmapReadout" class="readout compact-readout">No UV selected.</div>
+              <div id="bitmapAssetGrid" class="bitmap-asset-grid" aria-label="Bitmap UV assets"></div>
+              <label class="asset-import-row">Add PNGs <input id="importBitmapShelf" type="file" accept="image/png,image/*" multiple></label>
+              <label class="shelf-select-fallback">Selected Bitmap
                 <select id="bitmapShelfSelector">
                   <option value="">No imported bitmaps</option>
                 </select>
               </label>
               <label class="toggle"><input id="importMirroredSkin" type="checkbox"> Apply as mirrored half UV</label>
               <label>Bitmap Angle <input id="skinAngle" type="range" min="-180" max="180" step="1" value="0"><input id="skinAngleValue" type="number" min="-180" max="180" step="1" value="0"></label>
+              <div class="bitmap-target-grid">
+                <button id="applyShelfFaceBtn" class="primary">Apply To Face</button>
+                <button id="applyShelfTopBtn">Top</button>
+                <button id="applyShelfBottomBtn">Bottom</button>
+                <button id="applyShelfBackBtn">Back</button>
+              </div>
               <div class="button-grid compact-actions">
-                <button id="applyShelfFaceBtn">Use On Selected Face</button>
-                <button id="applyShelfTopBtn">Use On Top</button>
-                <button id="applyShelfBottomBtn">Use On Bottom</button>
-                <button id="applyShelfBackBtn">Use On Back</button>
                 <button id="clearBitmapShelfBtn">Clear Shelf</button>
               </div>
             </section>

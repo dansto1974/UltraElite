@@ -439,6 +439,141 @@ h3 {
   grid-template-columns: 1fr 1fr;
 }
 
+.asset-filter-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.asset-filter-grid label {
+  margin-top: 0;
+}
+
+.asset-import-row {
+  margin-top: 8px;
+}
+
+.shelf-select-fallback {
+  display: none !important;
+}
+
+.bitmap-asset-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 7px;
+  max-height: 260px;
+  overflow: auto;
+  padding: 2px;
+}
+
+.bitmap-asset-empty {
+  grid-column: 1 / -1;
+  min-height: 4.8rem;
+  display: grid;
+  place-items: center;
+  border: 1px dashed rgba(81, 255, 74, .18);
+  border-radius: 7px;
+  color: var(--muted);
+  font-size: .62rem;
+  line-height: 1.25;
+  text-align: center;
+  text-transform: uppercase;
+  padding: .65rem;
+}
+
+.bitmap-asset-card {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: 72px auto auto;
+  gap: 3px;
+  padding: 4px;
+  border-radius: 7px;
+  text-align: left;
+  background: rgba(0, 0, 0, .34);
+}
+
+.bitmap-asset-card.selected {
+  border-color: var(--yellow);
+  background: rgba(255, 217, 54, .13);
+  box-shadow: 0 0 16px rgba(255, 217, 54, .13);
+}
+
+.bitmap-asset-thumb {
+  min-width: 0;
+  width: 100%;
+  height: 72px;
+  display: block;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 5px;
+  background:
+    linear-gradient(45deg, rgba(255, 255, 255, .07) 25%, transparent 25% 75%, rgba(255, 255, 255, .07) 75%),
+    linear-gradient(45deg, rgba(255, 255, 255, .07) 25%, transparent 25% 75%, rgba(255, 255, 255, .07) 75%),
+    rgba(0, 0, 0, .52);
+  background-position: 0 0, 6px 6px, 0 0;
+  background-size: 12px 12px, 12px 12px, auto;
+}
+
+.bitmap-asset-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: auto;
+}
+
+.bitmap-asset-title,
+.bitmap-asset-meta {
+  min-width: 0;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bitmap-asset-title {
+  color: var(--text);
+  font-size: .62rem;
+  text-transform: uppercase;
+}
+
+.bitmap-asset-meta {
+  color: var(--muted);
+  font-size: .54rem;
+}
+
+.bitmap-asset-tag {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  max-width: calc(100% - 14px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: 1px solid rgba(0, 0, 0, .42);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, .72);
+  color: var(--yellow);
+  padding: .08rem .22rem;
+  font-size: .5rem;
+  line-height: 1.15;
+}
+
+.bitmap-target-grid {
+  display: grid;
+  grid-template-columns: 1.3fr repeat(3, .7fr);
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.bitmap-target-grid button {
+  min-width: 0;
+  padding-left: .25rem;
+  padding-right: .25rem;
+}
+
 .skin-import-grid {
   display: grid;
   grid-template-columns: 1fr;
