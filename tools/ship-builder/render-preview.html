@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ultra Elite Builder Render Preview</title>
+  <link rel="stylesheet" href="render-preview.css">
+</head>
+<body data-ultra-elite-mode="render-bench">
+  <canvas id="gamePreviewCanvas" width="900" height="420"></canvas>
+  <div id="previewStatus">Loading game renderer...</div>
+
+  <div class="game-stubs" aria-hidden="true">
+    <canvas id="space" width="16" height="16"></canvas>
+    <canvas id="scanner" width="16" height="16"></canvas>
+    <canvas id="foreAftRadar" width="16" height="16"></canvas>
+    <div id="panelBody"></div>
+    <div id="sidePanel"></div>
+    <button id="panelToggle"></button>
+    <div id="commsLog"></div>
+    <div id="message"></div>
+  </div>
+
+  <script>
+    window.addEventListener("error", (event) => {
+      const status = document.getElementById("previewStatus");
+      if (status) status.textContent = `${event.message} @ ${event.filename}:${event.lineno}`;
+    });
+  </script>
+  <script src="../../src/generated/model-library.js"></script>
+  <script src="../../src/generated/bitmap-skins.js"></script>
+  <script src="../../src/main.js"></script>
+  <script src="render-preview.js"></script>
+</body>
+</html>

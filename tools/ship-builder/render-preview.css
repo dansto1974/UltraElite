@@ -1,0 +1,39 @@
+:root {
+  color-scheme: dark;
+  --text: #55ff4e;
+  --muted: rgba(183, 220, 175, .76);
+  font-family: "Andale Mono", "Menlo", "Consolas", monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #000;
+  color: var(--text);
+}
+
+#gamePreviewCanvas {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+}
+
+#previewStatus {
+  position: absolute;
+  left: 8px;
+  bottom: 7px;
+  padding: .24rem .36rem;
+  border: 1px solid rgba(85, 255, 78, .2);
+  background: rgba(0, 0, 0, .72);
+  color: var(--muted);
+  font-size: .62rem;
+  text-transform: uppercase;
+}
+
+.game-stubs {
+  display: none;
+}

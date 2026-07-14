@@ -16020,8 +16020,22 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (!targetCtx) return null;
       const w = canvas.width || canvas.clientWidth || 1;
       const h = canvas.height || canvas.clientHeight || 1;
-      const modelName = MODELS[opts.model] ? opts.model : "cobra";
-      const model = MODELS[modelName];
+      let modelName = typeof opts.model === "string" && opts.model ? opts.model : "cobra";
+      let model = null;
+      const customBlueprint = opts.blueprint && Array.isArray(opts.blueprint.verts) && Array.isArray(opts.blueprint.edges)
+        ? opts.blueprint
+        : null;
+      if (customBlueprint) {
+        try {
+          model = buildBlueprint(cloneGeneratedModelBlueprint(customBlueprint));
+        } catch (error) {
+          console.warn(`Ultra Elite render bench custom blueprint failed for ${modelName}`, error);
+        }
+      }
+      if (!model) {
+        modelName = MODELS[opts.model] ? opts.model : "cobra";
+        model = MODELS[modelName];
+      }
       const previousFx = game.fxLevel;
       const previousMode = game.graphicsMode;
       const previousPerformance = { ...(game.performance || {}) };
@@ -16094,8 +16108,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         rot: Number(opts.yaw) || 0,
         pitch: Number(opts.pitch) || 0,
         roll: Number(opts.roll) || 0,
-        color: modelGameMeta(modelName).baseColor || shipColor(modelName, false),
-        role: opts.role || previewDecalRole(modelName),
+        color: opts.baseColor || modelGameMeta(modelName).baseColor || shipColor(modelName, false),
+        role: opts.role || opts.decalRole || previewDecalRole(modelName),
         decalSeed: hash32(`bench:${modelName}`),
         hp: 100,
         maxHp: 100,

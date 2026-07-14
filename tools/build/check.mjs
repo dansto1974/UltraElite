@@ -20,6 +20,8 @@ const files = {
   renderBenchHtml: path.join(root, "tools/render-bench/index.html"),
   renderQaHtml: path.join(root, "tools/render-qa/index.html"),
   renderQaJs: path.join(root, "tools/render-qa/render-qa.js"),
+  builderRenderPreviewHtml: path.join(root, "tools/ship-builder/render-preview.html"),
+  builderRenderPreviewJs: path.join(root, "tools/ship-builder/render-preview.js"),
   generatedModels: path.join(root, "src/generated/model-library.js"),
   generatedSkins: path.join(root, "src/generated/bitmap-skins.js"),
 };
@@ -45,6 +47,8 @@ const localServer = read(files.localServer);
 const renderBenchHtml = read(files.renderBenchHtml);
 const renderQaHtml = read(files.renderQaHtml);
 const renderQaJs = read(files.renderQaJs);
+const builderRenderPreviewHtml = read(files.builderRenderPreviewHtml);
+const builderRenderPreviewJs = read(files.builderRenderPreviewJs);
 const packageJson = JSON.parse(read(files.packageJson));
 const readme = read(files.readme);
 
@@ -158,6 +162,7 @@ if (!fs.existsSync(files.builderModels)) {
 
 new Function(js);
 new Function(renderQaJs);
+new Function(builderRenderPreviewJs);
 new Function(read(files.builderModels));
 new Function(read(files.generatedModels));
 new Function(read(files.generatedSkins));
@@ -201,8 +206,15 @@ function assertGeneratedAssetsBeforeMain(html, label) {
 
 assertGeneratedAssetsBeforeMain(renderBenchHtml, "Render bench");
 assertGeneratedAssetsBeforeMain(renderQaHtml, "Render QA");
+assertGeneratedAssetsBeforeMain(builderRenderPreviewHtml, "Ship Builder game-render preview");
 if (!renderQaJs.includes("window.UltraEliteRenderBench") || !renderQaJs.includes("api.renderFrame")) {
   throw new Error("Render QA must use the shared UltraEliteRenderBench renderer hook.");
+}
+if (!builderRenderPreviewJs.includes("window.UltraEliteRenderBench") || !builderRenderPreviewJs.includes("blueprint: payload.blueprint")) {
+  throw new Error("Ship Builder game-render preview must use the shared UltraEliteRenderBench renderer hook with a builder blueprint.");
+}
+if (!js.includes("const customBlueprint = opts.blueprint") || !js.includes("buildBlueprint(cloneGeneratedModelBlueprint(customBlueprint))")) {
+  throw new Error("Render bench hook must accept custom builder blueprints for Ship Builder game-render preview.");
 }
 
 function cleanBitmapKey(value) {

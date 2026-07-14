@@ -308,9 +308,17 @@
             </label>
             <button id="resetViewBtn">Reset View</button>
             <button id="fitViewBtn">Fit</button>
+            <button id="syncGamePreviewBtn">Sync Game Renderer</button>
           </div>
         </div>
         <canvas id="mainView" width="1120" height="680"></canvas>
+        <section class="game-preview-panel">
+          <header>
+            <h3>Game Renderer Mirror</h3>
+            <span id="gamePreviewReadout">Waiting for renderer...</span>
+          </header>
+          <iframe id="gamePreviewFrame" title="Game renderer mirror" src="render-preview.html"></iframe>
+        </section>
         <div class="ortho-grid">
           <article>
             <h3>Top X/Z</h3>

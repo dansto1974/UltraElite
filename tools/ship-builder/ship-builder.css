@@ -503,12 +503,42 @@ canvas {
 
 #mainView {
   flex: 1 1 auto;
-  min-height: 280px;
+  min-height: 230px;
   height: auto;
   cursor: grab;
 }
 
 #mainView:active { cursor: grabbing; }
+
+.game-preview-panel {
+  flex: 0 0 190px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 5px;
+  margin-top: 7px;
+  min-height: 0;
+}
+
+.game-preview-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.game-preview-panel span {
+  color: var(--muted);
+  font-size: .6rem;
+  text-transform: uppercase;
+}
+
+.game-preview-panel iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 154px;
+  border: 1px solid rgba(81, 255, 74, .2);
+  background: #000;
+}
 
 .ortho-grid {
   flex: 0 0 auto;

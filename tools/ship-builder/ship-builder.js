@@ -41,6 +41,9 @@ const els = {
   exportText: document.getElementById("exportText"),
   importText: document.getElementById("importText"),
   mainView: document.getElementById("mainView"),
+  gamePreviewFrame: document.getElementById("gamePreviewFrame"),
+  gamePreviewReadout: document.getElementById("gamePreviewReadout"),
+  syncGamePreviewBtn: document.getElementById("syncGamePreviewBtn"),
   xSlider: document.getElementById("xSlider"),
   ySlider: document.getElementById("ySlider"),
   zSlider: document.getElementById("zSlider"),
@@ -112,6 +115,7 @@ const state = {
 const TEMPLATE_SIZE = 400;
 const TEMPLATE_MAX_SIZE = 600;
 const BITMAP_FACE_SIDES = new Set(["top", "bottom", "back"]);
+let gamePreviewTimer = 0;
 
 function vec(x = 0, y = 0, z = 0) { return { x, y, z }; }
 function add(a, b) { return vec(a.x + b.x, a.y + b.y, a.z + b.z); }
@@ -2109,6 +2113,39 @@ function renderAll() {
   renderMain();
   document.querySelectorAll(".ortho-grid canvas").forEach((canvas) => drawOrthoCanvas(canvas, canvas.dataset.view));
   updateExport();
+  scheduleGamePreviewSync();
+}
+
+function gamePreviewPayload() {
+  return {
+    id: templateShipId(),
+    name: els.shipName.value.trim() || templateShipId(),
+    blueprint: derivedBlueprint(),
+    gameMeta: gameMetadata(),
+    view: { rx: state.view.rx, ry: state.view.ry, roll: 0 },
+    mode: "solid",
+    quality: "full",
+    targetScale: .56
+  };
+}
+
+function syncGamePreview() {
+  const frame = els.gamePreviewFrame;
+  if (!frame?.contentWindow) return;
+  try {
+    frame.contentWindow.postMessage({
+      type: "ultra-elite-render-preview",
+      payload: gamePreviewPayload()
+    }, "*");
+    if (els.gamePreviewReadout) els.gamePreviewReadout.textContent = `${templateShipId().toUpperCase()} SENT TO GAME RENDERER.`;
+  } catch (error) {
+    if (els.gamePreviewReadout) els.gamePreviewReadout.textContent = `GAME RENDER SYNC FAILED: ${error.message}`;
+  }
+}
+
+function scheduleGamePreviewSync(delay = 180) {
+  clearTimeout(gamePreviewTimer);
+  gamePreviewTimer = setTimeout(syncGamePreview, delay);
 }
 
 function updateUi() {
@@ -3053,6 +3090,12 @@ function bindEvents() {
     state.view.rx = -0.35; state.view.ry = 0.72; fitView(); renderAll();
   });
   document.getElementById("fitViewBtn").addEventListener("click", () => { fitView(); renderAll(); });
+  els.syncGamePreviewBtn?.addEventListener("click", syncGamePreview);
+  window.addEventListener("message", (event) => {
+    if (event.data?.type !== "ultra-elite-render-preview-ready") return;
+    if (els.gamePreviewReadout) els.gamePreviewReadout.textContent = "GAME RENDERER READY.";
+    syncGamePreview();
+  });
   document.getElementById("addPointBtn").addEventListener("click", () => {
     const v = addPointPair(60, 0, 0);
     selectVertex(v.id);
