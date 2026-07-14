@@ -152,15 +152,37 @@ function sourceImageProjection(data) {
     n = ((n + 180) % 360 + 360) % 360 - 180;
     return Math.abs(n) < .0001 ? null : Math.round(n * 100) / 100;
   };
+  const cleanFaceDecal = (decal) => {
+    const key = cleanBitmapKey(decal?.key);
+    if (!key) return null;
+    const clamp01 = (value, fallback) => Math.max(0, Math.min(1, Number.isFinite(Number(value)) ? Number(value) : fallback));
+    const scale = Math.max(.02, Math.min(2, Number.isFinite(Number(decal?.scale)) ? Number(decal.scale) : .35));
+    const alpha = clamp01(decal?.alpha, .92);
+    const angle = cleanAngle(decal?.angle) || 0;
+    return {
+      key,
+      x: round(clamp01(decal?.x, .5), 3),
+      y: round(clamp01(decal?.y, .5), 3),
+      scale: round(scale, 3),
+      ...(angle ? { angle } : {}),
+      ...(alpha < .999 ? { alpha: round(alpha, 3) } : {})
+    };
+  };
   const faceAngles = sourceFaces.map((face) => cleanAngle(face?.bitmapAngle));
+  const faceMirrorX = sourceFaces.map((face) => !!face?.bitmapMirrorX);
+  const faceDecals = sourceFaces.map((face) => Array.isArray(face?.bitmapDecals)
+    ? face.bitmapDecals.map(cleanFaceDecal).filter(Boolean)
+    : null);
   const primaryAxis = data.id === "thargoid" || data.id === "thargon" ? "x" : "y";
   const imageProjection = {
     ...(primaryAxis !== "y" ? { primaryAxis } : {}),
     ...(faceSides.some(Boolean) ? { faceSides } : {}),
     ...(faceTextures.some(Boolean) ? { faceTextures } : {}),
-    ...(faceAngles.some((angle) => angle != null) ? { faceAngles } : {})
+    ...(faceAngles.some((angle) => angle != null) ? { faceAngles } : {}),
+    ...(faceMirrorX.some(Boolean) ? { faceMirrorX } : {}),
+    ...(faceDecals.some((decals) => decals?.length) ? { faceDecals } : {})
   };
-  return imageProjection.primaryAxis || imageProjection.faceSides || imageProjection.faceTextures || imageProjection.faceAngles ? imageProjection : null;
+  return imageProjection.primaryAxis || imageProjection.faceSides || imageProjection.faceTextures || imageProjection.faceAngles || imageProjection.faceMirrorX || imageProjection.faceDecals ? imageProjection : null;
 }
 
 function deriveBlueprint(data) {
@@ -247,7 +269,7 @@ function deriveBlueprint(data) {
     edgeVisibility: edges.map(() => 31),
     normals,
     details,
-    ...(imageProjection.primaryAxis || imageProjection.faceSides || imageProjection.faceTextures || imageProjection.faceAngles ? { imageProjection } : {}),
+    ...(imageProjection.primaryAxis || imageProjection.faceSides || imageProjection.faceTextures || imageProjection.faceAngles || imageProjection.faceMirrorX || imageProjection.faceDecals ? { imageProjection } : {}),
     gameMeta: data.gameMeta || {}
   };
 }

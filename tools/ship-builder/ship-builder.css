@@ -415,6 +415,42 @@ h3 {
   background: rgba(0, 0, 0, .22);
 }
 
+.paint-subtabs {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+  margin-top: 7px;
+  padding: 4px;
+  border: 1px solid rgba(81, 255, 74, .16);
+  border-radius: 8px;
+  background: rgba(4, 10, 8, .96);
+}
+
+.paint-subtab-btn {
+  min-width: 0;
+  padding: .38rem .18rem;
+  border-radius: 6px;
+  font-size: .56rem;
+  line-height: 1;
+}
+
+.paint-subtab-btn.active {
+  border-color: var(--yellow);
+  color: var(--yellow);
+  background: rgba(255, 217, 54, .14);
+}
+
+.paint-tab-panel {
+  display: none;
+}
+
+.paint-tab-panel.active {
+  display: block;
+}
+
 .paint-group,
 .local-toolbox {
   margin-top: 8px;
@@ -463,7 +499,7 @@ h3 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
   margin-top: 7px;
-  max-height: 260px;
+  max-height: 390px;
   overflow: auto;
   padding: 2px;
 }
@@ -563,7 +599,7 @@ h3 {
 
 .bitmap-target-grid {
   display: grid;
-  grid-template-columns: 1.3fr repeat(3, .7fr);
+  grid-template-columns: 1.2fr repeat(3, .65fr);
   gap: 5px;
   margin-top: 6px;
 }
@@ -580,6 +616,33 @@ h3 {
   border: 1px solid rgba(81, 255, 74, .16);
   border-radius: 7px;
   background: rgba(0, 0, 0, .22);
+}
+
+.decal-layer-tool {
+  margin-top: 7px;
+  padding: .42rem;
+  border: 1px solid rgba(255, 217, 54, .18);
+  border-radius: 7px;
+  background: rgba(0, 0, 0, .22);
+}
+
+.decal-layer-tool h3 {
+  font-size: .62rem;
+}
+
+.decal-control-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.decal-control-grid label {
+  grid-template-columns: 4.2rem minmax(0, 1fr);
+}
+
+.decal-control-grid input[type="range"] {
+  width: 100%;
 }
 
 .uv-orientation-tool h3 {
@@ -743,12 +806,16 @@ canvas {
   background: #000;
 }
 
-.preview-stack.is-game-overlay iframe {
+.preview-stack.is-game-renderer iframe {
   display: block;
 }
 
-.preview-stack.is-game-overlay canvas {
+.preview-stack.is-game-renderer canvas {
   background: transparent;
+}
+
+.preview-stack.is-game-only canvas {
+  opacity: 0;
 }
 
 .preview-stack.is-builder-diagnostic {
@@ -780,6 +847,17 @@ canvas {
   color: var(--muted);
   font-size: .6rem;
   text-transform: uppercase;
+}
+
+.renderer-benchmark-frame {
+  position: fixed;
+  left: -1200px;
+  top: 0;
+  width: 900px;
+  height: 420px;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .ortho-grid {

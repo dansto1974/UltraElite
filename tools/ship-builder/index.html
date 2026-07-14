@@ -123,56 +123,83 @@
           <section class="template-tools">
             <h2>Paint / UV</h2>
             <div id="skinReadout" class="readout compact-readout">No skin bitmaps loaded.</div>
+            <div id="selectedBitmapReadout" class="readout compact-readout">No UV selected.</div>
 
-            <section class="local-toolbox">
-              <h2>Project Assets</h2>
-              <div id="localServerReadout" class="readout compact-readout">Checking local server...</div>
-              <div class="asset-filter-grid">
-                <label>Category
-                  <select id="assetShelfCategory">
-                    <option value="all">All assets</option>
+            <nav class="paint-subtabs" aria-label="Paint tools">
+              <button class="paint-subtab-btn active" data-paint-tab-target="assets" type="button">Assets</button>
+              <button class="paint-subtab-btn" data-paint-tab-target="face" type="button">Face</button>
+              <button class="paint-subtab-btn" data-paint-tab-target="decals" type="button">Decals</button>
+              <button class="paint-subtab-btn" data-paint-tab-target="templates" type="button">Templates</button>
+              <button class="paint-subtab-btn" data-paint-tab-target="project" type="button">Project</button>
+            </nav>
+
+            <section class="paint-tab-panel active" data-paint-tab-panel="assets">
+              <section class="local-toolbox">
+                <h2>Project Assets</h2>
+                <div id="localServerReadout" class="readout compact-readout">Checking local server...</div>
+                <div class="asset-filter-grid">
+                  <label>Category
+                    <select id="assetShelfCategory">
+                      <option value="all">All assets</option>
+                    </select>
+                  </label>
+                  <label>Kind
+                    <select id="assetShelfKind">
+                      <option value="all">All UVs</option>
+                      <option value="face">Face tiles</option>
+                      <option value="top">Top skins</option>
+                      <option value="bottom">Bottom skins</option>
+                      <option value="back">Back skins</option>
+                      <option value="side">Any side skin</option>
+                      <option value="decal">Decals</option>
+                      <option value="imported">Imported</option>
+                    </select>
+                  </label>
+                  <label>Model
+                    <select id="assetShelfModel">
+                      <option value="all">All models</option>
+                      <option value="current">Current model</option>
+                    </select>
+                  </label>
+                  <label>Search
+                    <input id="assetShelfSearch" type="search" spellcheck="false" placeholder="panel, entrance, top">
+                  </label>
+                </div>
+                <div class="button-grid compact-actions">
+                  <button id="refreshAssetShelfBtn">Load Matching UVs</button>
+                  <button id="reloadSkinBitmapsBtn">Reload Model Skins</button>
+                </div>
+              </section>
+
+              <section class="paint-group">
+                <h2>UV Picker</h2>
+                <div id="bitmapAssetGrid" class="bitmap-asset-grid" aria-label="Bitmap UV assets"></div>
+                <label class="asset-import-row">Add PNGs <input id="importBitmapShelf" type="file" accept="image/png,image/*" multiple></label>
+                <label class="shelf-select-fallback">Selected Bitmap
+                  <select id="bitmapShelfSelector">
+                    <option value="">No imported bitmaps</option>
                   </select>
                 </label>
-                <label>Kind
-                  <select id="assetShelfKind">
-                    <option value="all">All UVs</option>
-                    <option value="face">Face tiles</option>
-                    <option value="top">Top skins</option>
-                    <option value="bottom">Bottom skins</option>
-                    <option value="back">Back skins</option>
-                    <option value="side">Any side skin</option>
-                    <option value="imported">Imported</option>
-                  </select>
-                </label>
-                <label>Model
-                  <select id="assetShelfModel">
-                    <option value="all">All models</option>
-                    <option value="current">Current model</option>
-                  </select>
-                </label>
-                <label>Search
-                  <input id="assetShelfSearch" type="search" spellcheck="false" placeholder="panel, entrance, top">
-                </label>
-              </div>
-              <div class="button-grid compact-actions">
-                <button id="refreshAssetShelfBtn">Load Matching UVs</button>
-                <button id="reloadSkinBitmapsBtn">Reload Model Skins</button>
-              </div>
+                <div class="button-grid compact-actions">
+                  <button id="clearBitmapShelfBtn">Clear Shelf</button>
+                </div>
+              </section>
             </section>
 
-            <section class="paint-group">
-              <h2>UV Picker</h2>
-              <div id="selectedBitmapReadout" class="readout compact-readout">No UV selected.</div>
-              <div id="bitmapAssetGrid" class="bitmap-asset-grid" aria-label="Bitmap UV assets"></div>
-              <label class="asset-import-row">Add PNGs <input id="importBitmapShelf" type="file" accept="image/png,image/*" multiple></label>
-              <label class="shelf-select-fallback">Selected Bitmap
-                <select id="bitmapShelfSelector">
-                  <option value="">No imported bitmaps</option>
-                </select>
-              </label>
-              <label class="toggle"><input id="importMirroredSkin" type="checkbox"> Apply as mirrored half UV</label>
-              <section class="uv-orientation-tool" aria-label="Face UV orientation">
-                <h3>Face UV Orientation</h3>
+            <section class="paint-tab-panel" data-paint-tab-panel="face">
+              <section class="paint-group">
+                <h2>Apply Selected UV</h2>
+                <label class="toggle"><input id="importMirroredSkin" type="checkbox"> Apply as mirrored half UV</label>
+                <div class="bitmap-target-grid">
+                  <button id="applyShelfFaceBtn" class="primary">Apply To Face</button>
+                  <button id="applyShelfTopBtn">Top</button>
+                  <button id="applyShelfBottomBtn">Bottom</button>
+                  <button id="applyShelfBackBtn">Back</button>
+                </div>
+              </section>
+
+              <section class="uv-orientation-tool" aria-label="Face view and UV orientation">
+                <h3>Face View / UV Orientation</h3>
                 <label>Angle <input id="skinAngle" type="range" min="-180" max="180" step="1" value="0"><input id="skinAngleValue" type="number" min="-180" max="180" step="1" value="0"></label>
                 <div class="uv-rotate-grid">
                   <button type="button" class="uv-rotate-btn" data-uv-rotate="-90">90 CCW</button>
@@ -183,64 +210,88 @@
                   <button type="button" class="uv-rotate-btn" data-uv-rotate="90">90 CW</button>
                 </div>
                 <div class="uv-orient-actions">
-                  <button id="orientUvToViewBtn" type="button">Orient To View</button>
+                  <button id="orientUvToViewBtn" type="button">Face To View</button>
                   <button id="resetUvAngleBtn" type="button">Reset UV Angle</button>
                 </div>
               </section>
-              <div class="bitmap-target-grid">
-                <button id="applyShelfFaceBtn" class="primary">Apply To Face</button>
-                <button id="applyShelfTopBtn">Top</button>
-                <button id="applyShelfBottomBtn">Bottom</button>
-                <button id="applyShelfBackBtn">Back</button>
-              </div>
-              <div class="button-grid compact-actions">
-                <button id="clearBitmapShelfBtn">Clear Shelf</button>
-              </div>
+
+              <section class="paint-group">
+                <h2>Quick Import</h2>
+                <div class="skin-import-grid">
+                  <label>Top PNG <input id="importTopSkin" type="file" accept="image/png,image/*"></label>
+                  <label>Bottom PNG <input id="importBottomSkin" type="file" accept="image/png,image/*"></label>
+                  <label>Back PNG <input id="importBackSkin" type="file" accept="image/png,image/*"></label>
+                  <label>Selected Face PNG <input id="importFaceSkin" type="file" accept="image/png,image/*"></label>
+                </div>
+                <div class="button-grid compact-actions">
+                  <button id="clearFaceSkinBtn">Clear Selected Face Skin</button>
+                  <button id="clearImportedSkinsBtn">Clear Preview Skins</button>
+                </div>
+              </section>
             </section>
 
-            <section class="paint-group">
-              <h2>Quick Import</h2>
-              <div class="skin-import-grid">
-                <label>Top PNG <input id="importTopSkin" type="file" accept="image/png,image/*"></label>
-                <label>Bottom PNG <input id="importBottomSkin" type="file" accept="image/png,image/*"></label>
-                <label>Back PNG <input id="importBackSkin" type="file" accept="image/png,image/*"></label>
-                <label>Selected Face PNG <input id="importFaceSkin" type="file" accept="image/png,image/*"></label>
-              </div>
-              <div class="button-grid compact-actions">
-                <button id="clearFaceSkinBtn">Clear Selected Face Skin</button>
-                <button id="clearImportedSkinsBtn">Clear Preview Skins</button>
-              </div>
+            <section class="paint-tab-panel" data-paint-tab-panel="decals">
+              <section class="paint-group">
+                <h2>Add Decal</h2>
+                <div class="button-grid compact-actions">
+                  <button id="addShelfDecalBtn">Add Selected Decal To Face</button>
+                </div>
+              </section>
+
+              <section class="decal-layer-tool" aria-label="Face decal layer">
+                <h3>Face Decal Layer</h3>
+                <label>Layer
+                  <select id="faceDecalSelector">
+                    <option value="">No face decals</option>
+                  </select>
+                </label>
+                <div class="decal-control-grid">
+                  <label>X <input id="faceDecalX" type="range" min="0" max="1" step="0.01" value="0.5"></label>
+                  <label>Y <input id="faceDecalY" type="range" min="0" max="1" step="0.01" value="0.5"></label>
+                  <label>Scale <input id="faceDecalScale" type="range" min="0.04" max="1.5" step="0.01" value="0.35"></label>
+                  <label>Angle <input id="faceDecalAngle" type="number" min="-180" max="180" step="1" value="0"></label>
+                  <label>Alpha <input id="faceDecalAlpha" type="range" min="0" max="1" step="0.01" value="0.92"></label>
+                </div>
+                <div class="button-grid compact-actions">
+                  <button id="removeFaceDecalBtn" type="button">Remove Decal</button>
+                  <button id="clearFaceDecalsBtn" type="button">Clear Face Decals</button>
+                </div>
+              </section>
             </section>
 
-            <section class="paint-group">
-              <h2>Write To Project</h2>
-              <div class="button-grid compact-actions">
-                <button id="saveModelAssetBtn">Update Model</button>
-                <button id="uploadFaceSkinBtn">Upload Selected Face</button>
-                <button id="uploadTopSkinBtn">Upload Top Skin</button>
-                <button id="uploadBottomSkinBtn">Upload Bottom Skin</button>
-                <button id="uploadBackSkinBtn">Upload Back Skin</button>
-                <button id="rebuildAssetsBtn">Rebuild Game Files</button>
-              </div>
+            <section class="paint-tab-panel" data-paint-tab-panel="templates">
+              <section class="paint-group">
+                <h2>Templates</h2>
+                <label class="toggle"><input id="mirrorHalfSkins" type="checkbox" checked> Half-width side templates</label>
+                <label>Selected Face Bitmap Side
+                  <select id="templateFaceSide">
+                    <option value="auto">Auto from normal</option>
+                    <option value="top">Top</option>
+                    <option value="bottom">Bottom</option>
+                    <option value="back">Back</option>
+                  </select>
+                </label>
+                <div class="button-grid compact-actions">
+                  <button id="downloadTopTemplateBtn">Top PNG</button>
+                  <button id="downloadBottomTemplateBtn">Bottom PNG</button>
+                  <button id="downloadBackTemplateBtn">Back PNG</button>
+                  <button id="downloadFaceTemplateBtn">Selected Face</button>
+                </div>
+              </section>
             </section>
 
-            <section class="paint-group">
-              <h2>Templates</h2>
-              <label class="toggle"><input id="mirrorHalfSkins" type="checkbox" checked> Half-width side templates</label>
-            <label>Selected Face Bitmap Side
-              <select id="templateFaceSide">
-                <option value="auto">Auto from normal</option>
-                <option value="top">Top</option>
-                <option value="bottom">Bottom</option>
-                <option value="back">Back</option>
-              </select>
-            </label>
-            <div class="button-grid compact-actions">
-              <button id="downloadTopTemplateBtn">Top PNG</button>
-              <button id="downloadBottomTemplateBtn">Bottom PNG</button>
-              <button id="downloadBackTemplateBtn">Back PNG</button>
-              <button id="downloadFaceTemplateBtn">Selected Face</button>
-            </div>
+            <section class="paint-tab-panel" data-paint-tab-panel="project">
+              <section class="paint-group">
+                <h2>Write To Project</h2>
+                <div class="button-grid compact-actions">
+                  <button id="saveModelAssetBtn">Update Model</button>
+                  <button id="uploadFaceSkinBtn">Upload Selected Face</button>
+                  <button id="uploadTopSkinBtn">Upload Top Skin</button>
+                  <button id="uploadBottomSkinBtn">Upload Bottom Skin</button>
+                  <button id="uploadBackSkinBtn">Upload Back Skin</button>
+                  <button id="rebuildAssetsBtn">Rebuild Game Files</button>
+                </div>
+              </section>
             </section>
           </section>
         </section>
@@ -357,6 +408,7 @@
             <label class="view-mode-label">View
               <select id="previewRenderMode">
                 <optgroup label="Trusted">
+                  <option value="gameOnly">Game Renderer Only</option>
                   <option value="gameOverlay">Game Renderer + Overlay</option>
                 </optgroup>
                 <optgroup label="Diagnostics">
@@ -370,6 +422,8 @@
             <button id="resetViewBtn">Reset View</button>
             <button id="fitViewBtn">Fit</button>
             <button id="syncGamePreviewBtn">Refresh Renderer</button>
+            <button id="benchmarkRendererBtn">Benchmark</button>
+            <button id="spinPreviewBtn">Pop Out Spin</button>
           </div>
         </div>
         <div class="preview-trust-strip">

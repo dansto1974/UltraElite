@@ -2082,6 +2082,8 @@
       const faceSides = Array.isArray(options.faceSides) ? options.faceSides : [];
       const faceTextures = Array.isArray(options.faceTextures) ? options.faceTextures : [];
       const faceAngles = Array.isArray(options.faceAngles) ? options.faceAngles : [];
+      const faceMirrorX = Array.isArray(options.faceMirrorX) ? options.faceMirrorX : [];
+      const faceDecals = Array.isArray(options.faceDecals) ? options.faceDecals : [];
       const hasProjectionFaceSlot = (items, index) => Array.isArray(items) && Object.prototype.hasOwnProperty.call(items, index);
       const validFaceSide = (side) => (side === "top" || side === "bottom" || side === "back") ? side : "";
       const cleanFaceTextureKey = (value) => String(value || "").trim().replace(/[^a-zA-Z0-9_-]+/g, "_").replace(/^_+|_+$/g, "");
@@ -2090,6 +2092,20 @@
         n = ((n + 180) % 360 + 360) % 360 - 180;
         return Math.abs(n) < .0001 ? 0 : n;
       };
+      const cleanFaceDecals = (items) => Array.isArray(items)
+        ? items.map((decal) => {
+          const key = cleanFaceTextureKey(decal?.key);
+          if (!key) return null;
+          return {
+            key,
+            x: clamp(Number.isFinite(Number(decal?.x)) ? Number(decal.x) : .5, 0, 1),
+            y: clamp(Number.isFinite(Number(decal?.y)) ? Number(decal.y) : .5, 0, 1),
+            scale: clamp(Number.isFinite(Number(decal?.scale)) ? Number(decal.scale) : .35, .02, 2),
+            angle: cleanFaceAngle(decal?.angle),
+            alpha: clamp(Number.isFinite(Number(decal?.alpha)) ? Number(decal.alpha) : .92, 0, 1)
+          };
+        }).filter(Boolean)
+        : [];
       const rotateFaceUv = (uv, width, height, angleDeg) => {
         if (!angleDeg) return uv;
         const a = angleDeg * Math.PI / 180;
@@ -2182,8 +2198,11 @@
         const faceKey = hasProjectionFaceSlot(faceTextures, faceIndex)
           ? cleanFaceTextureKey(faceTextures[faceIndex])
           : cleanFaceTextureKey(faceTextures[normalIndex]);
+        const decalsForFace = hasProjectionFaceSlot(faceDecals, faceIndex)
+          ? cleanFaceDecals(faceDecals[faceIndex])
+          : cleanFaceDecals(faceDecals[normalIndex]);
         const faceTextureUv = (() => {
-          if (!faceKey || uvPolygonArea(uv) >= 1) return uv;
+          if (!(faceKey || decalsForFace.length) || uvPolygonArea(uv) >= 1) return uv;
           let tfp = fp;
           let tFlipU = flipU;
           let tFlipV = flipV;
@@ -2208,7 +2227,10 @@
         const faceAngle = hasProjectionFaceSlot(faceAngles, faceIndex)
           ? cleanFaceAngle(faceAngles[faceIndex])
           : cleanFaceAngle(faceAngles[normalIndex]);
-        if (faceKey) {
+        const mirrorFaceTextureX = hasProjectionFaceSlot(faceMirrorX, faceIndex)
+          ? !!faceMirrorX[faceIndex]
+          : !!faceMirrorX[normalIndex];
+        if (faceKey || decalsForFace.length) {
           const xs = faceTextureUv.map((p) => p[0]);
           const ys = faceTextureUv.map((p) => p[1]);
           const minFaceX = Math.min(...xs);
@@ -2227,7 +2249,7 @@
           baseH: fp.h,
           centerlineX: fp.centerlineX(flipU),
           uv,
-          ...(faceKey ? { faceKey, faceUv, faceBaseW, faceBaseH, ...(faceAngle ? { faceAngle } : {}) } : {}),
+          ...((faceKey || decalsForFace.length) ? { ...(faceKey ? { faceKey } : {}), faceUv, faceBaseW, faceBaseH, ...(faceAngle ? { faceAngle } : {}), ...(mirrorFaceTextureX ? { faceMirrorX: true } : {}), ...(decalsForFace.length ? { faceDecals: decalsForFace } : {}) } : {}),
           squareUv: face.map((i) => {
             const p = verts[i];
             if (primaryAxis === "x" && side !== "back") return uvFromAxes(p, 1, 2, side === "bottom", true);
@@ -10574,6 +10596,24 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return Object.keys(out).length ? out : null;
     }
 
+    function getGeneratedBitmapDecals(key = "generated") {
+      const decals = globalThis.ULTRA_ELITE_BITMAP_DECALS;
+      if (!decals || typeof decals !== "object") return null;
+      const out = {};
+      for (const [decalKey, entry] of Object.entries(decals)) {
+        const url = typeof entry === "string" ? entry : entry?.src;
+        if (!url) continue;
+        const img = getProjectedImageDecalSource(`${key}:decal:${decalKey}:generated`, url, true);
+        if (img) out[decalKey] = img;
+      }
+      return Object.keys(out).length ? out : null;
+    }
+
+    function modelHasFaceDecals(modelName) {
+      const faceDecals = MODELS[modelName]?.imageProjection?.faceDecals;
+      return Array.isArray(faceDecals) && faceDecals.some((decals) => Array.isArray(decals) && decals.length);
+    }
+
     function generatedBitmapSkinMirrorX(modelName, side) {
       const entry = globalThis.ULTRA_ELITE_BITMAP_SKINS?.[modelName]?.[side];
       return !!(entry && typeof entry === "object" && entry.mirrorX);
@@ -10624,6 +10664,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function getEntityImageDecals(o) {
       if (game.fxLevel === "classic" || !o?.model) return null;
+      const hasFaceDecals = modelHasFaceDecals(o.model);
+      const generatedDecals = hasFaceDecals ? getGeneratedBitmapDecals(`bitmap-skin:${o.type || "mesh"}:${o.model}`) : null;
       if (TEST_BITMAP_SKINS_ALL_MESHES) {
         const role = bitmapSkinRole(o);
         const key = `bitmap-skin:${o.type || "mesh"}:${o.model}:${role}:${o.police ? 1 : 0}`;
@@ -10632,12 +10674,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const generatedBottom = getGeneratedBitmapSkin(o.model, "bottom", key);
         const generatedBack = getGeneratedBitmapSkin(o.model, "back", key);
         const generatedFaces = getGeneratedBitmapFaceSkins(o.model, key);
-        if (manifest || generatedTop || generatedBottom || generatedBack || generatedFaces) {
+        if (manifest || generatedTop || generatedBottom || generatedBack || generatedFaces || generatedDecals) {
           return {
             top: generatedTop,
             bottom: generatedBottom,
             back: generatedBack,
             faces: generatedFaces,
+            decals: generatedDecals,
             mirrorX: {
               top: generatedBitmapSkinMirrorX(o.model, "top"),
               bottom: generatedBitmapSkinMirrorX(o.model, "bottom"),
@@ -10660,6 +10703,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           if (imageDecalCache.size > 96) imageDecalCache.delete(imageDecalCache.keys().next().value);
         }
         return entry;
+      }
+      if (generatedDecals) {
+        return {
+          decals: generatedDecals,
+          alpha: .96,
+          replaceBaseTexture: false
+        };
       }
       if (o.type !== "ship") return null;
       const meta = HACK_PROJECT_X_SKIN_ALL_SHIPS ? {
@@ -10965,6 +11015,63 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return !!(img && img.width > 0 && img.height > 0 && (img.complete === undefined || img.complete || img.naturalWidth > 0));
     }
 
+    const faceDecalLayerCache = new Map();
+    function faceDecalLayerCanvas(img, decal, width, height) {
+      const w = Math.max(8, Math.round(width || DECAL_TEXTURE_SIZE));
+      const h = Math.max(8, Math.round(height || DECAL_TEXTURE_SIZE));
+      const key = [
+        decal.key,
+        w,
+        h,
+        Math.round((decal.x ?? .5) * 1000),
+        Math.round((decal.y ?? .5) * 1000),
+        Math.round((decal.scale ?? .35) * 1000),
+        Math.round((decal.angle || 0) * 100),
+        Math.round((decal.alpha ?? .92) * 1000)
+      ].join(":");
+      let layer = faceDecalLayerCache.get(key);
+      if (layer) return layer;
+      layer = document.createElement("canvas");
+      layer.width = w;
+      layer.height = h;
+      const tc = layer.getContext("2d");
+      const sourceW = img.naturalWidth || img.width || 1;
+      const sourceH = img.naturalHeight || img.height || 1;
+      const maxSide = Math.max(4, Math.min(w, h) * clamp(decal.scale ?? .35, .02, 2));
+      const aspect = sourceW / Math.max(1, sourceH);
+      const drawW = aspect >= 1 ? maxSide : maxSide * aspect;
+      const drawH = aspect >= 1 ? maxSide / aspect : maxSide;
+      tc.save();
+      tc.globalAlpha = clamp(decal.alpha ?? .92, 0, 1);
+      tc.translate(clamp(decal.x ?? .5, 0, 1) * w, clamp(decal.y ?? .5, 0, 1) * h);
+      tc.rotate((decal.angle || 0) * Math.PI / 180);
+      tc.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+      tc.restore();
+      faceDecalLayerCache.set(key, layer);
+      if (faceDecalLayerCache.size > 160) faceDecalLayerCache.delete(faceDecalLayerCache.keys().next().value);
+      return layer;
+    }
+
+    function drawFaceDecalLayers(targetCtx, item) {
+      const decals = item.imageProjection?.faceDecals;
+      if (!Array.isArray(decals) || !decals.length || !item.imageProjection?.faceUv?.length) return;
+      const images = item.imageDecals?.decals;
+      if (!images || typeof images !== "object") return;
+      const baseW = Math.max(8, item.imageProjection.faceBaseW || DECAL_TEXTURE_SIZE);
+      const baseH = Math.max(8, item.imageProjection.faceBaseH || DECAL_TEXTURE_SIZE);
+      for (const decal of decals) {
+        const img = images[decal.key];
+        if (!imageTextureReady(img)) continue;
+        const layer = faceDecalLayerCanvas(img, decal, baseW, baseH);
+        const uv = item.imageProjection.faceUv;
+        if (item.project && item.camVerts) {
+          drawUVLayerPersp(targetCtx, item, layer, 1, uv, false, 42, 5, "source-over");
+        } else {
+          drawUVLayer(targetCtx, item, layer, 1, uv, false, "source-over");
+        }
+      }
+    }
+
     function drawFaceTexture(targetCtx, item) {
       if (game.fxLevel === "classic") return;
       const b = polygonBounds(item.projected);
@@ -10994,13 +11101,28 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         }
       }
       if (faceImageReady && item.imageProjection?.faceUv?.length) {
-        const sx = faceImage.width / Math.max(1, item.imageProjection.faceBaseW || DECAL_TEXTURE_SIZE);
-        const sy = faceImage.height / Math.max(1, item.imageProjection.faceBaseH || DECAL_TEXTURE_SIZE);
-        const uv = item.imageProjection.faceUv.map(([u, v]) => [u * sx, v * sy]);
-        if (item.project && item.camVerts) {
-          drawUVLayerPersp(targetCtx, item, faceImage, item.imageDecals.alpha ?? .82, uv, false, 42, 5, "source-over");
+        const baseW = Math.max(1, item.imageProjection.faceBaseW || DECAL_TEXTURE_SIZE);
+        const baseH = Math.max(1, item.imageProjection.faceBaseH || DECAL_TEXTURE_SIZE);
+        if (item.imageProjection.faceMirrorX) {
+          drawMirroredImageDecalLayer(targetCtx, item, faceImage, item.imageDecals.alpha ?? .82, {
+            sourceUv: item.imageProjection.faceUv,
+            projectionBaseW: baseW,
+            projectionBaseH: baseH,
+            sx: faceImage.width / Math.max(1, baseW / 2),
+            sy: faceImage.height / baseH,
+            mid: baseW / 2,
+            angle: 0,
+            mirrorX: true
+          }, "source-over");
         } else {
-          drawUVLayer(targetCtx, item, faceImage, item.imageDecals.alpha ?? .82, uv, false, "source-over");
+          const sx = faceImage.width / baseW;
+          const sy = faceImage.height / baseH;
+          const uv = item.imageProjection.faceUv.map(([u, v]) => [u * sx, v * sy]);
+          if (item.project && item.camVerts) {
+            drawUVLayerPersp(targetCtx, item, faceImage, item.imageDecals.alpha ?? .82, uv, false, 42, 5, "source-over");
+          } else {
+            drawUVLayer(targetCtx, item, faceImage, item.imageDecals.alpha ?? .82, uv, false, "source-over");
+          }
         }
       } else if (projectionImageReady) {
         const img = item.imageDecals[item.imageProjection.side];
@@ -11016,6 +11138,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           }
         }
       }
+      drawFaceDecalLayers(targetCtx, item);
     }
 
     const glowSpriteCache = new Map();
@@ -15729,7 +15852,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const [a, b, c, d] = points;
       const bounds = polygonBounds(points);
       const span = Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY);
-      const centroid = { x: (a.x + b.x + c.x + d.x) / 4, y: (a.y + b.y + c.y + d.y) / 4 };
       const quadPoint = (u, v) => ({
         x: lerp(lerp(a.x, b.x, u), lerp(d.x, c.x, u), v),
         y: lerp(lerp(a.y, b.y, u), lerp(d.y, c.y, u), v)
@@ -15743,68 +15865,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ctx.closePath();
       };
 
-      // The opening itself: solid black slot with a faint blue force-field "seal".
       ctx.save();
       quadPath();
       ctx.clip();
-      ctx.fillStyle = "#000";
-      ctx.fillRect(bounds.minX - 6, bounds.minY - 6, bounds.maxX - bounds.minX + 12, bounds.maxY - bounds.minY + 12);
-      if (ultraFxEnabled()) {
-        // Slot-local hangar glimpse: textured wall/floor/ceiling panels sit behind the
-        // blue field, so from outside the entrance reads as a real station interior.
-        const tex = getStationTexture(station?.stationStyle || stationStyleForSystem(currentSystem()));
-        const texQuad = (p0, p1, p2, p3, alpha = .55, shade = "rgba(0,0,0,.15)") => {
-          ctx.save();
-          ctx.globalAlpha = alpha;
-          drawTexturedTriangle(ctx, tex, p0.x, p0.y, p1.x, p1.y, p2.x, p2.y, 0, 0, tex.width, 0, tex.width, tex.height);
-          drawTexturedTriangle(ctx, tex, p0.x, p0.y, p2.x, p2.y, p3.x, p3.y, 0, 0, tex.width, tex.height, 0, tex.height);
-          ctx.restore();
-          ctx.fillStyle = shade;
-          ctx.beginPath();
-          ctx.moveTo(p0.x, p0.y);
-          ctx.lineTo(p1.x, p1.y);
-          ctx.lineTo(p2.x, p2.y);
-          ctx.lineTo(p3.x, p3.y);
-          ctx.closePath();
-          ctx.fill();
-        };
-        const back = [.26, .22, .74, .78];
-        const b0 = quadPoint(back[0], back[1]);
-        const b1 = quadPoint(back[2], back[1]);
-        const b2 = quadPoint(back[2], back[3]);
-        const b3 = quadPoint(back[0], back[3]);
-        texQuad(quadPoint(.05, .05), quadPoint(.95, .05), b1, b0, .42, "rgba(0,0,0,.22)");
-        texQuad(quadPoint(.05, .95), b3, b2, quadPoint(.95, .95), .46, "rgba(0,0,0,.08)");
-        texQuad(quadPoint(.05, .05), b0, b3, quadPoint(.05, .95), .48, "rgba(0,0,0,.32)");
-        texQuad(b1, quadPoint(.95, .05), quadPoint(.95, .95), b2, .48, "rgba(0,0,0,.28)");
-        texQuad(b0, b1, b2, b3, .52, "rgba(0,0,0,.38)");
-
-        ctx.strokeStyle = "rgba(190,205,180,.16)";
-        ctx.lineWidth = Math.max(.7, span * .0032);
-        for (let i = 1; i < 5; i++) {
-          const t = i / 5;
-          const p0 = quadPoint(lerp(.07, back[0], t), lerp(.08, back[1], t));
-          const p1 = quadPoint(lerp(.93, back[2], t), lerp(.08, back[1], t));
-          const p2 = quadPoint(lerp(.07, back[0], t), lerp(.92, back[3], t));
-          const p3 = quadPoint(lerp(.93, back[2], t), lerp(.92, back[3], t));
-          ctx.beginPath();
-          ctx.moveTo(p0.x, p0.y);
-          ctx.lineTo(p1.x, p1.y);
-          ctx.moveTo(p2.x, p2.y);
-          ctx.lineTo(p3.x, p3.y);
-          ctx.stroke();
-        }
-        ctx.strokeStyle = "rgba(225,245,220,.24)";
-        ctx.lineWidth = Math.max(1, span * .007);
-        for (const u of [.38, .62]) {
-          const p0 = quadPoint(u, .12);
-          const p1 = quadPoint(lerp(u, .5, .55), .33);
-          ctx.beginPath();
-          ctx.moveTo(p0.x, p0.y);
-          ctx.lineTo(p1.x, p1.y);
-          ctx.stroke();
-        }
-      }
       if (ultraFxEnabled()) {
         // Keep every seal feature in slot UV coordinates. Screen-space gradients/lines
         // look fine until the station rotates, then they visibly swim across the portal.
@@ -15839,36 +15902,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
       ctx.restore();
       if (!ultraFxEnabled()) return;
-
-      // Hazard strip around the OUTSIDE of the slot. Segments are projected edge-band
-      // polygons, not diagonal screen-space strokes, so the border stays outside the hole.
-      const bandW = Math.max(2, span * .04);
-      ctx.save();
-      [[a, b], [b, c], [c, d], [d, a]].forEach(([p, q], edgeIndex) => {
-        const dx = q.x - p.x, dy = q.y - p.y, elen = Math.hypot(dx, dy) || 1;
-        const ux = dx / elen, uy = dy / elen;
-        let nx = -uy, ny = ux;
-        const mx = (p.x + q.x) / 2, my = (p.y + q.y) / 2;
-        if ((mx - centroid.x) * nx + (my - centroid.y) * ny < 0) { nx = -nx; ny = -ny; }
-        const n = 9;
-        for (let i = 0; i < n; i++) {
-          const t0 = i / n * elen;
-          const t1 = (i + 1) / n * elen;
-          const p0 = { x: p.x + ux * t0, y: p.y + uy * t0 };
-          const p1 = { x: p.x + ux * t1, y: p.y + uy * t1 };
-          const o0 = { x: p0.x + nx * bandW, y: p0.y + ny * bandW };
-          const o1 = { x: p1.x + nx * bandW, y: p1.y + ny * bandW };
-          ctx.fillStyle = (i + edgeIndex) % 2 ? "#0c0f0c" : "#ffd33d";
-          ctx.beginPath();
-          ctx.moveTo(p0.x, p0.y);
-          ctx.lineTo(p1.x, p1.y);
-          ctx.lineTo(o1.x, o1.y);
-          ctx.lineTo(o0.x, o0.y);
-          ctx.closePath();
-          ctx.fill();
-        }
-      });
-      ctx.restore();
 
       // Blue force-field edge glow around the opening.
       const pulse = .4 + Math.max(0, Math.sin(performance.now() / 240)) * .6;
@@ -16086,6 +16119,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         }
         const bitmapKey = cleanBitmapSkinKey(model.imageProjection?.faceTextures?.[faceIndex] || "");
         const bitmapSide = model.imageProjection?.faceSides?.[faceIndex] || null;
+        const bitmapMirrorX = !!model.imageProjection?.faceMirrorX?.[faceIndex];
         const normalIndex = model.faceNormalIndices ? model.faceNormalIndices[faceIndex] : faceIndex;
         const normalLine = (() => {
           if (!result.orient || !result.project || !result.camera || !model.normals?.[normalIndex]) return null;
@@ -16112,6 +16146,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           avgZ: snap(avgZ),
           bitmapKey: bitmapKey || null,
           bitmapSide,
+          bitmapMirrorX,
           hasImageProjection: !!model.imageProjectionUV?.[faceIndex],
           normalLine
         };
@@ -16141,6 +16176,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return { width: w, height: h, points, faces, details };
     }
 
+    const renderBenchBlueprintModelCache = { key: "", source: null, model: null };
+
     function renderBenchModelFrame(canvas, opts = {}) {
       const targetCtx = canvas?.getContext?.("2d");
       if (!targetCtx) return null;
@@ -16153,7 +16190,15 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         : null;
       if (customBlueprint) {
         try {
-          model = buildBlueprint(cloneGeneratedModelBlueprint(customBlueprint));
+          const cacheKey = `${modelName}:${opts.blueprintKey || ""}`;
+          if (renderBenchBlueprintModelCache.source === customBlueprint && renderBenchBlueprintModelCache.key === cacheKey) {
+            model = renderBenchBlueprintModelCache.model;
+          } else {
+            model = buildBlueprint(cloneGeneratedModelBlueprint(customBlueprint));
+            renderBenchBlueprintModelCache.source = customBlueprint;
+            renderBenchBlueprintModelCache.key = cacheKey;
+            renderBenchBlueprintModelCache.model = model;
+          }
         } catch (error) {
           console.warn(`Ultra Elite render bench custom blueprint failed for ${modelName}`, error);
         }
@@ -16231,6 +16276,20 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
             }
           }
           if (Object.keys(faces).length) out.faces = faces;
+        }
+        if (skins.decals && typeof skins.decals === "object") {
+          const decals = {};
+          for (const [decalKey, entry] of Object.entries(skins.decals)) {
+            const cleanKey = cleanBitmapSkinKey(decalKey);
+            if (!cleanKey) continue;
+            const url = typeof entry === "string" ? entry : entry?.src;
+            const img = getProjectedImageDecalSource(`bench:${modelName}:${version}:decal:${cleanKey}`, url, true);
+            if (img) {
+              decals[cleanKey] = img;
+              count++;
+            }
+          }
+          if (Object.keys(decals).length) out.decals = decals;
         }
         return count ? out : undefined;
       })();
@@ -16354,14 +16413,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       // station from the back and sides.
       if (slotA && slotB && slotC && slotD && faceFacing(slotVerts).facing > .02) {
         drawDockPortal([slotA, slotB, slotC, slotD], o);
-        ctx.strokeStyle = "#ffd33d";
-        ctx.beginPath();
-        ctx.moveTo(slotA.x, slotA.y);
-        ctx.lineTo(slotB.x, slotB.y);
-        ctx.lineTo(slotC.x, slotC.y);
-        ctx.lineTo(slotD.x, slotD.y);
-        ctx.closePath();
-        ctx.stroke();
       }
     }
 

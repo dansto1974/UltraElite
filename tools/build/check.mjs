@@ -118,6 +118,7 @@ const bitmapProjectionGuards = [
   ["face-index bitmap slot helper", "hasProjectionFaceSlot"],
   ["face-side lookup must not fall through authored null face slots", "hasProjectionFaceSlot(faceSides, faceIndex)"],
   ["face-texture lookup must not fall through authored null face slots", "hasProjectionFaceSlot(faceTextures, faceIndex)"],
+  ["face-mirror lookup must not fall through authored null face slots", "hasProjectionFaceSlot(faceMirrorX, faceIndex)"],
   ["face-texture collapsed UV fallback", "faceTextureUv"],
   ["face-texture UV area check", "uvPolygonArea(uv)"],
 ];
@@ -212,7 +213,7 @@ assertGeneratedAssetsBeforeMain(builderRenderPreviewHtml, "Ship Builder game-ren
 if (!renderQaJs.includes("window.UltraEliteRenderBench") || !renderQaJs.includes("api.renderFrame")) {
   throw new Error("Render QA must use the shared UltraEliteRenderBench renderer hook.");
 }
-if (!builderRenderPreviewJs.includes("window.UltraEliteRenderBench") || !builderRenderPreviewJs.includes("blueprint: payload.blueprint") || !builderRenderPreviewJs.includes("bitmapSkins: payload.bitmapSkins")) {
+if (!builderRenderPreviewJs.includes("window.UltraEliteRenderBench") || !builderRenderPreviewJs.includes("blueprint: latest.blueprint") || !builderRenderPreviewJs.includes("bitmapSkins: latest.bitmapSkins")) {
   throw new Error("Ship Builder game-render preview must use the shared UltraEliteRenderBench renderer hook with a builder blueprint.");
 }
 if (!js.includes("const customBlueprint = opts.blueprint") || !js.includes("buildBlueprint(cloneGeneratedModelBlueprint(customBlueprint))") || !js.includes("const model = opts.model || MODELS[modelName]")) {
@@ -234,6 +235,22 @@ function cleanBitmapAngle(value) {
   let n = Number(value) || 0;
   n = ((n + 180) % 360 + 360) % 360 - 180;
   return Math.abs(n) < .0001 ? null : Math.round(n * 100) / 100;
+}
+
+function cleanFaceDecal(decal) {
+  const key = cleanBitmapKey(decal?.key);
+  if (!key) return null;
+  const bounded = (value, min, max, fallback) => Math.max(min, Math.min(max, Number.isFinite(Number(value)) ? Number(value) : fallback));
+  const angle = cleanBitmapAngle(decal?.angle);
+  const alpha = bounded(decal?.alpha, 0, 1, .92);
+  return {
+    key,
+    x: Math.round(bounded(decal?.x, 0, 1, .5) * 1000) / 1000,
+    y: Math.round(bounded(decal?.y, 0, 1, .5) * 1000) / 1000,
+    scale: Math.round(bounded(decal?.scale, .02, 2, .35) * 1000) / 1000,
+    ...(angle ? { angle } : {}),
+    ...(alpha < .999 ? { alpha: Math.round(alpha * 1000) / 1000 } : {})
+  };
 }
 
 function runGenerated(file, globalName) {
@@ -260,6 +277,7 @@ function bitmapSourceHash(src) {
 const builderModels = runWindowGenerated(files.builderModels, "ULTRA_ELITE_MODEL_LIBRARY");
 const generatedModels = runGenerated(files.generatedModels, "ULTRA_ELITE_MODEL_BLUEPRINTS");
 const generatedSkins = runGenerated(files.generatedSkins, "ULTRA_ELITE_BITMAP_SKINS");
+const generatedDecals = runGenerated(files.generatedSkins, "ULTRA_ELITE_BITMAP_DECALS");
 
 function sourceVertexId(vertex, index) {
   const id = Array.isArray(vertex) ? index : Number(vertex?.id);
@@ -299,11 +317,18 @@ if (fs.existsSync(modelDir)) {
     const faceSides = sourceFaces.map((face) => validBitmapFaceSide(face?.bitmapSide));
     const faceTextures = sourceFaces.map((face) => cleanBitmapKey(face?.bitmapFaceKey) || null);
     const faceAngles = sourceFaces.map((face) => cleanBitmapAngle(face?.bitmapAngle));
+    const faceMirrorX = sourceFaces.map((face) => !!face?.bitmapMirrorX);
+    const faceDecals = sourceFaces.map((face) => {
+      const decals = Array.isArray(face?.bitmapDecals) ? face.bitmapDecals.map(cleanFaceDecal).filter(Boolean) : [];
+      return decals.length ? decals : null;
+    });
     const hasFaceSides = faceSides.some(Boolean);
     const hasFaceTextures = faceTextures.some(Boolean);
     const hasFaceAngles = faceAngles.some((angle) => angle != null);
+    const hasFaceMirrorX = faceMirrorX.some(Boolean);
+    const hasFaceDecals = faceDecals.some((decals) => decals?.length);
     const usesOnlyFaceTextures = sourceFaces.length > 0 && faceTextures.every(Boolean);
-    if (!hasFaceSides && !hasFaceTextures && !hasFaceAngles) continue;
+    if (!hasFaceSides && !hasFaceTextures && !hasFaceAngles && !hasFaceMirrorX && !hasFaceDecals) continue;
 
     const generatedProjection = generatedModels[modelId]?.imageProjection || {};
     if (hasFaceSides && JSON.stringify(generatedProjection.faceSides) !== JSON.stringify(faceSides)) {
@@ -314,6 +339,17 @@ if (fs.existsSync(modelDir)) {
     }
     if (hasFaceAngles && JSON.stringify(generatedProjection.faceAngles) !== JSON.stringify(faceAngles)) {
       throw new Error(`${path.relative(root, filePath)} bitmap faceAngles are out of sync with src/generated/model-library.js; run npm run models or npm run build.`);
+    }
+    if (hasFaceMirrorX && JSON.stringify(generatedProjection.faceMirrorX) !== JSON.stringify(faceMirrorX)) {
+      throw new Error(`${path.relative(root, filePath)} bitmap faceMirrorX flags are out of sync with src/generated/model-library.js; run npm run models or npm run build.`);
+    }
+    if (hasFaceDecals && JSON.stringify(generatedProjection.faceDecals) !== JSON.stringify(faceDecals)) {
+      throw new Error(`${path.relative(root, filePath)} bitmap faceDecals are out of sync with src/generated/model-library.js; run npm run models or npm run build.`);
+    }
+    for (const decalKey of [...new Set(faceDecals.flatMap((decals) => (decals || []).map((decal) => decal.key)))]) {
+      if (!bitmapEntrySource(generatedDecals[decalKey])) {
+        throw new Error(`${path.relative(root, filePath)} declares bitmap decal ${decalKey}, but src/generated/bitmap-skins.js does not include it; run npm run skins or npm run build.`);
+      }
     }
     const uniqueFaceKeys = [...new Set(faceTextures.filter(Boolean))];
     const seenFaceTextureHashes = new Map();

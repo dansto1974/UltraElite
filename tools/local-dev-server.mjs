@@ -151,6 +151,27 @@ function listSkinAssets() {
   });
 }
 
+function listDecalAssets() {
+  const decalDir = path.join(root, "assets/decals");
+  const allowed = new Set([".png", ".jpg", ".jpeg", ".svg"]);
+  const files = fs.existsSync(decalDir)
+    ? fs.readdirSync(decalDir).filter((file) => allowed.has(path.extname(file).toLowerCase())).sort((a, b) => a.localeCompare(b))
+    : [];
+  return files.map((file) => {
+    const stat = fs.statSync(path.join(decalDir, file));
+    const key = cleanKey(path.basename(file, path.extname(file)));
+    return {
+      file,
+      model: "",
+      kind: "decal",
+      key,
+      category: "decal",
+      bytes: stat.size,
+      url: `/assets/decals/${file}`
+    };
+  });
+}
+
 async function saveModel(req, res, modelId) {
   const body = await readJsonBody(req);
   const cleanId = cleanKey(modelId || body.id);
@@ -242,7 +263,7 @@ const server = http.createServer(async (req, res) => {
       });
     }
     if (req.method === "GET" && pathname === "/api/skins") {
-      const skins = listSkinAssets();
+      const skins = [...listSkinAssets(), ...listDecalAssets()];
       const categories = [...new Set(skins.map((skin) => skin.category))].sort((a, b) => a.localeCompare(b));
       return sendJson(res, 200, { ok: true, skins, categories });
     }
