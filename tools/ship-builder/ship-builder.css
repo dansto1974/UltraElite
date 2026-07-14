@@ -490,12 +490,47 @@ h3 {
 
 .view-mode-label {
   display: grid;
-  grid-template-columns: auto minmax(132px, 172px);
+  grid-template-columns: auto minmax(178px, 230px);
   align-items: center;
   gap: 6px;
   color: var(--muted);
   font-size: .66rem;
   text-transform: uppercase;
+}
+
+.preview-trust-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -1px 0 7px;
+  min-height: 1.55rem;
+  padding: .28rem .42rem;
+  border: 1px solid rgba(81, 255, 74, .18);
+  background: rgba(0, 0, 0, .34);
+  color: var(--muted);
+  font-size: .62rem;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.preview-trust-badge {
+  flex: 0 0 auto;
+  padding: .16rem .34rem;
+  border: 1px solid rgba(81, 255, 74, .28);
+  border-radius: 5px;
+  color: var(--muted);
+}
+
+.preview-trust-badge.is-trusted {
+  border-color: rgba(85, 255, 78, .62);
+  color: var(--text);
+  background: rgba(85, 255, 78, .1);
+}
+
+.preview-trust-badge.is-diagnostic {
+  border-color: rgba(255, 217, 54, .56);
+  color: var(--yellow);
+  background: rgba(255, 217, 54, .09);
 }
 
 canvas {
@@ -537,6 +572,10 @@ canvas {
 
 .preview-stack.is-game-overlay canvas {
   background: transparent;
+}
+
+.preview-stack.is-builder-diagnostic {
+  border-color: rgba(255, 217, 54, .36);
 }
 
 #mainView {

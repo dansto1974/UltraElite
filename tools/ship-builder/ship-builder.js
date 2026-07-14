@@ -44,6 +44,8 @@ const els = {
   mainView: document.getElementById("mainView"),
   gamePreviewFrame: document.getElementById("gamePreviewFrame"),
   gamePreviewReadout: document.getElementById("gamePreviewReadout"),
+  previewTrustBadge: document.getElementById("previewTrustBadge"),
+  previewTrustReadout: document.getElementById("previewTrustReadout"),
   syncGamePreviewBtn: document.getElementById("syncGamePreviewBtn"),
   xSlider: document.getElementById("xSlider"),
   ySlider: document.getElementById("ySlider"),
@@ -858,6 +860,15 @@ function gameRendererOverlayMode() {
   return els.previewRenderMode?.value === "gameOverlay";
 }
 
+function previewModeLabel(value = els.previewRenderMode?.value || "gameOverlay") {
+  if (value === "gameOverlay") return "Game Renderer + Overlay";
+  if (value === "wireFaces") return "Builder Wire + Faces";
+  if (value === "wire") return "Builder Wireframe";
+  if (value === "wireBitmap") return "Builder Wire + Bitmap";
+  if (value === "bitmap") return "Builder Bitmap Only";
+  return value;
+}
+
 function previewProjectionPointToCanvas(point, canvas) {
   if (!point) return null;
   const nx = Number(point.nx);
@@ -891,6 +902,48 @@ function previewFaceForBuilderFace(face) {
 function faceSortDepthForMain(face) {
   const previewFace = previewFaceForBuilderFace(face);
   return Number.isFinite(previewFace?.avgZ) ? previewFace.avgZ : faceDepth(face);
+}
+
+function gamePreviewProjectionSummary(info = state.gamePreviewInfo) {
+  const projection = info?.projection;
+  if (!projection?.faces) return null;
+  const visibleFaces = projection.faces.filter((face) => face.visible).length;
+  const projectedPoints = projection.points.filter(Boolean).length;
+  const faceTextureRefs = projection.faces.filter((face) => face.bitmapKey).length;
+  const missingUv = projection.faces.filter((face) => face.bitmapKey && !face.hasImageProjection).length;
+  return {
+    faces: info.faces || projection.faces.length,
+    visibleFaces,
+    projectedPoints,
+    faceTextureRefs,
+    missingUv
+  };
+}
+
+function updatePreviewTrustUi() {
+  const mode = els.previewRenderMode?.value || "gameOverlay";
+  const overlay = mode === "gameOverlay";
+  els.mainPreviewStack?.classList.toggle("is-game-overlay", overlay);
+  els.mainPreviewStack?.classList.toggle("is-builder-diagnostic", !overlay);
+  if (els.previewTrustBadge) {
+    els.previewTrustBadge.classList.toggle("is-trusted", overlay);
+    els.previewTrustBadge.classList.toggle("is-diagnostic", !overlay);
+    els.previewTrustBadge.textContent = overlay ? "REAL RENDERER" : "BUILDER DIAGNOSTIC";
+  }
+  if (!els.previewTrustReadout) return;
+  if (!overlay) {
+    els.previewTrustReadout.textContent = `${previewModeLabel(mode)} | fallback preview path`;
+    return;
+  }
+  const summary = gamePreviewProjectionSummary();
+  if (!summary) {
+    els.previewTrustReadout.textContent = "Waiting for renderer projection packet...";
+    return;
+  }
+  const uvText = summary.missingUv
+    ? `${summary.missingUv} UV gap${summary.missingUv === 1 ? "" : "s"}`
+    : `${summary.faceTextureRefs} face UV${summary.faceTextureRefs === 1 ? "" : "s"}`;
+  els.previewTrustReadout.textContent = `${summary.visibleFaces}/${summary.faces} visible faces | ${summary.projectedPoints} points | ${uvText}`;
 }
 
 function drawGameRendererFaceNormals(ctx, canvas) {
@@ -2015,7 +2068,7 @@ function renderMain() {
   const ctx = canvas.getContext("2d");
   const previewMode = els.previewRenderMode?.value || "gameOverlay";
   const gameOverlay = previewMode === "gameOverlay";
-  els.mainPreviewStack?.classList.toggle("is-game-overlay", gameOverlay);
+  updatePreviewTrustUi();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   if (!gameOverlay) drawStars(ctx, canvas);
   const projected = projectedMapForMain(canvas);
@@ -2266,11 +2319,14 @@ function syncGamePreview() {
   const frame = els.gamePreviewFrame;
   if (!frame?.contentWindow) return;
   try {
+    state.gamePreviewInfo = null;
+    state.gamePreviewProjection = null;
+    updatePreviewTrustUi();
     frame.contentWindow.postMessage({
       type: "ultra-elite-render-preview",
       payload: gamePreviewPayload()
     }, "*");
-    if (els.gamePreviewReadout) els.gamePreviewReadout.textContent = `${templateShipId().toUpperCase()} SENT TO GAME RENDERER.`;
+    if (els.gamePreviewReadout) els.gamePreviewReadout.textContent = `${templateShipId().toUpperCase()} REFRESHING REAL RENDERER.`;
   } catch (error) {
     if (els.gamePreviewReadout) els.gamePreviewReadout.textContent = `GAME RENDER SYNC FAILED: ${error.message}`;
   }
@@ -2282,14 +2338,10 @@ function scheduleGamePreviewSync(delay = 180) {
 }
 
 function summarizeGamePreviewInfo(info) {
-  const projection = info?.projection;
-  if (!projection?.faces) return "GAME RENDERER READY.";
-  const visibleFaces = projection.faces.filter((face) => face.visible).length;
-  const faceTextureRefs = projection.faces.filter((face) => face.bitmapKey).length;
-  const missingUv = projection.faces.filter((face) => face.bitmapKey && !face.hasImageProjection).length;
-  const projectedPoints = projection.points.filter(Boolean).length;
-  const suffix = missingUv ? `  ${missingUv} FACE UV GAP${missingUv === 1 ? "" : "S"}` : "";
-  return `GAME RENDERER: ${visibleFaces}/${info.faces || projection.faces.length} VISIBLE FACES  ${projectedPoints} POINTS  ${faceTextureRefs} FACE UVS${suffix}`;
+  const summary = gamePreviewProjectionSummary(info);
+  if (!summary) return "REAL RENDERER READY.";
+  const suffix = summary.missingUv ? `  ${summary.missingUv} FACE UV GAP${summary.missingUv === 1 ? "" : "S"}` : "";
+  return `REAL RENDERER: ${summary.visibleFaces}/${summary.faces} VISIBLE FACES  ${summary.projectedPoints} POINTS  ${summary.faceTextureRefs} FACE UVS${suffix}`;
 }
 
 function handleGamePreviewResult(data) {
@@ -2297,6 +2349,8 @@ function handleGamePreviewResult(data) {
   state.gamePreviewInfo = info;
   state.gamePreviewProjection = info?.projection || null;
   if (els.gamePreviewReadout) els.gamePreviewReadout.textContent = summarizeGamePreviewInfo(info);
+  updatePreviewTrustUi();
+  renderMain();
 }
 
 function updateUi() {
