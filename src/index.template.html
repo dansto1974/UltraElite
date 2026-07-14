@@ -28,6 +28,15 @@ __ULTRA_ELITE_CSS__
       <text x="110" y="28" text-anchor="middle" font-family="monospace" font-size="18" letter-spacing="5" fill="var(--amber)">ULTRA ELITE</text>
     </svg>
     <div class="splash-version">v<span id="splashVersion"></span></div>
+    <div class="splash-loading" id="splashLoading" role="status" aria-live="polite">
+      <div class="splash-loading-row">
+        <span id="splashLoadingText">LOADING COMMANDER DATA</span>
+        <span id="splashLoadingPct">4%</span>
+      </div>
+      <div class="splash-loading-track" aria-hidden="true">
+        <div class="splash-loading-fill" id="splashLoadingFill" style="width: 4%"></div>
+      </div>
+    </div>
     <div class="getting-started" id="gettingStarted" hidden>
       <strong>Getting Started</strong>
       <ul>
@@ -38,7 +47,7 @@ __ULTRA_ELITE_CSS__
         <li>Open the right-hand panel with the arrow tab and choose Help for full controls and the update log.</li>
       </ul>
     </div>
-    <div class="splash-prompt">PRESS ANY KEY TO START</div>
+    <div class="splash-prompt" id="splashPrompt">LOADING...</div>
     <div class="splash-legal">
       <strong>Legal Notice & Credits:</strong>
       A non-commercial open-source fan tribute for educational, archival, and entertainment purposes.

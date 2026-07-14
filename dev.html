@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ultra Elite - Browser Experiment</title>
-  <link rel="stylesheet" href="src/game.css?v=mrl68szg">
+  <link rel="stylesheet" href="src/game.css?v=mrl8erjb">
 </head>
 <body>
   <div class="desktop-only-message" role="status" aria-live="polite">
@@ -26,6 +26,15 @@
       <text x="110" y="28" text-anchor="middle" font-family="monospace" font-size="18" letter-spacing="5" fill="var(--amber)">ULTRA ELITE</text>
     </svg>
     <div class="splash-version">v<span id="splashVersion"></span></div>
+    <div class="splash-loading" id="splashLoading" role="status" aria-live="polite">
+      <div class="splash-loading-row">
+        <span id="splashLoadingText">LOADING COMMANDER DATA</span>
+        <span id="splashLoadingPct">4%</span>
+      </div>
+      <div class="splash-loading-track" aria-hidden="true">
+        <div class="splash-loading-fill" id="splashLoadingFill" style="width: 4%"></div>
+      </div>
+    </div>
     <div class="getting-started" id="gettingStarted" hidden>
       <strong>Getting Started</strong>
       <ul>
@@ -36,7 +45,7 @@
         <li>Open the right-hand panel with the arrow tab and choose Help for full controls and the update log.</li>
       </ul>
     </div>
-    <div class="splash-prompt">PRESS ANY KEY TO START</div>
+    <div class="splash-prompt" id="splashPrompt">LOADING...</div>
     <div class="splash-legal">
       <strong>Legal Notice & Credits:</strong>
       A non-commercial open-source fan tribute for educational, archival, and entertainment purposes.
@@ -200,8 +209,8 @@
     </div>
   </div>
 
-  <script src="src/generated/model-library.js?v=mrl68szg"></script>
-  <script src="src/generated/bitmap-skins.js?v=mrl68szg"></script>
-  <script src="src/main.js?v=mrl68szg"></script>
+  <script src="src/generated/model-library.js?v=mrl8erjb"></script>
+  <script src="src/generated/bitmap-skins.js?v=mrl8erjb"></script>
+  <script src="src/main.js?v=mrl8erjb"></script>
 </body>
 </html>

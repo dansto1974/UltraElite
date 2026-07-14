@@ -1721,6 +1721,7 @@
         ]
       })
     };
+    const BUILTIN_MODEL_IDS = new Set(Object.keys(MODELS));
 
     function cloneGeneratedModelBlueprint(value) {
       return JSON.parse(JSON.stringify(value));
@@ -1815,9 +1816,15 @@
     function addUniqueModel(list, id) {
       if (!list.includes(id)) list.push(id);
     }
+    function modelCanImportRoleLists(id, meta = {}) {
+      if (BUILTIN_MODEL_IDS.has(id)) return false;
+      const modelClass = String(meta.class || "").toLowerCase();
+      return !["station", "rock", "asteroid", "cargo", "missile", "pod", "prop"].includes(modelClass);
+    }
     for (const [id, model] of Object.entries(MODELS)) {
       const meta = model?.gameMeta || {};
       const lists = meta.lists || {};
+      if (!modelCanImportRoleLists(id, meta)) continue;
       if (lists.trader) addUniqueModel(TRADER_MODELS, id);
       if (lists.pirate) addUniqueModel(PIRATE_MODELS, id);
       if (lists.police) addUniqueModel(POLICE_MODELS, id);
@@ -2691,6 +2698,8 @@
       enemyShots: [],
       playerDamageMarks: [],
       performance: { frameMs: 16.7, lod: 0, dprCap: 2 },
+      bootReady: false,
+      bootProgress: 4,
       screenShake: 0,
       playerEngineTrailClock: 0,
       playerShot: null,
@@ -2843,6 +2852,31 @@
       setDomHidden(hudEls.perfTicker, false);
     }
 
+    function setBootProgress(percent, text = "") {
+      game.bootProgress = clamp(Number(percent) || 0, 0, 100);
+      const rounded = Math.round(game.bootProgress);
+      const fill = byId("splashLoadingFill");
+      const pct = byId("splashLoadingPct");
+      const label = byId("splashLoadingText");
+      if (fill) fill.style.width = `${rounded}%`;
+      if (pct) pct.textContent = `${rounded}%`;
+      if (label && text) label.textContent = text;
+    }
+
+    function markBootReady() {
+      game.bootReady = true;
+      setBootProgress(100, "READY");
+      const splashEl = byId("splash");
+      const prompt = byId("splashPrompt");
+      if (splashEl) splashEl.classList.add("ready");
+      if (prompt) prompt.textContent = "PRESS ANY KEY TO START";
+      updateReadouts();
+    }
+
+    function nextBootFrame() {
+      return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+    }
+
     function toggleClass(el, name, value) {
       if (el && el.classList.contains(name) !== value) el.classList.toggle(name, value);
     }
@@ -2931,6 +2965,7 @@
 
     const SAFARI_FULLSCREEN_KEY_GUARD = typeof navigator !== "undefined"
       && /^((?!chrome|android).)*safari/i.test(navigator.userAgent || "");
+    const SAFARI_CANVAS_COMPOSITE_GUARD = SAFARI_FULLSCREEN_KEY_GUARD;
 
     function requestGameFullscreen(pointerGesture = false) {
       if (SAFARI_FULLSCREEN_KEY_GUARD && !pointerGesture) return;
@@ -6052,6 +6087,28 @@
       return stationSlotNormalForModel(model);
     }
 
+    function stationSlotBeaconPlacement(model, sourceIndex, source, entity) {
+      if (!model?.verts?.length || !source || !Number.isInteger(sourceIndex)) return null;
+      const normal = stationSlotBeaconNormal(model, sourceIndex, entity);
+      if (!normal) return null;
+      const slotIndices = stationSlotVertexIndices(model);
+      const sequenceIndex = slotIndices.indexOf(sourceIndex);
+      const slotVerts = slotIndices.map((i) => {
+        const v = model.verts[i];
+        return Array.isArray(v) ? vec(v[0], v[1], v[2]) : null;
+      });
+      if (slotVerts.some((p) => !p)) return null;
+      const center = scale(slotVerts.reduce((sum, p) => add(sum, p), vec()), 1 / slotVerts.length);
+      const sourcePoint = vec(source[0], source[1], source[2]);
+      let radial = sub(sourcePoint, center);
+      radial = sub(radial, scale(normal, dot(radial, normal)));
+      const phase = sequenceIndex >= 0 ? sequenceIndex / Math.max(1, slotIndices.length) : 0;
+      if (len(radial) < .001) return { point: sourcePoint, normal, slotBeacon: true, phase };
+      // Slot beacons sit just outside the entrance border. Keeping the marker off the
+      // exact hull/portal edge avoids losing alternating corners to boundary occlusion.
+      return { point: add(sourcePoint, scale(norm(radial), 7)), normal, slotBeacon: true, phase };
+    }
+
     const ROCK_HERMIT_SCENE_CHANCE = 0.04;
 
     function isDockableStructure(o) {
@@ -6352,6 +6409,10 @@
     }
 
     function launch() {
+      if (!game.bootReady) {
+        setMessage("Flight computer still loading.", true);
+        return;
+      }
       if (!game.docked || game.transition || game.jumpCountdown) return;
       const finishLaunch = (startSpeed = 40) => {
         game.docked = false;
@@ -9496,23 +9557,29 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
                 ? detail.point
                 : null;
           if (!source) continue;
+          const slotPlacement = stationSlotBeaconPlacement(model, sourceIndex, source, o);
           const surfaceNormal = detail.normal
             ? norm(vec(detail.normal[0], detail.normal[1], detail.normal[2]))
-            : stationSlotBeaconNormal(model, sourceIndex, o) || modelVertexSurfaceNormal(model, sourceIndex);
+            : slotPlacement?.normal || stationSlotBeaconNormal(model, sourceIndex, o) || modelVertexSurfaceNormal(model, sourceIndex);
           const normal = surfaceNormal
             ? worldDirToCam(norm(orient(surfaceNormal)), camera)
             : null;
-          const baseCamPoint = add(worldDirToCam(orient(vec(source[0] * scaleFactor, source[1] * scaleFactor, source[2] * scaleFactor)), camera), o.cam || vec());
-          const lift = normal ? (detail.lift ?? .5) * scaleFactor : 0;
+          const localPoint = slotPlacement?.point || vec(source[0], source[1], source[2]);
+          const baseCamPoint = add(worldDirToCam(orient(scale(localPoint, scaleFactor)), camera), o.cam || vec());
+          const lift = normal ? (detail.lift ?? (slotPlacement ? 2.5 : .5)) * scaleFactor : 0;
           const camPoint = lift ? add(baseCamPoint, scale(normal, lift)) : baseCamPoint;
           const projected = o.project ? o.project(camPoint) : project(camPoint, w, h);
           if (!projected) continue;
-          if (modelPointOccludedByHull(model, camVerts, points, sourceIndex, baseCamPoint, projected)) continue;
+          if (slotPlacement) {
+            if (!normal || -dot(normal, norm(baseCamPoint)) <= .02) continue;
+          } else if (modelPointOccludedByHull(model, camVerts, points, sourceIndex, baseCamPoint, projected)) continue;
           details.push({
             kind: "beacon",
             projected: [projected],
             avgZ: camPoint.z,
             color: detail.color || "#ffb642",
+            slotBeacon: !!slotPlacement,
+            beaconPhase: slotPlacement?.phase,
             seed: hash32(`${o.name || o.model || "model"}:${detail.index ?? 0}:beacon`)
           });
           continue;
@@ -10680,20 +10747,29 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       drawGlowSprite(targetCtx, cx, cy, r, "engineCore", GLOW_SPRITES.engineCore, alpha);
     }
 
+    function policeStrobePulse(side = 0) {
+      const period = .46;
+      const raw = (performance.now() / 1000 + side * period * .5) % period;
+      const t = raw / period;
+      if (t < .07) return 1;
+      if (t < .22) return Math.pow(1 - (t - .07) / .15, 2.1);
+      return 0;
+    }
+
     function drawPoliceStrobes(targetCtx, points) {
       const visible = points.filter(Boolean);
       if (visible.length < 2) return;
       const sorted = visible.slice().sort((a, b) => a.x - b.x);
       const candidates = [sorted[0], sorted[sorted.length - 1]];
-      const t = performance.now() / 105;
       targetCtx.save();
       targetCtx.globalCompositeOperation = "lighter";
       for (let i = 0; i < candidates.length; i++) {
         const p = candidates[i];
-        const pulse = Math.max(0, Math.sin(t + i * Math.PI));
-        const alpha = .18 + pulse * .62;
-        const radius = 10 + pulse * 20;
-        drawGlowSprite(targetCtx, p.x, p.y, radius, "policeBlue", GLOW_SPRITES.policeBlue, alpha);
+        const pulse = policeStrobePulse(i);
+        if (pulse <= .015) continue;
+        const radius = 8 + pulse * 28;
+        drawGlowSprite(targetCtx, p.x, p.y, radius, "policeBlue", GLOW_SPRITES.policeBlue, .28 + pulse * .92);
+        drawGlowSprite(targetCtx, p.x, p.y, Math.max(3, radius * .28), "distantWhite", GLOW_SPRITES.distantWhite, .45 + pulse * .85);
       }
       targetCtx.restore();
     }
@@ -10775,6 +10851,18 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       targetCtx.restore();
     }
 
+    function beaconFlashPulse(seed = 0, phase = null) {
+      const period = 1.18;
+      const offset = Number.isFinite(phase)
+        ? -phase * period
+        : (((seed || 0) & 1023) / 1023) * .22;
+      const raw = (performance.now() / 1000 + offset) % period;
+      const t = (raw < 0 ? raw + period : raw) / period;
+      if (t < .045) return t / .045;
+      if (t < .34) return Math.pow(1 - (t - .045) / .295, 1.85);
+      return 0;
+    }
+
     function drawSolidItems(targetCtx, items) {
       items.sort((a, b) => b.avgZ - a.avgZ);
       const tracePoly = (projected) => {
@@ -10786,25 +10874,25 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         if (item.kind === "beacon") {
           const p = item.projected[0];
           if (!p) continue;
-          const phaseOffset = ((item.seed || 0) & 1023) / 1023 * TAU;
-          const pulse = Math.pow(.5 + Math.sin(performance.now() / 1000 * TAU * .86 + phaseOffset) * .5, 3.2);
+          const pulse = beaconFlashPulse(item.seed, item.beaconPhase);
+          if (pulse <= .01) continue;
           const rgb = hexToRgb(item.color || "#ffb642");
-          const core = clamp((p.s || 1) * 6.2, 1.8, 6.6);
-          const halo = core * (4.4 + pulse * 1.7);
+          const core = clamp((p.s || 1) * (5.6 + pulse * 1.2), 1.8, 7.1);
+          const halo = core * (3.6 + pulse * 2.5);
           targetCtx.save();
           targetCtx.globalCompositeOperation = "lighter";
           const g = targetCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, halo);
-          g.addColorStop(0, `rgba(255,255,255,${.82 + pulse * .12})`);
-          g.addColorStop(.12, `rgba(255,255,255,${.36 + pulse * .12})`);
-          g.addColorStop(.34, `rgba(${rgb.r},${rgb.g},${rgb.b},${.22 + pulse * .16})`);
-          g.addColorStop(.72, `rgba(${rgb.r},${rgb.g},${rgb.b},${.06 + pulse * .08})`);
+          g.addColorStop(0, `rgba(255,255,255,${.92 * pulse})`);
+          g.addColorStop(.12, `rgba(255,255,255,${.46 * pulse})`);
+          g.addColorStop(.34, `rgba(${rgb.r},${rgb.g},${rgb.b},${.36 * pulse})`);
+          g.addColorStop(.72, `rgba(${rgb.r},${rgb.g},${rgb.b},${.11 * pulse})`);
           g.addColorStop(1, `rgba(${rgb.r},${rgb.g},${rgb.b},0)`);
           targetCtx.fillStyle = g;
           targetCtx.beginPath();
           targetCtx.arc(p.x, p.y, halo, 0, TAU);
           targetCtx.fill();
           targetCtx.globalCompositeOperation = "source-over";
-          targetCtx.fillStyle = `rgba(255,255,255,${.76 + pulse * .18})`;
+          targetCtx.fillStyle = `rgba(255,255,255,${.88 * pulse})`;
           targetCtx.beginPath();
           targetCtx.arc(p.x, p.y, core * .42, 0, TAU);
           targetCtx.fill();
@@ -12242,8 +12330,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return [
         vec(-HANGAR_GATE_W - side, HANGAR_GATE_H - inset, z),
         vec(HANGAR_GATE_W + side, HANGAR_GATE_H - inset, z),
-        vec(-HANGAR_GATE_W - side, -HANGAR_GATE_H + inset, z),
-        vec(HANGAR_GATE_W + side, -HANGAR_GATE_H + inset, z)
+        vec(HANGAR_GATE_W + side, -HANGAR_GATE_H + inset, z),
+        vec(-HANGAR_GATE_W - side, -HANGAR_GATE_H + inset, z)
       ];
     }
 
@@ -12335,25 +12423,28 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const strip = [p(i * 125 - 24, ceil - 4, 260), p(i * 125 + 24, ceil - 4, 260), p(i * 125 + 24, ceil - 4, 730), p(i * 125 - 24, ceil - 4, 730)];
         hangarPoly(strip, view, w, h, "rgba(255,244,204,.68)");
       }
-      for (const b of hangarGateBeaconPoints()) {
+      const gateBeacons = hangarGateBeaconPoints();
+      for (let i = 0; i < gateBeacons.length; i++) {
+        const b = gateBeacons[i];
         const pr = hangarProject(b, view, w, h);
         if (!pr) continue;
-        const blink = .4 + Math.max(0, Math.sin(performance.now() / 1000 * TAU + b.x * .01)) * .6;
+        const blink = beaconFlashPulse(0, i / Math.max(1, gateBeacons.length));
+        if (blink <= .01) continue;
         ctx.globalCompositeOperation = "lighter";
-        const r = Math.max(1.8, pr.s * 6.2);
-        const halo = r * 4.8;
+        const r = Math.max(1.8, pr.s * (5.6 + blink * 1.2));
+        const halo = r * (3.6 + blink * 2.5);
         const beacon = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, halo);
-        beacon.addColorStop(0, `rgba(255,255,255,${.76 * blink})`);
-        beacon.addColorStop(.14, `rgba(255,255,255,${.32 * blink})`);
-        beacon.addColorStop(.4, `rgba(255,182,66,${.2 * blink})`);
-        beacon.addColorStop(.82, `rgba(255,182,66,${.06 * blink})`);
+        beacon.addColorStop(0, `rgba(255,255,255,${.92 * blink})`);
+        beacon.addColorStop(.14, `rgba(255,255,255,${.46 * blink})`);
+        beacon.addColorStop(.4, `rgba(255,182,66,${.36 * blink})`);
+        beacon.addColorStop(.82, `rgba(255,182,66,${.11 * blink})`);
         beacon.addColorStop(1, "rgba(255,182,66,0)");
         ctx.fillStyle = beacon;
         ctx.beginPath();
         ctx.arc(pr.x, pr.y, halo, 0, TAU);
         ctx.fill();
         ctx.globalCompositeOperation = "source-over";
-        ctx.fillStyle = `rgba(255,255,255,${.72 * blink})`;
+        ctx.fillStyle = `rgba(255,255,255,${.88 * blink})`;
         ctx.beginPath();
         ctx.arc(pr.x, pr.y, r * .45, 0, TAU);
         ctx.fill();
@@ -14914,6 +15005,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function drawPlanetTerminatorShadow(o, cam, pr, r, sunDir, w, h) {
       if (!sunDir) return;
+      if (SAFARI_CANVAS_COMPOSITE_GUARD) {
+        drawPlanetTerminatorShadowSmooth(pr, r, sunDir);
+        return;
+      }
       const f = Math.min(w, h) * .82;
       const camQ = ensureCameraQuat(game.camera);
       const step = clamp(Math.ceil(r / 92), 2, 8);
@@ -14942,15 +15037,49 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
           const surfaceCamDir = norm(sub(scale(ray, t), cam));
           const surfaceWorldDir = norm(quatRotate(camQ, surfaceCamDir));
-          const night = clamp((-dot(surfaceWorldDir, sunDir) + .012) / .055, 0, 1);
+          const night = clamp((-dot(surfaceWorldDir, sunDir) + .018) / .082, 0, 1);
           if (night <= .015) continue;
 
-          const alpha = Math.pow(night, .5) * .98;
+          const alpha = Math.pow(night, .68) * .98;
           const level = Math.ceil(alpha * 18) / 18;
           ctx.fillStyle = `rgba(0,1,4,${level})`;
           ctx.fillRect(sx - halfStep - .5, sy - halfStep - .5, step + 1, step + 1);
         }
       }
+      ctx.restore();
+    }
+
+    function drawPlanetTerminatorShadowSmooth(pr, r, sunDir) {
+      const sc = worldDirToCam(sunDir);
+      let lx = sc.x, ly = -sc.y;
+      const lateral = Math.hypot(lx, ly);
+      if (lateral > .0001) {
+        lx /= lateral;
+        ly /= lateral;
+      } else {
+        lx = Math.cos(-.6);
+        ly = Math.sin(-.6);
+      }
+      const faceLight = clamp((1 - sc.z) / 2, 0, 1);
+      const nightAlpha = lerp(.98, .16, faceLight);
+      const terminator = lerp(.3, .58, faceLight);
+      const g = ctx.createLinearGradient(
+        pr.x + lx * r * .88,
+        pr.y + ly * r * .88,
+        pr.x - lx * r * 1.08,
+        pr.y - ly * r * 1.08
+      );
+      g.addColorStop(0, "rgba(0,1,4,0)");
+      g.addColorStop(terminator, "rgba(0,1,4,.08)");
+      g.addColorStop(clamp(terminator + .2, 0, .98), `rgba(0,1,4,${nightAlpha * .72})`);
+      g.addColorStop(1, `rgba(0,1,4,${nightAlpha})`);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(pr.x, pr.y, r, 0, TAU);
+      ctx.clip();
+      ctx.fillStyle = g;
+      ctx.fillRect(pr.x - r, pr.y - r, r * 2, r * 2);
       ctx.restore();
     }
 
@@ -17267,7 +17396,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       setDomText(hudEls.modeSwitchBtn, game.fxLevel === "classic" ? "Ultra" : "Old School");
       toggleClass(hudEls.modeSwitchBtn, "primary", game.fxLevel !== "classic");
       setDomAttr(hudEls.modeSwitchBtn, "aria-pressed", game.fxLevel !== "classic" ? "true" : "false");
-      const jumpBusy = !!game.transition || !!game.jumpCountdown;
+      const bootBusy = !game.bootReady;
+      const jumpBusy = bootBusy || !!game.transition || !!game.jumpCountdown;
       const canLaunch = game.docked && !jumpBusy;
       const canJump = !game.docked && !jumpBusy;
       const hasAutoDock = !game.docked && !jumpBusy && game.equipment.dockingComputer;
@@ -17368,6 +17498,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
       function dismissSplash(event = null) {
         if (!splashEl || splashEl.classList.contains("hidden")) return false;
+        if (!game.bootReady) {
+          setBootProgress(Math.max(game.bootProgress, 8), "LOADING COMMANDER DATA");
+          return true;
+        }
         splashEl.classList.add("hidden");
         setTimeout(() => splashEl.remove(), 600);
         requestGameFullscreen(event?.type === "click" || event?.type === "pointerdown");
@@ -17511,15 +17645,24 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       attachExternalViewControls(space);
 
       resizeCanvases();
-      (function boot() {
+      (async function boot() {
+        setBootProgress(8, "LOADING GENERATED ASSETS");
+        await nextBootFrame();
         const hadBrowserSave = browserSaveExists();
         setDomHidden(gettingStartedEl, hadBrowserSave);
+        setBootProgress(28, hadBrowserSave ? "CHECKING COMMANDER SAVE" : "PREPARING NEW COMMANDER");
+        await nextBootFrame();
         const loadedBrowserSave = loadBrowserSave(true);
         shouldAskCommanderName = !loadedBrowserSave;
+        setBootProgress(52, "BUILDING LOCAL SYSTEM");
+        await nextBootFrame();
         resetFlightScene(false);
+        setBootProgress(78, "INITIALISING COCKPIT");
+        await nextBootFrame();
         if (loadedBrowserSave) setMessage("Browser commander save loaded.", true);
         else if (hadBrowserSave) setMessage("Browser save could not be loaded.");
         renderPanel();
+        markBootReady();
         requestAnimationFrame(loop);
       })();
     }

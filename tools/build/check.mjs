@@ -135,6 +135,42 @@ for (const [label, marker] of bitmapProjectionGuards) {
   }
 }
 
+const modelRoleGuards = [
+  ["built-in model role-list quarantine", "BUILTIN_MODEL_IDS"],
+  ["generated role-list eligibility helper", "modelCanImportRoleLists"],
+  ["role-list expansion guard", "if (!modelCanImportRoleLists(id, meta)) continue;"],
+];
+for (const [label, marker] of modelRoleGuards) {
+  if (!js.includes(marker)) {
+    throw new Error(`Missing model role guard: ${label}. Built-in generated model metadata must not add stations, rocks, or cargo to NPC spawn lists.`);
+  }
+}
+
+const planetRenderGuards = [
+  ["Safari canvas planet terminator fallback", "SAFARI_CANVAS_COMPOSITE_GUARD"],
+  ["smooth planet terminator fallback", "drawPlanetTerminatorShadowSmooth"],
+];
+for (const [label, marker] of planetRenderGuards) {
+  if (!js.includes(marker)) {
+    throw new Error(`Missing planet renderer guard: ${label}. Safari must avoid the sampled terminator path that exposes shading tiles.`);
+  }
+}
+
+const stationBeaconGuards = [
+  ["strobe-style beacon pulse helper", "function beaconFlashPulse"],
+  ["station slot beacon placement helper", "stationSlotBeaconPlacement"],
+  ["station slot beacon border offset", "exact hull/portal edge avoids losing alternating corners"],
+  ["station slot beacon facing gate", "if (!normal || -dot(normal, norm(baseCamPoint)) <= .02) continue;"],
+  ["station slot beacons carry ordered phase", "beaconPhase: slotPlacement?.phase"],
+  ["station slot beacons flash in slot sequence", "beaconFlashPulse(item.seed, item.beaconPhase)"],
+  ["hangar transition beacons follow slot sequence", "beaconFlashPulse(0, i / Math.max(1, gateBeacons.length))"],
+];
+for (const [label, marker] of stationBeaconGuards) {
+  if (!js.includes(marker)) {
+    throw new Error(`Missing station beacon guard: ${label}. Slot beacons must sit just outside the entrance edge so all four corner lights survive portal/hull occlusion.`);
+  }
+}
+
 const retiredRuntimeSkinMarkers = [
   ["runtime generated bitmap skin fallback", "buildBitmapSkinTexture"],
   ["runtime generated Project X image decal fallback", "buildProjectedImageDecalTexture"],
