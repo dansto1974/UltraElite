@@ -507,19 +507,47 @@ canvas {
     #010201;
 }
 
-#mainView {
+.preview-stack {
+  position: relative;
   flex: 1 1 auto;
   min-height: 230px;
-  height: auto;
+  overflow: hidden;
+  border: 1px solid rgba(81, 255, 74, .2);
+  background: #000;
+}
+
+.preview-stack iframe,
+.preview-stack canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.preview-stack iframe {
+  display: none;
+  pointer-events: none;
+  background: #000;
+}
+
+.preview-stack.is-game-overlay iframe {
+  display: block;
+}
+
+.preview-stack.is-game-overlay canvas {
+  background: transparent;
+}
+
+#mainView {
   cursor: grab;
 }
 
 #mainView:active { cursor: grabbing; }
 
 .game-preview-panel {
-  flex: 0 0 190px;
-  display: grid;
-  grid-template-rows: auto 1fr;
+  flex: 0 0 auto;
+  display: block;
   gap: 5px;
   margin-top: 7px;
   min-height: 0;
@@ -536,14 +564,6 @@ canvas {
   color: var(--muted);
   font-size: .6rem;
   text-transform: uppercase;
-}
-
-.game-preview-panel iframe {
-  width: 100%;
-  height: 100%;
-  min-height: 154px;
-  border: 1px solid rgba(81, 255, 74, .2);
-  background: #000;
 }
 
 .ortho-grid {

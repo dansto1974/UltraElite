@@ -15701,7 +15701,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         drawProtrudingEdges("front", protrudingHullOccluders);
       }
       targetCtx.restore();
-      return { model, points, camVerts, centerCam };
+      return { model, points, camVerts, centerCam, project: projectFn, orient, camera, scaleFactor };
     }
 
     function drawDockPortal(points, station) {
@@ -16019,6 +16019,85 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
     }
 
+    function renderBenchProjectionPacket(model, result, w, h) {
+      if (!model || !result?.points || !result?.camVerts) return null;
+      const snap = (value, places = 2) => {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return null;
+        const mul = 10 ** places;
+        return Math.round(n * mul) / mul;
+      };
+      const points = result.points.map((point, index) => {
+        const cam = result.camVerts[index];
+        if (!point || !cam) return null;
+        return {
+          index,
+          x: snap(point.x),
+          y: snap(point.y),
+          nx: snap(point.x / Math.max(1, w), 5),
+          ny: snap(point.y / Math.max(1, h), 5),
+          z: snap(cam.z),
+          s: snap(point.s, 5)
+        };
+      });
+      const faces = (model.faces || []).map((face, faceIndex) => {
+        const facePoints = face.map((index) => points[index]).filter(Boolean);
+        const camFace = face.map((index) => result.camVerts[index]).filter(Boolean);
+        let facing = 0;
+        let avgZ = null;
+        if (camFace.length >= 3) {
+          const facingInfo = faceFacing(camFace);
+          facing = facingInfo.facing;
+          avgZ = camFace.reduce((sum, point) => sum + point.z, 0) / camFace.length;
+        }
+        const bitmapKey = cleanBitmapSkinKey(model.imageProjection?.faceTextures?.[faceIndex] || "");
+        const bitmapSide = model.imageProjection?.faceSides?.[faceIndex] || null;
+        const normalIndex = model.faceNormalIndices ? model.faceNormalIndices[faceIndex] : faceIndex;
+        const normalLine = (() => {
+          if (!result.orient || !result.project || !result.camera || !model.normals?.[normalIndex]) return null;
+          const center = scale(face.reduce((sum, index) => add(sum, vec(...model.verts[index])), vec()), 1 / face.length);
+          const normal = norm(vec(...model.normals[normalIndex]));
+          const normalLen = Math.max(8, modelBoundingRadius(model) * .09);
+          const toProjected = (local) => {
+            const scaled = scale(local, result.scaleFactor || 1);
+            const cam = add(worldDirToCam(result.orient(scaled), result.camera), result.centerCam);
+            const projected = result.project(cam);
+            if (!projected) return null;
+            return {
+              x: snap(projected.x),
+              y: snap(projected.y),
+              nx: snap(projected.x / Math.max(1, w), 5),
+              ny: snap(projected.y / Math.max(1, h), 5),
+              z: snap(cam.z)
+            };
+          };
+          const from = toProjected(center);
+          const to = toProjected(add(center, scale(normal, normalLen)));
+          return from && to ? { from, to } : null;
+        })();
+        return {
+          faceIndex,
+          normalIndex,
+          verts: face.slice(),
+          points: facePoints.map((point) => ({
+            index: point.index,
+            x: point.x,
+            y: point.y,
+            nx: point.nx,
+            ny: point.ny
+          })),
+          visible: facePoints.length === face.length && facing > -0.015,
+          facing: snap(facing, 5),
+          avgZ: snap(avgZ),
+          bitmapKey: bitmapKey || null,
+          bitmapSide,
+          hasImageProjection: !!model.imageProjectionUV?.[faceIndex],
+          normalLine
+        };
+      });
+      return { width: w, height: h, points, faces };
+    }
+
     function renderBenchModelFrame(canvas, opts = {}) {
       const targetCtx = canvas?.getContext?.("2d");
       if (!targetCtx) return null;
@@ -16184,7 +16263,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         points: result?.points?.filter(Boolean).length || 0,
         faces: model.faces?.length || 0,
         edges: model.edges?.length || 0,
-        details: model.details?.length || 0
+        details: model.details?.length || 0,
+        projection: opts.projection ? renderBenchProjectionPacket(model, result, w, h) : null
       };
     }
 

@@ -38,10 +38,17 @@ function render(payload = latest) {
     baseColor: meta.baseColor,
     decalRole: meta.decalRole,
     engineGlow: .75,
-    grid: true
+    grid: true,
+    projection: true
   });
   lastRender = performance.now();
-  status.textContent = `${payload.id || "builder"} | ${info?.faces || 0} faces | real renderer`;
+  const projectedFaces = info?.projection?.faces?.filter((face) => face.visible).length || 0;
+  status.textContent = `${payload.id || "builder"} | ${projectedFaces}/${info?.faces || 0} visible faces | real renderer`;
+  parent.postMessage({
+    type: "ultra-elite-render-preview-result",
+    payloadId: payload.id || "builder_preview",
+    info
+  }, "*");
 }
 
 function init() {

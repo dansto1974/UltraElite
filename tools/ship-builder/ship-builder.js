@@ -40,6 +40,7 @@ const els = {
   exportKind: document.getElementById("exportKind"),
   exportText: document.getElementById("exportText"),
   importText: document.getElementById("importText"),
+  mainPreviewStack: document.getElementById("mainPreviewStack"),
   mainView: document.getElementById("mainView"),
   gamePreviewFrame: document.getElementById("gamePreviewFrame"),
   gamePreviewReadout: document.getElementById("gamePreviewReadout"),
@@ -106,6 +107,8 @@ const state = {
   toolServer: { available: false, skins: [], version: 0 },
   assetVersion: Date.now(),
   previewSkinVersion: Date.now(),
+  gamePreviewInfo: null,
+  gamePreviewProjection: null,
   selected: null,
   pick: [],
   view: { rx: -0.35, ry: 0.72, zoom: 2.9, panX: 0, panY: 0 },
@@ -849,6 +852,63 @@ function project3d(v, canvas) {
     z: r.z,
     perspective
   };
+}
+
+function gameRendererOverlayMode() {
+  return els.previewRenderMode?.value === "gameOverlay";
+}
+
+function previewProjectionPointToCanvas(point, canvas) {
+  if (!point) return null;
+  const nx = Number(point.nx);
+  const ny = Number(point.ny);
+  return {
+    x: Number.isFinite(nx) ? nx * canvas.width : Number(point.x) || 0,
+    y: Number.isFinite(ny) ? ny * canvas.height : Number(point.y) || 0,
+    z: Number(point.z) || 0,
+    perspective: Number(point.s) || 1
+  };
+}
+
+function projectedMapForMain(canvas) {
+  if (gameRendererOverlayMode() && state.gamePreviewProjection?.points?.length) {
+    const map = new Map();
+    state.verts.forEach((v, index) => {
+      const point = previewProjectionPointToCanvas(state.gamePreviewProjection.points[index], canvas);
+      if (point) map.set(v.id, point);
+    });
+    if (map.size) return map;
+  }
+  return new Map(state.verts.map((v) => [v.id, project3d(v, canvas)]));
+}
+
+function previewFaceForBuilderFace(face) {
+  if (!gameRendererOverlayMode() || !state.gamePreviewProjection?.faces?.length) return null;
+  const index = state.faces.indexOf(face);
+  return index >= 0 ? state.gamePreviewProjection.faces[index] || null : null;
+}
+
+function faceSortDepthForMain(face) {
+  const previewFace = previewFaceForBuilderFace(face);
+  return Number.isFinite(previewFace?.avgZ) ? previewFace.avgZ : faceDepth(face);
+}
+
+function drawGameRendererFaceNormals(ctx, canvas) {
+  if (!els.showFaceNormals.checked || !state.gamePreviewProjection?.faces?.length) return;
+  ctx.save();
+  ctx.strokeStyle = "rgba(102,232,255,.78)";
+  ctx.lineWidth = 1.2;
+  for (const face of state.gamePreviewProjection.faces) {
+    if (!face.visible || !face.normalLine?.from || !face.normalLine?.to) continue;
+    const from = previewProjectionPointToCanvas(face.normalLine.from, canvas);
+    const to = previewProjectionPointToCanvas(face.normalLine.to, canvas);
+    if (!from || !to) continue;
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+    ctx.lineTo(to.x, to.y);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 function orthoProject(v, canvas, viewName) {
@@ -1947,11 +2007,13 @@ function derivedFaceEdges() {
 function renderMain() {
   const canvas = els.mainView;
   const ctx = canvas.getContext("2d");
+  const previewMode = els.previewRenderMode?.value || "gameOverlay";
+  const gameOverlay = previewMode === "gameOverlay";
+  els.mainPreviewStack?.classList.toggle("is-game-overlay", gameOverlay);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawStars(ctx, canvas);
-  const projected = new Map(state.verts.map((v) => [v.id, project3d(v, canvas)]));
-  const previewMode = els.previewRenderMode?.value || "wireFaces";
-  const drawFaces = previewMode !== "wire";
+  if (!gameOverlay) drawStars(ctx, canvas);
+  const projected = projectedMapForMain(canvas);
+  const drawFaces = previewMode !== "wire" && !gameOverlay;
   const drawWire = previewMode !== "bitmap";
   const drawBitmapGuide = previewMode === "wireBitmap" || previewMode === "bitmap";
 
@@ -1985,7 +2047,8 @@ function renderMain() {
       }
     }
   }
-  drawFaceNormals(ctx, (v) => project3d(v, canvas));
+  if (gameOverlay) drawGameRendererFaceNormals(ctx, canvas);
+  else drawFaceNormals(ctx, (v) => project3d(v, canvas));
 
   if (drawWire) {
     if (!drawFaces) {
@@ -2010,6 +2073,14 @@ function renderMain() {
       ctx.moveTo(a.x, a.y);
       ctx.lineTo(b.x, b.y);
       ctx.stroke();
+    }
+  }
+
+  if (gameOverlay && state.selected?.type === "face") {
+    const face = faceById(state.selected.id);
+    const pts = face?.verts.map((id) => projected.get(id)).filter(Boolean) || [];
+    if (face && pts.length >= 3) {
+      drawFace(ctx, pts, "rgba(255,217,54,.13)", "#ffd936", 2);
     }
   }
 
@@ -2201,6 +2272,24 @@ function scheduleGamePreviewSync(delay = 180) {
   gamePreviewTimer = setTimeout(syncGamePreview, delay);
 }
 
+function summarizeGamePreviewInfo(info) {
+  const projection = info?.projection;
+  if (!projection?.faces) return "GAME RENDERER READY.";
+  const visibleFaces = projection.faces.filter((face) => face.visible).length;
+  const faceTextureRefs = projection.faces.filter((face) => face.bitmapKey).length;
+  const missingUv = projection.faces.filter((face) => face.bitmapKey && !face.hasImageProjection).length;
+  const projectedPoints = projection.points.filter(Boolean).length;
+  const suffix = missingUv ? `  ${missingUv} FACE UV GAP${missingUv === 1 ? "" : "S"}` : "";
+  return `GAME RENDERER: ${visibleFaces}/${info.faces || projection.faces.length} VISIBLE FACES  ${projectedPoints} POINTS  ${faceTextureRefs} FACE UVS${suffix}`;
+}
+
+function handleGamePreviewResult(data) {
+  const info = data?.info || null;
+  state.gamePreviewInfo = info;
+  state.gamePreviewProjection = info?.projection || null;
+  if (els.gamePreviewReadout) els.gamePreviewReadout.textContent = summarizeGamePreviewInfo(info);
+}
+
 function updateUi() {
   els.vertexCount.textContent = `${state.verts.length} vertices`;
   els.faceCount.textContent = `${state.faces.length} faces`;
@@ -2343,7 +2432,7 @@ function nearestDetail(point, maxLineDist = 10) {
 }
 
 function selectInMain(point) {
-  const projected = new Map(state.verts.map((v) => [v.id, project3d(v, els.mainView)]));
+  const projected = projectedMapForMain(els.mainView);
   if (state.mode === "vertex") {
     const id = nearestVertex(point, projected);
     if (id) selectVertex(id);
@@ -2357,8 +2446,12 @@ function selectInMain(point) {
     }
   }
   if (state.mode === "face") {
-    const faces = [...state.faces].sort((a, b) => faceDepth(a) - faceDepth(b));
-    const hit = faces.find((face) => pointInPoly(point, face.verts.map((id) => projected.get(id)).filter(Boolean)));
+    const faces = [...state.faces].sort((a, b) => faceSortDepthForMain(a) - faceSortDepthForMain(b));
+    const hit = faces.find((face) => {
+      const previewFace = previewFaceForBuilderFace(face);
+      if (gameRendererOverlayMode() && previewFace && !previewFace.visible) return false;
+      return pointInPoly(point, face.verts.map((id) => projected.get(id)).filter(Boolean));
+    });
     if (hit) {
       state.selected = { type: "face", id: hit.id };
       setStatus(`FACE #${hit.id} SELECTED.`);
@@ -2398,8 +2491,12 @@ function selectInMain(point) {
     return;
   }
   if (state.mode === "detail") {
-    const faces = [...state.faces].sort((a, b) => faceDepth(a) - faceDepth(b));
-    const hit = faces.find((face) => pointInPoly(point, face.verts.map((id) => projected.get(id)).filter(Boolean)));
+    const faces = [...state.faces].sort((a, b) => faceSortDepthForMain(a) - faceSortDepthForMain(b));
+    const hit = faces.find((face) => {
+      const previewFace = previewFaceForBuilderFace(face);
+      if (gameRendererOverlayMode() && previewFace && !previewFace.visible) return false;
+      return pointInPoly(point, face.verts.map((id) => projected.get(id)).filter(Boolean));
+    });
     if (hit) {
       state.selected = { type: "face", id: hit.id };
       setStatus(`FACE #${hit.id} SELECTED FOR DETAILS.`);
@@ -3161,9 +3258,14 @@ function bindEvents() {
   document.getElementById("fitViewBtn").addEventListener("click", () => { fitView(); renderAll(); });
   els.syncGamePreviewBtn?.addEventListener("click", syncGamePreview);
   window.addEventListener("message", (event) => {
-    if (event.data?.type !== "ultra-elite-render-preview-ready") return;
-    if (els.gamePreviewReadout) els.gamePreviewReadout.textContent = "GAME RENDERER READY.";
-    syncGamePreview();
+    if (event.data?.type === "ultra-elite-render-preview-ready") {
+      if (els.gamePreviewReadout) els.gamePreviewReadout.textContent = "GAME RENDERER READY.";
+      syncGamePreview();
+      return;
+    }
+    if (event.data?.type === "ultra-elite-render-preview-result") {
+      handleGamePreviewResult(event.data);
+    }
   });
   document.getElementById("addPointBtn").addEventListener("click", () => {
     const v = addPointPair(60, 0, 0);

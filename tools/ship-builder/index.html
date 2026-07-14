@@ -315,6 +315,7 @@
             <label class="toggle"><input id="showFaceNormals" type="checkbox" checked> Normals</label>
             <label class="view-mode-label">View
               <select id="previewRenderMode">
+                <option value="gameOverlay">Game Renderer + Overlay</option>
                 <option value="wireFaces">Wire + Faces</option>
                 <option value="wire">Wireframe</option>
                 <option value="wireBitmap">Wire + Bitmap</option>
@@ -326,13 +327,15 @@
             <button id="syncGamePreviewBtn">Sync Game Renderer</button>
           </div>
         </div>
-        <canvas id="mainView" width="1120" height="680"></canvas>
+        <div id="mainPreviewStack" class="preview-stack">
+          <iframe id="gamePreviewFrame" title="Game renderer mirror" src="render-preview.html"></iframe>
+          <canvas id="mainView" width="1120" height="680"></canvas>
+        </div>
         <section class="game-preview-panel">
           <header>
             <h3>Game Renderer Mirror</h3>
             <span id="gamePreviewReadout">Waiting for renderer...</span>
           </header>
-          <iframe id="gamePreviewFrame" title="Game renderer mirror" src="render-preview.html"></iframe>
         </section>
         <div class="ortho-grid">
           <article>
