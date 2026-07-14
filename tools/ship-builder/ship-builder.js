@@ -911,6 +911,12 @@ function drawGameRendererFaceNormals(ctx, canvas) {
   ctx.restore();
 }
 
+function previewDetailForBuilderDetail(detail) {
+  if (!gameRendererOverlayMode() || !state.gamePreviewProjection?.details?.length) return null;
+  const index = state.details.indexOf(detail);
+  return index >= 0 ? state.gamePreviewProjection.details[index] || null : null;
+}
+
 function orthoProject(v, canvas, viewName) {
   const radius = modelRadius() || 120;
   const scale = Math.min(canvas.width, canvas.height) / (radius * 2.45) * state.orthoScale;
@@ -2085,9 +2091,13 @@ function renderMain() {
   }
 
   for (const detail of state.details) {
-    const pts3 = detailModelPoints(detail);
+    const previewDetail = previewDetailForBuilderDetail(detail);
+    const pts3 = previewDetail ? [] : detailModelPoints(detail);
+    const pts = previewDetail
+      ? previewDetail.points.map((point) => previewProjectionPointToCanvas(point, canvas)).filter(Boolean)
+      : pts3.map((p) => project3d(p, canvas));
     if (detail.type === "beacon") {
-      const p = pts3[0] ? project3d(pts3[0], canvas) : null;
+      const p = pts[0] || null;
       if (!p) continue;
       const selected = state.selected?.type === "detail" && state.selected.id === detail.id;
       ctx.save();
@@ -2108,8 +2118,7 @@ function renderMain() {
       ctx.restore();
       continue;
     }
-    if (pts3.length < 2) continue;
-    const pts = pts3.map((p) => project3d(p, canvas));
+    if (pts.length < 2) continue;
     const selected = state.selected?.type === "detail" && state.selected.id === detail.id;
     if (previewMode === "wire" && !selected) continue;
     if (detail.type === "panel") {

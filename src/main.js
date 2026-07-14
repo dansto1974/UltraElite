@@ -16027,6 +16027,20 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const mul = 10 ** places;
         return Math.round(n * mul) / mul;
       };
+      const localPointToProjection = (local) => {
+        if (!result.orient || !result.project || !result.camera || !local) return null;
+        const scaled = scale(local, result.scaleFactor || 1);
+        const cam = add(worldDirToCam(result.orient(scaled), result.camera), result.centerCam);
+        const projected = result.project(cam);
+        if (!projected) return null;
+        return {
+          x: snap(projected.x),
+          y: snap(projected.y),
+          nx: snap(projected.x / Math.max(1, w), 5),
+          ny: snap(projected.y / Math.max(1, h), 5),
+          z: snap(cam.z)
+        };
+      };
       const points = result.points.map((point, index) => {
         const cam = result.camVerts[index];
         if (!point || !cam) return null;
@@ -16058,21 +16072,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           const center = scale(face.reduce((sum, index) => add(sum, vec(...model.verts[index])), vec()), 1 / face.length);
           const normal = norm(vec(...model.normals[normalIndex]));
           const normalLen = Math.max(8, modelBoundingRadius(model) * .09);
-          const toProjected = (local) => {
-            const scaled = scale(local, result.scaleFactor || 1);
-            const cam = add(worldDirToCam(result.orient(scaled), result.camera), result.centerCam);
-            const projected = result.project(cam);
-            if (!projected) return null;
-            return {
-              x: snap(projected.x),
-              y: snap(projected.y),
-              nx: snap(projected.x / Math.max(1, w), 5),
-              ny: snap(projected.y / Math.max(1, h), 5),
-              z: snap(cam.z)
-            };
-          };
-          const from = toProjected(center);
-          const to = toProjected(add(center, scale(normal, normalLen)));
+          const from = localPointToProjection(center);
+          const to = localPointToProjection(add(center, scale(normal, normalLen)));
           return from && to ? { from, to } : null;
         })();
         return {
@@ -16095,7 +16096,29 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           normalLine
         };
       });
-      return { width: w, height: h, points, faces };
+      const details = (model.details || []).map((detail, detailIndex) => {
+        const localPoints = [];
+        if (Number.isFinite(detail.index) && model.verts[detail.index]) {
+          localPoints.push(vec(...model.verts[detail.index]));
+        } else if (Array.isArray(detail.indices)) {
+          for (const index of detail.indices) {
+            if (model.verts[index]) localPoints.push(vec(...model.verts[index]));
+          }
+        } else if (Array.isArray(detail.points)) {
+          for (const point of detail.points) {
+            if (Array.isArray(point) && point.length >= 3) localPoints.push(vec(point[0], point[1], point[2]));
+          }
+        }
+        const projected = localPoints.map(localPointToProjection).filter(Boolean);
+        return {
+          detailIndex,
+          type: detail.type || "detail",
+          color: detail.color || null,
+          points: projected,
+          visible: projected.length > 0 && projected.length === localPoints.length
+        };
+      });
+      return { width: w, height: h, points, faces, details };
     }
 
     function renderBenchModelFrame(canvas, opts = {}) {
