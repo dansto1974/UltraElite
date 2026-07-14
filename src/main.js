@@ -3096,6 +3096,11 @@
       "quantum fuel regulator", "Sirius personality module", "encrypted navigation wafer",
       "sealed alloy sample"
     ];
+    const MISSION_STARTER_ITEMS = [
+      "station mailbag", "medical paperwork", "replacement circuit boards",
+      "seed samples", "docking clamp spares", "trade invoices",
+      "survey notes", "navigation almanac", "harmless specimen case"
+    ];
     const MISSION_RECOVERY_ITEMS = [
       "stolen prototype computer", "naval flight recorder", "alien alloy panel",
       "corporate cipher module", "black box recorder", "experimental guidance core"
@@ -3110,6 +3115,17 @@
     const MISSION_TARGET_NAMES = [
       "BLACK ACRE", "MORNING KNIFE", "RED LEDGER", "NULL SAINT", "STATIC REEF",
       "BONE MARKET", "COLD VECTOR", "GRIEF ENGINE", "VANTA WAKE", "SILENT FEE"
+    ];
+    const DEV_MISSION_PRESETS = [
+      { id: "starterCourier", label: "Starter Courier", type: "courier", opts: { starter: true, rewardCredits: 65, rankPoints: 1, titlePrefix: "Dev starter courier" } },
+      { id: "starterFreight", label: "Starter Freight", type: "cargo", opts: { starter: true, cargoItem: "station mailbag", rewardCredits: 75, rankPoints: 1, titlePrefix: "Dev starter freight" } },
+      { id: "privateBounty", label: "Private Bounty", type: "bounty", opts: { heat: 2, legalClass: "private", targetModel: "mamba", rewardCredits: 520, rankPoints: 2 } },
+      { id: "sanctionedRecovery", label: "Recovery", type: "recovery", opts: { heat: 3, legalClass: "sanctioned", targetModel: "krait", recoveryName: "stolen prototype computer", rewardCredits: 790, rankPoints: 2 } },
+      { id: "thargoidNaval", label: "Thargoid Naval", type: "naval", opts: { heat: 4, legalClass: "military", targetModel: "thargoid", recoveryName: "alien alloy panel", loan: { id: "navalEcm", name: "Long-range Naval ECM", keepChance: 0 }, rewardCredits: 1250, rankPoints: 5, noRandomSpecialRewards: true } },
+      { id: "loanLaser", label: "Loan Laser", type: "naval", opts: { heat: 4, legalClass: "military", targetModel: "asp", loan: { id: "navalOverchargeLaser", name: "Overcharged Naval Laser", keepChance: 0 }, rewardCredits: 1100, rankPoints: 4, noRandomSpecialRewards: true } },
+      { id: "keepLaser", label: "Keep Laser", type: "naval", opts: { heat: 4, legalClass: "military", targetModel: "ferdelance", loan: { id: "navalOverchargeLaser", name: "Overcharged Naval Laser", keepChance: 1 }, rewardEquipment: "militaryLaser", rewardCredits: 1450, rankPoints: 5, noRandomSpecialRewards: true } },
+      { id: "shipReward", label: "Ship Reward", type: "naval", opts: { heat: 4, legalClass: "military", targetModel: "constrictor", loan: { id: "navalEcm", name: "Long-range Naval ECM", keepChance: 0 }, rewardShip: "diamondback", rewardCredits: 2200, rankPoints: 6, noRandomSpecialRewards: true } },
+      { id: "specialCargo", label: "Special Cargo", type: "cargo", opts: { heat: 3, legalClass: "sanctioned", destinationBands: [[28, 44], [18, 36], [8, 24]], cargoItem: "experimental ship drive", cargoTons: 1, cargoSecret: true, rewardEquipment: "militaryLaser", rewardCredits: 1750, rankPoints: 3 } }
     ];
 
     function missionState() {
@@ -3149,6 +3165,10 @@
       return list[Math.floor(rng() * list.length) % list.length];
     }
 
+    function missionRatingScore() {
+      return (Number(game.kills) || 0) + (Number(game.missionRankPoints) || 0);
+    }
+
     function systemsInRange(from, minLy, maxLy) {
       return galaxies[from.galaxy ?? game.galaxy]
         .filter((system) => system.index !== from.index)
@@ -3157,8 +3177,12 @@
         .sort((a, b) => a.d - b.d);
     }
 
-    function missionDestination(rng, from, type) {
-      const bands = type === "naval"
+    function missionDestination(rng, from, type, opts = {}) {
+      const bands = Array.isArray(opts.destinationBands) && opts.destinationBands.length
+        ? opts.destinationBands
+        : opts.starter
+        ? [[1, 7], [1, 10], [1, 14]]
+        : type === "naval"
         ? [[18, 64], [8, 42], [4, 28]]
         : type === "courier"
           ? [[4, 14], [14, 30], [1, 8]]
@@ -3170,7 +3194,8 @@
       return missionChoice(rng, galaxies[from.galaxy ?? game.galaxy].filter((s) => s.index !== from.index)) || from;
     }
 
-    function missionRewardBase(type, dist, rng, heat = 0) {
+    function missionRewardBase(type, dist, rng, heat = 0, opts = {}) {
+      if (opts.starter) return Math.round((35 + dist * 8 + rng() * 45) / 5) * 5;
       const base = {
         courier: 90,
         cargo: 145,
@@ -3221,15 +3246,16 @@
       return "sanctioned";
     }
 
-    function makeMission(type, rng, ordinal) {
+    function makeMission(type, rng, ordinal, opts = {}) {
       const from = currentSystem();
-      const to = missionDestination(rng, from, type);
+      const starter = !!opts.starter;
+      const to = missionDestination(rng, from, type, opts);
       const dist = distance(from, to);
-      const heat = type === "naval" ? 3 + Math.floor(rng() * 2) : type === "recovery" ? 2 + Math.floor(rng() * 2) : type === "cargo" ? Math.floor(rng() * 3) : type === "bounty" ? 1 + Math.floor(rng() * 2) : Math.floor(rng() * 2);
+      const heat = Number.isFinite(opts.heat) ? opts.heat : starter ? 0 : type === "naval" ? 3 + Math.floor(rng() * 2) : type === "recovery" ? 2 + Math.floor(rng() * 2) : type === "cargo" ? Math.floor(rng() * 3) : type === "bounty" ? 1 + Math.floor(rng() * 2) : Math.floor(rng() * 2);
       const issuer = missionChoice(rng, MISSION_ISSUERS[type] || MISSION_ISSUERS.courier);
       const id = `m-${game.galaxy}-${from.index}-${missionState().dockSerial}-${ordinal}-${Math.floor(rng() * 0xffffff).toString(36)}`;
-      const rewardCredits = missionRewardBase(type, dist, rng, heat);
-      const legalClass = missionLegalClass(type, rng);
+      const rewardCredits = Number.isFinite(opts.rewardCredits) ? opts.rewardCredits : missionRewardBase(type, dist, rng, heat, opts);
+      const legalClass = opts.legalClass || (starter ? "sanctioned" : missionLegalClass(type, rng));
       const mission = {
         id,
         type,
@@ -3243,48 +3269,60 @@
         heat,
         reward: {
           credits: rewardCredits,
-          rankPoints: type === "naval" ? 4 + Math.floor(dist / 14) : type === "bounty" || type === "recovery" ? 2 : 1,
-          legalClearance: legalClass === "private" ? 0 : type === "naval" ? "clean" : type === "bounty" ? 4 : type === "cargo" ? 2 : 1
+          rankPoints: Number.isFinite(opts.rankPoints) ? opts.rankPoints : starter ? 1 : type === "naval" ? 4 + Math.floor(dist / 14) : type === "bounty" || type === "recovery" ? 2 : 1,
+          legalClearance: opts.legalClearance !== undefined ? opts.legalClearance : legalClass === "private" ? 0 : type === "naval" ? "clean" : type === "bounty" ? 4 : type === "cargo" ? 2 : 1
         },
         status: "board"
       };
+      if (opts.rewardEquipment) mission.reward.equipment = opts.rewardEquipment;
+      if (opts.rewardShip) mission.reward.ship = opts.rewardShip;
       if (type === "cargo" || type === "courier") {
-        const item = type === "cargo" ? missionChoice(rng, MISSION_CONTRACT_ITEMS) : "sealed diplomatic packet";
-        if (type === "cargo") mission.cargo = { name: item, tons: rng() < .82 ? 1 : 2, held: false, secret: heat > 1 };
-        mission.title = type === "cargo" ? `Deliver ${item}` : `Courier dispatch to ${to.name}`;
-        mission.description = type === "cargo"
-          ? `${issuer} needs a sealed ${item} moved to ${to.name}. The item is not market cargo and must remain sealed.`
+        const item = starter
+          ? opts.cargoItem || missionChoice(rng, MISSION_STARTER_ITEMS)
+          : opts.cargoItem || (type === "cargo" ? missionChoice(rng, MISSION_CONTRACT_ITEMS) : "sealed diplomatic packet");
+        if (type === "cargo") mission.cargo = { name: item, tons: opts.cargoTons || (starter ? 1 : rng() < .82 ? 1 : 2), held: false, secret: opts.cargoSecret ?? (!starter && heat > 1) };
+        mission.title = starter
+          ? type === "cargo" ? `${opts.titlePrefix || "Starter freight"} to ${to.name}` : `${opts.titlePrefix || "Starter courier run"} to ${to.name}`
+          : type === "cargo" ? `Deliver ${item}` : `Courier dispatch to ${to.name}`;
+        mission.description = starter
+          ? type === "cargo"
+            ? `${issuer} needs ${item} moved to ${to.name}. Low-risk station work; sealed, legal and harmless.`
+            : `${issuer} needs a routine data dispatch carried to ${to.name}. Easy local work for a new commander.`
+          : type === "cargo"
+            ? `${issuer} needs a sealed ${item} moved to ${to.name}. The item is not market cargo and must remain sealed.`
           : `${issuer} requests a discreet data handoff at ${to.name}. No cargo space required.`;
       } else {
-        const model = missionTargetModel(rng, type);
-        const targetName = model === "thargoid"
+        const model = opts.targetModel || missionTargetModel(rng, type);
+        const targetName = opts.targetName || (model === "thargoid"
           ? "THARGOID WARSHIP"
-          : `${shipName(model)} "${missionChoice(rng, MISSION_TARGET_NAMES)}"`;
+          : `${shipName(model)} "${missionChoice(rng, MISSION_TARGET_NAMES)}"`);
         mission.target = {
           id: `${id}-target`,
           model,
           name: targetName,
           spawned: false,
           destroyed: false,
-          spawnDelay: 14 + Math.floor(rng() * 24)
+          spawnDelay: Number.isFinite(opts.spawnDelay) ? opts.spawnDelay : 14 + Math.floor(rng() * 24)
         };
-        if (type === "recovery" || type === "naval") {
-          const item = model === "thargoid" ? "alien alloy panel" : missionChoice(rng, MISSION_RECOVERY_ITEMS);
+        if (type === "recovery" || type === "naval" || opts.recoveryName) {
+          const item = opts.recoveryName || (model === "thargoid" ? "alien alloy panel" : missionChoice(rng, MISSION_RECOVERY_ITEMS));
           mission.recovery = { name: item, tons: 1, held: false, required: true };
         }
         if (type === "naval") {
-          mission.loan = rng() < .55
+          mission.loan = opts.loan || (rng() < .55
             ? { id: "navalOverchargeLaser", name: "Overcharged Naval Laser", keepChance: .08 }
-            : { id: "navalEcm", name: "Long-range Naval ECM", keepChance: .12 };
-          if (rng() < .16) mission.reward.equipment = "militaryLaser";
-          if (rng() < .035) mission.reward.ship = "diamondback";
+            : { id: "navalEcm", name: "Long-range Naval ECM", keepChance: .12 });
+          if (!opts.noRandomSpecialRewards) {
+            if (rng() < .16) mission.reward.equipment = "militaryLaser";
+            if (rng() < .035) mission.reward.ship = "diamondback";
+          }
         }
         mission.title = type === "naval" ? `Naval action at ${to.name}` : `${legalClass === "private" ? "Private warrant" : "Warrant"}: ${targetName}`;
         mission.description = type === "naval"
           ? `${issuer} reports alien or hostile military activity near ${to.name}. Destroy the assigned target${mission.recovery ? ` and recover the ${mission.recovery.name}` : ""}.`
           : `${issuer} authorises action against ${targetName} in ${to.name}. ${legalClass === "private" ? "Local police may not recognise this warrant." : "Warrant is registered with station authority."}`;
       }
-      mission.requirements = missionRequirementsFor(type, dist, heat, mission);
+      mission.requirements = starter ? [] : missionRequirementsFor(type, dist, heat, mission);
       return mission;
     }
 
@@ -3296,7 +3334,12 @@
       const rng = mulberry(hash32(`mission-board:${game.commander}:${boardKey}:${game.kills}:${Math.floor(game.credits)}`));
       const count = 4 + Math.floor(rng() * 3);
       const board = [];
+      const starterSlots = missionRatingScore() < 8 ? 2 : missionRatingScore() < 16 ? 1 : 0;
       for (let i = 0; i < count; i++) {
+        if (i < starterSlots) {
+          board.push(makeMission(rng() < .55 ? "courier" : "cargo", rng, i, { starter: true }));
+          continue;
+        }
         let roll = rng();
         const anarchyBias = clamp((3 - sys.government) / 4, 0, .55);
         const corporateBias = clamp(((sys.tech + 1) - 8) / 8, 0, .32) + clamp((sys.productivity - 14000) / 26000, 0, .18);
@@ -3637,7 +3680,7 @@
         if (game.comms.length) game.comms = [];
         if (el.dataset.renderKey !== "muted") {
           el.dataset.renderKey = "muted";
-          setDomHtml(el, "");
+          if (el.innerHTML) el.innerHTML = "";
         }
         return;
       }
@@ -8306,6 +8349,27 @@
       const label = { star: "star", planet: "planet", station: "station" }[kind] || kind;
       const option = ([...DEV_STAR_TYPES, ...DEV_PLANET_TYPES, ...DEV_STATION_TYPES].find(([id]) => id === value) || [value, value])[1];
       setMessage(`Dev visual override: ${label} ${option}.`, true);
+      renderPanel();
+    }
+
+    function cheatInjectMission(presetId) {
+      const preset = DEV_MISSION_PRESETS.find((item) => item.id === presetId);
+      if (!preset) return;
+      if (!game.docked) {
+        eliteAudio.play("boop");
+        setMessage("Dev mission injection needs a station bulletin board. Dock first.", true);
+        return;
+      }
+      const state = missionState();
+      generateMissionBoard(false);
+      const ordinal = state.board.length + state.active.length + 50;
+      const rng = mulberry(hash32(`dev-mission:${game.commander}:${game.galaxy}:${game.current}:${state.dockSerial}:${preset.id}:${Date.now()}`));
+      const mission = makeMission(preset.type, rng, ordinal, preset.opts || {});
+      mission.id = `dev-${preset.id}-${Date.now().toString(36)}-${Math.floor(rng() * 0xffffff).toString(36)}`;
+      mission.devInjected = true;
+      mission.title = `[DEV] ${mission.title}`;
+      state.board.unshift(mission);
+      setMessage(`Dev mission posted: ${preset.label}.`, true);
       renderPanel();
     }
 
@@ -17511,7 +17575,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           </span>
         </div>`;
       }).join("");
-      return `<div class="notice">Testing helpers only — free, no legal or economic side effects, work whether docked or in flight.</div>
+      const missionButtons = DEV_MISSION_PRESETS.map((preset) =>
+        `<button class="btn mini" data-dev-mission="${preset.id}" ${game.docked ? "" : "disabled"}>${preset.label}</button>`
+      ).join("");
+      return `<div class="notice">Testing helpers only — free, no legal or economic side effects. Mission board tests require docking.</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0">
         <button class="btn mini" data-cheat="credits1000">+1,000 CR</button>
         <button class="btn mini" data-cheat="credits10000">+10,000 CR</button>
@@ -17550,6 +17617,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
             <span class="value"><select class="btn mini" data-dev-world="station">${optionList(DEV_STATION_TYPES, game.devStationType)}</select></span>
           </div>
         </div>
+      </div>
+      <div class="notice">
+        Mission test rig
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">${missionButtons}</div>
       </div>
       <div class="notice">
         Equipment
@@ -17681,6 +17752,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (cheatShip) cheatShip.addEventListener("change", () => cheatChangePlayerShip(cheatShip.value));
       panelBody.querySelectorAll("[data-dev-world]").forEach((select) => {
         select.addEventListener("change", () => cheatSetWorldOverride(select.dataset.devWorld, select.value));
+      });
+      panelBody.querySelectorAll("[data-dev-mission]").forEach((b) => {
+        b.addEventListener("click", () => cheatInjectMission(b.dataset.devMission));
       });
       const fuel = panelBody.querySelector("[data-fuel]");
       if (fuel) fuel.addEventListener("click", buyFuel);

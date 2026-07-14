@@ -868,7 +868,8 @@
     .panel-body {
       min-width: 0;
       min-height: 0;
-      overflow: auto;
+      overflow-y: auto;
+      overflow-x: hidden;
       padding: 10px 12px 12px;
       scrollbar-color: var(--green-dim) #030603;
     }
@@ -1542,6 +1543,39 @@
       font-size: var(--panel-text);
       line-height: 1.45;
       margin-bottom: 10px;
+    }
+
+    .mission-card {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .mission-card p {
+      margin: 5px 0 8px;
+    }
+
+    .mission-card .grid2 {
+      grid-template-columns: 1fr;
+      gap: 3px;
+    }
+
+    .mission-card .stat-line {
+      grid-template-columns: minmax(82px, .42fr) minmax(0, 1fr);
+      align-items: start;
+      gap: 8px;
+    }
+
+    .mission-card .label {
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+    }
+
+    .mission-card .value {
+      min-width: 0;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      text-align: left;
     }
 
     .about-section {
