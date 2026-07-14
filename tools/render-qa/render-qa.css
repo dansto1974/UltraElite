@@ -174,10 +174,25 @@ h2 {
   border-color: rgba(255, 107, 93, .7);
 }
 
+.model-btn.review-ok {
+  border-color: rgba(85, 255, 78, .56);
+}
+
+.model-btn.review-issue {
+  border-color: rgba(255, 107, 93, .82);
+  background: rgba(255, 107, 93, .1);
+}
+
 .model-btn.current {
   color: #020402;
   border-color: var(--text);
   background: var(--text);
+}
+
+.model-btn.current.review-issue {
+  color: #140302;
+  border-color: var(--red);
+  background: var(--red);
 }
 
 pre,
@@ -194,6 +209,30 @@ textarea {
 textarea {
   min-height: 150px;
   resize: vertical;
+}
+
+.review-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.review-actions button {
+  min-width: 0;
+  padding: .38rem .35rem;
+  font-size: .64rem;
+  text-transform: uppercase;
+}
+
+.review-summary {
+  margin-top: 7px;
+  padding: .4rem;
+  border: 1px solid rgba(86, 255, 92, .16);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: .66rem;
+  line-height: 1.25;
 }
 
 .diagnostic {

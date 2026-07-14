@@ -17,6 +17,10 @@ const modelList = $("modelList");
 const modelReadout = $("modelReadout");
 const diagnosticsList = $("diagnosticsList");
 const notes = $("notes");
+const markOkBtn = $("markOkBtn");
+const markIssueBtn = $("markIssueBtn");
+const clearReviewBtn = $("clearReviewBtn");
+const reviewSummary = $("reviewSummary");
 
 const angles = [
   { id: "nose", label: "Nose", yaw: Math.PI, pitch: 0, roll: 0 },
@@ -32,7 +36,93 @@ const angles = [
 let api = null;
 let auto = false;
 let orbitStart = performance.now();
-const humanNotes = new Map();
+const REVIEW_STORAGE_KEY = "ultraElite.renderQaReviews.v1";
+const reviewState = loadReviewState();
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[char]));
+}
+
+function loadReviewState() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(REVIEW_STORAGE_KEY) || "{}");
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveReviewState() {
+  localStorage.setItem(REVIEW_STORAGE_KEY, JSON.stringify(reviewState));
+}
+
+function reviewForModel(id) {
+  return reviewState[id] || { status: "todo", notes: "" };
+}
+
+function saveCurrentNotes() {
+  const id = currentModelId();
+  if (!id) return;
+  const entry = reviewForModel(id);
+  const text = notes.value.trim();
+  if (!text && (entry.status || "todo") === "todo") {
+    delete reviewState[id];
+  } else {
+    reviewState[id] = {
+      ...entry,
+      status: entry.status || "todo",
+      notes: text,
+      updatedAt: new Date().toISOString()
+    };
+  }
+  saveReviewState();
+  updateModelList();
+  renderReviewSummary();
+}
+
+function setCurrentReviewStatus(status) {
+  const id = currentModelId();
+  if (!id) return;
+  const nextStatus = status === "ok" || status === "issue" ? status : "todo";
+  const text = notes.value.trim();
+  if (nextStatus === "todo" && !text) {
+    delete reviewState[id];
+  } else {
+    reviewState[id] = {
+      ...reviewForModel(id),
+      status: nextStatus,
+      notes: text,
+      updatedAt: new Date().toISOString()
+    };
+  }
+  saveReviewState();
+  render();
+}
+
+function reviewBadge(id, diagnosticsIssue) {
+  const status = reviewForModel(id).status || "todo";
+  if (status === "ok") return { label: "ok", className: "review-ok" };
+  if (status === "issue") return { label: "issue", className: "review-issue" };
+  return { label: diagnosticsIssue ? "!" : "todo", className: diagnosticsIssue ? "issue" : "" };
+}
+
+function renderReviewSummary() {
+  if (!reviewSummary || !api?.models?.length) return;
+  const counts = api.models.reduce((acc, model) => {
+    const status = reviewForModel(model.id).status || "todo";
+    if (status === "ok") acc.ok++;
+    else if (status === "issue") acc.issue++;
+    else acc.todo++;
+    return acc;
+  }, { ok: 0, issue: 0, todo: 0 });
+  reviewSummary.textContent = `Reviewed ${counts.ok + counts.issue}/${api.models.length}  OK ${counts.ok}  Issues ${counts.issue}  Todo ${counts.todo}`;
+}
 
 function currentModelId() {
   return modelSelect.value || api?.models?.[0]?.id || "";
@@ -100,7 +190,7 @@ function diagnosticsForModel(id) {
 
 function renderDiagnostics(diagnostics) {
   diagnosticsList.innerHTML = diagnostics.map((item) =>
-    `<div class="diagnostic ${item.level === "error" ? "error" : item.level === "warn" ? "warn" : ""}">${item.text}</div>`
+    `<div class="diagnostic ${item.level === "error" ? "error" : item.level === "warn" ? "warn" : ""}">${escapeHtml(item.text)}</div>`
   ).join("");
 }
 
@@ -109,8 +199,10 @@ function updateModelList(diagnosticsMap = new Map()) {
   modelList.innerHTML = api.models.map((model) => {
     const diagnostics = diagnosticsMap.get(model.id) || diagnosticsForModel(model.id);
     const issue = diagnostics.some((item) => item.level === "error" || item.level === "warn");
-    return `<button class="model-btn ${model.id === current ? "current" : ""} ${issue ? "issue" : ""}" data-model="${model.id}" type="button"><span>${model.name}</span><span>${issue ? "!" : "ok"}</span></button>`;
+    const badge = reviewBadge(model.id, issue);
+    return `<button class="model-btn ${model.id === current ? "current" : ""} ${badge.className}" data-model="${escapeHtml(model.id)}" type="button"><span>${escapeHtml(model.name)}</span><span>${badge.label}</span></button>`;
   }).join("");
+  renderReviewSummary();
 }
 
 function currentAngles() {
@@ -146,6 +238,7 @@ function render() {
   const renderMs = performance.now() - before;
   const model = api.models.find((entry) => entry.id === currentModelId());
   const diagnostics = diagnosticsForModel(currentModelId());
+  const review = reviewForModel(currentModelId());
   renderDiagnostics(diagnostics);
   updateModelList(new Map([[currentModelId(), diagnostics]]));
   const index = modelIndex();
@@ -160,15 +253,16 @@ function render() {
     `projected points: ${info?.points ?? "--"}`,
     `route: ${info?.route || "--"}`,
     `radius: ${info?.radius?.toFixed?.(1) || model?.radius || "--"}`,
+    `review: ${review.status || "todo"}`,
     `mode: ${modeSelect.value}`,
     `quality: ${qualitySelect.value}`
   ].join("\n");
 }
 
 function selectModel(id) {
-  humanNotes.set(currentModelId(), notes.value);
+  saveCurrentNotes();
   modelSelect.value = id;
-  notes.value = humanNotes.get(id) || "";
+  notes.value = reviewForModel(id).notes || "";
   orbitStart = performance.now();
   render();
 }
@@ -189,9 +283,10 @@ function init() {
     statusText.textContent = "Renderer hook missing.";
     return;
   }
-  modelSelect.innerHTML = api.models.map((model) => `<option value="${model.id}">${model.name}</option>`).join("");
-  angleSelect.innerHTML = angles.map((angle) => `<option value="${angle.id}">${angle.label}</option>`).join("");
+  modelSelect.innerHTML = api.models.map((model) => `<option value="${escapeHtml(model.id)}">${escapeHtml(model.name)}</option>`).join("");
+  angleSelect.innerHTML = angles.map((angle) => `<option value="${escapeHtml(angle.id)}">${escapeHtml(angle.label)}</option>`).join("");
   modelSelect.value = api.models[0]?.id || "";
+  notes.value = reviewForModel(currentModelId()).notes || "";
   updateModelList();
   render();
   requestAnimationFrame(animationLoop);
@@ -208,6 +303,10 @@ qualitySelect.addEventListener("change", render);
 scaleSlider.addEventListener("input", render);
 prevBtn.addEventListener("click", () => stepModel(-1));
 nextBtn.addEventListener("click", () => stepModel(1));
+notes.addEventListener("input", saveCurrentNotes);
+markOkBtn.addEventListener("click", () => setCurrentReviewStatus("ok"));
+markIssueBtn.addEventListener("click", () => setCurrentReviewStatus("issue"));
+clearReviewBtn.addEventListener("click", () => setCurrentReviewStatus("todo"));
 autoBtn.addEventListener("click", () => {
   auto = !auto;
   autoBtn.classList.toggle("active", auto);
