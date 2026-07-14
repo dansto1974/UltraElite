@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import zlib from "node:zlib";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -8,6 +9,7 @@ const modelDir = path.join(root, "assets/models");
 const builderLibraryPath = path.join(root, "tools/ship-builder/game-model-library.js");
 const generatedRuntimePath = path.join(root, "src/generated/model-library.js");
 const FORMAT = "ultra-elite-ship-builder/v1";
+const pngAverageColorCache = new Map();
 
 function readJson(file) {
   try {
@@ -19,6 +21,104 @@ function readJson(file) {
 
 function cleanBitmapKey(value) {
   return String(value || "").trim().replace(/[^a-zA-Z0-9_-]+/g, "_").replace(/^_+|_+$/g, "");
+}
+
+function cleanHexColor(value) {
+  const text = String(value || "").trim();
+  return /^#[0-9a-f]{6}$/i.test(text) ? text.toLowerCase() : null;
+}
+
+function averagePngColor(filePath) {
+  if (pngAverageColorCache.has(filePath)) return pngAverageColorCache.get(filePath);
+  let color = null;
+  try {
+    const png = fs.readFileSync(filePath);
+    const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+    if (!png.subarray(0, 8).equals(signature)) throw new Error("not a PNG");
+    let pos = 8;
+    let width = 0;
+    let height = 0;
+    let bitDepth = 0;
+    let colorType = 0;
+    const idat = [];
+    while (pos + 12 <= png.length) {
+      const length = png.readUInt32BE(pos);
+      const type = png.subarray(pos + 4, pos + 8).toString("ascii");
+      const data = png.subarray(pos + 8, pos + 8 + length);
+      pos += 12 + length;
+      if (type === "IHDR") {
+        width = data.readUInt32BE(0);
+        height = data.readUInt32BE(4);
+        bitDepth = data[8];
+        colorType = data[9];
+        if (data[12]) throw new Error("interlaced PNGs are not supported");
+      } else if (type === "IDAT") {
+        idat.push(data);
+      } else if (type === "IEND") {
+        break;
+      }
+    }
+    const channels = colorType === 6 ? 4 : colorType === 2 ? 3 : 0;
+    if (!width || !height || bitDepth !== 8 || !channels || !idat.length) throw new Error("unsupported PNG format");
+    const raw = zlib.inflateSync(Buffer.concat(idat));
+    const stride = width * channels;
+    const rows = [];
+    let offset = 0;
+    let sumR = 0;
+    let sumG = 0;
+    let sumB = 0;
+    let sumA = 0;
+    for (let y = 0; y < height; y++) {
+      const filter = raw[offset++];
+      const row = Buffer.alloc(stride);
+      const prev = y > 0 ? rows[y - 1] : null;
+      for (let x = 0; x < stride; x++) {
+        const value = raw[offset++];
+        const left = x >= channels ? row[x - channels] : 0;
+        const up = prev ? prev[x] : 0;
+        const upLeft = prev && x >= channels ? prev[x - channels] : 0;
+        let recon = value;
+        if (filter === 1) recon += left;
+        else if (filter === 2) recon += up;
+        else if (filter === 3) recon += Math.floor((left + up) / 2);
+        else if (filter === 4) {
+          const p = left + up - upLeft;
+          const pa = Math.abs(p - left);
+          const pb = Math.abs(p - up);
+          const pc = Math.abs(p - upLeft);
+          recon += pa <= pb && pa <= pc ? left : pb <= pc ? up : upLeft;
+        } else if (filter !== 0) {
+          throw new Error(`unsupported PNG filter ${filter}`);
+        }
+        row[x] = recon & 255;
+      }
+      rows.push(row);
+      for (let x = 0; x < stride; x += channels) {
+        const a = channels === 4 ? row[x + 3] : 255;
+        if (a <= 8) continue;
+        sumR += row[x] * a;
+        sumG += row[x + 1] * a;
+        sumB += row[x + 2] * a;
+        sumA += a;
+      }
+    }
+    if (sumA > 0) {
+      const toHex = (n) => Math.round(n / sumA).toString(16).padStart(2, "0");
+      color = `#${toHex(sumR)}${toHex(sumG)}${toHex(sumB)}`;
+    }
+  } catch {
+    color = null;
+  }
+  pngAverageColorCache.set(filePath, color);
+  return color;
+}
+
+function averageBitmapFaceColor(modelId, faceKey) {
+  const cleanModel = cleanBitmapKey(modelId);
+  const cleanKey = cleanBitmapKey(faceKey);
+  if (!cleanModel || !cleanKey) return null;
+  const filePath = path.join(root, "assets/skins", `${cleanModel}-face-${cleanKey}.png`);
+  return fs.existsSync(filePath) ? averagePngColor(filePath) : null;
 }
 
 function vec(x = 0, y = 0, z = 0) {
@@ -147,6 +247,10 @@ function sourceImageProjection(data) {
     return side === "top" || side === "bottom" || side === "back" ? side : null;
   });
   const faceTextures = sourceFaces.map((face) => cleanBitmapKey(face?.bitmapFaceKey) || null);
+  const faceColors = sourceFaces.map((face) =>
+    cleanHexColor(face?.faceColor || face?.color)
+    || averageBitmapFaceColor(data.id, face?.bitmapFaceKey)
+    || null);
   const cleanAngle = (value) => {
     let n = Number(value) || 0;
     n = ((n + 180) % 360 + 360) % 360 - 180;
@@ -178,11 +282,12 @@ function sourceImageProjection(data) {
     ...(primaryAxis !== "y" ? { primaryAxis } : {}),
     ...(faceSides.some(Boolean) ? { faceSides } : {}),
     ...(faceTextures.some(Boolean) ? { faceTextures } : {}),
+    ...(faceColors.some(Boolean) ? { faceColors } : {}),
     ...(faceAngles.some((angle) => angle != null) ? { faceAngles } : {}),
     ...(faceMirrorX.some(Boolean) ? { faceMirrorX } : {}),
     ...(faceDecals.some((decals) => decals?.length) ? { faceDecals } : {})
   };
-  return imageProjection.primaryAxis || imageProjection.faceSides || imageProjection.faceTextures || imageProjection.faceAngles || imageProjection.faceMirrorX || imageProjection.faceDecals ? imageProjection : null;
+  return imageProjection.primaryAxis || imageProjection.faceSides || imageProjection.faceTextures || imageProjection.faceColors || imageProjection.faceAngles || imageProjection.faceMirrorX || imageProjection.faceDecals ? imageProjection : null;
 }
 
 function deriveBlueprint(data) {
@@ -269,7 +374,7 @@ function deriveBlueprint(data) {
     edgeVisibility: edges.map(() => 31),
     normals,
     details,
-    ...(imageProjection.primaryAxis || imageProjection.faceSides || imageProjection.faceTextures || imageProjection.faceAngles || imageProjection.faceMirrorX || imageProjection.faceDecals ? { imageProjection } : {}),
+    ...(imageProjection.primaryAxis || imageProjection.faceSides || imageProjection.faceTextures || imageProjection.faceColors || imageProjection.faceAngles || imageProjection.faceMirrorX || imageProjection.faceDecals ? { imageProjection } : {}),
     gameMeta: data.gameMeta || {}
   };
 }

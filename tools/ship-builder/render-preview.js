@@ -10,9 +10,14 @@ let pending = null;
 let renderQueued = false;
 let spinFrame = 0;
 let spinLast = 0;
+let drag = null;
 const spinOnLoad = new URLSearchParams(window.location.search).get("spin") === "1";
 const spinPreviewStorageKey = "ultraEliteSpinPreviewPayload";
 const spinPreviewChannel = "ultra-elite-builder-spin-preview";
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
 
 function postToHost(message) {
   if (window.parent && window.parent !== window) window.parent.postMessage(message, "*");
@@ -51,6 +56,7 @@ function render(payload = latest) {
     mode: latest.mode || "solid",
     fxLevel: latest.fxLevel || "ultra",
     quality: latest.quality || "live",
+    lightMode: latest.lightMode || null,
     lod: "0",
     targetScale: Number(latest.targetScale) || .56,
     yaw: Number(view.ry) || 0,
@@ -70,6 +76,8 @@ function render(payload = latest) {
   postToHost({
     type: "ultra-elite-render-preview-result",
     payloadId: latest.id || "builder_preview",
+    blueprintKey: latest.blueprintKey || "",
+    bitmapSkinVersion: latest.bitmapSkinVersion || 0,
     benchmarkRequestId: latest.benchmarkRequestId || "",
     info,
     renderMs,
@@ -96,6 +104,19 @@ function stopSpin() {
   if (spinFrame) cancelAnimationFrame(spinFrame);
   spinFrame = 0;
   spinLast = 0;
+}
+
+function setInteractiveView(nextView) {
+  if (!latest?.blueprint) return;
+  latest = {
+    ...latest,
+    view: {
+      ...(latest.view || {}),
+      ...nextView
+    },
+    projection: false
+  };
+  requestRender(latest);
 }
 
 function spinTick(now) {
@@ -131,7 +152,57 @@ function syncSpinState() {
 function acceptPreviewPayload(payload) {
   if (payload && Object.prototype.hasOwnProperty.call(payload, "autoRotate") && !payload.autoRotate) stopSpin();
   requestRender(payload);
+  if (payload && Object.prototype.hasOwnProperty.call(payload, "bitmapSkins") && payload.bitmapSkins) {
+    setTimeout(() => requestRender(latest), 90);
+    setTimeout(() => requestRender(latest), 260);
+  }
   requestAnimationFrame(syncSpinState);
+}
+
+function bindInteractivePreview() {
+  canvas.addEventListener("pointerdown", (event) => {
+    if (!latest?.blueprint) return;
+    event.preventDefault();
+    stopSpin();
+    latest = { ...latest, autoRotate: false };
+    drag = {
+      x: event.clientX,
+      y: event.clientY,
+      rx: Number(latest.view?.rx) || -0.35,
+      ry: Number(latest.view?.ry) || 0
+    };
+    canvas.setPointerCapture?.(event.pointerId);
+  });
+  canvas.addEventListener("pointermove", (event) => {
+    if (!drag) return;
+    event.preventDefault();
+    const dx = event.clientX - drag.x;
+    const dy = event.clientY - drag.y;
+    setInteractiveView({
+      rx: clamp(drag.rx + dy * 0.006, -1.45, 1.45),
+      ry: drag.ry + dx * 0.006,
+      roll: Number(latest.view?.roll) || 0
+    });
+  });
+  const endDrag = (event) => {
+    if (!drag) return;
+    if (event?.pointerId != null && canvas.hasPointerCapture?.(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+    drag = null;
+  };
+  canvas.addEventListener("pointerup", endDrag);
+  canvas.addEventListener("pointercancel", endDrag);
+  canvas.addEventListener("pointerleave", endDrag);
+  canvas.addEventListener("wheel", (event) => {
+    if (!latest?.blueprint) return;
+    event.preventDefault();
+    const current = Number(latest.targetScale) || .62;
+    latest = {
+      ...latest,
+      targetScale: clamp(current * (event.deltaY > 0 ? .92 : 1.08), .28, 1.45),
+      projection: false
+    };
+    requestRender(latest);
+  }, { passive: false });
 }
 
 function loadStoredSpinPayload() {
@@ -180,4 +251,5 @@ window.addEventListener("resize", () => requestRender());
 
 if (window.UltraEliteRenderBench) init();
 else window.addEventListener("ultraelite:renderbench-ready", init, { once: true });
+bindInteractivePreview();
 })();

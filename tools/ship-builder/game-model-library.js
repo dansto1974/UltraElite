@@ -992,6 +992,40 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
     "format": "ultra-elite-ship-builder/v1",
     "id": "anaconda",
     "name": "Anaconda",
+    "symmetry": "x-locked",
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "private",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "imageDecalMirrorX": {
+        "top": true,
+        "bottom": true,
+        "back": false
+      },
+      "valueCr": 250000,
+      "stats": {
+        "r": 254,
+        "hp": 120,
+        "speed": 1,
+        "cargo": 10,
+        "missiles": 1,
+        "laser": "none"
+      },
+      "lists": {
+        "trader": true,
+        "pirate": true,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": false
+      }
+    },
     "verts": [
       {
         "id": 1,
@@ -1470,20 +1504,24 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1
         ],
         [
-          1,
-          2
-        ],
-        [
-          2,
-          3
+          0,
+          4
         ],
         [
           3,
           4
         ],
         [
-          0,
-          4
+          2,
+          3
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          5,
+          10
         ],
         [
           0,
@@ -1494,67 +1532,63 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6
         ],
         [
+          6,
+          10
+        ],
+        [
+          6,
+          11
+        ],
+        [
           2,
           7
+        ],
+        [
+          7,
+          11
         ],
         [
           3,
           8
         ],
         [
+          8,
+          12
+        ],
+        [
+          7,
+          12
+        ],
+        [
           4,
           9
         ],
         [
-          5,
-          10
-        ],
-        [
-          6,
-          10
-        ],
-        [
-          6,
-          11
-        ],
-        [
-          7,
-          11
-        ],
-        [
-          7,
-          12
-        ],
-        [
-          8,
-          12
+          9,
+          13
         ],
         [
           8,
           13
         ],
         [
-          9,
-          13
-        ],
-        [
-          9,
-          14
-        ],
-        [
           5,
           14
         ],
         [
-          10,
+          9,
           14
         ],
         [
           10,
-          12
+          14
         ],
         [
           11,
+          12
+        ],
+        [
+          10,
           12
         ],
         [
@@ -1568,128 +1602,128 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       ],
       "edgeFaces": [
         [
+          0,
+          1
+        ],
+        [
+          0,
+          5
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          0,
+          2
+        ],
+        [
           1,
-          0
-        ],
-        [
-          2,
-          0
-        ],
-        [
-          3,
-          0
-        ],
-        [
-          4,
-          0
-        ],
-        [
-          5,
-          0
-        ],
-        [
-          5,
-          1
-        ],
-        [
-          2,
-          1
-        ],
-        [
-          3,
-          2
-        ],
-        [
-          4,
-          3
-        ],
-        [
-          5,
-          4
-        ],
-        [
-          6,
-          1
-        ],
-        [
-          7,
-          1
-        ],
-        [
-          7,
-          2
-        ],
-        [
-          8,
-          2
-        ],
-        [
-          8,
-          3
-        ],
-        [
-          9,
-          3
-        ],
-        [
-          9,
-          4
-        ],
-        [
-          10,
-          4
-        ],
-        [
-          10,
-          5
-        ],
-        [
-          6,
-          5
-        ],
-        [
-          11,
           6
         ],
         [
-          11,
+          1,
+          5
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          1,
           7
         ],
         [
-          8,
+          2,
           7
         ],
         [
-          10,
+          2,
+          3
+        ],
+        [
+          2,
+          8
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
           9
         ],
         [
-          11,
+          3,
+          8
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          4,
           10
+        ],
+        [
+          4,
+          9
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          5,
+          10
+        ],
+        [
+          6,
+          11
+        ],
+        [
+          7,
+          8
+        ],
+        [
+          7,
+          11
+        ],
+        [
+          9,
+          10
+        ],
+        [
+          10,
+          11
         ]
       ],
       "edgeVisibility": [
-        30,
-        30,
-        30,
-        30,
-        30,
-        29,
-        29,
-        29,
-        29,
-        29,
-        30,
-        30,
-        30,
-        30,
         31,
         31,
-        30,
-        30,
-        30,
-        30,
-        30,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
         31,
         31,
         31,
@@ -1698,68 +1732,75 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       "normals": [
         [
           0,
-          -51,
-          -49
+          -72.41,
+          -68.97
         ],
         [
-          -51,
-          18,
-          -87
+          -49.23,
+          18.66,
+          -85.02
         ],
         [
-          -77,
-          -57,
-          -19
+          -79.08,
+          -57.94,
+          -19.72
         ],
         [
-          0,
-          -90,
-          16
+          0.63,
+          -98.36,
+          18.05
         ],
         [
-          77,
-          -57,
-          -19
+          79.08,
+          -57.94,
+          -19.72
         ],
         [
-          51,
-          18,
-          -87
-        ],
-        [
-          0,
-          111,
-          -20
-        ],
-        [
-          -97,
-          72,
-          24
-        ],
-        [
-          -108,
-          -68,
-          34
-        ],
-        [
-          108,
-          -68,
-          34
-        ],
-        [
-          97,
-          72,
-          24
+          49.7,
+          16.05,
+          -85.28
         ],
         [
           0,
-          94,
-          18
+          98.2,
+          -18.88
+        ],
+        [
+          -78.9,
+          58.16,
+          19.8
+        ],
+        [
+          -82.19,
+          -50.81,
+          25.77
+        ],
+        [
+          82.19,
+          -50.81,
+          25.77
+        ],
+        [
+          76.13,
+          60.48,
+          23.39
+        ],
+        [
+          0,
+          98.22,
+          18.79
         ]
       ],
       "details": [
         {
           "type": "window",
+          "color": "#101915",
+          "lift": 1,
+          "normal": [
+            0,
+            0.98,
+            0.19
+          ],
           "points": [
             [
               0,
@@ -1776,17 +1817,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               41.5,
               37
             ]
-          ],
-          "color": "#101915",
-          "normal": [
-            0,
-            0.98,
-            0.19
-          ],
-          "lift": 1
+          ]
         },
         {
           "type": "engine",
+          "color": "#f7fff7",
+          "stroke": "#ffffff",
+          "lift": 1,
+          "normal": [
+            0,
+            -0.72,
+            -0.69
+          ],
           "points": [
             [
               0,
@@ -1813,18 +1855,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -18.3,
               -31.8
             ]
-          ],
-          "color": "#f7fff7",
-          "stroke": "#ffffff",
-          "normal": [
-            0,
-            -0.72,
-            -0.69
-          ],
-          "lift": 1
+          ]
         },
         {
           "type": "engine",
+          "color": "#f7fff7",
+          "stroke": "#ffffff",
+          "lift": 1,
+          "normal": [
+            -0.5,
+            0.18,
+            -0.85
+          ],
           "points": [
             [
               -15.5,
@@ -1851,18 +1893,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               35,
               -42.7
             ]
-          ],
-          "color": "#f7fff7",
-          "stroke": "#ffffff",
-          "normal": [
-            -0.5,
-            0.18,
-            -0.85
-          ],
-          "lift": 1
+          ]
         },
         {
           "type": "engine",
+          "color": "#f7fff7",
+          "stroke": "#ffffff",
+          "lift": 1,
+          "normal": [
+            0.5,
+            0.18,
+            -0.85
+          ],
           "points": [
             [
               15.5,
@@ -1889,23 +1931,71 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               35,
               -42.7
             ]
-          ],
-          "color": "#f7fff7",
-          "stroke": "#ffffff",
-          "normal": [
-            0.5,
-            0.18,
-            -0.85
-          ],
-          "lift": 1
+          ]
         }
-      ]
-    },
-    "gameMeta": {
-      "imageDecalMirrorX": {
-        "top": true,
-        "bottom": true,
-        "back": false
+      ],
+      "imageProjection": {
+        "faceTextures": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "faceMirrorX": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ]
+      },
+      "gameMeta": {
+        "class": "fighter",
+        "npcRole": "private",
+        "aiProfile": "standard",
+        "decalRole": "private",
+        "baseColor": "#e9f2e4",
+        "description": "",
+        "missionLore": "",
+        "imageDecalMirrorX": {
+          "top": true,
+          "bottom": true,
+          "back": false
+        },
+        "valueCr": 250000,
+        "stats": {
+          "r": 254,
+          "hp": 120,
+          "speed": 1,
+          "cargo": 10,
+          "missiles": 1,
+          "laser": "none"
+        },
+        "lists": {
+          "trader": true,
+          "pirate": true,
+          "police": false,
+          "alien": false
+        },
+        "flags": {
+          "escapePod": true,
+          "hiddenUntilDiscovered": false
+        }
       }
     }
   },
@@ -3378,6 +3468,22 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "rock_panel",
           "rock_panel",
           "rock_panel"
+        ],
+        "faceColors": [
+          "#5b5b61",
+          "#5b5b61",
+          "#5b5b61",
+          "#5b5b61",
+          "#5b5b61",
+          "#5b5b61",
+          "#5b5b61",
+          "#5b5b61",
+          "#5b5b61",
+          "#5b5b61",
+          "#5b5b61",
+          "#5b5b61",
+          "#5b5b61",
+          "#5b5b61"
         ]
       }
     },
@@ -4541,6 +4647,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "rock_panel",
           "rock_panel",
           "rock_panel"
+        ],
+        "faceColors": [
+          "#5a5b61",
+          "#5a5b61",
+          "#5a5b61",
+          "#5a5b61",
+          "#5a5b61",
+          "#5a5b61",
+          "#5a5b61",
+          "#5a5b61",
+          "#5a5b61",
+          "#5a5b61"
         ]
       }
     },
@@ -4967,6 +5085,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           null,
           null,
           "end_panel"
+        ],
+        "faceColors": [
+          "#4b4635",
+          null,
+          null,
+          null,
+          null,
+          null,
+          "#4b4635"
         ]
       }
     },
@@ -8607,6 +8734,22 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "station_panel",
           "station_panel",
           "station_panel"
+        ],
+        "faceColors": [
+          "#5a5f5f",
+          "#3f4647",
+          "#3f4647",
+          "#3f4647",
+          "#3f4647",
+          "#3f4647",
+          "#3f4647",
+          "#3f4647",
+          "#3f4647",
+          "#3f4647",
+          "#3f4647",
+          "#3f4647",
+          "#3f4647",
+          "#3f4647"
         ]
       }
     },
@@ -9456,7 +9599,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "escapePod": true,
         "hiddenUntilDiscovered": true
       },
-      "imageDecalTest": true,
       "imageDecalMirrorX": {
         "top": true,
         "bottom": true,
@@ -10517,8 +10659,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "flags": {
           "escapePod": true,
           "hiddenUntilDiscovered": true
-        },
-        "imageDecalTest": true
+        }
       }
     }
   },
@@ -11481,6 +11622,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "station_panel",
           "station_panel",
           "station_panel"
+        ],
+        "faceColors": [
+          "#595e5e",
+          "#3f4647",
+          "#3f4647",
+          "#3f4647",
+          "#3f4647",
+          "#3f4647",
+          "#3f4647",
+          "#3f4647",
+          "#3f4647",
+          "#3f4647",
+          "#3f4647",
+          "#3f4647"
         ]
       }
     },
@@ -11755,6 +11910,12 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "pod_panel",
           "pod_panel",
           "pod_panel"
+        ],
+        "faceColors": [
+          "#7b7568",
+          "#7b7568",
+          "#7b7568",
+          "#7b7568"
         ]
       }
     },
@@ -12673,6 +12834,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "side_panel",
           null,
           "side_panel",
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "faceColors": [
+          null,
+          null,
+          "#6f727b",
+          null,
+          "#6f727b",
           null,
           null,
           null,
@@ -14070,6 +14243,22 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "rock_panel",
           "rock_panel",
           "rock_panel"
+        ],
+        "faceColors": [
+          "#5b6061",
+          "#494d55",
+          "#494d55",
+          "#494d55",
+          "#494d55",
+          "#494d55",
+          "#494d55",
+          "#494d55",
+          "#494d55",
+          "#494d55",
+          "#494d55",
+          "#494d55",
+          "#494d55",
+          "#494d55"
         ]
       }
     },
@@ -16749,6 +16938,25 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "missile_panel",
           "missile_panel",
           "missile_panel"
+        ],
+        "faceColors": [
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a",
+          "#a9545a"
         ]
       }
     },
@@ -17647,6 +17855,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceTextures": [
           "plate_panel",
           "plate_panel"
+        ],
+        "faceColors": [
+          "#8b877c",
+          "#8b877c"
         ]
       },
       "gameMeta": {
@@ -19464,6 +19676,21 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           null,
           null,
           null
+        ],
+        "faceColors": [
+          null,
+          null,
+          null,
+          "#767772",
+          null,
+          null,
+          null,
+          "#767772",
+          null,
+          null,
+          null,
+          null,
+          null
         ]
       }
     },
@@ -20194,6 +20421,12 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "rock_panel",
           "rock_panel",
           "rock_panel"
+        ],
+        "faceColors": [
+          "#58595f",
+          "#58595f",
+          "#58595f",
+          "#58595f"
         ]
       }
     },
@@ -23342,6 +23575,22 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           null,
           null,
           "front_panel"
+        ],
+        "faceColors": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          "#7f807c"
         ]
       }
     },

@@ -2,6 +2,7 @@
 
 const TAU = Math.PI * 2;
 const EPS = 0.0001;
+const STANDARD_VIEW = Object.freeze({ rx: -0.35, ry: 0.72 });
 
 const els = {
   shipId: document.getElementById("shipId"),
@@ -37,6 +38,7 @@ const els = {
   selectionReadout: document.getElementById("selectionReadout"),
   pickList: document.getElementById("pickList"),
   status: document.getElementById("status"),
+  topStatus: document.getElementById("topStatus"),
   exportKind: document.getElementById("exportKind"),
   exportText: document.getElementById("exportText"),
   importText: document.getElementById("importText"),
@@ -49,6 +51,9 @@ const els = {
   syncGamePreviewBtn: document.getElementById("syncGamePreviewBtn"),
   benchmarkRendererBtn: document.getElementById("benchmarkRendererBtn"),
   spinPreviewBtn: document.getElementById("spinPreviewBtn"),
+  spinPreviewModal: document.getElementById("spinPreviewModal"),
+  spinPreviewFrame: document.getElementById("spinPreviewFrame"),
+  closeSpinPreviewBtn: document.getElementById("closeSpinPreviewBtn"),
   xSlider: document.getElementById("xSlider"),
   ySlider: document.getElementById("ySlider"),
   zSlider: document.getElementById("zSlider"),
@@ -67,6 +72,9 @@ const els = {
   skinAngleValue: document.getElementById("skinAngleValue"),
   orientUvToViewBtn: document.getElementById("orientUvToViewBtn"),
   resetUvAngleBtn: document.getElementById("resetUvAngleBtn"),
+  faceColor: document.getElementById("faceColor"),
+  averageFaceColorBtn: document.getElementById("averageFaceColorBtn"),
+  clearFaceColorBtn: document.getElementById("clearFaceColorBtn"),
   importBitmapShelf: document.getElementById("importBitmapShelf"),
   bitmapShelfSelector: document.getElementById("bitmapShelfSelector"),
   bitmapAssetGrid: document.getElementById("bitmapAssetGrid"),
@@ -99,7 +107,9 @@ const els = {
   assetShelfCategory: document.getElementById("assetShelfCategory"),
   refreshAssetShelfBtn: document.getElementById("refreshAssetShelfBtn"),
   saveModelAssetBtn: document.getElementById("saveModelAssetBtn"),
+  saveModelTopBtn: document.getElementById("saveModelTopBtn"),
   rebuildAssetsBtn: document.getElementById("rebuildAssetsBtn"),
+  rebuildGameTopBtn: document.getElementById("rebuildGameTopBtn"),
   uploadTopSkinBtn: document.getElementById("uploadTopSkinBtn"),
   uploadBottomSkinBtn: document.getElementById("uploadBottomSkinBtn"),
   uploadBackSkinBtn: document.getElementById("uploadBackSkinBtn"),
@@ -134,7 +144,7 @@ const state = {
   faceDecalUiKey: "",
   selected: null,
   pick: [],
-  view: { rx: -0.35, ry: 0.72, zoom: 2.9, panX: 0, panY: 0 },
+  view: { rx: STANDARD_VIEW.rx, ry: STANDARD_VIEW.ry, zoom: 2.9, panX: 0, panY: 0 },
   orthoScale: 1,
   drag: null
 };
@@ -144,12 +154,13 @@ const TEMPLATE_MAX_SIZE = 600;
 const BITMAP_FACE_SIDES = new Set(["top", "bottom", "back"]);
 const SPIN_PREVIEW_STORAGE_KEY = "ultraEliteSpinPreviewPayload";
 const SPIN_PREVIEW_CHANNEL = "ultra-elite-builder-spin-preview";
+const DEFAULT_PREVIEW_RENDER_MODE = "gameOverlay";
 let gamePreviewTimer = 0;
 let gamePreviewViewFrame = 0;
 let gamePreviewLastKey = "";
 let gamePreviewSentBlueprintKey = "";
+let gamePreviewConfirmedBlueprintKey = "";
 let gamePreviewSentSkinVersion = 0;
-let spinPreviewPopup = null;
 let rendererBenchmarkRunning = false;
 const previewImageDataUrlCache = new WeakMap();
 
@@ -246,10 +257,12 @@ function sourceFace(face, index) {
   const bitmapAngle = normalizeBitmapAngle(face?.bitmapAngle);
   const bitmapMirrorX = !!face?.bitmapMirrorX;
   const bitmapDecals = cleanFaceDecals(face?.bitmapDecals);
+  const faceColor = optionalHexColor(face?.faceColor || face?.color);
   return {
     id: Number.isFinite(id) ? id : 1000 + index,
     verts: (Array.isArray(face) ? face : face?.verts || []).map(Number),
     mirrored: !!face?.mirrored,
+    ...(faceColor ? { faceColor } : {}),
     ...(bitmapSide ? { bitmapSide } : {}),
     ...(bitmapFaceKey ? { bitmapFaceKey } : {}),
     ...(bitmapAngle ? { bitmapAngle } : {}),
@@ -272,7 +285,8 @@ function sourceEdge(edge, index) {
 }
 
 function setStatus(text) {
-  els.status.textContent = text;
+  if (els.status) els.status.textContent = text;
+  if (els.topStatus) els.topStatus.textContent = text;
 }
 
 function confirmWrite(message) {
@@ -497,6 +511,9 @@ function syncMirroredFace(face) {
     else delete mf.bitmapAngle;
     if (face.bitmapMirrorX) mf.bitmapMirrorX = true;
     else delete mf.bitmapMirrorX;
+    const color = optionalHexColor(face.faceColor);
+    if (color) mf.faceColor = color;
+    else delete mf.faceColor;
     const decals = cleanFaceDecals(face.bitmapDecals).map(mirroredFaceDecal).filter(Boolean);
     if (decals.length) mf.bitmapDecals = decals.map((decal) => ({ ...decal }));
     else delete mf.bitmapDecals;
@@ -914,6 +931,7 @@ function patchMirroredDetail(detail, patch) {
 }
 
 function resetWedge() {
+  resetGamePreviewSyncState();
   state.nextId = 1;
   state.verts = [];
   state.faces = [];
@@ -940,6 +958,7 @@ function resetWedge() {
   setStatus("NEW SIMPLE PYRAMID WEDGE CREATED.");
   fitView();
   renderAll();
+  scheduleGamePreviewSync(0, true);
 }
 
 function rotatePoint(v) {
@@ -974,6 +993,7 @@ function orientFaceToView(face = selectedFace(), redraw = true, statusText = "")
     updateFaceUvAngleControls();
     return false;
   }
+  setStandardView();
   const view = orientFaceViewAngles(face);
   if (!view) {
     setStatus("FACE NORMAL IS TOO SMALL TO ORIENT VIEW.");
@@ -982,7 +1002,7 @@ function orientFaceToView(face = selectedFace(), redraw = true, statusText = "")
   state.view.rx = view.rx;
   state.view.ry = view.ry;
   if (statusText) setStatus(statusText);
-  else setStatus(`FACE #${face.id} ORIENTED TO VIEW.`);
+  else setStatus(`FACE #${face.id} ORIENTED TO VIEW FROM STANDARD POSE.`);
   if (redraw) renderAll();
   return true;
 }
@@ -1023,6 +1043,11 @@ function previewModeLabel(value = els.previewRenderMode?.value || "gameOverlay")
   if (value === "wireBitmap") return "Builder Wire + Bitmap";
   if (value === "bitmap") return "Builder Bitmap Only";
   return value;
+}
+
+function setDefaultPreviewRenderMode() {
+  if (!els.previewRenderMode) return;
+  els.previewRenderMode.value = DEFAULT_PREVIEW_RENDER_MODE;
 }
 
 function previewProjectionPointToCanvas(point, canvas) {
@@ -1169,12 +1194,16 @@ function shadedHullColor(n) {
   return `rgb(${Math.round(base.r * mul)},${Math.round(base.g * mul)},${Math.round(base.b * mul)})`;
 }
 
-function builderBitmapFill(n) {
+function shadedFaceColor(n, color = els.baseColor.value) {
   const light = norm(vec(-0.35, 0.7, 0.6));
   const d = clamp(dot(n, light), -0.4, 1);
   const mul = 0.46 + (d + 0.4) / 1.4 * 0.54;
-  const base = hexToRgb(els.baseColor.value);
+  const base = hexToRgb(color);
   return `rgb(${Math.round(base.r * mul)},${Math.round(base.g * mul)},${Math.round(base.b * mul)})`;
+}
+
+function builderBitmapFill(n, face = null) {
+  return shadedFaceColor(n, optionalHexColor(face?.faceColor) || els.baseColor.value);
 }
 
 function drawFace(ctx, pts, fill, stroke = "rgba(85,255,78,.46)", width = 1) {
@@ -1291,7 +1320,7 @@ function drawStars(ctx, canvas) {
 }
 
 function templateShipId() {
-  return (els.shipId.value.trim() || "custom_ship").toLowerCase().replace(/[^a-z0-9_-]+/g, "_");
+  return cleanBitmapKey(els.shipId.value, "custom_ship");
 }
 
 function mirrorHalfSkinsEnabled() {
@@ -1345,6 +1374,60 @@ function updateFaceUvAngleControls() {
     if (control) control.disabled = !enabled;
   }
   document.querySelectorAll(".uv-rotate-btn").forEach((button) => { button.disabled = !enabled; });
+  updateFaceColorControls();
+}
+
+function updateFaceColorControls() {
+  const face = selectedFace();
+  const color = optionalHexColor(face?.faceColor);
+  if (els.faceColor) {
+    els.faceColor.disabled = !face;
+    els.faceColor.value = color || normalizeHexColor(els.baseColor?.value);
+  }
+  if (els.clearFaceColorBtn) els.clearFaceColorBtn.disabled = !face || !color;
+  if (els.averageFaceColorBtn) els.averageFaceColorBtn.disabled = !face || !currentSelectedFaceImage(face);
+}
+
+function currentSelectedFaceImage(face = selectedFace()) {
+  const key = cleanBitmapKey(face?.bitmapFaceKey);
+  if (!key) return null;
+  return state.faceSkinImages?.[key]?.naturalWidth ? state.faceSkinImages[key] : null;
+}
+
+function setSelectedFaceColor(value, message = "FACE COLOUR UPDATED.") {
+  const face = selectedFace();
+  if (!face) {
+    setStatus("SELECT A FACE FIRST.");
+    return;
+  }
+  const color = optionalHexColor(value);
+  if (!color) {
+    setStatus("CHOOSE A VALID FACE COLOUR.");
+    updateFaceColorControls();
+    return;
+  }
+  face.faceColor = color;
+  if (mirrorActionsEnabled()) syncMirroredFace(face);
+  setStatus(message);
+  renderAll();
+}
+
+function clearSelectedFaceColor() {
+  const face = selectedFace();
+  if (!face) return setStatus("SELECT A FACE FIRST.");
+  delete face.faceColor;
+  if (mirrorActionsEnabled()) syncMirroredFace(face);
+  setStatus(`FACE #${face.id} COLOUR CLEARED; BUILD WILL USE BITMAP AVERAGE WHEN AVAILABLE.`);
+  renderAll();
+}
+
+function useSelectedFaceBitmapAverage() {
+  const face = selectedFace();
+  if (!face) return setStatus("SELECT A FACE FIRST.");
+  const img = currentSelectedFaceImage(face);
+  const color = averageImageColor(img);
+  if (!color) return setStatus("NO LOADED FACE BITMAP TO SAMPLE.");
+  setSelectedFaceColor(color, `FACE #${face.id} COLOUR SET FROM BITMAP AVERAGE (${color}).`);
 }
 
 function setSelectedFaceMirrorX(enabled) {
@@ -2017,6 +2100,8 @@ function setSelectedFaceSkinFromImage(img, source = "imported", url = "", name =
   face.bitmapFaceKey = key;
   if (mirrorX) face.bitmapMirrorX = true;
   else delete face.bitmapMirrorX;
+  const averageColor = averageImageColor(img);
+  if (averageColor) face.faceColor = averageColor;
   if (mirrorActionsEnabled()) syncMirroredFace(face);
   if (state.faceSkinUrls[key] && state.faceSkinUrls[key] !== url) URL.revokeObjectURL(state.faceSkinUrls[key]);
   state.faceSkinImages[key] = img;
@@ -2029,7 +2114,8 @@ function setSelectedFaceSkinFromImage(img, source = "imported", url = "", name =
   updateSkinReadout();
   updateFaceUvAngleControls();
   const angleText = options.orientToView ? ", FACE ORIENTED TO VIEW" : "";
-  setStatus(`${name} APPLIED TO FACE #${face.id} AS ${key}${mirrorX ? " AS MIRRORED HALF UV" : ""}${angleText}. SAVE AS ${templateShipId()}-face-${key}.png TO MAKE PERMANENT.`);
+  const colorText = averageColor ? `, COLOUR ${averageColor}` : "";
+  setStatus(`${name} APPLIED TO FACE #${face.id} AS ${key}${mirrorX ? " AS MIRRORED HALF UV" : ""}${angleText}${colorText}. SAVE AS ${templateShipId()}-face-${key}.png TO MAKE PERMANENT.`);
   renderAll();
 }
 
@@ -2777,6 +2863,7 @@ function renderMain() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   if (gameOnly) return;
   if (!gameOverlay) drawStars(ctx, canvas);
+  if (gameOverlay && !state.gamePreviewProjection?.points?.length) return;
   const projected = projectedMapForMain(canvas);
   const drawFaces = previewMode !== "wire" && !gameOverlay;
   const drawWire = previewMode !== "bitmap" && !gameOverlay;
@@ -2789,7 +2876,7 @@ function renderMain() {
       const n = faceNormal(face);
       const selected = state.selected?.type === "face" && state.selected.id === face.id;
       if (drawBitmapGuide) {
-        drawFace(ctx, pts, builderBitmapFill(n), "rgba(0,0,0,0)", 0);
+        drawFace(ctx, pts, builderBitmapFill(n, face), "rgba(0,0,0,0)", 0);
         const textured = drawFaceBitmapSkin(ctx, face, pts);
         drawFaceBitmapDecals(ctx, face, pts);
         if (!textured) drawFaceTextureGuide(ctx, pts, previewMode === "bitmap" ? .22 : .16);
@@ -2806,7 +2893,7 @@ function renderMain() {
         drawFace(
           ctx,
           pts,
-          selected ? "rgba(255,217,54,.24)" : shadedHullColor(n),
+          selected ? "rgba(255,217,54,.24)" : shadedFaceColor(n, optionalHexColor(face.faceColor) || els.baseColor.value),
           selected ? "#ffd936" : drawWire ? "rgba(85,255,78,.32)" : "rgba(0,0,0,0)",
           selected ? 2 : drawWire ? 1 : 0
         );
@@ -3046,7 +3133,7 @@ function gamePreviewPayload(options = {}) {
   const blueprint = derivedBlueprint();
   const blueprintKey = JSON.stringify(blueprint);
   const skinVersion = state.previewSkinVersion || 0;
-  const includeBlueprint = force || blueprintKey !== gamePreviewSentBlueprintKey;
+  const includeBlueprint = force || blueprintKey !== gamePreviewSentBlueprintKey || blueprintKey !== gamePreviewConfirmedBlueprintKey;
   const includeSkins = force || skinVersion !== gamePreviewSentSkinVersion;
   const mode = options.mode || gamePreviewRendererMode();
   const fxLevel = options.fxLevel || gamePreviewFxLevel();
@@ -3062,6 +3149,7 @@ function gamePreviewPayload(options = {}) {
     mode,
     fxLevel,
     quality: "live",
+    lightMode: "camera",
     projection: gameRendererOverlayMode(),
     targetScale: .56
   };
@@ -3097,6 +3185,7 @@ function gamePreviewViewPayload() {
     mode: gamePreviewRendererMode(),
     fxLevel: gamePreviewFxLevel(),
     quality: "live",
+    lightMode: "camera",
     projection: gameRendererOverlayMode(),
     targetScale: .56
   };
@@ -3110,7 +3199,10 @@ function syncGamePreview(force = false) {
     const key = gamePreviewSyncKey(payload);
     if (!force && key === gamePreviewLastKey) return;
     gamePreviewLastKey = key;
-    if (payload.blueprint) gamePreviewSentBlueprintKey = payload.blueprintKey;
+    if (payload.blueprint) {
+      gamePreviewSentBlueprintKey = payload.blueprintKey;
+      gamePreviewConfirmedBlueprintKey = "";
+    }
     if (Object.prototype.hasOwnProperty.call(payload, "bitmapSkins")) gamePreviewSentSkinVersion = payload.bitmapSkinVersion || 0;
     state.gamePreviewInfo = null;
     state.gamePreviewProjection = null;
@@ -3127,7 +3219,7 @@ function syncGamePreview(force = false) {
 
 function syncGamePreviewView() {
   const frame = els.gamePreviewFrame;
-  if (!frame?.contentWindow || !gamePreviewSentBlueprintKey) return;
+  if (!frame?.contentWindow || !gamePreviewSentBlueprintKey || gamePreviewConfirmedBlueprintKey !== gamePreviewSentBlueprintKey) return;
   const payload = gamePreviewViewPayload();
   const key = gamePreviewSyncKey(payload);
   if (key === gamePreviewLastKey) return;
@@ -3139,11 +3231,24 @@ function syncGamePreviewView() {
 }
 
 function queueGamePreviewViewSync() {
-  if (gamePreviewViewFrame || !gamePreviewSentBlueprintKey) return;
+  if (gamePreviewViewFrame || !gamePreviewSentBlueprintKey || gamePreviewConfirmedBlueprintKey !== gamePreviewSentBlueprintKey) return;
   gamePreviewViewFrame = requestAnimationFrame(() => {
     gamePreviewViewFrame = 0;
     syncGamePreviewView();
   });
+}
+
+function resetGamePreviewSyncState() {
+  clearTimeout(gamePreviewTimer);
+  if (gamePreviewViewFrame) cancelAnimationFrame(gamePreviewViewFrame);
+  gamePreviewViewFrame = 0;
+  gamePreviewLastKey = "";
+  gamePreviewSentBlueprintKey = "";
+  gamePreviewConfirmedBlueprintKey = "";
+  gamePreviewSentSkinVersion = 0;
+  state.gamePreviewInfo = null;
+  state.gamePreviewProjection = null;
+  updatePreviewTrustUi();
 }
 
 function spinPreviewPayload() {
@@ -3176,37 +3281,51 @@ function broadcastSpinPreviewPayload(payload) {
   channel.close();
 }
 
-function postSpinPreviewPayload(popup, payload = spinPreviewPayload()) {
+function postSpinPreviewPayload(targetWindow, payload = spinPreviewPayload()) {
   storeSpinPreviewPayload(payload);
   broadcastSpinPreviewPayload(payload);
-  if (!popup || popup.closed) return false;
-  popup.postMessage({
+  if (!targetWindow) return false;
+  targetWindow.postMessage({
     type: "ultra-elite-render-preview",
     payload
   }, "*");
   return true;
 }
 
-function openSpinPreviewPopup() {
+function closeSpinPreviewWindow() {
+  els.spinPreviewModal?.classList.add("is-hidden");
+  const frame = els.spinPreviewFrame;
+  if (frame?.contentWindow) {
+    frame.contentWindow.postMessage({
+      type: "ultra-elite-render-preview",
+      payload: { autoRotate: false }
+    }, "*");
+  }
+  if (frame) frame.src = "about:blank";
+  setStatus("SPIN PREVIEW CLOSED.");
+}
+
+function openSpinPreviewWindow() {
   const payload = spinPreviewPayload();
   storeSpinPreviewPayload(payload);
-  const popup = window.open("render-preview.html?spin=1", "ultraEliteSpinPreview", "popup,width=980,height=620");
-  if (!popup) {
-    setStatus("POP-OUT PREVIEW BLOCKED BY THE BROWSER.");
+  const frame = els.spinPreviewFrame;
+  if (!frame) {
+    setStatus("SPIN PREVIEW FRAME MISSING.");
     return;
   }
-  spinPreviewPopup = popup;
-  setStatus("OPENING POP-OUT ROTATION PREVIEW...");
+  els.spinPreviewModal?.classList.remove("is-hidden");
+  setStatus("OPENING SPIN PREVIEW...");
   const sendSnapshot = () => {
-    if (postSpinPreviewPayload(popup, payload)) setStatus("POP-OUT ROTATION PREVIEW UPDATED.");
+    if (postSpinPreviewPayload(frame.contentWindow, payload)) setStatus("SPIN PREVIEW UPDATED.");
   };
   const handleReady = (event) => {
-    if (event.source !== popup) return;
+    if (event.source !== frame.contentWindow) return;
     if (event.data?.type !== "ultra-elite-render-preview-ready") return;
     window.removeEventListener("message", handleReady);
     sendSnapshot();
   };
   window.addEventListener("message", handleReady);
+  frame.src = `render-preview.html?spin=1&embed=${Date.now()}`;
   setTimeout(sendSnapshot, 450);
   setTimeout(sendSnapshot, 1200);
 }
@@ -3385,6 +3504,14 @@ function summarizeGamePreviewInfo(info) {
 }
 
 function handleGamePreviewResult(data) {
+  if (data?.blueprintKey && gamePreviewSentBlueprintKey && data.blueprintKey !== gamePreviewSentBlueprintKey) {
+    gamePreviewLastKey = "";
+    scheduleGamePreviewSync(0, true);
+    return;
+  }
+  if (data?.blueprintKey && data.blueprintKey === gamePreviewSentBlueprintKey) {
+    gamePreviewConfirmedBlueprintKey = data.blueprintKey;
+  }
   const info = data?.info || null;
   state.gamePreviewInfo = info;
   state.gamePreviewProjection = info?.projection || null;
@@ -3412,8 +3539,9 @@ function updateUi() {
     const faceSkin = face ? cleanBitmapKey(face.bitmapFaceKey) : "";
     const faceAngle = face ? normalizeBitmapAngle(face.bitmapAngle) : 0;
     const faceMirror = face?.bitmapMirrorX ? "  half-mirror" : "";
+    const faceColor = optionalHexColor(face?.faceColor);
     els.selectionReadout.textContent = n
-      ? `Face #${state.selected.id}  normal X ${round(n.x, 2)}  Y ${round(n.y, 2)}  Z ${round(n.z, 2)}  bitmap ${bitmapSide}${faceSkin ? `  face ${faceSkin}` : ""}${faceAngle ? `  angle ${faceAngle}` : ""}${faceMirror}`
+      ? `Face #${state.selected.id}  normal X ${round(n.x, 2)}  Y ${round(n.y, 2)}  Z ${round(n.z, 2)}  bitmap ${bitmapSide}${faceSkin ? `  face ${faceSkin}` : ""}${faceAngle ? `  angle ${faceAngle}` : ""}${faceMirror}${faceColor ? `  colour ${faceColor}` : ""}`
       : `Face #${state.selected.id}`;
   } else {
     els.selectionReadout.textContent = `${state.selected.type.toUpperCase()} #${state.selected.id}`;
@@ -3641,6 +3769,11 @@ function fitView() {
   state.view.panY = 0;
 }
 
+function setStandardView() {
+  state.view.rx = STANDARD_VIEW.rx;
+  state.view.ry = STANDARD_VIEW.ry;
+}
+
 function deleteSelected() {
   if (!state.selected) return;
   const { type, id } = state.selected;
@@ -3796,6 +3929,7 @@ function derivedBlueprint() {
   }).filter(Boolean);
   const faceSides = state.faces.map((f) => validBitmapFaceSide(f.bitmapSide) || null);
   const faceTextures = state.faces.map((f) => cleanBitmapKey(f.bitmapFaceKey) || null);
+  const faceColors = state.faces.map((f) => optionalHexColor(f.faceColor) || null);
   const faceAngles = state.faces.map((f) => normalizeBitmapAngle(f.bitmapAngle) || null);
   const faceMirrorX = state.faces.map((f) => !!f.bitmapMirrorX);
   const faceDecals = state.faces.map((f) => {
@@ -3807,11 +3941,12 @@ function derivedBlueprint() {
     ...(primaryAxis !== "y" ? { primaryAxis } : {}),
     ...(faceSides.some(Boolean) ? { faceSides } : {}),
     ...(faceTextures.some(Boolean) ? { faceTextures } : {}),
+    ...(faceColors.some(Boolean) ? { faceColors } : {}),
     ...(faceAngles.some((angle) => angle != null) ? { faceAngles } : {}),
     ...(faceMirrorX.some(Boolean) ? { faceMirrorX } : {}),
     ...(faceDecals.some((decals) => decals?.length) ? { faceDecals } : {})
   };
-  const hasImageProjection = !!imageProjection.primaryAxis || !!imageProjection.faceSides || !!imageProjection.faceTextures || !!imageProjection.faceAngles || !!imageProjection.faceMirrorX || !!imageProjection.faceDecals;
+  const hasImageProjection = !!imageProjection.primaryAxis || !!imageProjection.faceSides || !!imageProjection.faceTextures || !!imageProjection.faceColors || !!imageProjection.faceAngles || !!imageProjection.faceMirrorX || !!imageProjection.faceDecals;
   return {
     verts,
     edges,
@@ -3832,6 +3967,40 @@ function numberFromInput(input, fallback = 0) {
 function normalizeHexColor(value, fallback = "#e9f2e4") {
   const text = String(value || "").trim();
   return /^#[0-9a-f]{6}$/i.test(text) ? text : fallback;
+}
+
+function optionalHexColor(value) {
+  const text = String(value || "").trim();
+  return /^#[0-9a-f]{6}$/i.test(text) ? text.toLowerCase() : null;
+}
+
+function averageImageColor(img) {
+  if (!img?.naturalWidth || !img?.naturalHeight) return null;
+  const canvas = document.createElement("canvas");
+  const sample = 64;
+  const scale = Math.min(1, sample / Math.max(img.naturalWidth, img.naturalHeight));
+  canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+  canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return null;
+  try {
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    let r = 0, g = 0, b = 0, aTotal = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      const a = data[i + 3];
+      if (a <= 8) continue;
+      r += data[i] * a;
+      g += data[i + 1] * a;
+      b += data[i + 2] * a;
+      aTotal += a;
+    }
+    if (!aTotal) return null;
+    const toHex = (n) => Math.round(n / aTotal).toString(16).padStart(2, "0");
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  } catch {
+    return null;
+  }
 }
 
 function exportedImageDecalMirrorX() {
@@ -3891,6 +4060,7 @@ function builderExport() {
       id: f.id,
       verts: f.verts,
       mirrored: !!f.mirrored,
+      ...(optionalHexColor(f.faceColor) ? { faceColor: optionalHexColor(f.faceColor) } : {}),
       ...(validBitmapFaceSide(f.bitmapSide) ? { bitmapSide: f.bitmapSide } : {}),
       ...(cleanBitmapKey(f.bitmapFaceKey) ? { bitmapFaceKey: cleanBitmapKey(f.bitmapFaceKey) } : {}),
       ...(normalizeBitmapAngle(f.bitmapAngle) ? { bitmapAngle: normalizeBitmapAngle(f.bitmapAngle) } : {}),
@@ -3924,6 +4094,7 @@ function importBuilderJson() {
   try {
     const data = JSON.parse(els.importText.value);
     if (!data || !Array.isArray(data.verts) || !Array.isArray(data.faces)) throw new Error("Not builder JSON");
+    resetGamePreviewSyncState();
     state.nextId = 1;
     state.verts = data.verts.map((v, index) => {
       const vertex = sourceVertex(v, index);
@@ -3993,6 +4164,7 @@ function importBuilderJson() {
     fitView();
     setStatus("BUILDER JSON IMPORTED.");
     renderAll();
+    scheduleGamePreviewSync(0, true);
   } catch (err) {
     setStatus(`IMPORT FAILED: ${err.message}`);
   }
@@ -4028,6 +4200,7 @@ function loadLibraryModel(id) {
     setStatus("LIBRARY OBJECT NOT FOUND.");
     return;
   }
+  resetGamePreviewSyncState();
   state.nextId = 1;
   state.verts = (source.verts || []).map((v, index) => {
     const vertex = sourceVertex(v, index);
@@ -4093,6 +4266,7 @@ function loadLibraryModel(id) {
   fitView();
   setStatus(`LOADED ${els.shipName.value.toUpperCase()} FROM GAME LIBRARY.`);
   renderAll();
+  scheduleGamePreviewSync(0, true);
 }
 
 function downloadShip() {
@@ -4245,7 +4419,7 @@ function copyExport() {
 function setExportVisible(visible) {
   els.workspace.classList.toggle("export-hidden", !visible);
   els.exportPanel.classList.toggle("is-hidden", !visible);
-  els.toggleExportBtn.textContent = visible ? "Hide Export" : "Show Export";
+  els.toggleExportBtn.textContent = visible ? "Hide Advanced" : "Advanced";
 }
 
 function setMode(mode, announce = true) {
@@ -4334,9 +4508,18 @@ function bindEvents() {
   document.getElementById("newWedgeBtn").addEventListener("click", resetWedge);
   els.loadLibraryModelBtn.addEventListener("click", () => loadLibraryModel(els.librarySelector.value));
   els.toggleExportBtn.addEventListener("click", () => setExportVisible(els.exportPanel.classList.contains("is-hidden")));
+  els.saveModelTopBtn?.addEventListener("click", saveModelAsset);
+  els.rebuildGameTopBtn?.addEventListener("click", rebuildGameFiles);
   els.showFaceNormals.addEventListener("input", renderAll);
   els.previewRenderMode.addEventListener("input", renderAll);
-  els.spinPreviewBtn?.addEventListener("click", openSpinPreviewPopup);
+  els.spinPreviewBtn?.addEventListener("click", openSpinPreviewWindow);
+  els.closeSpinPreviewBtn?.addEventListener("click", closeSpinPreviewWindow);
+  els.spinPreviewModal?.addEventListener("click", (event) => {
+    if (event.target === els.spinPreviewModal) closeSpinPreviewWindow();
+  });
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !els.spinPreviewModal?.classList.contains("is-hidden")) closeSpinPreviewWindow();
+  });
   els.importBitmapShelf.addEventListener("change", (ev) => {
     importBitmapShelfFiles(ev.target.files);
     ev.target.value = "";
@@ -4422,6 +4605,9 @@ function bindEvents() {
   });
   els.orientUvToViewBtn?.addEventListener("click", () => orientFaceToView());
   els.resetUvAngleBtn?.addEventListener("click", () => setSelectedFaceUvAngle(0, true, "FACE UV ANGLE RESET."));
+  els.faceColor?.addEventListener("input", (ev) => setSelectedFaceColor(ev.target.value, "FACE COLOUR UPDATED."));
+  els.averageFaceColorBtn?.addEventListener("click", useSelectedFaceBitmapAverage);
+  els.clearFaceColorBtn?.addEventListener("click", clearSelectedFaceColor);
   els.downloadTopTemplateBtn.addEventListener("click", () => downloadTemplate("top"));
   els.downloadBottomTemplateBtn.addEventListener("click", () => downloadTemplate("bottom"));
   els.downloadBackTemplateBtn.addEventListener("click", () => downloadTemplate("back"));
@@ -4429,7 +4615,7 @@ function bindEvents() {
   els.templateFaceSide.addEventListener("change", (ev) => setSelectedFaceBitmapSide(ev.target.value));
   els.shipId.addEventListener("change", () => loadSkinBitmaps(els.shipId.value, state.skinImages?.mirrorX || emptyMirrorFlags(false)));
   document.getElementById("resetViewBtn").addEventListener("click", () => {
-    state.view.rx = -0.35; state.view.ry = 0.72; fitView(); renderAll();
+    setStandardView(); fitView(); renderAll();
   });
   document.getElementById("fitViewBtn").addEventListener("click", () => { fitView(); renderAll(); });
   els.syncGamePreviewBtn?.addEventListener("click", () => syncGamePreview(true));
@@ -4517,18 +4703,19 @@ function bindEvents() {
     patchMirroredDetail(detail, { color });
     renderAll();
   });
-  document.getElementById("downloadBtn").addEventListener("click", downloadShip);
-  document.getElementById("copyBtn").addEventListener("click", copyExport);
+  document.getElementById("downloadBtn")?.addEventListener("click", downloadShip);
+  document.getElementById("copyBtn")?.addEventListener("click", copyExport);
   document.getElementById("importBtn").addEventListener("click", importBuilderJson);
   els.exportKind.addEventListener("change", updateExport);
   [
     els.shipId, els.shipName, els.shipDescription, els.shipMissionLore, els.shipClass, els.npcRole, els.aiProfile, els.decalRole, els.baseColor,
     els.shipValue, els.shipHp, els.speedMul, els.cargoTons, els.missileCount, els.laserClass,
-    els.flagTrader, els.flagPirate, els.flagPolice, els.flagAlien, els.flagEscapePod, els.flagHidden, els.mirrorHalfSkins, els.skinAngle, els.skinAngleValue
+    els.flagTrader, els.flagPirate, els.flagPolice, els.flagAlien, els.flagEscapePod, els.flagHidden, els.mirrorHalfSkins, els.skinAngle, els.skinAngleValue, els.faceColor
   ].forEach((el) => el.addEventListener("input", updateExport));
 }
 
 bindEvents();
+setDefaultPreviewRenderMode();
 populateLibrarySelector();
 resetWedge();
 kickInitialGamePreviewSync();

@@ -20,6 +20,12 @@ body {
   width: 100vw;
   height: 100vh;
   background: #000;
+  cursor: grab;
+  touch-action: none;
+}
+
+#gamePreviewCanvas:active {
+  cursor: grabbing;
 }
 
 #previewStatus {

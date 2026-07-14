@@ -128,6 +128,22 @@ for (const [label, marker] of bitmapProjectionGuards) {
   }
 }
 
+const retiredRuntimeSkinMarkers = [
+  ["runtime generated bitmap skin fallback", "buildBitmapSkinTexture"],
+  ["runtime generated Project X image decal fallback", "buildProjectedImageDecalTexture"],
+  ["legacy procedural hull decal entry", "function getShipDecal"],
+  ["legacy procedural hull decal preview", "function getPreviewShipDecal"],
+  ["legacy Project X embedded decal flag", "imageDecalTest"],
+  ["legacy Project X embedded decal source", "imageDecalDataUrl"],
+  ["legacy Project X all-ships hack", "HACK_PROJECT_X_SKIN_ALL_SHIPS"],
+  ["legacy bitmap skins all-meshes test gate", "TEST_BITMAP_SKINS_ALL_MESHES"],
+];
+for (const [label, marker] of retiredRuntimeSkinMarkers) {
+  if (js.includes(marker)) {
+    throw new Error(`Retired mesh skin path still present: ${label}. Mesh rendering should use authored bitmap assets or degrade to solid faces.`);
+  }
+}
+
 const builderBitmapGuards = [
   ["builder face-texture collapsed UV fallback", "function faceTextureProjection"],
   ["builder face-texture UV area check", "polygonArea2d(fallbackPts)"],
@@ -159,6 +175,13 @@ if (!fs.existsSync(files.generatedSkins)) {
 }
 if (!fs.existsSync(files.builderModels)) {
   throw new Error("Missing tools/ship-builder/game-model-library.js; run npm run models or npm run build.");
+}
+
+for (const file of fs.readdirSync(modelDir).filter((name) => name.endsWith(".ultraship.json"))) {
+  const source = read(path.join(modelDir, file));
+  if (source.includes('"imageDecalTest"') || source.includes('"imageDecalDataUrl"') || source.includes('"imageDecalBottomDataUrl"')) {
+    throw new Error(`${file} still contains retired imageDecalTest metadata. Use authored bitmap skins/decals instead.`);
+  }
 }
 
 new Function(js);
@@ -225,6 +248,11 @@ if (!js.includes("const benchImageDecals") || !js.includes("opts.bitmapSkins")) 
 
 function cleanBitmapKey(value) {
   return String(value || "").trim().replace(/[^a-zA-Z0-9_-]+/g, "_").replace(/^_+|_+$/g, "");
+}
+
+function cleanHexColor(value) {
+  const text = String(value || "").trim();
+  return /^#[0-9a-f]{6}$/i.test(text) ? text.toLowerCase() : null;
 }
 
 function validBitmapFaceSide(value) {
@@ -316,6 +344,7 @@ if (fs.existsSync(modelDir)) {
     const sourceFaces = Array.isArray(data.faces) ? data.faces : [];
     const faceSides = sourceFaces.map((face) => validBitmapFaceSide(face?.bitmapSide));
     const faceTextures = sourceFaces.map((face) => cleanBitmapKey(face?.bitmapFaceKey) || null);
+    const authoredFaceColors = sourceFaces.map((face) => cleanHexColor(face?.faceColor || face?.color));
     const faceAngles = sourceFaces.map((face) => cleanBitmapAngle(face?.bitmapAngle));
     const faceMirrorX = sourceFaces.map((face) => !!face?.bitmapMirrorX);
     const faceDecals = sourceFaces.map((face) => {
@@ -324,11 +353,12 @@ if (fs.existsSync(modelDir)) {
     });
     const hasFaceSides = faceSides.some(Boolean);
     const hasFaceTextures = faceTextures.some(Boolean);
+    const hasAuthoredFaceColors = authoredFaceColors.some(Boolean);
     const hasFaceAngles = faceAngles.some((angle) => angle != null);
     const hasFaceMirrorX = faceMirrorX.some(Boolean);
     const hasFaceDecals = faceDecals.some((decals) => decals?.length);
     const usesOnlyFaceTextures = sourceFaces.length > 0 && faceTextures.every(Boolean);
-    if (!hasFaceSides && !hasFaceTextures && !hasFaceAngles && !hasFaceMirrorX && !hasFaceDecals) continue;
+    if (!hasFaceSides && !hasFaceTextures && !hasAuthoredFaceColors && !hasFaceAngles && !hasFaceMirrorX && !hasFaceDecals) continue;
 
     const generatedProjection = generatedModels[modelId]?.imageProjection || {};
     if (hasFaceSides && JSON.stringify(generatedProjection.faceSides) !== JSON.stringify(faceSides)) {
@@ -336,6 +366,19 @@ if (fs.existsSync(modelDir)) {
     }
     if (hasFaceTextures && JSON.stringify(generatedProjection.faceTextures) !== JSON.stringify(faceTextures)) {
       throw new Error(`${path.relative(root, filePath)} bitmap faceTextures are out of sync with src/generated/model-library.js; run npm run models or npm run build.`);
+    }
+    if ((hasFaceTextures || hasAuthoredFaceColors) && (!Array.isArray(generatedProjection.faceColors) || generatedProjection.faceColors.length !== sourceFaces.length)) {
+      throw new Error(`${path.relative(root, filePath)} bitmap faceColors are missing or out of sync with src/generated/model-library.js; run npm run models or npm run build.`);
+    }
+    if (Array.isArray(generatedProjection.faceColors)) {
+      generatedProjection.faceColors.forEach((color, faceIndex) => {
+        if (color != null && !cleanHexColor(color)) {
+          throw new Error(`${path.relative(root, filePath)} generated invalid faceColors[${faceIndex}] (${color}).`);
+        }
+        if (authoredFaceColors[faceIndex] && color !== authoredFaceColors[faceIndex]) {
+          throw new Error(`${path.relative(root, filePath)} authored faceColor for face ${faceIndex} is out of sync with src/generated/model-library.js; run npm run models or npm run build.`);
+        }
+      });
     }
     if (hasFaceAngles && JSON.stringify(generatedProjection.faceAngles) !== JSON.stringify(faceAngles)) {
       throw new Error(`${path.relative(root, filePath)} bitmap faceAngles are out of sync with src/generated/model-library.js; run npm run models or npm run build.`);

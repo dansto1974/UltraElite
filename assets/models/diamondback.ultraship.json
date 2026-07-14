@@ -29,7 +29,6 @@
       "escapePod": true,
       "hiddenUntilDiscovered": true
     },
-    "imageDecalTest": true,
     "imageDecalMirrorX": {
       "top": true,
       "bottom": true,
@@ -1090,8 +1089,7 @@
       "flags": {
         "escapePod": true,
         "hiddenUntilDiscovered": true
-      },
-      "imageDecalTest": true
+      }
     }
   }
 }

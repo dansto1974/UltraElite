@@ -20,10 +20,11 @@
           <select id="librarySelector"></select>
           <button id="loadLibraryModelBtn">Load</button>
         </div>
-        <button id="toggleExportBtn">Show Export</button>
-        <button id="downloadBtn">Download Ship</button>
-        <button id="copyBtn">Copy Export</button>
+        <button id="saveModelTopBtn" class="primary">Save Model</button>
+        <button id="rebuildGameTopBtn">Rebuild Game</button>
+        <button id="toggleExportBtn">Advanced</button>
       </div>
+      <div id="topStatus" class="status top-status">READY.</div>
     </header>
 
     <section id="workspace" class="workspace export-hidden">
@@ -210,8 +211,16 @@
                   <button type="button" class="uv-rotate-btn" data-uv-rotate="90">90 CW</button>
                 </div>
                 <div class="uv-orient-actions">
-                  <button id="orientUvToViewBtn" type="button">Face To View</button>
                   <button id="resetUvAngleBtn" type="button">Reset UV Angle</button>
+                </div>
+              </section>
+
+              <section class="paint-group">
+                <h2>Face Colour</h2>
+                <label>Solid fallback <input id="faceColor" type="color" value="#e9f2e4"></label>
+                <div class="button-grid compact-actions">
+                  <button id="averageFaceColorBtn" type="button">Use UV Average</button>
+                  <button id="clearFaceColorBtn" type="button">Clear Face Colour</button>
                 </div>
               </section>
 
@@ -284,7 +293,7 @@
               <section class="paint-group">
                 <h2>Write To Project</h2>
                 <div class="button-grid compact-actions">
-                  <button id="saveModelAssetBtn">Update Model</button>
+                  <button id="saveModelAssetBtn">Save Model</button>
                   <button id="uploadFaceSkinBtn">Upload Selected Face</button>
                   <button id="uploadTopSkinBtn">Upload Top Skin</button>
                   <button id="uploadBottomSkinBtn">Upload Bottom Skin</button>
@@ -402,14 +411,15 @@
               <button data-mode="face" class="mode-btn" type="button" title="Face select">F</button>
               <button data-mode="edge" class="mode-btn" type="button" title="Edge or stick select">E</button>
               <button data-mode="detail" class="mode-btn" type="button" title="Detail select">D</button>
+              <button id="orientUvToViewBtn" class="selection-action-btn" type="button" title="Orient selected face to view">Face To View</button>
               <button id="clearSelectionBtn" type="button" title="Clear selection">×</button>
             </div>
             <label class="toggle"><input id="showFaceNormals" type="checkbox" checked> Normals</label>
             <label class="view-mode-label">View
               <select id="previewRenderMode">
                 <optgroup label="Trusted">
+                  <option value="gameOverlay" selected>Game Renderer + Overlay</option>
                   <option value="gameOnly">Game Renderer Only</option>
-                  <option value="gameOverlay">Game Renderer + Overlay</option>
                 </optgroup>
                 <optgroup label="Diagnostics">
                   <option value="wireFaces">Builder Wire + Faces</option>
@@ -423,14 +433,14 @@
             <button id="fitViewBtn">Fit</button>
             <button id="syncGamePreviewBtn">Refresh Renderer</button>
             <button id="benchmarkRendererBtn">Benchmark</button>
-            <button id="spinPreviewBtn">Pop Out Spin</button>
+            <button id="spinPreviewBtn">Spin Preview</button>
           </div>
         </div>
         <div class="preview-trust-strip">
           <span id="previewTrustBadge" class="preview-trust-badge">Renderer</span>
           <span id="previewTrustReadout">Waiting for renderer...</span>
         </div>
-        <div id="mainPreviewStack" class="preview-stack">
+        <div id="mainPreviewStack" class="preview-stack is-game-renderer is-game-overlay">
           <iframe id="gamePreviewFrame" title="Game renderer mirror" src="render-preview.html"></iframe>
           <canvas id="mainView" width="1120" height="680"></canvas>
         </div>
@@ -456,6 +466,16 @@
         </div>
       </section>
 
+      <section id="spinPreviewModal" class="spin-preview-modal is-hidden" aria-label="Spin preview">
+        <div class="spin-preview-window">
+          <header>
+            <h3>Spin Preview</h3>
+            <button id="closeSpinPreviewBtn" type="button" title="Close spin preview" aria-label="Close spin preview">×</button>
+          </header>
+          <iframe id="spinPreviewFrame" title="Spin preview renderer"></iframe>
+        </div>
+      </section>
+
       <aside id="exportPanel" class="panel export-panel is-hidden">
         <h2>Export</h2>
         <p class="hint">Builder JSON keeps editable faces. Blueprint JS is the game-ready paste target.</p>
@@ -466,6 +486,10 @@
           </select>
         </label>
         <textarea id="exportText" spellcheck="false"></textarea>
+        <div class="button-grid compact-actions">
+          <button id="downloadBtn">Download Ship</button>
+          <button id="copyBtn">Copy Export</button>
+        </div>
         <div class="import-box">
           <h2>Import</h2>
           <textarea id="importText" placeholder="Paste builder JSON here"></textarea>
