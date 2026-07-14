@@ -415,10 +415,16 @@ h3 {
   background: rgba(0, 0, 0, .22);
 }
 
+.paint-group,
 .local-toolbox {
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid rgba(81, 255, 74, .16);
+}
+
+.paint-group h2,
+.local-toolbox h2 {
+  margin-top: 0;
 }
 
 .local-toolbox .readout[data-available="true"] {

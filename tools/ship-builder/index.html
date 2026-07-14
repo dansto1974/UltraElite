@@ -121,39 +121,11 @@
 
         <section class="tool-tab-panel" data-tool-tab-panel="paint">
           <section class="template-tools">
-            <h2>Paint Templates</h2>
-            <p class="hint">Download exact projection guides for bitmap skins. Top, bottom and back keep the ship footprint proportional with a 600px maximum dimension. Selected face exports as its own correctly sized tile.</p>
+            <h2>Paint / UV</h2>
             <div id="skinReadout" class="readout compact-readout">No skin bitmaps loaded.</div>
-            <label class="toggle"><input id="mirrorHalfSkins" type="checkbox" checked> Download half-width templates</label>
-            <label class="toggle"><input id="importMirroredSkin" type="checkbox"> Import/apply bitmap as mirrored half UV</label>
-            <label>Bitmap Angle <input id="skinAngle" type="range" min="-180" max="180" step="1" value="0"><input id="skinAngleValue" type="number" min="-180" max="180" step="1" value="0"></label>
-            <label>Bitmap Shelf <input id="importBitmapShelf" type="file" accept="image/png,image/*" multiple></label>
-            <label>Reusable Bitmap
-              <select id="bitmapShelfSelector">
-                <option value="">No imported bitmaps</option>
-              </select>
-            </label>
-            <div class="button-grid compact-actions">
-              <button id="applyShelfTopBtn">Use On Top</button>
-              <button id="applyShelfBottomBtn">Use On Bottom</button>
-              <button id="applyShelfBackBtn">Use On Back</button>
-              <button id="applyShelfFaceBtn">Use On Selected Face</button>
-              <button id="clearBitmapShelfBtn">Clear Shelf</button>
-            </div>
-            <div class="skin-import-grid">
-              <label>Import Top PNG <input id="importTopSkin" type="file" accept="image/png,image/*"></label>
-              <label>Import Bottom PNG <input id="importBottomSkin" type="file" accept="image/png,image/*"></label>
-              <label>Import Back PNG <input id="importBackSkin" type="file" accept="image/png,image/*"></label>
-              <label>Import Selected Face PNG <input id="importFaceSkin" type="file" accept="image/png,image/*"></label>
-            </div>
-            <p class="hint">Imports update the live preview. To make them permanent, save object skins as assets/skins/id-side.png and face skins as assets/skins/id-face-key.png, then rebuild.</p>
-            <div class="button-grid compact-actions">
-              <button id="reloadSkinBitmapsBtn">Reload Asset Skins</button>
-              <button id="clearImportedSkinsBtn">Clear Preview Skins</button>
-              <button id="clearFaceSkinBtn">Clear Selected Face Skin</button>
-            </div>
+
             <section class="local-toolbox">
-              <h2>Local Asset Server</h2>
+              <h2>Project Assets</h2>
               <div id="localServerReadout" class="readout compact-readout">Checking local server...</div>
               <label>Asset Category
                 <select id="assetShelfCategory">
@@ -162,16 +134,58 @@
               </label>
               <div class="button-grid compact-actions">
                 <button id="refreshAssetShelfBtn">Load Asset Shelf</button>
-                <button id="saveModelAssetBtn">Update Model</button>
-                <button id="rebuildAssetsBtn">Rebuild Game Files</button>
+                <button id="reloadSkinBitmapsBtn">Reload Model Skins</button>
+              </div>
+            </section>
+
+            <section class="paint-group">
+              <h2>Bitmap Shelf</h2>
+              <label>Add PNGs <input id="importBitmapShelf" type="file" accept="image/png,image/*" multiple></label>
+              <label>Selected Bitmap
+                <select id="bitmapShelfSelector">
+                  <option value="">No imported bitmaps</option>
+                </select>
+              </label>
+              <label class="toggle"><input id="importMirroredSkin" type="checkbox"> Apply as mirrored half UV</label>
+              <label>Bitmap Angle <input id="skinAngle" type="range" min="-180" max="180" step="1" value="0"><input id="skinAngleValue" type="number" min="-180" max="180" step="1" value="0"></label>
+              <div class="button-grid compact-actions">
+                <button id="applyShelfFaceBtn">Use On Selected Face</button>
+                <button id="applyShelfTopBtn">Use On Top</button>
+                <button id="applyShelfBottomBtn">Use On Bottom</button>
+                <button id="applyShelfBackBtn">Use On Back</button>
+                <button id="clearBitmapShelfBtn">Clear Shelf</button>
+              </div>
+            </section>
+
+            <section class="paint-group">
+              <h2>Quick Import</h2>
+              <div class="skin-import-grid">
+                <label>Top PNG <input id="importTopSkin" type="file" accept="image/png,image/*"></label>
+                <label>Bottom PNG <input id="importBottomSkin" type="file" accept="image/png,image/*"></label>
+                <label>Back PNG <input id="importBackSkin" type="file" accept="image/png,image/*"></label>
+                <label>Selected Face PNG <input id="importFaceSkin" type="file" accept="image/png,image/*"></label>
               </div>
               <div class="button-grid compact-actions">
+                <button id="clearFaceSkinBtn">Clear Selected Face Skin</button>
+                <button id="clearImportedSkinsBtn">Clear Preview Skins</button>
+              </div>
+            </section>
+
+            <section class="paint-group">
+              <h2>Write To Project</h2>
+              <div class="button-grid compact-actions">
+                <button id="saveModelAssetBtn">Update Model</button>
+                <button id="uploadFaceSkinBtn">Upload Selected Face</button>
                 <button id="uploadTopSkinBtn">Upload Top Skin</button>
                 <button id="uploadBottomSkinBtn">Upload Bottom Skin</button>
                 <button id="uploadBackSkinBtn">Upload Back Skin</button>
-                <button id="uploadFaceSkinBtn">Upload Selected Face</button>
+                <button id="rebuildAssetsBtn">Rebuild Game Files</button>
               </div>
             </section>
+
+            <section class="paint-group">
+              <h2>Templates</h2>
+              <label class="toggle"><input id="mirrorHalfSkins" type="checkbox" checked> Half-width side templates</label>
             <label>Selected Face Bitmap Side
               <select id="templateFaceSide">
                 <option value="auto">Auto from normal</option>
@@ -186,6 +200,7 @@
               <button id="downloadBackTemplateBtn">Back PNG</button>
               <button id="downloadFaceTemplateBtn">Selected Face</button>
             </div>
+            </section>
           </section>
         </section>
 
