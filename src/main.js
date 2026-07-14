@@ -2995,6 +2995,8 @@
 
     let commanderNameDialogOpen = false;
     let commanderNameDialogForce = false;
+    let missionCompleteDialogOpen = false;
+    const missionCompleteQueue = [];
 
     function setCommanderNameDialog(open, force = false) {
       const dialog = byId("commanderNameDialog");
@@ -3036,6 +3038,56 @@
 
     function askCommanderName(force = false) {
       return setCommanderNameDialog(true, force);
+    }
+
+    function missionCompleteDialogPayload(mission) {
+      return {
+        title: mission?.title || "Mission complete",
+        body: mission?.completionMessage || "Mission complete. Your account has been credited.",
+        issuer: mission?.issuer || "Mission Office",
+        destination: mission?.destination?.name || currentSystem().name,
+        reward: missionRewardText(mission),
+        queueRemaining: 0
+      };
+    }
+
+    function showNextMissionCompleteDialog() {
+      if (missionCompleteDialogOpen) return;
+      const next = missionCompleteQueue.shift();
+      const dialog = byId("missionCompleteDialog");
+      if (!dialog || !next) {
+        missionCompleteDialogOpen = false;
+        if (dialog) setDomHidden(dialog, true);
+        return;
+      }
+      next.queueRemaining = missionCompleteQueue.length;
+      setDomText(byId("missionCompleteName"), next.title);
+      setDomText(byId("missionCompleteBody"), next.body);
+      setDomText(byId("missionCompleteIssuer"), next.issuer);
+      setDomText(byId("missionCompleteDestination"), next.destination);
+      setDomText(byId("missionCompleteReward"), next.reward);
+      setDomText(byId("missionCompletePrompt"), next.queueRemaining
+        ? `Press any key for next completion (${next.queueRemaining} waiting)`
+        : "Press any key to dismiss");
+      missionCompleteDialogOpen = true;
+      setDomHidden(dialog, false);
+      setTimeout(() => byId("missionCompleteDismiss")?.focus({ preventScroll: true }), 0);
+    }
+
+    function queueMissionCompleteDialogs(completed) {
+      const payloads = (completed || []).map(missionCompleteDialogPayload);
+      if (!payloads.length) return;
+      missionCompleteQueue.push(...payloads);
+      showNextMissionCompleteDialog();
+    }
+
+    function dismissMissionCompleteDialog() {
+      const dialog = byId("missionCompleteDialog");
+      if (!missionCompleteDialogOpen) return false;
+      missionCompleteDialogOpen = false;
+      if (dialog) setDomHidden(dialog, true);
+      setTimeout(showNextMissionCompleteDialog, 80);
+      return true;
     }
 
     function baseMarketFor(system) {
@@ -3408,31 +3460,80 @@
       renderPanel();
     }
 
+    function missionEquipmentName(id) {
+      if (id === "navalOverchargeLaser") return "Overcharged Naval Laser";
+      if (id === "navalEcm") return "Long-range Naval ECM";
+      return EQUIPMENT.find((e) => e.id === id)?.name || id || "equipment";
+    }
+
+    function buildMissionCompletionDebrief(mission, details) {
+      const reward = mission.reward || {};
+      const lines = [];
+      const commander = `Commander ${game.commander || "Jameson"}`;
+      if (mission.legalClass === "military" || mission.type === "naval") {
+        lines.push(`Thanks for your service, ${commander}. Sector command confirms that ${mission.title} is complete.`);
+      } else if (mission.type === "bounty" || mission.type === "recovery") {
+        lines.push(`Contract closed, ${commander}. ${mission.issuer || "The issuer"} confirms the target work is complete.`);
+      } else {
+        lines.push(`Thank you, ${commander}. ${mission.issuer || "The mission office"} confirms delivery at ${mission.destination?.name || currentSystem().name}.`);
+      }
+      lines.push(`We have credited your account with ${fmt(reward.credits || 0)} CR.`);
+      if (reward.rankPoints) lines.push(`Your Elite service record has been increased by ${reward.rankPoints} point${reward.rankPoints === 1 ? "" : "s"}.`);
+      if (reward.legalClearance === "clean") lines.push("Your legal record has been cleared under mission authority.");
+      else if (reward.legalClearance) lines.push(`Your legal record has been reduced by ${reward.legalClearance} point${reward.legalClearance === 1 ? "" : "s"}.`);
+      if (details.equipmentAward) lines.push(`The ${details.equipmentAward} is now yours to keep.`);
+      if (details.shipAward) lines.push(`Shipyard authorisation for a ${details.shipAward} has been added to your record.`);
+      if (details.loanName) {
+        lines.push(details.loanKept
+          ? `Command has decided to let you retain the loaned ${details.loanName}.`
+          : `The loaned ${details.loanName} has been returned to mission stores.`);
+      }
+      return lines.join(" ");
+    }
+
     function completeMission(mission) {
       if (!mission || mission.status !== "active") return false;
       mission.status = "complete";
       mission.completedAt = { galaxy: game.galaxy, system: game.current };
       const reward = mission.reward || {};
+      const details = {
+        credits: Number(reward.credits) || 0,
+        rankPoints: Number(reward.rankPoints) || 0,
+        legalClearance: reward.legalClearance || 0,
+        equipmentAward: "",
+        shipAward: "",
+        loanName: mission.loan?.name || "",
+        loanKept: false
+      };
       game.credits += Number(reward.credits) || 0;
       game.missionRankPoints = (Number(game.missionRankPoints) || 0) + (Number(reward.rankPoints) || 0);
       if (reward.legalClearance === "clean") game.legal = 0;
       else game.legal = Math.max(0, game.legal - (Number(reward.legalClearance) || 0));
-      if (reward.equipment && game.equipment[reward.equipment] === false) {
-        if (isLaserEquipment(reward.equipment)) fitLaser(reward.equipment);
-        else game.equipment[reward.equipment] = true;
+      if (reward.equipment) {
+        details.equipmentAward = missionEquipmentName(reward.equipment);
+        if (game.equipment[reward.equipment] === false) {
+          if (isLaserEquipment(reward.equipment)) fitLaser(reward.equipment);
+          else game.equipment[reward.equipment] = true;
+        }
       }
-      if (reward.ship && SHIP_NAMES[reward.ship] && !game.missionUnlocks.ships.includes(reward.ship)) {
-        game.missionUnlocks.ships.push(reward.ship);
+      if (reward.ship && SHIP_NAMES[reward.ship]) {
+        details.shipAward = shipName(reward.ship);
+        if (!game.missionUnlocks.ships.includes(reward.ship)) game.missionUnlocks.ships.push(reward.ship);
       }
       if (mission.loan?.keepChance && Math.random() < mission.loan.keepChance) {
+        details.loanKept = true;
         if (mission.loan.id === "navalOverchargeLaser") {
           fitLaser("militaryLaser");
           mission.rewardKeptLoan = "Military Laser";
+          details.loanName = mission.rewardKeptLoan;
         } else if (mission.loan.id === "navalEcm") {
           game.equipment.ecm = true;
           mission.rewardKeptLoan = "E.C.M. System";
+          details.loanName = mission.rewardKeptLoan;
         }
       }
+      mission.completionDetails = details;
+      mission.completionMessage = buildMissionCompletionDebrief(mission, details);
       missionState().completed++;
       return true;
     }
@@ -3446,7 +3547,7 @@
       return true;
     }
 
-    function completeDockedMissions() {
+    function completeDockedMissions({ announce = true } = {}) {
       const completed = [];
       for (const mission of missionState().active) {
         if (!missionReadyForDockCompletion(mission)) continue;
@@ -3455,7 +3556,8 @@
       if (!completed.length) return "";
       const total = completed.reduce((sum, mission) => sum + (Number(mission.reward?.credits) || 0), 0);
       const names = completed.map((mission) => mission.title).slice(0, 2).join("; ");
-      commsMessage(stationCommsName(), `Mission office confirms completion: ${names}.`, "station");
+      if (announce) commsMessage(stationCommsName(), `Mission office confirms completion: ${names}.`, "station");
+      queueMissionCompleteDialogs(completed);
       return `${completed.length} mission${completed.length === 1 ? "" : "s"} completed. ${fmt(total)} CR paid.`;
     }
 
@@ -7017,8 +7119,8 @@
           game.fuel = clamp(game.fuel + 0.2, 0, 7);
           game.legal = Math.max(0, game.legal - 2);
           game.dockScene = makeDockScene(st.name, hullRepaired, repairLine, preRepairMarks);
-          refreshMissionBoardOnDock();
           const missionDockLine = completeDockedMissions();
+          refreshMissionBoardOnDock();
           const completeDock = () => {
             if (!game.dockScene?._sequenceServiceComms) {
               commsMessage(`${st.name.toUpperCase()} CONTROL`, stationControllerLine("dockComplete"), "station");
@@ -17038,7 +17140,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function renderMissions() {
       const state = missionState();
-      if (game.docked) generateMissionBoard(false);
+      if (game.docked) {
+        completeDockedMissions({ announce: false });
+        generateMissionBoard(false);
+      }
       const active = state.active.filter((mission) => mission.status === "active");
       const completed = state.active.filter((mission) => mission.status === "complete").slice(-3);
       const board = game.docked ? state.board : [];
@@ -18193,6 +18298,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const commanderNameInput = byId("commanderNameInput");
       const commanderNameSubmit = byId("commanderNameSubmit");
       const commanderNameCancel = byId("commanderNameCancel");
+      const missionCompleteDismiss = byId("missionCompleteDismiss");
       if (commanderNameInput) {
         commanderNameInput.addEventListener("input", () => {
           commanderNameInput.value = commanderNameInput.value
@@ -18214,6 +18320,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
       if (commanderNameSubmit) commanderNameSubmit.addEventListener("click", () => submitCommanderNameDialog(false, true));
       if (commanderNameCancel) commanderNameCancel.addEventListener("click", () => submitCommanderNameDialog(true, true));
+      if (missionCompleteDismiss) missionCompleteDismiss.addEventListener("click", dismissMissionCompleteDialog);
 
       window.addEventListener("keydown", (e) => {
         // The first keypress only dismisses the splash, it never triggers a game action.
@@ -18224,6 +18331,11 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         if (commanderNameDialogOpen) {
           if (e.code === "Enter") submitCommanderNameDialog(false, false);
           else if (e.code === "Escape") cancelCommanderNameDialog();
+          e.preventDefault();
+          return;
+        }
+        if (missionCompleteDialogOpen) {
+          dismissMissionCompleteDialog();
           e.preventDefault();
           return;
         }

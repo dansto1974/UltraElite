@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ultra Elite - Browser Experiment</title>
-  <link rel="stylesheet" href="src/game.css?v=mrlaa7or">
+  <link rel="stylesheet" href="src/game.css?v=mrlb3fwj">
 </head>
 <body>
   <div class="desktop-only-message" role="status" aria-live="polite">
@@ -210,8 +210,24 @@
     </div>
   </div>
 
-  <script src="src/generated/model-library.js?v=mrlaa7or"></script>
-  <script src="src/generated/bitmap-skins.js?v=mrlaa7or"></script>
-  <script src="src/main.js?v=mrlaa7or"></script>
+  <div class="commander-dialog mission-complete-dialog" id="missionCompleteDialog" hidden aria-modal="true" role="dialog" aria-labelledby="missionCompleteTitle">
+    <div class="commander-dialog-box mission-complete-box">
+      <div class="commander-dialog-kicker">Mission Office</div>
+      <div class="commander-dialog-title" id="missionCompleteTitle">Mission Complete</div>
+      <div class="mission-complete-name" id="missionCompleteName"></div>
+      <div class="mission-complete-body" id="missionCompleteBody"></div>
+      <div class="mission-complete-grid">
+        <span>Issuer</span><strong id="missionCompleteIssuer"></strong>
+        <span>Destination</span><strong id="missionCompleteDestination"></strong>
+        <span>Reward</span><strong id="missionCompleteReward"></strong>
+      </div>
+      <div class="mission-complete-prompt" id="missionCompletePrompt">Press any key to dismiss</div>
+      <button class="btn mini primary" id="missionCompleteDismiss" type="button">Dismiss</button>
+    </div>
+  </div>
+
+  <script src="src/generated/model-library.js?v=mrlb3fwj"></script>
+  <script src="src/generated/bitmap-skins.js?v=mrlb3fwj"></script>
+  <script src="src/main.js?v=mrlb3fwj"></script>
 </body>
 </html>
