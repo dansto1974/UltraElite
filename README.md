@@ -4,7 +4,7 @@ A browser-based, non-commercial fan tribute to the original 1984 space trading g
 
 - Play: [www.ultraelite.co.uk](https://www.ultraelite.co.uk)
 - Source: [github.com/dansto1974/UltraElite](https://github.com/dansto1974/UltraElite)
-- Current version: `1.0.14-beta`
+- Current version: `1.0.16-beta`
 - Release file: `index.html`
 - Local dev entry: `dev.html`
 
@@ -303,6 +303,15 @@ The game is currently designed for desktop. Mobile displays show a desktop-only 
 - Local build, sound-design and ship-builder tools for developing the project without hand-editing one enormous inline HTML file.
 
 ## Change Log
+
+### 1.0.16-beta
+
+- Fixed escape capsule recovery so ejecting clears legal status properly when the commander is recovered at Lave.
+
+### 1.0.15-beta
+
+- Fixed missing bitmap faces on station models, including Dodo front/back panels.
+- Improved consistency between in-game bitmap rendering and the ship-builder preview.
 
 ### 1.0.14-beta
 

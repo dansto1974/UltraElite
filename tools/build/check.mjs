@@ -7,6 +7,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "../..");
 
 const files = {
+  packageJson: path.join(root, "package.json"),
+  readme: path.join(root, "README.md"),
   devHtml: path.join(root, "dev.html"),
   template: path.join(root, "src/index.template.html"),
   css: path.join(root, "src/game.css"),
@@ -34,6 +36,8 @@ const template = read(files.template);
 const css = read(files.css);
 const js = read(files.js);
 const builderJs = read(files.builderJs);
+const packageJson = JSON.parse(read(files.packageJson));
+const readme = read(files.readme);
 
 if (!normalizedDevHtml.includes('href="src/game.css"') || !normalizedDevHtml.includes('src="src/main.js"')) {
   throw new Error("dev.html is not loading the modular CSS/JS sources.");
@@ -67,6 +71,22 @@ if (js.toLowerCase().includes("</script>")) {
 
 if (css.toLowerCase().includes("</style>")) {
   throw new Error("src/game.css contains </style>, which would break inline builds.");
+}
+
+const gameVersion = js.match(/const GAME_VERSION = "([^"]+)"/)?.[1];
+const readmeVersion = readme.match(/Current version: `([^`]+)`/)?.[1];
+const readmeLatestChange = readme.match(/## Change Log\s+### ([^\n]+)/)?.[1]?.trim();
+if (!gameVersion) {
+  throw new Error("Could not find GAME_VERSION in src/main.js.");
+}
+if (packageJson.version !== gameVersion) {
+  throw new Error(`package.json version ${packageJson.version} does not match GAME_VERSION ${gameVersion}.`);
+}
+if (readmeVersion !== gameVersion) {
+  throw new Error(`README current version ${readmeVersion || "(missing)"} does not match GAME_VERSION ${gameVersion}.`);
+}
+if (readmeLatestChange !== gameVersion) {
+  throw new Error(`README latest changelog entry ${readmeLatestChange || "(missing)"} does not match GAME_VERSION ${gameVersion}.`);
 }
 
 const protrudingEdgeGuards = [
