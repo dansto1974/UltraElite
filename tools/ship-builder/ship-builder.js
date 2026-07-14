@@ -71,6 +71,15 @@ const els = {
   reloadSkinBitmapsBtn: document.getElementById("reloadSkinBitmapsBtn"),
   clearImportedSkinsBtn: document.getElementById("clearImportedSkinsBtn"),
   clearFaceSkinBtn: document.getElementById("clearFaceSkinBtn"),
+  localServerReadout: document.getElementById("localServerReadout"),
+  assetShelfCategory: document.getElementById("assetShelfCategory"),
+  refreshAssetShelfBtn: document.getElementById("refreshAssetShelfBtn"),
+  saveModelAssetBtn: document.getElementById("saveModelAssetBtn"),
+  rebuildAssetsBtn: document.getElementById("rebuildAssetsBtn"),
+  uploadTopSkinBtn: document.getElementById("uploadTopSkinBtn"),
+  uploadBottomSkinBtn: document.getElementById("uploadBottomSkinBtn"),
+  uploadBackSkinBtn: document.getElementById("uploadBackSkinBtn"),
+  uploadFaceSkinBtn: document.getElementById("uploadFaceSkinBtn"),
   templateFaceSide: document.getElementById("templateFaceSide"),
   downloadTopTemplateBtn: document.getElementById("downloadTopTemplateBtn"),
   downloadBottomTemplateBtn: document.getElementById("downloadBottomTemplateBtn"),
@@ -91,6 +100,8 @@ const state = {
   faceSkinUrls: {},
   faceSkinSources: {},
   bitmapShelf: [],
+  toolServer: { available: false, skins: [], version: 0 },
+  assetVersion: Date.now(),
   selected: null,
   pick: [],
   view: { rx: -0.35, ry: 0.72, zoom: 2.9, panX: 0, panY: 0 },
@@ -185,6 +196,51 @@ function sourceEdge(edge, index) {
 
 function setStatus(text) {
   els.status.textContent = text;
+}
+
+function setLocalServerReadout(text, ok = state.toolServer.available) {
+  if (!els.localServerReadout) return;
+  els.localServerReadout.textContent = text;
+  els.localServerReadout.dataset.available = ok ? "true" : "false";
+}
+
+async function apiJson(path, options = {}) {
+  const response = await fetch(path, {
+    ...options,
+    headers: {
+      "content-type": "application/json",
+      ...(options.headers || {})
+    }
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
+  return data;
+}
+
+function cacheBust(url) {
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}v=${encodeURIComponent(state.assetVersion || Date.now())}`;
+}
+
+async function checkLocalToolServer() {
+  try {
+    const data = await apiJson("/api/status", { method: "GET" });
+    state.toolServer.available = true;
+    state.toolServer.version = data.version || Date.now();
+    state.assetVersion = state.toolServer.version;
+    setLocalServerReadout("LOCAL SERVER READY.", true);
+    return true;
+  } catch {
+    state.toolServer.available = false;
+    setLocalServerReadout("STATIC MODE: START npm run dev:tools FOR DIRECT SAVE/UPLOAD.", false);
+    return false;
+  }
+}
+
+async function requireToolServer() {
+  if (state.toolServer.available || await checkLocalToolServer()) return true;
+  setStatus("LOCAL TOOL SERVER NOT AVAILABLE. RUN npm run dev:tools.");
+  return false;
 }
 
 function vertexById(id) {
@@ -1072,11 +1128,11 @@ function updateSkinReadout() {
 }
 
 function skinPath(modelId, side) {
-  return `../../assets/skins/${modelId}-${side}.png`;
+  return cacheBust(`../../assets/skins/${modelId}-${side}.png`);
 }
 
 function faceSkinPath(modelId, key) {
-  return `../../assets/skins/${modelId}-face-${key}.png`;
+  return cacheBust(`../../assets/skins/${modelId}-face-${key}.png`);
 }
 
 function clearSkinBitmaps() {
@@ -1157,10 +1213,69 @@ function updateBitmapShelfSelector() {
 
 function addBitmapToShelf(file, img, url) {
   const id = `bitmap_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-  state.bitmapShelf.push({ id, name: file.name || "imported bitmap", img, url });
+  state.bitmapShelf.push({ id, name: file.name || "imported bitmap", img, url, source: "imported" });
   updateBitmapShelfSelector();
   els.bitmapShelfSelector.value = id;
   return id;
+}
+
+function addBitmapAssetToShelf(asset) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.decoding = "async";
+    img.onload = () => {
+      const id = `asset_${asset.file}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+      const label = asset.kind === "face"
+        ? `${asset.category}/${asset.model} face ${asset.key}`
+        : `${asset.category}/${asset.model} ${asset.side}`;
+      state.bitmapShelf.push({
+        id,
+        name: label,
+        img,
+        url: "",
+        source: "asset",
+        asset
+      });
+      resolve(true);
+    };
+    img.onerror = () => resolve(false);
+    img.src = cacheBust(asset.url);
+  });
+}
+
+function populateAssetCategorySelector(categories = []) {
+  if (!els.assetShelfCategory) return;
+  const current = els.assetShelfCategory.value || "all";
+  const options = ["all", ...categories.filter((cat) => cat && cat !== "all")];
+  els.assetShelfCategory.innerHTML = options.map((category) =>
+    `<option value="${category}">${category === "all" ? "All assets" : category}</option>`
+  ).join("");
+  if (options.includes(current)) els.assetShelfCategory.value = current;
+}
+
+async function refreshAvailableSkinAssets() {
+  if (!await requireToolServer()) return null;
+  const data = await apiJson("/api/skins", { method: "GET" });
+  state.toolServer.skins = Array.isArray(data.skins) ? data.skins : [];
+  populateAssetCategorySelector(data.categories || []);
+  return state.toolServer.skins;
+}
+
+async function loadAssetShelf() {
+  try {
+    const skins = await refreshAvailableSkinAssets();
+    if (!skins) return;
+    const category = els.assetShelfCategory?.value || "all";
+    const selected = skins.filter((skin) => category === "all" || skin.category === category);
+    let loaded = 0;
+    for (const asset of selected) {
+      if (await addBitmapAssetToShelf(asset)) loaded++;
+    }
+    updateBitmapShelfSelector();
+    setStatus(`${loaded} ${category === "all" ? "" : `${category.toUpperCase()} `}ASSET BITMAP${loaded === 1 ? "" : "S"} LOADED TO SHELF.`);
+  } catch (error) {
+    setStatus(`ASSET SHELF LOAD FAILED: ${error.message}`);
+  }
 }
 
 function clearBitmapShelf() {
@@ -2685,6 +2800,118 @@ function downloadShip() {
   URL.revokeObjectURL(a.href);
 }
 
+function imageToPngDataUrl(img) {
+  if (!img?.naturalWidth || !img?.naturalHeight) throw new Error("Image is not loaded.");
+  const canvas = document.createElement("canvas");
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0);
+  return canvas.toDataURL("image/png");
+}
+
+async function saveModelAsset() {
+  try {
+    if (!await requireToolServer()) return;
+    const data = builderExport();
+    const cleanId = cleanBitmapKey(data.id, "custom_ship");
+    setStatus(`SAVING ${cleanId.toUpperCase()} MODEL...`);
+    const result = await apiJson(`/api/models/${encodeURIComponent(cleanId)}`, {
+      method: "POST",
+      body: JSON.stringify(data)
+    });
+    window.ULTRA_ELITE_MODEL_LIBRARY = window.ULTRA_ELITE_MODEL_LIBRARY || {};
+    window.ULTRA_ELITE_MODEL_LIBRARY[cleanId] = { ...data, id: cleanId };
+    populateLibrarySelector();
+    if (els.librarySelector) els.librarySelector.value = cleanId;
+    state.assetVersion = Date.now();
+    setStatus(`MODEL UPDATED: ${result.path}.`);
+  } catch (error) {
+    setStatus(`MODEL SAVE FAILED: ${error.message}`);
+  }
+}
+
+async function uploadSkinSide(side) {
+  try {
+    if (!await requireToolServer()) return;
+    const img = state.skinImages?.[side];
+    if (!img?.naturalWidth) {
+      setStatus(`NO ${side.toUpperCase()} SKIN LOADED.`);
+      return;
+    }
+    const model = templateShipId();
+    setStatus(`UPLOADING ${model.toUpperCase()} ${side.toUpperCase()} SKIN...`);
+    const result = await apiJson("/api/skins", {
+      method: "POST",
+      body: JSON.stringify({
+        kind: "side",
+        model,
+        side,
+        dataUrl: imageToPngDataUrl(img)
+      })
+    });
+    state.assetVersion = Date.now();
+    loadSkinBitmaps(model, state.skinImages?.mirrorX || currentModelMirrorFlags());
+    await refreshAvailableSkinAssets();
+    setStatus(`SKIN UPDATED: ${result.path}.`);
+  } catch (error) {
+    setStatus(`SKIN UPLOAD FAILED: ${error.message}`);
+  }
+}
+
+async function uploadSelectedFaceSkin() {
+  try {
+    if (!await requireToolServer()) return;
+    const face = selectedFace();
+    if (!face) {
+      setStatus("SELECT A FACE FIRST.");
+      return;
+    }
+    const key = selectedFaceSkinKey(face);
+    const img = state.faceSkinImages?.[key];
+    if (!img?.naturalWidth) {
+      setStatus(`NO FACE SKIN LOADED FOR ${key}.`);
+      return;
+    }
+    face.bitmapFaceKey = key;
+    if (mirrorActionsEnabled()) syncMirroredFace(face);
+    const model = templateShipId();
+    setStatus(`UPLOADING ${model.toUpperCase()} FACE ${key}...`);
+    const result = await apiJson("/api/skins", {
+      method: "POST",
+      body: JSON.stringify({
+        kind: "face",
+        model,
+        key,
+        dataUrl: imageToPngDataUrl(img)
+      })
+    });
+    state.assetVersion = Date.now();
+    loadSkinBitmaps(model, state.skinImages?.mirrorX || currentModelMirrorFlags());
+    await refreshAvailableSkinAssets();
+    setStatus(`FACE SKIN UPDATED: ${result.path}.`);
+  } catch (error) {
+    setStatus(`FACE SKIN UPLOAD FAILED: ${error.message}`);
+  }
+}
+
+async function rebuildGameFiles() {
+  try {
+    if (!await requireToolServer()) return;
+    setStatus("REBUILDING MODEL/SKIN/GAME FILES...");
+    const result = await apiJson("/api/rebuild", {
+      method: "POST",
+      body: JSON.stringify({ scope: "all" })
+    });
+    state.assetVersion = Date.now();
+    loadSkinBitmaps(templateShipId(), state.skinImages?.mirrorX || currentModelMirrorFlags());
+    await refreshAvailableSkinAssets();
+    setStatus(`REBUILD COMPLETE (${result.steps?.length || 0} STEPS).`);
+  } catch (error) {
+    setStatus(`REBUILD FAILED: ${error.message}`);
+  }
+}
+
 function copyExport() {
   navigator.clipboard?.writeText(els.exportText.value).then(
     () => setStatus("EXPORT COPIED."),
@@ -2781,6 +3008,16 @@ function bindEvents() {
   els.applyShelfBackBtn.addEventListener("click", () => applyShelfBitmap("back"));
   els.applyShelfFaceBtn.addEventListener("click", applyShelfBitmapToSelectedFace);
   els.clearBitmapShelfBtn.addEventListener("click", clearBitmapShelf);
+  els.refreshAssetShelfBtn?.addEventListener("click", loadAssetShelf);
+  els.saveModelAssetBtn?.addEventListener("click", saveModelAsset);
+  els.rebuildAssetsBtn?.addEventListener("click", rebuildGameFiles);
+  els.uploadTopSkinBtn?.addEventListener("click", () => uploadSkinSide("top"));
+  els.uploadBottomSkinBtn?.addEventListener("click", () => uploadSkinSide("bottom"));
+  els.uploadBackSkinBtn?.addEventListener("click", () => uploadSkinSide("back"));
+  els.uploadFaceSkinBtn?.addEventListener("click", uploadSelectedFaceSkin);
+  els.assetShelfCategory?.addEventListener("change", () => {
+    if (state.toolServer.skins.length) setStatus(`${els.assetShelfCategory.value.toUpperCase()} ASSET CATEGORY SELECTED.`);
+  });
   els.importTopSkin.addEventListener("change", (ev) => {
     importSkinFile("top", ev.target.files?.[0]);
     ev.target.value = "";
@@ -2902,3 +3139,6 @@ function bindEvents() {
 bindEvents();
 populateLibrarySelector();
 resetWedge();
+checkLocalToolServer().then((ok) => {
+  if (ok) refreshAvailableSkinAssets().catch(() => {});
+});

@@ -16,6 +16,10 @@ const files = {
   js: path.join(root, "src/main.js"),
   builderJs: path.join(root, "tools/ship-builder/ship-builder.js"),
   builderModels: path.join(root, "tools/ship-builder/game-model-library.js"),
+  localServer: path.join(root, "tools/local-dev-server.mjs"),
+  renderBenchHtml: path.join(root, "tools/render-bench/index.html"),
+  renderQaHtml: path.join(root, "tools/render-qa/index.html"),
+  renderQaJs: path.join(root, "tools/render-qa/render-qa.js"),
   generatedModels: path.join(root, "src/generated/model-library.js"),
   generatedSkins: path.join(root, "src/generated/bitmap-skins.js"),
 };
@@ -37,6 +41,10 @@ const template = read(files.template);
 const css = read(files.css);
 const js = read(files.js);
 const builderJs = read(files.builderJs);
+const localServer = read(files.localServer);
+const renderBenchHtml = read(files.renderBenchHtml);
+const renderQaHtml = read(files.renderQaHtml);
+const renderQaJs = read(files.renderQaJs);
 const packageJson = JSON.parse(read(files.packageJson));
 const readme = read(files.readme);
 
@@ -149,9 +157,53 @@ if (!fs.existsSync(files.builderModels)) {
 }
 
 new Function(js);
+new Function(renderQaJs);
 new Function(read(files.builderModels));
 new Function(read(files.generatedModels));
 new Function(read(files.generatedSkins));
+
+if (packageJson.scripts?.["dev:tools"] !== "node tools/local-dev-server.mjs") {
+  throw new Error("package.json must expose npm run dev:tools for the local Ultra Elite tool server.");
+}
+
+const localToolGuards = [
+  ["local model save API", "saveModel(req, res"],
+  ["local skin upload API", '"/api/skins"'],
+  ["local rebuild API", '"/api/rebuild"'],
+  ["local rebuild helper", "async function rebuildScope"]
+];
+for (const [label, marker] of localToolGuards) {
+  if (!localServer.includes(marker)) {
+    throw new Error(`Missing local tool server guard: ${label}.`);
+  }
+}
+
+const builderToolGuards = [
+  ["builder direct model save", "async function saveModelAsset"],
+  ["builder direct skin side upload", "async function uploadSkinSide"],
+  ["builder direct face skin upload", "async function uploadSelectedFaceSkin"],
+  ["builder asset shelf API load", "async function loadAssetShelf"]
+];
+for (const [label, marker] of builderToolGuards) {
+  if (!builderJs.includes(marker)) {
+    throw new Error(`Missing ship-builder local tool guard: ${label}.`);
+  }
+}
+
+function assertGeneratedAssetsBeforeMain(html, label) {
+  const modelsIndex = html.indexOf('src="../../src/generated/model-library.js"');
+  const skinsIndex = html.indexOf('src="../../src/generated/bitmap-skins.js"');
+  const mainIndex = html.indexOf('src="../../src/main.js"');
+  if (modelsIndex < 0 || skinsIndex < 0 || mainIndex < 0 || !(modelsIndex < mainIndex && skinsIndex < mainIndex)) {
+    throw new Error(`${label} must load generated model/skin manifests before src/main.js.`);
+  }
+}
+
+assertGeneratedAssetsBeforeMain(renderBenchHtml, "Render bench");
+assertGeneratedAssetsBeforeMain(renderQaHtml, "Render QA");
+if (!renderQaJs.includes("window.UltraEliteRenderBench") || !renderQaJs.includes("api.renderFrame")) {
+  throw new Error("Render QA must use the shared UltraEliteRenderBench renderer hook.");
+}
 
 function cleanBitmapKey(value) {
   return String(value || "").trim().replace(/[^a-zA-Z0-9_-]+/g, "_").replace(/^_+|_+$/g, "");

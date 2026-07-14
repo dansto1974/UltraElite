@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ultra Elite Render QA</title>
+  <link rel="stylesheet" href="render-qa.css">
+</head>
+<body data-ultra-elite-mode="render-bench">
+  <main class="qa">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Ultra Elite Dev Tool</p>
+        <h1>Render QA</h1>
+      </div>
+      <div class="summary">
+        <span id="statusText">Loading renderer...</span>
+        <span id="modelCounter">-- / --</span>
+      </div>
+    </header>
+
+    <section class="controls">
+      <button id="prevBtn" type="button">Prev</button>
+      <button id="nextBtn" type="button">Next</button>
+      <button id="autoBtn" type="button">Auto</button>
+      <label>Model <select id="modelSelect"></select></label>
+      <label>Angle <select id="angleSelect"></select></label>
+      <label>Mode
+        <select id="modeSelect">
+          <option value="solid">Solid</option>
+          <option value="both">Solid + wire</option>
+          <option value="wire">Wire</option>
+        </select>
+      </label>
+      <label>Detail
+        <select id="qualitySelect">
+          <option value="full">Full</option>
+          <option value="live">Live LOD</option>
+          <option value="plain">Plain</option>
+        </select>
+      </label>
+      <label>Scale <input id="scaleSlider" type="range" min="24" max="78" step="1" value="54"></label>
+    </section>
+
+    <section class="stage">
+      <aside class="model-list">
+        <h2>Objects</h2>
+        <div id="modelList"></div>
+      </aside>
+      <section class="viewer">
+        <canvas id="qaCanvas" width="1280" height="820"></canvas>
+      </section>
+      <aside class="diagnostics">
+        <h2>Current</h2>
+        <pre id="modelReadout">--</pre>
+        <h2>Diagnostics</h2>
+        <div id="diagnosticsList"></div>
+        <h2>Notes</h2>
+        <textarea id="notes" spellcheck="true" placeholder="Human-eye notes for this model..."></textarea>
+      </aside>
+    </section>
+  </main>
+
+  <div class="game-stubs" aria-hidden="true">
+    <canvas id="space" width="16" height="16"></canvas>
+    <canvas id="scanner" width="16" height="16"></canvas>
+    <canvas id="foreAftRadar" width="16" height="16"></canvas>
+    <div id="panelBody"></div>
+    <div id="sidePanel"></div>
+    <button id="panelToggle"></button>
+    <div id="commsLog"></div>
+    <div id="message"></div>
+  </div>
+
+  <script>
+    window.addEventListener("error", (event) => {
+      const status = document.getElementById("statusText");
+      if (status) status.textContent = `${event.message} @ ${event.filename}:${event.lineno}`;
+    });
+  </script>
+  <script src="../../src/generated/model-library.js"></script>
+  <script src="../../src/generated/bitmap-skins.js"></script>
+  <script src="../../src/main.js"></script>
+  <script src="render-qa.js"></script>
+</body>
+</html>

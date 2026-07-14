@@ -152,6 +152,26 @@
               <button id="clearImportedSkinsBtn">Clear Preview Skins</button>
               <button id="clearFaceSkinBtn">Clear Selected Face Skin</button>
             </div>
+            <section class="local-toolbox">
+              <h2>Local Asset Server</h2>
+              <div id="localServerReadout" class="readout compact-readout">Checking local server...</div>
+              <label>Asset Category
+                <select id="assetShelfCategory">
+                  <option value="all">All assets</option>
+                </select>
+              </label>
+              <div class="button-grid compact-actions">
+                <button id="refreshAssetShelfBtn">Load Asset Shelf</button>
+                <button id="saveModelAssetBtn">Update Model</button>
+                <button id="rebuildAssetsBtn">Rebuild Game Files</button>
+              </div>
+              <div class="button-grid compact-actions">
+                <button id="uploadTopSkinBtn">Upload Top Skin</button>
+                <button id="uploadBottomSkinBtn">Upload Bottom Skin</button>
+                <button id="uploadBackSkinBtn">Upload Back Skin</button>
+                <button id="uploadFaceSkinBtn">Upload Selected Face</button>
+              </div>
+            </section>
             <label>Selected Face Bitmap Side
               <select id="templateFaceSide">
                 <option value="auto">Auto from normal</option>
