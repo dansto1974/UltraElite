@@ -7376,7 +7376,9 @@
         game.fuel = 7;
         restoreShipSystems();
         game.speed = 0;
-        game.legal = hadCapsule ? Math.max(0, game.legal - 6) : 0;
+        // BBC Elite's ESCAPE routine clears FIST, so the capsule wipes the
+        // criminal record rather than merely reducing it.
+        game.legal = 0;
         game.cargo = Object.fromEntries(GOODS.map((g) => [g[0], 0]));
         resetFlightScene(false);
         renderPanel();
@@ -7630,8 +7632,9 @@
       renderPanel();
     }
 
-    const GAME_VERSION = "1.0.15-beta";
+    const GAME_VERSION = "1.0.16-beta";
     const UPDATE_LOG = [
+      ["1.0.16-beta", "Escape capsule fix: ejecting now clears your legal status properly when you are recovered at Lave."],
       ["1.0.15-beta", "Ship and station surface polish: fixed missing bitmap faces on station models, including Dodo front/back panels, and improved workshop preview consistency."],
       ["1.0.14-beta", "HUD and workshop polish: added an in-game pause control, increased global volume headroom and improved ship-builder preview tools for future Project X craft."],
       ["1.0.13-beta", "Project structure refresh: Ultra Elite now builds from modular local source files into the single-file browser release, with a dedicated ship-builder workshop for future Project X craft."],

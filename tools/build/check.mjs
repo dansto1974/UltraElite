@@ -104,6 +104,19 @@ for (const [label, marker] of builderBitmapGuards) {
   }
 }
 
+const escapePodLegalGuards = [
+  ["escape pod legal reset source note", "BBC Elite's ESCAPE routine clears FIST"],
+  ["escape pod legal reset assignment", "game.legal = 0;"],
+];
+for (const [label, marker] of escapePodLegalGuards) {
+  if (!js.includes(marker)) {
+    throw new Error(`Missing gameplay guard: ${label}. Using an escape capsule must clear legal status, matching original FIST reset behaviour.`);
+  }
+}
+if (js.includes("game.legal = hadCapsule ?")) {
+  throw new Error("Escape capsule path must not only reduce legal status; original Elite clears FIST after launching an escape pod.");
+}
+
 if (!fs.existsSync(files.generatedModels)) {
   throw new Error("Missing src/generated/model-library.js; run npm run models or npm run build.");
 }
