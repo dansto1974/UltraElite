@@ -170,6 +170,12 @@ function modelFaceTextureKeys(model) {
   return [...new Set(data.faces.map((face) => cleanBitmapKey(face?.bitmapFaceKey)).filter(Boolean))];
 }
 
+function modelUsesOnlyFaceTextures(model) {
+  const data = modelAssets.get(model);
+  const faces = Array.isArray(data?.faces) ? data.faces : [];
+  return faces.length > 0 && faces.every((face) => cleanBitmapKey(face?.bitmapFaceKey));
+}
+
 function pngHeaderSize(filePath) {
   if (!fs.existsSync(filePath)) return null;
   const fd = fs.openSync(filePath, "r");
@@ -696,38 +702,40 @@ let recompressBeforeBytes = 0;
 let recompressAfterBytes = 0;
 for (const model of models) {
   manifest[model] = {};
-  for (const side of ["top", "bottom", "back"]) {
-    const file = `${model}-${side}.png`;
-    const filePath = path.join(outDir, file);
-    const sizeInfo = pngHeaderSize(filePath);
-    const expectedSize = generatedSkinSize(model);
-    const preserveExisting = force && preserveForceSkins.has(model) && fs.existsSync(filePath);
-    const mirrorX = modelSideMirrorX(model, side);
-    const needsMirrorRegen = mirrorX
-      && !preserveForceSkins.has(model)
-      && !!sizeInfo
-      && sizeInfo.width > Math.ceil(expectedSize / 2) + 4;
-    if ((force && !preserveExisting) || !fs.existsSync(filePath) || needsMirrorRegen) {
-      let { rgba, width, height } = renderSkin(model, side);
-      if (mirrorX) {
-        const cropped = cropLeftHalfRgba(rgba, width, height);
-        rgba = cropped.rgba;
-        width = cropped.width;
-        height = cropped.height;
+  if (!modelUsesOnlyFaceTextures(model)) {
+    for (const side of ["top", "bottom", "back"]) {
+      const file = `${model}-${side}.png`;
+      const filePath = path.join(outDir, file);
+      const sizeInfo = pngHeaderSize(filePath);
+      const expectedSize = generatedSkinSize(model);
+      const preserveExisting = force && preserveForceSkins.has(model) && fs.existsSync(filePath);
+      const mirrorX = modelSideMirrorX(model, side);
+      const needsMirrorRegen = mirrorX
+        && !preserveForceSkins.has(model)
+        && !!sizeInfo
+        && sizeInfo.width > Math.ceil(expectedSize / 2) + 4;
+      if ((force && !preserveExisting) || !fs.existsSync(filePath) || needsMirrorRegen) {
+        let { rgba, width, height } = renderSkin(model, side);
+        if (mirrorX) {
+          const cropped = cropLeftHalfRgba(rgba, width, height);
+          rgba = cropped.rgba;
+          width = cropped.width;
+          height = cropped.height;
+        }
+        const png = pngEncode(rgba, width, height);
+        fs.writeFileSync(filePath, png);
+        generatedCount++;
       }
-      const png = pngEncode(rgba, width, height);
-      fs.writeFileSync(filePath, png);
-      generatedCount++;
+      if (recompress && fs.existsSync(filePath)) {
+        const result = recompressPngFile(filePath);
+        recompressBeforeBytes += result.before;
+        recompressAfterBytes += result.after;
+        if (result.skipped) recompressSkippedCount++;
+        else if (result.after < result.before) recompressedCount++;
+      }
+      pngFiles.push(filePath);
+      manifest[model][side] = `assets/skins/${file}`;
     }
-    if (recompress && fs.existsSync(filePath)) {
-      const result = recompressPngFile(filePath);
-      recompressBeforeBytes += result.before;
-      recompressAfterBytes += result.after;
-      if (result.skipped) recompressSkippedCount++;
-      else if (result.after < result.before) recompressedCount++;
-    }
-    pngFiles.push(filePath);
-    manifest[model][side] = `assets/skins/${file}`;
   }
   const faceEntries = {};
   for (const key of modelFaceTextureKeys(model)) {

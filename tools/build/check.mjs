@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
+import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -172,6 +173,15 @@ function runWindowGenerated(file, windowName) {
   return ctx.window[windowName] || {};
 }
 
+function bitmapEntrySource(entry) {
+  if (typeof entry === "string") return entry;
+  return typeof entry?.src === "string" ? entry.src : "";
+}
+
+function bitmapSourceHash(src) {
+  return crypto.createHash("sha256").update(src).digest("hex");
+}
+
 const builderModels = runWindowGenerated(files.builderModels, "ULTRA_ELITE_MODEL_LIBRARY");
 const generatedModels = runGenerated(files.generatedModels, "ULTRA_ELITE_MODEL_BLUEPRINTS");
 const generatedSkins = runGenerated(files.generatedSkins, "ULTRA_ELITE_BITMAP_SKINS");
@@ -215,6 +225,7 @@ if (fs.existsSync(modelDir)) {
     const faceTextures = sourceFaces.map((face) => cleanBitmapKey(face?.bitmapFaceKey) || null);
     const hasFaceSides = faceSides.some(Boolean);
     const hasFaceTextures = faceTextures.some(Boolean);
+    const usesOnlyFaceTextures = sourceFaces.length > 0 && faceTextures.every(Boolean);
     if (!hasFaceSides && !hasFaceTextures) continue;
 
     const generatedProjection = generatedModels[modelId]?.imageProjection || {};
@@ -224,9 +235,29 @@ if (fs.existsSync(modelDir)) {
     if (hasFaceTextures && JSON.stringify(generatedProjection.faceTextures) !== JSON.stringify(faceTextures)) {
       throw new Error(`${path.relative(root, filePath)} bitmap faceTextures are out of sync with src/generated/model-library.js; run npm run models or npm run build.`);
     }
-    for (const key of new Set(faceTextures.filter(Boolean))) {
-      if (!generatedSkins[modelId]?.faces?.[key]) {
+    const uniqueFaceKeys = [...new Set(faceTextures.filter(Boolean))];
+    const seenFaceTextureHashes = new Map();
+    for (const key of uniqueFaceKeys) {
+      const entry = generatedSkins[modelId]?.faces?.[key];
+      if (!entry) {
         throw new Error(`${path.relative(root, filePath)} declares bitmap face ${key}, but src/generated/bitmap-skins.js does not include it; run npm run skins or npm run build.`);
+      }
+      const src = bitmapEntrySource(entry);
+      if (!src) {
+        throw new Error(`${path.relative(root, filePath)} declares bitmap face ${key}, but its generated skin entry has no image source.`);
+      }
+      const hash = bitmapSourceHash(src);
+      const existingKey = seenFaceTextureHashes.get(hash);
+      if (existingKey && existingKey !== key) {
+        throw new Error(`${path.relative(root, filePath)} maps distinct bitmap faces ${existingKey} and ${key} to identical image data. Reuse the same bitmapFaceKey for intentional sharing, or fix the source PNGs.`);
+      }
+      seenFaceTextureHashes.set(hash, key);
+    }
+    if (usesOnlyFaceTextures) {
+      for (const side of ["top", "bottom", "back"]) {
+        if (generatedSkins[modelId]?.[side]) {
+          throw new Error(`${path.relative(root, filePath)} is fully face-textured, but src/generated/bitmap-skins.js still embeds ${modelId}-${side}.png.`);
+        }
       }
     }
   }
