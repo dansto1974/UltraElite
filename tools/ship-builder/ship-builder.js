@@ -130,6 +130,59 @@ function cleanBitmapKey(value, fallback = "") {
   return clean || fallback;
 }
 
+function sourceVertexId(vertex, index) {
+  const id = Array.isArray(vertex) ? index : Number(vertex?.id);
+  return Number.isFinite(id) ? id : index;
+}
+
+function sourceVertex(vertex, index) {
+  const id = sourceVertexId(vertex, index);
+  if (Array.isArray(vertex)) {
+    return {
+      id,
+      x: Number(vertex[0]) || 0,
+      y: Number(vertex[1]) || 0,
+      z: Number(vertex[2]) || 0,
+      mirrorId: null,
+      center: false
+    };
+  }
+  return {
+    id,
+    x: Number(vertex?.x) || 0,
+    y: Number(vertex?.y) || 0,
+    z: Number(vertex?.z) || 0,
+    mirrorId: vertex?.mirrorId ?? null,
+    center: !!vertex?.center
+  };
+}
+
+function sourceFace(face, index) {
+  const id = Number(face?.id);
+  const bitmapSide = validBitmapFaceSide(face?.bitmapSide);
+  const bitmapFaceKey = cleanBitmapKey(face?.bitmapFaceKey);
+  return {
+    id: Number.isFinite(id) ? id : 1000 + index,
+    verts: (Array.isArray(face) ? face : face?.verts || []).map(Number),
+    mirrored: !!face?.mirrored,
+    ...(bitmapSide ? { bitmapSide } : {}),
+    ...(bitmapFaceKey ? { bitmapFaceKey } : {})
+  };
+}
+
+function sourceEdge(edge, index) {
+  const id = Number(edge?.id);
+  const a = Array.isArray(edge) ? edge[0] : edge?.a;
+  const b = Array.isArray(edge) ? edge[1] : edge?.b;
+  return {
+    id: Number.isFinite(id) ? id : 2000 + index,
+    a: Number(a),
+    b: Number(b),
+    kind: edge?.kind || "edge",
+    mirrored: !!edge?.mirrored
+  };
+}
+
 function setStatus(text) {
   els.status.textContent = text;
 }
@@ -1344,6 +1397,62 @@ function templateProjection(side, mode = "footprint") {
   return footprintFromAxes(0, 2, side === "bottom", true);
 }
 
+function templateProjectionFromAxes(uAxis, vAxis, flipU = false, flipV = true) {
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, minZ = Infinity, maxZ = -Infinity;
+  for (const p of state.verts) {
+    minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+    minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+    minZ = Math.min(minZ, p.z); maxZ = Math.max(maxZ, p.z);
+  }
+  if (!state.verts.length) {
+    minX = minY = minZ = -1;
+    maxX = maxY = maxZ = 1;
+  }
+  const marginX = Math.max(1, (maxX - minX) * .08);
+  const marginY = Math.max(1, (maxY - minY) * .08);
+  const marginZ = Math.max(1, (maxZ - minZ) * .08);
+  minX -= marginX; maxX += marginX;
+  minY -= marginY; maxY += marginY;
+  minZ -= marginZ; maxZ += marginZ;
+  const mins = [minX, minY, minZ];
+  const ranges = [maxX - minX || 1, maxY - minY || 1, maxZ - minZ || 1];
+  const scale = TEMPLATE_MAX_SIZE / Math.max(ranges[uAxis], ranges[vAxis], 1);
+  const width = Math.max(16, Math.round(ranges[uAxis] * scale));
+  const height = Math.max(16, Math.round(ranges[vAxis] * scale));
+  const centerU = (0 - mins[uAxis]) * scale;
+  const project = (p) => {
+    const coords = [p.x, p.y, p.z];
+    const rawU = (coords[uAxis] - mins[uAxis]) * scale;
+    const rawV = (coords[vAxis] - mins[vAxis]) * scale;
+    return { x: flipU ? width - rawU : rawU, y: flipV ? height - rawV : rawV };
+  };
+  project.width = width;
+  project.height = height;
+  project.centerlineX = flipU ? width - centerU : centerU;
+  project.mode = "face";
+  return project;
+}
+
+function polygonArea2d(pts) {
+  let area = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i], b = pts[(i + 1) % pts.length];
+    area += a.x * b.y - b.x * a.y;
+  }
+  return Math.abs(area) * .5;
+}
+
+function faceTextureProjection(face, fallbackProject) {
+  const verts = face.verts.map(vertexById).filter(Boolean);
+  const fallbackPts = verts.map(fallbackProject);
+  if (!cleanBitmapKey(face.bitmapFaceKey) || polygonArea2d(fallbackPts) >= 1) return fallbackProject;
+  const n = faceNormal(face);
+  const absX = Math.abs(n.x), absY = Math.abs(n.y), absZ = Math.abs(n.z);
+  if (absZ >= absX && absZ >= absY) return templateProjectionFromAxes(0, 1, n.z < 0, true);
+  if (absX >= absY && absX >= absZ) return templateProjectionFromAxes(2, 1, n.x > 0, true);
+  return templateProjectionFromAxes(0, 2, n.y < 0, true);
+}
+
 function autoTemplateSideForFace(face) {
   const n = faceNormal(face);
   const absX = Math.abs(n.x), absY = Math.abs(n.y), absZ = Math.abs(n.z);
@@ -1473,20 +1582,9 @@ function createSelectedFaceTemplateCanvas() {
     setStatus("SELECT A FACE FIRST.");
     return null;
   }
-  const side = templateSideForFace(face);
-  const project = templateProjection(side, "footprint");
-  const half = mirrorHalfSkinsEnabled();
-  const foldX = project.centerlineX ?? project.width / 2;
-  const fold = (p) => half ? { x: mirroredTemplateU(p.x, foldX), y: p.y } : p;
-  const facePts = face.verts.map(vertexById).filter(Boolean).map(project).map(fold);
-  if (facePts.length < 3) return null;
-  const minX = Math.min(...facePts.map((p) => p.x));
-  const maxX = Math.max(...facePts.map((p) => p.x));
-  const minY = Math.min(...facePts.map((p) => p.y));
-  const maxY = Math.max(...facePts.map((p) => p.y));
-  const pad = 0;
-  const width = Math.max(16, Math.ceil(maxX - minX) + pad * 2);
-  const height = Math.max(16, Math.ceil(maxY - minY) + pad * 2);
+  const mapping = selectedFaceTextureMapping(face);
+  if (!mapping || mapping.uv.length < 3) return null;
+  const { side, project, minX, minY, pad, width, height } = mapping;
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
@@ -1501,24 +1599,23 @@ function createSelectedFaceTemplateCanvas() {
   ctx.strokeStyle = "rgba(255,255,255,.96)";
   ctx.fillStyle = "rgba(255,255,255,.08)";
   ctx.lineWidth = 1;
-  traceTemplatePoly(ctx, facePts.map(translate), true);
+  traceTemplatePoly(ctx, mapping.uv, true);
   ctx.fill();
   ctx.stroke();
   ctx.restore();
 
   for (const detail of state.details) {
-    if (detail.faceId === face.id) drawTemplateDetail(ctx, detail, (v) => fold(project(v)), translate);
+    if (detail.faceId === face.id) drawTemplateDetail(ctx, detail, project, translate);
   }
 
   canvas.dataset.templateSide = side;
   canvas.dataset.templateFaceId = String(face.id);
-  canvas.dataset.templateHalf = half ? "1" : "";
   return canvas;
 }
 
 function selectedFaceTextureMapping(face) {
   const side = templateSideForFace(face);
-  const project = templateProjection(side, "footprint");
+  const project = faceTextureProjection(face, templateProjection(side, "footprint"));
   const pts = face.verts.map(vertexById).filter(Boolean).map(project);
   if (pts.length < 3) return null;
   const minX = Math.min(...pts.map((p) => p.x));
@@ -1529,7 +1626,7 @@ function selectedFaceTextureMapping(face) {
   const width = Math.max(24, Math.ceil(maxX - minX + pad * 2));
   const height = Math.max(24, Math.ceil(maxY - minY + pad * 2));
   const uv = pts.map((p) => ({ x: p.x - minX + pad, y: p.y - minY + pad }));
-  return { uv, width, height };
+  return { side, project, uv, width, height, minX, minY, pad };
 }
 
 function downloadCanvas(canvas, filename) {
@@ -1558,8 +1655,7 @@ function downloadSelectedFaceTemplate() {
   if (!canvas) return;
   const side = canvas.dataset.templateSide || "face";
   const faceId = canvas.dataset.templateFaceId || "selected";
-  const half = canvas.dataset.templateHalf ? "-half" : "";
-  downloadCanvas(canvas, `${templateShipId()}-face-${faceId}-${side}${half}-${canvas.width}x${canvas.height}-template.png`);
+  downloadCanvas(canvas, `${templateShipId()}-face-${faceId}-${side}-${canvas.width}x${canvas.height}-template.png`);
   setStatus(`FACE ${faceId} TEMPLATE DOWNLOADED (${canvas.width}x${canvas.height}).`);
 }
 
@@ -1694,6 +1790,24 @@ function drawFaceBitmapSkin(ctx, face, pts) {
   return true;
 }
 
+function derivedFaceEdges() {
+  const seen = new Set();
+  const edges = [];
+  for (const face of state.faces) {
+    const ids = face.verts || [];
+    for (let i = 0; i < ids.length; i++) {
+      const a = ids[i];
+      const b = ids[(i + 1) % ids.length];
+      if (!Number.isFinite(a) || !Number.isFinite(b) || a === b) continue;
+      const key = a < b ? `${a},${b}` : `${b},${a}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      edges.push({ a, b });
+    }
+  }
+  return edges;
+}
+
 function renderMain() {
   const canvas = els.mainView;
   const ctx = canvas.getContext("2d");
@@ -1711,21 +1825,45 @@ function renderMain() {
       const pts = face.verts.map((id) => projected.get(id)).filter(Boolean);
       const n = faceNormal(face);
       const selected = state.selected?.type === "face" && state.selected.id === face.id;
-      const textured = drawBitmapGuide && drawFaceBitmapSkin(ctx, face, pts);
-      const selectedBitmap = selected && textured && drawBitmapGuide;
-      drawFace(
-        ctx,
-        pts,
-        selectedBitmap ? "rgba(0,0,0,0)" : selected ? "rgba(255,217,54,.24)" : textured ? "rgba(0,0,0,0)" : drawBitmapGuide ? builderBitmapFill(n) : shadedHullColor(n),
-        selected ? "#ffd936" : drawWire ? "rgba(85,255,78,.32)" : "rgba(0,0,0,0)",
-        selected ? 2 : drawWire ? 1 : 0
-      );
-      if (drawBitmapGuide && !textured) drawFaceTextureGuide(ctx, pts, previewMode === "bitmap" ? .22 : .16);
+      if (drawBitmapGuide) {
+        drawFace(ctx, pts, builderBitmapFill(n), "rgba(0,0,0,0)", 0);
+        const textured = drawFaceBitmapSkin(ctx, face, pts);
+        if (!textured) drawFaceTextureGuide(ctx, pts, previewMode === "bitmap" ? .22 : .16);
+        if (selected || drawWire) {
+          drawFace(
+            ctx,
+            pts,
+            selected ? "rgba(255,217,54,.18)" : "rgba(0,0,0,0)",
+            selected ? "#ffd936" : "rgba(85,255,78,.32)",
+            selected ? 2 : 1
+          );
+        }
+      } else {
+        drawFace(
+          ctx,
+          pts,
+          selected ? "rgba(255,217,54,.24)" : shadedHullColor(n),
+          selected ? "#ffd936" : drawWire ? "rgba(85,255,78,.32)" : "rgba(0,0,0,0)",
+          selected ? 2 : drawWire ? 1 : 0
+        );
+      }
     }
   }
   drawFaceNormals(ctx, (v) => project3d(v, canvas));
 
   if (drawWire) {
+    if (!drawFaces) {
+      ctx.strokeStyle = "rgba(85,255,78,.58)";
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      for (const e of derivedFaceEdges()) {
+        const a = projected.get(e.a), b = projected.get(e.b);
+        if (!a || !b) continue;
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+      }
+      ctx.stroke();
+    }
     for (const e of state.edges) {
       const a = projected.get(e.a), b = projected.get(e.b);
       if (!a || !b) continue;
@@ -2367,19 +2505,20 @@ function importBuilderJson() {
     const data = JSON.parse(els.importText.value);
     if (!data || !Array.isArray(data.verts) || !Array.isArray(data.faces)) throw new Error("Not builder JSON");
     state.nextId = 1;
-    state.verts = data.verts.map((v) => {
-      state.nextId = Math.max(state.nextId, Number(v.id) + 1);
-      return { id: Number(v.id), x: Number(v.x), y: Number(v.y), z: Number(v.z), mirrorId: v.mirrorId ?? null, center: !!v.center };
+    state.verts = data.verts.map((v, index) => {
+      const vertex = sourceVertex(v, index);
+      state.nextId = Math.max(state.nextId, vertex.id + 1);
+      return vertex;
     });
-    state.faces = (data.faces || []).map((f) => {
-      state.nextId = Math.max(state.nextId, Number(f.id) + 1);
-      const bitmapSide = validBitmapFaceSide(f.bitmapSide);
-      const bitmapFaceKey = cleanBitmapKey(f.bitmapFaceKey);
-      return { id: Number(f.id), verts: f.verts.map(Number), mirrored: !!f.mirrored, ...(bitmapSide ? { bitmapSide } : {}), ...(bitmapFaceKey ? { bitmapFaceKey } : {}) };
+    state.faces = (data.faces || []).map((f, index) => {
+      const face = sourceFace(f, index);
+      state.nextId = Math.max(state.nextId, face.id + 1);
+      return face;
     });
-    state.edges = (data.edges || []).map((e) => {
-      state.nextId = Math.max(state.nextId, Number(e.id) + 1);
-      return { id: Number(e.id), a: Number(e.a), b: Number(e.b), kind: e.kind || "edge", mirrored: !!e.mirrored };
+    state.edges = (data.edges || []).map((e, index) => {
+      const edge = sourceEdge(e, index);
+      state.nextId = Math.max(state.nextId, edge.id + 1);
+      return edge;
     });
     state.details = (data.details || []).map((d) => {
       const idNum = Number(d.id);
@@ -2469,29 +2608,20 @@ function loadLibraryModel(id) {
     return;
   }
   state.nextId = 1;
-  state.verts = (source.verts || []).map((v) => {
-    const idNum = Number(v.id);
-    state.nextId = Math.max(state.nextId, idNum + 1);
-    return {
-      id: idNum,
-      x: Number(v.x),
-      y: Number(v.y),
-      z: Number(v.z),
-      mirrorId: v.mirrorId ?? null,
-      center: !!v.center
-    };
+  state.verts = (source.verts || []).map((v, index) => {
+    const vertex = sourceVertex(v, index);
+    state.nextId = Math.max(state.nextId, vertex.id + 1);
+    return vertex;
   });
-  state.faces = (source.faces || []).map((f) => {
-    const idNum = Number(f.id);
-    state.nextId = Math.max(state.nextId, idNum + 1);
-    const bitmapSide = validBitmapFaceSide(f.bitmapSide);
-    const bitmapFaceKey = cleanBitmapKey(f.bitmapFaceKey);
-    return { id: idNum, verts: (f.verts || []).map(Number), mirrored: !!f.mirrored, ...(bitmapSide ? { bitmapSide } : {}), ...(bitmapFaceKey ? { bitmapFaceKey } : {}) };
+  state.faces = (source.faces || []).map((f, index) => {
+    const face = sourceFace(f, index);
+    state.nextId = Math.max(state.nextId, face.id + 1);
+    return face;
   });
-  state.edges = (source.edges || []).map((e) => {
-    const idNum = Number(e.id);
-    state.nextId = Math.max(state.nextId, idNum + 1);
-    return { id: idNum, a: Number(e.a), b: Number(e.b), kind: e.kind || "edge", mirrored: !!e.mirrored };
+  state.edges = (source.edges || []).map((e, index) => {
+    const edge = sourceEdge(e, index);
+    state.nextId = Math.max(state.nextId, edge.id + 1);
+    return edge;
   });
   state.details = (source.details || []).map((d) => {
     const idNum = Number(d.id);

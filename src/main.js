@@ -2081,6 +2081,7 @@
       const primaryAxis = options.primaryAxis || "y";
       const faceSides = Array.isArray(options.faceSides) ? options.faceSides : [];
       const faceTextures = Array.isArray(options.faceTextures) ? options.faceTextures : [];
+      const hasProjectionFaceSlot = (items, index) => Array.isArray(items) && Object.prototype.hasOwnProperty.call(items, index);
       const validFaceSide = (side) => (side === "top" || side === "bottom" || side === "back") ? side : "";
       const cleanFaceTextureKey = (value) => String(value || "").trim().replace(/[^a-zA-Z0-9_-]+/g, "_").replace(/^_+|_+$/g, "");
       let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, minZ = Infinity, maxZ = -Infinity;
@@ -2123,11 +2124,21 @@
           }
         };
       };
+      const uvPolygonArea = (uv) => {
+        let area = 0;
+        for (let i = 0; i < uv.length; i++) {
+          const a = uv[i], b = uv[(i + 1) % uv.length];
+          area += a[0] * b[1] - b[0] * a[1];
+        }
+        return Math.abs(area) * .5;
+      };
       return faces.map((face, faceIndex) => {
         const normalIndex = faceNormalIndices[faceIndex] ?? faceIndex;
         const n = norm(vec(...(normals[normalIndex] || [0, 0, 0])));
         const absX = Math.abs(n.x), absY = Math.abs(n.y), absZ = Math.abs(n.z);
-        let side = validFaceSide(faceSides[faceIndex] ?? faceSides[normalIndex]);
+        let side = hasProjectionFaceSlot(faceSides, faceIndex)
+          ? validFaceSide(faceSides[faceIndex])
+          : validFaceSide(faceSides[normalIndex]);
         if (!side) {
           side = n.z < -.42 && absZ >= absY * .86 && absZ >= absX * .65 ? "back" : n.y < 0 ? "bottom" : "top";
           if (primaryAxis === "x" && absX >= absY * .86 && absX >= absZ * .65) {
@@ -2152,13 +2163,35 @@
           }
           return fp.uv(p, flipU, flipV);
         });
-        const faceKey = cleanFaceTextureKey(faceTextures[faceIndex] ?? faceTextures[normalIndex]);
+        const faceKey = hasProjectionFaceSlot(faceTextures, faceIndex)
+          ? cleanFaceTextureKey(faceTextures[faceIndex])
+          : cleanFaceTextureKey(faceTextures[normalIndex]);
+        const faceTextureUv = (() => {
+          if (!faceKey || uvPolygonArea(uv) >= 1) return uv;
+          let tfp = fp;
+          let tFlipU = flipU;
+          let tFlipV = flipV;
+          if (absZ >= absX && absZ >= absY) {
+            tfp = footprint(0, 1);
+            tFlipU = n.z < 0;
+            tFlipV = true;
+          } else if (absX >= absY && absX >= absZ) {
+            tfp = footprint(2, 1);
+            tFlipU = n.x > 0;
+            tFlipV = true;
+          } else {
+            tfp = footprint(0, 2);
+            tFlipU = n.y < 0;
+            tFlipV = true;
+          }
+          return face.map((i) => tfp.uv(verts[i], tFlipU, tFlipV));
+        })();
         let faceUv = null;
         let faceBaseW = 0;
         let faceBaseH = 0;
         if (faceKey) {
-          const xs = uv.map((p) => p[0]);
-          const ys = uv.map((p) => p[1]);
+          const xs = faceTextureUv.map((p) => p[0]);
+          const ys = faceTextureUv.map((p) => p[1]);
           const minFaceX = Math.min(...xs);
           const maxFaceX = Math.max(...xs);
           const minFaceY = Math.min(...ys);
@@ -2166,7 +2199,7 @@
           const pad = 24;
           faceBaseW = Math.max(24, Math.ceil(maxFaceX - minFaceX + pad * 2));
           faceBaseH = Math.max(24, Math.ceil(maxFaceY - minFaceY + pad * 2));
-          faceUv = uv.map(([u, v]) => [u - minFaceX + pad, v - minFaceY + pad]);
+          faceUv = faceTextureUv.map(([u, v]) => [u - minFaceX + pad, v - minFaceY + pad]);
         }
         return {
           side,
