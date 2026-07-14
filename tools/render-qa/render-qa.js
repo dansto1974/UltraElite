@@ -38,6 +38,7 @@ let auto = false;
 let orbitStart = performance.now();
 const REVIEW_STORAGE_KEY = "ultraElite.renderQaReviews.v1";
 const reviewState = loadReviewState();
+const latestDiagnosticsByModel = new Map();
 
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => ({
@@ -150,7 +151,7 @@ function skinManifest(id) {
   return globalThis.ULTRA_ELITE_BITMAP_SKINS?.[id] || null;
 }
 
-function diagnosticsForModel(id) {
+function assetDiagnosticsForModel(id) {
   const blueprint = modelBlueprint(id);
   const manifest = skinManifest(id);
   const projection = blueprint?.imageProjection || {};
@@ -188,16 +189,96 @@ function diagnosticsForModel(id) {
   return diagnostics;
 }
 
+function summarizeList(items, limit = 5) {
+  const values = [...items].filter(Boolean);
+  if (values.length <= limit) return values.join(", ");
+  return `${values.slice(0, limit).join(", ")} +${values.length - limit} more`;
+}
+
+function rendererDiagnosticsForModel(id, info) {
+  const projection = info?.projection;
+  const blueprint = modelBlueprint(id);
+  const declaredFaceTextures = Array.isArray(blueprint?.imageProjection?.faceTextures)
+    ? blueprint.imageProjection.faceTextures
+    : [];
+  const diagnostics = [];
+
+  if (!info?.rendered) {
+    diagnostics.push({ level: "error", text: "Renderer did not produce a mesh result." });
+    return diagnostics;
+  }
+  if (!projection) {
+    diagnostics.push({ level: "error", text: "Renderer projection packet missing; Render QA cannot check face/UV geometry." });
+    return diagnostics;
+  }
+
+  const projectedPoints = (projection.points || []).filter(Boolean).length;
+  if (Number.isFinite(info.points) && projectedPoints !== info.points) {
+    diagnostics.push({ level: "warn", text: `Projected point count mismatch: renderer ${info.points}, packet ${projectedPoints}.` });
+  }
+  if ((projection.faces || []).length !== info.faces) {
+    diagnostics.push({ level: "error", text: `Projected face count mismatch: renderer ${info.faces}, packet ${projection.faces?.length || 0}.` });
+  }
+  if (declaredFaceTextures.length && declaredFaceTextures.length !== (projection.faces || []).length) {
+    diagnostics.push({ level: "warn", text: `Face texture metadata count ${declaredFaceTextures.length} differs from renderer face count ${(projection.faces || []).length}.` });
+  }
+
+  const visibleFaces = (projection.faces || []).filter((face) => face.visible).length;
+  if (info.faces && visibleFaces <= 0) {
+    diagnostics.push({ level: "error", text: "No visible faces at the current QA angle." });
+  }
+
+  const bitmapUvGaps = (projection.faces || []).filter((face) => face.bitmapKey && !face.hasImageProjection);
+  if (bitmapUvGaps.length) {
+    diagnostics.push({
+      level: "error",
+      text: `Face bitmap declared but no renderer UV: ${summarizeList(bitmapUvGaps.map((face) => `#${face.faceIndex}:${face.bitmapKey}`))}.`
+    });
+  }
+
+  const incompleteFaces = (projection.faces || []).filter((face) => Array.isArray(face.verts) && face.points?.length !== face.verts.length);
+  if (incompleteFaces.length) {
+    diagnostics.push({
+      level: "warn",
+      text: `Projection packet has incomplete face polygons: ${summarizeList(incompleteFaces.map((face) => `#${face.faceIndex}`))}.`
+    });
+  }
+
+  if ((projection.details || []).length !== info.details) {
+    diagnostics.push({ level: "warn", text: `Projected detail count mismatch: renderer ${info.details}, packet ${projection.details?.length || 0}.` });
+  }
+  const incompleteDetails = (projection.details || []).filter((detail) => !detail.visible);
+  if (incompleteDetails.length) {
+    diagnostics.push({
+      level: "warn",
+      text: `Detail projection incomplete: ${summarizeList(incompleteDetails.map((detail) => `#${detail.detailIndex}:${detail.type}`))}.`
+    });
+  }
+
+  diagnostics.push({
+    level: "ok",
+    text: `Renderer projection OK: ${visibleFaces}/${info.faces || 0} visible faces, ${projectedPoints} points, ${(projection.details || []).length}/${info.details || 0} details.`
+  });
+  return diagnostics;
+}
+
+function diagnosticsForModel(id, info = null) {
+  return [
+    ...assetDiagnosticsForModel(id),
+    ...(info ? rendererDiagnosticsForModel(id, info) : [])
+  ];
+}
+
 function renderDiagnostics(diagnostics) {
   diagnosticsList.innerHTML = diagnostics.map((item) =>
-    `<div class="diagnostic ${item.level === "error" ? "error" : item.level === "warn" ? "warn" : ""}">${escapeHtml(item.text)}</div>`
+    `<div class="diagnostic ${item.level === "error" ? "error" : item.level === "warn" ? "warn" : item.level === "ok" ? "ok" : ""}">${escapeHtml(item.text)}</div>`
   ).join("");
 }
 
 function updateModelList(diagnosticsMap = new Map()) {
   const current = currentModelId();
   modelList.innerHTML = api.models.map((model) => {
-    const diagnostics = diagnosticsMap.get(model.id) || diagnosticsForModel(model.id);
+    const diagnostics = diagnosticsMap.get(model.id) || latestDiagnosticsByModel.get(model.id) || assetDiagnosticsForModel(model.id);
     const issue = diagnostics.some((item) => item.level === "error" || item.level === "warn");
     const badge = reviewBadge(model.id, issue);
     return `<button class="model-btn ${model.id === current ? "current" : ""} ${badge.className}" data-model="${escapeHtml(model.id)}" type="button"><span>${escapeHtml(model.name)}</span><span>${badge.label}</span></button>`;
@@ -233,23 +314,31 @@ function render() {
     pitch: angle.pitch,
     roll: angle.roll,
     engineGlow: .8,
-    grid: true
+    grid: true,
+    projection: true
   });
   const renderMs = performance.now() - before;
   const model = api.models.find((entry) => entry.id === currentModelId());
-  const diagnostics = diagnosticsForModel(currentModelId());
+  const diagnostics = diagnosticsForModel(currentModelId(), info);
   const review = reviewForModel(currentModelId());
+  latestDiagnosticsByModel.set(currentModelId(), diagnostics);
   renderDiagnostics(diagnostics);
   updateModelList(new Map([[currentModelId(), diagnostics]]));
   const index = modelIndex();
+  const issueCount = diagnostics.filter((item) => item.level === "error" || item.level === "warn").length;
+  const projection = info?.projection;
+  const visibleFaces = projection?.faces?.filter((face) => face.visible).length ?? null;
+  const projectedDetails = projection?.details?.length ?? null;
   modelCounter.textContent = `${index + 1} / ${api.models.length}`;
-  statusText.textContent = `${model?.name || currentModelId()} | ${angle.label} | ${renderMs.toFixed(2)} ms`;
+  statusText.textContent = `${model?.name || currentModelId()} | ${angle.label} | ${issueCount ? `${issueCount} warning${issueCount === 1 ? "" : "s"}` : "projection OK"} | ${renderMs.toFixed(2)} ms`;
   modelReadout.textContent = [
     `id: ${currentModelId()}`,
     `name: ${model?.name || "--"}`,
     `faces: ${info?.faces ?? model?.faces ?? "--"}`,
+    `visible faces: ${visibleFaces ?? "--"}`,
     `edges: ${info?.edges ?? model?.edges ?? "--"}`,
     `details: ${info?.details ?? model?.details ?? "--"}`,
+    `projected details: ${projectedDetails ?? "--"}`,
     `projected points: ${info?.points ?? "--"}`,
     `route: ${info?.route || "--"}`,
     `radius: ${info?.radius?.toFixed?.(1) || model?.radius || "--"}`,

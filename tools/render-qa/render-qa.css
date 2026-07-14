@@ -245,6 +245,11 @@ textarea {
   line-height: 1.28;
 }
 
+.diagnostic.ok {
+  border-color: rgba(86, 255, 92, .22);
+  color: rgba(183, 220, 175, .84);
+}
+
 .diagnostic.warn {
   border-color: rgba(255, 217, 54, .42);
   color: var(--yellow);
