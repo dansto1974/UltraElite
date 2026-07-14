@@ -230,6 +230,12 @@ function validBitmapFaceSide(value) {
   return value === "top" || value === "bottom" || value === "back" ? value : null;
 }
 
+function cleanBitmapAngle(value) {
+  let n = Number(value) || 0;
+  n = ((n + 180) % 360 + 360) % 360 - 180;
+  return Math.abs(n) < .0001 ? null : Math.round(n * 100) / 100;
+}
+
 function runGenerated(file, globalName) {
   const ctx = { globalThis: {} };
   vm.runInNewContext(read(file), ctx, { filename: file });
@@ -292,10 +298,12 @@ if (fs.existsSync(modelDir)) {
     const sourceFaces = Array.isArray(data.faces) ? data.faces : [];
     const faceSides = sourceFaces.map((face) => validBitmapFaceSide(face?.bitmapSide));
     const faceTextures = sourceFaces.map((face) => cleanBitmapKey(face?.bitmapFaceKey) || null);
+    const faceAngles = sourceFaces.map((face) => cleanBitmapAngle(face?.bitmapAngle));
     const hasFaceSides = faceSides.some(Boolean);
     const hasFaceTextures = faceTextures.some(Boolean);
+    const hasFaceAngles = faceAngles.some((angle) => angle != null);
     const usesOnlyFaceTextures = sourceFaces.length > 0 && faceTextures.every(Boolean);
-    if (!hasFaceSides && !hasFaceTextures) continue;
+    if (!hasFaceSides && !hasFaceTextures && !hasFaceAngles) continue;
 
     const generatedProjection = generatedModels[modelId]?.imageProjection || {};
     if (hasFaceSides && JSON.stringify(generatedProjection.faceSides) !== JSON.stringify(faceSides)) {
@@ -303,6 +311,9 @@ if (fs.existsSync(modelDir)) {
     }
     if (hasFaceTextures && JSON.stringify(generatedProjection.faceTextures) !== JSON.stringify(faceTextures)) {
       throw new Error(`${path.relative(root, filePath)} bitmap faceTextures are out of sync with src/generated/model-library.js; run npm run models or npm run build.`);
+    }
+    if (hasFaceAngles && JSON.stringify(generatedProjection.faceAngles) !== JSON.stringify(faceAngles)) {
+      throw new Error(`${path.relative(root, filePath)} bitmap faceAngles are out of sync with src/generated/model-library.js; run npm run models or npm run build.`);
     }
     const uniqueFaceKeys = [...new Set(faceTextures.filter(Boolean))];
     const seenFaceTextureHashes = new Map();

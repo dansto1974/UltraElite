@@ -171,7 +171,22 @@
                 </select>
               </label>
               <label class="toggle"><input id="importMirroredSkin" type="checkbox"> Apply as mirrored half UV</label>
-              <label>Bitmap Angle <input id="skinAngle" type="range" min="-180" max="180" step="1" value="0"><input id="skinAngleValue" type="number" min="-180" max="180" step="1" value="0"></label>
+              <section class="uv-orientation-tool" aria-label="Face UV orientation">
+                <h3>Face UV Orientation</h3>
+                <label>Angle <input id="skinAngle" type="range" min="-180" max="180" step="1" value="0"><input id="skinAngleValue" type="number" min="-180" max="180" step="1" value="0"></label>
+                <div class="uv-rotate-grid">
+                  <button type="button" class="uv-rotate-btn" data-uv-rotate="-90">90 CCW</button>
+                  <button type="button" class="uv-rotate-btn" data-uv-rotate="-45">45 CCW</button>
+                  <button type="button" class="uv-rotate-btn" data-uv-rotate="-30">30 CCW</button>
+                  <button type="button" class="uv-rotate-btn" data-uv-rotate="30">30 CW</button>
+                  <button type="button" class="uv-rotate-btn" data-uv-rotate="45">45 CW</button>
+                  <button type="button" class="uv-rotate-btn" data-uv-rotate="90">90 CW</button>
+                </div>
+                <div class="uv-orient-actions">
+                  <button id="orientUvToViewBtn" type="button">Orient To View</button>
+                  <button id="resetUvAngleBtn" type="button">Reset UV Angle</button>
+                </div>
+              </section>
               <div class="bitmap-target-grid">
                 <button id="applyShelfFaceBtn" class="primary">Apply To Face</button>
                 <button id="applyShelfTopBtn">Top</button>

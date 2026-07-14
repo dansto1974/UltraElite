@@ -63,6 +63,8 @@ const els = {
   importMirroredSkin: document.getElementById("importMirroredSkin"),
   skinAngle: document.getElementById("skinAngle"),
   skinAngleValue: document.getElementById("skinAngleValue"),
+  orientUvToViewBtn: document.getElementById("orientUvToViewBtn"),
+  resetUvAngleBtn: document.getElementById("resetUvAngleBtn"),
   importBitmapShelf: document.getElementById("importBitmapShelf"),
   bitmapShelfSelector: document.getElementById("bitmapShelfSelector"),
   bitmapAssetGrid: document.getElementById("bitmapAssetGrid"),
@@ -112,6 +114,7 @@ const state = {
   faceSkinSources: {},
   bitmapShelf: [],
   toolServer: { available: false, skins: [], version: 0 },
+  sideSkinAngle: 0,
   assetVersion: Date.now(),
   previewSkinVersion: Date.now(),
   gamePreviewInfo: null,
@@ -188,12 +191,14 @@ function sourceFace(face, index) {
   const id = Number(face?.id);
   const bitmapSide = validBitmapFaceSide(face?.bitmapSide);
   const bitmapFaceKey = cleanBitmapKey(face?.bitmapFaceKey);
+  const bitmapAngle = normalizeBitmapAngle(face?.bitmapAngle);
   return {
     id: Number.isFinite(id) ? id : 1000 + index,
     verts: (Array.isArray(face) ? face : face?.verts || []).map(Number),
     mirrored: !!face?.mirrored,
     ...(bitmapSide ? { bitmapSide } : {}),
-    ...(bitmapFaceKey ? { bitmapFaceKey } : {})
+    ...(bitmapFaceKey ? { bitmapFaceKey } : {}),
+    ...(bitmapAngle ? { bitmapAngle } : {})
   };
 }
 
@@ -397,6 +402,9 @@ function syncMirroredFace(face) {
     const key = cleanBitmapKey(face.bitmapFaceKey);
     if (key) mf.bitmapFaceKey = key;
     else delete mf.bitmapFaceKey;
+    const angle = normalizeBitmapAngle(face.bitmapAngle);
+    if (angle) mf.bitmapAngle = angle;
+    else delete mf.bitmapAngle;
   }
 }
 
@@ -1149,15 +1157,66 @@ function ratioClose(a, b, tolerance = .36) {
   return Number.isFinite(a) && Number.isFinite(b) && a > 0 && b > 0 && Math.abs(Math.log(a / b)) <= tolerance;
 }
 
-function skinAngleDeg() {
-  return clamp(Number(els.skinAngle?.value) || 0, -180, 180);
+function normalizeBitmapAngle(value) {
+  let n = Number(value) || 0;
+  n = ((n + 180) % 360 + 360) % 360 - 180;
+  if (Math.abs(n) < .0001) return 0;
+  return Math.round(n * 100) / 100;
+}
+
+function sideSkinAngleDeg() {
+  return normalizeBitmapAngle(state.sideSkinAngle);
 }
 
 function syncSkinAngle(value, redraw = true) {
-  const n = clamp(Math.round(Number(value) || 0), -180, 180);
-  if (els.skinAngle) els.skinAngle.value = String(n);
-  if (els.skinAngleValue) els.skinAngleValue.value = String(n);
+  state.sideSkinAngle = normalizeBitmapAngle(value);
+  updateFaceUvAngleControls();
   if (redraw) renderAll();
+}
+
+function selectedFaceUvAngle() {
+  const face = selectedFace();
+  return face ? normalizeBitmapAngle(face.bitmapAngle) : 0;
+}
+
+function setUvAngleInputs(value) {
+  const n = normalizeBitmapAngle(value);
+  if (els.skinAngle) els.skinAngle.value = String(Math.round(n));
+  if (els.skinAngleValue) els.skinAngleValue.value = String(Math.round(n));
+}
+
+function updateFaceUvAngleControls() {
+  const face = selectedFace();
+  const enabled = !!face;
+  setUvAngleInputs(enabled ? face.bitmapAngle : 0);
+  for (const control of [els.skinAngle, els.skinAngleValue, els.orientUvToViewBtn, els.resetUvAngleBtn]) {
+    if (control) control.disabled = !enabled;
+  }
+  document.querySelectorAll(".uv-rotate-btn").forEach((button) => { button.disabled = !enabled; });
+}
+
+function setSelectedFaceUvAngle(value, redraw = true, statusText = "") {
+  const face = selectedFace();
+  if (!face) {
+    setStatus("SELECT A FACE FIRST.");
+    updateFaceUvAngleControls();
+    return false;
+  }
+  const angle = normalizeBitmapAngle(value);
+  if (angle) face.bitmapAngle = angle;
+  else delete face.bitmapAngle;
+  if (mirrorActionsEnabled()) syncMirroredFace(face);
+  setUvAngleInputs(angle);
+  markPreviewSkinsDirty();
+  if (statusText) setStatus(statusText);
+  if (redraw) renderAll();
+  return true;
+}
+
+function rotateSelectedFaceUvAngle(delta) {
+  const face = selectedFace();
+  const next = normalizeBitmapAngle((face ? face.bitmapAngle : 0) + Number(delta || 0));
+  setSelectedFaceUvAngle(next, true, `FACE UV ANGLE ${next} DEGREES.`);
 }
 
 function skinAngleMetaValue(meta = {}) {
@@ -1690,7 +1749,7 @@ function selectedFaceSkinKey(face) {
   return cleanBitmapKey(face.bitmapFaceKey, fallback);
 }
 
-function setSelectedFaceSkinFromImage(img, source = "imported", url = "", name = "bitmap") {
+function setSelectedFaceSkinFromImage(img, source = "imported", url = "", name = "bitmap", options = {}) {
   const face = selectedFace();
   if (!face) {
     if (url) URL.revokeObjectURL(url);
@@ -1704,9 +1763,17 @@ function setSelectedFaceSkinFromImage(img, source = "imported", url = "", name =
   state.faceSkinImages[key] = img;
   state.faceSkinSources[key] = source;
   if (url) state.faceSkinUrls[key] = url;
+  if (options.orientToView) {
+    const angle = faceUvAngleToView(face);
+    if (angle) face.bitmapAngle = angle;
+    else delete face.bitmapAngle;
+    if (mirrorActionsEnabled()) syncMirroredFace(face);
+  }
   markPreviewSkinsDirty();
   updateSkinReadout();
-  setStatus(`${name} APPLIED TO FACE #${face.id} AS ${key}. SAVE AS ${templateShipId()}-face-${key}.png TO MAKE PERMANENT.`);
+  updateFaceUvAngleControls();
+  const angleText = options.orientToView ? `, ORIENTED ${normalizeBitmapAngle(face.bitmapAngle)} DEGREES TO VIEW` : "";
+  setStatus(`${name} APPLIED TO FACE #${face.id} AS ${key}${angleText}. SAVE AS ${templateShipId()}-face-${key}.png TO MAKE PERMANENT.`);
   renderAll();
 }
 
@@ -1718,8 +1785,10 @@ function clearSelectedFaceSkin() {
   }
   const key = cleanBitmapKey(face.bitmapFaceKey);
   delete face.bitmapFaceKey;
+  delete face.bitmapAngle;
   if (mirrorActionsEnabled()) syncMirroredFace(face);
   markPreviewSkinsDirty();
+  updateFaceUvAngleControls();
   setStatus(key ? `FACE TEXTURE ${key} CLEARED FROM FACE #${face.id}.` : "SELECTED FACE HAS NO FACE TEXTURE.");
   renderAll();
 }
@@ -1736,13 +1805,13 @@ function applyShelfBitmap(side) {
   setStatus(`${item.name} APPLIED TO ${side.toUpperCase()}${mirrored ? " AS MIRRORED HALF UV" : ""}.`);
 }
 
-function applyShelfBitmapToSelectedFace() {
+function applyShelfBitmapToSelectedFace(options = {}) {
   const item = selectedBitmapShelfItem();
   if (!item) {
     setStatus("SELECT A UV THUMBNAIL FIRST.");
     return;
   }
-  setSelectedFaceSkinFromImage(item.img, "shelf", "", item.name);
+  setSelectedFaceSkinFromImage(item.img, "shelf", "", item.name, options);
 }
 
 function importSkinFile(side, file, addToShelf = true) {
@@ -1787,7 +1856,7 @@ function importSelectedFaceSkinFile(file, addToShelf = true) {
   const img = new Image();
   img.onload = () => {
     const shelfId = addToShelf ? addBitmapToShelf(file, img, url) : "";
-    setSelectedFaceSkinFromImage(img, addToShelf ? "shelf" : "imported", addToShelf ? "" : url, file.name || "FACE PNG");
+    setSelectedFaceSkinFromImage(img, addToShelf ? "shelf" : "imported", addToShelf ? "" : url, file.name || "FACE PNG", { orientToView: true });
     if (shelfId) selectBitmapShelfItem(shelfId);
     renderAll();
   };
@@ -2110,7 +2179,7 @@ function createSelectedFaceTemplateCanvas() {
   return canvas;
 }
 
-function selectedFaceTextureMapping(face) {
+function selectedFaceTextureMapping(face, options = {}) {
   const side = templateSideForFace(face);
   const project = faceTextureProjection(face, templateProjection(side, "footprint"));
   const pts = face.verts.map(vertexById).filter(Boolean).map(project);
@@ -2122,8 +2191,47 @@ function selectedFaceTextureMapping(face) {
   const pad = 24;
   const width = Math.max(24, Math.ceil(maxX - minX + pad * 2));
   const height = Math.max(24, Math.ceil(maxY - minY + pad * 2));
-  const uv = pts.map((p) => ({ x: p.x - minX + pad, y: p.y - minY + pad }));
-  return { side, project, uv, width, height, minX, minY, pad };
+  const rawUv = pts.map((p) => ({ x: p.x - minX + pad, y: p.y - minY + pad }));
+  const angle = options.applyAngle === false ? 0 : normalizeBitmapAngle(face.bitmapAngle);
+  const uv = angle ? rawUv.map((p) => rotateTemplatePoint(p, width, height, angle)) : rawUv;
+  return { side, project, uv, rawUv, angle, width, height, minX, minY, pad };
+}
+
+function faceUvAngleToView(face) {
+  const canvas = els.mainView;
+  if (!face || !canvas) return 0;
+  const mapping = selectedFaceTextureMapping(face, { applyAngle: false });
+  if (!mapping || mapping.rawUv.length < 2) return 0;
+  const verts = face.verts.map(vertexById).filter(Boolean);
+  if (verts.length !== mapping.rawUv.length) return 0;
+  const screen = verts.map((v) => project3d(v, canvas));
+  let best = null;
+  for (let i = 0; i < screen.length; i++) {
+    const j = (i + 1) % screen.length;
+    const su = screen[j].x - screen[i].x;
+    const sv = screen[j].y - screen[i].y;
+    const uu = mapping.rawUv[j].x - mapping.rawUv[i].x;
+    const uv = mapping.rawUv[j].y - mapping.rawUv[i].y;
+    const screenLen = Math.hypot(su, sv);
+    const uvLen = Math.hypot(uu, uv);
+    const score = screenLen * uvLen;
+    if (score > (best?.score || 0)) best = { su, sv, uu, uv, score };
+  }
+  if (!best || best.score < .001) return 0;
+  const screenAngle = Math.atan2(best.sv, best.su);
+  const uvAngle = Math.atan2(best.uv, best.uu);
+  return normalizeBitmapAngle((screenAngle - uvAngle) * 180 / Math.PI);
+}
+
+function orientSelectedFaceUvToView(redraw = true) {
+  const face = selectedFace();
+  if (!face) {
+    setStatus("SELECT A FACE FIRST.");
+    updateFaceUvAngleControls();
+    return false;
+  }
+  const angle = faceUvAngleToView(face);
+  return setSelectedFaceUvAngle(angle, redraw, `FACE UV ORIENTED TO VIEW (${angle} DEGREES).`);
 }
 
 function downloadCanvas(canvas, filename) {
@@ -2261,7 +2369,7 @@ function drawFaceBitmapSkin(ctx, face, pts) {
   const img = state.skinImages?.[side];
   if (!img?.complete || !img.naturalWidth || pts.length < 3) return false;
   const { project, mirrorX } = skinProjectionForImage(side, img);
-  const angle = skinAngleDeg();
+  const angle = sideSkinAngleDeg();
   const baseW = project.width || TEMPLATE_SIZE;
   const baseH = project.height || TEMPLATE_SIZE;
   const seamX = project.centerlineX ?? baseW / 2;
@@ -2539,7 +2647,7 @@ function gamePreviewBitmapSkins() {
     count++;
   }
   if (Object.keys(faces).length) skins.faces = faces;
-  const angle = skinAngleDeg();
+  const angle = sideSkinAngleDeg();
   if (angle) skins.angle = { top: angle, bottom: angle, back: angle };
   return count ? skins : null;
 }
@@ -2613,8 +2721,9 @@ function updateUi() {
     const autoSide = face ? autoTemplateSideForFace(face) : "";
     const bitmapSide = face ? (validBitmapFaceSide(face.bitmapSide) || `auto/${autoSide}`) : "";
     const faceSkin = face ? cleanBitmapKey(face.bitmapFaceKey) : "";
+    const faceAngle = face ? normalizeBitmapAngle(face.bitmapAngle) : 0;
     els.selectionReadout.textContent = n
-      ? `Face #${state.selected.id}  normal X ${round(n.x, 2)}  Y ${round(n.y, 2)}  Z ${round(n.z, 2)}  bitmap ${bitmapSide}${faceSkin ? `  face ${faceSkin}` : ""}`
+      ? `Face #${state.selected.id}  normal X ${round(n.x, 2)}  Y ${round(n.y, 2)}  Z ${round(n.z, 2)}  bitmap ${bitmapSide}${faceSkin ? `  face ${faceSkin}` : ""}${faceAngle ? `  angle ${faceAngle}` : ""}`
       : `Face #${state.selected.id}`;
   } else {
     els.selectionReadout.textContent = `${state.selected.type.toUpperCase()} #${state.selected.id}`;
@@ -2622,6 +2731,7 @@ function updateUi() {
   updateSliders();
   updateDetailControls();
   updateFaceBitmapSideControl();
+  updateFaceUvAngleControls();
 }
 
 function updateSliders() {
@@ -2996,13 +3106,15 @@ function derivedBlueprint() {
   }).filter(Boolean);
   const faceSides = state.faces.map((f) => validBitmapFaceSide(f.bitmapSide) || null);
   const faceTextures = state.faces.map((f) => cleanBitmapKey(f.bitmapFaceKey) || null);
+  const faceAngles = state.faces.map((f) => normalizeBitmapAngle(f.bitmapAngle) || null);
   const primaryAxis = templatePrimaryAxis();
   const imageProjection = {
     ...(primaryAxis !== "y" ? { primaryAxis } : {}),
     ...(faceSides.some(Boolean) ? { faceSides } : {}),
-    ...(faceTextures.some(Boolean) ? { faceTextures } : {})
+    ...(faceTextures.some(Boolean) ? { faceTextures } : {}),
+    ...(faceAngles.some((angle) => angle != null) ? { faceAngles } : {})
   };
-  const hasImageProjection = !!imageProjection.primaryAxis || !!imageProjection.faceSides || !!imageProjection.faceTextures;
+  const hasImageProjection = !!imageProjection.primaryAxis || !!imageProjection.faceSides || !!imageProjection.faceTextures || !!imageProjection.faceAngles;
   return {
     verts,
     edges,
@@ -3037,7 +3149,7 @@ function exportedImageDecalMirrorX() {
 function gameMetadata() {
   const radius = Math.round(modelRadius());
   const imageDecalMirrorX = exportedImageDecalMirrorX();
-  const imageDecalAngle = skinAngleDeg();
+  const imageDecalAngle = sideSkinAngleDeg();
   return {
     class: els.shipClass.value,
     npcRole: els.npcRole.value,
@@ -3083,7 +3195,8 @@ function builderExport() {
       verts: f.verts,
       mirrored: !!f.mirrored,
       ...(validBitmapFaceSide(f.bitmapSide) ? { bitmapSide: f.bitmapSide } : {}),
-      ...(cleanBitmapKey(f.bitmapFaceKey) ? { bitmapFaceKey: cleanBitmapKey(f.bitmapFaceKey) } : {})
+      ...(cleanBitmapKey(f.bitmapFaceKey) ? { bitmapFaceKey: cleanBitmapKey(f.bitmapFaceKey) } : {}),
+      ...(normalizeBitmapAngle(f.bitmapAngle) ? { bitmapAngle: normalizeBitmapAngle(f.bitmapAngle) } : {})
     })),
     edges: state.edges.map((e) => ({ id: e.id, a: e.a, b: e.b, kind: e.kind, mirrored: !!e.mirrored })),
     details: state.details.map((d) => ({ ...d })),
@@ -3517,7 +3630,12 @@ function bindEvents() {
     if (!card) return;
     selectBitmapShelfItem(card.dataset.shelfId);
     const item = selectedBitmapShelfItem();
-    if (item) setStatus(`${bitmapShelfItemTitle(item)} SELECTED.`);
+    if (!item) return;
+    if (selectedFace()) {
+      applyShelfBitmapToSelectedFace({ orientToView: true });
+    } else {
+      setStatus(`${bitmapShelfItemTitle(item)} SELECTED. SELECT A FACE TO APPLY IT.`);
+    }
   });
   els.bitmapShelfSelector?.addEventListener("change", () => {
     updateBitmapAssetGrid();
@@ -3526,7 +3644,7 @@ function bindEvents() {
   els.applyShelfTopBtn.addEventListener("click", () => applyShelfBitmap("top"));
   els.applyShelfBottomBtn.addEventListener("click", () => applyShelfBitmap("bottom"));
   els.applyShelfBackBtn.addEventListener("click", () => applyShelfBitmap("back"));
-  els.applyShelfFaceBtn.addEventListener("click", applyShelfBitmapToSelectedFace);
+  els.applyShelfFaceBtn.addEventListener("click", () => applyShelfBitmapToSelectedFace({ orientToView: true }));
   els.clearBitmapShelfBtn.addEventListener("click", clearBitmapShelf);
   els.refreshAssetShelfBtn?.addEventListener("click", loadAssetShelf);
   els.saveModelAssetBtn?.addEventListener("click", saveModelAsset);
@@ -3565,8 +3683,13 @@ function bindEvents() {
     updateSkinReadout();
     renderAll();
   });
-  els.skinAngle?.addEventListener("input", (ev) => syncSkinAngle(ev.target.value));
-  els.skinAngleValue?.addEventListener("change", (ev) => syncSkinAngle(ev.target.value));
+  els.skinAngle?.addEventListener("input", (ev) => setSelectedFaceUvAngle(ev.target.value));
+  els.skinAngleValue?.addEventListener("change", (ev) => setSelectedFaceUvAngle(ev.target.value));
+  document.querySelectorAll(".uv-rotate-btn").forEach((button) => {
+    button.addEventListener("click", () => rotateSelectedFaceUvAngle(button.dataset.uvRotate));
+  });
+  els.orientUvToViewBtn?.addEventListener("click", () => orientSelectedFaceUvToView());
+  els.resetUvAngleBtn?.addEventListener("click", () => setSelectedFaceUvAngle(0, true, "FACE UV ANGLE RESET."));
   els.downloadTopTemplateBtn.addEventListener("click", () => downloadTemplate("top"));
   els.downloadBottomTemplateBtn.addEventListener("click", () => downloadTemplate("bottom"));
   els.downloadBackTemplateBtn.addEventListener("click", () => downloadTemplate("back"));

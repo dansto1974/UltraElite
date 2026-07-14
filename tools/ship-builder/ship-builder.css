@@ -574,6 +574,48 @@ h3 {
   padding-right: .25rem;
 }
 
+.uv-orientation-tool {
+  margin-top: 7px;
+  padding: .42rem;
+  border: 1px solid rgba(81, 255, 74, .16);
+  border-radius: 7px;
+  background: rgba(0, 0, 0, .22);
+}
+
+.uv-orientation-tool h3 {
+  font-size: .62rem;
+}
+
+.uv-orientation-tool label {
+  grid-template-columns: 1fr;
+}
+
+.uv-orientation-tool label input[type="range"] {
+  width: 100%;
+}
+
+.uv-rotate-grid,
+.uv-orient-actions {
+  display: grid;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.uv-rotate-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.uv-orient-actions {
+  grid-template-columns: 1fr 1fr;
+}
+
+.uv-rotate-grid button,
+.uv-orient-actions button {
+  min-width: 0;
+  padding-left: .22rem;
+  padding-right: .22rem;
+}
+
 .skin-import-grid {
   display: grid;
   grid-template-columns: 1fr;

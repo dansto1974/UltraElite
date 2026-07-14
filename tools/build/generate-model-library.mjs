@@ -147,13 +147,20 @@ function sourceImageProjection(data) {
     return side === "top" || side === "bottom" || side === "back" ? side : null;
   });
   const faceTextures = sourceFaces.map((face) => cleanBitmapKey(face?.bitmapFaceKey) || null);
+  const cleanAngle = (value) => {
+    let n = Number(value) || 0;
+    n = ((n + 180) % 360 + 360) % 360 - 180;
+    return Math.abs(n) < .0001 ? null : Math.round(n * 100) / 100;
+  };
+  const faceAngles = sourceFaces.map((face) => cleanAngle(face?.bitmapAngle));
   const primaryAxis = data.id === "thargoid" || data.id === "thargon" ? "x" : "y";
   const imageProjection = {
     ...(primaryAxis !== "y" ? { primaryAxis } : {}),
     ...(faceSides.some(Boolean) ? { faceSides } : {}),
-    ...(faceTextures.some(Boolean) ? { faceTextures } : {})
+    ...(faceTextures.some(Boolean) ? { faceTextures } : {}),
+    ...(faceAngles.some((angle) => angle != null) ? { faceAngles } : {})
   };
-  return imageProjection.primaryAxis || imageProjection.faceSides || imageProjection.faceTextures ? imageProjection : null;
+  return imageProjection.primaryAxis || imageProjection.faceSides || imageProjection.faceTextures || imageProjection.faceAngles ? imageProjection : null;
 }
 
 function deriveBlueprint(data) {
@@ -240,7 +247,7 @@ function deriveBlueprint(data) {
     edgeVisibility: edges.map(() => 31),
     normals,
     details,
-    ...(imageProjection.primaryAxis || imageProjection.faceSides || imageProjection.faceTextures ? { imageProjection } : {}),
+    ...(imageProjection.primaryAxis || imageProjection.faceSides || imageProjection.faceTextures || imageProjection.faceAngles ? { imageProjection } : {}),
     gameMeta: data.gameMeta || {}
   };
 }

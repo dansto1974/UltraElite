@@ -2081,9 +2081,25 @@
       const primaryAxis = options.primaryAxis || "y";
       const faceSides = Array.isArray(options.faceSides) ? options.faceSides : [];
       const faceTextures = Array.isArray(options.faceTextures) ? options.faceTextures : [];
+      const faceAngles = Array.isArray(options.faceAngles) ? options.faceAngles : [];
       const hasProjectionFaceSlot = (items, index) => Array.isArray(items) && Object.prototype.hasOwnProperty.call(items, index);
       const validFaceSide = (side) => (side === "top" || side === "bottom" || side === "back") ? side : "";
       const cleanFaceTextureKey = (value) => String(value || "").trim().replace(/[^a-zA-Z0-9_-]+/g, "_").replace(/^_+|_+$/g, "");
+      const cleanFaceAngle = (value) => {
+        let n = Number(value) || 0;
+        n = ((n + 180) % 360 + 360) % 360 - 180;
+        return Math.abs(n) < .0001 ? 0 : n;
+      };
+      const rotateFaceUv = (uv, width, height, angleDeg) => {
+        if (!angleDeg) return uv;
+        const a = angleDeg * Math.PI / 180;
+        const c = Math.cos(a), s = Math.sin(a);
+        const cx = width / 2, cy = height / 2;
+        return uv.map(([u, v]) => {
+          const dx = u - cx, dy = v - cy;
+          return [cx + dx * c - dy * s, cy + dx * s + dy * c];
+        });
+      };
       let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, minZ = Infinity, maxZ = -Infinity;
       for (const p of verts) {
         minX = Math.min(minX, p[0]); maxX = Math.max(maxX, p[0]);
@@ -2189,6 +2205,9 @@
         let faceUv = null;
         let faceBaseW = 0;
         let faceBaseH = 0;
+        const faceAngle = hasProjectionFaceSlot(faceAngles, faceIndex)
+          ? cleanFaceAngle(faceAngles[faceIndex])
+          : cleanFaceAngle(faceAngles[normalIndex]);
         if (faceKey) {
           const xs = faceTextureUv.map((p) => p[0]);
           const ys = faceTextureUv.map((p) => p[1]);
@@ -2200,6 +2219,7 @@
           faceBaseW = Math.max(24, Math.ceil(maxFaceX - minFaceX + pad * 2));
           faceBaseH = Math.max(24, Math.ceil(maxFaceY - minFaceY + pad * 2));
           faceUv = faceTextureUv.map(([u, v]) => [u - minFaceX + pad, v - minFaceY + pad]);
+          faceUv = rotateFaceUv(faceUv, faceBaseW, faceBaseH, faceAngle);
         }
         return {
           side,
@@ -2207,7 +2227,7 @@
           baseH: fp.h,
           centerlineX: fp.centerlineX(flipU),
           uv,
-          ...(faceKey ? { faceKey, faceUv, faceBaseW, faceBaseH } : {}),
+          ...(faceKey ? { faceKey, faceUv, faceBaseW, faceBaseH, ...(faceAngle ? { faceAngle } : {}) } : {}),
           squareUv: face.map((i) => {
             const p = verts[i];
             if (primaryAxis === "x" && side !== "back") return uvFromAxes(p, 1, 2, side === "bottom", true);
