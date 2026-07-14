@@ -7630,8 +7630,9 @@
       renderPanel();
     }
 
-    const GAME_VERSION = "1.0.14-beta";
+    const GAME_VERSION = "1.0.15-beta";
     const UPDATE_LOG = [
+      ["1.0.15-beta", "Ship and station surface polish: fixed missing bitmap faces on station models, including Dodo front/back panels, and improved workshop preview consistency."],
       ["1.0.14-beta", "HUD and workshop polish: added an in-game pause control, increased global volume headroom and improved ship-builder preview tools for future Project X craft."],
       ["1.0.13-beta", "Project structure refresh: Ultra Elite now builds from modular local source files into the single-file browser release, with a dedicated ship-builder workshop for future Project X craft."],
       ["1.0.12-beta", "Audio mix polish: raised the global master level so Ultra mode engines, weapons, station ambience and cinematic transitions come through more clearly."],
