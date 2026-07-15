@@ -1631,6 +1631,72 @@
       text-align: left;
     }
 
+    .dockyard-card {
+      display: grid;
+      grid-template-columns: 148px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+    }
+
+    .dockyard-thumb {
+      width: 148px;
+      height: 96px;
+      border: 1px solid var(--soft-line);
+      background: #010201;
+    }
+
+    .dockyard-card-body {
+      min-width: 0;
+    }
+
+    .dockyard-card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+      color: var(--amber);
+    }
+
+    .dockyard-actions {
+      margin-top: 8px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .dockyard-card .grid2 {
+      grid-template-columns: 1fr;
+      gap: 3px;
+    }
+
+    .dockyard-card .stat-line {
+      grid-template-columns: minmax(82px, .38fr) minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .dockyard-card .label,
+    .dockyard-card .value {
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+    }
+
+    .dockyard-card .value {
+      text-align: left;
+      overflow-wrap: anywhere;
+    }
+
+    @media (max-width: 760px) {
+      .dockyard-card {
+        grid-template-columns: 1fr;
+      }
+
+      .dockyard-thumb {
+        width: 100%;
+        max-width: 220px;
+      }
+    }
+
     .about-section {
       color: var(--green);
     }

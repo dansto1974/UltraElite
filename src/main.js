@@ -17726,8 +17726,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const current = playerShipModel();
       const owned = ownedShipList();
       const docked = !!game.docked;
-      const hulls = shipyardHullList();
-      const rows = hulls.map((model) => {
+      const saleHulls = shipyardSaleHullList(localTech).filter((model) => !owned.includes(model));
+      const card = (model, section) => {
         const currentHull = model === current;
         const ownedHull = owned.includes(model);
         const price = shipPurchasePrice(model);
@@ -17736,7 +17736,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const cap = shipCargoCap(model);
         const cargo = usedCargo();
         const cargoBlocked = cargo > cap;
-        const techBlocked = !ownedHull && localTech < requiredTech;
+        const techBlocked = section === "sale" && localTech < requiredTech;
         const affordable = ownedHull || game.credits >= price;
         const buyDisabled = currentHull || !docked || cargoBlocked || techBlocked || !affordable || (!ownedHull && !Number.isFinite(price));
         const sellDisabled = currentHull || !docked || !ownedHull || !Number.isFinite(resale);
@@ -17750,30 +17750,38 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
               ? "Equipment transfer included"
               : `Purchase ${price.toLocaleString()} CR`;
         const stats = shipStats(model);
-        return `<div class="notice">
-          <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
-            <strong class="about-heading">${shipName(model)}</strong>
-            <span style="color:var(--amber);white-space:nowrap">${status}</span>
-          </div>
-          <div class="grid2">
-            ${stat("Speed", `${Math.round(220 * (stats.speed || 1))} m/s`)}
-            ${stat("Cargo", `${cap}t`)}
-            ${stat("Hull HP", Math.round(stats.hp))}
-            ${stat("Tech", `TL ${requiredTech}`)}
-            ${stat("Dockyard", tradeNote)}
-            ${ownedHull ? stat("Resale", currentHull ? "Current ship" : Number.isFinite(resale) ? `${resale.toLocaleString()} CR` : "Restricted") : stat("Resale", "Buy first")}
-          </div>
-          <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn mini primary" data-shipyard-buy="${model}" ${buyDisabled ? "disabled" : ""}>${action}</button>
-            <button class="btn mini danger" data-shipyard-sell="${model}" ${sellDisabled ? "disabled" : ""}>Sell ${Number.isFinite(resale) ? `${resale.toLocaleString()} CR` : ""}</button>
+        return `<div class="notice dockyard-card">
+          <canvas class="dockyard-thumb" width="148" height="96" data-shipyard-thumb="${model}" aria-label="${shipName(model)} preview"></canvas>
+          <div class="dockyard-card-body">
+            <div class="dockyard-card-head">
+              <strong class="about-heading">${shipName(model)}</strong>
+              <span>${status}</span>
+            </div>
+            <div class="grid2">
+              ${stat("Speed", `${Math.round(220 * (stats.speed || 1))} m/s`)}
+              ${stat("Cargo", `${cap}t`)}
+              ${stat("Hull HP", Math.round(stats.hp))}
+              ${stat("Tech", `TL ${requiredTech}`)}
+              ${stat("Dockyard", tradeNote)}
+              ${ownedHull ? stat("Resale", currentHull ? "Current ship" : Number.isFinite(resale) ? `${resale.toLocaleString()} CR` : "Restricted") : stat("Resale", "Buy first")}
+            </div>
+            <div class="dockyard-actions">
+              <button class="btn mini primary" data-shipyard-buy="${model}" ${buyDisabled ? "disabled" : ""}>${action}</button>
+              ${ownedHull ? `<button class="btn mini danger" data-shipyard-sell="${model}" ${sellDisabled ? "disabled" : ""}>Sell ${Number.isFinite(resale) ? `${resale.toLocaleString()} CR` : ""}</button>` : ""}
+            </div>
           </div>
         </div>`;
-      }).join("");
+      };
+      const ownedRows = owned.map((model) => card(model, "owned")).join("");
+      const saleRows = saleHulls.map((model) => card(model, "sale")).join("");
       return `<div class="notice" style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
           <span>Credits ${fmt(game.credits)} CR. Local tech level ${localTech}. Owned ships can be readied for free; new purchases are delivered dockside and movable equipment is transferred.</span>
           <button class="btn mini" data-shipyard-market ${docked ? "" : "disabled"}>Open Market</button>
         </div>
-        ${hulls.length ? rows : `<div class="notice">No shipyard hulls available at this station.</div>`}`;
+        <strong class="about-heading">Your Ships</strong>
+        ${ownedRows || `<div class="notice">No owned ships registered. Replacement Cobra available from station stores.</div>`}
+        <strong class="about-heading">Ships For Sale</strong>
+        ${saleRows || `<div class="notice">No purchasable hulls meet this station's tech level and authorisation limits.</div>`}`;
     }
 
     function renderStatus() {
@@ -17920,8 +17928,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return playerBaseCargoCap(modelName) + (game.equipment.cargoBay ? 15 : 0);
     }
 
-    function shipyardHullList() {
-      return authorizedDockyardShipList().filter((model) => Number.isFinite(shipPurchasePrice(model)) || ownedShipList().includes(model));
+    function shipyardSaleHullList(localTech = currentSystem().tech + 1) {
+      return authorizedDockyardShipList().filter((model) => Number.isFinite(shipPurchasePrice(model)) && localTech >= shipTechLevel(model));
     }
 
     function shipLore(model, personal = false) {
@@ -18286,6 +18294,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         game.panel = "market";
         renderPanel();
       });
+      drawShipyardThumbnails();
       panelBody.querySelectorAll("[data-ship-nav]").forEach((b) => b.addEventListener("click", () => cycleShipDiagram(Number(b.dataset.shipNav))));
       panelBody.querySelectorAll("[data-shipselect]").forEach((select) => select.addEventListener("change", () => {
         shipDiagramState.model = select.value;
@@ -18520,6 +18529,50 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           c.stroke();
         }
       }
+    }
+
+    function drawShipyardThumbnail(canvas) {
+      const modelName = canvas?.dataset?.shipyardThumb;
+      const model = MODELS[modelName];
+      const c = canvas?.getContext?.("2d");
+      if (!c) return;
+      drawShipPreviewBackground(c, canvas, modelName || "cobra", false);
+      if (!model) return;
+      const tempCam = vec(0, 0, 360);
+      const targetPx = Math.min(canvas.width * .7, canvas.height * .74);
+      const scaleFactor = targetPx / modelOverallSize(model) * (tempCam.z / 320);
+      const identityCamera = makeCamera(0);
+      const detailProject = (p) => {
+        const f = 320 / p.z;
+        return { x: canvas.width / 2 + p.x * f, y: canvas.height / 2 - p.y * f };
+      };
+      const hullColor = shipColor(modelName, POLICE_MODELS.includes(modelName));
+      drawModelEntity(c, {
+        camera: identityCamera,
+        centerCam: tempCam,
+        w: canvas.width,
+        h: canvas.height,
+        mode: game.graphicsMode,
+        project: detailProject,
+        quality: false
+      }, {
+        type: "ship",
+        model: modelName,
+        scaleFactor,
+        rot: .64,
+        pitch: .34,
+        roll: .08,
+        police: POLICE_MODELS.includes(modelName),
+        engineGlow: 1,
+        color: hullColor
+      }, {
+        decal: null,
+        edgeWidth: 1.2
+      });
+    }
+
+    function drawShipyardThumbnails() {
+      panelBody.querySelectorAll("canvas[data-shipyard-thumb]").forEach(drawShipyardThumbnail);
     }
 
     function drawShipDiagram(canvas, dt = 0) {
