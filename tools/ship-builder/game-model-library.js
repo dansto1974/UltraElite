@@ -18735,7 +18735,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false,
         "faceColor": "#03192d",
         "bitmapSide": "top",
-        "bitmapFaceKey": "naga-top-480x600_4"
+        "bitmapFaceKey": "naga-top-480x600_4",
+        "bitmapBaseW": 480,
+        "bitmapBaseH": 600,
+        "bitmapUv": [
+          [
+            240,
+            0
+          ],
+          [
+            328.696,
+            240
+          ],
+          [
+            240,
+            224.348
+          ]
+        ]
       },
       {
         "id": 1001,
@@ -18747,7 +18763,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": true,
         "faceColor": "#03192d",
         "bitmapFaceKey": "naga-top-480x600_4",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "bitmapBaseW": 480,
+        "bitmapBaseH": 600,
+        "bitmapUv": [
+          [
+            240,
+            224.348
+          ],
+          [
+            151.304,
+            240
+          ],
+          [
+            240,
+            0
+          ]
+        ]
       },
       {
         "id": 1018,
@@ -18759,7 +18791,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false,
         "faceColor": "#03192d",
         "bitmapSide": "top",
-        "bitmapFaceKey": "naga-top-480x600_4"
+        "bitmapFaceKey": "naga-top-480x600_4",
+        "bitmapBaseW": 480,
+        "bitmapBaseH": 600,
+        "bitmapUv": [
+          [
+            240,
+            0
+          ],
+          [
+            349.565,
+            166.957
+          ],
+          [
+            328.696,
+            240
+          ]
+        ]
       },
       {
         "id": 1003,
@@ -18771,7 +18819,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": true,
         "faceColor": "#03192d",
         "bitmapSide": "top",
-        "bitmapFaceKey": "naga-top-480x600_4"
+        "bitmapFaceKey": "naga-top-480x600_4",
+        "bitmapBaseW": 480,
+        "bitmapBaseH": 600,
+        "bitmapUv": [
+          [
+            151.304,
+            240
+          ],
+          [
+            130.435,
+            166.957
+          ],
+          [
+            240,
+            0
+          ]
+        ]
       },
       {
         "id": 1004,
@@ -18783,7 +18847,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false,
         "faceColor": "#03192d",
         "bitmapSide": "top",
-        "bitmapFaceKey": "naga-top-480x600_4"
+        "bitmapFaceKey": "naga-top-480x600_4",
+        "bitmapBaseW": 480,
+        "bitmapBaseH": 600,
+        "bitmapUv": [
+          [
+            240,
+            224.348
+          ],
+          [
+            328.696,
+            240
+          ],
+          [
+            480,
+            422.609
+          ]
+        ]
       },
       {
         "id": 1020,
@@ -18795,7 +18875,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false,
         "faceColor": "#03192d",
         "bitmapSide": "top",
-        "bitmapFaceKey": "naga-top-480x600_4"
+        "bitmapFaceKey": "naga-top-480x600_4",
+        "bitmapBaseW": 480,
+        "bitmapBaseH": 600,
+        "bitmapUv": [
+          [
+            240,
+            224.348
+          ],
+          [
+            480,
+            422.609
+          ],
+          [
+            302.609,
+            537.391
+          ]
+        ]
       },
       {
         "id": 1021,
@@ -18807,7 +18903,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false,
         "faceColor": "#03192d",
         "bitmapSide": "top",
-        "bitmapFaceKey": "naga-top-480x600_4"
+        "bitmapFaceKey": "naga-top-480x600_4",
+        "bitmapBaseW": 480,
+        "bitmapBaseH": 600,
+        "bitmapUv": [
+          [
+            240,
+            224.348
+          ],
+          [
+            302.609,
+            537.391
+          ],
+          [
+            240,
+            526.957
+          ]
+        ]
       },
       {
         "id": 1005,
@@ -18819,7 +18931,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": true,
         "faceColor": "#03192d",
         "bitmapSide": "top",
-        "bitmapFaceKey": "naga-top-480x600_4"
+        "bitmapFaceKey": "naga-top-480x600_4",
+        "bitmapBaseW": 480,
+        "bitmapBaseH": 600,
+        "bitmapUv": [
+          [
+            240,
+            526.957
+          ],
+          [
+            177.391,
+            537.391
+          ],
+          [
+            240,
+            224.348
+          ]
+        ]
       },
       {
         "id": 1022,
@@ -18831,7 +18959,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": true,
         "faceColor": "#03192d",
         "bitmapSide": "top",
-        "bitmapFaceKey": "naga-top-480x600_4"
+        "bitmapFaceKey": "naga-top-480x600_4",
+        "bitmapBaseW": 480,
+        "bitmapBaseH": 600,
+        "bitmapUv": [
+          [
+            177.391,
+            537.391
+          ],
+          [
+            0,
+            422.609
+          ],
+          [
+            240,
+            224.348
+          ]
+        ]
       },
       {
         "id": 1023,
@@ -18843,7 +18987,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": true,
         "faceColor": "#03192d",
         "bitmapSide": "top",
-        "bitmapFaceKey": "naga-top-480x600_4"
+        "bitmapFaceKey": "naga-top-480x600_4",
+        "bitmapBaseW": 480,
+        "bitmapBaseH": 600,
+        "bitmapUv": [
+          [
+            0,
+            422.609
+          ],
+          [
+            151.304,
+            240
+          ],
+          [
+            240,
+            224.348
+          ]
+        ]
       },
       {
         "id": 1024,
@@ -18855,7 +19015,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false,
         "faceColor": "#03192e",
         "bitmapSide": "bottom",
-        "bitmapFaceKey": "naga_bottom_2"
+        "bitmapFaceKey": "naga_bottom_2",
+        "bitmapBaseW": 480,
+        "bitmapBaseH": 600,
+        "bitmapUv": [
+          [
+            240,
+            255.652
+          ],
+          [
+            0,
+            422.609
+          ],
+          [
+            130.435,
+            166.957
+          ]
+        ]
       },
       {
         "id": 1007,
@@ -18867,7 +19043,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": true,
         "faceColor": "#03192e",
         "bitmapSide": "bottom",
-        "bitmapFaceKey": "naga_bottom_2"
+        "bitmapFaceKey": "naga_bottom_2",
+        "bitmapBaseW": 480,
+        "bitmapBaseH": 600,
+        "bitmapUv": [
+          [
+            349.565,
+            166.957
+          ],
+          [
+            480,
+            422.609
+          ],
+          [
+            240,
+            255.652
+          ]
+        ]
       },
       {
         "id": 1008,
@@ -18879,7 +19071,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false,
         "faceColor": "#03192d",
         "bitmapSide": "top",
-        "bitmapFaceKey": "naga-top-480x600_4"
+        "bitmapFaceKey": "naga-top-480x600_4",
+        "bitmapBaseW": 480,
+        "bitmapBaseH": 600,
+        "bitmapUv": [
+          [
+            328.696,
+            240
+          ],
+          [
+            349.565,
+            166.957
+          ],
+          [
+            480,
+            422.609
+          ]
+        ]
       },
       {
         "id": 1009,
@@ -18891,7 +19099,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": true,
         "faceColor": "#03192d",
         "bitmapFaceKey": "naga-top-480x600_4",
-        "bitmapSide": "top"
+        "bitmapSide": "top",
+        "bitmapBaseW": 480,
+        "bitmapBaseH": 600,
+        "bitmapUv": [
+          [
+            0,
+            422.609
+          ],
+          [
+            130.435,
+            166.957
+          ],
+          [
+            151.304,
+            240
+          ]
+        ]
       },
       {
         "id": 1010,
@@ -18903,7 +19127,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false,
         "faceColor": "#03192d",
         "bitmapSide": "top",
-        "bitmapFaceKey": "naga-top-480x600_4"
+        "bitmapFaceKey": "naga-top-480x600_4",
+        "bitmapBaseW": 480,
+        "bitmapBaseH": 600,
+        "bitmapUv": [
+          [
+            240,
+            526.957
+          ],
+          [
+            302.609,
+            537.391
+          ],
+          [
+            240,
+            600
+          ]
+        ]
       },
       {
         "id": 1026,
@@ -18915,7 +19155,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false,
         "faceColor": "#03192d",
         "bitmapSide": "top",
-        "bitmapFaceKey": "naga-top-480x600_4"
+        "bitmapFaceKey": "naga-top-480x600_4",
+        "bitmapBaseW": 480,
+        "bitmapBaseH": 600,
+        "bitmapUv": [
+          [
+            240,
+            600
+          ],
+          [
+            177.391,
+            537.391
+          ],
+          [
+            240,
+            526.957
+          ]
+        ]
       },
       {
         "id": 1012,
@@ -18929,7 +19185,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "nightlance-back-half-300x91-template",
         "bitmapSide": "back",
         "bitmapAngle": -90,
-        "bitmapMirrorX": true
+        "bitmapMirrorX": true,
+        "bitmapBaseW": 300,
+        "bitmapBaseH": 91,
+        "bitmapUv": [
+          [
+            189.13,
+            0
+          ],
+          [
+            189.13,
+            91
+          ],
+          [
+            150,
+            47.895
+          ]
+        ]
       },
       {
         "id": 1013,
@@ -18943,7 +19215,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapSide": "back",
         "bitmapFaceKey": "nightlance-back-half-300x91-template",
         "bitmapAngle": -90,
-        "bitmapMirrorX": true
+        "bitmapMirrorX": true,
+        "bitmapBaseW": 300,
+        "bitmapBaseH": 91,
+        "bitmapUv": [
+          [
+            150,
+            47.895
+          ],
+          [
+            110.87,
+            91
+          ],
+          [
+            110.87,
+            0
+          ]
+        ]
       },
       {
         "id": 3009,
@@ -18957,7 +19245,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapSide": "back",
         "bitmapFaceKey": "nightlance-back-half-300x91-template",
         "bitmapAngle": -90,
-        "bitmapMirrorX": true
+        "bitmapMirrorX": true,
+        "bitmapBaseW": 300,
+        "bitmapBaseH": 91,
+        "bitmapUv": [
+          [
+            110.87,
+            0
+          ],
+          [
+            110.87,
+            91
+          ],
+          [
+            0,
+            57.474
+          ]
+        ]
       },
       {
         "id": 3010,
@@ -18971,7 +19275,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "nightlance-back-half-300x91-template",
         "bitmapSide": "back",
         "bitmapAngle": -90,
-        "bitmapMirrorX": true
+        "bitmapMirrorX": true,
+        "bitmapBaseW": 300,
+        "bitmapBaseH": 91,
+        "bitmapUv": [
+          [
+            300,
+            57.474
+          ],
+          [
+            189.13,
+            91
+          ],
+          [
+            189.13,
+            0
+          ]
+        ]
       },
       {
         "id": 3019,
@@ -18983,7 +19303,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false,
         "faceColor": "#03192e",
         "bitmapSide": "bottom",
-        "bitmapFaceKey": "naga_bottom_2"
+        "bitmapFaceKey": "naga_bottom_2",
+        "bitmapBaseW": 480,
+        "bitmapBaseH": 600,
+        "bitmapUv": [
+          [
+            240,
+            0
+          ],
+          [
+            240,
+            255.652
+          ],
+          [
+            130.435,
+            166.957
+          ]
+        ]
       },
       {
         "id": 3020,
@@ -18995,7 +19331,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": true,
         "faceColor": "#03192e",
         "bitmapSide": "bottom",
-        "bitmapFaceKey": "naga_bottom_2"
+        "bitmapFaceKey": "naga_bottom_2",
+        "bitmapBaseW": 480,
+        "bitmapBaseH": 600,
+        "bitmapUv": [
+          [
+            349.565,
+            166.957
+          ],
+          [
+            240,
+            255.652
+          ],
+          [
+            240,
+            0
+          ]
+        ]
       },
       {
         "id": 3029,
@@ -19007,7 +19359,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false,
         "faceColor": "#03192e",
         "bitmapSide": "bottom",
-        "bitmapFaceKey": "naga_bottom_2"
+        "bitmapFaceKey": "naga_bottom_2",
+        "bitmapBaseW": 480,
+        "bitmapBaseH": 600,
+        "bitmapUv": [
+          [
+            240,
+            255.652
+          ],
+          [
+            480,
+            422.609
+          ],
+          [
+            302.609,
+            553.043
+          ]
+        ]
       },
       {
         "id": 3030,
@@ -19019,7 +19387,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": true,
         "faceColor": "#03192e",
         "bitmapSide": "bottom",
-        "bitmapFaceKey": "naga_bottom_2"
+        "bitmapFaceKey": "naga_bottom_2",
+        "bitmapBaseW": 480,
+        "bitmapBaseH": 600,
+        "bitmapUv": [
+          [
+            177.391,
+            553.043
+          ],
+          [
+            0,
+            422.609
+          ],
+          [
+            240,
+            255.652
+          ]
+        ]
       },
       {
         "id": 3031,
@@ -19031,7 +19415,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false,
         "faceColor": "#03192e",
         "bitmapSide": "bottom",
-        "bitmapFaceKey": "naga_bottom_2"
+        "bitmapFaceKey": "naga_bottom_2",
+        "bitmapBaseW": 480,
+        "bitmapBaseH": 600,
+        "bitmapUv": [
+          [
+            240,
+            255.652
+          ],
+          [
+            302.609,
+            553.043
+          ],
+          [
+            240,
+            560.87
+          ]
+        ]
       },
       {
         "id": 3032,
@@ -19043,7 +19443,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": true,
         "faceColor": "#03192e",
         "bitmapSide": "bottom",
-        "bitmapFaceKey": "naga_bottom_2"
+        "bitmapFaceKey": "naga_bottom_2",
+        "bitmapBaseW": 480,
+        "bitmapBaseH": 600,
+        "bitmapUv": [
+          [
+            240,
+            560.87
+          ],
+          [
+            177.391,
+            553.043
+          ],
+          [
+            240,
+            255.652
+          ]
+        ]
       },
       {
         "id": 3033,
@@ -19055,7 +19471,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": false,
         "faceColor": "#03192e",
         "bitmapSide": "bottom",
-        "bitmapFaceKey": "naga_bottom_2"
+        "bitmapFaceKey": "naga_bottom_2",
+        "bitmapBaseW": 480,
+        "bitmapBaseH": 600,
+        "bitmapUv": [
+          [
+            240,
+            600
+          ],
+          [
+            240,
+            560.87
+          ],
+          [
+            302.609,
+            553.043
+          ]
+        ]
       },
       {
         "id": 3034,
@@ -19067,7 +19499,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "mirrored": true,
         "faceColor": "#03192e",
         "bitmapSide": "bottom",
-        "bitmapFaceKey": "naga_bottom_2"
+        "bitmapFaceKey": "naga_bottom_2",
+        "bitmapBaseW": 480,
+        "bitmapBaseH": 600,
+        "bitmapUv": [
+          [
+            177.391,
+            553.043
+          ],
+          [
+            240,
+            560.87
+          ],
+          [
+            240,
+            600
+          ]
+        ]
       }
     ],
     "edges": [
@@ -20328,94 +20776,458 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "naga_bottom_2"
         ],
         "faceTextureUv": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
+          [
+            [
+              240,
+              0
+            ],
+            [
+              328.696,
+              240
+            ],
+            [
+              240,
+              224.348
+            ]
+          ],
+          [
+            [
+              240,
+              224.348
+            ],
+            [
+              151.304,
+              240
+            ],
+            [
+              240,
+              0
+            ]
+          ],
+          [
+            [
+              240,
+              0
+            ],
+            [
+              349.565,
+              166.957
+            ],
+            [
+              328.696,
+              240
+            ]
+          ],
+          [
+            [
+              151.304,
+              240
+            ],
+            [
+              130.435,
+              166.957
+            ],
+            [
+              240,
+              0
+            ]
+          ],
+          [
+            [
+              240,
+              224.348
+            ],
+            [
+              328.696,
+              240
+            ],
+            [
+              480,
+              422.609
+            ]
+          ],
+          [
+            [
+              240,
+              224.348
+            ],
+            [
+              480,
+              422.609
+            ],
+            [
+              302.609,
+              537.391
+            ]
+          ],
+          [
+            [
+              240,
+              224.348
+            ],
+            [
+              302.609,
+              537.391
+            ],
+            [
+              240,
+              526.957
+            ]
+          ],
+          [
+            [
+              240,
+              526.957
+            ],
+            [
+              177.391,
+              537.391
+            ],
+            [
+              240,
+              224.348
+            ]
+          ],
+          [
+            [
+              177.391,
+              537.391
+            ],
+            [
+              0,
+              422.609
+            ],
+            [
+              240,
+              224.348
+            ]
+          ],
+          [
+            [
+              0,
+              422.609
+            ],
+            [
+              151.304,
+              240
+            ],
+            [
+              240,
+              224.348
+            ]
+          ],
+          [
+            [
+              240,
+              255.652
+            ],
+            [
+              0,
+              422.609
+            ],
+            [
+              130.435,
+              166.957
+            ]
+          ],
+          [
+            [
+              349.565,
+              166.957
+            ],
+            [
+              480,
+              422.609
+            ],
+            [
+              240,
+              255.652
+            ]
+          ],
+          [
+            [
+              328.696,
+              240
+            ],
+            [
+              349.565,
+              166.957
+            ],
+            [
+              480,
+              422.609
+            ]
+          ],
+          [
+            [
+              0,
+              422.609
+            ],
+            [
+              130.435,
+              166.957
+            ],
+            [
+              151.304,
+              240
+            ]
+          ],
+          [
+            [
+              240,
+              526.957
+            ],
+            [
+              302.609,
+              537.391
+            ],
+            [
+              240,
+              600
+            ]
+          ],
+          [
+            [
+              240,
+              600
+            ],
+            [
+              177.391,
+              537.391
+            ],
+            [
+              240,
+              526.957
+            ]
+          ],
+          [
+            [
+              189.13,
+              0
+            ],
+            [
+              189.13,
+              91
+            ],
+            [
+              150,
+              47.895
+            ]
+          ],
+          [
+            [
+              150,
+              47.895
+            ],
+            [
+              110.87,
+              91
+            ],
+            [
+              110.87,
+              0
+            ]
+          ],
+          [
+            [
+              110.87,
+              0
+            ],
+            [
+              110.87,
+              91
+            ],
+            [
+              0,
+              57.474
+            ]
+          ],
+          [
+            [
+              300,
+              57.474
+            ],
+            [
+              189.13,
+              91
+            ],
+            [
+              189.13,
+              0
+            ]
+          ],
+          [
+            [
+              240,
+              0
+            ],
+            [
+              240,
+              255.652
+            ],
+            [
+              130.435,
+              166.957
+            ]
+          ],
+          [
+            [
+              349.565,
+              166.957
+            ],
+            [
+              240,
+              255.652
+            ],
+            [
+              240,
+              0
+            ]
+          ],
+          [
+            [
+              240,
+              255.652
+            ],
+            [
+              480,
+              422.609
+            ],
+            [
+              302.609,
+              553.043
+            ]
+          ],
+          [
+            [
+              177.391,
+              553.043
+            ],
+            [
+              0,
+              422.609
+            ],
+            [
+              240,
+              255.652
+            ]
+          ],
+          [
+            [
+              240,
+              255.652
+            ],
+            [
+              302.609,
+              553.043
+            ],
+            [
+              240,
+              560.87
+            ]
+          ],
+          [
+            [
+              240,
+              560.87
+            ],
+            [
+              177.391,
+              553.043
+            ],
+            [
+              240,
+              255.652
+            ]
+          ],
+          [
+            [
+              240,
+              600
+            ],
+            [
+              240,
+              560.87
+            ],
+            [
+              302.609,
+              553.043
+            ]
+          ],
+          [
+            [
+              177.391,
+              553.043
+            ],
+            [
+              240,
+              560.87
+            ],
+            [
+              240,
+              600
+            ]
+          ]
         ],
         "faceTextureBaseW": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
+          480,
+          480,
+          480,
+          480,
+          480,
+          480,
+          480,
+          480,
+          480,
+          480,
+          480,
+          480,
+          480,
+          480,
+          480,
+          480,
+          300,
+          300,
+          300,
+          300,
+          480,
+          480,
+          480,
+          480,
+          480,
+          480,
+          480,
+          480
         ],
         "faceTextureBaseH": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
+          600,
+          600,
+          600,
+          600,
+          600,
+          600,
+          600,
+          600,
+          600,
+          600,
+          600,
+          600,
+          600,
+          600,
+          600,
+          600,
+          91,
+          91,
+          91,
+          91,
+          600,
+          600,
+          600,
+          600,
+          600,
+          600,
+          600,
+          600
         ],
         "faceColors": [
           "#03192d",

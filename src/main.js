@@ -2318,7 +2318,6 @@
           : cleanFaceDecals(faceDecals[normalIndex]);
         const faceTextureUvForFace = (() => {
           if (authoredFaceUv && faceKey) return authoredFaceUv;
-          if (faceKey && authoredFaceSide) return uv;
           if (!(faceKey || decalsForFace.length)) return uv;
           const localUv = faceLocalTextureUv(face);
           if (localUv && uvPolygonArea(localUv) >= 1) return localUv;
@@ -2354,10 +2353,6 @@
           if (authoredFaceUv && faceKey) {
             faceBaseW = Math.max(1, Math.round(Number(faceTextureBaseW[faceIndex]) || DECAL_TEXTURE_SIZE));
             faceBaseH = Math.max(1, Math.round(Number(faceTextureBaseH[faceIndex]) || DECAL_TEXTURE_SIZE));
-            faceUv = faceTextureUvForFace;
-          } else if (faceKey && authoredFaceSide) {
-            faceBaseW = Math.max(1, Math.round(fp.w || DECAL_TEXTURE_SIZE));
-            faceBaseH = Math.max(1, Math.round(fp.h || DECAL_TEXTURE_SIZE));
             faceUv = faceTextureUvForFace;
           } else {
             const xs = faceTextureUvForFace.map((p) => p[0]);

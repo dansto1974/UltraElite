@@ -632,25 +632,19 @@ async function projectSelectedFaces() {
   const width = Math.max(1, img.naturalWidth || img.width || 1);
   const height = Math.max(1, img.naturalHeight || img.height || 1);
   const projectionSide = projectionSideForCurrentView();
-  const uvByFaceId = projectionSide ? null : state.viewName === "camera"
+  const uvByFaceId = state.viewName === "camera"
     ? rendererProjectionUvForFaces(faces, width, height)
     : orthographicSelectedUvForFaces(faces, width, height);
-  if (!projectionSide && !uvByFaceId) return setStatus("Projection is not ready for every selected face. Wait a beat or reselect visible faces.");
+  if (!uvByFaceId) return setStatus("Projection is not ready for every selected face. Wait a beat or reselect visible faces.");
   for (const face of faces) {
     delete face.bitmapAngle;
     delete face.bitmapMirrorX;
     face.bitmapFaceKey = key;
-    if (projectionSide) {
-      face.bitmapSide = projectionSide;
-      delete face.bitmapBaseW;
-      delete face.bitmapBaseH;
-      delete face.bitmapUv;
-    } else {
-      delete face.bitmapSide;
-      face.bitmapBaseW = width;
-      face.bitmapBaseH = height;
-      face.bitmapUv = uvByFaceId.get(face.id);
-    }
+    if (projectionSide) face.bitmapSide = projectionSide;
+    else delete face.bitmapSide;
+    face.bitmapBaseW = width;
+    face.bitmapBaseH = height;
+    face.bitmapUv = uvByFaceId.get(face.id);
   }
   state.assetImages.set(key, img);
   if (!hasCurrentModelFaceAsset(key)) state.appliedSkinKeys.add(key);
