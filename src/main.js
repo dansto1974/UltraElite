@@ -1806,6 +1806,22 @@
     const SHIP_MODEL_LIST = Object.keys(SHIP_NAMES).filter((model) => !shipHiddenUntilDiscovered(model));
     const DEV_SHIP_MODEL_LIST = Object.keys(SHIP_NAMES);
     const ALL_MODEL_LIST = Object.keys(MODELS).filter((name) => MODELS[name]?.verts?.length);
+    const NON_FLYABLE_MODEL_IDS = new Set([
+      "asteroid", "boulder", "splinter", "hermit",
+      "canister", "plate", "missile", "escapePod",
+      "coriolis", "dodoStation"
+    ]);
+    const NON_FLYABLE_MODEL_CLASSES = new Set(["station", "rock", "asteroid", "cargo", "missile", "pod", "prop"]);
+
+    function isDockyardShipModel(model) {
+      if (!SHIP_NAMES[model] || !MODELS[model]?.verts?.length) return false;
+      if (NON_FLYABLE_MODEL_IDS.has(model)) return false;
+      const modelClass = String(modelGameMeta(model).class || "").toLowerCase();
+      return !NON_FLYABLE_MODEL_CLASSES.has(modelClass);
+    }
+
+    const DOCKYARD_SHIP_MODEL_LIST = Object.keys(SHIP_NAMES).filter(isDockyardShipModel);
+    const PUBLIC_DOCKYARD_SHIP_MODEL_LIST = DOCKYARD_SHIP_MODEL_LIST.filter((model) => !shipHiddenUntilDiscovered(model));
 
     const TRADER_MODELS = ["cobra", "cobra1", "adder", "gecko", "moray", "python", "boa", "anaconda", "shuttle", "transporter", "worm"];
     const PIRATE_MODELS = ["krait", "mamba", "sidewinder", "asp", "ferdelance", "gecko", "adder", "cobra", "constrictor", "cougar"];
@@ -2018,11 +2034,16 @@
       return [...SHIP_MODEL_LIST, ...unlocked];
     }
 
+    function authorizedDockyardShipList() {
+      const unlocked = (game?.missionUnlocks?.ships || []).filter((model) => isDockyardShipModel(model) && !PUBLIC_DOCKYARD_SHIP_MODEL_LIST.includes(model));
+      return [...PUBLIC_DOCKYARD_SHIP_MODEL_LIST, ...unlocked];
+    }
+
     function ownedShipList() {
       const owned = Array.isArray(game?.missionUnlocks?.ownedShips) ? game.missionUnlocks.ownedShips : [];
       const current = game?.playerShip || "cobra";
       const fallback = owned.length ? owned : [current || "cobra"];
-      return [...new Set([current, ...fallback].filter((model) => SHIP_NAMES[model]))];
+      return [...new Set([current, ...fallback].filter(isDockyardShipModel))];
     }
 
     function previewModelList() {
@@ -2031,7 +2052,7 @@
     }
 
     function playerSelectableShipList() {
-      if (game?.developerMode) return DEV_SHIP_MODEL_LIST;
+      if (game?.developerMode) return DOCKYARD_SHIP_MODEL_LIST;
       return ownedShipList();
     }
 
@@ -2346,7 +2367,7 @@
     };
 
     function playerShipModel() {
-      return DEV_SHIP_MODEL_LIST.includes(game.playerShip) ? game.playerShip : "cobra";
+      return isDockyardShipModel(game.playerShip) ? game.playerShip : "cobra";
     }
 
     function playerBaseCargoCap(model = playerShipModel()) {
@@ -8484,7 +8505,7 @@
     function buyShip(model) {
       if (!game.docked) return;
       missionState();
-      if (!authorizedShipList().includes(model)) {
+      if (!authorizedDockyardShipList().includes(model)) {
         eliteAudio.play("boop");
         setMessage("Shipyard authorisation required for that hull.");
         return;
@@ -17720,7 +17741,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const buyDisabled = currentHull || !docked || cargoBlocked || techBlocked || !affordable || (!ownedHull && !Number.isFinite(price));
         const sellDisabled = currentHull || !docked || !ownedHull || !Number.isFinite(resale);
         const action = currentHull ? "Current" : ownedHull ? "Ready Ship" : `Buy ${price.toLocaleString()} CR`;
-        const status = currentHull ? "Current hull" : ownedHull ? "Owned" : (game.missionUnlocks.ships || []).includes(model) && !SHIP_MODEL_LIST.includes(model) ? "Authorised" : "For sale";
+        const status = currentHull ? "Current hull" : ownedHull ? "Owned" : (game.missionUnlocks.ships || []).includes(model) && !PUBLIC_DOCKYARD_SHIP_MODEL_LIST.includes(model) ? "Authorised" : "For sale";
         const tradeNote = cargoBlocked
           ? `Cargo ${cargo}/${cap}t - sell cargo first`
           : techBlocked
@@ -17900,7 +17921,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function shipyardHullList() {
-      return authorizedShipList().filter((model) => Number.isFinite(shipPurchasePrice(model)) || ownedShipList().includes(model));
+      return authorizedDockyardShipList().filter((model) => Number.isFinite(shipPurchasePrice(model)) || ownedShipList().includes(model));
     }
 
     function shipLore(model, personal = false) {
