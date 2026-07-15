@@ -3067,8 +3067,8 @@
       setDomText(byId("missionCompleteDestination"), next.destination);
       setDomText(byId("missionCompleteReward"), next.reward);
       setDomText(byId("missionCompletePrompt"), next.queueRemaining
-        ? `Press any key for next completion (${next.queueRemaining} waiting)`
-        : "Press any key to dismiss");
+        ? `Press Space for next completion (${next.queueRemaining} waiting)`
+        : "Press Space to dismiss");
       missionCompleteDialogOpen = true;
       setDomHidden(dialog, false);
       setTimeout(() => byId("missionCompleteDismiss")?.focus({ preventScroll: true }), 0);
@@ -18466,8 +18466,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           return;
         }
         if (missionCompleteDialogOpen) {
-          dismissMissionCompleteDialog();
-          e.preventDefault();
+          if (e.code === "Space") {
+            dismissMissionCompleteDialog();
+            e.preventDefault();
+          }
           return;
         }
         eliteAudio.resume();
