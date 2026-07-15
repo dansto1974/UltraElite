@@ -11665,10 +11665,11 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const cx = (b.minX + b.maxX) / 2;
       const cy = (b.minY + b.maxY) / 2;
       const span = Math.max(b.maxX - b.minX, b.maxY - b.minY);
-      const r = clamp(span * 3.2, 7, 54);
-      const hazeR = clamp(span * 7.4, 22, 118);
-      drawGlowSprite(targetCtx, cx, cy, hazeR, "engineHaze", GLOW_SPRITES.engineHaze, alpha);
-      drawGlowSprite(targetCtx, cx, cy, r, "engineCore", GLOW_SPRITES.engineCore, alpha);
+      const farFade = clamp(span / 5.5, .28, 1);
+      const r = clamp(span * 2.75, 3.5, 140);
+      const hazeR = clamp(span * 5.8, 8, 320);
+      drawGlowSprite(targetCtx, cx, cy, hazeR, "engineHaze", GLOW_SPRITES.engineHaze, alpha * farFade);
+      drawGlowSprite(targetCtx, cx, cy, r, "engineCore", GLOW_SPRITES.engineCore, alpha * farFade);
     }
 
     function policeStrobePulse(side = 0) {
@@ -16563,12 +16564,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const rect = space.getBoundingClientRect();
       const dpr = rect.width ? w / rect.width : Math.max(1, window.devicePixelRatio || 1);
       const r = o.type === "missile" ? 1.6 : 2.2;
-      const whiteR = 10 * dpr;
-      const blueR = whiteR * (2.5 + glow * .7);
+      const whiteR = (3.4 + glow * 1.2) * dpr;
+      const blueR = whiteR * (1.8 + glow * .45);
+      const dotAlpha = clamp(.24 + glow * .18, .25, .48);
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
-      drawGlowSprite(ctx, c.x, c.y, blueR, "distantBlue", GLOW_SPRITES.distantBlue, .74 + glow * .24);
-      drawGlowSprite(ctx, c.x, c.y, whiteR, "distantWhite", GLOW_SPRITES.distantWhite, .82 + glow * .18);
+      drawGlowSprite(ctx, c.x, c.y, blueR, "distantBlue", GLOW_SPRITES.distantBlue, dotAlpha);
+      drawGlowSprite(ctx, c.x, c.y, whiteR, "distantWhite", GLOW_SPRITES.distantWhite, dotAlpha + .14);
       ctx.globalCompositeOperation = "source-over";
       ctx.fillStyle = "rgba(0,0,0,.92)";
       ctx.beginPath();
@@ -16858,7 +16860,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const benchImageDecals = (() => {
         const skins = opts.bitmapSkins;
         if (!skins || typeof skins !== "object") return undefined;
-        const generated = cloneImageDecalBundle(getEntityImageDecals(renderBenchEntity));
+        const builderOverride = !!skins.builderOverride;
+        const generated = builderOverride ? null : cloneImageDecalBundle(getEntityImageDecals(renderBenchEntity));
         const version = cleanBitmapSkinKey(skins.version || opts.assetVersion || "live") || "live";
         const out = generated || {
           top: null,
@@ -16910,7 +16913,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
             }
           }
         }
-        return count || generated ? out : undefined;
+        return count || generated || builderOverride ? out : undefined;
       })();
 
       targetCtx.save();

@@ -212,6 +212,11 @@ function modelSideMirrorX(model, side) {
   return !!modelMeta(model).imageDecalMirrorX?.[side];
 }
 
+function modelSideDisabled(model, side) {
+  const disabled = modelMeta(model).imageDecalDisabledSides;
+  return Array.isArray(disabled) && disabled.includes(side);
+}
+
 function skinManifestEntry(model, side, dataUrl, filePath) {
   const mirrorX = modelSideMirrorX(model, side);
   const relPath = path.relative(root, filePath).replaceAll(path.sep, "/");
@@ -752,6 +757,7 @@ for (const model of models) {
   manifest[model] = {};
   if (!modelUsesOnlyFaceTextures(model)) {
     for (const side of ["top", "bottom", "back"]) {
+      if (modelSideDisabled(model, side)) continue;
       const file = `${model}-${side}.png`;
       const filePath = path.join(outDir, file);
       const sizeInfo = pngHeaderSize(filePath);

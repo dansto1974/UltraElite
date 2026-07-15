@@ -79,6 +79,9 @@ const els = {
   importBitmapShelf: document.getElementById("importBitmapShelf"),
   bitmapShelfSelector: document.getElementById("bitmapShelfSelector"),
   bitmapAssetGrid: document.getElementById("bitmapAssetGrid"),
+  currentBitmapAssetGrid: document.getElementById("currentBitmapAssetGrid"),
+  localBitmapAssetGrid: document.getElementById("localBitmapAssetGrid"),
+  replaceAssetInput: document.getElementById("replaceAssetInput"),
   selectedBitmapReadout: document.getElementById("selectedBitmapReadout"),
   assetShelfKind: document.getElementById("assetShelfKind"),
   assetShelfModel: document.getElementById("assetShelfModel"),
@@ -106,9 +109,29 @@ const els = {
   clearImportedSkinsBtn: document.getElementById("clearImportedSkinsBtn"),
   clearFaceSkinBtn: document.getElementById("clearFaceSkinBtn"),
   clearAllFaceUvBtn: document.getElementById("clearAllFaceUvBtn"),
+  clearTopSkinBtn: document.getElementById("clearTopSkinBtn"),
+  clearBottomSkinBtn: document.getElementById("clearBottomSkinBtn"),
+  clearBackSkinBtn: document.getElementById("clearBackSkinBtn"),
   localServerReadout: document.getElementById("localServerReadout"),
   assetShelfCategory: document.getElementById("assetShelfCategory"),
   refreshAssetShelfBtn: document.getElementById("refreshAssetShelfBtn"),
+  loadCurrentShipAssetsBtn: document.getElementById("loadCurrentShipAssetsBtn"),
+  selectedAssetThumb: document.getElementById("selectedAssetThumb"),
+  selectedAssetTitle: document.getElementById("selectedAssetTitle"),
+  selectedAssetMeta: document.getElementById("selectedAssetMeta"),
+  openAssetLibraryBtn: document.getElementById("openAssetLibraryBtn"),
+  openAssetLibraryPaintBtn: document.getElementById("openAssetLibraryPaintBtn"),
+  closeAssetLibraryBtn: document.getElementById("closeAssetLibraryBtn"),
+  assetLibraryModal: document.getElementById("assetLibraryModal"),
+  writeSummaryModal: document.getElementById("writeSummaryModal"),
+  writeSummaryTitle: document.getElementById("writeSummaryTitle"),
+  writeSummaryBody: document.getElementById("writeSummaryBody"),
+  confirmWriteSummaryBtn: document.getElementById("confirmWriteSummaryBtn"),
+  cancelWriteSummaryBtn: document.getElementById("cancelWriteSummaryBtn"),
+  buildCompleteModal: document.getElementById("buildCompleteModal"),
+  buildCompleteMessage: document.getElementById("buildCompleteMessage"),
+  closeBuildCompleteBtn: document.getElementById("closeBuildCompleteBtn"),
+  testBuildDevHtmlBtn: document.getElementById("testBuildDevHtmlBtn"),
   saveModelAssetBtn: document.getElementById("saveModelAssetBtn"),
   saveModelTopBtn: document.getElementById("saveModelTopBtn"),
   rebuildAssetsBtn: document.getElementById("rebuildAssetsBtn"),
@@ -176,6 +199,7 @@ let gamePreviewSentBlueprintKey = "";
 let gamePreviewConfirmedBlueprintKey = "";
 let gamePreviewSentSkinVersion = 0;
 let rendererBenchmarkRunning = false;
+let writeSummaryResolver = null;
 const previewImageDataUrlCache = new WeakMap();
 
 function vec(x = 0, y = 0, z = 0) { return { x, y, z }; }
@@ -305,6 +329,89 @@ function setStatus(text) {
 
 function confirmWrite(message) {
   return window.confirm(`${message}\n\nThis writes to the local project files.`);
+}
+
+function closeWriteSummaryModal(result = false) {
+  if (!els.writeSummaryModal) return;
+  els.writeSummaryModal.classList.add("is-hidden");
+  if (writeSummaryResolver) {
+    const resolve = writeSummaryResolver;
+    writeSummaryResolver = null;
+    resolve(result);
+  }
+}
+
+function writeSummaryGroup(title, lines = []) {
+  const section = document.createElement("section");
+  section.className = "write-summary-group";
+  const heading = document.createElement("h3");
+  heading.textContent = title;
+  section.append(heading);
+  const list = document.createElement("ul");
+  for (const line of lines.filter(Boolean)) {
+    const item = document.createElement("li");
+    item.textContent = line;
+    list.append(item);
+  }
+  if (!list.children.length) {
+    const item = document.createElement("li");
+    item.textContent = "No changes in this group.";
+    list.append(item);
+  }
+  section.append(list);
+  return section;
+}
+
+function confirmProjectWriteSummary({ title = "Confirm Write", intro = "", confirmLabel = "Build Assets", groups = [] } = {}) {
+  if (!els.writeSummaryModal || !els.writeSummaryBody) {
+    return Promise.resolve(confirmWrite(intro || title));
+  }
+  if (writeSummaryResolver) closeWriteSummaryModal(false);
+  if (els.writeSummaryTitle) els.writeSummaryTitle.textContent = title;
+  if (els.confirmWriteSummaryBtn) els.confirmWriteSummaryBtn.textContent = confirmLabel;
+  els.writeSummaryBody.replaceChildren();
+  if (intro) {
+    const summary = document.createElement("p");
+    summary.className = "write-summary-intro";
+    summary.textContent = intro;
+    els.writeSummaryBody.append(summary);
+  }
+  for (const group of groups) {
+    els.writeSummaryBody.append(writeSummaryGroup(group.title, group.lines));
+  }
+  const warning = document.createElement("p");
+  warning.className = "write-summary-warning";
+  warning.textContent = "This writes to the local project files.";
+  els.writeSummaryBody.append(warning);
+  els.writeSummaryModal.classList.remove("is-hidden");
+  els.confirmWriteSummaryBtn?.focus();
+  return new Promise((resolve) => {
+    writeSummaryResolver = resolve;
+  });
+}
+
+function localDevHtmlTestUrl() {
+  if (window.location.protocol === "http:" || window.location.protocol === "https:") {
+    return `${window.location.origin}/dev.html`;
+  }
+  return new URL("../../dev.html", window.location.href).href;
+}
+
+function showBuildCompleteModal(message = "The local dev.html test build is ready.") {
+  if (!els.buildCompleteModal) return;
+  if (els.buildCompleteMessage) els.buildCompleteMessage.textContent = message;
+  els.buildCompleteModal.classList.remove("is-hidden");
+  els.testBuildDevHtmlBtn?.focus();
+}
+
+function closeBuildCompleteModal() {
+  els.buildCompleteModal?.classList.add("is-hidden");
+}
+
+function openLocalDevHtmlTest() {
+  const url = localDevHtmlTestUrl();
+  window.open(url, "_blank", "noopener");
+  closeBuildCompleteModal();
 }
 
 function setLocalServerReadout(text, ok = state.toolServer.available) {
@@ -1647,7 +1754,7 @@ function faceSkinCount() {
 }
 
 function markPreviewSkinsDirty() {
-  state.previewSkinVersion = Date.now();
+  state.previewSkinVersion = Math.max(Date.now(), (state.previewSkinVersion || 0) + 1);
 }
 
 function updateSkinReadout() {
@@ -1941,66 +2048,138 @@ function collapseDuplicateSkinAssets(assets) {
 }
 
 function updateSelectedBitmapReadout() {
-  if (!els.selectedBitmapReadout) return;
   const item = selectedBitmapShelfItem();
   if (!item) {
-    els.selectedBitmapReadout.textContent = state.bitmapShelf.length
-      ? "No UV selected."
-      : "Load project UVs or add PNGs to start.";
+    if (els.selectedBitmapReadout) {
+      els.selectedBitmapReadout.textContent = state.bitmapShelf.length
+        ? "No UV selected."
+        : "Load project UVs or add PNGs to start.";
+    }
+    if (els.selectedAssetThumb) {
+      els.selectedAssetThumb.removeAttribute("src");
+      els.selectedAssetThumb.classList.add("is-empty");
+    }
+    if (els.selectedAssetTitle) els.selectedAssetTitle.textContent = "No asset selected";
+    if (els.selectedAssetMeta) els.selectedAssetMeta.textContent = "Open the library to choose a UV or decal.";
     return;
   }
   const face = selectedFace();
   const target = face ? `FACE #${face.id}` : "NO FACE SELECTED";
-  els.selectedBitmapReadout.textContent = `${bitmapShelfItemTitle(item)} | ${bitmapShelfItemMeta(item)} | TARGET ${target}`;
+  const title = bitmapShelfItemTitle(item);
+  const meta = bitmapShelfItemMeta(item);
+  if (els.selectedBitmapReadout) {
+    els.selectedBitmapReadout.textContent = `${title} | ${meta} | TARGET ${target}`;
+  }
+  if (els.selectedAssetThumb) {
+    els.selectedAssetThumb.src = item.img?.currentSrc || item.img?.src || item.asset?.url || "";
+    els.selectedAssetThumb.classList.remove("is-empty");
+  }
+  if (els.selectedAssetTitle) els.selectedAssetTitle.textContent = title;
+  if (els.selectedAssetMeta) els.selectedAssetMeta.textContent = `${meta} | ${target}`;
 }
 
-function updateBitmapAssetGrid() {
-  if (!els.bitmapAssetGrid) return;
+function bitmapShelfItemBelongsToCurrentModel(item) {
+  return item?.source === "asset" && skinAssetBelongsToCurrentModel(item.asset);
+}
+
+function bitmapShelfItemIsLocal(item) {
+  return item && item.source !== "asset";
+}
+
+function bitmapShelfSharedItems() {
   const filters = bitmapShelfFilters();
-  const items = state.bitmapShelf.filter((item) => bitmapShelfItemMatchesFilters(item, filters));
-  let selectedId = els.bitmapShelfSelector?.value || "";
-  if (items.length && !items.some((item) => item.id === selectedId)) {
-    selectedId = items[0].id;
-    if (els.bitmapShelfSelector) els.bitmapShelfSelector.value = selectedId;
+  return state.bitmapShelf.filter((item) => item.source === "asset" && bitmapShelfItemMatchesFilters(item, filters));
+}
+
+function renderBitmapAssetCard(item, selectedId) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = `bitmap-asset-card${item.id === selectedId ? " selected" : ""}`;
+  button.dataset.shelfId = item.id;
+  button.title = item.name || item.asset?.file || "UV asset";
+
+  const thumb = document.createElement("span");
+  thumb.className = "bitmap-asset-thumb";
+  const img = document.createElement("img");
+  img.alt = "";
+  img.decoding = "async";
+  img.src = item.img?.currentSrc || item.img?.src || item.asset?.url || "";
+  thumb.append(img);
+
+  const title = document.createElement("span");
+  title.className = "bitmap-asset-title";
+  title.textContent = bitmapShelfItemTitle(item);
+
+  const meta = document.createElement("span");
+  meta.className = "bitmap-asset-meta";
+  meta.textContent = bitmapShelfItemMeta(item);
+
+  const tag = document.createElement("span");
+  tag.className = `bitmap-asset-tag bitmap-asset-tag-${bitmapShelfItemTarget(item)}`;
+  tag.textContent = bitmapShelfItemTarget(item).toUpperCase();
+
+  button.append(thumb, title, meta, tag);
+  if (item.source === "asset" && item.asset?.file) {
+    const replaceBtn = document.createElement("span");
+    replaceBtn.className = "bitmap-asset-replace";
+    replaceBtn.dataset.replaceAssetId = item.id;
+    replaceBtn.title = `Replace ${item.asset.file}`;
+    replaceBtn.textContent = "RPL";
+    button.append(replaceBtn);
+
+    const deleteBtn = document.createElement("span");
+    deleteBtn.className = "bitmap-asset-delete";
+    deleteBtn.dataset.deleteAssetId = item.id;
+    deleteBtn.title = `Delete ${item.asset.file}`;
+    deleteBtn.textContent = "DEL";
+    button.append(deleteBtn);
   }
-  els.bitmapAssetGrid.replaceChildren();
+  return button;
+}
+
+function renderBitmapAssetGrid(grid, items, selectedId, emptyText) {
+  if (!grid) return;
+  grid.replaceChildren();
   if (!items.length) {
     const empty = document.createElement("div");
     empty.className = "bitmap-asset-empty";
-    empty.textContent = state.bitmapShelf.length ? "No loaded UVs match these filters." : "No UV thumbnails loaded.";
-    els.bitmapAssetGrid.append(empty);
-    updateSelectedBitmapReadout();
+    empty.textContent = emptyText;
+    grid.append(empty);
     return;
   }
   for (const item of items) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = `bitmap-asset-card${item.id === selectedId ? " selected" : ""}`;
-    button.dataset.shelfId = item.id;
-    button.title = item.name || item.asset?.file || "UV asset";
+    grid.append(renderBitmapAssetCard(item, selectedId));
+  }
+}
 
-    const thumb = document.createElement("span");
-    thumb.className = "bitmap-asset-thumb";
-    const img = document.createElement("img");
-    img.alt = "";
-    img.decoding = "async";
-    img.src = item.img?.currentSrc || item.img?.src || item.asset?.url || "";
-    thumb.append(img);
-
-    const title = document.createElement("span");
-    title.className = "bitmap-asset-title";
-    title.textContent = bitmapShelfItemTitle(item);
-
-    const meta = document.createElement("span");
-    meta.className = "bitmap-asset-meta";
-    meta.textContent = bitmapShelfItemMeta(item);
-
-    const tag = document.createElement("span");
-    tag.className = `bitmap-asset-tag bitmap-asset-tag-${bitmapShelfItemTarget(item)}`;
-    tag.textContent = bitmapShelfItemTarget(item).toUpperCase();
-
-    button.append(thumb, title, meta, tag);
-    els.bitmapAssetGrid.append(button);
+function updateBitmapAssetGrid() {
+  const selectedId = els.bitmapShelfSelector?.value || "";
+  const currentItems = state.bitmapShelf.filter(bitmapShelfItemBelongsToCurrentModel);
+  const localItems = state.bitmapShelf.filter(bitmapShelfItemIsLocal);
+  const sharedItems = bitmapShelfSharedItems();
+  const activeSelectedId = bitmapShelfItemById(selectedId) ? selectedId : "";
+  renderBitmapAssetGrid(
+    els.currentBitmapAssetGrid,
+    currentItems,
+    activeSelectedId,
+    "No current ship UVs loaded. Use Load Current Ship UVs."
+  );
+  renderBitmapAssetGrid(
+    els.localBitmapAssetGrid,
+    localItems,
+    activeSelectedId,
+    "No loaded unsaved PNGs."
+  );
+  renderBitmapAssetGrid(
+    els.bitmapAssetGrid,
+    sharedItems,
+    activeSelectedId,
+    state.bitmapShelf.some((item) => item.source === "asset") ? "No shared UVs match these filters." : "No shared UV thumbnails loaded."
+  );
+  if (!activeSelectedId && state.bitmapShelf[0] && els.bitmapShelfSelector) {
+    els.bitmapShelfSelector.value = state.bitmapShelf[0].id;
+    updateBitmapAssetGrid();
+    return;
   }
   updateSelectedBitmapReadout();
 }
@@ -2104,6 +2283,13 @@ function assetAliasForCurrentModel(asset) {
   return asset.aliases.find((alias) => alias.model === currentModel) || asset;
 }
 
+function skinAssetBelongsToCurrentModel(asset) {
+  const currentModel = templateShipId();
+  if (!asset || !currentModel) return false;
+  if (asset.model === currentModel) return true;
+  return Array.isArray(asset.aliases) && asset.aliases.some((alias) => alias.model === currentModel);
+}
+
 function populateAssetCategorySelector(categories = []) {
   if (!els.assetShelfCategory) return;
   const current = els.assetShelfCategory.value || "all";
@@ -2152,6 +2338,225 @@ async function loadAssetShelf() {
     setStatus(`${loaded} MATCHING UV${loaded === 1 ? "" : "S"} LOADED${skippedText}.`);
   } catch (error) {
     setStatus(`ASSET SHELF LOAD FAILED: ${error.message}`);
+  }
+}
+
+async function loadCurrentShipAssets() {
+  try {
+    const skins = await refreshAvailableSkinAssets();
+    if (!skins) return;
+    const selected = collapseDuplicateSkinAssets(skins.filter(skinAssetBelongsToCurrentModel));
+    let loaded = 0;
+    let skipped = 0;
+    for (const asset of selected) {
+      if (shelfHasAsset(asset)) {
+        skipped++;
+        continue;
+      }
+      if (await addBitmapAssetToShelf(asset)) loaded++;
+    }
+    updateBitmapShelfSelector();
+    const firstCurrent = state.bitmapShelf.find(bitmapShelfItemBelongsToCurrentModel);
+    if (firstCurrent) selectBitmapShelfItem(firstCurrent.id);
+    const skippedText = skipped ? `, ${skipped} ALREADY LOADED` : "";
+    setStatus(`${loaded} CURRENT SHIP UV${loaded === 1 ? "" : "S"} LOADED${skippedText}.`);
+  } catch (error) {
+    setStatus(`CURRENT SHIP UV LOAD FAILED: ${error.message}`);
+  }
+}
+
+function currentModelUsageForAsset(asset) {
+  const currentAsset = assetAliasForCurrentModel(asset);
+  const modelId = templateShipId();
+  if (!currentAsset || !modelId) return null;
+  const faces = state.faces || [];
+  let count = 0;
+  if (currentAsset.kind === "face" && currentAsset.model === modelId) {
+    count = faces.filter((face) => cleanBitmapKey(face.bitmapFaceKey) === currentAsset.key).length;
+  } else if (currentAsset.kind === "side" && currentAsset.model === modelId) {
+    count = faces.filter((face) => !cleanBitmapKey(face.bitmapFaceKey)).length;
+  } else if (currentAsset.kind === "decal") {
+    count = faces.reduce((sum, face) => {
+      const decals = cleanFaceDecals(face.bitmapDecals);
+      return sum + decals.filter((decal) => cleanBitmapKey(decal.key) === currentAsset.key).length;
+    }, 0);
+  }
+  if (!count) return null;
+  return {
+    id: modelId,
+    name: `${els.shipName.value.trim() || modelId} (current unsaved Builder model)`,
+    file: "in memory",
+    count,
+    current: true
+  };
+}
+
+function mergeAssetUsage(savedUsage = [], currentUsage = null) {
+  const merged = Array.isArray(savedUsage) ? savedUsage.map((entry) => ({ ...entry })) : [];
+  if (currentUsage) {
+    const existing = merged.find((entry) => entry.id === currentUsage.id && entry.file !== "in memory");
+    if (existing) existing.currentCount = currentUsage.count;
+    else merged.unshift(currentUsage);
+  }
+  return merged;
+}
+
+function assetUsageLine(entry) {
+  const bits = [`${entry.name || entry.id || "Unknown model"}`];
+  if (entry.current) bits.push("current Builder model");
+  else if (entry.currentCount) bits.push(`current Builder model ${entry.currentCount}`);
+  if (Number.isFinite(Number(entry.count)) && entry.count > 0) bits.push(`${entry.count} reference${entry.count === 1 ? "" : "s"}`);
+  if (entry.file && entry.file !== "in memory") bits.push(entry.file);
+  return `- ${bits.join(" | ")}`;
+}
+
+async function assetUsageForConfirmation(asset) {
+  const currentUsage = currentModelUsageForAsset(asset);
+  const usageResult = await apiJson(`/api/skins/usage?file=${encodeURIComponent(asset.file)}`, { method: "GET" });
+  return mergeAssetUsage(usageResult.usage, currentUsage);
+}
+
+function replacementMimeAllowed(asset, file) {
+  const ext = String(asset?.file || "").split(".").pop()?.toLowerCase() || "";
+  if (ext === "png") return file.type === "image/png";
+  if (ext === "jpg" || ext === "jpeg") return file.type === "image/jpeg";
+  if (ext === "svg") return file.type === "image/svg+xml";
+  return file.type.startsWith("image/");
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Replacement image could not be read."));
+    reader.readAsDataURL(file);
+  });
+}
+
+let pendingReplaceAssetId = "";
+
+function beginReplaceBitmapAsset(itemId) {
+  const item = bitmapShelfItemById(itemId);
+  if (!item?.asset?.file) {
+    setStatus("SELECT A PROJECT ASSET TO REPLACE.");
+    return;
+  }
+  pendingReplaceAssetId = itemId;
+  if (els.replaceAssetInput) {
+    els.replaceAssetInput.value = "";
+    els.replaceAssetInput.click();
+  }
+}
+
+function clearCurrentModelDeletedAssetReferences(asset) {
+  const currentAsset = assetAliasForCurrentModel(asset);
+  const modelId = templateShipId();
+  if (!currentAsset || !modelId) return;
+  let changed = false;
+  if (currentAsset.kind === "face" && currentAsset.model === modelId) {
+    for (const face of state.faces) {
+      if (cleanBitmapKey(face.bitmapFaceKey) !== currentAsset.key) continue;
+      delete face.bitmapFaceKey;
+      delete face.bitmapAngle;
+      delete face.bitmapMirrorX;
+      changed = true;
+    }
+  } else if (currentAsset.kind === "side" && currentAsset.model === modelId) {
+    clearSkinSide(currentAsset.side);
+    for (const face of state.faces) {
+      if (face.bitmapSide !== currentAsset.side) continue;
+      delete face.bitmapSide;
+      changed = true;
+    }
+  } else if (currentAsset.kind === "decal") {
+    for (const face of state.faces) {
+      const decals = cleanFaceDecals(face.bitmapDecals);
+      const next = decals.filter((decal) => cleanBitmapKey(decal.key) !== currentAsset.key);
+      if (next.length === decals.length) continue;
+      if (next.length) face.bitmapDecals = next;
+      else delete face.bitmapDecals;
+      changed = true;
+    }
+  }
+  if (!changed) return;
+  markPreviewSkinsDirty();
+  updateFaceUvAngleControls();
+  updateFaceDecalControls();
+  renderAll();
+}
+
+async function replaceBitmapAsset(itemId, file) {
+  const item = bitmapShelfItemById(itemId);
+  const asset = item?.asset;
+  if (!asset?.file || !file) return;
+  if (!replacementMimeAllowed(asset, file)) {
+    setStatus(`REPLACEMENT TYPE MUST MATCH ${asset.file}.`);
+    return;
+  }
+  if (!await requireToolServer()) return;
+  try {
+    const usage = await assetUsageForConfirmation(asset);
+    const usageText = usage.length
+      ? usage.map(assetUsageLine).join("\n")
+      : "- No saved or current model references found.";
+    const aliasText = Array.isArray(asset.aliases) && asset.aliases.length > 1
+      ? `\n\nThis thumbnail groups ${asset.aliases.length} identical asset files. This will replace only:\n${asset.file}`
+      : "";
+    const ok = confirmWrite(`Replace asset file ${asset.file} with ${file.name}?${aliasText}\n\nThis will change the appearance of:\n${usageText}`);
+    if (!ok) {
+      setStatus("ASSET REPLACE CANCELLED.");
+      return;
+    }
+    const dataUrl = await fileToDataUrl(file);
+    setStatus(`REPLACING ${asset.file}...`);
+    const result = await apiJson("/api/skins", {
+      method: "PUT",
+      body: JSON.stringify({ file: asset.file, dataUrl })
+    });
+    state.assetVersion = Date.now();
+    state.bitmapShelf = state.bitmapShelf.filter((entry) => entry.asset?.file !== asset.file);
+    updateBitmapShelfSelector();
+    await refreshAvailableSkinAssets();
+    setStatus(`ASSET REPLACED: ${result.replaced}.`);
+  } catch (error) {
+    setStatus(`ASSET REPLACE FAILED: ${error.message}`);
+  }
+}
+
+async function deleteBitmapAsset(itemId) {
+  const item = bitmapShelfItemById(itemId);
+  const asset = item?.asset;
+  if (!asset?.file) {
+    setStatus("SELECT A PROJECT ASSET TO DELETE.");
+    return;
+  }
+  if (!await requireToolServer()) return;
+  try {
+    const usage = await assetUsageForConfirmation(asset);
+    const usageText = usage.length
+      ? usage.map(assetUsageLine).join("\n")
+      : "- No saved or current model references found.";
+    const aliasText = Array.isArray(asset.aliases) && asset.aliases.length > 1
+      ? `\n\nThis thumbnail groups ${asset.aliases.length} identical asset files. This will delete only:\n${asset.file}`
+      : "";
+    const ok = confirmWrite(`Delete asset file ${asset.file}?${aliasText}\n\nUsed in:\n${usageText}`);
+    if (!ok) {
+      setStatus("ASSET DELETE CANCELLED.");
+      return;
+    }
+    setStatus(`DELETING ${asset.file}...`);
+    const result = await apiJson("/api/skins", {
+      method: "DELETE",
+      body: JSON.stringify({ file: asset.file })
+    });
+    clearCurrentModelDeletedAssetReferences(asset);
+    state.assetVersion = Date.now();
+    state.bitmapShelf = state.bitmapShelf.filter((entry) => entry.asset?.file !== asset.file);
+    updateBitmapShelfSelector();
+    await refreshAvailableSkinAssets();
+    setStatus(`ASSET DELETED: ${result.deleted}.`);
+  } catch (error) {
+    setStatus(`ASSET DELETE FAILED: ${error.message}`);
   }
 }
 
@@ -2281,6 +2686,30 @@ function clearSelectedFaceSkin() {
   renderAll();
 }
 
+function clearSelectedFacePaint() {
+  const face = selectedFace();
+  if (!face) return setStatus("SELECT A FACE FIRST.");
+  const hadPaint =
+    cleanBitmapKey(face.bitmapFaceKey) ||
+    validBitmapFaceSide(face.bitmapSide) ||
+    normalizeBitmapAngle(face.bitmapAngle) ||
+    face.bitmapMirrorX ||
+    cleanFaceDecals(face.bitmapDecals).length ||
+    optionalHexColor(face.faceColor);
+  delete face.bitmapSide;
+  delete face.bitmapFaceKey;
+  delete face.bitmapAngle;
+  delete face.bitmapMirrorX;
+  delete face.bitmapDecals;
+  delete face.faceColor;
+  if (mirrorActionsEnabled()) syncMirroredFace(face);
+  markPreviewSkinsDirty();
+  updateFaceUvAngleControls();
+  updateFaceDecalControls();
+  setStatus(hadPaint ? `FACE #${face.id} PAINT, UVS AND DECALS CLEARED.` : "SELECTED FACE HAD NO PAINT TO CLEAR.");
+  renderAll();
+}
+
 function clearAllFaceUv() {
   const affected = state.faces.filter((face) =>
     cleanBitmapKey(face.bitmapFaceKey)
@@ -2306,6 +2735,23 @@ function clearAllFaceUv() {
   markPreviewSkinsDirty();
   updateFaceUvAngleControls();
   setStatus(`${affected.length} FACE UV ASSIGNMENT${affected.length === 1 ? "" : "S"} CLEARED.`);
+  renderAll();
+}
+
+function clearSkinSide(side) {
+  if (!["top", "bottom", "back"].includes(side)) return;
+  const img = state.skinImages?.[side];
+  const url = state.skinImages?.urls?.[side];
+  const hadSkin = !!img?.naturalWidth || !!url;
+  if (url) URL.revokeObjectURL(url);
+  if (!state.skinImages?.modelId) state.skinImages = emptySkinBundle(templateShipId());
+  state.skinImages[side] = null;
+  state.skinImages.source[side] = "";
+  state.skinImages.urls[side] = "";
+  if (state.skinImages.mirrorX) state.skinImages.mirrorX[side] = false;
+  markPreviewSkinsDirty();
+  updateSkinReadout();
+  setStatus(hadSkin ? `${side.toUpperCase()} SKIN CLEARED FROM PREVIEW.` : `NO ${side.toUpperCase()} SKIN LOADED.`);
   renderAll();
 }
 
@@ -3430,6 +3876,7 @@ function gamePreviewBitmapSkins() {
   const skins = {
     version: state.previewSkinVersion,
     mirrorX: state.skinImages?.mirrorX || emptyMirrorFlags(false),
+    builderOverride: true,
     replaceBaseTexture: true,
     alpha: .96
   };
@@ -3458,7 +3905,7 @@ function gamePreviewBitmapSkins() {
   if (Object.keys(decals).length) skins.decals = decals;
   const angle = sideSkinAngleDeg();
   if (angle) skins.angle = { top: angle, bottom: angle, back: angle };
-  return count ? skins : null;
+  return skins;
 }
 
 function gamePreviewPayload(options = {}) {
@@ -4672,7 +5119,42 @@ async function saveModelAsset() {
     const cleanId = cleanBitmapKey(data.id, "custom_ship");
     const sideSkins = referencedVisibleSideSkinUploads();
     const faceSkins = referencedVisibleFaceSkinUploads();
-    if (!confirmWrite(`Save the visible ship as assets/models/${cleanId}.ultraship.json, write loaded skin PNGs, and regenerate model libraries?`)) {
+    const sideSkinFiles = sideSkins.map((skin) => `assets/skins/${cleanId}-${skin.side}.png`);
+    const faceSkinFiles = faceSkins.map((skin) => `assets/skins/${cleanId}-face-${skin.key}.png`);
+    const ok = await confirmProjectWriteSummary({
+      title: "Save Ship",
+      confirmLabel: "Build Assets",
+      intro: `Save ${data.name || cleanId} as ${cleanId}, then rebuild the local dev.html test files. This does not publish anything.`,
+      groups: [
+        {
+          title: "Model Asset",
+          lines: [
+            `assets/models/${cleanId}.ultraship.json`,
+            `${state.verts.length} vertices, ${state.faces.length} faces, ${state.edges.length} edges`
+          ]
+        },
+        {
+          title: "Skin PNGs",
+          lines: [
+            ...sideSkinFiles,
+            ...faceSkinFiles,
+            !sideSkinFiles.length && !faceSkinFiles.length ? "No loaded/referenced skin PNGs will be written." : ""
+          ]
+        },
+        {
+          title: "Build Outputs",
+          lines: [
+            "tools/ship-builder/game-model-library.js",
+            "src/generated/model-library.js",
+            "src/generated/bitmap-skins.js",
+            "dev.html",
+            "index.html",
+            "Ready to test through local dev.html after the build completes."
+          ]
+        }
+      ]
+    });
+    if (!ok) {
       setStatus("MODEL SAVE CANCELLED.");
       return;
     }
@@ -4704,6 +5186,7 @@ async function saveModelAsset() {
       faceSkins.length ? `${faceSkins.length} FACE PNG${faceSkins.length === 1 ? "" : "S"}` : ""
     ].filter(Boolean).join(", ");
     setStatus(`MODEL UPDATED: ${result.path}${savedParts ? `; ${savedParts} SAVED.` : "."}`);
+    showBuildCompleteModal(`${data.name || cleanId} is built into the local dev.html test files. Click below to test locally.`);
   } catch (error) {
     setStatus(`MODEL SAVE FAILED: ${error.message}`);
   }
@@ -4831,6 +5314,19 @@ function setPaintTab(tab) {
   });
 }
 
+function openAssetLibrary() {
+  if (!els.assetLibraryModal) return;
+  els.assetLibraryModal.classList.remove("is-hidden");
+  updateBitmapAssetGrid();
+  refreshAvailableSkinAssets().catch((error) => {
+    setStatus(`ASSET LIBRARY REFRESH FAILED: ${error.message}`);
+  });
+}
+
+function closeAssetLibrary() {
+  els.assetLibraryModal?.classList.add("is-hidden");
+}
+
 function bindEvents() {
   document.querySelectorAll(".tool-tab-btn").forEach((btn) => btn.addEventListener("click", () => {
     setToolTab(btn.dataset.toolTabTarget);
@@ -4905,14 +5401,64 @@ function bindEvents() {
   els.spinPreviewModal?.addEventListener("click", (event) => {
     if (event.target === els.spinPreviewModal) closeSpinPreviewWindow();
   });
+  els.openAssetLibraryBtn?.addEventListener("click", openAssetLibrary);
+  els.openAssetLibraryPaintBtn?.addEventListener("click", openAssetLibrary);
+  els.closeAssetLibraryBtn?.addEventListener("click", closeAssetLibrary);
+  els.assetLibraryModal?.addEventListener("click", (event) => {
+    if (event.target === els.assetLibraryModal) closeAssetLibrary();
+  });
+  els.confirmWriteSummaryBtn?.addEventListener("click", () => closeWriteSummaryModal(true));
+  els.cancelWriteSummaryBtn?.addEventListener("click", () => closeWriteSummaryModal(false));
+  els.writeSummaryModal?.addEventListener("click", (event) => {
+    if (event.target === els.writeSummaryModal) closeWriteSummaryModal(false);
+  });
+  els.closeBuildCompleteBtn?.addEventListener("click", closeBuildCompleteModal);
+  els.testBuildDevHtmlBtn?.addEventListener("click", openLocalDevHtmlTest);
+  els.buildCompleteModal?.addEventListener("click", (event) => {
+    if (event.target === els.buildCompleteModal) closeBuildCompleteModal();
+  });
   window.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && !els.spinPreviewModal?.classList.contains("is-hidden")) closeSpinPreviewWindow();
+    if (event.key !== "Escape") return;
+    if (!els.writeSummaryModal?.classList.contains("is-hidden")) {
+      closeWriteSummaryModal(false);
+      return;
+    }
+    if (!els.buildCompleteModal?.classList.contains("is-hidden")) {
+      closeBuildCompleteModal();
+      return;
+    }
+    if (!els.assetLibraryModal?.classList.contains("is-hidden")) {
+      closeAssetLibrary();
+      return;
+    }
+    if (!els.spinPreviewModal?.classList.contains("is-hidden")) closeSpinPreviewWindow();
   });
   els.importBitmapShelf.addEventListener("change", (ev) => {
     importBitmapShelfFiles(ev.target.files);
     ev.target.value = "";
   });
-  els.bitmapAssetGrid?.addEventListener("click", (ev) => {
+  els.replaceAssetInput?.addEventListener("change", (ev) => {
+    const file = ev.target.files?.[0];
+    const itemId = pendingReplaceAssetId;
+    pendingReplaceAssetId = "";
+    ev.target.value = "";
+    if (file && itemId) replaceBitmapAsset(itemId, file);
+  });
+  const handleBitmapGridClick = (ev) => {
+    const replaceTarget = ev.target.closest("[data-replace-asset-id]");
+    if (replaceTarget) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      beginReplaceBitmapAsset(replaceTarget.dataset.replaceAssetId);
+      return;
+    }
+    const deleteTarget = ev.target.closest("[data-delete-asset-id]");
+    if (deleteTarget) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      deleteBitmapAsset(deleteTarget.dataset.deleteAssetId);
+      return;
+    }
     const card = ev.target.closest("[data-shelf-id]");
     if (!card) return;
     selectBitmapShelfItem(card.dataset.shelfId);
@@ -4923,12 +5469,15 @@ function bindEvents() {
       setStatus(`${bitmapShelfItemTitle(item)} DECAL SELECTED. USE ADD DECAL TO LAYER IT ON THE SELECTED FACE.`);
     } else if (selectedFace()) {
       setPaintTab("face");
-      applyShelfBitmapToSelectedFace({ orientToView: true });
+      setStatus(`${bitmapShelfItemTitle(item)} SELECTED. USE THE APPLY BUTTONS TO PLACE IT.`);
     } else {
       setPaintTab("face");
       setStatus(`${bitmapShelfItemTitle(item)} SELECTED. SELECT A FACE TO APPLY IT.`);
     }
-  });
+  };
+  els.bitmapAssetGrid?.addEventListener("click", handleBitmapGridClick);
+  els.currentBitmapAssetGrid?.addEventListener("click", handleBitmapGridClick);
+  els.localBitmapAssetGrid?.addEventListener("click", handleBitmapGridClick);
   els.bitmapShelfSelector?.addEventListener("change", () => {
     updateBitmapAssetGrid();
     updateSelectedBitmapReadout();
@@ -4948,6 +5497,7 @@ function bindEvents() {
   els.clearAllFaceDecalsBtn?.addEventListener("click", clearAllFaceDecals);
   els.clearBitmapShelfBtn.addEventListener("click", clearBitmapShelf);
   els.refreshAssetShelfBtn?.addEventListener("click", loadAssetShelf);
+  els.loadCurrentShipAssetsBtn?.addEventListener("click", loadCurrentShipAssets);
   els.saveModelAssetBtn?.addEventListener("click", saveModelAsset);
   els.rebuildAssetsBtn?.addEventListener("click", rebuildGameFiles);
   els.uploadTopSkinBtn?.addEventListener("click", () => uploadSkinSide("top"));
@@ -4979,8 +5529,11 @@ function bindEvents() {
   });
   els.reloadSkinBitmapsBtn.addEventListener("click", () => loadSkinBitmaps(els.shipId.value, state.skinImages?.mirrorX || emptyMirrorFlags(false)));
   els.clearImportedSkinsBtn.addEventListener("click", clearSkinBitmaps);
-  els.clearFaceSkinBtn.addEventListener("click", clearSelectedFaceSkin);
+  els.clearFaceSkinBtn.addEventListener("click", clearSelectedFacePaint);
   els.clearAllFaceUvBtn?.addEventListener("click", clearAllFaceUv);
+  els.clearTopSkinBtn?.addEventListener("click", () => clearSkinSide("top"));
+  els.clearBottomSkinBtn?.addEventListener("click", () => clearSkinSide("bottom"));
+  els.clearBackSkinBtn?.addEventListener("click", () => clearSkinSide("back"));
   els.mirrorHalfSkins.addEventListener("input", () => {
     updateSkinReadout();
     renderAll();

@@ -8,32 +8,13 @@
 </head>
 <body>
   <main class="app">
-    <header class="topbar">
-      <div>
-        <p class="eyebrow">Ultra Elite Workshop</p>
-        <h1>Ship Builder</h1>
-      </div>
-      <div class="top-actions">
-        <button id="newWedgeBtn" class="primary">New Wedge</button>
-        <div class="library-load">
-          <span>Library</span>
-          <select id="librarySelector"></select>
-          <button id="loadLibraryModelBtn">Load</button>
-        </div>
-        <button id="saveModelTopBtn" class="primary">Save Ship</button>
-        <button id="rebuildGameTopBtn">Rebuild Game</button>
-        <button id="toggleExportBtn">Advanced</button>
-      </div>
-      <div id="topStatus" class="status top-status">READY.</div>
-    </header>
-
     <section id="workspace" class="workspace export-hidden">
       <aside id="toolsPanel" class="panel tools" data-mode="vertex" data-tool-tab="edit">
         <nav class="tool-tabs" aria-label="Ship builder tool sections">
           <button class="tool-tab-btn active" data-tool-tab-target="edit" type="button">Edit</button>
           <button class="tool-tab-btn" data-tool-tab-target="paint" type="button">Paint</button>
           <button class="tool-tab-btn" data-tool-tab-target="model" type="button">Model</button>
-          <button class="tool-tab-btn" data-tool-tab-target="game" type="button">Game</button>
+          <button class="tool-tab-btn" data-tool-tab-target="game" type="button">Game Info</button>
         </nav>
 
         <section class="tool-tab-panel active" data-tool-tab-panel="edit">
@@ -125,72 +106,22 @@
             <h2>Paint / UV</h2>
             <div id="skinReadout" class="readout compact-readout">No skin bitmaps loaded.</div>
             <div id="selectedBitmapReadout" class="readout compact-readout">No UV selected.</div>
+            <input id="replaceAssetInput" class="hidden-file-input" type="file" accept="image/png,image/jpeg,image/svg+xml">
+            <div class="paint-toolbar">
+              <label class="toggle"><input id="importMirroredSkin" type="checkbox"> Apply as mirrored half UV</label>
+              <button id="openAssetLibraryPaintBtn" type="button">Asset Library</button>
+            </div>
 
             <nav class="paint-subtabs" aria-label="Paint tools">
-              <button class="paint-subtab-btn active" data-paint-tab-target="assets" type="button">Pick Existing</button>
-              <button class="paint-subtab-btn" data-paint-tab-target="face" type="button">Apply / Import</button>
+              <button class="paint-subtab-btn active" data-paint-tab-target="face" type="button">Apply / Import</button>
               <button class="paint-subtab-btn" data-paint-tab-target="decals" type="button">Decals</button>
+              <button class="paint-subtab-btn" data-paint-tab-target="clear" type="button">Clear</button>
               <button class="paint-subtab-btn" data-paint-tab-target="templates" type="button">Templates</button>
-              <button class="paint-subtab-btn" data-paint-tab-target="project" type="button">Save Project</button>
             </nav>
 
-            <section class="paint-tab-panel active" data-paint-tab-panel="assets">
-              <section class="local-toolbox">
-                <h2>Existing Project UVs</h2>
-                <div id="localServerReadout" class="readout compact-readout">Checking local server...</div>
-                <div class="asset-filter-grid">
-                  <label>Category
-                    <select id="assetShelfCategory">
-                      <option value="all">All assets</option>
-                    </select>
-                  </label>
-                  <label>Kind
-                    <select id="assetShelfKind">
-                      <option value="all">All UVs</option>
-                      <option value="face">Face tiles</option>
-                      <option value="top">Top skins</option>
-                      <option value="bottom">Bottom skins</option>
-                      <option value="back">Back skins</option>
-                      <option value="side">Any side skin</option>
-                      <option value="decal">Decals</option>
-                      <option value="imported">Imported</option>
-                    </select>
-                  </label>
-                  <label>Model
-                    <select id="assetShelfModel">
-                      <option value="all">All models</option>
-                      <option value="current">Current model</option>
-                    </select>
-                  </label>
-                  <label>Search
-                    <input id="assetShelfSearch" type="search" spellcheck="false" placeholder="panel, entrance, top">
-                  </label>
-                </div>
-                <div class="button-grid compact-actions">
-                  <button id="refreshAssetShelfBtn">Load Matching UVs</button>
-                  <button id="reloadSkinBitmapsBtn">Reload Current Model UVs</button>
-                </div>
-              </section>
-
-              <section class="paint-group">
-                <h2>Selected Existing UV</h2>
-                <div id="bitmapAssetGrid" class="bitmap-asset-grid" aria-label="Bitmap UV assets"></div>
-                <label class="asset-import-row">Load Temporary PNGs <input id="importBitmapShelf" type="file" accept="image/png,image/*" multiple></label>
-                <label class="shelf-select-fallback">Selected Bitmap
-                  <select id="bitmapShelfSelector">
-                    <option value="">No imported bitmaps</option>
-                  </select>
-                </label>
-                <div class="button-grid compact-actions">
-                  <button id="clearBitmapShelfBtn">Clear Shelf</button>
-                </div>
-              </section>
-            </section>
-
-            <section class="paint-tab-panel" data-paint-tab-panel="face">
+            <section class="paint-tab-panel active" data-paint-tab-panel="face">
               <section class="paint-group">
                 <h2>Reuse Selected UV</h2>
-                <label class="toggle"><input id="importMirroredSkin" type="checkbox"> Apply as mirrored half UV</label>
                 <div class="bitmap-target-grid">
                   <button id="applyShelfFaceBtn" class="primary">Use On Face</button>
                   <button id="applyShelfTopBtn">Use Top</button>
@@ -220,7 +151,6 @@
                 <label>Solid fallback <input id="faceColor" type="color" value="#e9f2e4"></label>
                 <div class="button-grid compact-actions">
                   <button id="averageFaceColorBtn" type="button">Use UV Average</button>
-                  <button id="clearFaceColorBtn" type="button">Clear Face Colour</button>
                 </div>
               </section>
 
@@ -231,11 +161,6 @@
                   <label>New Bottom PNG <input id="importBottomSkin" type="file" accept="image/png,image/*"></label>
                   <label>New Back PNG <input id="importBackSkin" type="file" accept="image/png,image/*"></label>
                   <label>New Face PNG <input id="importFaceSkin" type="file" accept="image/png,image/*"></label>
-                </div>
-                <div class="button-grid compact-actions">
-                  <button id="clearFaceSkinBtn">Clear Selected Face Skin</button>
-                  <button id="clearAllFaceUvBtn" type="button">Clear All Face UVs</button>
-                  <button id="clearImportedSkinsBtn">Clear Loaded Previews</button>
                 </div>
               </section>
             </section>
@@ -264,7 +189,34 @@
                 </div>
                 <div class="button-grid compact-actions">
                   <button id="removeFaceDecalBtn" type="button">Remove Decal</button>
-                  <button id="clearFaceDecalsBtn" type="button">Clear Face Decals</button>
+                </div>
+              </section>
+            </section>
+
+            <section class="paint-tab-panel" data-paint-tab-panel="clear">
+              <section class="paint-group">
+                <h2>Selected Face</h2>
+                <div class="button-grid compact-actions">
+                  <button id="clearFaceSkinBtn">Clear Selected Face</button>
+                  <button id="clearFaceDecalsBtn" type="button">Clear Selected Face Decals</button>
+                  <button id="clearFaceColorBtn" type="button">Clear Face Colour</button>
+                </div>
+              </section>
+
+              <section class="paint-group">
+                <h2>Side Skins</h2>
+                <div class="button-grid compact-actions">
+                  <button id="clearTopSkinBtn" type="button">Clear Top</button>
+                  <button id="clearBottomSkinBtn" type="button">Clear Bottom</button>
+                  <button id="clearBackSkinBtn" type="button">Clear Back</button>
+                  <button id="clearImportedSkinsBtn">Clear Loaded Previews</button>
+                </div>
+              </section>
+
+              <section class="paint-group">
+                <h2>Whole Model</h2>
+                <div class="button-grid compact-actions">
+                  <button id="clearAllFaceUvBtn" type="button">Clear All UVs</button>
                   <button id="clearAllFaceDecalsBtn" type="button">Clear All Decals</button>
                 </div>
               </section>
@@ -291,24 +243,40 @@
               </section>
             </section>
 
-            <section class="paint-tab-panel" data-paint-tab-panel="project">
-              <section class="paint-group">
-                <h2>Save Visible Ship</h2>
-                <div class="button-grid compact-actions">
-                  <button id="saveModelAssetBtn">Save Ship</button>
-                  <button id="uploadFaceSkinBtn">Write Selected Face Only</button>
-                  <button id="uploadTopSkinBtn">Write Top Only</button>
-                  <button id="uploadBottomSkinBtn">Write Bottom Only</button>
-                  <button id="uploadBackSkinBtn">Write Back Only</button>
-                  <button id="rebuildAssetsBtn">Rebuild Game Files</button>
-                </div>
-              </section>
-            </section>
           </section>
         </section>
 
         <section class="tool-tab-panel" data-tool-tab-panel="model">
-        <h2>Model</h2>
+        <h2>Model Save</h2>
+        <section class="model-project-tools">
+          <h2>Workspace</h2>
+          <div class="button-grid compact-actions">
+            <button id="newWedgeBtn" class="primary">New Wedge</button>
+            <button id="saveModelTopBtn" class="primary">Save Ship</button>
+            <button id="rebuildGameTopBtn">Rebuild Game</button>
+            <button id="toggleExportBtn">Advanced</button>
+          </div>
+          <div class="library-load">
+            <span>Library</span>
+            <select id="librarySelector"></select>
+            <button id="loadLibraryModelBtn">Load</button>
+          </div>
+        </section>
+
+        <section class="model-project-tools">
+          <h2>Asset Writes</h2>
+          <div class="button-grid compact-actions">
+            <button id="uploadFaceSkinBtn">Write Selected Face Only</button>
+            <button id="uploadTopSkinBtn">Write Top Only</button>
+            <button id="uploadBottomSkinBtn">Write Bottom Only</button>
+            <button id="uploadBackSkinBtn">Write Back Only</button>
+            <button id="rebuildAssetsBtn">Rebuild Game Files</button>
+          </div>
+        </section>
+        </section>
+
+        <section class="tool-tab-panel" data-tool-tab-panel="game">
+        <h2>Game Info</h2>
         <label>Ship Id <input id="shipId" value="custom_wedge" spellcheck="false"></label>
         <label>Display Name <input id="shipName" value="Custom Wedge" spellcheck="false"></label>
         <label>Library Description
@@ -322,10 +290,7 @@
           <span id="faceCount">0 faces</span>
           <span id="edgeCount">0 edges</span>
         </div>
-        </section>
 
-        <section class="tool-tab-panel" data-tool-tab-panel="game">
-        <h2>Game Info</h2>
         <label>Ship Class
           <select id="shipClass">
             <option value="fighter">Fighter</option>
@@ -399,13 +364,25 @@
           <label class="toggle"><input id="flagHidden" type="checkbox"> Hidden until discovered</label>
         </div>
         </section>
+
+        <section id="selectedAssetCard" class="selected-asset-card" aria-label="Current bitmap asset">
+          <div class="selected-asset-thumb">
+            <img id="selectedAssetThumb" alt="">
+          </div>
+          <div class="selected-asset-copy">
+            <h2>Current Asset</h2>
+            <div id="selectedAssetTitle" class="selected-asset-title">No asset selected</div>
+            <div id="selectedAssetMeta" class="selected-asset-meta">Open the library to choose a UV or decal.</div>
+          </div>
+          <button id="openAssetLibraryBtn" type="button">Library</button>
+        </section>
       </aside>
 
       <section class="panel stage">
         <div class="view-head">
-          <div>
-            <h2>Live Preview</h2>
-            <p>Drag the main view to rotate. Wheel to zoom. Click points/faces/edges in any view.</p>
+          <div class="tool-title">
+            <p class="eyebrow">Ultra Elite Workshop</p>
+            <h1>Ship Builder</h1>
           </div>
           <div class="view-actions">
             <div class="preview-mode-toolbar" aria-label="Selection tools">
@@ -417,6 +394,20 @@
               <button id="clearSelectionBtn" type="button" title="Clear selection">×</button>
             </div>
             <label class="toggle"><input id="showFaceNormals" type="checkbox" checked> Normals</label>
+            <button id="resetViewBtn">Reset View</button>
+            <button id="fitViewBtn">Fit</button>
+            <button id="toggleBlueprintBtn" class="blueprint-toggle active" type="button" aria-pressed="true">Blueprints On</button>
+            <button id="syncGamePreviewBtn">Refresh Renderer</button>
+            <button id="benchmarkRendererBtn">Benchmark</button>
+            <button id="spinPreviewBtn">Spin Preview</button>
+          </div>
+        </div>
+        <div id="mainPreviewStack" class="preview-stack is-game-renderer is-game-overlay">
+          <div class="game-preview-overlay">
+            <h3>Game Renderer Mirror</h3>
+            <span id="gamePreviewReadout">Waiting for renderer...</span>
+          </div>
+          <div class="preview-trust-strip">
             <label class="view-mode-label">View
               <select id="previewRenderMode">
                 <optgroup label="Trusted">
@@ -431,28 +422,12 @@
                 </optgroup>
               </select>
             </label>
-            <button id="resetViewBtn">Reset View</button>
-            <button id="fitViewBtn">Fit</button>
-            <button id="toggleBlueprintBtn" class="blueprint-toggle active" type="button" aria-pressed="true">Blueprints On</button>
-            <button id="syncGamePreviewBtn">Refresh Renderer</button>
-            <button id="benchmarkRendererBtn">Benchmark</button>
-            <button id="spinPreviewBtn">Spin Preview</button>
+            <span id="previewTrustReadout">Waiting for renderer...</span>
           </div>
-        </div>
-        <div class="preview-trust-strip">
-          <span id="previewTrustBadge" class="preview-trust-badge">Renderer</span>
-          <span id="previewTrustReadout">Waiting for renderer...</span>
-        </div>
-        <div id="mainPreviewStack" class="preview-stack is-game-renderer is-game-overlay">
           <iframe id="gamePreviewFrame" title="Game renderer mirror" src="render-preview.html"></iframe>
           <canvas id="mainView" width="1120" height="680"></canvas>
+          <div id="topStatus" class="status top-status">READY.</div>
         </div>
-        <section class="game-preview-panel">
-          <header>
-            <h3>Game Renderer Mirror</h3>
-            <span id="gamePreviewReadout">Waiting for renderer...</span>
-          </header>
-        </section>
         <div class="ortho-grid">
           <article>
             <h3>Top X/Z</h3>
@@ -500,6 +475,113 @@
         </div>
         <div id="status" class="status">READY.</div>
       </aside>
+    </section>
+
+    <section id="assetLibraryModal" class="asset-library-modal is-hidden" aria-modal="true" aria-label="Asset library">
+      <div class="asset-library-window">
+        <header class="asset-library-head">
+          <div>
+            <p class="eyebrow">Asset Library</p>
+            <h2>Bitmap UVs and Decals</h2>
+            <div id="localServerReadout" class="readout compact-readout">Checking local server...</div>
+          </div>
+          <div class="asset-library-actions">
+            <button id="loadCurrentShipAssetsBtn" type="button">Load Current Ship UVs</button>
+            <button id="reloadSkinBitmapsBtn" type="button">Reload Visible Skins</button>
+            <button id="refreshAssetShelfBtn" type="button">Load Matching Shared</button>
+            <button id="closeAssetLibraryBtn" type="button" aria-label="Close asset library">Close</button>
+          </div>
+        </header>
+
+        <div class="asset-library-layout">
+          <section class="asset-library-section">
+            <h2>Current Ship</h2>
+            <div id="currentBitmapAssetGrid" class="bitmap-asset-grid" aria-label="Current ship bitmap UV assets"></div>
+          </section>
+
+          <section class="asset-library-section">
+            <h2>Loaded Unsaved</h2>
+            <label class="asset-import-row">Load Temporary PNGs <input id="importBitmapShelf" type="file" accept="image/png,image/*" multiple></label>
+            <div id="localBitmapAssetGrid" class="bitmap-asset-grid compact-bitmap-grid" aria-label="Loaded unsaved bitmap UV assets"></div>
+            <label class="shelf-select-fallback">Selected Bitmap
+              <select id="bitmapShelfSelector">
+                <option value="">No imported bitmaps</option>
+              </select>
+            </label>
+            <div class="button-grid compact-actions">
+              <button id="clearBitmapShelfBtn" type="button">Clear Loaded PNGs</button>
+            </div>
+          </section>
+
+          <section class="asset-library-section asset-library-shared">
+            <h2>Shared Assets</h2>
+            <div class="asset-filter-grid">
+              <label>Category
+                <select id="assetShelfCategory">
+                  <option value="all">All assets</option>
+                </select>
+              </label>
+              <label>Kind
+                <select id="assetShelfKind">
+                  <option value="all">All UVs</option>
+                  <option value="face">Face tiles</option>
+                  <option value="top">Top skins</option>
+                  <option value="bottom">Bottom skins</option>
+                  <option value="back">Back skins</option>
+                  <option value="side">Any side skin</option>
+                  <option value="decal">Decals</option>
+                  <option value="imported">Imported</option>
+                </select>
+              </label>
+              <label>Model
+                <select id="assetShelfModel">
+                  <option value="all">All models</option>
+                  <option value="current">Current model</option>
+                </select>
+              </label>
+              <label>Search
+                <input id="assetShelfSearch" type="search" spellcheck="false" placeholder="panel, entrance, top">
+              </label>
+            </div>
+            <div id="bitmapAssetGrid" class="bitmap-asset-grid" aria-label="Bitmap UV assets"></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section id="writeSummaryModal" class="write-summary-modal is-hidden" aria-modal="true" aria-label="Confirm project write">
+      <div class="write-summary-window">
+        <header>
+          <div>
+            <p class="eyebrow">Project Write</p>
+            <h2 id="writeSummaryTitle">Save Ship</h2>
+          </div>
+        </header>
+        <div id="writeSummaryBody" class="write-summary-body"></div>
+        <footer class="write-summary-actions">
+          <button id="cancelWriteSummaryBtn" type="button">Cancel</button>
+          <button id="confirmWriteSummaryBtn" class="primary" type="button">Build Assets</button>
+        </footer>
+      </div>
+    </section>
+
+    <section id="buildCompleteModal" class="write-summary-modal build-complete-modal is-hidden" aria-modal="true" aria-label="Build complete">
+      <div class="write-summary-window build-complete-window">
+        <header>
+          <div>
+            <p class="eyebrow">Build Complete</p>
+            <h2>Assets Ready For Local Test</h2>
+          </div>
+        </header>
+        <div class="write-summary-body">
+          <p id="buildCompleteMessage" class="write-summary-intro">The local dev.html test build is ready.</p>
+          <p class="write-summary-warning">Local dev.html only. Nothing has been published.</p>
+        </div>
+        <footer class="write-summary-actions">
+          <button id="closeBuildCompleteBtn" type="button">Close</button>
+          <button id="testBuildDevHtmlBtn" class="primary" type="button">Test local dev.html</button>
+        </footer>
+      </div>
     </section>
   </main>
 

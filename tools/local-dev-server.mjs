@@ -180,6 +180,180 @@ function listDecalAssets() {
   });
 }
 
+function listModelAssets() {
+  const modelDir = path.join(root, "assets/models");
+  if (!fs.existsSync(modelDir)) return [];
+  return fs.readdirSync(modelDir)
+    .filter((file) => file.endsWith(".ultraship.json"))
+    .sort((a, b) => a.localeCompare(b))
+    .map((file) => {
+      const filePath = path.join(modelDir, file);
+      try {
+        const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+        return {
+          id: cleanKey(data.id || path.basename(file, ".ultraship.json")),
+          name: String(data.name || data.id || path.basename(file, ".ultraship.json")),
+          file,
+          data
+        };
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean);
+}
+
+function assetByFile(file) {
+  const cleanFile = path.basename(String(file || ""));
+  if (!cleanFile || cleanFile !== String(file || "")) return null;
+  return [...listSkinAssets(), ...listDecalAssets()].find((asset) => asset.file === cleanFile) || null;
+}
+
+function assetDirectory(asset) {
+  if (asset?.kind === "decal") return path.join(root, "assets/decals");
+  if (asset?.kind === "face" || asset?.kind === "side" || asset?.kind === "other") return path.join(root, "assets/skins");
+  return "";
+}
+
+function usageForAsset(asset) {
+  if (!asset) return [];
+  const usage = [];
+  const models = listModelAssets();
+  for (const model of models) {
+    const faces = Array.isArray(model.data?.faces) ? model.data.faces : [];
+    let count = 0;
+    if (asset.kind === "face") {
+      count = faces.filter((face) => cleanKey(face?.bitmapFaceKey) === asset.key && model.id === asset.model).length;
+    } else if (asset.kind === "side") {
+      count = model.id === asset.model
+        ? faces.filter((face) => cleanKey(face?.bitmapFaceKey) === "").length
+        : 0;
+    } else if (asset.kind === "decal") {
+      count = faces.reduce((sum, face) => {
+        const decals = Array.isArray(face?.bitmapDecals) ? face.bitmapDecals : [];
+        return sum + decals.filter((decal) => cleanKey(decal?.key) === asset.key).length;
+      }, 0);
+    }
+    if (count > 0) {
+      usage.push({
+        id: model.id,
+        name: model.name,
+        file: model.file,
+        count
+      });
+    }
+  }
+  if (!usage.length && asset.model) {
+    usage.push({
+      id: asset.model,
+      name: asset.model,
+      file: `${asset.model}.ultraship.json`,
+      count: 0
+    });
+  }
+  return usage.sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
+}
+
+function disabledBitmapSides(meta = {}) {
+  return new Set(Array.isArray(meta.imageDecalDisabledSides)
+    ? meta.imageDecalDisabledSides.filter((side) => ["top", "bottom", "back"].includes(side))
+    : []);
+}
+
+function mutateModelForDeletedAsset(model, asset) {
+  const data = model.data;
+  const faces = Array.isArray(data.faces) ? data.faces : [];
+  let changed = false;
+  if (asset.kind === "face" && model.id === asset.model) {
+    for (const face of faces) {
+      if (cleanKey(face?.bitmapFaceKey) !== asset.key) continue;
+      delete face.bitmapFaceKey;
+      delete face.bitmapAngle;
+      delete face.bitmapMirrorX;
+      changed = true;
+    }
+  } else if (asset.kind === "side" && model.id === asset.model) {
+    data.gameMeta = data.gameMeta || {};
+    const disabled = disabledBitmapSides(data.gameMeta);
+    if (!disabled.has(asset.side)) {
+      disabled.add(asset.side);
+      data.gameMeta.imageDecalDisabledSides = [...disabled];
+      changed = true;
+    }
+    if (data.gameMeta.imageDecalMirrorX?.[asset.side] != null) {
+      delete data.gameMeta.imageDecalMirrorX[asset.side];
+      if (!Object.values(data.gameMeta.imageDecalMirrorX).some(Boolean)) delete data.gameMeta.imageDecalMirrorX;
+      changed = true;
+    }
+    if (data.gameMeta.imageDecalAngle?.[asset.side] != null) {
+      delete data.gameMeta.imageDecalAngle[asset.side];
+      if (!Object.keys(data.gameMeta.imageDecalAngle).length) delete data.gameMeta.imageDecalAngle;
+      changed = true;
+    }
+    for (const face of faces) {
+      if (face?.bitmapSide !== asset.side) continue;
+      delete face.bitmapSide;
+      changed = true;
+    }
+  } else if (asset.kind === "decal") {
+    for (const face of faces) {
+      const decals = Array.isArray(face?.bitmapDecals) ? face.bitmapDecals : [];
+      const next = decals.filter((decal) => cleanKey(decal?.key) !== asset.key);
+      if (next.length !== decals.length) {
+        if (next.length) face.bitmapDecals = next;
+        else delete face.bitmapDecals;
+        changed = true;
+      }
+    }
+  }
+  return changed;
+}
+
+function clearDeletedAssetReferences(asset) {
+  const changed = [];
+  for (const model of listModelAssets()) {
+    if (!mutateModelForDeletedAsset(model, asset)) continue;
+    const filePath = path.join(root, "assets/models", model.file);
+    fs.writeFileSync(filePath, `${JSON.stringify(model.data, null, 2)}\n`);
+    changed.push({ id: model.id, name: model.name, file: model.file });
+  }
+  return changed;
+}
+
+async function skinUsage(req, res) {
+  const params = new URL(req.url, `http://${host}:${port}`).searchParams;
+  const file = params.get("file") || "";
+  const asset = assetByFile(file);
+  if (!asset) return sendJson(res, 404, { ok: false, error: "Asset file not found." });
+  return sendJson(res, 200, {
+    ok: true,
+    asset,
+    usage: usageForAsset(asset)
+  });
+}
+
+async function deleteSkin(req, res) {
+  const body = await readJsonBody(req);
+  const asset = assetByFile(body.file);
+  if (!asset) return sendJson(res, 404, { ok: false, error: "Asset file not found." });
+  const dir = assetDirectory(asset);
+  if (!dir) return sendJson(res, 400, { ok: false, error: "Unsupported asset type." });
+  const filePath = path.resolve(dir, asset.file);
+  if (!filePath.startsWith(dir + path.sep)) return sendJson(res, 403, { ok: false, error: "Forbidden asset path." });
+  const usage = usageForAsset(asset);
+  const changedModels = clearDeletedAssetReferences(asset);
+  fs.unlinkSync(filePath);
+  const steps = await rebuildScope("all");
+  return sendJson(res, 200, {
+    ok: true,
+    deleted: path.relative(root, filePath),
+    asset,
+    usage,
+    changedModels,
+    steps
+  });
+}
+
 async function saveModel(req, res, modelId) {
   const body = await readJsonBody(req);
   const cleanId = cleanKey(modelId || body.id);
@@ -206,6 +380,20 @@ function decodePngDataUrl(dataUrl) {
   return Buffer.from(match[1], "base64");
 }
 
+function decodeImageDataUrl(dataUrl) {
+  const match = String(dataUrl || "").match(/^data:(image\/(?:png|jpeg|jpg|svg\+xml));base64,([a-zA-Z0-9+/=]+)$/);
+  if (!match) throw new Error("Expected a PNG, JPEG, or SVG image data URL.");
+  return { mime: match[1], bytes: Buffer.from(match[2], "base64") };
+}
+
+function assetMimeMatchesFile(asset, mime) {
+  const ext = path.extname(asset?.file || "").toLowerCase();
+  if (ext === ".png") return mime === "image/png";
+  if (ext === ".jpg" || ext === ".jpeg") return mime === "image/jpeg" || mime === "image/jpg";
+  if (ext === ".svg") return mime === "image/svg+xml";
+  return false;
+}
+
 async function saveSkin(req, res) {
   const body = await readJsonBody(req);
   const model = cleanKey(body.model);
@@ -226,6 +414,31 @@ async function saveSkin(req, res) {
   return sendJson(res, 200, {
     ok: true,
     path: path.relative(root, filePath),
+    bytes: bytes.length,
+    steps
+  });
+}
+
+async function replaceSkin(req, res) {
+  const body = await readJsonBody(req);
+  const asset = assetByFile(body.file);
+  if (!asset) return sendJson(res, 404, { ok: false, error: "Asset file not found." });
+  const dir = assetDirectory(asset);
+  if (!dir) return sendJson(res, 400, { ok: false, error: "Unsupported asset type." });
+  const filePath = path.resolve(dir, asset.file);
+  if (!filePath.startsWith(dir + path.sep)) return sendJson(res, 403, { ok: false, error: "Forbidden asset path." });
+  const { mime, bytes } = decodeImageDataUrl(body.dataUrl);
+  if (!assetMimeMatchesFile(asset, mime)) {
+    return sendJson(res, 400, { ok: false, error: `Replacement image type must match ${path.extname(asset.file) || "asset"} file.` });
+  }
+  const usage = usageForAsset(asset);
+  fs.writeFileSync(filePath, bytes);
+  const steps = await rebuildScope("skins");
+  return sendJson(res, 200, {
+    ok: true,
+    replaced: path.relative(root, filePath),
+    asset,
+    usage,
     bytes: bytes.length,
     steps
   });
@@ -275,9 +488,12 @@ const server = http.createServer(async (req, res) => {
       const categories = [...new Set(skins.map((skin) => skin.category))].sort((a, b) => a.localeCompare(b));
       return sendJson(res, 200, { ok: true, skins, categories });
     }
+    if (req.method === "GET" && pathname === "/api/skins/usage") return skinUsage(req, res);
     const modelMatch = pathname.match(/^\/api\/models\/([^/]+)$/);
     if (req.method === "POST" && modelMatch) return saveModel(req, res, modelMatch[1]);
     if (req.method === "POST" && pathname === "/api/skins") return saveSkin(req, res);
+    if (req.method === "PUT" && pathname === "/api/skins") return replaceSkin(req, res);
+    if (req.method === "DELETE" && pathname === "/api/skins") return deleteSkin(req, res);
     if (req.method === "POST" && pathname === "/api/rebuild") {
       const body = await readJsonBody(req);
       const scope = ["models", "skins", "single", "all"].includes(body.scope) ? body.scope : "all";

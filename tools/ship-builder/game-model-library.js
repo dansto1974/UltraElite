@@ -31,7 +31,7 @@ window.ULTRA_ELITE_SHIP_DESCRIPTIONS = {
   "thargoid": "",
   "thargon": "",
   "transporter": "",
-  "umbra": "The Umbra is a naval strike craft with a flattened stealth hull, forward blade spars and enough missile capacity to make traffic controllers speak more carefully.",
+  "umbra": "The Umbra is a top secret naval strike craft with a mean looking flattened stealth hull, Meaner still is its huge missile loadout and military lasers",
   "viper": "",
   "worm": ""
 };
@@ -26388,23 +26388,28 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
   "umbra": {
     "format": "ultra-elite-ship-builder/v1",
     "id": "umbra",
-    "name": "Umbra",
+    "name": "X780b Umbra",
     "symmetry": "x-locked",
     "gameMeta": {
-      "class": "strike craft",
-      "npcRole": "military",
-      "aiProfile": "hunter",
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
       "decalRole": "none",
       "baseColor": "#0b1020",
-      "description": "The Umbra is a naval strike craft with a flattened stealth hull, forward blade spars and enough missile capacity to make traffic controllers speak more carefully.",
+      "description": "The Umbra is a top secret naval strike craft with a mean looking flattened stealth hull, Meaner still is its huge missile loadout and military lasers",
       "missionLore": "Restricted strike craft issued only to special operations squadrons.",
+      "imageDecalMirrorX": {
+        "top": false,
+        "bottom": false,
+        "back": true
+      },
       "valueCr": 4800000,
       "stats": {
-        "r": 132,
+        "r": 112,
         "hp": 360,
         "speed": 2.35,
         "cargo": 8,
-        "missiles": 6,
+        "missiles": 8,
         "laser": "military"
       },
       "lists": {
@@ -26416,11 +26421,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       "flags": {
         "escapePod": true,
         "hiddenUntilDiscovered": true
-      },
-      "imageDecalMirrorX": {
-        "top": true,
-        "bottom": true,
-        "back": false
       }
     },
     "verts": [
@@ -26459,8 +26459,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5,
         "x": 0,
-        "y": -10,
-        "z": -88,
+        "y": -4,
+        "z": -90,
         "mirrorId": null,
         "center": true
       },
@@ -26529,18 +26529,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "center": false
       },
       {
-        "id": 14,
-        "x": 0,
-        "y": 44,
-        "z": -48,
-        "mirrorId": null,
-        "center": true
-      },
-      {
         "id": 15,
         "x": 0,
-        "y": 0,
-        "z": -116,
+        "y": 10,
+        "z": -103,
         "mirrorId": null,
         "center": true
       },
@@ -26559,27 +26551,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "z": 62,
         "mirrorId": 16,
         "center": false
-      },
-      {
-        "id": 18,
-        "x": 0,
-        "y": 9,
-        "z": 132,
-        "mirrorId": null,
-        "center": true
       }
     ],
     "faces": [
       {
         "id": 1000,
         "verts": [
-          1,
           6,
-          2
+          2,
+          1
         ],
         "mirrored": false,
-        "faceColor": "#1f2937",
-        "bitmapSide": "top"
+        "faceColor": "#1f2937"
       },
       {
         "id": 1001,
@@ -26589,30 +26572,27 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7
         ],
         "mirrored": true,
-        "faceColor": "#1f2937",
-        "bitmapSide": "top"
+        "faceColor": "#1f2937"
       },
       {
         "id": 1002,
         "verts": [
-          1,
           3,
-          16
+          16,
+          1
         ],
         "mirrored": false,
-        "faceColor": "#0b1020",
-        "bitmapSide": "bottom"
+        "faceColor": "#0b1020"
       },
       {
         "id": 1019,
         "verts": [
-          1,
           16,
-          6
+          6,
+          1
         ],
         "mirrored": false,
-        "faceColor": "#0b1020",
-        "bitmapSide": "bottom"
+        "faceColor": "#0b1020"
       },
       {
         "id": 1003,
@@ -26622,8 +26602,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           17
         ],
         "mirrored": true,
-        "faceColor": "#0b1020",
-        "bitmapSide": "bottom"
+        "faceColor": "#0b1020"
       },
       {
         "id": 1020,
@@ -26633,8 +26612,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3
         ],
         "mirrored": true,
-        "faceColor": "#0b1020",
-        "bitmapSide": "bottom"
+        "faceColor": "#0b1020"
       },
       {
         "id": 1004,
@@ -26644,8 +26622,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8
         ],
         "mirrored": false,
-        "faceColor": "#151b2e",
-        "bitmapSide": "top"
+        "faceColor": "#151b2e"
       },
       {
         "id": 1021,
@@ -26655,8 +26632,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           10
         ],
         "mirrored": false,
-        "faceColor": "#151b2e",
-        "bitmapSide": "top"
+        "faceColor": "#151b2e"
       },
       {
         "id": 1022,
@@ -26666,41 +26642,37 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4
         ],
         "mirrored": false,
-        "faceColor": "#151b2e",
-        "bitmapSide": "top"
+        "faceColor": "#242c38"
       },
       {
         "id": 1005,
         "verts": [
-          2,
           4,
-          11
+          11,
+          2
         ],
         "mirrored": true,
-        "faceColor": "#151b2e",
-        "bitmapSide": "top"
+        "faceColor": "#242c38"
       },
       {
         "id": 1023,
         "verts": [
-          2,
           11,
-          9
+          9,
+          2
         ],
         "mirrored": true,
-        "faceColor": "#151b2e",
-        "bitmapSide": "top"
+        "faceColor": "#151b2e"
       },
       {
         "id": 1024,
         "verts": [
-          2,
           9,
-          7
+          7,
+          2
         ],
         "mirrored": true,
-        "faceColor": "#151b2e",
-        "bitmapSide": "top"
+        "faceColor": "#151b2e"
       },
       {
         "id": 1006,
@@ -26710,8 +26682,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8
         ],
         "mirrored": false,
-        "faceColor": "#080d18",
-        "bitmapSide": "bottom"
+        "faceColor": "#042140"
       },
       {
         "id": 1025,
@@ -26721,30 +26692,27 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           16
         ],
         "mirrored": false,
-        "faceColor": "#080d18",
-        "bitmapSide": "bottom"
+        "faceColor": "#080d18"
       },
       {
         "id": 1007,
         "verts": [
-          3,
           17,
-          9
+          9,
+          3
         ],
         "mirrored": true,
-        "faceColor": "#080d18",
-        "bitmapSide": "bottom"
+        "faceColor": "#080d18"
       },
       {
         "id": 1026,
         "verts": [
-          3,
           9,
-          13
+          13,
+          3
         ],
         "mirrored": true,
-        "faceColor": "#080d18",
-        "bitmapSide": "bottom"
+        "faceColor": "#042140"
       },
       {
         "id": 1008,
@@ -26754,30 +26722,27 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8
         ],
         "mirrored": false,
-        "faceColor": "#263145",
-        "bitmapSide": "top"
+        "faceColor": "#263145"
       },
       {
         "id": 1009,
         "verts": [
-          7,
           9,
-          17
+          17,
+          7
         ],
         "mirrored": true,
-        "faceColor": "#263145",
-        "bitmapSide": "top"
+        "faceColor": "#263145"
       },
       {
         "id": 1010,
         "verts": [
-          4,
           10,
-          15
+          15,
+          4
         ],
         "mirrored": false,
-        "faceColor": "#111827",
-        "bitmapSide": "back"
+        "faceColor": "#111827"
       },
       {
         "id": 1027,
@@ -26787,8 +26752,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           11
         ],
         "mirrored": false,
-        "faceColor": "#111827",
-        "bitmapSide": "back"
+        "faceColor": "#111827"
       },
       {
         "id": 1011,
@@ -26798,30 +26762,36 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           15
         ],
         "mirrored": false,
-        "faceColor": "#050815",
-        "bitmapSide": "back"
+        "faceColor": "#0b0b0c",
+        "bitmapFaceKey": "face-1011",
+        "bitmapAngle": 96,
+        "bitmapMirrorX": true
       },
       {
         "id": 1028,
         "verts": [
-          5,
           15,
-          12
+          12,
+          5
         ],
         "mirrored": false,
-        "faceColor": "#050815",
-        "bitmapSide": "back"
+        "faceColor": "#0b0b0c",
+        "bitmapFaceKey": "face-1011",
+        "bitmapAngle": -96,
+        "bitmapMirrorX": true
       },
       {
         "id": 1012,
         "verts": [
-          10,
           12,
-          15
+          15,
+          10
         ],
         "mirrored": false,
-        "faceColor": "#09111f",
-        "bitmapSide": "back"
+        "faceColor": "#0b0b0c",
+        "bitmapFaceKey": "face-1011",
+        "bitmapAngle": -115,
+        "bitmapMirrorX": true
       },
       {
         "id": 1013,
@@ -26831,41 +26801,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           13
         ],
         "mirrored": true,
-        "faceColor": "#09111f",
-        "bitmapSide": "back"
-      },
-      {
-        "id": 1014,
-        "verts": [
-          4,
-          14,
-          10
-        ],
-        "mirrored": false,
-        "faceColor": "#334155",
-        "bitmapSide": "top"
-      },
-      {
-        "id": 1015,
-        "verts": [
-          4,
-          11,
-          14
-        ],
-        "mirrored": true,
-        "faceColor": "#334155",
-        "bitmapSide": "top"
+        "faceColor": "#0b0b0c",
+        "bitmapFaceKey": "face-1011",
+        "bitmapAngle": 115,
+        "bitmapMirrorX": true
       },
       {
         "id": 1016,
         "verts": [
-          3,
           5,
-          12
+          12,
+          3
         ],
         "mirrored": false,
-        "faceColor": "#060914",
-        "bitmapSide": "bottom"
+        "faceColor": "#060914"
       },
       {
         "id": 1017,
@@ -26875,19 +26824,25 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5
         ],
         "mirrored": true,
-        "faceColor": "#060914",
-        "bitmapSide": "bottom"
+        "faceColor": "#060914"
       },
       {
-        "id": 1018,
+        "id": 3012,
         "verts": [
-          1,
-          18,
-          2
+          9,
+          11,
+          13
         ],
-        "mirrored": false,
-        "faceColor": "#2dd4bf",
-        "bitmapSide": "top"
+        "mirrored": false
+      },
+      {
+        "id": 3013,
+        "verts": [
+          12,
+          10,
+          8
+        ],
+        "mirrored": true
       }
     ],
     "edges": [
@@ -26904,20 +26859,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "b": 11,
         "kind": "stick",
         "mirrored": true
-      },
-      {
-        "id": 2002,
-        "a": 14,
-        "b": 15,
-        "kind": "stick",
-        "mirrored": false
-      },
-      {
-        "id": 2003,
-        "a": 1,
-        "b": 18,
-        "kind": "edge",
-        "mirrored": false
       }
     ],
     "details": [
@@ -26925,7 +26866,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "id": 3000,
         "type": "engine",
         "faceId": 1012,
-        "inset": 0.48,
+        "inset": 0.57,
         "color": "#a78bfa",
         "normal": [
           0.55,
@@ -26937,36 +26878,12 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "id": 3001,
         "type": "engine",
         "faceId": 1013,
-        "inset": 0.48,
+        "inset": 0.57,
         "color": "#a78bfa",
         "normal": [
           -0.55,
           0,
           -0.84
-        ]
-      },
-      {
-        "id": 3002,
-        "type": "window",
-        "faceId": 1000,
-        "inset": 0.18,
-        "color": "#020617",
-        "normal": [
-          0.2,
-          0.94,
-          0.28
-        ]
-      },
-      {
-        "id": 3003,
-        "type": "window",
-        "faceId": 1001,
-        "inset": 0.18,
-        "color": "#020617",
-        "normal": [
-          -0.2,
-          0.94,
-          0.28
         ]
       },
       {
@@ -27014,28 +26931,52 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ]
       },
       {
-        "id": 3008,
-        "type": "beacon",
-        "vertexId": 14,
-        "color": "#a78bfa",
+        "id": 3014,
+        "type": "window",
+        "faceId": 1000,
+        "inset": 0.44,
+        "color": "#101915",
         "normal": [
-          0,
-          1,
-          0
-        ],
-        "lift": 2
+          0.4,
+          0.89,
+          0.23
+        ]
       },
       {
-        "id": 3009,
-        "type": "beacon",
-        "vertexId": 18,
-        "color": "#22d3ee",
+        "id": 3015,
+        "type": "window",
+        "faceId": 1001,
+        "inset": 0.44,
+        "color": "#101915",
         "normal": [
-          0,
-          1,
-          0
-        ],
-        "lift": 1
+          -0.4,
+          0.89,
+          0.23
+        ]
+      },
+      {
+        "id": 3016,
+        "type": "engine",
+        "faceId": 1011,
+        "inset": 0.57,
+        "color": "#f7fff7",
+        "normal": [
+          -0.57,
+          -0.56,
+          -0.6
+        ]
+      },
+      {
+        "id": 3017,
+        "type": "engine",
+        "faceId": 1028,
+        "inset": 0.57,
+        "color": "#f7fff7",
+        "normal": [
+          0.57,
+          -0.56,
+          -0.6
+        ]
       }
     ],
     "blueprint": {
@@ -27062,8 +27003,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           0,
-          -10,
-          -88
+          -4,
+          -90
         ],
         [
           38,
@@ -27107,13 +27048,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           0,
-          44,
-          -48
-        ],
-        [
-          0,
-          0,
-          -116
+          10,
+          -103
         ],
         [
           48,
@@ -27124,18 +27060,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -48,
           -3,
           62
-        ],
-        [
-          0,
-          9,
-          132
         ]
       ],
       "edges": [
-        [
-          0,
-          5
-        ],
         [
           1,
           5
@@ -27145,6 +27072,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1
         ],
         [
+          0,
+          5
+        ],
+        [
           1,
           6
         ],
@@ -27153,32 +27084,32 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6
         ],
         [
+          2,
+          14
+        ],
+        [
+          0,
+          14
+        ],
+        [
           0,
           2
         ],
         [
-          2,
-          15
-        ],
-        [
-          0,
-          15
-        ],
-        [
           5,
-          15
+          14
         ],
         [
           6,
-          16
+          15
         ],
         [
           0,
-          16
+          15
         ],
         [
           2,
-          16
+          15
         ],
         [
           5,
@@ -27238,11 +27169,11 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           7,
-          15
+          14
         ],
         [
           8,
-          16
+          15
         ],
         [
           2,
@@ -27258,15 +27189,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           9,
-          14
+          13
         ],
         [
           3,
-          14
+          13
         ],
         [
           10,
-          14
+          13
         ],
         [
           4,
@@ -27274,15 +27205,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           12,
-          14
+          13
         ],
         [
           4,
-          14
+          13
         ],
         [
           11,
-          14
+          13
         ],
         [
           4,
@@ -27297,39 +27228,11 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           12
         ],
         [
-          3,
-          13
-        ],
-        [
-          9,
-          13
-        ],
-        [
-          10,
-          13
-        ],
-        [
           2,
           4
-        ],
-        [
-          0,
-          17
-        ],
-        [
-          1,
-          17
-        ],
-        [
-          13,
-          14
         ]
       ],
       "edgeFaces": [
-        [
-          0,
-          3
-        ],
         [
           0,
           6
@@ -27337,6 +27240,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         [
           0,
           1
+        ],
+        [
+          0,
+          3
         ],
         [
           1,
@@ -27348,15 +27255,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           2,
-          5
-        ],
-        [
-          2,
           13
         ],
         [
           2,
           3
+        ],
+        [
+          2,
+          5
         ],
         [
           3,
@@ -27384,7 +27291,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           7,
-          7
+          27
         ],
         [
           7,
@@ -27408,7 +27315,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           10,
-          10
+          26
         ],
         [
           10,
@@ -27420,11 +27327,11 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           12,
-          26
+          24
         ],
         [
           12,
-          12
+          27
         ],
         [
           12,
@@ -27444,11 +27351,11 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           15,
-          15
+          26
         ],
         [
           15,
-          27
+          25
         ],
         [
           18,
@@ -27464,7 +27371,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           20,
-          27
+          25
         ],
         [
           20,
@@ -27480,52 +27387,22 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           21,
-          26
-        ],
-        [
-          22,
-          22
-        ],
-        [
-          23,
-          23
-        ],
-        [
-          24,
-          25
-        ],
-        [
-          24,
           24
         ],
         [
-          25,
-          25
-        ],
-        [
-          26,
+          22,
           27
         ],
         [
-          28,
-          28
+          23,
+          26
         ],
         [
-          28,
-          28
-        ],
-        [
-          -1,
-          -1
+          24,
+          25
         ]
       ],
       "edgeVisibility": [
-        31,
-        31,
-        31,
-        31,
-        31,
-        31,
         31,
         31,
         31,
@@ -27661,59 +27538,54 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           18.61
         ],
         [
-          5.62,
-          92.02,
-          -38.74
+          11.52,
+          96.59,
+          -23.18
         ],
         [
-          -5.62,
-          92.02,
-          -38.74
+          -11.52,
+          96.59,
+          -23.18
         ],
         [
-          -33.77,
-          -88.64,
-          -31.66
+          -57.04,
+          -55.89,
+          -60.19
         ],
         [
-          33.77,
-          -88.64,
-          -31.66
+          57.04,
+          -55.89,
+          -60.19
         ],
         [
-          17.28,
-          -95.39,
-          -24.54
+          -3.64,
+          -92.77,
+          -37.15
         ],
         [
-          -17.28,
-          -95.39,
-          -24.54
+          3.64,
+          -92.77,
+          -37.15
         ],
         [
-          -7.55,
-          72.9,
-          -68.04
+          -11.93,
+          -99.04,
+          -6.95
         ],
         [
-          7.55,
-          72.9,
-          -68.04
+          11.93,
+          -99.04,
+          -6.95
         ],
         [
-          1.9,
-          -99.97,
-          -1.79
+          -20.31,
+          -95.29,
+          -22.53
         ],
         [
-          -1.9,
-          -99.97,
-          -1.79
-        ],
-        [
-          -100,
-          0,
-          0
+          20.31,
+          -95.29,
+          -22.53
         ]
       ],
       "details": [
@@ -27721,118 +27593,67 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "type": "engine",
           "color": "#a78bfa",
           "normal": [
-            0.55,
-            0,
-            -0.84
+            -0.04,
+            -0.93,
+            -0.37
           ],
+          "lift": 0.5,
           "points": [
             [
-              41.79,
-              1.53,
-              -92.53
+              29.43,
+              -4.98,
+              -68.47
             ],
             [
-              29.31,
-              -5.67,
-              -73.33
+              12.33,
+              6.42,
+              -95.26
             ],
             [
-              14.91,
-              -0.87,
-              -102.13
+              44.25,
+              3.57,
+              -91.27
             ]
           ],
-          "stroke": "#ffffff",
-          "lift": 1.5
+          "stroke": "#ffffff"
         },
         {
           "type": "engine",
           "color": "#a78bfa",
           "normal": [
-            -0.55,
-            0,
-            -0.84
+            0.04,
+            -0.93,
+            -0.37
           ],
+          "lift": 0.5,
           "points": [
             [
-              -41.79,
-              1.53,
-              -92.53
+              -44.25,
+              3.57,
+              -91.27
             ],
             [
-              -14.91,
-              -0.87,
-              -102.13
+              -12.33,
+              6.42,
+              -95.26
             ],
             [
-              -29.31,
-              -5.67,
-              -73.33
+              -29.43,
+              -4.98,
+              -68.47
             ]
           ],
-          "stroke": "#ffffff",
-          "lift": 1.5
+          "stroke": "#ffffff"
         },
         {
-          "type": "window",
-          "color": "#020617",
-          "normal": [
-            0.2,
-            0.94,
-            0.28
-          ],
-          "points": [
-            [
-              10.39,
-              9.11,
-              62.08
-            ],
-            [
-              17.23,
-              10.19,
-              45.88
-            ],
-            [
-              10.39,
-              12.71,
-              48.04
-            ]
-          ]
-        },
-        {
-          "type": "window",
-          "color": "#020617",
-          "normal": [
-            -0.2,
-            0.94,
-            0.28
-          ],
-          "points": [
-            [
-              -10.39,
-              9.11,
-              62.08
-            ],
-            [
-              -10.39,
-              12.71,
-              48.04
-            ],
-            [
-              -17.23,
-              10.19,
-              45.88
-            ]
-          ]
-        },
-        {
-          "type": "line",
+          "type": "polyline",
           "color": "#7dd3fc",
           "normal": [
-            0.436,
-            0.722,
-            0.538
+            0.44,
+            0.72,
+            0.54
           ],
+          "lift": 0.5,
           "points": [
             [
               41.2,
@@ -27844,16 +27665,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               6.5,
               -65.2
             ]
-          ]
+          ],
+          "width": 1.2
         },
         {
-          "type": "line",
+          "type": "polyline",
           "color": "#7dd3fc",
           "normal": [
-            -0.176,
-            0.983,
-            -0.055
+            -0.18,
+            0.98,
+            -0.05
           ],
+          "lift": 0.5,
           "points": [
             [
               -32.2,
@@ -27865,16 +27688,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               7.8,
               -81.6
             ]
-          ]
+          ],
+          "width": 1.2
         },
         {
-          "type": "line",
+          "type": "polyline",
           "color": "#475569",
           "normal": [
             0.12,
-            -0.993,
+            -0.99,
             0.02
           ],
+          "lift": 0.5,
           "points": [
             [
               47.24,
@@ -27886,16 +27711,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -2.79,
               -24.96
             ]
-          ]
+          ],
+          "width": 1.2
         },
         {
-          "type": "line",
+          "type": "polyline",
           "color": "#475569",
           "normal": [
-            -0.138,
-            -0.989,
-            0.059
+            -0.14,
+            -0.99,
+            0.06
           ],
+          "lift": 0.5,
           "points": [
             [
               -49.52,
@@ -27907,62 +27734,150 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -1.9,
               -10.01
             ]
+          ],
+          "width": 1.2
+        },
+        {
+          "type": "window",
+          "color": "#101915",
+          "normal": [
+            0.4,
+            0.89,
+            0.23
+          ],
+          "lift": 0.5,
+          "points": [
+            [
+              23.81,
+              9.49,
+              37.04
+            ],
+            [
+              7.09,
+              15.65,
+              42.32
+            ],
+            [
+              7.09,
+              6.85,
+              76.64
+            ]
           ]
         },
         {
-          "type": "beacon",
-          "index": 13,
-          "color": "#a78bfa",
+          "type": "window",
+          "color": "#101915",
           "normal": [
-            0,
-            1,
-            0
+            -0.4,
+            0.89,
+            0.23
           ],
-          "lift": 2
+          "lift": 0.5,
+          "points": [
+            [
+              -7.09,
+              6.85,
+              76.64
+            ],
+            [
+              -7.09,
+              15.65,
+              42.32
+            ],
+            [
+              -23.81,
+              9.49,
+              37.04
+            ]
+          ]
         },
         {
-          "type": "beacon",
-          "index": 17,
-          "color": "#22d3ee",
+          "type": "engine",
+          "color": "#f7fff7",
           "normal": [
-            0,
-            1,
-            0
+            -0.57,
+            -0.56,
+            -0.6
           ],
-          "lift": 1
+          "lift": 0.5,
+          "points": [
+            [
+              -4.3,
+              -2.85,
+              -86.99
+            ],
+            [
+              -21.4,
+              -6.27,
+              -67.61
+            ],
+            [
+              -4.3,
+              5.13,
+              -94.4
+            ]
+          ],
+          "stroke": "#ffffff"
+        },
+        {
+          "type": "engine",
+          "color": "#f7fff7",
+          "normal": [
+            0.57,
+            -0.56,
+            -0.6
+          ],
+          "lift": 0.5,
+          "points": [
+            [
+              4.3,
+              5.13,
+              -94.4
+            ],
+            [
+              21.4,
+              -6.27,
+              -67.61
+            ],
+            [
+              4.3,
+              -2.85,
+              -86.99
+            ]
+          ],
+          "stroke": "#ffffff"
         }
       ],
       "imageProjection": {
-        "faceSides": [
-          "top",
-          "top",
-          "bottom",
-          "bottom",
-          "bottom",
-          "bottom",
-          "top",
-          "top",
-          "top",
-          "top",
-          "top",
-          "top",
-          "bottom",
-          "bottom",
-          "bottom",
-          "bottom",
-          "top",
-          "top",
-          "back",
-          "back",
-          "back",
-          "back",
-          "back",
-          "back",
-          "top",
-          "top",
-          "bottom",
-          "bottom",
-          "top"
+        "faceTextures": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          "face-1011",
+          "face-1011",
+          "face-1011",
+          "face-1011",
+          null,
+          null,
+          null,
+          null
         ],
         "faceColors": [
           "#1f2937",
@@ -27973,44 +27888,108 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#0b1020",
           "#151b2e",
           "#151b2e",
+          "#242c38",
+          "#242c38",
           "#151b2e",
           "#151b2e",
-          "#151b2e",
-          "#151b2e",
+          "#042140",
           "#080d18",
           "#080d18",
-          "#080d18",
-          "#080d18",
+          "#042140",
           "#263145",
           "#263145",
           "#111827",
           "#111827",
-          "#050815",
-          "#050815",
-          "#09111f",
-          "#09111f",
-          "#334155",
-          "#334155",
+          "#0b0b0c",
+          "#0b0b0c",
+          "#0b0b0c",
+          "#0b0b0c",
           "#060914",
           "#060914",
-          "#2dd4bf"
+          null,
+          null
+        ],
+        "faceAngles": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          96,
+          -96,
+          -115,
+          115,
+          null,
+          null,
+          null,
+          null
+        ],
+        "faceMirrorX": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          true,
+          true,
+          true,
+          true,
+          false,
+          false,
+          false,
+          false
         ]
       },
       "gameMeta": {
-        "class": "strike craft",
-        "npcRole": "military",
-        "aiProfile": "hunter",
+        "class": "fighter",
+        "npcRole": "private",
+        "aiProfile": "standard",
         "decalRole": "none",
         "baseColor": "#0b1020",
-        "description": "The Umbra is a naval strike craft with a flattened stealth hull, forward blade spars and enough missile capacity to make traffic controllers speak more carefully.",
+        "description": "The Umbra is a top secret naval strike craft with a mean looking flattened stealth hull, Meaner still is its huge missile loadout and military lasers",
         "missionLore": "Restricted strike craft issued only to special operations squadrons.",
+        "imageDecalMirrorX": {
+          "top": false,
+          "bottom": false,
+          "back": true
+        },
         "valueCr": 4800000,
         "stats": {
-          "r": 132,
+          "r": 112,
           "hp": 360,
           "speed": 2.35,
           "cargo": 8,
-          "missiles": 6,
+          "missiles": 8,
           "laser": "military"
         },
         "lists": {
@@ -28022,11 +28001,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "flags": {
           "escapePod": true,
           "hiddenUntilDiscovered": true
-        },
-        "imageDecalMirrorX": {
-          "top": true,
-          "bottom": true,
-          "back": false
         }
       }
     }

@@ -1,23 +1,28 @@
 {
   "format": "ultra-elite-ship-builder/v1",
   "id": "umbra",
-  "name": "Umbra",
+  "name": "X780b Umbra",
   "symmetry": "x-locked",
   "gameMeta": {
-    "class": "strike craft",
-    "npcRole": "military",
-    "aiProfile": "hunter",
+    "class": "fighter",
+    "npcRole": "private",
+    "aiProfile": "standard",
     "decalRole": "none",
     "baseColor": "#0b1020",
-    "description": "The Umbra is a naval strike craft with a flattened stealth hull, forward blade spars and enough missile capacity to make traffic controllers speak more carefully.",
+    "description": "The Umbra is a top secret naval strike craft with a mean looking flattened stealth hull, Meaner still is its huge missile loadout and military lasers",
     "missionLore": "Restricted strike craft issued only to special operations squadrons.",
+    "imageDecalMirrorX": {
+      "top": false,
+      "bottom": false,
+      "back": true
+    },
     "valueCr": 4800000,
     "stats": {
-      "r": 132,
+      "r": 112,
       "hp": 360,
       "speed": 2.35,
       "cargo": 8,
-      "missiles": 6,
+      "missiles": 8,
       "laser": "military"
     },
     "lists": {
@@ -29,11 +34,6 @@
     "flags": {
       "escapePod": true,
       "hiddenUntilDiscovered": true
-    },
-    "imageDecalMirrorX": {
-      "top": true,
-      "bottom": true,
-      "back": false
     }
   },
   "verts": [
@@ -72,8 +72,8 @@
     {
       "id": 5,
       "x": 0,
-      "y": -10,
-      "z": -88,
+      "y": -4,
+      "z": -90,
       "mirrorId": null,
       "center": true
     },
@@ -142,18 +142,10 @@
       "center": false
     },
     {
-      "id": 14,
-      "x": 0,
-      "y": 44,
-      "z": -48,
-      "mirrorId": null,
-      "center": true
-    },
-    {
       "id": 15,
       "x": 0,
-      "y": 0,
-      "z": -116,
+      "y": 10,
+      "z": -103,
       "mirrorId": null,
       "center": true
     },
@@ -172,27 +164,18 @@
       "z": 62,
       "mirrorId": 16,
       "center": false
-    },
-    {
-      "id": 18,
-      "x": 0,
-      "y": 9,
-      "z": 132,
-      "mirrorId": null,
-      "center": true
     }
   ],
   "faces": [
     {
       "id": 1000,
       "verts": [
-        1,
         6,
-        2
+        2,
+        1
       ],
       "mirrored": false,
-      "faceColor": "#1f2937",
-      "bitmapSide": "top"
+      "faceColor": "#1f2937"
     },
     {
       "id": 1001,
@@ -202,30 +185,27 @@
         7
       ],
       "mirrored": true,
-      "faceColor": "#1f2937",
-      "bitmapSide": "top"
+      "faceColor": "#1f2937"
     },
     {
       "id": 1002,
       "verts": [
-        1,
         3,
-        16
+        16,
+        1
       ],
       "mirrored": false,
-      "faceColor": "#0b1020",
-      "bitmapSide": "bottom"
+      "faceColor": "#0b1020"
     },
     {
       "id": 1019,
       "verts": [
-        1,
         16,
-        6
+        6,
+        1
       ],
       "mirrored": false,
-      "faceColor": "#0b1020",
-      "bitmapSide": "bottom"
+      "faceColor": "#0b1020"
     },
     {
       "id": 1003,
@@ -235,8 +215,7 @@
         17
       ],
       "mirrored": true,
-      "faceColor": "#0b1020",
-      "bitmapSide": "bottom"
+      "faceColor": "#0b1020"
     },
     {
       "id": 1020,
@@ -246,8 +225,7 @@
         3
       ],
       "mirrored": true,
-      "faceColor": "#0b1020",
-      "bitmapSide": "bottom"
+      "faceColor": "#0b1020"
     },
     {
       "id": 1004,
@@ -257,8 +235,7 @@
         8
       ],
       "mirrored": false,
-      "faceColor": "#151b2e",
-      "bitmapSide": "top"
+      "faceColor": "#151b2e"
     },
     {
       "id": 1021,
@@ -268,8 +245,7 @@
         10
       ],
       "mirrored": false,
-      "faceColor": "#151b2e",
-      "bitmapSide": "top"
+      "faceColor": "#151b2e"
     },
     {
       "id": 1022,
@@ -279,41 +255,37 @@
         4
       ],
       "mirrored": false,
-      "faceColor": "#151b2e",
-      "bitmapSide": "top"
+      "faceColor": "#242c38"
     },
     {
       "id": 1005,
       "verts": [
-        2,
         4,
-        11
+        11,
+        2
       ],
       "mirrored": true,
-      "faceColor": "#151b2e",
-      "bitmapSide": "top"
+      "faceColor": "#242c38"
     },
     {
       "id": 1023,
       "verts": [
-        2,
         11,
-        9
+        9,
+        2
       ],
       "mirrored": true,
-      "faceColor": "#151b2e",
-      "bitmapSide": "top"
+      "faceColor": "#151b2e"
     },
     {
       "id": 1024,
       "verts": [
-        2,
         9,
-        7
+        7,
+        2
       ],
       "mirrored": true,
-      "faceColor": "#151b2e",
-      "bitmapSide": "top"
+      "faceColor": "#151b2e"
     },
     {
       "id": 1006,
@@ -323,8 +295,7 @@
         8
       ],
       "mirrored": false,
-      "faceColor": "#080d18",
-      "bitmapSide": "bottom"
+      "faceColor": "#042140"
     },
     {
       "id": 1025,
@@ -334,30 +305,27 @@
         16
       ],
       "mirrored": false,
-      "faceColor": "#080d18",
-      "bitmapSide": "bottom"
+      "faceColor": "#080d18"
     },
     {
       "id": 1007,
       "verts": [
-        3,
         17,
-        9
+        9,
+        3
       ],
       "mirrored": true,
-      "faceColor": "#080d18",
-      "bitmapSide": "bottom"
+      "faceColor": "#080d18"
     },
     {
       "id": 1026,
       "verts": [
-        3,
         9,
-        13
+        13,
+        3
       ],
       "mirrored": true,
-      "faceColor": "#080d18",
-      "bitmapSide": "bottom"
+      "faceColor": "#042140"
     },
     {
       "id": 1008,
@@ -367,30 +335,27 @@
         8
       ],
       "mirrored": false,
-      "faceColor": "#263145",
-      "bitmapSide": "top"
+      "faceColor": "#263145"
     },
     {
       "id": 1009,
       "verts": [
-        7,
         9,
-        17
+        17,
+        7
       ],
       "mirrored": true,
-      "faceColor": "#263145",
-      "bitmapSide": "top"
+      "faceColor": "#263145"
     },
     {
       "id": 1010,
       "verts": [
-        4,
         10,
-        15
+        15,
+        4
       ],
       "mirrored": false,
-      "faceColor": "#111827",
-      "bitmapSide": "back"
+      "faceColor": "#111827"
     },
     {
       "id": 1027,
@@ -400,8 +365,7 @@
         11
       ],
       "mirrored": false,
-      "faceColor": "#111827",
-      "bitmapSide": "back"
+      "faceColor": "#111827"
     },
     {
       "id": 1011,
@@ -411,30 +375,36 @@
         15
       ],
       "mirrored": false,
-      "faceColor": "#050815",
-      "bitmapSide": "back"
+      "faceColor": "#0b0b0c",
+      "bitmapFaceKey": "face-1011",
+      "bitmapAngle": 96,
+      "bitmapMirrorX": true
     },
     {
       "id": 1028,
       "verts": [
-        5,
         15,
-        12
+        12,
+        5
       ],
       "mirrored": false,
-      "faceColor": "#050815",
-      "bitmapSide": "back"
+      "faceColor": "#0b0b0c",
+      "bitmapFaceKey": "face-1011",
+      "bitmapAngle": -96,
+      "bitmapMirrorX": true
     },
     {
       "id": 1012,
       "verts": [
-        10,
         12,
-        15
+        15,
+        10
       ],
       "mirrored": false,
-      "faceColor": "#09111f",
-      "bitmapSide": "back"
+      "faceColor": "#0b0b0c",
+      "bitmapFaceKey": "face-1011",
+      "bitmapAngle": -115,
+      "bitmapMirrorX": true
     },
     {
       "id": 1013,
@@ -444,41 +414,20 @@
         13
       ],
       "mirrored": true,
-      "faceColor": "#09111f",
-      "bitmapSide": "back"
-    },
-    {
-      "id": 1014,
-      "verts": [
-        4,
-        14,
-        10
-      ],
-      "mirrored": false,
-      "faceColor": "#334155",
-      "bitmapSide": "top"
-    },
-    {
-      "id": 1015,
-      "verts": [
-        4,
-        11,
-        14
-      ],
-      "mirrored": true,
-      "faceColor": "#334155",
-      "bitmapSide": "top"
+      "faceColor": "#0b0b0c",
+      "bitmapFaceKey": "face-1011",
+      "bitmapAngle": 115,
+      "bitmapMirrorX": true
     },
     {
       "id": 1016,
       "verts": [
-        3,
         5,
-        12
+        12,
+        3
       ],
       "mirrored": false,
-      "faceColor": "#060914",
-      "bitmapSide": "bottom"
+      "faceColor": "#060914"
     },
     {
       "id": 1017,
@@ -488,19 +437,25 @@
         5
       ],
       "mirrored": true,
-      "faceColor": "#060914",
-      "bitmapSide": "bottom"
+      "faceColor": "#060914"
     },
     {
-      "id": 1018,
+      "id": 3012,
       "verts": [
-        1,
-        18,
-        2
+        9,
+        11,
+        13
       ],
-      "mirrored": false,
-      "faceColor": "#2dd4bf",
-      "bitmapSide": "top"
+      "mirrored": false
+    },
+    {
+      "id": 3013,
+      "verts": [
+        12,
+        10,
+        8
+      ],
+      "mirrored": true
     }
   ],
   "edges": [
@@ -517,20 +472,6 @@
       "b": 11,
       "kind": "stick",
       "mirrored": true
-    },
-    {
-      "id": 2002,
-      "a": 14,
-      "b": 15,
-      "kind": "stick",
-      "mirrored": false
-    },
-    {
-      "id": 2003,
-      "a": 1,
-      "b": 18,
-      "kind": "edge",
-      "mirrored": false
     }
   ],
   "details": [
@@ -538,7 +479,7 @@
       "id": 3000,
       "type": "engine",
       "faceId": 1012,
-      "inset": 0.48,
+      "inset": 0.57,
       "color": "#a78bfa",
       "normal": [
         0.55,
@@ -550,36 +491,12 @@
       "id": 3001,
       "type": "engine",
       "faceId": 1013,
-      "inset": 0.48,
+      "inset": 0.57,
       "color": "#a78bfa",
       "normal": [
         -0.55,
         0,
         -0.84
-      ]
-    },
-    {
-      "id": 3002,
-      "type": "window",
-      "faceId": 1000,
-      "inset": 0.18,
-      "color": "#020617",
-      "normal": [
-        0.2,
-        0.94,
-        0.28
-      ]
-    },
-    {
-      "id": 3003,
-      "type": "window",
-      "faceId": 1001,
-      "inset": 0.18,
-      "color": "#020617",
-      "normal": [
-        -0.2,
-        0.94,
-        0.28
       ]
     },
     {
@@ -627,28 +544,1077 @@
       ]
     },
     {
-      "id": 3008,
-      "type": "beacon",
-      "vertexId": 14,
-      "color": "#a78bfa",
+      "id": 3014,
+      "type": "window",
+      "faceId": 1000,
+      "inset": 0.44,
+      "color": "#101915",
       "normal": [
-        0,
-        1,
-        0
-      ],
-      "lift": 2
+        0.4,
+        0.89,
+        0.23
+      ]
     },
     {
-      "id": 3009,
-      "type": "beacon",
-      "vertexId": 18,
-      "color": "#22d3ee",
+      "id": 3015,
+      "type": "window",
+      "faceId": 1001,
+      "inset": 0.44,
+      "color": "#101915",
       "normal": [
-        0,
-        1,
-        0
-      ],
-      "lift": 1
+        -0.4,
+        0.89,
+        0.23
+      ]
+    },
+    {
+      "id": 3016,
+      "type": "engine",
+      "faceId": 1011,
+      "inset": 0.57,
+      "color": "#f7fff7",
+      "normal": [
+        -0.57,
+        -0.56,
+        -0.6
+      ]
+    },
+    {
+      "id": 3017,
+      "type": "engine",
+      "faceId": 1028,
+      "inset": 0.57,
+      "color": "#f7fff7",
+      "normal": [
+        0.57,
+        -0.56,
+        -0.6
+      ]
     }
-  ]
+  ],
+  "blueprint": {
+    "verts": [
+      [
+        0,
+        2,
+        108
+      ],
+      [
+        0,
+        22,
+        30
+      ],
+      [
+        0,
+        -12,
+        24
+      ],
+      [
+        0,
+        16,
+        -78
+      ],
+      [
+        0,
+        -4,
+        -90
+      ],
+      [
+        38,
+        8,
+        18
+      ],
+      [
+        -38,
+        8,
+        18
+      ],
+      [
+        108,
+        0,
+        -28
+      ],
+      [
+        -108,
+        0,
+        -28
+      ],
+      [
+        56,
+        5,
+        -96
+      ],
+      [
+        -56,
+        5,
+        -96
+      ],
+      [
+        30,
+        -10,
+        -56
+      ],
+      [
+        -30,
+        -10,
+        -56
+      ],
+      [
+        0,
+        10,
+        -103
+      ],
+      [
+        48,
+        -3,
+        62
+      ],
+      [
+        -48,
+        -3,
+        62
+      ]
+    ],
+    "edges": [
+      [
+        1,
+        5
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        5
+      ],
+      [
+        1,
+        6
+      ],
+      [
+        0,
+        6
+      ],
+      [
+        2,
+        14
+      ],
+      [
+        0,
+        14
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        5,
+        14
+      ],
+      [
+        6,
+        15
+      ],
+      [
+        0,
+        15
+      ],
+      [
+        2,
+        15
+      ],
+      [
+        5,
+        7
+      ],
+      [
+        1,
+        7
+      ],
+      [
+        7,
+        9
+      ],
+      [
+        1,
+        9
+      ],
+      [
+        3,
+        9
+      ],
+      [
+        1,
+        3
+      ],
+      [
+        3,
+        10
+      ],
+      [
+        1,
+        10
+      ],
+      [
+        8,
+        10
+      ],
+      [
+        1,
+        8
+      ],
+      [
+        6,
+        8
+      ],
+      [
+        2,
+        11
+      ],
+      [
+        7,
+        11
+      ],
+      [
+        2,
+        7
+      ],
+      [
+        7,
+        14
+      ],
+      [
+        8,
+        15
+      ],
+      [
+        2,
+        8
+      ],
+      [
+        8,
+        12
+      ],
+      [
+        2,
+        12
+      ],
+      [
+        9,
+        13
+      ],
+      [
+        3,
+        13
+      ],
+      [
+        10,
+        13
+      ],
+      [
+        4,
+        12
+      ],
+      [
+        12,
+        13
+      ],
+      [
+        4,
+        13
+      ],
+      [
+        11,
+        13
+      ],
+      [
+        4,
+        11
+      ],
+      [
+        9,
+        11
+      ],
+      [
+        10,
+        12
+      ],
+      [
+        2,
+        4
+      ]
+    ],
+    "edgeFaces": [
+      [
+        0,
+        6
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        3
+      ],
+      [
+        1,
+        11
+      ],
+      [
+        1,
+        4
+      ],
+      [
+        2,
+        13
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        2,
+        5
+      ],
+      [
+        3,
+        16
+      ],
+      [
+        4,
+        17
+      ],
+      [
+        4,
+        5
+      ],
+      [
+        5,
+        14
+      ],
+      [
+        6,
+        16
+      ],
+      [
+        6,
+        7
+      ],
+      [
+        7,
+        27
+      ],
+      [
+        7,
+        8
+      ],
+      [
+        8,
+        18
+      ],
+      [
+        8,
+        9
+      ],
+      [
+        9,
+        19
+      ],
+      [
+        9,
+        10
+      ],
+      [
+        10,
+        26
+      ],
+      [
+        10,
+        11
+      ],
+      [
+        11,
+        17
+      ],
+      [
+        12,
+        24
+      ],
+      [
+        12,
+        27
+      ],
+      [
+        12,
+        13
+      ],
+      [
+        13,
+        16
+      ],
+      [
+        14,
+        17
+      ],
+      [
+        14,
+        15
+      ],
+      [
+        15,
+        26
+      ],
+      [
+        15,
+        25
+      ],
+      [
+        18,
+        22
+      ],
+      [
+        18,
+        19
+      ],
+      [
+        19,
+        23
+      ],
+      [
+        20,
+        25
+      ],
+      [
+        20,
+        23
+      ],
+      [
+        20,
+        21
+      ],
+      [
+        21,
+        22
+      ],
+      [
+        21,
+        24
+      ],
+      [
+        22,
+        27
+      ],
+      [
+        23,
+        26
+      ],
+      [
+        24,
+        25
+      ]
+    ],
+    "edgeVisibility": [
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31
+    ],
+    "normals": [
+      [
+        39.91,
+        88.82,
+        22.77
+      ],
+      [
+        -39.91,
+        88.82,
+        22.77
+      ],
+      [
+        5.47,
+        -98.49,
+        16.42
+      ],
+      [
+        26.74,
+        94.74,
+        17.61
+      ],
+      [
+        -26.74,
+        94.74,
+        17.61
+      ],
+      [
+        -5.47,
+        -98.49,
+        16.42
+      ],
+      [
+        43.57,
+        72.2,
+        53.75
+      ],
+      [
+        16.96,
+        98.38,
+        -5.74
+      ],
+      [
+        17.55,
+        98.3,
+        -5.46
+      ],
+      [
+        -17.55,
+        98.3,
+        -5.46
+      ],
+      [
+        -16.96,
+        98.38,
+        -5.74
+      ],
+      [
+        -43.57,
+        72.2,
+        53.75
+      ],
+      [
+        12,
+        -99.26,
+        2.02
+      ],
+      [
+        13.84,
+        -98.86,
+        5.93
+      ],
+      [
+        -13.84,
+        -98.86,
+        5.93
+      ],
+      [
+        -12,
+        -99.26,
+        2.02
+      ],
+      [
+        23.14,
+        95.49,
+        18.61
+      ],
+      [
+        -23.14,
+        95.49,
+        18.61
+      ],
+      [
+        11.52,
+        96.59,
+        -23.18
+      ],
+      [
+        -11.52,
+        96.59,
+        -23.18
+      ],
+      [
+        -57.04,
+        -55.89,
+        -60.19
+      ],
+      [
+        57.04,
+        -55.89,
+        -60.19
+      ],
+      [
+        -3.64,
+        -92.77,
+        -37.15
+      ],
+      [
+        3.64,
+        -92.77,
+        -37.15
+      ],
+      [
+        -11.93,
+        -99.04,
+        -6.95
+      ],
+      [
+        11.93,
+        -99.04,
+        -6.95
+      ],
+      [
+        -20.31,
+        -95.29,
+        -22.53
+      ],
+      [
+        20.31,
+        -95.29,
+        -22.53
+      ]
+    ],
+    "details": [
+      {
+        "type": "engine",
+        "color": "#a78bfa",
+        "normal": [
+          -0.04,
+          -0.93,
+          -0.37
+        ],
+        "lift": 0.5,
+        "points": [
+          [
+            29.43,
+            -4.98,
+            -68.47
+          ],
+          [
+            12.33,
+            6.42,
+            -95.26
+          ],
+          [
+            44.25,
+            3.57,
+            -91.27
+          ]
+        ],
+        "stroke": "#ffffff"
+      },
+      {
+        "type": "engine",
+        "color": "#a78bfa",
+        "normal": [
+          0.04,
+          -0.93,
+          -0.37
+        ],
+        "lift": 0.5,
+        "points": [
+          [
+            -44.25,
+            3.57,
+            -91.27
+          ],
+          [
+            -12.33,
+            6.42,
+            -95.26
+          ],
+          [
+            -29.43,
+            -4.98,
+            -68.47
+          ]
+        ],
+        "stroke": "#ffffff"
+      },
+      {
+        "type": "polyline",
+        "color": "#7dd3fc",
+        "normal": [
+          0.44,
+          0.72,
+          0.54
+        ],
+        "lift": 0.5,
+        "points": [
+          [
+            41.2,
+            8.6,
+            14.6
+          ],
+          [
+            53.8,
+            6.5,
+            -65.2
+          ]
+        ],
+        "width": 1.2
+      },
+      {
+        "type": "polyline",
+        "color": "#7dd3fc",
+        "normal": [
+          -0.18,
+          0.98,
+          -0.05
+        ],
+        "lift": 0.5,
+        "points": [
+          [
+            -32.2,
+            9.9,
+            -1.8
+          ],
+          [
+            -44.8,
+            7.8,
+            -81.6
+          ]
+        ],
+        "width": 1.2
+      },
+      {
+        "type": "polyline",
+        "color": "#475569",
+        "normal": [
+          0.12,
+          -0.99,
+          0.02
+        ],
+        "lift": 0.5,
+        "points": [
+          [
+            47.24,
+            -4.65,
+            30.84
+          ],
+          [
+            84.44,
+            -2.79,
+            -24.96
+          ]
+        ],
+        "width": 1.2
+      },
+      {
+        "type": "polyline",
+        "color": "#475569",
+        "normal": [
+          -0.14,
+          -0.99,
+          0.06
+        ],
+        "lift": 0.5,
+        "points": [
+          [
+            -49.52,
+            -3.76,
+            45.79
+          ],
+          [
+            -86.72,
+            -1.9,
+            -10.01
+          ]
+        ],
+        "width": 1.2
+      },
+      {
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          0.4,
+          0.89,
+          0.23
+        ],
+        "lift": 0.5,
+        "points": [
+          [
+            23.81,
+            9.49,
+            37.04
+          ],
+          [
+            7.09,
+            15.65,
+            42.32
+          ],
+          [
+            7.09,
+            6.85,
+            76.64
+          ]
+        ]
+      },
+      {
+        "type": "window",
+        "color": "#101915",
+        "normal": [
+          -0.4,
+          0.89,
+          0.23
+        ],
+        "lift": 0.5,
+        "points": [
+          [
+            -7.09,
+            6.85,
+            76.64
+          ],
+          [
+            -7.09,
+            15.65,
+            42.32
+          ],
+          [
+            -23.81,
+            9.49,
+            37.04
+          ]
+        ]
+      },
+      {
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          -0.57,
+          -0.56,
+          -0.6
+        ],
+        "lift": 0.5,
+        "points": [
+          [
+            -4.3,
+            -2.85,
+            -86.99
+          ],
+          [
+            -21.4,
+            -6.27,
+            -67.61
+          ],
+          [
+            -4.3,
+            5.13,
+            -94.4
+          ]
+        ],
+        "stroke": "#ffffff"
+      },
+      {
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0.57,
+          -0.56,
+          -0.6
+        ],
+        "lift": 0.5,
+        "points": [
+          [
+            4.3,
+            5.13,
+            -94.4
+          ],
+          [
+            21.4,
+            -6.27,
+            -67.61
+          ],
+          [
+            4.3,
+            -2.85,
+            -86.99
+          ]
+        ],
+        "stroke": "#ffffff"
+      }
+    ],
+    "imageProjection": {
+      "faceTextures": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "face-1011",
+        "face-1011",
+        "face-1011",
+        "face-1011",
+        null,
+        null,
+        null,
+        null
+      ],
+      "faceColors": [
+        "#1f2937",
+        "#1f2937",
+        "#0b1020",
+        "#0b1020",
+        "#0b1020",
+        "#0b1020",
+        "#151b2e",
+        "#151b2e",
+        "#242c38",
+        "#242c38",
+        "#151b2e",
+        "#151b2e",
+        "#042140",
+        "#080d18",
+        "#080d18",
+        "#042140",
+        "#263145",
+        "#263145",
+        "#111827",
+        "#111827",
+        "#0b0b0c",
+        "#0b0b0c",
+        "#0b0b0c",
+        "#0b0b0c",
+        "#060914",
+        "#060914",
+        null,
+        null
+      ],
+      "faceAngles": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        96,
+        -96,
+        -115,
+        115,
+        null,
+        null,
+        null,
+        null
+      ],
+      "faceMirrorX": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "none",
+      "baseColor": "#0b1020",
+      "description": "The Umbra is a top secret naval strike craft with a mean looking flattened stealth hull, Meaner still is its huge missile loadout and military lasers",
+      "missionLore": "Restricted strike craft issued only to special operations squadrons.",
+      "imageDecalMirrorX": {
+        "top": false,
+        "bottom": false,
+        "back": true
+      },
+      "valueCr": 4800000,
+      "stats": {
+        "r": 112,
+        "hp": 360,
+        "speed": 2.35,
+        "cargo": 8,
+        "missiles": 8,
+        "laser": "military"
+      },
+      "lists": {
+        "trader": false,
+        "pirate": false,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": true
+      }
+    }
+  }
 }
