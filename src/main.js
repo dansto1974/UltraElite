@@ -2013,16 +2013,25 @@
       return Math.max(max[0] - min[0], max[1] - min[1], max[2] - min[2], 1);
     }
 
-    function previewModelList() {
-      if (game?.developerMode) return ALL_MODEL_LIST;
+    function authorizedShipList() {
       const unlocked = (game?.missionUnlocks?.ships || []).filter((model) => SHIP_NAMES[model] && !SHIP_MODEL_LIST.includes(model));
       return [...SHIP_MODEL_LIST, ...unlocked];
     }
 
+    function ownedShipList() {
+      const owned = game?.missionUnlocks?.ownedShips || [];
+      const current = game?.playerShip || "cobra";
+      return [...new Set(["cobra", current, ...owned].filter((model) => SHIP_NAMES[model]))];
+    }
+
+    function previewModelList() {
+      if (game?.developerMode) return ALL_MODEL_LIST;
+      return authorizedShipList();
+    }
+
     function playerSelectableShipList() {
       if (game?.developerMode) return DEV_SHIP_MODEL_LIST;
-      const unlocked = (game?.missionUnlocks?.ships || []).filter((model) => SHIP_NAMES[model] && !SHIP_MODEL_LIST.includes(model));
-      return [...SHIP_MODEL_LIST, ...unlocked];
+      return ownedShipList();
     }
 
     function downloadText(filename, text) {
@@ -2656,7 +2665,7 @@
       cargo: Object.fromEntries(GOODS.map((g) => [g[0], 0])),
       marketStock: {},
       missions: { active: [], board: [], boardKey: "", dockSerial: 0, completed: 0 },
-      missionUnlocks: { ships: [] },
+      missionUnlocks: { ships: [], ownedShips: ["cobra"] },
       equipment: {
         fuelScoop: false,
         ecm: false,
@@ -3191,6 +3200,8 @@
       if (!Number.isFinite(game.missions.completed)) game.missions.completed = 0;
       if (!game.missionUnlocks || typeof game.missionUnlocks !== "object") game.missionUnlocks = { ships: [] };
       if (!Array.isArray(game.missionUnlocks.ships)) game.missionUnlocks.ships = [];
+      if (!Array.isArray(game.missionUnlocks.ownedShips)) game.missionUnlocks.ownedShips = [playerShipModel()];
+      if (!game.missionUnlocks.ownedShips.includes(playerShipModel())) game.missionUnlocks.ownedShips.push(playerShipModel());
       return game.missions;
     }
 
@@ -8449,6 +8460,52 @@
       renderPanel();
     }
 
+    function buyShip(model) {
+      if (!game.docked) return;
+      missionState();
+      if (!authorizedShipList().includes(model)) {
+        eliteAudio.play("boop");
+        setMessage("Shipyard authorisation required for that hull.");
+        return;
+      }
+      if (model === playerShipModel()) {
+        eliteAudio.play("boop");
+        setMessage("Already aboard that ship.");
+        return;
+      }
+      const cap = shipCargoCap(model);
+      if (usedCargo() > cap) {
+        eliteAudio.play("boop");
+        setMessage(`Cannot transfer: ${shipName(model)} hold is limited to ${cap}t.`);
+        return;
+      }
+      const owned = ownedShipList().includes(model);
+      const price = shipPurchasePrice(model);
+      if (!owned && !Number.isFinite(price)) {
+        eliteAudio.play("boop");
+        setMessage("Restricted hull: no shipyard price available.");
+        return;
+      }
+      const tradeIn = playerShipTradeInValue(playerShipModel()) || 0;
+      const net = owned ? 0 : Math.max(0, price - tradeIn);
+      if (game.credits < net) {
+        eliteAudio.play("boop");
+        setMessage(`Insufficient credits. Need ${net.toLocaleString()} CR after trade-in.`);
+        return;
+      }
+      if (!owned) {
+        game.credits -= net;
+        if (!game.missionUnlocks.ownedShips.includes(model)) game.missionUnlocks.ownedShips.push(model);
+      }
+      game.playerShip = model;
+      applyPlayerShipStats({ trimCargo: false });
+      restoreShipSystems();
+      shipDiagramState.model = model;
+      eliteAudio.play("beep");
+      setMessage(`${shipName(model)} ${owned ? "readied" : "purchased"} at shipyard.`, true);
+      renderPanel();
+    }
+
     // Testing helpers only — bypass cost/tech-level/docked gating entirely, unlike
     // buyFuel/buyEquipment above. Not tied to any key/hotkey; reachable only via the
     // Cheats panel tab, so there's no risk of an accidental keypress granting free stuff.
@@ -8471,6 +8528,8 @@
     function cheatChangePlayerShip(model) {
       if (!playerSelectableShipList().includes(model)) return;
       game.playerShip = model;
+      missionState();
+      if (!game.missionUnlocks.ownedShips.includes(model)) game.missionUnlocks.ownedShips.push(model);
       applyPlayerShipStats();
       restoreShipSystems();
       shipDiagramState.model = model;
@@ -17163,7 +17222,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const title = game.panel === "cheats" ? "Dev" : game.panel[0].toUpperCase() + game.panel.slice(1);
       byId("panelTitle").textContent = title;
       byId("panelSub").textContent = game.docked ? `Docked at ${game.dockedAt || currentSystem().name + " Station"}` : "In flight";
-      const map = { market: renderMarket, missions: renderMissions, chart: renderChart, equip: renderEquip, status: renderStatus, ship: renderShip, library: renderLibrary, help: renderHelp, about: renderAbout, cheats: renderCheats };
+      const map = { market: renderMarket, missions: renderMissions, chart: renderChart, equip: renderEquip, shipyard: renderShipyard, status: renderStatus, ship: renderShip, library: renderLibrary, help: renderHelp, about: renderAbout, cheats: renderCheats };
       const panelChanged = lastRenderedPanel !== game.panel;
       panelBody.innerHTML = map[game.panel]();
       if (panelChanged || game.panel === "ship" || game.panel === "library") panelBody.scrollTop = 0;
@@ -17582,6 +17641,45 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ${rows}`;
     }
 
+    function renderShipyard() {
+      const current = playerShipModel();
+      const owned = ownedShipList();
+      const tradeIn = playerShipTradeInValue(current) || 0;
+      const docked = !!game.docked;
+      const hulls = shipyardHullList();
+      const rows = hulls.map((model) => {
+        const currentHull = model === current;
+        const ownedHull = owned.includes(model);
+        const price = shipPurchasePrice(model);
+        const cap = shipCargoCap(model);
+        const cargoBlocked = usedCargo() > cap;
+        const net = ownedHull ? 0 : Math.max(0, (price || 0) - tradeIn);
+        const affordable = ownedHull || game.credits >= net;
+        const disabled = currentHull || !docked || cargoBlocked || !affordable || (!ownedHull && !Number.isFinite(price));
+        const action = currentHull ? "Current" : ownedHull ? "Switch" : `Buy ${net ? `${net.toLocaleString()} CR` : "with trade-in"}`;
+        const status = currentHull ? "Current hull" : ownedHull ? "Owned" : (game.missionUnlocks.ships || []).includes(model) && !SHIP_MODEL_LIST.includes(model) ? "Authorised" : "For sale";
+        const note = cargoBlocked ? `Cargo ${usedCargo()}/${cap}t exceeds hold` : ownedHull ? "No charge" : `Price ${price.toLocaleString()} CR`;
+        const stats = shipStats(model);
+        return `<div class="notice">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+            <strong class="about-heading">${shipName(model)}</strong>
+            <span style="color:var(--amber);white-space:nowrap">${status}</span>
+          </div>
+          <div class="grid2">
+            ${stat("Speed", `${Math.round(220 * (stats.speed || 1))} m/s`)}
+            ${stat("Cargo", `${cap}t`)}
+            ${stat("Hull HP", Math.round(stats.hp))}
+            ${stat("Trade", note)}
+          </div>
+          <div style="margin-top:8px">
+            <button class="btn mini primary" data-shipyard-buy="${model}" ${disabled ? "disabled" : ""}>${action}</button>
+          </div>
+        </div>`;
+      }).join("");
+      return `<div class="notice">Credits ${fmt(game.credits)} CR &nbsp; Current ${shipName(current)} trade-in ${tradeIn.toLocaleString()} CR. Ship transfers are dockside only.</div>
+        ${hulls.length ? rows : `<div class="notice">No shipyard hulls available at this station.</div>`}`;
+    }
+
     function renderStatus() {
       const saveDisabled = canSaveCommander() ? "" : "disabled";
       return `<div class="grid2">
@@ -17677,12 +17775,29 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function playerShipValueText(modelName) {
-      const base = SHIP_PRICES[modelName];
-      if (!Number.isFinite(base)) return "Restricted";
+      const value = playerShipTradeInValue(modelName);
+      return Number.isFinite(value) ? `${value.toLocaleString()} CR` : "Restricted";
+    }
+
+    function shipPurchasePrice(modelName) {
+      const price = SHIP_PRICES[modelName] ?? modelGameMeta(modelName).valueCr;
+      return Number.isFinite(price) ? Math.max(0, Math.round(price)) : null;
+    }
+
+    function playerShipTradeInValue(modelName = playerShipModel()) {
+      const base = shipPurchasePrice(modelName);
+      if (!Number.isFinite(base)) return null;
       const condition = clamp(Number.isFinite(game.energy) ? game.energy : 100, 0, 100) / 100;
       const equipmentValue = EQUIPMENT.reduce((sum, item) => sum + (game.equipment[item.id] ? item.cost * .45 : 0), 0);
-      const value = Math.round((base * (.38 + condition * .52) + equipmentValue) / 100) * 100;
-      return `${value.toLocaleString()} CR`;
+      return Math.round((base * (.38 + condition * .52) + equipmentValue) / 100) * 100;
+    }
+
+    function shipCargoCap(modelName) {
+      return playerBaseCargoCap(modelName) + (game.equipment.cargoBay ? 15 : 0);
+    }
+
+    function shipyardHullList() {
+      return authorizedShipList().filter((model) => Number.isFinite(shipPurchasePrice(model)) || ownedShipList().includes(model));
     }
 
     function shipLore(model, personal = false) {
@@ -18040,6 +18155,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       });
       attachLocalMapDrag();
       panelBody.querySelectorAll("[data-equip]").forEach((b) => b.addEventListener("click", () => buyEquipment(b.dataset.equip)));
+      panelBody.querySelectorAll("[data-shipyard-buy]").forEach((b) => b.addEventListener("click", () => buyShip(b.dataset.shipyardBuy)));
       panelBody.querySelectorAll("[data-ship-nav]").forEach((b) => b.addEventListener("click", () => cycleShipDiagram(Number(b.dataset.shipNav))));
       panelBody.querySelectorAll("[data-shipselect]").forEach((select) => select.addEventListener("change", () => {
         shipDiagramState.model = select.value;
