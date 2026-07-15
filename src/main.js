@@ -3224,6 +3224,10 @@
       }, 0);
     }
 
+    function isMissionCargoObject(o) {
+      return !!o?.missionCargo;
+    }
+
     function activeMissionById(id) {
       return missionState().active.find((mission) => mission.id === id && mission.status === "active") || null;
     }
@@ -3640,8 +3644,9 @@
       game.objects.push(protectFreshDropFromLaser({
         type: "canister",
         model: "canister",
-        name: cargo.name.toUpperCase(),
+        name: `MISSION CARGO: ${cargo.name.toUpperCase()}`,
         missionCargo: { missionId: mission.id, name: cargo.name, tons: cargo.tons || 1 },
+        protectedMissionCargo: true,
         pos: add(target.pos, vec(0, 0, 34)),
         vel: vec(0, 0, -14),
         rot: 0,
@@ -5889,7 +5894,7 @@
       const objectSpeed = o.speed || (o.vel ? len(o.vel) : 0);
       const impact = clamp(5 + game.speed / 24 + objectSpeed / 70 + (o.r || 20) / 90, 7, 42);
       const arc = damagePlayer(impact, `${o.name || o.type} collision`, { sourcePos: o.pos });
-      if (Number.isFinite(o.hp)) {
+      if (!isMissionCargoObject(o) && Number.isFinite(o.hp)) {
         o.hp -= impact * (o.type === "ship" ? 1.35 : 2.6);
         if (o.hp <= 0) destroyObject(o, false);
       }
@@ -5988,8 +5993,8 @@
         a._collisionAt = now;
         b._collisionAt = now;
         const impact = clamp((len(bodyVelocity(a)) + len(bodyVelocity(b))) / 95, 1.2, 9);
-        if (Number.isFinite(a.hp)) a.hp -= impact * (b.type === "ship" ? .75 : 1.15);
-        if (Number.isFinite(b.hp)) b.hp -= impact * (a.type === "ship" ? .75 : 1.15);
+        if (!isMissionCargoObject(a) && Number.isFinite(a.hp)) a.hp -= impact * (b.type === "ship" ? .75 : 1.15);
+        if (!isMissionCargoObject(b) && Number.isFinite(b.hp)) b.hp -= impact * (a.type === "ship" ? .75 : 1.15);
         if (a.hp <= 0) destroyObject(a, false);
         if (b.hp <= 0) destroyObject(b, false);
       }
@@ -7572,6 +7577,12 @@
         return;
       }
       if (hitPos && !DEV_DISABLE_LASER_EFFECTS) spawnSmokePuffs(hitPos, best.r ? clamp(best.r / 70, .45, 1.8) : .7, best.type === "ship" ? 4 : 3);
+      if (isMissionCargoObject(best)) {
+        if (!DEV_DISABLE_LASER_EFFECTS) eliteAudio.playAt("hit", hitPos || best.pos, { range: 1400, gain: .45 });
+        addImpactShake(.1, hitPos || best.pos, 800);
+        setMessage("Mission cargo container is sealed and cannot be destroyed.", true);
+        return;
+      }
       const isRockTarget = best.type === "asteroid" || best.type === "boulder" || best.type === "splinter";
       best.hp -= isRockTarget && game.equipment.miningLaser ? laser.damage * (laser.rockMul || 2) : laser.damage;
       if (!DEV_DISABLE_LASER_EFFECTS) eliteAudio.playAt("hit", hitPos || best.pos, { range: 1400, gain: best.type === "ship" ? 1 : .82 });
@@ -7634,6 +7645,10 @@
       spawnExplosion(o.pos, .6);
       spawnSmokePuffs(o.pos, .8, 5);
       if (o.target) {
+        if (isMissionCargoObject(o.target)) {
+          setMessage("Mission cargo container survived missile impact.", true);
+          return;
+        }
         o.target.hp -= 120;
         spawnSmokePuffs(o.target.pos, clamp((o.target.r || 50) / 60, .7, 2), 7);
         setMessage(`${o.target.name} missile hit.`, true);
@@ -8109,6 +8124,11 @@
     }
 
     function destroyObject(o, byPlayer = true) {
+      if (isMissionCargoObject(o)) {
+        if (Number.isFinite(o.hp)) o.hp = Math.max(1, o.hp);
+        if (byPlayer) setMessage("Mission cargo container is sealed and cannot be destroyed.", true);
+        return;
+      }
       game.objects = game.objects.filter((x) => x !== o);
       if (o.type === "ship") {
         eliteAudio.playAt("explosion", o.pos, { range: 2400, gain: clamp(shipExplosionMagnitude(o) / 1.5, .65, 1.35) });
@@ -17285,7 +17305,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           <td><button class="btn mini" data-sell="${item.name}" ${disabled || cargo <= 0 ? "disabled" : ""}>Sell</button></td>
         </tr>`;
       }).join("");
+      const sealedCargo = missionCargoUsed();
+      const sealedNote = sealedCargo ? `<div class="notice">Sealed mission cargo: ${sealedCargo}t protected. It cannot be sold, jettisoned, or destroyed.</div>` : "";
       return `<div class="notice">Credits ${fmt(game.credits)} CR &nbsp; Cargo ${usedCargo()}/${game.cargoCap}t &nbsp; Fuel ${fmt(game.fuel)} LY</div>
+        ${sealedNote}
         <button class="btn primary" data-fuel ${fuelDisabled || disabled}>${fuelLabel}</button>
         <table><thead><tr><th>Goods</th><th>Price</th><th>Avail</th><th>Cargo</th><th></th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
     }
@@ -17425,7 +17448,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const active = state.active.filter((mission) => mission.status === "active");
       const completed = state.active.filter((mission) => mission.status === "complete").slice(-3);
       const board = game.docked ? state.board : [];
-      const cargoLine = `Cargo ${usedCargo()}/${game.cargoCap}t, including ${missionCargoUsed()}t sealed mission cargo.`;
+      const cargoLine = `Cargo ${usedCargo()}/${game.cargoCap}t, including ${missionCargoUsed()}t protected sealed mission cargo.`;
       const activeHtml = active.length
         ? active.map((mission) => renderMissionCard(mission, true)).join("")
         : `<div class="notice">No active contracts.</div>`;
