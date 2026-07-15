@@ -127,16 +127,16 @@
             <div id="selectedBitmapReadout" class="readout compact-readout">No UV selected.</div>
 
             <nav class="paint-subtabs" aria-label="Paint tools">
-              <button class="paint-subtab-btn active" data-paint-tab-target="assets" type="button">Assets</button>
-              <button class="paint-subtab-btn" data-paint-tab-target="face" type="button">Face</button>
+              <button class="paint-subtab-btn active" data-paint-tab-target="assets" type="button">Pick Existing</button>
+              <button class="paint-subtab-btn" data-paint-tab-target="face" type="button">Apply / Import</button>
               <button class="paint-subtab-btn" data-paint-tab-target="decals" type="button">Decals</button>
               <button class="paint-subtab-btn" data-paint-tab-target="templates" type="button">Templates</button>
-              <button class="paint-subtab-btn" data-paint-tab-target="project" type="button">Project</button>
+              <button class="paint-subtab-btn" data-paint-tab-target="project" type="button">Save Project</button>
             </nav>
 
             <section class="paint-tab-panel active" data-paint-tab-panel="assets">
               <section class="local-toolbox">
-                <h2>Project Assets</h2>
+                <h2>Existing Project UVs</h2>
                 <div id="localServerReadout" class="readout compact-readout">Checking local server...</div>
                 <div class="asset-filter-grid">
                   <label>Category
@@ -168,14 +168,14 @@
                 </div>
                 <div class="button-grid compact-actions">
                   <button id="refreshAssetShelfBtn">Load Matching UVs</button>
-                  <button id="reloadSkinBitmapsBtn">Reload Model Skins</button>
+                  <button id="reloadSkinBitmapsBtn">Reload Current Model UVs</button>
                 </div>
               </section>
 
               <section class="paint-group">
-                <h2>UV Picker</h2>
+                <h2>Selected Existing UV</h2>
                 <div id="bitmapAssetGrid" class="bitmap-asset-grid" aria-label="Bitmap UV assets"></div>
-                <label class="asset-import-row">Add PNGs <input id="importBitmapShelf" type="file" accept="image/png,image/*" multiple></label>
+                <label class="asset-import-row">Load Temporary PNGs <input id="importBitmapShelf" type="file" accept="image/png,image/*" multiple></label>
                 <label class="shelf-select-fallback">Selected Bitmap
                   <select id="bitmapShelfSelector">
                     <option value="">No imported bitmaps</option>
@@ -189,13 +189,13 @@
 
             <section class="paint-tab-panel" data-paint-tab-panel="face">
               <section class="paint-group">
-                <h2>Apply Selected UV</h2>
+                <h2>Reuse Selected UV</h2>
                 <label class="toggle"><input id="importMirroredSkin" type="checkbox"> Apply as mirrored half UV</label>
                 <div class="bitmap-target-grid">
-                  <button id="applyShelfFaceBtn" class="primary">Apply To Face</button>
-                  <button id="applyShelfTopBtn">Top</button>
-                  <button id="applyShelfBottomBtn">Bottom</button>
-                  <button id="applyShelfBackBtn">Back</button>
+                  <button id="applyShelfFaceBtn" class="primary">Use On Face</button>
+                  <button id="applyShelfTopBtn">Use Top</button>
+                  <button id="applyShelfBottomBtn">Use Bottom</button>
+                  <button id="applyShelfBackBtn">Use Back</button>
                 </div>
               </section>
 
@@ -225,26 +225,26 @@
               </section>
 
               <section class="paint-group">
-                <h2>Quick Import</h2>
+                <h2>Import New PNG</h2>
                 <div class="skin-import-grid">
-                  <label>Top PNG <input id="importTopSkin" type="file" accept="image/png,image/*"></label>
-                  <label>Bottom PNG <input id="importBottomSkin" type="file" accept="image/png,image/*"></label>
-                  <label>Back PNG <input id="importBackSkin" type="file" accept="image/png,image/*"></label>
-                  <label>Selected Face PNG <input id="importFaceSkin" type="file" accept="image/png,image/*"></label>
+                  <label>New Top PNG <input id="importTopSkin" type="file" accept="image/png,image/*"></label>
+                  <label>New Bottom PNG <input id="importBottomSkin" type="file" accept="image/png,image/*"></label>
+                  <label>New Back PNG <input id="importBackSkin" type="file" accept="image/png,image/*"></label>
+                  <label>New Face PNG <input id="importFaceSkin" type="file" accept="image/png,image/*"></label>
                 </div>
                 <div class="button-grid compact-actions">
                   <button id="clearFaceSkinBtn">Clear Selected Face Skin</button>
                   <button id="clearAllFaceUvBtn" type="button">Clear All Face UVs</button>
-                  <button id="clearImportedSkinsBtn">Clear Preview Skins</button>
+                  <button id="clearImportedSkinsBtn">Clear Loaded Previews</button>
                 </div>
               </section>
             </section>
 
             <section class="paint-tab-panel" data-paint-tab-panel="decals">
               <section class="paint-group">
-                <h2>Add Decal</h2>
+                <h2>Reuse Selected Decal</h2>
                 <div class="button-grid compact-actions">
-                  <button id="addShelfDecalBtn">Add Selected Decal To Face</button>
+                  <button id="addShelfDecalBtn">Add Existing Decal To Face</button>
                 </div>
               </section>
 
@@ -293,7 +293,7 @@
 
             <section class="paint-tab-panel" data-paint-tab-panel="project">
               <section class="paint-group">
-                <h2>Write To Project</h2>
+                <h2>Write Files</h2>
                 <div class="button-grid compact-actions">
                   <button id="saveModelAssetBtn">Save Model</button>
                   <button id="uploadFaceSkinBtn">Upload Selected Face</button>
