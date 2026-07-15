@@ -160,6 +160,9 @@ if (js.includes('item.glass ? "#101915"')) {
 if (js.includes('detail.type === "engine" ? engineVisual.stroke : detail.stroke')) {
   throw new Error("Window/glass details must not inherit procedural outline strokes in solid mode.");
 }
+if (!js.includes('strokeStyle: wireDetails ? (detail.stroke || wireColor) : (detail.type === "engine" ? engineVisual.stroke : null)')) {
+  throw new Error("Window/glass detail strokes must stay mode-aware: Old School/wire may use authored strokes, but Ultra solid mode may only stroke engine details.");
+}
 if (!js.includes("rgba(255,255,248,.42)") || !js.includes("targetCtx.globalAlpha = clamp(item.glintAlpha ?? .58, .12, .95)")) {
   throw new Error("Window glints must keep their intended bright core and visible alpha; white-line fixes belong elsewhere.");
 }
@@ -177,6 +180,9 @@ if (js.includes("rgba(90,160,255,${.055")) {
 }
 if (js.includes("portalCtx.strokeStyle = `rgba(120,180,255")) {
   throw new Error("Station portal shimmer must not use procedural stroke lines in solid mode.");
+}
+if (!js.includes('if (portalMode === "wire")') || !js.includes("drawStationForcefieldQuad(portalCtx, points")) {
+  throw new Error("Station portal strokes must stay confined to wire mode; Ultra solid mode should draw the inset forcefield fill.");
 }
 
 const modelRoleGuards = [
@@ -445,6 +451,63 @@ function sourceEdgeEnds(edge) {
   return Array.isArray(edge) ? [Number(edge[0]), Number(edge[1])] : [Number(edge?.a), Number(edge?.b)];
 }
 
+function sourceEdgeKind(edge) {
+  return !Array.isArray(edge) && edge?.kind === "stick" ? "stick" : "edge";
+}
+
+function explicitEdgeKind(edge) {
+  if (Array.isArray(edge) || edge?.kind === undefined || edge?.kind === null) return null;
+  return String(edge.kind);
+}
+
+function expectedEdgeKindsForBlueprint(data, blueprint) {
+  if (!Array.isArray(blueprint?.edges)) return null;
+  const indexById = new Map((data.verts || []).map((vertex, index) => [sourceVertexId(vertex, index), index]));
+  const kindByKey = new Map();
+  for (const [index, edge] of (data.edges || []).entries()) {
+    const declaredKind = explicitEdgeKind(edge);
+    if (declaredKind && declaredKind !== "edge" && declaredKind !== "stick") {
+      throw new Error(`${data.id || "model"} editable edge ${index} has invalid kind "${declaredKind}". Use "edge" or "stick" so Ultra solid rendering never guesses from orphan edges.`);
+    }
+    const [sourceA, sourceB] = sourceEdgeEnds(edge);
+    const a = indexById.get(sourceA);
+    const b = indexById.get(sourceB);
+    if (a === undefined || b === undefined || a === b) continue;
+    const key = a < b ? `${a},${b}` : `${b},${a}`;
+    kindByKey.set(key, sourceEdgeKind(edge));
+  }
+  return blueprint.edges.map((edge) => {
+    if (!Array.isArray(edge) || edge.length < 2) return "edge";
+    const [a, b] = edge.map(Number);
+    const key = a < b ? `${a},${b}` : `${b},${a}`;
+    return kindByKey.get(key) || "edge";
+  });
+}
+
+function assertGeneratedEdgeKinds(label, data, blueprint) {
+  const expected = expectedEdgeKindsForBlueprint(data, blueprint);
+  if (!expected) return;
+  if (!Array.isArray(blueprint.edgeKinds)) {
+    throw new Error(`${label} is missing generated edgeKinds. Build-time metadata must classify edges vs sticks so the renderer does not infer sticks from orphan edges.`);
+  }
+  if (blueprint.edgeKinds.length !== expected.length) {
+    throw new Error(`${label} edgeKinds length ${blueprint.edgeKinds.length} does not match edges length ${expected.length}.`);
+  }
+  for (const [index, kind] of blueprint.edgeKinds.entries()) {
+    if (kind !== "edge" && kind !== "stick") {
+      throw new Error(`${label} edgeKinds[${index}] has invalid kind "${kind}".`);
+    }
+    if (kind !== expected[index]) {
+      throw new Error(`${label} edgeKinds[${index}] is "${kind}" but editable edge intent resolves to "${expected[index]}". Run npm run models or npm run build.`);
+    }
+  }
+}
+
+function assertOptionalEmbeddedEdgeKinds(label, data, blueprint) {
+  if (!Array.isArray(blueprint?.edgeKinds)) return;
+  assertGeneratedEdgeKinds(label, data, blueprint);
+}
+
 for (const [modelId, model] of Object.entries(builderModels)) {
   const vertexIds = new Set((model.verts || []).map(sourceVertexId));
   for (const [index, face] of (model.faces || []).entries()) {
@@ -459,6 +522,7 @@ for (const [modelId, model] of Object.entries(builderModels)) {
       throw new Error(`tools/ship-builder/game-model-library.js has an unnormalizable edge for ${modelId} at index ${index}.`);
     }
   }
+  assertGeneratedEdgeKinds(`tools/ship-builder/game-model-library.js ${modelId}`, model, model.blueprint);
 }
 
 if (fs.existsSync(modelDir)) {
@@ -489,6 +553,8 @@ if (fs.existsSync(modelDir)) {
     const hasFaceMirrorX = faceMirrorX.some(Boolean);
     const hasFaceDecals = faceDecals.some((decals) => decals?.length);
     const usesOnlyFaceTextures = sourceFaces.length > 0 && faceTextures.every(Boolean);
+    assertOptionalEmbeddedEdgeKinds(`${path.relative(root, filePath)} embedded blueprint`, data, data.blueprint);
+    assertGeneratedEdgeKinds(`${path.relative(root, filePath)} generated blueprint`, data, generatedModels[modelId]);
     if (!hasFaceSides && !hasFaceTextures && !hasFaceTextureUv && !hasFaceTextureBaseW && !hasFaceTextureBaseH && !hasAuthoredFaceColors && !hasFaceAngles && !hasFaceMirrorX && !hasFaceDecals) continue;
 
     const generatedProjection = generatedModels[modelId]?.imageProjection || {};
@@ -516,6 +582,9 @@ if (fs.existsSync(modelDir)) {
       }
       if (faceTextureUv[faceIndex] && (!faceTextureBaseW[faceIndex] || !faceTextureBaseH[faceIndex])) {
         throw new Error(`${path.relative(root, filePath)} face ${faceIndex} has authored bitmapUv without bitmapBaseW/bitmapBaseH.`);
+      }
+      if (faceTextureUv[faceIndex] && faceAngles[faceIndex] != null) {
+        throw new Error(`${path.relative(root, filePath)} face ${faceIndex} has explicit bitmapUv plus bitmapAngle. Bake the rotation into authored UVs so the renderer does not apply extra draw-time intent.`);
       }
     });
     if ((hasFaceTextures || hasAuthoredFaceColors) && (!Array.isArray(generatedProjection.faceColors) || generatedProjection.faceColors.length !== sourceFaces.length)) {
