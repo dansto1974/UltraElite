@@ -561,13 +561,39 @@
       return { pos: cam.pos, q: quatNorm(quatMul(cam.q, quatFromAxisAngle(vec(0, 1, 0), VIEW_YAW[mode]))) };
     }
 
-    function setViewMode(mode) {
-      if (!(mode in VIEW_LABELS)) return;
-      game.viewMode = mode;
-      // The CSS crosshair belongs to the forward (weapons) view only.
+    function transitionLocksView() {
+      return !!game.transition || !!game.jumpCountdown;
+    }
+
+    function syncViewPresentation() {
+      const mode = game.viewMode || "fwd";
       const cross = document.querySelector(".crosshair");
-      if (cross) cross.style.display = mode === "fwd" ? "" : "none";
-      if (space) space.style.cursor = mode === "ext" && !game.docked ? "grab" : "";
+      const showReticle = mode === "fwd" && !game.docked && !transitionLocksView() && !game.playerDestroyed;
+      if (cross) cross.style.display = showReticle ? "" : "none";
+      if (space) space.style.cursor = mode === "ext" && !game.docked && !transitionLocksView() ? "grab" : "";
+    }
+
+    function forceTransitionViewMode() {
+      game.viewMode = "fwd";
+      syncViewPresentation();
+    }
+
+    function setViewMode(mode, opts = {}) {
+      if (!(mode in VIEW_LABELS)) return false;
+      if (!opts.force && transitionLocksView() && mode !== "fwd") {
+        forceTransitionViewMode();
+        if (!opts.silent) {
+          const now = performance.now();
+          if (!game._viewLockNoticeAt || now - game._viewLockNoticeAt > 900) {
+            game._viewLockNoticeAt = now;
+            setMessage("View locked during transition.", true);
+          }
+        }
+        return false;
+      }
+      game.viewMode = mode;
+      syncViewPresentation();
+      return true;
     }
 
     const DECAL_TEXTURE_SIZE = 400;
@@ -3600,18 +3626,19 @@
       return true;
     }
 
-    function completeDockedMissions({ announce = true } = {}) {
+    function completeDockedMissions({ announce = true, queueDialogs = true, detailed = false } = {}) {
       const completed = [];
       for (const mission of missionState().active) {
         if (!missionReadyForDockCompletion(mission)) continue;
         if (completeMission(mission)) completed.push(mission);
       }
-      if (!completed.length) return "";
+      if (!completed.length) return detailed ? { message: "", completed: [] } : "";
       const total = completed.reduce((sum, mission) => sum + (Number(mission.reward?.credits) || 0), 0);
       const names = completed.map((mission) => mission.title).slice(0, 2).join("; ");
       if (announce) commsMessage(stationCommsName(), `Mission office confirms completion: ${names}.`, "station");
-      queueMissionCompleteDialogs(completed);
-      return `${completed.length} mission${completed.length === 1 ? "" : "s"} completed. ${fmt(total)} CR paid.`;
+      if (queueDialogs) queueMissionCompleteDialogs(completed);
+      const message = `${completed.length} mission${completed.length === 1 ? "" : "s"} completed. ${fmt(total)} CR paid.`;
+      return detailed ? { message, completed } : message;
     }
 
     function failActiveMissions(reason) {
@@ -6098,6 +6125,7 @@
     // finishes, so save data / game state is never in a "half-jumped" condition.
     function startTransition(kind, dur, onComplete, extra = {}) {
       game.transition = { kind, t: 0, dur, onComplete, ...extra };
+      forceTransitionViewMode();
     }
 
     function jumpTransitionProgress(tr) {
@@ -6323,6 +6351,7 @@
 
     function startJumpCountdown(kind, dur, label, onComplete, extra = {}) {
       game.jumpCountdown = { kind, t: 0, dur, countdownLabel: label, onComplete, ...extra };
+      forceTransitionViewMode();
     }
 
     function updateJumpTrajectoryControl(jc, dt) {
@@ -6355,6 +6384,7 @@
       if (jc.t < jc.dur) return;
       game.jumpCountdown = null;
       jc.onComplete();
+      syncViewPresentation();
     }
 
     const FRESH_DROP_LASER_GRACE_MS = 3500;
@@ -7244,7 +7274,8 @@
           game.fuel = clamp(game.fuel + 0.2, 0, 7);
           game.legal = Math.max(0, game.legal - 2);
           game.dockScene = makeDockScene(st.name, hullRepaired, repairLine, preRepairMarks);
-          const missionDockLine = completeDockedMissions();
+          const missionDockResult = completeDockedMissions({ detailed: true, queueDialogs: false });
+          const missionDockLine = missionDockResult.message;
           refreshMissionBoardOnDock();
           const completeDock = () => {
             if (!game.dockScene?._sequenceServiceComms) {
@@ -7254,6 +7285,7 @@
             const welcome = hullRepaired ? `Welcome to ${st.name}. Free hull repair complete.` : `Welcome to ${st.name}.`;
             setMessage(missionDockLine ? `${welcome} ${missionDockLine}` : welcome, true);
             renderPanel();
+            queueMissionCompleteDialogs(missionDockResult.completed);
           };
           if (ultraFxEnabled()) startTransition("dockHangar", 10.2, completeDock, { scene: game.dockScene });
           else completeDock();
@@ -8375,6 +8407,7 @@
       if (!tr || tr.kind !== "death" || !tr.waitingForRestart) return false;
       game.transition = null;
       tr.onComplete();
+      syncViewPresentation();
       return true;
     }
 
@@ -8720,8 +8753,9 @@
       renderPanel();
     }
 
-    const GAME_VERSION = "1.0.18-beta";
+    const GAME_VERSION = "1.0.19-beta";
     const UPDATE_LOG = [
+      ["1.0.19-beta", "Mission and dockyard polish: active contracts now report ship requirements more clearly, mission completion debriefs wait until landing is complete, and transition cameras lock the cockpit view cleanly."],
       ["1.0.18-beta", "Launch loading now gates the cockpit until assets are ready, Safari planet shadows are safer, and station/police beacons have clearer sequenced strobe behaviour."],
       ["1.0.17-beta", "Station render polish: bitmap faces, entrance forcefields, beacons and hangar transitions now line up more cleanly."],
       ["1.0.16-beta", "Escape capsule fix: ejecting now clears your legal status properly when you are recovered at Lave."],
@@ -9326,6 +9360,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         } else if (tr.t >= tr.dur) {
           game.transition = null;
           tr.onComplete();
+          syncViewPresentation();
         }
       } else if (!game.docked) {
         timeSimPhase("control", () => {
@@ -17457,11 +17492,15 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ? mission.requirements.map((req) => missing.some((m) => m.id === req.id) ? `${req.label} required` : `${req.label} fitted`).join(" · ")
         : "None";
       const canAccept = game.docked && !active && !missing.length && (!mission.cargo || usedCargo() + (Number(mission.cargo.tons) || 0) <= game.cargoCap);
-      return `<div class="notice mission-card">
+      const requirementWarning = active && missing.length
+        ? `<div class="mission-requirement-warning">Current ship does not meet mission requirements: ${escapeHtml(missing.map((req) => req.label).join(", "))}</div>`
+        : "";
+      return `<div class="notice mission-card${requirementWarning ? " mission-card-warning" : ""}">
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
           <strong class="about-heading">${escapeHtml(type)} · ${escapeHtml(mission.title)}</strong>
           <span style="color:var(--amber);white-space:nowrap">${escapeHtml(heat)}</span>
         </div>
+        ${requirementWarning}
         <p>${escapeHtml(mission.description)}</p>
         <div class="grid2">
           ${stat("Issuer", escapeHtml(mission.issuer))}
@@ -17794,9 +17833,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       };
       const ownedRows = owned.map((model) => card(model, "owned")).join("");
       const saleRows = saleHulls.map((model) => card(model, "sale")).join("");
-      return `<div class="notice" style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
-          <span>Credits ${fmt(game.credits)} CR. Local tech level ${localTech}. Owned ships can be readied for free; new purchases are delivered dockside and movable equipment is transferred.</span>
-          <button class="btn mini" data-shipyard-market ${docked ? "" : "disabled"}>Open Market</button>
+      return `<div class="notice dockyard-summary">
+          Credits ${fmt(game.credits)} CR. Local tech level ${localTech}. Owned ships can be readied for free; new purchases are delivered dockside and movable equipment is transferred.
         </div>
         <strong class="about-heading">Your Ships</strong>
         ${ownedRows || `<div class="notice">No owned ships registered. Replacement Cobra available from station stores.</div>`}
@@ -18319,11 +18357,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       panelBody.querySelectorAll("[data-equip]").forEach((b) => b.addEventListener("click", () => buyEquipment(b.dataset.equip)));
       panelBody.querySelectorAll("[data-shipyard-buy]").forEach((b) => b.addEventListener("click", () => buyShip(b.dataset.shipyardBuy)));
       panelBody.querySelectorAll("[data-shipyard-sell]").forEach((b) => b.addEventListener("click", () => sellShip(b.dataset.shipyardSell)));
-      const shipyardMarket = panelBody.querySelector("[data-shipyard-market]");
-      if (shipyardMarket) shipyardMarket.addEventListener("click", () => {
-        game.panel = "market";
-        renderPanel();
-      });
       drawShipyardThumbnails();
       panelBody.querySelectorAll("[data-ship-nav]").forEach((b) => b.addEventListener("click", () => cycleShipDiagram(Number(b.dataset.shipNav))));
       panelBody.querySelectorAll("[data-shipselect]").forEach((select) => select.addEventListener("change", () => {
