@@ -3139,6 +3139,7 @@
       courier: "Courier",
       cargo: "Freight",
       bounty: "Bounty",
+      suppression: "Pirate Suppression",
       recovery: "Recovery",
       naval: "Naval"
     };
@@ -3161,6 +3162,7 @@
       courier: ["Lloyd's Interstellar", "GalCop Dispatch", "Free Traders' Exchange", "Station Records Office"],
       cargo: ["Sirius Cybernetics", "Zieman Logistics", "Wiccan Warehousing", "Orbital Materials Trust"],
       bounty: ["GalCop Warrants", "Station Security", "Pilot's Protective Guild", "Local Justice Office"],
+      suppression: ["Station Security", "GalCop Patrol Liaison", "Local Defence Office", "Trade Lane Authority"],
       recovery: ["Sirius Recovery Bureau", "Tionisla Data Factors", "Corporate Salvage Board", "Insurance Underwriters"],
       naval: ["GalCop Naval Intelligence", "Sector Naval Command", "Federal Liaison Office", "Joint Xeno Desk"]
     };
@@ -3172,6 +3174,7 @@
       { id: "starterCourier", label: "Starter Courier", type: "courier", opts: { starter: true, rewardCredits: 65, rankPoints: 1, titlePrefix: "Dev starter courier" } },
       { id: "starterFreight", label: "Starter Freight", type: "cargo", opts: { starter: true, cargoItem: "station mailbag", rewardCredits: 75, rankPoints: 1, titlePrefix: "Dev starter freight" } },
       { id: "privateBounty", label: "Private Bounty", type: "bounty", opts: { heat: 2, legalClass: "private", targetModel: "mamba", rewardCredits: 520, rankPoints: 2 } },
+      { id: "pirateSuppression", label: "Pirate Sweep", type: "suppression", opts: { heat: 2, legalClass: "sanctioned", suppressionKills: 4, rewardCredits: 860, rankPoints: 2 } },
       { id: "sanctionedRecovery", label: "Recovery", type: "recovery", opts: { heat: 3, legalClass: "sanctioned", targetModel: "krait", recoveryName: "stolen prototype computer", rewardCredits: 790, rankPoints: 2 } },
       { id: "thargoidNaval", label: "Thargoid Naval", type: "naval", opts: { heat: 4, legalClass: "military", targetModel: "thargoid", recoveryName: "alien alloy panel", loan: { id: "navalEcm", name: "Long-range Naval ECM", keepChance: 0 }, rewardCredits: 1250, rankPoints: 5, noRandomSpecialRewards: true } },
       { id: "loanLaser", label: "Loan Laser", type: "naval", opts: { heat: 4, legalClass: "military", targetModel: "asp", loan: { id: "navalOverchargeLaser", name: "Overcharged Naval Laser", keepChance: 0 }, rewardCredits: 1100, rankPoints: 4, noRandomSpecialRewards: true } },
@@ -3236,6 +3239,8 @@
         ? [[1, 7], [1, 10], [1, 14]]
         : type === "naval"
         ? [[18, 64], [8, 42], [4, 28]]
+        : type === "suppression"
+          ? [[3, 18], [1, 12], [18, 34]]
         : type === "courier"
           ? [[4, 14], [14, 30], [1, 8]]
           : [[7, 34], [2, 16], [20, 42]];
@@ -3252,6 +3257,7 @@
         courier: 90,
         cargo: 145,
         bounty: 320,
+        suppression: 300,
         recovery: 430,
         naval: 620
       }[type] || 120;
@@ -3265,9 +3271,9 @@
       };
       if (dist > 18 || heat >= 3) addReq("fuelScoop", "Fuel Scoop");
       if (type === "recovery" || type === "naval") addReq("fuelScoop", "Fuel Scoop");
-      if ((type === "bounty" || type === "recovery") && heat >= 2) addReq("upgradedLaser", "Beam, mining or military laser");
+      if ((type === "bounty" || type === "recovery" || type === "suppression") && heat >= 2) addReq("upgradedLaser", "Beam, mining or military laser");
       if (type === "naval" && mission?.loan?.id !== "navalOverchargeLaser") addReq("upgradedLaser", "Beam, mining or military laser");
-      if (type === "naval" || heat >= 4) addReq("extraEnergy", "Extra Energy Unit");
+      if (type === "naval" || heat >= 4 || (type === "suppression" && heat >= 3)) addReq("extraEnergy", "Extra Energy Unit");
       if (heat >= 3 && type === "cargo") addReq("ecm", "E.C.M. System");
       return requirements;
     }
@@ -3291,6 +3297,7 @@
 
     function missionLegalClass(type, rng) {
       if (type === "naval") return "military";
+      if (type === "suppression") return "sanctioned";
       const sys = currentSystem();
       const anarchyBias = clamp((3 - sys.government) / 4, 0, .45);
       if (type === "bounty" && rng() < .14 + anarchyBias) return "private";
@@ -3303,10 +3310,13 @@
       const starter = !!opts.starter;
       const to = missionDestination(rng, from, type, opts);
       const dist = distance(from, to);
-      const heat = Number.isFinite(opts.heat) ? opts.heat : starter ? 0 : type === "naval" ? 3 + Math.floor(rng() * 2) : type === "recovery" ? 2 + Math.floor(rng() * 2) : type === "cargo" ? Math.floor(rng() * 3) : type === "bounty" ? 1 + Math.floor(rng() * 2) : Math.floor(rng() * 2);
+      const heat = Number.isFinite(opts.heat) ? opts.heat : starter ? 0 : type === "naval" ? 3 + Math.floor(rng() * 2) : type === "recovery" ? 2 + Math.floor(rng() * 2) : type === "suppression" ? 1 + Math.floor(rng() * 3) : type === "cargo" ? Math.floor(rng() * 3) : type === "bounty" ? 1 + Math.floor(rng() * 2) : Math.floor(rng() * 2);
       const issuer = missionChoice(rng, MISSION_ISSUERS[type] || MISSION_ISSUERS.courier);
       const id = `m-${game.galaxy}-${from.index}-${missionState().dockSerial}-${ordinal}-${Math.floor(rng() * 0xffffff).toString(36)}`;
-      const rewardCredits = Number.isFinite(opts.rewardCredits) ? opts.rewardCredits : missionRewardBase(type, dist, rng, heat, opts);
+      const suppressionRequired = type === "suppression"
+        ? clamp(Math.trunc(Number.isFinite(opts.suppressionKills) ? opts.suppressionKills : 3 + Math.floor(rng() * 8) + Math.floor(heat / 2)), 2, 10)
+        : 0;
+      const rewardCredits = Number.isFinite(opts.rewardCredits) ? opts.rewardCredits : missionRewardBase(type, dist, rng, heat, opts) + suppressionRequired * 85;
       const legalClass = opts.legalClass || (starter ? "sanctioned" : missionLegalClass(type, rng));
       const mission = {
         id,
@@ -3321,8 +3331,8 @@
         heat,
         reward: {
           credits: rewardCredits,
-          rankPoints: Number.isFinite(opts.rankPoints) ? opts.rankPoints : starter ? 1 : type === "naval" ? 4 + Math.floor(dist / 14) : type === "bounty" || type === "recovery" ? 2 : 1,
-          legalClearance: opts.legalClearance !== undefined ? opts.legalClearance : legalClass === "private" ? 0 : type === "naval" ? "clean" : type === "bounty" ? 4 : type === "cargo" ? 2 : 1
+          rankPoints: Number.isFinite(opts.rankPoints) ? opts.rankPoints : starter ? 1 : type === "naval" ? 4 + Math.floor(dist / 14) : type === "suppression" ? Math.max(2, Math.ceil(suppressionRequired / 3)) : type === "bounty" || type === "recovery" ? 2 : 1,
+          legalClearance: opts.legalClearance !== undefined ? opts.legalClearance : legalClass === "private" ? 0 : type === "naval" ? "clean" : type === "suppression" ? 3 : type === "bounty" ? 4 : type === "cargo" ? 2 : 1
         },
         status: "board"
       };
@@ -3343,6 +3353,10 @@
           : type === "cargo"
             ? `${issuer} needs a sealed ${item} moved to ${to.name}. The item is not market cargo and must remain sealed.`
           : `${issuer} requests a discreet data handoff at ${to.name}. No cargo space required.`;
+      } else if (type === "suppression") {
+        mission.suppression = { required: suppressionRequired, destroyed: 0 };
+        mission.title = `Pirate suppression at ${to.name}`;
+        mission.description = `${issuer} reports sustained pirate activity around ${to.name}. Destroy ${suppressionRequired} pirate vessel${suppressionRequired === 1 ? "" : "s"} in-system; station records will honour the contract across multiple sorties.`;
       } else {
         const model = opts.targetModel || missionTargetModel(rng, type);
         const targetName = opts.targetName || (model === "thargoid"
@@ -3400,6 +3414,7 @@
         if (roll < .24 - anarchyBias * .08) type = "courier";
         else if (roll < .52 + corporateBias * .16) type = "cargo";
         else if (roll < .76 + anarchyBias * .12) type = "bounty";
+        else if (roll < .86 + anarchyBias * .18) type = "suppression";
         else if (roll < .975 + anarchyBias * .12 + corporateBias * .06) type = "recovery";
         else type = "naval";
         if (rng() < navalBias * .22) type = "naval";
@@ -3472,7 +3487,7 @@
       const commander = `Commander ${game.commander || "Jameson"}`;
       if (mission.legalClass === "military" || mission.type === "naval") {
         lines.push(`Thanks for your service, ${commander}. Sector command confirms that ${mission.title} is complete.`);
-      } else if (mission.type === "bounty" || mission.type === "recovery") {
+      } else if (mission.type === "bounty" || mission.type === "recovery" || mission.type === "suppression") {
         lines.push(`Contract closed, ${commander}. ${mission.issuer || "The issuer"} confirms the target work is complete.`);
       } else {
         lines.push(`Thank you, ${commander}. ${mission.issuer || "The mission office"} confirms delivery at ${mission.destination?.name || currentSystem().name}.`);
@@ -3542,6 +3557,7 @@
       if (!mission || mission.status !== "active" || !sameSystemRef(mission.destination)) return false;
       if (mission.type === "courier") return true;
       if (mission.cargo) return mission.cargo.held;
+      if (mission.suppression) return (Number(mission.suppression.destroyed) || 0) >= (Number(mission.suppression.required) || 1);
       if (mission.target && !mission.target.destroyed) return false;
       if (mission.recovery?.required && !mission.recovery.held) return false;
       return true;
@@ -3577,6 +3593,31 @@
       if (!mission) return null;
       if (mission.legalClass === "military" || mission.legalClass === "sanctioned") return "authorised";
       return "private";
+    }
+
+    function activeSuppressionMissionsHere() {
+      return missionState().active.filter((mission) =>
+        mission.status === "active"
+        && mission.type === "suppression"
+        && mission.suppression
+        && sameSystemRef(mission.destination)
+        && (Number(mission.suppression.destroyed) || 0) < (Number(mission.suppression.required) || 1)
+      );
+    }
+
+    function pirateSuppressionEligibleKill(o) {
+      return !!o && o.type === "ship" && o.hostile && o.role === "pirate" && !o.police && !isAlienShip(o);
+    }
+
+    function recordPirateSuppressionKill(o) {
+      if (!pirateSuppressionEligibleKill(o)) return [];
+      const updated = [];
+      for (const mission of activeSuppressionMissionsHere()) {
+        const required = Number(mission.suppression.required) || 1;
+        mission.suppression.destroyed = clamp((Number(mission.suppression.destroyed) || 0) + 1, 0, required);
+        updated.push(mission);
+      }
+      return updated;
     }
 
     function spawnMissionDrop(target, mission) {
@@ -6877,11 +6918,36 @@
       return count;
     }
 
+    function spawnSuppressionPirates(rng = Math.random, liveShipCount = 0) {
+      const missions = activeSuppressionMissionsHere();
+      if (!missions.length) return 0;
+      const remaining = Math.max(...missions.map((mission) => Math.max(0, (Number(mission.suppression.required) || 1) - (Number(mission.suppression.destroyed) || 0))));
+      const room = Math.max(0, 7 - liveShipCount);
+      if (!room) return 0;
+      const count = Math.min(room, 1 + (remaining > 2 && rng() < .38 ? 1 : 0));
+      for (let i = 0; i < count; i++) {
+        const pirate = spawnShip(rng, true);
+        pirate.suppressionContact = true;
+      }
+      game.missionPirateDelay = 16 + count * 7 + rng() * 16;
+      return count;
+    }
+
     function spawnAmbientEncounter(dt, liveShipCount) {
       game.extraVesselDelay = Math.max(0, (game.extraVesselDelay || 0) - dt);
+      game.missionPirateDelay = Math.max(0, (game.missionPirateDelay || 0) - dt);
       if (game.witchspace) return;
-      if (Math.random() >= dt * .035 || liveShipCount >= 7) return;
       const safeZone = stationSafeZoneActive();
+      const suppressionMissions = activeSuppressionMissionsHere();
+      if (suppressionMissions.length && !safeZone && liveShipCount < 7) {
+        const remaining = Math.max(...suppressionMissions.map((mission) => Math.max(0, (Number(mission.suppression.required) || 1) - (Number(mission.suppression.destroyed) || 0))));
+        const pressure = clamp(remaining / 10, .25, 1);
+        if (game.missionPirateDelay <= 0 || Math.random() < dt * (.045 + pressure * .055)) {
+          spawnSuppressionPirates(Math.random, liveShipCount);
+          return;
+        }
+      }
+      if (Math.random() >= dt * .035 || liveShipCount >= 7) return;
       const gov = currentSystem().government;
       const extraChance = safeZone ? 0 : extraVesselChanceForGovernment(gov);
       if (game.extraVesselDelay <= 0 && Math.random() < extraChance) {
@@ -8083,11 +8149,19 @@
           game.legal += o.police ? 24 : 5;
         } else if (o.police || !o.hostile) game.legal += o.police ? 24 : 8;
         else game.legal = Math.max(0, game.legal - 1);
-        const missionText = mission
-          ? mission.recovery?.required ? ` Mission target destroyed. Recover ${mission.recovery.name}.` : " Mission target destroyed. Dock for payment."
-          : "";
+        const suppressionUpdates = recordPirateSuppressionKill(o);
+        const missionBits = [];
+        if (mission) missionBits.push(mission.recovery?.required ? `Mission target destroyed. Recover ${mission.recovery.name}.` : "Mission target destroyed. Dock for payment.");
+        for (const update of suppressionUpdates) {
+          const required = Number(update.suppression.required) || 1;
+          const destroyed = Number(update.suppression.destroyed) || 0;
+          missionBits.push(destroyed >= required
+            ? `Pirate suppression complete (${destroyed}/${required}). Dock for payment.`
+            : `Pirate suppression progress ${destroyed}/${required}.`);
+        }
+        const missionText = missionBits.length ? ` ${missionBits.join(" ")}` : "";
         setMessage(`${o.name} destroyed. ${o.bounty ? `Bounty ${o.bounty} CR.` : "Debris detected."}${missionText}`, true);
-        if (mission && game.panelOpen && game.panel === "missions") renderPanel();
+        if ((mission || suppressionUpdates.length) && game.panelOpen && game.panel === "missions") renderPanel();
       } else if (o.type === "canister" || o.type === "plate") {
         scoopCargo(o);
       } else if (o.type === "asteroid") {
@@ -17145,6 +17219,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const bits = [];
       bits.push(atDestination ? `In ${mission.destination.name}` : `Destination ${mission.destination.name} (${fmt(mission.distanceLy)} LY)`);
       if (mission.cargo?.held) bits.push(`${mission.cargo.tons}t sealed cargo aboard`);
+      if (mission.suppression) bits.push(`${Number(mission.suppression.destroyed) || 0}/${Number(mission.suppression.required) || 1} pirates destroyed`);
       if (mission.target) bits.push(mission.target.destroyed ? "target destroyed" : mission.target.spawned ? "target active" : "target not found");
       if (mission.recovery?.required) bits.push(mission.recovery.held ? `${mission.recovery.name} recovered` : `${mission.recovery.name} required`);
       if (mission.loan) bits.push(`${mission.loan.name} on loan`);
@@ -17218,7 +17293,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function renderMissionCard(mission, active = false) {
       const type = MISSION_TYPES[mission.type] || mission.type;
       const heat = mission.heat ? "●".repeat(Math.min(4, mission.heat)) : "none";
-      const cargo = mission.cargo ? `${mission.cargo.tons}t ${mission.cargo.name}` : mission.recovery ? `recover ${mission.recovery.name}` : "none";
+      const cargo = mission.cargo ? `${mission.cargo.tons}t ${mission.cargo.name}` : mission.suppression ? `destroy ${mission.suppression.required} pirates` : mission.recovery ? `recover ${mission.recovery.name}` : "none";
       const missing = missingMissionRequirements(mission);
       const requirements = mission.requirements?.length
         ? mission.requirements.map((req) => missing.some((m) => m.id === req.id) ? `${req.label} required` : `${req.label} fitted`).join(" · ")
