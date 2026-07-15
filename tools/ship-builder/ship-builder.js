@@ -3622,15 +3622,19 @@ function createSelectedFaceTemplateCanvas() {
 
 function selectedFaceTextureMapping(face, options = {}) {
   if (Array.isArray(face?.bitmapUv) && face.bitmapUv.length >= 3) {
-    const uv = face.bitmapUv.map((p) => ({ x: Number(p[0]) || 0, y: Number(p[1]) || 0 }));
+    const rawUv = face.bitmapUv.map((p) => ({ x: Number(p[0]) || 0, y: Number(p[1]) || 0 }));
+    const width = Math.max(1, Math.round(Number(face.bitmapBaseW) || TEMPLATE_SIZE));
+    const height = Math.max(1, Math.round(Number(face.bitmapBaseH) || TEMPLATE_SIZE));
+    const angle = options.applyAngle === false ? 0 : normalizeBitmapAngle(face.bitmapAngle);
+    const uv = angle ? rawUv.map((p) => rotateTemplatePoint(p, width, height, angle)) : rawUv;
     return {
       side: templateSideForFace(face),
       project: (p) => p,
       uv,
-      rawUv: uv,
-      angle: 0,
-      width: Math.max(1, Math.round(Number(face.bitmapBaseW) || TEMPLATE_SIZE)),
-      height: Math.max(1, Math.round(Number(face.bitmapBaseH) || TEMPLATE_SIZE)),
+      rawUv,
+      angle,
+      width,
+      height,
       minX: 0,
       minY: 0,
       pad: 0
@@ -5032,6 +5036,7 @@ function derivedBlueprint() {
   });
   const edgeEntries = [...edgeMap.values()];
   const edges = edgeEntries.map((e) => e.edge);
+  const edgeKinds = edgeEntries.map((e) => e.kind === "stick" ? "stick" : "edge");
   const edgeFaces = edgeEntries.map((e) => {
     const unique = [...new Set(e.faces)];
     if (!unique.length) return [-1, -1];
@@ -5116,6 +5121,7 @@ function derivedBlueprint() {
     verts,
     faces,
     edges,
+    edgeKinds,
     edgeFaces,
     edgeVisibility,
     normals,

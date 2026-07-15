@@ -174,7 +174,7 @@
       "faceColor": "#495053",
       "bitmapSide": "top",
       "bitmapFaceKey": "station_panel",
-      "bitmapAngle": 90,
+      "bitmapAngle": 45,
       "bitmapMirrorX": true
     },
     {
@@ -198,10 +198,10 @@
         1
       ],
       "mirrored": false,
+      "faceColor": "#495053",
       "bitmapSide": "top",
       "bitmapFaceKey": "station_panel",
-      "bitmapMirrorX": true,
-      "faceColor": "#495053"
+      "bitmapMirrorX": true
     },
     {
       "id": 1003,
@@ -211,10 +211,10 @@
         7
       ],
       "mirrored": false,
+      "faceColor": "#495053",
       "bitmapSide": "top",
       "bitmapFaceKey": "station_panel",
-      "bitmapMirrorX": true,
-      "faceColor": "#495053"
+      "bitmapMirrorX": true
     },
     {
       "id": 1004,
@@ -280,10 +280,10 @@
         2
       ],
       "mirrored": false,
+      "faceColor": "#495053",
       "bitmapSide": "top",
       "bitmapFaceKey": "station_panel",
-      "bitmapMirrorX": true,
-      "faceColor": "#495053"
+      "bitmapMirrorX": true
     },
     {
       "id": 1009,
@@ -491,6 +491,84 @@
         160
       ]
     ],
+    "faces": [
+      [
+        1,
+        2,
+        3,
+        0
+      ],
+      [
+        0,
+        3,
+        4
+      ],
+      [
+        5,
+        1,
+        0
+      ],
+      [
+        2,
+        1,
+        6
+      ],
+      [
+        7,
+        3,
+        2
+      ],
+      [
+        11,
+        4,
+        3,
+        7
+      ],
+      [
+        5,
+        0,
+        4,
+        8
+      ],
+      [
+        10,
+        7,
+        2,
+        6
+      ],
+      [
+        5,
+        9,
+        6,
+        1
+      ],
+      [
+        11,
+        7,
+        10
+      ],
+      [
+        8,
+        4,
+        11
+      ],
+      [
+        8,
+        9,
+        5
+      ],
+      [
+        6,
+        9,
+        10
+      ],
+      [
+        10,
+        9,
+        8,
+        11
+      ]
+    ],
     "edges": [
       [
         1,
@@ -604,6 +682,36 @@
         12,
         15
       ]
+    ],
+    "edgeKinds": [
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge"
     ],
     "edgeFaces": [
       [
@@ -893,7 +1001,7 @@
         "#495053"
       ],
       "faceAngles": [
-        90,
+        45,
         null,
         null,
         null,

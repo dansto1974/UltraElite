@@ -1021,7 +1021,40 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#808b96",
           "#85909d"
         ]
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     }
   },
   "anaconda": {
@@ -2058,7 +2091,34 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "escapePod": true,
           "hiddenUntilDiscovered": false
         }
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     }
   },
   "asp": {
@@ -2965,7 +3025,37 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#5a5961",
           "#333435"
         ]
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "stick"
+      ]
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -3693,7 +3783,30 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "escapePod": true,
           "hiddenUntilDiscovered": false
         }
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     }
   },
   "boa": {
@@ -4437,7 +4550,33 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#858377",
           "#5b594a"
         ]
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -4989,7 +5128,24 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "escapePod": true,
           "hiddenUntilDiscovered": false
         }
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     }
   },
   "canister": {
@@ -5424,7 +5580,24 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           null,
           "end_panel"
         ]
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -6719,7 +6892,47 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#babfc3",
           "#9ba6b5"
         ]
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "stick",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -7435,7 +7648,27 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#3c4447",
           "#3c4447"
         ]
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -8312,7 +8545,33 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#373333",
           "#464544"
         ]
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -8498,7 +8757,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#495053",
         "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapAngle": 90,
+        "bitmapAngle": 45,
         "bitmapMirrorX": true
       },
       {
@@ -8522,10 +8781,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1
         ],
         "mirrored": false,
+        "faceColor": "#495053",
         "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapMirrorX": true,
-        "faceColor": "#495053"
+        "bitmapMirrorX": true
       },
       {
         "id": 1003,
@@ -8535,10 +8794,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7
         ],
         "mirrored": false,
+        "faceColor": "#495053",
         "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapMirrorX": true,
-        "faceColor": "#495053"
+        "bitmapMirrorX": true
       },
       {
         "id": 1004,
@@ -8604,10 +8863,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2
         ],
         "mirrored": false,
+        "faceColor": "#495053",
         "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapMirrorX": true,
-        "faceColor": "#495053"
+        "bitmapMirrorX": true
       },
       {
         "id": 1009,
@@ -8815,6 +9074,84 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           160
         ]
       ],
+      "faces": [
+        [
+          1,
+          2,
+          3,
+          0
+        ],
+        [
+          0,
+          3,
+          4
+        ],
+        [
+          5,
+          1,
+          0
+        ],
+        [
+          2,
+          1,
+          6
+        ],
+        [
+          7,
+          3,
+          2
+        ],
+        [
+          11,
+          4,
+          3,
+          7
+        ],
+        [
+          5,
+          0,
+          4,
+          8
+        ],
+        [
+          10,
+          7,
+          2,
+          6
+        ],
+        [
+          5,
+          9,
+          6,
+          1
+        ],
+        [
+          11,
+          7,
+          10
+        ],
+        [
+          8,
+          4,
+          11
+        ],
+        [
+          8,
+          9,
+          5
+        ],
+        [
+          6,
+          9,
+          10
+        ],
+        [
+          10,
+          9,
+          8,
+          11
+        ]
+      ],
       "edges": [
         [
           1,
@@ -8928,6 +9265,36 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           12,
           15
         ]
+      ],
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
       ],
       "edgeFaces": [
         [
@@ -9237,7 +9604,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#495053"
         ],
         "faceAngles": [
-          90,
+          45,
           null,
           null,
           null,
@@ -10120,7 +10487,34 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#484a51",
           "#545254"
         ]
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -11246,7 +11640,27 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#513e26",
           "#55422b"
         ]
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "stick",
+        "stick",
+        "stick"
+      ]
     }
   },
   "dodoStation": {
@@ -12338,7 +12752,43 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "escapePod": true,
           "hiddenUntilDiscovered": false
         }
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     }
   },
   "escapePod": {
@@ -12615,7 +13065,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "pod_panel",
           "pod_panel"
         ]
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -13560,7 +14018,36 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           null,
           null
         ]
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -14366,7 +14853,26 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#475351",
           "#414d4c"
         ]
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -15078,7 +15584,30 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "escapePod": true,
           "hiddenUntilDiscovered": false
         }
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     }
   },
   "krait": {
@@ -15894,7 +16423,30 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#2e2a2a",
           "#262120"
         ]
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "stick",
+        "stick",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -16926,7 +17478,37 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#717277",
           "#2e2c2d"
         ]
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -17816,7 +18398,33 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "missile_panel",
           "missile_panel"
         ]
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -18538,7 +19146,28 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#707a7d",
           "#70797d"
         ]
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -21314,7 +21943,51 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "escapePod": true,
           "hiddenUntilDiscovered": true
         }
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "stick",
+        "stick",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     }
   },
   "plate": {
@@ -21533,7 +22206,13 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "escapePod": false,
           "hiddenUntilDiscovered": false
         }
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     }
   },
   "python": {
@@ -22483,7 +23162,35 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#80764d",
           "#4f4d3e"
         ]
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -23386,7 +24093,39 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           null,
           null
         ]
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -23920,7 +24659,24 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#5f5e62",
           "#514f51"
         ]
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -24211,7 +24967,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "escapePod": true,
           "hiddenUntilDiscovered": false
         }
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     }
   },
   "thargoid": {
@@ -25260,7 +26024,35 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "escapePod": true,
           "hiddenUntilDiscovered": false
         }
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     }
   },
   "thargon": {
@@ -25886,7 +26678,24 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "escapePod": true,
           "hiddenUntilDiscovered": false
         }
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     }
   },
   "transporter": {
@@ -27548,7 +28357,55 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           null,
           "front_panel"
         ]
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -29175,7 +30032,51 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "escapePod": true,
           "hiddenUntilDiscovered": true
         }
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "stick",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "stick",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     }
   },
   "viper": {
@@ -29918,7 +30819,29 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#435c6c",
           "#324752"
         ]
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     },
     "gameMeta": {
       "imageDecalMirrorX": {
@@ -30543,7 +31466,25 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#524f3c",
           "#6a664d"
         ]
-      }
+      },
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ]
     }
   }
 };

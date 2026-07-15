@@ -321,11 +321,33 @@ function normalizeBlueprintDetails(data, blueprint) {
   });
 }
 
+function sourceEdgeKindsForBlueprint(data, blueprint) {
+  if (!Array.isArray(blueprint?.edges)) return null;
+  const indexById = new Map((data.verts || []).map((vertex, index) => [Number(vertex?.id ?? index), index]));
+  const kindByKey = new Map();
+  for (const edge of data.edges || []) {
+    const explicit = explicitEdgeIds(edge);
+    const a = indexById.get(Number(explicit.a));
+    const b = indexById.get(Number(explicit.b));
+    if (a === undefined || b === undefined || a === b) continue;
+    const key = a < b ? `${a},${b}` : `${b},${a}`;
+    kindByKey.set(key, explicit.kind === "stick" ? "stick" : "edge");
+  }
+  return blueprint.edges.map((edge) => {
+    if (!Array.isArray(edge) || edge.length < 2) return "edge";
+    const [a, b] = edge;
+    const key = a < b ? `${a},${b}` : `${b},${a}`;
+    return kindByKey.get(key) || "edge";
+  });
+}
+
 function deriveBlueprint(data) {
   if (data.blueprint && typeof data.blueprint === "object") {
     const blueprint = JSON.parse(JSON.stringify(data.blueprint));
     const imageProjection = sourceImageProjection(data);
     if (imageProjection) blueprint.imageProjection = { ...(blueprint.imageProjection || {}), ...imageProjection };
+    const edgeKinds = sourceEdgeKindsForBlueprint(data, blueprint);
+    if (edgeKinds) blueprint.edgeKinds = edgeKinds;
     normalizeBlueprintDetails(data, blueprint);
     return blueprint;
   }
@@ -358,6 +380,7 @@ function deriveBlueprint(data) {
   }
   const edgeEntries = [...edgeMap.values()];
   const edges = edgeEntries.map((entry) => entry.edge);
+  const edgeKinds = edgeEntries.map((entry) => entry.kind === "stick" ? "stick" : "edge");
   const edgeFaces = edgeEntries.map((entry) => {
     const unique = [...new Set(entry.faces)];
     if (!unique.length) return [-1, -1];
@@ -410,6 +433,7 @@ function deriveBlueprint(data) {
   return {
     verts,
     edges,
+    edgeKinds,
     edgeFaces,
     edgeVisibility: edges.map(() => 31),
     normals,

@@ -2393,6 +2393,7 @@
         const mirrorFaceTextureX = hasProjectionFaceSlot(faceMirrorX, faceIndex)
           ? !!faceMirrorX[faceIndex]
           : !!faceMirrorX[normalIndex];
+        let faceAngleForDraw = faceAngle;
         if (faceKey || decalsForFace.length) {
           if (authoredFaceUv && faceKey) {
             faceBaseW = Math.max(1, Math.round(Number(faceTextureBaseW[faceIndex]) || DECAL_TEXTURE_SIZE));
@@ -2413,6 +2414,7 @@
             faceUv = fitted.uv;
             faceBaseW = fitted.width;
             faceBaseH = fitted.height;
+            faceAngleForDraw = 0;
           }
         }
         return {
@@ -2421,7 +2423,7 @@
           baseH: fp.h,
           centerlineX: fp.centerlineX(flipU),
           uv,
-          ...((faceKey || decalsForFace.length) ? { ...(faceKey ? { faceKey } : {}), faceUv, faceBaseW, faceBaseH, ...(faceAngle ? { faceAngle } : {}), ...(mirrorFaceTextureX ? { faceMirrorX: true } : {}), ...(decalsForFace.length ? { faceDecals: decalsForFace } : {}) } : {}),
+          ...((faceKey || decalsForFace.length) ? { ...(faceKey ? { faceKey } : {}), faceUv, faceBaseW, faceBaseH, ...(faceAngleForDraw ? { faceAngle: faceAngleForDraw } : {}), ...(mirrorFaceTextureX ? { faceMirrorX: true } : {}), ...(decalsForFace.length ? { faceDecals: decalsForFace } : {}) } : {}),
           squareUv: face.map((i) => {
             const p = verts[i];
             if (primaryAxis === "x" && side !== "back") return uvFromAxes(p, 1, 2, side === "bottom", true);
@@ -10643,7 +10645,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           projected,
           avgZ: verts.reduce((sum, p) => sum + p.z, 0) / verts.length,
           fillStyle: wireDetails ? "#000" : (detail.type === "engine" ? engineVisual.fill : (detail.color || "#101915")),
-          strokeStyle: wireDetails ? (detail.stroke || wireColor) : (detail.type === "engine" ? engineVisual.stroke : detail.stroke || null),
+          strokeStyle: wireDetails ? (detail.stroke || wireColor) : (detail.type === "engine" ? engineVisual.stroke : null),
           lineWidth: detail.width || 1.2,
           fillInset: wireDetails ? (options.wireFillInset ?? 1.1) : 0,
           glow: !wireDetails && detail.type === "engine",
@@ -10690,16 +10692,20 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return (rootCam.z - tipCam.z) / edgeLen;
     }
 
+    function edgeIsStick(model, edgeIndex) {
+      return model?.edgeKinds?.[edgeIndex] === "stick" || !!model?.edgeCullNormals?.[edgeIndex];
+    }
+
     function collectProtrudingModelEdges(model, camVerts, points, strokeStyle = "#e9f2e4", lineWidth = 1.2, options = {}) {
       if (!model.edges) return [];
       const items = [];
       const frontThreshold = options.frontThreshold ?? -.08;
       for (let edgeIndex = 0; edgeIndex < model.edges.length; edgeIndex++) {
         if (options.skipEdgeIndices?.has(edgeIndex)) continue;
-        const marked = !!model.edgeCullNormals?.[edgeIndex] || model.edgeFaces?.[edgeIndex]?.[0] < 0;
-        if (!marked) continue;
+        const edge = model.edges[edgeIndex];
+        if (!edgeIsStick(model, edgeIndex)) continue;
         const frontFacing = protrudingEdgeFacingScore(model, edgeIndex, camVerts, options.edgeCullNormalsCam || null) > frontThreshold;
-        const [a, b] = model.edges[edgeIndex];
+        const [a, b] = edge;
         const pa = points[a], pb = points[b];
         if (!pa || !pb) continue;
         const va = camVerts[a], vb = camVerts[b];
@@ -11837,8 +11843,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const bw = b.maxX - b.minX;
       const bh = b.maxY - b.minY;
       if (bw <= 2 || bh <= 2) return;
+      const effectPoly = insetProjectedPolygon(projected, clamp(Math.min(bw, bh) * .08, .45, 2.2));
+      if (effectPoly.length < 3) return;
       targetCtx.save();
-      tracePoly(projected);
+      tracePoly(effectPoly);
       targetCtx.closePath();
       targetCtx.clip();
       const glass = targetCtx.createLinearGradient(b.minX, b.minY, b.maxX, b.maxY);
@@ -11858,10 +11866,12 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const bw = b.maxX - b.minX;
       const bh = b.maxY - b.minY;
       if (bw <= 2 || bh <= 2) return;
+      const effectPoly = insetProjectedPolygon(projected, clamp(Math.min(bw, bh) * .08, .45, 2.2));
+      if (effectPoly.length < 3) return;
       const hue = primarySun()?.hue ?? 46;
       const span = Math.hypot(bw, bh) * 1.35;
       targetCtx.save();
-      tracePoly(projected);
+      tracePoly(effectPoly);
       targetCtx.closePath();
       targetCtx.clip();
       targetCtx.globalCompositeOperation = "screen";
@@ -12013,7 +12023,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         // edgeCullNormals marks deliberate protruding geometry such as Cobra/Asp
         // nose sticks. Those are model structure, not disposable surface detail;
         // hull masks decide how much of them is hidden.
-        const markedProtrudingEdge = !!opts.skipMarkedProtrudingEdges && (!!model.edgeCullNormals?.[edgeIndex] || model.edgeFaces?.[edgeIndex]?.[0] < 0);
+        const markedProtrudingEdge = !!opts.skipMarkedProtrudingEdges && edgeIsStick(model, edgeIndex);
         if (markedProtrudingEdge) continue;
         if (!wireEdgeVisible(model, edgeIndex, faceVisible, camVerts, opts.edgeCullNormalsCam || null, points)) continue;
         const [a, b] = model.edges[edgeIndex];
@@ -16508,8 +16518,14 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function drawStationForcefieldQuad(targetCtx, points, options = {}) {
       if (!points || points.length < 4 || points.some((p) => !p) || !ultraFxEnabled()) return;
       const portalCtx = targetCtx || ctx;
-      const [a, b, c, d] = points;
-      const bounds = polygonBounds(points);
+      const rawBounds = polygonBounds(points);
+      if (![rawBounds.minX, rawBounds.maxX, rawBounds.minY, rawBounds.maxY].every(Number.isFinite)) return;
+      const rawSpan = Math.max(rawBounds.maxX - rawBounds.minX, rawBounds.maxY - rawBounds.minY);
+      if (!Number.isFinite(rawSpan) || rawSpan <= 0) return;
+      const effectPoints = insetProjectedPolygon(points, clamp(rawSpan * .006, .55, 2.75));
+      if (effectPoints.length < 4) return;
+      const [a, b, c, d] = effectPoints;
+      const bounds = polygonBounds(effectPoints);
       if (![bounds.minX, bounds.maxX, bounds.minY, bounds.maxY].every(Number.isFinite)) return;
       const span = Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY);
       if (!Number.isFinite(span) || span <= 0) return;
@@ -16574,27 +16590,22 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         portalCtx.fill();
       }
       portalCtx.globalCompositeOperation = "lighter";
-      portalCtx.strokeStyle = `rgba(120,180,255,${.10 * shimmer})`;
-      portalCtx.lineWidth = Math.max(1, span * .012);
       for (let i = 1; i < 5; i++) {
         const v = clamp(i / 5 + Math.sin(performance.now() / 260 + i + rot) * .018, .04, .96);
-        const p0 = quadPoint(.04, v);
-        const p1 = quadPoint(.96, v);
+        const half = clamp(.006 + i * .0008, .006, .012);
+        const p0 = quadPoint(.05, clamp(v - half, .04, .96));
+        const p1 = quadPoint(.95, clamp(v - half, .04, .96));
+        const p2 = quadPoint(.95, clamp(v + half, .04, .96));
+        const p3 = quadPoint(.05, clamp(v + half, .04, .96));
+        portalCtx.fillStyle = `rgba(84,150,255,${.045 * shimmer})`;
         portalCtx.beginPath();
         portalCtx.moveTo(p0.x, p0.y);
         portalCtx.lineTo(p1.x, p1.y);
-        portalCtx.stroke();
+        portalCtx.lineTo(p2.x, p2.y);
+        portalCtx.lineTo(p3.x, p3.y);
+        portalCtx.closePath();
+        portalCtx.fill();
       }
-      portalCtx.restore();
-
-      // Keep the field itself alive without repainting a bright mesh-like border.
-      const pulse = .4 + Math.max(0, Math.sin(performance.now() / 240 + rot)) * .6;
-      portalCtx.save();
-      portalCtx.globalCompositeOperation = "lighter";
-      portalCtx.strokeStyle = `rgba(90,160,255,${.055 * pulse * intensity})`;
-      portalCtx.lineWidth = Math.max(.7, span * .006);
-      quadPath();
-      portalCtx.stroke();
       portalCtx.restore();
     }
 

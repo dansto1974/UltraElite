@@ -115,6 +115,8 @@ const protrudingEdgeGuards = [
   ["protruding-edge front pass occluder option", "frontOccluders"],
   ["protruding-edge base pass before hull", 'drawProtrudingEdges("behind")'],
   ["protruding-edge front pass with hull occluders", 'drawProtrudingEdges("front", protrudingHullOccluders)'],
+  ["explicit edge kind classifier", "function edgeIsStick"],
+  ["generated runtime edge kinds", "edgeKinds"],
 ];
 for (const [label, marker] of protrudingEdgeGuards) {
   if (!js.includes(marker)) {
@@ -143,11 +145,38 @@ for (const [label, marker] of bitmapProjectionGuards) {
 if (js.includes("authoredFaceSide")) {
   throw new Error("Retired renderer UV path detected: per-face texture keys must not use authored bitmapSide to force whole-model side projection.");
 }
+if (!js.includes("faceAngleForDraw = 0")) {
+  throw new Error("Generated face-local UV rotation must be baked once before draw; do not pass the same faceAngle into the draw step again.");
+}
 if (!js.includes("function drawWindowGlassTint") || !js.includes("drawWindowGlassTint(targetCtx, item, tracePoly)")) {
   throw new Error("Window glints must use a transparent glass tint so authored UV/window art remains visible underneath.");
 }
+if (!js.includes("const effectPoly = insetProjectedPolygon(projected")) {
+  throw new Error("Window glass/glint overlays must be inset from polygon edges to avoid pale antialias outlines.");
+}
 if (js.includes('item.glass ? "#101915"')) {
   throw new Error("Window detail rendering must not replace authored UV/window art with an opaque glass fill.");
+}
+if (js.includes('detail.type === "engine" ? engineVisual.stroke : detail.stroke')) {
+  throw new Error("Window/glass details must not inherit procedural outline strokes in solid mode.");
+}
+if (!js.includes("rgba(255,255,248,.42)") || !js.includes("targetCtx.globalAlpha = clamp(item.glintAlpha ?? .58, .12, .95)")) {
+  throw new Error("Window glints must keep their intended bright core and visible alpha; white-line fixes belong elsewhere.");
+}
+if (!js.includes('targetCtx.globalCompositeOperation = "screen";')) {
+  throw new Error("Window glints should keep screen compositing; white-line fixes must not mute the windscreen glint.");
+}
+if (js.includes("model.edgeFaces?.[edgeIndex]?.[0] < 0 && !edgeIsWindowDetailEdge")) {
+  throw new Error("Ultra solid sticks must use explicit edgeKinds/edgeCullNormals, not window-specific legacy edge exceptions.");
+}
+if (js.includes("!!model.edgeCullNormals?.[edgeIndex] || model.edgeFaces?.[edgeIndex]?.[0] < 0")) {
+  throw new Error("Ultra solid mode must not treat every orphan edge as a stick; preserve ordinary orphan edges for Old School only.");
+}
+if (js.includes("rgba(90,160,255,${.055")) {
+  throw new Error("Station portal rendering must not repaint a faint perimeter stroke in solid mode.");
+}
+if (js.includes("portalCtx.strokeStyle = `rgba(120,180,255")) {
+  throw new Error("Station portal shimmer must not use procedural stroke lines in solid mode.");
 }
 
 const modelRoleGuards = [
