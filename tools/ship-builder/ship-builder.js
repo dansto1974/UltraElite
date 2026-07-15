@@ -5026,6 +5026,14 @@ function withDetailRender(detail) {
   };
 }
 
+const FACE_RENDER_FACE_TEXTURE = 1;
+const FACE_RENDER_EXPLICIT_UV = 2;
+const FACE_RENDER_DECAL = 4;
+const FACE_RENDER_FALLBACK_COLOR = 8;
+const FACE_RENDER_MIRROR_X = 16;
+const FACE_RENDER_ANGLE = 32;
+const FACE_RENDER_SIDE = 64;
+
 function derivedBlueprint() {
   const indexById = new Map(state.verts.map((v, i) => [v.id, i]));
   const verts = state.verts.map((v) => [round(v.x), round(v.y), round(v.z)]);
@@ -5126,6 +5134,17 @@ function derivedBlueprint() {
     const decals = cleanFaceDecals(f.bitmapDecals);
     return decals.length ? decals : null;
   });
+  const faceRenderFlags = projectionFaces.map((f, index) => {
+    let flags = 0;
+    if (faceSides[index]) flags |= FACE_RENDER_SIDE;
+    if (faceTextures[index]) flags |= FACE_RENDER_FACE_TEXTURE;
+    if (faceTextureUv[index]) flags |= FACE_RENDER_EXPLICIT_UV;
+    if (faceColors[index]) flags |= FACE_RENDER_FALLBACK_COLOR;
+    if (faceAngles[index] != null) flags |= FACE_RENDER_ANGLE;
+    if (faceMirrorX[index]) flags |= FACE_RENDER_MIRROR_X;
+    if (faceDecals[index]?.length) flags |= FACE_RENDER_DECAL;
+    return flags;
+  });
   const primaryAxis = templatePrimaryAxis();
   const imageProjection = {
     ...(primaryAxis !== "y" ? { primaryAxis } : {}),
@@ -5137,9 +5156,10 @@ function derivedBlueprint() {
     ...(faceColors.some(Boolean) ? { faceColors } : {}),
     ...(faceAngles.some((angle) => angle != null) ? { faceAngles } : {}),
     ...(faceMirrorX.some(Boolean) ? { faceMirrorX } : {}),
-    ...(faceDecals.some((decals) => decals?.length) ? { faceDecals } : {})
+    ...(faceDecals.some((decals) => decals?.length) ? { faceDecals } : {}),
+    ...(faceRenderFlags.some(Boolean) ? { faceRenderFlags } : {})
   };
-  const hasImageProjection = !!imageProjection.primaryAxis || !!imageProjection.faceSides || !!imageProjection.faceTextures || !!imageProjection.faceTextureUv || !!imageProjection.faceColors || !!imageProjection.faceAngles || !!imageProjection.faceMirrorX || !!imageProjection.faceDecals;
+  const hasImageProjection = !!imageProjection.primaryAxis || !!imageProjection.faceSides || !!imageProjection.faceTextures || !!imageProjection.faceTextureUv || !!imageProjection.faceColors || !!imageProjection.faceAngles || !!imageProjection.faceMirrorX || !!imageProjection.faceDecals || !!imageProjection.faceRenderFlags;
   return {
     verts,
     faces,

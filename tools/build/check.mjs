@@ -371,6 +371,12 @@ if (!js.includes("const benchImageDecals") || !js.includes("opts.bitmapSkins")) 
 if (!js.includes("function modelFaceBaseColor") || !js.includes("function hasProjectionFaceSlot")) {
   throw new Error("Per-face colour fallback must use a shared projection slot helper visible to collectSolidFaces.");
 }
+if (!js.includes("FACE_RENDER_FACE_TEXTURE") || !js.includes("model.faceRenderFlags") || !js.includes("model.faceBaseColors")) {
+  throw new Error("Built model faces must carry precomputed faceRenderFlags and faceBaseColors for collectSolidFaces.");
+}
+if (!builderJs.includes("faceRenderFlags") || !js.includes("faceRenderFlagsFromProjection")) {
+  throw new Error("Ship Builder and runtime blueprints must share generated faceRenderFlags intent.");
+}
 
 function cleanBitmapKey(value) {
   return String(value || "").trim().replace(/[^a-zA-Z0-9_-]+/g, "_").replace(/^_+|_+$/g, "");
@@ -414,6 +420,14 @@ function cleanFaceDecal(decal) {
     ...(alpha < .999 ? { alpha: Math.round(alpha * 1000) / 1000 } : {})
   };
 }
+
+const FACE_RENDER_FACE_TEXTURE = 1;
+const FACE_RENDER_EXPLICIT_UV = 2;
+const FACE_RENDER_DECAL = 4;
+const FACE_RENDER_FALLBACK_COLOR = 8;
+const FACE_RENDER_MIRROR_X = 16;
+const FACE_RENDER_ANGLE = 32;
+const FACE_RENDER_SIDE = 64;
 
 function runGenerated(file, globalName) {
   const ctx = { globalThis: {} };
@@ -573,6 +587,17 @@ if (fs.existsSync(modelDir)) {
       const decals = Array.isArray(face?.bitmapDecals) ? face.bitmapDecals.map(cleanFaceDecal).filter(Boolean) : [];
       return decals.length ? decals : null;
     });
+    const faceRenderFlags = sourceFaces.map((face, faceIndex) => {
+      let flags = 0;
+      if (faceSides[faceIndex]) flags |= FACE_RENDER_SIDE;
+      if (faceTextures[faceIndex]) flags |= FACE_RENDER_FACE_TEXTURE;
+      if (faceTextureUv[faceIndex]) flags |= FACE_RENDER_EXPLICIT_UV;
+      if (authoredFaceColors[faceIndex] || face?.bitmapFaceKey) flags |= FACE_RENDER_FALLBACK_COLOR;
+      if (faceAngles[faceIndex] != null) flags |= FACE_RENDER_ANGLE;
+      if (faceMirrorX[faceIndex]) flags |= FACE_RENDER_MIRROR_X;
+      if (faceDecals[faceIndex]?.length) flags |= FACE_RENDER_DECAL;
+      return flags;
+    });
     const hasFaceSides = faceSides.some(Boolean);
     const hasFaceTextures = faceTextures.some(Boolean);
     const hasFaceTextureUv = faceTextureUv.some(Boolean);
@@ -582,6 +607,7 @@ if (fs.existsSync(modelDir)) {
     const hasFaceAngles = faceAngles.some((angle) => angle != null);
     const hasFaceMirrorX = faceMirrorX.some(Boolean);
     const hasFaceDecals = faceDecals.some((decals) => decals?.length);
+    const hasFaceRenderFlags = faceRenderFlags.some(Boolean);
     const usesOnlyFaceTextures = sourceFaces.length > 0 && faceTextures.every(Boolean);
     assertOptionalEmbeddedEdgeKinds(`${path.relative(root, filePath)} embedded blueprint`, data, data.blueprint);
     assertGeneratedEdgeKinds(`${path.relative(root, filePath)} generated blueprint`, data, generatedModels[modelId]);
@@ -639,6 +665,9 @@ if (fs.existsSync(modelDir)) {
     }
     if (hasFaceDecals && JSON.stringify(generatedProjection.faceDecals) !== JSON.stringify(faceDecals)) {
       throw new Error(`${path.relative(root, filePath)} bitmap faceDecals are out of sync with src/generated/model-library.js; run npm run models or npm run build.`);
+    }
+    if (hasFaceRenderFlags && JSON.stringify(generatedProjection.faceRenderFlags) !== JSON.stringify(faceRenderFlags)) {
+      throw new Error(`${path.relative(root, filePath)} bitmap faceRenderFlags are out of sync with src/generated/model-library.js; run npm run models or npm run build.`);
     }
     const blueprintProjection = data.blueprint?.imageProjection;
     const blueprintBitmapFields = [

@@ -650,6 +650,14 @@
       { id: "energyBomb", name: "Energy Bomb", cost: 900, tech: 12, desc: "One-shot device that cripples every nearby hostile. Illegal to carry." }
     ];
 
+    const FACE_RENDER_FACE_TEXTURE = 1;
+    const FACE_RENDER_EXPLICIT_UV = 2;
+    const FACE_RENDER_DECAL = 4;
+    const FACE_RENDER_FALLBACK_COLOR = 8;
+    const FACE_RENDER_MIRROR_X = 16;
+    const FACE_RENDER_ANGLE = 32;
+    const FACE_RENDER_SIDE = 64;
+
     function remapImageProjectionForBuiltFaces(data, entries) {
       const projection = data?.imageProjection;
       if (!projection || !Array.isArray(data?.faces) || !entries?.length) return projection || {};
@@ -684,7 +692,7 @@
           : null;
       };
       const remapped = { ...projection };
-      for (const field of ["faceSides", "faceTextures", "faceTextureBaseW", "faceTextureBaseH", "faceColors", "faceAngles", "faceMirrorX", "faceDecals"]) {
+      for (const field of ["faceSides", "faceTextures", "faceTextureBaseW", "faceTextureBaseH", "faceColors", "faceAngles", "faceMirrorX", "faceDecals", "faceRenderFlags"]) {
         const values = remapArrayByNormal(field);
         if (values) remapped[field] = values;
       }
@@ -692,6 +700,39 @@
         remapped.faceTextureUv = entries.map(remapFaceUv);
       }
       return remapped;
+    }
+
+    function faceProjectionSlot(projection, field, faceIndex, normalIndex) {
+      const items = projection?.[field];
+      if (!Array.isArray(items)) return null;
+      if (hasProjectionFaceSlot(items, faceIndex)) return items[faceIndex];
+      return hasProjectionFaceSlot(items, normalIndex) ? items[normalIndex] : null;
+    }
+
+    function faceRenderFlagsFromProjection(projection, faceIndex, normalIndex) {
+      const authored = faceProjectionSlot(projection, "faceRenderFlags", faceIndex, normalIndex);
+      if (Number.isFinite(Number(authored))) return Number(authored) | 0;
+      let flags = 0;
+      const side = faceProjectionSlot(projection, "faceSides", faceIndex, normalIndex);
+      const texture = faceProjectionSlot(projection, "faceTextures", faceIndex, normalIndex);
+      const uv = faceProjectionSlot(projection, "faceTextureUv", faceIndex, normalIndex);
+      const color = faceProjectionSlot(projection, "faceColors", faceIndex, normalIndex);
+      const angle = faceProjectionSlot(projection, "faceAngles", faceIndex, normalIndex);
+      const mirror = faceProjectionSlot(projection, "faceMirrorX", faceIndex, normalIndex);
+      const decals = faceProjectionSlot(projection, "faceDecals", faceIndex, normalIndex);
+      if (side) flags |= FACE_RENDER_SIDE;
+      if (texture) flags |= FACE_RENDER_FACE_TEXTURE;
+      if (Array.isArray(uv) && uv.length >= 3) flags |= FACE_RENDER_EXPLICIT_UV;
+      if (/^#[0-9a-f]{6}$/i.test(String(color || ""))) flags |= FACE_RENDER_FALLBACK_COLOR;
+      if (Number.isFinite(Number(angle)) && Math.abs(Number(angle)) > .0001) flags |= FACE_RENDER_ANGLE;
+      if (mirror) flags |= FACE_RENDER_MIRROR_X;
+      if (Array.isArray(decals) && decals.length) flags |= FACE_RENDER_DECAL;
+      return flags;
+    }
+
+    function faceBaseColorFromProjection(projection, faceIndex, normalIndex) {
+      const color = faceProjectionSlot(projection, "faceColors", faceIndex, normalIndex);
+      return /^#[0-9a-f]{6}$/i.test(String(color || "")) ? color : null;
     }
 
     function detailRenderIntent(detail) {
@@ -779,6 +820,10 @@
       model.faceNormalIndices = entries.map((e) => e.normalIndex);
       model.wireMaskFaces = entries.map((e) => duplicateFaceKeys.has(e.normalIndex) ? 0 : 1);
       model.imageProjection = remapImageProjectionForBuiltFaces(data, entries);
+      model.faceRenderFlags = entries.map((entry, faceIndex) =>
+        faceRenderFlagsFromProjection(model.imageProjection, faceIndex, entry.normalIndex));
+      model.faceBaseColors = entries.map((entry, faceIndex) =>
+        faceBaseColorFromProjection(model.imageProjection, faceIndex, entry.normalIndex));
       model.wireCullEdgeKeys = new Set(Object.keys(model.edgeCullNormals || {}).map((edgeIndex) => {
         const edge = model.edges[Number(edgeIndex)];
         return edge ? (edge[0] < edge[1] ? `${edge[0]},${edge[1]}` : `${edge[1]},${edge[0]}`) : "";
@@ -10386,6 +10431,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function modelFaceBaseColor(model, faceIndex, normalIndex, fallback) {
+      const resolved = model?.faceBaseColors?.[faceIndex];
+      if (/^#[0-9a-f]{6}$/i.test(String(resolved || ""))) return resolved;
       const faceColors = model?.imageProjection?.faceColors;
       if (!Array.isArray(faceColors)) return fallback;
       const color = hasProjectionFaceSlot(faceColors, faceIndex) ? faceColors[faceIndex] : faceColors[normalIndex];
@@ -10488,6 +10535,12 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const lit = clamp(.12 + Math.max(0, dot(n, modelFaceLightDirection(center, options))) * .82 + facing * .05, .1, .95);
         const grain = Math.abs(Math.sin(center.x * .037 + center.y * .071 + center.z * .043 + face.length * 1.7));
         const faceBaseColor = modelFaceBaseColor(model, faceIndex, normalIndex, baseColor);
+        const faceRenderFlags = model.faceRenderFlags?.[faceIndex] || 0;
+        const imageProjection = !clipped && model.imageProjectionUV?.[faceIndex];
+        const projectionSide = imageProjection?.side;
+        const hasSideTexture = !!(projectionSide && options.imageDecals?.[projectionSide]);
+        const hasFaceImageWork = !!(faceRenderFlags & (FACE_RENDER_FACE_TEXTURE | FACE_RENDER_DECAL));
+        const hasImageProjection = !!imageProjection && (hasSideTexture || hasFaceImageWork);
         faces.push({
           kind: "poly",
           projected,
@@ -10495,7 +10548,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           project: options.project || null,
           uv: !clipped && model.faceUV && model.faceUV[faceIndex],
           decalUV: !clipped && model.decalUV && model.decalUV[faceIndex],
-          imageProjection: !clipped && model.imageProjectionUV && model.imageProjectionUV[faceIndex],
+          faceRenderFlags,
+          imageProjection: hasImageProjection ? imageProjection : null,
           faceIndex,
           normalIndex,
           avgZ,

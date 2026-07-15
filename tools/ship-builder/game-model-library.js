@@ -1036,6 +1036,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#656f7b",
           "#808b96",
           "#85909d"
+        ],
+        "faceRenderFlags": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
         ]
       },
       "edgeKinds": [
@@ -2105,6 +2122,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#606057",
           "#555349",
           "#625e51"
+        ],
+        "faceRenderFlags": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
         ]
       },
       "gameMeta": {
@@ -3096,6 +3127,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#595960",
           "#5a5961",
           "#333435"
+        ],
+        "faceRenderFlags": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
         ]
       },
       "edgeKinds": [
@@ -3826,6 +3871,22 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           true,
           true,
           true
+        ],
+        "faceRenderFlags": [
+          89,
+          89,
+          89,
+          89,
+          89,
+          73,
+          89,
+          89,
+          121,
+          89,
+          89,
+          89,
+          89,
+          89
         ]
       },
       "gameMeta": {
@@ -4637,6 +4698,21 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#716d61",
           "#858377",
           "#5b594a"
+        ],
+        "faceRenderFlags": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
         ]
       },
       "edgeKinds": [
@@ -5187,6 +5263,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           true,
           false,
           false
+        ],
+        "faceRenderFlags": [
+          73,
+          73,
+          73,
+          89,
+          121,
+          89,
+          89,
+          89,
+          73,
+          73
         ]
       },
       "gameMeta": {
@@ -5667,6 +5755,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           null,
           null,
           "end_panel"
+        ],
+        "faceRenderFlags": [
+          73,
+          8,
+          8,
+          8,
+          8,
+          8,
+          73
         ]
       },
       "edgeKinds": [
@@ -7027,6 +7124,21 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#98a0ad",
           "#babfc3",
           "#9ba6b5"
+        ],
+        "faceRenderFlags": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
         ]
       },
       "edgeKinds": [
@@ -7815,6 +7927,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#515d5b",
           "#3c4447",
           "#3c4447"
+        ],
+        "faceRenderFlags": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
         ]
       },
       "edgeKinds": [
@@ -8744,6 +8868,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#525153",
           "#373333",
           "#464544"
+        ],
+        "faceRenderFlags": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
         ]
       },
       "edgeKinds": [
@@ -9866,6 +10002,22 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           true,
           true,
           true
+        ],
+        "faceRenderFlags": [
+          121,
+          89,
+          89,
+          89,
+          89,
+          89,
+          89,
+          89,
+          89,
+          89,
+          89,
+          89,
+          89,
+          89
         ]
       },
       "gameMeta": {
@@ -10742,6 +10894,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#474544",
           "#484a51",
           "#545254"
+        ],
+        "faceRenderFlags": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
         ]
       },
       "edgeKinds": [
@@ -12007,6 +12171,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#786f5a",
           "#513e26",
           "#55422b"
+        ],
+        "faceRenderFlags": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
         ]
       },
       "edgeKinds": [
@@ -13123,6 +13299,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           true,
           true,
           true
+        ],
+        "faceRenderFlags": [
+          89,
+          89,
+          89,
+          89,
+          89,
+          89,
+          89,
+          89,
+          89,
+          89,
+          89,
+          89
         ]
       },
       "gameMeta": {
@@ -13472,6 +13662,12 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "pod_panel",
           "pod_panel",
           "pod_panel"
+        ],
+        "faceRenderFlags": [
+          73,
+          73,
+          73,
+          73
         ]
       },
       "edgeKinds": [
@@ -14457,6 +14653,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           null,
           null,
           null
+        ],
+        "faceRenderFlags": [
+          8,
+          8,
+          73,
+          8,
+          73,
+          8,
+          8,
+          8,
+          8,
+          8
         ]
       },
       "edgeKinds": [
@@ -15340,6 +15548,17 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#525e5c",
           "#475351",
           "#414d4c"
+        ],
+        "faceRenderFlags": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
         ]
       },
       "edgeKinds": [
@@ -16051,6 +16270,22 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           false,
           false,
           false
+        ],
+        "faceRenderFlags": [
+          89,
+          73,
+          73,
+          73,
+          73,
+          73,
+          73,
+          73,
+          73,
+          73,
+          73,
+          73,
+          73,
+          73
         ]
       },
       "gameMeta": {
@@ -16966,6 +17201,14 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#494a4e",
           "#2e2a2a",
           "#262120"
+        ],
+        "faceRenderFlags": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
         ]
       },
       "edgeKinds": [
@@ -18069,6 +18312,13 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#717277",
           "#717277",
           "#2e2c2d"
+        ],
+        "faceRenderFlags": [
+          8,
+          8,
+          8,
+          8,
+          8
         ]
       },
       "edgeKinds": [
@@ -18997,6 +19247,25 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "missile_panel",
           "missile_panel",
           "missile_panel"
+        ],
+        "faceRenderFlags": [
+          73,
+          73,
+          73,
+          73,
+          73,
+          73,
+          73,
+          73,
+          73,
+          73,
+          73,
+          73,
+          73,
+          73,
+          73,
+          73,
+          73
         ]
       },
       "edgeKinds": [
@@ -19777,6 +20046,17 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#70797d",
           "#707a7d",
           "#70797d"
+        ],
+        "faceRenderFlags": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
         ]
       },
       "edgeKinds": [
@@ -22629,6 +22909,36 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           null,
           null,
           null
+        ],
+        "faceRenderFlags": [
+          75,
+          75,
+          75,
+          75,
+          75,
+          75,
+          75,
+          75,
+          75,
+          75,
+          75,
+          75,
+          75,
+          75,
+          75,
+          75,
+          75,
+          75,
+          75,
+          75,
+          75,
+          75,
+          75,
+          75,
+          75,
+          75,
+          75,
+          75
         ]
       },
       "gameMeta": {
@@ -22903,6 +23213,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColors": [
           "#8b877c",
           "#8b877c"
+        ],
+        "faceRenderFlags": [
+          73,
+          73
         ]
       },
       "gameMeta": {
@@ -23937,6 +24251,21 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#80774c",
           "#80764d",
           "#4f4d3e"
+        ],
+        "faceRenderFlags": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
         ]
       },
       "edgeKinds": [
@@ -24876,6 +25205,21 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           null,
           null,
           null
+        ],
+        "faceRenderFlags": [
+          8,
+          8,
+          8,
+          73,
+          8,
+          8,
+          8,
+          73,
+          8,
+          8,
+          8,
+          8,
+          8
         ]
       },
       "edgeKinds": [
@@ -25458,6 +25802,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#514f51",
           "#5f5e62",
           "#514f51"
+        ],
+        "faceRenderFlags": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
         ]
       },
       "edgeKinds": [
@@ -25738,6 +26091,12 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           true,
           false,
           true
+        ],
+        "faceRenderFlags": [
+          89,
+          89,
+          73,
+          89
         ]
       },
       "gameMeta": {
@@ -26827,6 +27186,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#36156b",
           "#351567",
           "#421c79"
+        ],
+        "faceRenderFlags": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
         ]
       },
       "gameMeta": {
@@ -27497,6 +27868,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#3a1873",
           "#3d1b74",
           "#361668"
+        ],
+        "faceRenderFlags": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
         ]
       },
       "gameMeta": {
@@ -29284,6 +29664,22 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           null,
           null,
           "front_panel"
+        ],
+        "faceRenderFlags": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          73
         ]
       },
       "edgeKinds": [
@@ -31006,6 +31402,36 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           false,
           false,
           false
+        ],
+        "faceRenderFlags": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          57,
+          57,
+          57,
+          57,
+          8,
+          8,
+          0,
+          0
         ]
       },
       "gameMeta": {
@@ -31858,6 +32284,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#4f6e80",
           "#435c6c",
           "#324752"
+        ],
+        "faceRenderFlags": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
         ]
       },
       "edgeKinds": [
@@ -32521,6 +32956,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#6a695e",
           "#524f3c",
           "#6a664d"
+        ],
+        "faceRenderFlags": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
         ]
       },
       "edgeKinds": [

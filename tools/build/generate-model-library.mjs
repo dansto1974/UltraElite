@@ -242,6 +242,13 @@ function buildStateHelpers(data) {
 function sourceImageProjection(data) {
   const sourceFaces = Array.isArray(data.faces) ? data.faces : [];
   if (!sourceFaces.length) return null;
+  const FACE_RENDER_FACE_TEXTURE = 1;
+  const FACE_RENDER_EXPLICIT_UV = 2;
+  const FACE_RENDER_DECAL = 4;
+  const FACE_RENDER_FALLBACK_COLOR = 8;
+  const FACE_RENDER_MIRROR_X = 16;
+  const FACE_RENDER_ANGLE = 32;
+  const FACE_RENDER_SIDE = 64;
   const faceSides = sourceFaces.map((face) => {
     const side = face?.bitmapSide;
     return side === "top" || side === "bottom" || side === "back" ? side : null;
@@ -288,6 +295,17 @@ function sourceImageProjection(data) {
   const faceDecals = sourceFaces.map((face) => Array.isArray(face?.bitmapDecals)
     ? face.bitmapDecals.map(cleanFaceDecal).filter(Boolean)
     : null);
+  const faceRenderFlags = sourceFaces.map((face, index) => {
+    let flags = 0;
+    if (faceSides[index]) flags |= FACE_RENDER_SIDE;
+    if (faceTextures[index]) flags |= FACE_RENDER_FACE_TEXTURE;
+    if (faceTextureUv[index]) flags |= FACE_RENDER_EXPLICIT_UV;
+    if (faceColors[index]) flags |= FACE_RENDER_FALLBACK_COLOR;
+    if (faceAngles[index] != null) flags |= FACE_RENDER_ANGLE;
+    if (faceMirrorX[index]) flags |= FACE_RENDER_MIRROR_X;
+    if (faceDecals[index]?.length) flags |= FACE_RENDER_DECAL;
+    return flags;
+  });
   const primaryAxis = data.id === "thargoid" || data.id === "thargon" ? "x" : "y";
   const imageProjection = {
     ...(primaryAxis !== "y" ? { primaryAxis } : {}),
@@ -299,9 +317,10 @@ function sourceImageProjection(data) {
     ...(faceColors.some(Boolean) ? { faceColors } : {}),
     ...(faceAngles.some((angle) => angle != null) ? { faceAngles } : {}),
     ...(faceMirrorX.some(Boolean) ? { faceMirrorX } : {}),
-    ...(faceDecals.some((decals) => decals?.length) ? { faceDecals } : {})
+    ...(faceDecals.some((decals) => decals?.length) ? { faceDecals } : {}),
+    ...(faceRenderFlags.some(Boolean) ? { faceRenderFlags } : {})
   };
-  return imageProjection.primaryAxis || imageProjection.faceSides || imageProjection.faceTextures || imageProjection.faceTextureUv || imageProjection.faceColors || imageProjection.faceAngles || imageProjection.faceMirrorX || imageProjection.faceDecals ? imageProjection : null;
+  return imageProjection.primaryAxis || imageProjection.faceSides || imageProjection.faceTextures || imageProjection.faceTextureUv || imageProjection.faceColors || imageProjection.faceAngles || imageProjection.faceMirrorX || imageProjection.faceDecals || imageProjection.faceRenderFlags ? imageProjection : null;
 }
 
 function detailRenderIntent(detail) {
