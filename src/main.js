@@ -8613,6 +8613,21 @@
       renderPanel();
     }
 
+    function cheatAddOwnedShip(model) {
+      if (!isDockyardShipModel(model)) return;
+      missionState();
+      if (!PUBLIC_DOCKYARD_SHIP_MODEL_LIST.includes(model) && !game.missionUnlocks.ships.includes(model)) {
+        game.missionUnlocks.ships.push(model);
+      }
+      if (!game.missionUnlocks.ownedShips.includes(model)) {
+        game.missionUnlocks.ownedShips.push(model);
+        setMessage(`Cheat: ${shipName(model)} added to available ships.`);
+      } else {
+        setMessage(`Cheat: ${shipName(model)} already available.`);
+      }
+      renderPanel();
+    }
+
     function cheatRefillShip() {
       game.fuel = 7;
       restoreShipSystems();
@@ -18121,6 +18136,11 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const shipOptions = playerSelectableShipList().map((model) =>
         `<option value="${model}" ${model === currentShip ? "selected" : ""}>${shipName(model)}</option>`
       ).join("");
+      const ownedShips = ownedShipList();
+      const grantShip = DOCKYARD_SHIP_MODEL_LIST.find((model) => !ownedShips.includes(model)) || currentShip;
+      const grantShipOptions = DOCKYARD_SHIP_MODEL_LIST.map((model) =>
+        `<option value="${model}" ${model === grantShip ? "selected" : ""}>${shipName(model)}${ownedShips.includes(model) ? " (owned)" : ""}</option>`
+      ).join("");
       const equipmentRows = [...EQUIPMENT].sort((a, b) =>
         (DEV_EQUIPMENT_ORDER[a.id] ?? 100) - (DEV_EQUIPMENT_ORDER[b.id] ?? 100) || a.name.localeCompare(b.name)
       ).map((e) => {
@@ -18157,6 +18177,11 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       <div class="notice">
         Player ship
         <select class="btn mini" data-cheat-ship>${shipOptions}</select>
+      </div>
+      <div class="notice">
+        Add available ship
+        <select class="btn mini" data-cheat-owned-ship>${grantShipOptions}</select>
+        <button class="btn mini" data-cheat-add-owned-ship>Add to Dockyard</button>
       </div>
       <div class="notice">
         Visual test rig
@@ -18315,6 +18340,11 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }));
       const cheatShip = panelBody.querySelector("[data-cheat-ship]");
       if (cheatShip) cheatShip.addEventListener("change", () => cheatChangePlayerShip(cheatShip.value));
+      const cheatOwnedShip = panelBody.querySelector("[data-cheat-owned-ship]");
+      const cheatAddOwnedShipButton = panelBody.querySelector("[data-cheat-add-owned-ship]");
+      if (cheatOwnedShip && cheatAddOwnedShipButton) {
+        cheatAddOwnedShipButton.addEventListener("click", () => cheatAddOwnedShip(cheatOwnedShip.value));
+      }
       panelBody.querySelectorAll("[data-dev-world]").forEach((select) => {
         select.addEventListener("change", () => cheatSetWorldOverride(select.dataset.devWorld, select.value));
       });
