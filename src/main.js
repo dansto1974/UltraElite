@@ -650,6 +650,50 @@
       { id: "energyBomb", name: "Energy Bomb", cost: 900, tech: 12, desc: "One-shot device that cripples every nearby hostile. Illegal to carry." }
     ];
 
+    function remapImageProjectionForBuiltFaces(data, entries) {
+      const projection = data?.imageProjection;
+      if (!projection || !Array.isArray(data?.faces) || !entries?.length) return projection || {};
+      // buildBlueprint may rotate/reverse face vertices from the authored face order;
+      // bitmap UVs must follow the rebuilt vertex order or textures land on wrong corners.
+      const sourceFaces = data.faces.map((face) => Array.isArray(face)
+        ? face
+        : Array.isArray(face?.verts)
+          ? face.verts
+          : null);
+      const hasSlot = (items, index) => Array.isArray(items) && Object.prototype.hasOwnProperty.call(items, index);
+      const remapArrayByNormal = (field) => {
+        const source = projection[field];
+        if (!Array.isArray(source)) return null;
+        return entries.map((entry) => hasSlot(source, entry.normalIndex) ? source[entry.normalIndex] : null);
+      };
+      const remapFaceUv = (entry) => {
+        const sourceUv = hasSlot(projection.faceTextureUv, entry.normalIndex)
+          ? projection.faceTextureUv[entry.normalIndex]
+          : null;
+        const sourceFace = sourceFaces[entry.normalIndex];
+        if (!Array.isArray(sourceUv) || !Array.isArray(sourceFace) || sourceUv.length !== sourceFace.length) {
+          return Array.isArray(sourceUv) && sourceUv.length === entry.face.length
+            ? sourceUv.map((p) => Array.isArray(p) ? [Number(p[0]) || 0, Number(p[1]) || 0] : [0, 0])
+            : null;
+        }
+        const uvByVertex = new Map();
+        for (let i = 0; i < sourceFace.length; i++) uvByVertex.set(sourceFace[i], sourceUv[i]);
+        const remapped = entry.face.map((vertexIndex) => uvByVertex.get(vertexIndex));
+        return remapped.every((p) => Array.isArray(p))
+          ? remapped.map((p) => [Number(p[0]) || 0, Number(p[1]) || 0])
+          : null;
+      };
+      const remapped = { ...projection };
+      for (const field of ["faceSides", "faceTextures", "faceTextureBaseW", "faceTextureBaseH", "faceColors", "faceAngles", "faceMirrorX", "faceDecals"]) {
+        const values = remapArrayByNormal(field);
+        if (values) remapped[field] = values;
+      }
+      if (Array.isArray(projection.faceTextureUv)) {
+        remapped.faceTextureUv = entries.map(remapFaceUv);
+      }
+      return remapped;
+    }
+
     function buildBlueprint(data) {
       const model = { ...data };
       const faceEntries = model.normals.map((normal, faceIndex) => {
@@ -714,6 +758,7 @@
       model.faceUV = entries.map((e) => e.uv);
       model.faceNormalIndices = entries.map((e) => e.normalIndex);
       model.wireMaskFaces = entries.map((e) => duplicateFaceKeys.has(e.normalIndex) ? 0 : 1);
+      model.imageProjection = remapImageProjectionForBuiltFaces(data, entries);
       model.wireCullEdgeKeys = new Set(Object.keys(model.edgeCullNormals || {}).map((edgeIndex) => {
         const edge = model.edges[Number(edgeIndex)];
         return edge ? (edge[0] < edge[1] ? `${edge[0]},${edge[1]}` : `${edge[1]},${edge[0]}`) : "";
@@ -2309,7 +2354,6 @@
         const faceKey = hasProjectionFaceSlot(faceTextures, faceIndex)
           ? cleanFaceTextureKey(faceTextures[faceIndex])
           : cleanFaceTextureKey(faceTextures[normalIndex]);
-        const authoredFaceSide = hasProjectionFaceSlot(faceSides, faceIndex) && validFaceSide(faceSides[faceIndex]);
         const authoredFaceUv = hasProjectionFaceSlot(faceTextureUv, faceIndex) && Array.isArray(faceTextureUv[faceIndex]) && faceTextureUv[faceIndex].length === face.length
           ? faceTextureUv[faceIndex].map((p) => Array.isArray(p) ? [Number(p[0]) || 0, Number(p[1]) || 0] : [0, 0])
           : null;
@@ -11578,14 +11622,15 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function drawFaceTexture(targetCtx, item) {
       if (game.fxLevel === "classic") return;
-      const b = polygonBounds(item.projected);
-      if ((b.maxX - b.minX) * (b.maxY - b.minY) < 500) return;
-      const img = item.texture || getHullTexture();
       const imageProjection = item.imageProjection && item.imageDecals?.[item.imageProjection.side];
       const faceKey = item.imageProjection?.faceKey;
       const faceImage = faceKey ? item.imageDecals?.faces?.[faceKey] : null;
       const faceImageReady = imageTextureReady(faceImage);
       const projectionImageReady = imageTextureReady(imageProjection);
+      const hasExplicitFaceTexture = !!(faceImageReady && item.imageProjection?.faceUv?.length);
+      const b = polygonBounds(item.projected);
+      if ((b.maxX - b.minX) * (b.maxY - b.minY) < 500 && !hasExplicitFaceTexture) return;
+      const img = item.texture || getHullTexture();
       const hasImageTexture = !!(faceImageReady || projectionImageReady);
       // Perspective-correct subdivided path when the projector + camera-space verts are
       // available (main flight view); otherwise the plain affine fan (ship diagram etc).
@@ -16876,7 +16921,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const distance = Math.max(40, radius * Math.min(w, h) * .82 / Math.max(1, targetPx));
       const camera = makeCamera(0);
       const qualityMode = opts.quality || "live";
-      const quality = qualityMode === "full" ? {
+      let quality = qualityMode === "full" ? {
         pxRadius: Infinity,
         textures: true,
         decals: true,
@@ -16893,6 +16938,27 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         damage: false,
         effects: false
       } : undefined;
+      if (opts.projectionProof) {
+        quality = {
+          pxRadius: Infinity,
+          textures: true,
+          decals: true,
+          details: false,
+          detailEdges: false,
+          damage: false,
+          effects: false
+        };
+      }
+      const orthographicScale = targetPx / Math.max(1, radius * 2);
+      const orthographicProject = (p) => {
+        if (!p || p.z <= 1) return null;
+        return {
+          x: w / 2 + p.x * orthographicScale,
+          y: h / 2 - p.y * orthographicScale,
+          z: p.z,
+          s: orthographicScale
+        };
+      };
 
       const stationPreview = modelName === "coriolis" || modelName === "dodoStation" || model?.id === "coriolis" || model?.id === "dodoStation";
       const benchMeta = modelGameMeta(modelName);
@@ -16908,7 +16974,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         decalSeed: hash32(`bench:${modelName}`),
         hp: 100,
         maxHp: 100,
-        engineGlow: Number(opts.engineGlow ?? .65),
+        engineGlow: opts.projectionProof ? 0 : Number(opts.engineGlow ?? .65),
         police: modelName === "viper"
       };
 
@@ -16998,7 +17064,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         w,
         h,
         mode: game.graphicsMode,
-        quality: qualityMode === "full" ? false : undefined
+        quality: qualityMode === "full" ? false : undefined,
+        project: opts.orthographic ? orthographicProject : undefined
       }, renderBenchEntity, {
         model,
         quality,

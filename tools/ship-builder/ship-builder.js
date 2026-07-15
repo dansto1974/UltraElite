@@ -259,6 +259,15 @@ function cleanFaceDecals(decals) {
   return Array.isArray(decals) ? decals.map(normalizeFaceDecal).filter(Boolean) : [];
 }
 
+function cleanFaceBitmapUv(face) {
+  const verts = Array.isArray(face) ? face : face?.verts || [];
+  if (!Array.isArray(face?.bitmapUv) || verts.length < 3) return null;
+  const uv = face.bitmapUv
+    .map((p) => Array.isArray(p) ? [round(Number(p[0]) || 0, 3), round(Number(p[1]) || 0, 3)] : null)
+    .filter(Boolean);
+  return uv.length === verts.length ? uv : null;
+}
+
 function mirroredFaceAngle(angle) {
   return normalizeBitmapAngle(-normalizeBitmapAngle(angle));
 }
@@ -306,9 +315,7 @@ function sourceFace(face, index) {
   const bitmapFaceKey = cleanBitmapKey(face?.bitmapFaceKey);
   const bitmapAngle = normalizeBitmapAngle(face?.bitmapAngle);
   const bitmapMirrorX = !!face?.bitmapMirrorX;
-  const bitmapUv = Array.isArray(face?.bitmapUv)
-    ? face.bitmapUv.map((p) => Array.isArray(p) ? [round(Number(p[0]) || 0, 3), round(Number(p[1]) || 0, 3)] : null).filter(Boolean)
-    : null;
+  const bitmapUv = cleanFaceBitmapUv(face);
   const bitmapBaseW = Math.max(0, Math.round(Number(face?.bitmapBaseW) || 0));
   const bitmapBaseH = Math.max(0, Math.round(Number(face?.bitmapBaseH) || 0));
   const bitmapDecals = cleanFaceDecals(face?.bitmapDecals);
@@ -2790,6 +2797,23 @@ function faceGroupProjectionTargets(faces) {
 }
 
 function applyCurrentViewGroupUv(faces, img) {
+  const templateSide = activeProjectionViewName();
+  if (["top", "bottom", "back"].includes(templateSide)) {
+    const project = templateProjection(templateSide, "footprint");
+    const baseW = project.width || TEMPLATE_SIZE;
+    const baseH = project.height || TEMPLATE_SIZE;
+    for (const face of faces) {
+      face.bitmapSide = templateSide;
+      face.bitmapUv = face.verts.map((id) => {
+        const v = vertexById(id);
+        const p = project(v || vec());
+        return [round(p.x, 3), round(p.y, 3)];
+      });
+      face.bitmapBaseW = baseW;
+      face.bitmapBaseH = baseH;
+    }
+    return true;
+  }
   const verts = [];
   for (const face of faces) {
     for (const id of face.verts) {
@@ -5042,7 +5066,7 @@ function derivedBlueprint() {
   }).filter(Boolean);
   const faceSides = state.faces.map((f) => validBitmapFaceSide(f.bitmapSide) || null);
   const faceTextures = state.faces.map((f) => cleanBitmapKey(f.bitmapFaceKey) || null);
-  const faceTextureUv = state.faces.map((f) => Array.isArray(f.bitmapUv) && f.bitmapUv.length >= 3 ? f.bitmapUv.map((p) => [round(Number(p[0]) || 0, 3), round(Number(p[1]) || 0, 3)]) : null);
+  const faceTextureUv = state.faces.map((f) => cleanFaceBitmapUv(f));
   const faceTextureBaseW = state.faces.map((f) => Number.isFinite(Number(f.bitmapBaseW)) && Number(f.bitmapBaseW) > 0 ? Math.round(Number(f.bitmapBaseW)) : null);
   const faceTextureBaseH = state.faces.map((f) => Number.isFinite(Number(f.bitmapBaseH)) && Number(f.bitmapBaseH) > 0 ? Math.round(Number(f.bitmapBaseH)) : null);
   const faceColors = state.faces.map((f) => optionalHexColor(f.faceColor) || null);
@@ -5068,6 +5092,7 @@ function derivedBlueprint() {
   const hasImageProjection = !!imageProjection.primaryAxis || !!imageProjection.faceSides || !!imageProjection.faceTextures || !!imageProjection.faceTextureUv || !!imageProjection.faceColors || !!imageProjection.faceAngles || !!imageProjection.faceMirrorX || !!imageProjection.faceDecals;
   return {
     verts,
+    faces,
     edges,
     edgeFaces,
     edgeVisibility,
@@ -5182,7 +5207,7 @@ function builderExport() {
       ...(optionalHexColor(f.faceColor) ? { faceColor: optionalHexColor(f.faceColor) } : {}),
       ...(validBitmapFaceSide(f.bitmapSide) ? { bitmapSide: f.bitmapSide } : {}),
       ...(cleanBitmapKey(f.bitmapFaceKey) ? { bitmapFaceKey: cleanBitmapKey(f.bitmapFaceKey) } : {}),
-      ...(Array.isArray(f.bitmapUv) && f.bitmapUv.length >= 3 ? { bitmapUv: f.bitmapUv.map((p) => [round(Number(p[0]) || 0, 3), round(Number(p[1]) || 0, 3)]) } : {}),
+      ...(cleanFaceBitmapUv(f) ? { bitmapUv: cleanFaceBitmapUv(f) } : {}),
       ...(Number.isFinite(Number(f.bitmapBaseW)) && Number(f.bitmapBaseW) > 0 && Number.isFinite(Number(f.bitmapBaseH)) && Number(f.bitmapBaseH) > 0 ? { bitmapBaseW: Math.round(Number(f.bitmapBaseW)), bitmapBaseH: Math.round(Number(f.bitmapBaseH)) } : {}),
       ...(normalizeBitmapAngle(f.bitmapAngle) ? { bitmapAngle: normalizeBitmapAngle(f.bitmapAngle) } : {}),
       ...(f.bitmapMirrorX ? { bitmapMirrorX: true } : {}),

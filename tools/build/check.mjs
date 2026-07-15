@@ -22,6 +22,7 @@ const files = {
   renderBenchHtml: path.join(root, "tools/render-bench/index.html"),
   renderQaHtml: path.join(root, "tools/render-qa/index.html"),
   renderQaJs: path.join(root, "tools/render-qa/render-qa.js"),
+  uvPainterJs: path.join(root, "tools/uv-painter/uv-painter.js"),
   builderRenderPreviewHtml: path.join(root, "tools/ship-builder/render-preview.html"),
   builderRenderPreviewJs: path.join(root, "tools/ship-builder/render-preview.js"),
   generatedModels: path.join(root, "src/generated/model-library.js"),
@@ -53,6 +54,7 @@ const localServer = read(files.localServer);
 const renderBenchHtml = read(files.renderBenchHtml);
 const renderQaHtml = read(files.renderQaHtml);
 const renderQaJs = read(files.renderQaJs);
+const uvPainterJs = read(files.uvPainterJs);
 const builderRenderPreviewHtml = read(files.builderRenderPreviewHtml);
 const builderRenderPreviewJs = read(files.builderRenderPreviewJs);
 const packageJson = JSON.parse(read(files.packageJson));
@@ -121,6 +123,7 @@ for (const [label, marker] of protrudingEdgeGuards) {
 }
 
 const bitmapProjectionGuards = [
+  ["blueprint face rebuild remaps bitmap metadata", "function remapImageProjectionForBuiltFaces"],
   ["face-index bitmap slot helper", "hasProjectionFaceSlot"],
   ["face-side lookup must not fall through authored null face slots", "hasProjectionFaceSlot(faceSides, faceIndex)"],
   ["face-texture lookup must not fall through authored null face slots", "hasProjectionFaceSlot(faceTextures, faceIndex)"],
@@ -136,6 +139,9 @@ for (const [label, marker] of bitmapProjectionGuards) {
   if (!js.includes(marker)) {
     throw new Error(`Missing renderer guard: ${label}. Bitmap projection metadata is authored in face order; face index must win over normal index.`);
   }
+}
+if (js.includes("authoredFaceSide")) {
+  throw new Error("Retired renderer UV path detected: per-face texture keys must not use authored bitmapSide to force whole-model side projection.");
 }
 
 const modelRoleGuards = [
@@ -252,6 +258,7 @@ for (const file of fs.readdirSync(modelDir).filter((name) => name.endsWith(".ult
 
 new Function(js);
 new Function(renderQaJs);
+new Function(uvPainterJs);
 new Function(builderRenderPreviewJs);
 new Function(read(files.builderModels));
 new Function(read(files.generatedModels));
@@ -335,6 +342,14 @@ function cleanBitmapAngle(value) {
   return Math.abs(n) < .0001 ? null : Math.round(n * 100) / 100;
 }
 
+function cleanFaceUv(uv) {
+  if (!Array.isArray(uv)) return null;
+  const points = uv.map((p) => Array.isArray(p) && Number.isFinite(Number(p[0])) && Number.isFinite(Number(p[1]))
+    ? [Math.round(Number(p[0]) * 1000) / 1000, Math.round(Number(p[1]) * 1000) / 1000]
+    : null).filter(Boolean);
+  return points.length >= 3 ? points : null;
+}
+
 function cleanFaceDecal(decal) {
   const key = cleanBitmapKey(decal?.key);
   if (!key) return null;
@@ -414,6 +429,9 @@ if (fs.existsSync(modelDir)) {
     const sourceFaces = Array.isArray(data.faces) ? data.faces : [];
     const faceSides = sourceFaces.map((face) => validBitmapFaceSide(face?.bitmapSide));
     const faceTextures = sourceFaces.map((face) => cleanBitmapKey(face?.bitmapFaceKey) || null);
+    const faceTextureUv = sourceFaces.map((face) => cleanFaceUv(face?.bitmapUv));
+    const faceTextureBaseW = sourceFaces.map((face) => Number.isFinite(Number(face?.bitmapBaseW)) && Number(face.bitmapBaseW) > 0 ? Math.round(Number(face.bitmapBaseW)) : null);
+    const faceTextureBaseH = sourceFaces.map((face) => Number.isFinite(Number(face?.bitmapBaseH)) && Number(face.bitmapBaseH) > 0 ? Math.round(Number(face.bitmapBaseH)) : null);
     const authoredFaceColors = sourceFaces.map((face) => cleanHexColor(face?.faceColor || face?.color));
     const faceAngles = sourceFaces.map((face) => cleanBitmapAngle(face?.bitmapAngle));
     const faceMirrorX = sourceFaces.map((face) => !!face?.bitmapMirrorX);
@@ -423,12 +441,15 @@ if (fs.existsSync(modelDir)) {
     });
     const hasFaceSides = faceSides.some(Boolean);
     const hasFaceTextures = faceTextures.some(Boolean);
+    const hasFaceTextureUv = faceTextureUv.some(Boolean);
+    const hasFaceTextureBaseW = faceTextureBaseW.some(Boolean);
+    const hasFaceTextureBaseH = faceTextureBaseH.some(Boolean);
     const hasAuthoredFaceColors = authoredFaceColors.some(Boolean);
     const hasFaceAngles = faceAngles.some((angle) => angle != null);
     const hasFaceMirrorX = faceMirrorX.some(Boolean);
     const hasFaceDecals = faceDecals.some((decals) => decals?.length);
     const usesOnlyFaceTextures = sourceFaces.length > 0 && faceTextures.every(Boolean);
-    if (!hasFaceSides && !hasFaceTextures && !hasAuthoredFaceColors && !hasFaceAngles && !hasFaceMirrorX && !hasFaceDecals) continue;
+    if (!hasFaceSides && !hasFaceTextures && !hasFaceTextureUv && !hasFaceTextureBaseW && !hasFaceTextureBaseH && !hasAuthoredFaceColors && !hasFaceAngles && !hasFaceMirrorX && !hasFaceDecals) continue;
 
     const generatedProjection = generatedModels[modelId]?.imageProjection || {};
     if (hasFaceSides && JSON.stringify(generatedProjection.faceSides) !== JSON.stringify(faceSides)) {
@@ -437,6 +458,26 @@ if (fs.existsSync(modelDir)) {
     if (hasFaceTextures && JSON.stringify(generatedProjection.faceTextures) !== JSON.stringify(faceTextures)) {
       throw new Error(`${path.relative(root, filePath)} bitmap faceTextures are out of sync with src/generated/model-library.js; run npm run models or npm run build.`);
     }
+    if (hasFaceTextureUv && JSON.stringify(generatedProjection.faceTextureUv) !== JSON.stringify(faceTextureUv)) {
+      throw new Error(`${path.relative(root, filePath)} bitmap faceTextureUv is out of sync with src/generated/model-library.js; run npm run models or npm run build.`);
+    }
+    if (hasFaceTextureBaseW && JSON.stringify(generatedProjection.faceTextureBaseW) !== JSON.stringify(faceTextureBaseW)) {
+      throw new Error(`${path.relative(root, filePath)} bitmap faceTextureBaseW is out of sync with src/generated/model-library.js; run npm run models or npm run build.`);
+    }
+    if (hasFaceTextureBaseH && JSON.stringify(generatedProjection.faceTextureBaseH) !== JSON.stringify(faceTextureBaseH)) {
+      throw new Error(`${path.relative(root, filePath)} bitmap faceTextureBaseH is out of sync with src/generated/model-library.js; run npm run models or npm run build.`);
+    }
+    sourceFaces.forEach((face, faceIndex) => {
+      if (Array.isArray(face?.bitmapUv)) {
+        const verts = sourceFaceVerts(face);
+        if (!faceTextureUv[faceIndex] || faceTextureUv[faceIndex].length !== verts.length) {
+          throw new Error(`${path.relative(root, filePath)} face ${faceIndex} has bitmapUv with ${faceTextureUv[faceIndex]?.length || 0} points for ${verts.length} vertices.`);
+        }
+      }
+      if (faceTextureUv[faceIndex] && (!faceTextureBaseW[faceIndex] || !faceTextureBaseH[faceIndex])) {
+        throw new Error(`${path.relative(root, filePath)} face ${faceIndex} has authored bitmapUv without bitmapBaseW/bitmapBaseH.`);
+      }
+    });
     if ((hasFaceTextures || hasAuthoredFaceColors) && (!Array.isArray(generatedProjection.faceColors) || generatedProjection.faceColors.length !== sourceFaces.length)) {
       throw new Error(`${path.relative(root, filePath)} bitmap faceColors are missing or out of sync with src/generated/model-library.js; run npm run models or npm run build.`);
     }
@@ -463,6 +504,9 @@ if (fs.existsSync(modelDir)) {
     const blueprintBitmapFields = [
       ["faceSides", hasFaceSides, faceSides],
       ["faceTextures", hasFaceTextures, faceTextures],
+      ["faceTextureUv", hasFaceTextureUv, faceTextureUv],
+      ["faceTextureBaseW", hasFaceTextureBaseW, faceTextureBaseW],
+      ["faceTextureBaseH", hasFaceTextureBaseH, faceTextureBaseH],
       ["faceColors", hasAuthoredFaceColors, authoredFaceColors],
       ["faceAngles", hasFaceAngles, faceAngles],
       ["faceMirrorX", hasFaceMirrorX, faceMirrorX],

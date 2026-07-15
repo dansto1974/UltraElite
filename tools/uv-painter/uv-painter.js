@@ -2,6 +2,7 @@
 "use strict";
 
 const TAU = Math.PI * 2;
+const TEMPLATE_MAX_SIZE = 600;
 const VIEWS = {
   top: { rx: -Math.PI / 2, ry: 0, label: "Top" },
   bottom: { rx: Math.PI / 2, ry: Math.PI, label: "Bottom" },
@@ -207,6 +208,8 @@ function renderPayload(force = false) {
     fxLevel: "ultra",
     quality: "live",
     lightMode: "camera",
+    orthographic: state.viewName !== "camera",
+    projectionProof: state.viewName !== "camera",
     projection: true,
     targetScale: .56
   };
@@ -305,16 +308,17 @@ async function loadAssets() {
 
 function assetSortRank(asset) {
   const current = modelId();
-  if (asset.kind === "side" && asset.model === current) return 0;
-  if (asset.kind === "side") return 1;
-  if (asset.kind === "face" && asset.model === current) return 2;
+  if (asset.kind === "face" && asset.model === current && currentModelUsedFaceKeys().has(cleanKey(asset.key))) return 0;
+  if (asset.kind === "face" && asset.model === current) return 1;
+  if (asset.kind === "side" && asset.model === current) return 2;
   if (asset.kind === "face") return 3;
-  return 4;
+  if (asset.kind === "side") return 4;
+  return 5;
 }
 
 function assetLabel(asset) {
   if (asset.label) return asset.label;
-  if (asset.kind === "side") return `${asset.model || "shared"} / ${String(asset.side || "").toUpperCase()} SKIN`;
+  if (asset.kind === "side") return `${asset.model || "shared"} / ${String(asset.side || "").toUpperCase()} SIDE SKIN`;
   if (asset.kind === "face") return `${asset.model || "shared"} / FACE UV / ${asset.key || asset.file}`;
   return `${asset.model || "shared"} / ${asset.key || asset.file}`;
 }
@@ -344,8 +348,19 @@ function updateAssetSelect() {
 
 function selectPreferredAssetForModel() {
   const current = modelId();
-  const preferred = state.assets.find((asset) => asset.kind === "side" && asset.model === current && asset.side === "top")
+  const usedFaceKeys = [...currentModelUsedFaceKeys()];
+  const faceUseCounts = new Map();
+  for (const face of state.model?.faces || []) {
+    const key = cleanKey(face.bitmapFaceKey);
+    if (key) faceUseCounts.set(key, (faceUseCounts.get(key) || 0) + 1);
+  }
+  const preferredUsedFaceKey = usedFaceKeys
+    .sort((a, b) => (faceUseCounts.get(b) || 0) - (faceUseCounts.get(a) || 0) || a.localeCompare(b))[0];
+  const preferred = state.assets.find((asset) => asset.kind === "face" && asset.model === current && cleanKey(asset.key) === preferredUsedFaceKey)
+    || state.assets.find((asset) => asset.kind === "face" && asset.model === current)
+    || state.assets.find((asset) => asset.kind === "side" && asset.model === current && asset.side === "top")
     || state.assets.find((asset) => asset.kind === "side" && asset.model === current)
+    || state.assets.find((asset) => asset.kind === "face")
     || state.assets.find((asset) => asset.kind === "side");
   if (preferred) els.assetSelect.value = preferred.id || preferred.file;
 }
@@ -567,6 +582,20 @@ function setView(name) {
 }
 
 function orthographicSelectedUvForFaces(faces, width, height) {
+  const template = templateProjectionForCurrentView();
+  if (template) {
+    return new Map(faces.map((face) => [
+      face.id,
+      face.verts.map((id) => {
+        const vertex = vertexById(id);
+        const point = vertex ? template.project(vertex) : { x: 0, y: 0 };
+        return [
+          round(point.x),
+          round(point.y)
+        ];
+      })
+    ]));
+  }
   const points = [];
   for (const face of faces) {
     for (const id of face.verts) {
@@ -591,6 +620,49 @@ function orthographicSelectedUvForFaces(faces, width, height) {
       ];
     })
   ]));
+}
+
+function templateProjectionForCurrentView() {
+  if (!state.model?.verts?.length) return null;
+  const side = projectionSideForCurrentView();
+  if (!side) return null;
+  let uProp = "x";
+  let vProp = "z";
+  let flipU = false;
+  let flipV = true;
+  if (side === "bottom") flipU = true;
+  if (side === "back") {
+    uProp = "x";
+    vProp = "y";
+    flipU = true;
+    flipV = true;
+  }
+  const values = state.model.verts.map((v) => ({ u: Number(v[uProp]) || 0, v: Number(v[vProp]) || 0 }));
+  let minU = Math.min(...values.map((p) => p.u));
+  let maxU = Math.max(...values.map((p) => p.u));
+  let minV = Math.min(...values.map((p) => p.v));
+  let maxV = Math.max(...values.map((p) => p.v));
+  const marginU = Math.max(1, (maxU - minU) * .08);
+  const marginV = Math.max(1, (maxV - minV) * .08);
+  minU -= marginU; maxU += marginU;
+  minV -= marginV; maxV += marginV;
+  const rangeU = maxU - minU || 1;
+  const rangeV = maxV - minV || 1;
+  const scale = TEMPLATE_MAX_SIZE / Math.max(rangeU, rangeV, 1);
+  const templateWidth = Math.max(16, Math.round(rangeU * scale));
+  const templateHeight = Math.max(16, Math.round(rangeV * scale));
+  return {
+    width: templateWidth,
+    height: templateHeight,
+    project(vertex) {
+      const rawU = ((Number(vertex?.[uProp]) || 0) - minU) * scale;
+      const rawV = ((Number(vertex?.[vProp]) || 0) - minV) * scale;
+      return {
+        x: flipU ? templateWidth - rawU : rawU,
+        y: flipV ? templateHeight - rawV : rawV
+      };
+    }
+  };
 }
 
 function rendererProjectionUvForFaces(faces, width, height) {
@@ -632,6 +704,7 @@ async function projectSelectedFaces() {
   const width = Math.max(1, img.naturalWidth || img.width || 1);
   const height = Math.max(1, img.naturalHeight || img.height || 1);
   const projectionSide = projectionSideForCurrentView();
+  const template = state.viewName === "camera" ? null : templateProjectionForCurrentView();
   const uvByFaceId = state.viewName === "camera"
     ? rendererProjectionUvForFaces(faces, width, height)
     : orthographicSelectedUvForFaces(faces, width, height);
@@ -642,8 +715,8 @@ async function projectSelectedFaces() {
     face.bitmapFaceKey = key;
     if (projectionSide) face.bitmapSide = projectionSide;
     else delete face.bitmapSide;
-    face.bitmapBaseW = width;
-    face.bitmapBaseH = height;
+    face.bitmapBaseW = template?.width || width;
+    face.bitmapBaseH = template?.height || height;
     face.bitmapUv = uvByFaceId.get(face.id);
   }
   state.assetImages.set(key, img);

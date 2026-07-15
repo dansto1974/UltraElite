@@ -57,6 +57,8 @@ function render(payload = latest) {
     fxLevel: latest.fxLevel || "ultra",
     quality: latest.quality || "live",
     lightMode: latest.lightMode || null,
+    orthographic: !!latest.orthographic,
+    projectionProof: !!latest.projectionProof,
     lod: "0",
     targetScale: Number(latest.targetScale) || .56,
     yaw: Number(view.ry) || 0,
