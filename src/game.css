@@ -1772,6 +1772,14 @@
       opacity: .42;
     }
 
+    .star-map .mission-route-line {
+      stroke: var(--amber);
+      stroke-width: 1;
+      stroke-dasharray: 2 4;
+      opacity: .64;
+      filter: drop-shadow(0 0 3px rgba(255, 211, 74, .38));
+    }
+
     .star-map .mission-destination-ring {
       fill: none;
       stroke: var(--amber);

@@ -17115,6 +17115,14 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       );
     }
 
+    function activeMissionsInCurrentGalaxy() {
+      return missionState().active.filter((mission) =>
+        mission.status === "active"
+        && mission.destination
+        && mission.destination.galaxy === game.galaxy
+      );
+    }
+
     function missionMapHalo(x, y, radius, count = 1) {
       if (!count) return "";
       const label = `${count} active mission${count === 1 ? "" : "s"}`;
@@ -17214,6 +17222,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const minY = Math.min(...ys), maxY = Math.max(...ys);
       const sx = (x) => pad + (x - minX) / (maxX - minX || 1) * (w - pad * 2);
       const sy = (y) => pad + (y - minY) / (maxY - minY || 1) * (h - pad * 2);
+      const cur = currentSystem();
+      const curX = sx(cur.x).toFixed(1), curY = sy(cur.y).toFixed(1);
+      const missionRoutes = activeMissionsInCurrentGalaxy().map((mission) => {
+        const dest = galaxies[game.galaxy][mission.destination.system];
+        if (!dest) return "";
+        return `<line x1="${curX}" y1="${curY}" x2="${sx(dest.x).toFixed(1)}" y2="${sy(dest.y).toFixed(1)}" class="mission-route-line" pointer-events="none"></line>`;
+      }).join("");
       const dots = sys.map((s) => {
         const isCur = s.index === game.current;
         const isTgt = s.index === game.target;
@@ -17227,7 +17242,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           <circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" pointer-events="none"></circle>
         </g>`;
       }).join("");
-      return `<svg viewBox="0 0 ${w} ${h}" class="star-map" data-map="galaxy">${dots}</svg>`;
+      return `<svg viewBox="0 0 ${w} ${h}" class="star-map" data-map="galaxy">${missionRoutes}${dots}</svg>`;
     }
 
     function renderLocalMap() {
@@ -17250,6 +17265,15 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ).join("")
         + (currentRangeLy > .05 ? `<circle cx="${originX.toFixed(1)}" cy="${originY.toFixed(1)}" r="${(currentRangeLy * scalePx).toFixed(1)}" class="range-ring current-range"></circle>` : "")
         + `<circle cx="${originX.toFixed(1)}" cy="${originY.toFixed(1)}" r="${(maxRangeLy * scalePx).toFixed(1)}" class="range-ring max-range"></circle>`;
+      const missionRoutes = activeMissionsInCurrentGalaxy().map((mission) => {
+        const dest = galaxies[game.galaxy][mission.destination.system];
+        if (!dest) return "";
+        const dxLy = (dest.x - cur.x) / 4;
+        const dyLy = (dest.y - cur.y) / 4;
+        const x = originX + dxLy * scalePx;
+        const y = originY + dyLy * scalePx;
+        return `<line x1="${originX.toFixed(1)}" y1="${originY.toFixed(1)}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" class="mission-route-line" pointer-events="none"></line>`;
+      }).join("");
       const dots = nearby.map(({ s, d, x, y }) => {
         const isCur = s.index === game.current;
         const isTgt = s.index === game.target;
@@ -17264,6 +17288,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }).join("");
       return `<svg viewBox="0 0 ${w} ${h}" class="star-map" data-map="local">
         ${rings}
+        ${missionRoutes}
         ${dots}
       </svg>`;
     }
