@@ -96,6 +96,7 @@ const els = {
   faceDecalAlpha: document.getElementById("faceDecalAlpha"),
   removeFaceDecalBtn: document.getElementById("removeFaceDecalBtn"),
   clearFaceDecalsBtn: document.getElementById("clearFaceDecalsBtn"),
+  clearAllFaceDecalsBtn: document.getElementById("clearAllFaceDecalsBtn"),
   clearBitmapShelfBtn: document.getElementById("clearBitmapShelfBtn"),
   importTopSkin: document.getElementById("importTopSkin"),
   importBottomSkin: document.getElementById("importBottomSkin"),
@@ -104,6 +105,7 @@ const els = {
   reloadSkinBitmapsBtn: document.getElementById("reloadSkinBitmapsBtn"),
   clearImportedSkinsBtn: document.getElementById("clearImportedSkinsBtn"),
   clearFaceSkinBtn: document.getElementById("clearFaceSkinBtn"),
+  clearAllFaceUvBtn: document.getElementById("clearAllFaceUvBtn"),
   localServerReadout: document.getElementById("localServerReadout"),
   assetShelfCategory: document.getElementById("assetShelfCategory"),
   refreshAssetShelfBtn: document.getElementById("refreshAssetShelfBtn"),
@@ -2279,6 +2281,34 @@ function clearSelectedFaceSkin() {
   renderAll();
 }
 
+function clearAllFaceUv() {
+  const affected = state.faces.filter((face) =>
+    cleanBitmapKey(face.bitmapFaceKey)
+    || validBitmapFaceSide(face.bitmapSide)
+    || normalizeBitmapAngle(face.bitmapAngle)
+    || face.bitmapMirrorX
+  );
+  if (!affected.length) {
+    setStatus("NO FACE UV ASSIGNMENTS TO CLEAR.");
+    return;
+  }
+  const confirmClear = window.confirm(`Clear face UV assignments from ${affected.length} face${affected.length === 1 ? "" : "s"}?`);
+  if (!confirmClear) return;
+  for (const face of affected) {
+    delete face.bitmapSide;
+    delete face.bitmapFaceKey;
+    delete face.bitmapAngle;
+    delete face.bitmapMirrorX;
+  }
+  if (mirrorActionsEnabled()) {
+    for (const face of affected) syncMirroredFace(face);
+  }
+  markPreviewSkinsDirty();
+  updateFaceUvAngleControls();
+  setStatus(`${affected.length} FACE UV ASSIGNMENT${affected.length === 1 ? "" : "S"} CLEARED.`);
+  renderAll();
+}
+
 function applyShelfBitmap(side) {
   const item = selectedBitmapShelfItem();
   if (!item) {
@@ -2381,6 +2411,25 @@ function clearSelectedFaceDecals() {
   markPreviewSkinsDirty();
   updateFaceDecalControls();
   setStatus(count ? `${count} DECAL${count === 1 ? "" : "S"} CLEARED FROM FACE #${face.id}.` : "SELECTED FACE HAS NO DECALS.");
+  renderAll();
+}
+
+function clearAllFaceDecals() {
+  const affected = state.faces.filter((face) => cleanFaceDecals(face.bitmapDecals).length);
+  const count = affected.reduce((sum, face) => sum + cleanFaceDecals(face.bitmapDecals).length, 0);
+  if (!count) {
+    setStatus("NO FACE DECALS TO CLEAR.");
+    return;
+  }
+  const confirmClear = window.confirm(`Clear ${count} decal${count === 1 ? "" : "s"} from ${affected.length} face${affected.length === 1 ? "" : "s"}?`);
+  if (!confirmClear) return;
+  for (const face of affected) delete face.bitmapDecals;
+  if (mirrorActionsEnabled()) {
+    for (const face of affected) syncMirroredFace(face);
+  }
+  markPreviewSkinsDirty();
+  updateFaceDecalControls();
+  setStatus(`${count} DECAL${count === 1 ? "" : "S"} CLEARED FROM ${affected.length} FACE${affected.length === 1 ? "" : "S"}.`);
   renderAll();
 }
 
@@ -4877,6 +4926,7 @@ function bindEvents() {
   els.faceDecalAngle?.addEventListener("change", updateSelectedFaceDecalFromControls);
   els.removeFaceDecalBtn?.addEventListener("click", removeSelectedFaceDecal);
   els.clearFaceDecalsBtn?.addEventListener("click", clearSelectedFaceDecals);
+  els.clearAllFaceDecalsBtn?.addEventListener("click", clearAllFaceDecals);
   els.clearBitmapShelfBtn.addEventListener("click", clearBitmapShelf);
   els.refreshAssetShelfBtn?.addEventListener("click", loadAssetShelf);
   els.saveModelAssetBtn?.addEventListener("click", saveModelAsset);
@@ -4911,6 +4961,7 @@ function bindEvents() {
   els.reloadSkinBitmapsBtn.addEventListener("click", () => loadSkinBitmaps(els.shipId.value, state.skinImages?.mirrorX || emptyMirrorFlags(false)));
   els.clearImportedSkinsBtn.addEventListener("click", clearSkinBitmaps);
   els.clearFaceSkinBtn.addEventListener("click", clearSelectedFaceSkin);
+  els.clearAllFaceUvBtn?.addEventListener("click", clearAllFaceUv);
   els.mirrorHalfSkins.addEventListener("input", () => {
     updateSkinReadout();
     renderAll();
