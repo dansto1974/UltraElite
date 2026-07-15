@@ -1772,6 +1772,15 @@
       opacity: .42;
     }
 
+    .star-map .mission-destination-ring {
+      fill: none;
+      stroke: var(--amber);
+      stroke-width: 1.35;
+      stroke-dasharray: 2.5 2.5;
+      opacity: .95;
+      filter: drop-shadow(0 0 4px rgba(255, 211, 74, .55));
+    }
+
     .star-map .map-dot {
       cursor: pointer;
     }

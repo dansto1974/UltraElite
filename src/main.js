@@ -17106,6 +17106,45 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return bits.join(" · ");
     }
 
+    function activeMissionsForSystem(system) {
+      return missionState().active.filter((mission) =>
+        mission.status === "active"
+        && mission.destination
+        && mission.destination.galaxy === (system.galaxy ?? game.galaxy)
+        && mission.destination.system === system.index
+      );
+    }
+
+    function missionMapHalo(x, y, radius, count = 1) {
+      if (!count) return "";
+      const label = `${count} active mission${count === 1 ? "" : "s"}`;
+      return `<circle cx="${x}" cy="${y}" r="${radius}" class="mission-destination-ring" pointer-events="none"><title>${escapeHtml(label)}</title></circle>`;
+    }
+
+    function centerLocalMapOnSystem(system) {
+      const cur = currentSystem();
+      game.localMapPanX = (system.x - cur.x) / 4;
+      game.localMapPanY = (system.y - cur.y) / 4;
+    }
+
+    function plotMissionCourse(id) {
+      const mission = activeMissionById(id);
+      if (!mission?.destination || mission.destination.galaxy !== game.galaxy) {
+        eliteAudio.play("boop");
+        setMessage("Mission destination is not on this galaxy chart.", true);
+        return;
+      }
+      const destination = galaxies[game.galaxy][mission.destination.system];
+      const currentDistance = destination ? distance(currentSystem(), destination) : mission.distanceLy;
+      game.target = mission.destination.system;
+      game.panel = "chart";
+      game.panelOpen = true;
+      game.mapMode = currentDistance <= 24 ? "local" : "galaxy";
+      if (game.mapMode === "local" && destination) centerLocalMapOnSystem(destination);
+      setMessage(`Course plotted for ${mission.destination.name}: ${mission.title}.`, true);
+      renderPanel();
+    }
+
     function renderMissionCard(mission, active = false) {
       const type = MISSION_TYPES[mission.type] || mission.type;
       const heat = mission.heat ? "●".repeat(Math.min(4, mission.heat)) : "none";
@@ -17132,7 +17171,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         </div>
         <div style="margin-top:8px">
           ${active
-            ? `<button class="btn mini danger" data-mission-abandon="${mission.id}">Abandon</button>`
+            ? `<button class="btn mini primary" data-mission-plot="${mission.id}">Plot Course</button> <button class="btn mini danger" data-mission-abandon="${mission.id}">Abandon</button>`
             : `<button class="btn mini primary" data-mission-accept="${mission.id}" ${canAccept ? "" : "disabled"}>Accept</button>`}
         </div>
       </div>`;
@@ -17178,10 +17217,12 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const dots = sys.map((s) => {
         const isCur = s.index === game.current;
         const isTgt = s.index === game.target;
+        const missionCount = activeMissionsForSystem(s).length;
         const r = isCur || isTgt ? 4.2 : 2.1;
         const fill = isCur ? "var(--cyan)" : isTgt ? "var(--amber)" : "var(--green-dim)";
         const x = sx(s.x).toFixed(1), y = sy(s.y).toFixed(1);
         return `<g class="map-dot" data-sys="${s.index}">
+          ${missionMapHalo(x, y, isCur || isTgt ? 9.5 : 7.5, missionCount)}
           <circle cx="${x}" cy="${y}" r="8" class="map-hit"><title>${s.name}</title></circle>
           <circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" pointer-events="none"></circle>
         </g>`;
@@ -17212,8 +17253,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const dots = nearby.map(({ s, d, x, y }) => {
         const isCur = s.index === game.current;
         const isTgt = s.index === game.target;
+        const missionCount = activeMissionsForSystem(s).length;
         const label = isCur || d <= maxRangeLy ? `<text x="${(x + 7).toFixed(1)}" y="${(y + 4).toFixed(1)}" class="map-label">${s.name}</text>` : "";
         return `<g class="map-dot" data-sys="${s.index}">
+          ${missionMapHalo(x.toFixed(1), y.toFixed(1), isCur ? 15 : isTgt ? 10 : 8.5, missionCount)}
           <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${isCur ? 12 : 10}" class="map-hit"><title>${s.name}</title></circle>
           <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${isCur || isTgt ? 4.4 : 3}" fill="${isCur ? "var(--cyan)" : isTgt ? "var(--amber)" : "var(--green)"}" pointer-events="none"></circle>
           ${label}
@@ -17864,6 +17907,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const fuel = panelBody.querySelector("[data-fuel]");
       if (fuel) fuel.addEventListener("click", buyFuel);
       panelBody.querySelectorAll("[data-mission-accept]").forEach((b) => b.addEventListener("click", () => acceptMission(b.dataset.missionAccept)));
+      panelBody.querySelectorAll("[data-mission-plot]").forEach((b) => b.addEventListener("click", () => plotMissionCourse(b.dataset.missionPlot)));
       panelBody.querySelectorAll("[data-mission-abandon]").forEach((b) => b.addEventListener("click", () => abandonMission(b.dataset.missionAbandon)));
       const missile = panelBody.querySelector("[data-missile]");
       if (missile) missile.addEventListener("click", () => {
