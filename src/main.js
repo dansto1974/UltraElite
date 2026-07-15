@@ -11688,14 +11688,21 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function shipStatus(o) {
+      if (o.missionTargetId) return { text: "MISSION TARGET", color: "#ffd33d" };
       if (o.aiMode === "flee") return { text: "FLEEING", color: "#91a78d" };
       if (o.hostile) return o.police ? { text: "PURSUING", color: "#46dfff" } : { text: "HOSTILE", color: "#ff6a55" };
       if (o.police) return { text: "PATROL", color: "#46dfff" };
       return { text: "CRUISING", color: "#65ff47" };
     }
 
+    function shipContactId(o) {
+      if (o?.missionTargetId) return `MT-${String(o.missionTargetId).slice(-6).toUpperCase()}`;
+      if (Number.isFinite(o?._simId)) return `ID-${String(o._simId).padStart(4, "0")}`;
+      return `ID-${hash32(`${o?.model || "ship"}:${o?.name || ""}:${Math.round(o?.pos?.x || 0)}:${Math.round(o?.pos?.z || 0)}`).toString(16).slice(-4).toUpperCase()}`;
+    }
+
     function drawShipLabels(w, h) {
-      ctx.font = `13px ${UI_CANVAS_FONT}`;
+      ctx.font = `16px ${UI_CANVAS_FONT}`;
       ctx.textAlign = "center";
       const lod = performanceLod();
       const maxLabels = lod >= 2 ? 2 : lod > 0 ? 4 : performanceSceneLoad() > .18 ? 5 : 7;
@@ -11719,41 +11726,58 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const { o, pr, apparentR, d } = item;
 
         const status = shipStatus(o);
+        const contactId = shipContactId(o);
         const distText = `${Math.round(d)}m`;
-        const labelY = pr.y - apparentR - 12;
-        const barW = 55;
-        ctx.font = `13px ${UI_CANVAS_FONT}`;
+        const locked = o === game.targetObject;
+        const missionTarget = !!o.missionTargetId;
+        const idText = `${contactId}${locked ? "  LOCKED" : ""}`;
+        const metaText = `${status.text}  ${distText}`;
+        const boxH = missionTarget ? 82 : 70;
+        const boxY = clamp(pr.y - apparentR - boxH - 12, 8, h - boxH - 8);
+        const barW = missionTarget ? 86 : 74;
+        ctx.font = `16px ${UI_CANVAS_FONT}`;
         const nameW = ctx.measureText(o.name).width;
-        ctx.font = `11px ${UI_CANVAS_FONT}`;
-        const statusW = ctx.measureText(status.text).width;
-        const distW = ctx.measureText(distText).width;
-        const boxW = Math.max(nameW, statusW, distW, barW) + 12;
+        ctx.font = `12px ${UI_CANVAS_FONT}`;
+        const idW = ctx.measureText(idText).width;
+        ctx.font = `13px ${UI_CANVAS_FONT}`;
+        const metaW = ctx.measureText(metaText).width;
+        const boxW = Math.max(nameW, idW, metaW, barW) + (missionTarget ? 26 : 18);
+        const boxX = clamp(pr.x - boxW / 2, 8, w - boxW - 8);
+        const centerX = boxX + boxW / 2;
 
-        ctx.fillStyle = "rgba(3,8,3,.55)";
-        ctx.fillRect(pr.x - boxW / 2, labelY - 48, boxW, 54);
-        ctx.strokeStyle = "rgba(101,255,71,.25)";
+        ctx.fillStyle = missionTarget ? "rgba(42,30,2,.72)" : "rgba(3,8,3,.68)";
+        ctx.fillRect(boxX, boxY, boxW, boxH);
+        ctx.strokeStyle = missionTarget ? "rgba(255,211,61,.82)" : locked ? "rgba(255,211,61,.62)" : "rgba(101,255,71,.34)";
         ctx.lineWidth = 1;
-        ctx.strokeRect(pr.x - boxW / 2, labelY - 48, boxW, 54);
+        ctx.strokeRect(boxX, boxY, boxW, boxH);
+        if (missionTarget || locked) {
+          ctx.fillStyle = missionTarget ? "rgba(255,211,61,.24)" : "rgba(255,211,61,.16)";
+          ctx.fillRect(boxX, boxY, boxW, 16);
+          ctx.fillStyle = "#ffe88c";
+          ctx.font = `11px ${UI_CANVAS_FONT}`;
+          ctx.fillText(missionTarget ? "MISSION TARGET" : "TARGET LOCK", centerX, boxY + 12);
+        }
 
         ctx.fillStyle = "#cfe9c8";
-        ctx.font = `13px ${UI_CANVAS_FONT}`;
-        ctx.fillText(o.name, pr.x, labelY - 34);
+        ctx.font = `16px ${UI_CANVAS_FONT}`;
+        ctx.fillText(o.name, centerX, boxY + (missionTarget || locked ? 34 : 21));
+        ctx.fillStyle = locked ? "#ffd33d" : "#91a78d";
+        ctx.font = `12px ${UI_CANVAS_FONT}`;
+        ctx.fillText(idText, centerX, boxY + (missionTarget || locked ? 49 : 36));
         ctx.fillStyle = status.color;
-        ctx.font = `11px ${UI_CANVAS_FONT}`;
-        ctx.fillText(status.text, pr.x, labelY - 21);
-        ctx.fillStyle = "#91a78d";
-        ctx.fillText(distText, pr.x, labelY - 8);
+        ctx.font = `13px ${UI_CANVAS_FONT}`;
+        ctx.fillText(metaText, centerX, boxY + (missionTarget || locked ? 65 : 52));
 
         const hpFrac = clamp((o.hp ?? 1) / (o.maxHp || o.hp || 1), 0, 1);
         const hpColor = hpFrac > .5 ? "#65ff47" : hpFrac > .22 ? "#ffd33d" : "#ff6a55";
-        const barX = pr.x - barW / 2, barY = labelY + 1;
+        const barX = centerX - barW / 2, barY = boxY + boxH - 10;
         ctx.fillStyle = "rgba(255,255,255,.12)";
-        ctx.fillRect(barX, barY, barW, 5);
+        ctx.fillRect(barX, barY, barW, 6);
         ctx.fillStyle = hpColor;
-        ctx.fillRect(barX, barY, barW * hpFrac, 5);
+        ctx.fillRect(barX, barY, barW * hpFrac, 6);
         ctx.strokeStyle = "rgba(255,255,255,.3)";
         ctx.lineWidth = .75;
-        ctx.strokeRect(barX, barY, barW, 5);
+        ctx.strokeRect(barX, barY, barW, 6);
       }
       ctx.textAlign = "left";
     }
