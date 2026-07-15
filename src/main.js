@@ -16319,6 +16319,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         texture: opts.texture || null,
         textures: opts.textures ?? quality.textures,
         metalAlphaMul: opts.metalAlphaMul ?? (quality.textures ? 1 : 0),
+        lightMode: opts.lightMode || null,
         edgeColor: opts.edgeColor || hullColor,
         edgeWidth: opts.edgeWidth ?? clamp(680 / Math.max(80, centerCam.z), .7, 2),
         detailEdges: quality.detailEdges !== false,
@@ -18569,7 +18570,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       drawShipPreviewBackground(c, canvas, modelName || "cobra", false);
       if (!model) return;
       const tempCam = vec(0, 0, 360);
-      const targetPx = Math.min(canvas.width * .7, canvas.height * .74);
+      const targetPx = Math.min(canvas.width * .84, canvas.height * .9);
       const scaleFactor = targetPx / modelOverallSize(model) * (tempCam.z / 320);
       const identityCamera = makeCamera(0);
       const detailProject = (p) => {
@@ -18597,6 +18598,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         color: hullColor
       }, {
         decal: null,
+        lightMode: "camera",
         edgeWidth: 1.2
       });
     }
