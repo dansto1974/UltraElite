@@ -3638,11 +3638,11 @@
     function spawnMissionTarget(mission) {
       if (!mission?.target || mission.target.spawned || mission.target.destroyed) return null;
       const rng = mulberry(hash32(`mission-spawn:${mission.id}:${game.galaxy}:${game.current}:${Math.floor(performance.now() / 1000)}`));
-      const model = mission.target.model || "krait";
+      const model = MODELS[mission.target.model] ? mission.target.model : "krait";
       const stats = shipStats(model);
       const thargoid = model === "thargoid";
       const hostile = true;
-      const role = thargoid ? "alien" : mission.legalClass === "private" ? "trader" : "pirate";
+      const role = thargoid ? "alien" : "pirate";
       const o = {
         type: "ship",
         model,
@@ -3665,7 +3665,7 @@
         missionTargetId: mission.target.id,
         aiMode: "attack",
         target: null,
-        orbitCenter: game.camera.pos,
+        orbitCenter: { ...game.camera.pos },
         orbitRadius: 900 + rng() * 700,
         orbitAngle: rng() * TAU,
         orbitSpeed: (rng() > .5 ? 1 : -1) * (.22 + rng() * .25),
@@ -3690,8 +3690,21 @@
         if (mission.status !== "active" || !mission.target || mission.target.destroyed || mission.target.spawned) continue;
         if (!sameSystemRef(mission.destination)) continue;
         mission.target.spawnDelay = Math.max(0, (Number(mission.target.spawnDelay) || 0) - dt);
-        const nearBody = worldSnapshot().bodies.some((body) => len(sub(body.pos, game.camera.pos)) < (body.r || 500) + 2600);
-        if (mission.target.spawnDelay <= 0 || nearBody) spawnMissionTarget(mission);
+        const nearBody = worldSnapshot().bodies.some((body) =>
+          finiteVec3(body?.pos)
+          && finiteVec3(game.camera?.pos)
+          && len(sub(body.pos, game.camera.pos)) < (body.r || 500) + 2600
+        );
+        if (mission.target.spawnDelay <= 0 || nearBody) {
+          try {
+            spawnMissionTarget(mission);
+          } catch (err) {
+            console.error("Mission target spawn failed", err);
+            mission.target.spawned = false;
+            mission.target.spawnDelay = 8;
+            setMessage("Mission contact signal unstable. Reacquiring target.", true);
+          }
+        }
       }
     }
 
@@ -17123,6 +17136,18 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       );
     }
 
+    function missionDestinationSystem(mission) {
+      const ref = mission?.destination;
+      if (!ref || ref.galaxy !== game.galaxy || !Number.isInteger(ref.system)) return null;
+      return galaxies[game.galaxy]?.[ref.system] || null;
+    }
+
+    function missionRouteLine(x1, y1, x2, y2) {
+      if (![x1, y1, x2, y2].every(Number.isFinite)) return "";
+      if (Math.hypot(x2 - x1, y2 - y1) < .5) return "";
+      return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" class="mission-route-line" pointer-events="none"></line>`;
+    }
+
     function missionMapHalo(x, y, radius, count = 1) {
       if (!count) return "";
       const label = `${count} active mission${count === 1 ? "" : "s"}`;
@@ -17142,7 +17167,12 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         setMessage("Mission destination is not on this galaxy chart.", true);
         return;
       }
-      const destination = galaxies[game.galaxy][mission.destination.system];
+      const destination = missionDestinationSystem(mission);
+      if (!destination) {
+        eliteAudio.play("boop");
+        setMessage("Mission destination data is unavailable.", true);
+        return;
+      }
       const currentDistance = destination ? distance(currentSystem(), destination) : mission.distanceLy;
       game.target = mission.destination.system;
       game.panel = "chart";
@@ -17225,9 +17255,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const cur = currentSystem();
       const curX = sx(cur.x).toFixed(1), curY = sy(cur.y).toFixed(1);
       const missionRoutes = activeMissionsInCurrentGalaxy().map((mission) => {
-        const dest = galaxies[game.galaxy][mission.destination.system];
+        const dest = missionDestinationSystem(mission);
         if (!dest) return "";
-        return `<line x1="${curX}" y1="${curY}" x2="${sx(dest.x).toFixed(1)}" y2="${sy(dest.y).toFixed(1)}" class="mission-route-line" pointer-events="none"></line>`;
+        return missionRouteLine(Number(curX), Number(curY), sx(dest.x), sy(dest.y));
       }).join("");
       const dots = sys.map((s) => {
         const isCur = s.index === game.current;
@@ -17266,13 +17296,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         + (currentRangeLy > .05 ? `<circle cx="${originX.toFixed(1)}" cy="${originY.toFixed(1)}" r="${(currentRangeLy * scalePx).toFixed(1)}" class="range-ring current-range"></circle>` : "")
         + `<circle cx="${originX.toFixed(1)}" cy="${originY.toFixed(1)}" r="${(maxRangeLy * scalePx).toFixed(1)}" class="range-ring max-range"></circle>`;
       const missionRoutes = activeMissionsInCurrentGalaxy().map((mission) => {
-        const dest = galaxies[game.galaxy][mission.destination.system];
+        const dest = missionDestinationSystem(mission);
         if (!dest) return "";
         const dxLy = (dest.x - cur.x) / 4;
         const dyLy = (dest.y - cur.y) / 4;
         const x = originX + dxLy * scalePx;
         const y = originY + dyLy * scalePx;
-        return `<line x1="${originX.toFixed(1)}" y1="${originY.toFixed(1)}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" class="mission-route-line" pointer-events="none"></line>`;
+        return missionRouteLine(originX, originY, x, y);
       }).join("");
       const dots = nearby.map(({ s, d, x, y }) => {
         const isCur = s.index === game.current;
