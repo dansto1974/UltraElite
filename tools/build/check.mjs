@@ -143,6 +143,12 @@ for (const [label, marker] of bitmapProjectionGuards) {
 if (js.includes("authoredFaceSide")) {
   throw new Error("Retired renderer UV path detected: per-face texture keys must not use authored bitmapSide to force whole-model side projection.");
 }
+if (!js.includes("function drawWindowGlassTint") || !js.includes("drawWindowGlassTint(targetCtx, item, tracePoly)")) {
+  throw new Error("Window glints must use a transparent glass tint so authored UV/window art remains visible underneath.");
+}
+if (js.includes('item.glass ? "#101915"')) {
+  throw new Error("Window detail rendering must not replace authored UV/window art with an opaque glass fill.");
+}
 
 const modelRoleGuards = [
   ["built-in model role-list quarantine", "BUILTIN_MODEL_IDS"],
@@ -219,6 +225,8 @@ const builderBitmapGuards = [
   ["builder face-texture local projection", "function faceLocalTextureProjection"],
   ["builder face-texture collapsed UV fallback", "function faceTextureProjection"],
   ["builder face-texture UV area check", "polygonArea2d(fallbackPts)"],
+  ["builder face-group overlay resolves renderer face index", "item?.faceIndex === index"],
+  ["builder transient face projection follows renderable faces", "const projectionFaces = renderableFaces.map((face) => face.source)"],
 ];
 for (const [label, marker] of builderBitmapGuards) {
   if (!builderJs.includes(marker)) {
@@ -312,6 +320,9 @@ if (!renderQaJs.includes("window.UltraEliteRenderBench") || !renderQaJs.includes
 }
 if (!builderRenderPreviewJs.includes("window.UltraEliteRenderBench") || !builderRenderPreviewJs.includes("blueprint: latest.blueprint") || !builderRenderPreviewJs.includes("bitmapSkins: latest.bitmapSkins")) {
   throw new Error("Ship Builder game-render preview must use the shared UltraEliteRenderBench renderer hook with a builder blueprint.");
+}
+if (!builderRenderPreviewJs.includes("engineGlow: 0")) {
+  throw new Error("Ship Builder game-render preview must suppress engine glow so face groups and stern paint stay inspectable.");
 }
 if (!js.includes("const customBlueprint = opts.blueprint") || !js.includes("buildBlueprint(cloneGeneratedModelBlueprint(customBlueprint))") || !js.includes("const model = opts.model || MODELS[modelName]")) {
   throw new Error("Render bench hook must accept custom builder blueprints for Ship Builder game-render preview.");

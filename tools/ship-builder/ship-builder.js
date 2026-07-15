@@ -1263,6 +1263,22 @@ function previewProjectionPointToCanvas(point, canvas) {
   };
 }
 
+function renderableFaceVertexIds(face) {
+  if (!face || !Array.isArray(face.verts)) return [];
+  const vertexIds = new Set(state.verts.map((v) => v.id));
+  return face.verts.filter((id) => vertexIds.has(id));
+}
+
+function renderableFaceIndex(target) {
+  let index = 0;
+  for (const face of state.faces) {
+    if (renderableFaceVertexIds(face).length < 3) continue;
+    if (face === target) return index;
+    index++;
+  }
+  return -1;
+}
+
 function projectedMapForMain(canvas) {
   if (gameRendererOverlayMode() && state.gamePreviewProjection?.points?.length) {
     const map = new Map();
@@ -1277,8 +1293,9 @@ function projectedMapForMain(canvas) {
 
 function previewFaceForBuilderFace(face) {
   if (!gameRendererOverlayMode() || !state.gamePreviewProjection?.faces?.length) return null;
-  const index = state.faces.indexOf(face);
-  return index >= 0 ? state.gamePreviewProjection.faces[index] || null : null;
+  const index = renderableFaceIndex(face);
+  if (index < 0) return null;
+  return state.gamePreviewProjection.faces.find((item) => item?.faceIndex === index) || null;
 }
 
 function faceSortDepthForMain(face) {
@@ -4985,9 +5002,13 @@ function flipSelectedFace() {
 function derivedBlueprint() {
   const indexById = new Map(state.verts.map((v, i) => [v.id, i]));
   const verts = state.verts.map((v) => [round(v.x), round(v.y), round(v.z)]);
-  const faces = state.faces
-    .map((f) => f.verts.map((id) => indexById.get(id)).filter((i) => i !== undefined))
-    .filter((ids) => ids.length >= 3);
+  const renderableFaces = state.faces
+    .map((face) => ({
+      source: face,
+      ids: face.verts.map((id) => indexById.get(id)).filter((i) => i !== undefined)
+    }))
+    .filter((face) => face.ids.length >= 3);
+  const faces = renderableFaces.map((face) => face.ids);
   const normals = faces.map((ids) => {
     const a = vec(...verts[ids[0]]), b = vec(...verts[ids[1]]), c = vec(...verts[ids[2]]);
     const n = norm(cross(sub(b, a), sub(c, a)));
@@ -5064,15 +5085,16 @@ function derivedBlueprint() {
     }
     return { ...base, points, stroke: d.type === "engine" ? "#ffffff" : undefined };
   }).filter(Boolean);
-  const faceSides = state.faces.map((f) => validBitmapFaceSide(f.bitmapSide) || null);
-  const faceTextures = state.faces.map((f) => cleanBitmapKey(f.bitmapFaceKey) || null);
-  const faceTextureUv = state.faces.map((f) => cleanFaceBitmapUv(f));
-  const faceTextureBaseW = state.faces.map((f) => Number.isFinite(Number(f.bitmapBaseW)) && Number(f.bitmapBaseW) > 0 ? Math.round(Number(f.bitmapBaseW)) : null);
-  const faceTextureBaseH = state.faces.map((f) => Number.isFinite(Number(f.bitmapBaseH)) && Number(f.bitmapBaseH) > 0 ? Math.round(Number(f.bitmapBaseH)) : null);
-  const faceColors = state.faces.map((f) => optionalHexColor(f.faceColor) || null);
-  const faceAngles = state.faces.map((f) => normalizeBitmapAngle(f.bitmapAngle) || null);
-  const faceMirrorX = state.faces.map((f) => !!f.bitmapMirrorX);
-  const faceDecals = state.faces.map((f) => {
+  const projectionFaces = renderableFaces.map((face) => face.source);
+  const faceSides = projectionFaces.map((f) => validBitmapFaceSide(f.bitmapSide) || null);
+  const faceTextures = projectionFaces.map((f) => cleanBitmapKey(f.bitmapFaceKey) || null);
+  const faceTextureUv = projectionFaces.map((f) => cleanFaceBitmapUv(f));
+  const faceTextureBaseW = projectionFaces.map((f) => Number.isFinite(Number(f.bitmapBaseW)) && Number(f.bitmapBaseW) > 0 ? Math.round(Number(f.bitmapBaseW)) : null);
+  const faceTextureBaseH = projectionFaces.map((f) => Number.isFinite(Number(f.bitmapBaseH)) && Number(f.bitmapBaseH) > 0 ? Math.round(Number(f.bitmapBaseH)) : null);
+  const faceColors = projectionFaces.map((f) => optionalHexColor(f.faceColor) || null);
+  const faceAngles = projectionFaces.map((f) => normalizeBitmapAngle(f.bitmapAngle) || null);
+  const faceMirrorX = projectionFaces.map((f) => !!f.bitmapMirrorX);
+  const faceDecals = projectionFaces.map((f) => {
     const decals = cleanFaceDecals(f.bitmapDecals);
     return decals.length ? decals : null;
   });

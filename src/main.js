@@ -11810,12 +11810,6 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const c = document.createElement("canvas");
       c.width = c.height = size;
       const tc = c.getContext("2d");
-      const base = tc.createLinearGradient(0, 0, size, 0);
-      base.addColorStop(0, `hsla(${key}, 22%, 30%, .08)`);
-      base.addColorStop(.42, `hsla(${key}, 24%, 62%, .16)`);
-      base.addColorStop(1, `hsla(${key}, 18%, 18%, .04)`);
-      tc.fillStyle = base;
-      tc.fillRect(0, 0, size, size);
       const glint = tc.createLinearGradient(0, 0, size, 0);
       glint.addColorStop(0, "rgba(255,255,255,0)");
       glint.addColorStop(.44, "rgba(255,255,255,0)");
@@ -11834,6 +11828,27 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       windowGlintCache.set(key, sprite);
       if (windowGlintCache.size > 18) windowGlintCache.delete(windowGlintCache.keys().next().value);
       return sprite;
+    }
+
+    function drawWindowGlassTint(targetCtx, item, tracePoly) {
+      const projected = item?.projected;
+      if (!projected?.length) return;
+      const b = polygonBounds(projected);
+      const bw = b.maxX - b.minX;
+      const bh = b.maxY - b.minY;
+      if (bw <= 2 || bh <= 2) return;
+      targetCtx.save();
+      tracePoly(projected);
+      targetCtx.closePath();
+      targetCtx.clip();
+      const glass = targetCtx.createLinearGradient(b.minX, b.minY, b.maxX, b.maxY);
+      glass.addColorStop(0, "rgba(2,8,10,.20)");
+      glass.addColorStop(.45, "rgba(48,82,86,.075)");
+      glass.addColorStop(.72, "rgba(255,255,238,.045)");
+      glass.addColorStop(1, "rgba(0,0,0,.11)");
+      targetCtx.fillStyle = glass;
+      targetCtx.fillRect(b.minX, b.minY, bw, bh);
+      targetCtx.restore();
     }
 
     function drawWindowGlint(targetCtx, item, tracePoly) {
@@ -11938,16 +11953,20 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         }
         targetCtx.closePath();
         if (item.fillStyle) {
-          targetCtx.fillStyle = item.glass ? "#101915" : item.fillStyle;
-          if (item.fillInset) {
-            const inset = insetProjectedPolygon(item.projected, item.fillInset);
-            if (inset.length >= 3) {
-              tracePoly(inset);
-              targetCtx.closePath();
+          if (item.glass) {
+            drawWindowGlassTint(targetCtx, item, tracePoly);
+            drawWindowGlint(targetCtx, item, tracePoly);
+          } else {
+            targetCtx.fillStyle = item.fillStyle;
+            if (item.fillInset) {
+              const inset = insetProjectedPolygon(item.projected, item.fillInset);
+              if (inset.length >= 3) {
+                tracePoly(inset);
+                targetCtx.closePath();
+              }
             }
+            targetCtx.fill();
           }
-          targetCtx.fill();
-          if (item.glass) drawWindowGlint(targetCtx, item, tracePoly);
           if (item.metal && item.uv) drawFaceTexture(targetCtx, item);
           drawImageTextureLighting(targetCtx, item, tracePoly);
         }

@@ -66,7 +66,7 @@ function render(payload = latest) {
     roll: Number(view.roll) || 0,
     baseColor: meta.baseColor,
     decalRole: meta.decalRole,
-    engineGlow: .75,
+    engineGlow: 0,
     grid: true,
     projection: latest.projection !== false
   });
