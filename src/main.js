@@ -2482,25 +2482,49 @@
             faceAngleForDraw = 0;
           }
         }
-        return {
+        const squareUv = face.map((i) => {
+          const p = verts[i];
+          if (primaryAxis === "x" && side !== "back") return uvFromAxes(p, 1, 2, side === "bottom", true);
+          if (side === "back") {
+            const u = ((maxX - p[0]) / rangeX) * DECAL_TEXTURE_SIZE;
+            const v = ((maxY - p[1]) / rangeY) * DECAL_TEXTURE_SIZE;
+            return [u, v];
+          }
+          const u = ((p[0] - minX) / rangeX) * DECAL_TEXTURE_SIZE;
+          const v = ((maxZ - p[2]) / rangeZ) * DECAL_TEXTURE_SIZE;
+          return [side === "bottom" ? DECAL_TEXTURE_SIZE - u : u, v];
+        });
+        const projector = {
+          sourceKind: "projector",
           side,
           baseW: fp.w,
           baseH: fp.h,
           centerlineX: fp.centerlineX(flipU),
           uv,
+          squareUv
+        };
+        const facePacket = (faceKey || decalsForFace.length)
+          ? {
+            sourceKind: "face",
+            ...(faceKey ? { key: faceKey } : {}),
+            uv: faceUv,
+            baseW: faceBaseW,
+            baseH: faceBaseH,
+            ...(faceAngleForDraw ? { angle: faceAngleForDraw } : {}),
+            ...(mirrorFaceTextureX ? { mirrorX: true } : {}),
+            ...(decalsForFace.length ? { decals: decalsForFace } : {})
+          }
+          : null;
+        return {
+          projector,
+          ...(facePacket ? { face: facePacket } : {}),
+          side,
+          baseW: projector.baseW,
+          baseH: projector.baseH,
+          centerlineX: projector.centerlineX,
+          uv: projector.uv,
           ...((faceKey || decalsForFace.length) ? { ...(faceKey ? { faceKey } : {}), faceUv, faceBaseW, faceBaseH, ...(faceAngleForDraw ? { faceAngle: faceAngleForDraw } : {}), ...(mirrorFaceTextureX ? { faceMirrorX: true } : {}), ...(decalsForFace.length ? { faceDecals: decalsForFace } : {}) } : {}),
-          squareUv: face.map((i) => {
-            const p = verts[i];
-            if (primaryAxis === "x" && side !== "back") return uvFromAxes(p, 1, 2, side === "bottom", true);
-            if (side === "back") {
-              const u = ((maxX - p[0]) / rangeX) * DECAL_TEXTURE_SIZE;
-              const v = ((maxY - p[1]) / rangeY) * DECAL_TEXTURE_SIZE;
-              return [u, v];
-            }
-            const u = ((p[0] - minX) / rangeX) * DECAL_TEXTURE_SIZE;
-            const v = ((maxZ - p[2]) / rangeZ) * DECAL_TEXTURE_SIZE;
-            return [side === "bottom" ? DECAL_TEXTURE_SIZE - u : u, v];
-          })
+          squareUv
         };
       });
     }
@@ -10537,7 +10561,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const faceBaseColor = modelFaceBaseColor(model, faceIndex, normalIndex, baseColor);
         const faceRenderFlags = model.faceRenderFlags?.[faceIndex] || 0;
         const imageProjection = !clipped && model.imageProjectionUV?.[faceIndex];
-        const projectionSide = imageProjection?.side;
+        const projectionSide = imageProjection?.projector?.side || imageProjection?.side;
         const hasSideTexture = !!(projectionSide && options.imageDecals?.[projectionSide]);
         const hasFaceImageWork = !!(faceRenderFlags & (FACE_RENDER_FACE_TEXTURE | FACE_RENDER_DECAL));
         const hasImageProjection = !!imageProjection && (hasSideTexture || hasFaceImageWork);
@@ -11644,6 +11668,26 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return !!(img && img.width > 0 && img.height > 0 && (img.complete === undefined || img.complete || img.naturalWidth > 0));
     }
 
+    function projectorTexturePacket(imageProjection) {
+      if (imageProjection?.projector) return imageProjection.projector;
+      return imageProjection?.side && imageProjection?.uv ? imageProjection : null;
+    }
+
+    function faceTexturePacket(imageProjection) {
+      if (imageProjection?.face) return imageProjection.face;
+      if (!(imageProjection?.faceKey || imageProjection?.faceDecals?.length)) return null;
+      return {
+        sourceKind: "face",
+        ...(imageProjection.faceKey ? { key: imageProjection.faceKey } : {}),
+        uv: imageProjection.faceUv,
+        baseW: imageProjection.faceBaseW,
+        baseH: imageProjection.faceBaseH,
+        ...(imageProjection.faceAngle ? { angle: imageProjection.faceAngle } : {}),
+        ...(imageProjection.faceMirrorX ? { mirrorX: true } : {}),
+        ...(imageProjection.faceDecals?.length ? { decals: imageProjection.faceDecals } : {})
+      };
+    }
+
     const faceDecalLayerCache = new Map();
     function faceDecalLayerCanvas(img, decal, width, height) {
       const w = Math.max(8, Math.round(width || DECAL_TEXTURE_SIZE));
@@ -11682,17 +11726,18 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function drawFaceDecalLayers(targetCtx, item) {
-      const decals = item.imageProjection?.faceDecals;
-      if (!Array.isArray(decals) || !decals.length || !item.imageProjection?.faceUv?.length) return;
+      const faceTexture = faceTexturePacket(item.imageProjection);
+      const decals = faceTexture?.decals;
+      if (!Array.isArray(decals) || !decals.length || !faceTexture?.uv?.length) return;
       const images = item.imageDecals?.decals;
       if (!images || typeof images !== "object") return;
-      const baseW = Math.max(8, item.imageProjection.faceBaseW || DECAL_TEXTURE_SIZE);
-      const baseH = Math.max(8, item.imageProjection.faceBaseH || DECAL_TEXTURE_SIZE);
+      const baseW = Math.max(8, faceTexture.baseW || DECAL_TEXTURE_SIZE);
+      const baseH = Math.max(8, faceTexture.baseH || DECAL_TEXTURE_SIZE);
       for (const decal of decals) {
         const img = images[decal.key];
         if (!imageTextureReady(img)) continue;
         const layer = faceDecalLayerCanvas(img, decal, baseW, baseH);
-        const uv = item.imageProjection.faceUv;
+        const uv = faceTexture.uv;
         if (item.project && item.camVerts) {
           drawUVLayerPersp(targetCtx, item, layer, 1, uv, false, 42, 5, "source-over");
         } else {
@@ -11703,12 +11748,14 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function drawFaceTexture(targetCtx, item) {
       if (game.fxLevel === "classic") return;
-      const imageProjection = item.imageProjection && item.imageDecals?.[item.imageProjection.side];
-      const faceKey = item.imageProjection?.faceKey;
+      const projectorTexture = projectorTexturePacket(item.imageProjection);
+      const faceTexture = faceTexturePacket(item.imageProjection);
+      const imageProjection = projectorTexture && item.imageDecals?.[projectorTexture.side];
+      const faceKey = faceTexture?.key;
       const faceImage = faceKey ? item.imageDecals?.faces?.[faceKey] : null;
       const faceImageReady = imageTextureReady(faceImage);
       const projectionImageReady = imageTextureReady(imageProjection);
-      const hasExplicitFaceTexture = !!(faceImageReady && item.imageProjection?.faceUv?.length);
+      const hasExplicitFaceTexture = !!(faceImageReady && faceTexture?.uv?.length);
       const b = polygonBounds(item.projected);
       if ((b.maxX - b.minX) * (b.maxY - b.minY) < 500 && !hasExplicitFaceTexture) return;
       const img = item.texture || getHullTexture();
@@ -11730,13 +11777,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           drawUVLayer(targetCtx, item, item.decal, .86, item.decalUV, false);
         }
       }
-      if (faceImageReady && item.imageProjection?.faceUv?.length) {
-        const baseW = Math.max(1, item.imageProjection.faceBaseW || DECAL_TEXTURE_SIZE);
-        const baseH = Math.max(1, item.imageProjection.faceBaseH || DECAL_TEXTURE_SIZE);
-        const faceAngle = item.imageProjection.faceAngle || 0;
-        if (item.imageProjection.faceMirrorX) {
+      if (faceImageReady && faceTexture?.uv?.length) {
+        const baseW = Math.max(1, faceTexture.baseW || DECAL_TEXTURE_SIZE);
+        const baseH = Math.max(1, faceTexture.baseH || DECAL_TEXTURE_SIZE);
+        const faceAngle = faceTexture.angle || 0;
+        if (faceTexture.mirrorX) {
           drawMirroredImageDecalLayer(targetCtx, item, faceImage, item.imageDecals.alpha ?? .82, {
-            sourceUv: item.imageProjection.faceUv,
+            sourceUv: faceTexture.uv,
             projectionBaseW: baseW,
             projectionBaseH: baseH,
             sx: faceImage.width / Math.max(1, baseW / 2),
@@ -11749,8 +11796,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           const sx = faceImage.width / baseW;
           const sy = faceImage.height / baseH;
           const sourceUv = faceAngle
-            ? item.imageProjection.faceUv.map(([u, v]) => rotateImageDecalUv(u, v, baseW, baseH, faceAngle))
-            : item.imageProjection.faceUv;
+            ? faceTexture.uv.map(([u, v]) => rotateImageDecalUv(u, v, baseW, baseH, faceAngle))
+            : faceTexture.uv;
           const uv = sourceUv.map(([u, v]) => [u * sx, v * sy]);
           if (item.project && item.camVerts) {
             drawUVLayerPersp(targetCtx, item, faceImage, item.imageDecals.alpha ?? .82, uv, false, 42, 5, "source-over");
@@ -11759,8 +11806,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           }
         }
       } else if (projectionImageReady) {
-        const img = item.imageDecals[item.imageProjection.side];
-        const uvInfo = imageDecalUvInfo(item.imageProjection, item.imageDecals, img);
+        const img = item.imageDecals[projectorTexture.side];
+        const uvInfo = imageDecalUvInfo(projectorTexture, item.imageDecals, img);
         if (uvInfo.mirrorX) {
           drawMirroredImageDecalLayer(targetCtx, item, img, item.imageDecals.alpha ?? .82, uvInfo, "source-over");
         } else {

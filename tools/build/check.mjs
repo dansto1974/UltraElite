@@ -136,11 +136,21 @@ const bitmapProjectionGuards = [
   ["face-texture local projection", "faceLocalTextureUv"],
   ["face-texture collapsed UV fallback", "faceTextureUv"],
   ["face-texture UV area check", "uvPolygonArea(uv)"],
+  ["resolved projector UV packet", 'sourceKind: "projector"'],
+  ["resolved face UV packet", 'sourceKind: "face"'],
+  ["projector packet draw accessor", "function projectorTexturePacket"],
+  ["face packet draw accessor", "function faceTexturePacket"],
+  ["solid-face projector side lookup", "imageProjection?.projector?.side || imageProjection?.side"],
+  ["draw path consumes projector packet", "projectorTexturePacket(item.imageProjection)"],
+  ["draw path consumes face packet", "faceTexturePacket(item.imageProjection)"],
 ];
 for (const [label, marker] of bitmapProjectionGuards) {
   if (!js.includes(marker)) {
     throw new Error(`Missing renderer guard: ${label}. Bitmap projection metadata is authored in face order; face index must win over normal index.`);
   }
+}
+if (js.includes("const faceKey = item.imageProjection?.faceKey")) {
+  throw new Error("drawFaceTexture must consume resolved face UV packets, not the old mixed imageProjection face fields directly.");
 }
 if (js.includes("authoredFaceSide")) {
   throw new Error("Retired renderer UV path detected: per-face texture keys must not use authored bitmapSide to force whole-model side projection.");
