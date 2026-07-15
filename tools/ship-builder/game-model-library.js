@@ -22,6 +22,7 @@ window.ULTRA_ELITE_SHIP_DESCRIPTIONS = {
   "mamba": "",
   "missile": "",
   "moray": "",
+  "nightlance": "The Nightlance is a classified deep-space interceptor built around a narrow pressure hull, overpowered drives and almost no concession to comfort. It is quick, pointy and deeply unfriendly.",
   "plate": "A battered alloy plate drifting loose in space. Valuable only to commanders with a fuel scoop and a relaxed attitude to where things have been.",
   "python": "",
   "shuttle": "",
@@ -30,6 +31,7 @@ window.ULTRA_ELITE_SHIP_DESCRIPTIONS = {
   "thargoid": "",
   "thargon": "",
   "transporter": "",
+  "umbra": "The Umbra is a naval strike craft with a flattened stealth hull, forward blade spars and enough missile capacity to make traffic controllers speak more carefully.",
   "viper": "",
   "worm": ""
 };
@@ -18546,6 +18548,1342 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       }
     }
   },
+  "nightlance": {
+    "format": "ultra-elite-ship-builder/v1",
+    "id": "nightlance",
+    "name": "Nightlance",
+    "symmetry": "x-locked",
+    "gameMeta": {
+      "class": "interceptor",
+      "npcRole": "military",
+      "aiProfile": "bountyHunter",
+      "decalRole": "none",
+      "baseColor": "#111827",
+      "description": "The Nightlance is a classified deep-space interceptor built around a narrow pressure hull, overpowered drives and almost no concession to comfort. It is quick, pointy and deeply unfriendly.",
+      "missionLore": "Black-budget naval interceptor. Most registries deny it exists.",
+      "valueCr": 3600000,
+      "stats": {
+        "r": 150,
+        "hp": 240,
+        "speed": 2.55,
+        "cargo": 4,
+        "missiles": 4,
+        "laser": "military"
+      },
+      "lists": {
+        "trader": false,
+        "pirate": false,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": true
+      },
+      "imageDecalMirrorX": {
+        "top": true,
+        "bottom": true,
+        "back": false
+      }
+    },
+    "verts": [
+      {
+        "id": 1,
+        "x": 0,
+        "y": 0,
+        "z": 120,
+        "mirrorId": null,
+        "center": true
+      },
+      {
+        "id": 2,
+        "x": 0,
+        "y": 18,
+        "z": 34,
+        "mirrorId": null,
+        "center": true
+      },
+      {
+        "id": 3,
+        "x": 0,
+        "y": -10,
+        "z": 22,
+        "mirrorId": null,
+        "center": true
+      },
+      {
+        "id": 4,
+        "x": 0,
+        "y": 14,
+        "z": -82,
+        "mirrorId": null,
+        "center": true
+      },
+      {
+        "id": 5,
+        "x": 0,
+        "y": -8,
+        "z": -94,
+        "mirrorId": null,
+        "center": true
+      },
+      {
+        "id": 6,
+        "x": 34,
+        "y": 5,
+        "z": 28,
+        "mirrorId": 7,
+        "center": false
+      },
+      {
+        "id": 7,
+        "x": -34,
+        "y": 5,
+        "z": 28,
+        "mirrorId": 6,
+        "center": false
+      },
+      {
+        "id": 8,
+        "x": 92,
+        "y": -2,
+        "z": -42,
+        "mirrorId": 9,
+        "center": false
+      },
+      {
+        "id": 9,
+        "x": -92,
+        "y": -2,
+        "z": -42,
+        "mirrorId": 8,
+        "center": false
+      },
+      {
+        "id": 10,
+        "x": 24,
+        "y": 10,
+        "z": -86,
+        "mirrorId": 11,
+        "center": false
+      },
+      {
+        "id": 11,
+        "x": -24,
+        "y": 10,
+        "z": -86,
+        "mirrorId": 10,
+        "center": false
+      },
+      {
+        "id": 12,
+        "x": 24,
+        "y": -9,
+        "z": -92,
+        "mirrorId": 13,
+        "center": false
+      },
+      {
+        "id": 13,
+        "x": -24,
+        "y": -9,
+        "z": -92,
+        "mirrorId": 12,
+        "center": false
+      },
+      {
+        "id": 14,
+        "x": 42,
+        "y": -5,
+        "z": 56,
+        "mirrorId": 15,
+        "center": false
+      },
+      {
+        "id": 15,
+        "x": -42,
+        "y": -5,
+        "z": 56,
+        "mirrorId": 14,
+        "center": false
+      },
+      {
+        "id": 16,
+        "x": 0,
+        "y": 38,
+        "z": -58,
+        "mirrorId": null,
+        "center": true
+      },
+      {
+        "id": 17,
+        "x": 0,
+        "y": 0,
+        "z": -110,
+        "mirrorId": null,
+        "center": true
+      },
+      {
+        "id": 18,
+        "x": 0,
+        "y": 0,
+        "z": 150,
+        "mirrorId": null,
+        "center": true
+      }
+    ],
+    "faces": [
+      {
+        "id": 1000,
+        "verts": [
+          1,
+          6,
+          2
+        ],
+        "mirrored": false,
+        "faceColor": "#202a3b",
+        "bitmapSide": "top"
+      },
+      {
+        "id": 1001,
+        "verts": [
+          1,
+          2,
+          7
+        ],
+        "mirrored": true,
+        "faceColor": "#202a3b",
+        "bitmapSide": "top"
+      },
+      {
+        "id": 1002,
+        "verts": [
+          1,
+          3,
+          14,
+          6
+        ],
+        "mirrored": false,
+        "faceColor": "#111827",
+        "bitmapSide": "bottom"
+      },
+      {
+        "id": 1003,
+        "verts": [
+          1,
+          7,
+          15,
+          3
+        ],
+        "mirrored": true,
+        "faceColor": "#111827",
+        "bitmapSide": "bottom"
+      },
+      {
+        "id": 1004,
+        "verts": [
+          2,
+          6,
+          8,
+          10,
+          4
+        ],
+        "mirrored": false,
+        "faceColor": "#172033",
+        "bitmapSide": "top"
+      },
+      {
+        "id": 1005,
+        "verts": [
+          2,
+          4,
+          11,
+          9,
+          7
+        ],
+        "mirrored": true,
+        "faceColor": "#172033",
+        "bitmapSide": "top"
+      },
+      {
+        "id": 1006,
+        "verts": [
+          3,
+          12,
+          8,
+          14
+        ],
+        "mirrored": false,
+        "faceColor": "#0a0f18",
+        "bitmapSide": "bottom"
+      },
+      {
+        "id": 1007,
+        "verts": [
+          3,
+          15,
+          9,
+          13
+        ],
+        "mirrored": true,
+        "faceColor": "#0a0f18",
+        "bitmapSide": "bottom"
+      },
+      {
+        "id": 1008,
+        "verts": [
+          6,
+          14,
+          8
+        ],
+        "mirrored": false,
+        "faceColor": "#253249",
+        "bitmapSide": "top"
+      },
+      {
+        "id": 1009,
+        "verts": [
+          7,
+          9,
+          15
+        ],
+        "mirrored": true,
+        "faceColor": "#253249",
+        "bitmapSide": "top"
+      },
+      {
+        "id": 1010,
+        "verts": [
+          4,
+          10,
+          17,
+          11
+        ],
+        "mirrored": false,
+        "faceColor": "#111722",
+        "bitmapSide": "back"
+      },
+      {
+        "id": 1011,
+        "verts": [
+          5,
+          13,
+          17,
+          12
+        ],
+        "mirrored": false,
+        "faceColor": "#070b12",
+        "bitmapSide": "back"
+      },
+      {
+        "id": 1012,
+        "verts": [
+          10,
+          12,
+          17
+        ],
+        "mirrored": false,
+        "faceColor": "#0d1320",
+        "bitmapSide": "back"
+      },
+      {
+        "id": 1013,
+        "verts": [
+          11,
+          17,
+          13
+        ],
+        "mirrored": true,
+        "faceColor": "#0d1320",
+        "bitmapSide": "back"
+      },
+      {
+        "id": 1014,
+        "verts": [
+          4,
+          16,
+          10
+        ],
+        "mirrored": false,
+        "faceColor": "#2a3550",
+        "bitmapSide": "top"
+      },
+      {
+        "id": 1015,
+        "verts": [
+          4,
+          11,
+          16
+        ],
+        "mirrored": true,
+        "faceColor": "#2a3550",
+        "bitmapSide": "top"
+      },
+      {
+        "id": 1016,
+        "verts": [
+          3,
+          5,
+          12
+        ],
+        "mirrored": false,
+        "faceColor": "#090d14",
+        "bitmapSide": "bottom"
+      },
+      {
+        "id": 1017,
+        "verts": [
+          3,
+          13,
+          5
+        ],
+        "mirrored": true,
+        "faceColor": "#090d14",
+        "bitmapSide": "bottom"
+      }
+    ],
+    "edges": [
+      {
+        "id": 2000,
+        "a": 1,
+        "b": 18,
+        "kind": "stick",
+        "mirrored": false
+      },
+      {
+        "id": 2001,
+        "a": 16,
+        "b": 17,
+        "kind": "stick",
+        "mirrored": false
+      },
+      {
+        "id": 2002,
+        "a": 8,
+        "b": 12,
+        "kind": "stick",
+        "mirrored": false
+      },
+      {
+        "id": 2003,
+        "a": 9,
+        "b": 13,
+        "kind": "stick",
+        "mirrored": true
+      }
+    ],
+    "details": [
+      {
+        "id": 3000,
+        "type": "engine",
+        "faceId": 1012,
+        "inset": 0.5,
+        "color": "#74f7ff",
+        "normal": [
+          0.42,
+          0,
+          -0.9
+        ]
+      },
+      {
+        "id": 3001,
+        "type": "engine",
+        "faceId": 1013,
+        "inset": 0.5,
+        "color": "#74f7ff",
+        "normal": [
+          -0.42,
+          0,
+          -0.9
+        ]
+      },
+      {
+        "id": 3002,
+        "type": "window",
+        "faceId": 1000,
+        "inset": 0.24,
+        "color": "#05090f",
+        "normal": [
+          0.18,
+          0.92,
+          0.33
+        ]
+      },
+      {
+        "id": 3003,
+        "type": "window",
+        "faceId": 1001,
+        "inset": 0.24,
+        "color": "#05090f",
+        "normal": [
+          -0.18,
+          0.92,
+          0.33
+        ]
+      },
+      {
+        "id": 3004,
+        "type": "panel",
+        "faceId": 1004,
+        "inset": 0.74,
+        "color": "#39d4ff",
+        "segment": [
+          6,
+          10
+        ]
+      },
+      {
+        "id": 3005,
+        "type": "panel",
+        "faceId": 1005,
+        "inset": 0.74,
+        "color": "#39d4ff",
+        "segment": [
+          7,
+          11
+        ]
+      },
+      {
+        "id": 3006,
+        "type": "panel",
+        "faceId": 1006,
+        "inset": 0.62,
+        "color": "#64748b",
+        "segment": [
+          14,
+          8
+        ]
+      },
+      {
+        "id": 3007,
+        "type": "panel",
+        "faceId": 1007,
+        "inset": 0.62,
+        "color": "#64748b",
+        "segment": [
+          15,
+          9
+        ]
+      },
+      {
+        "id": 3008,
+        "type": "beacon",
+        "vertexId": 16,
+        "color": "#38bdf8",
+        "normal": [
+          0,
+          1,
+          0
+        ],
+        "lift": 2
+      }
+    ],
+    "blueprint": {
+      "verts": [
+        [
+          0,
+          0,
+          120
+        ],
+        [
+          0,
+          18,
+          34
+        ],
+        [
+          0,
+          -10,
+          22
+        ],
+        [
+          0,
+          14,
+          -82
+        ],
+        [
+          0,
+          -8,
+          -94
+        ],
+        [
+          34,
+          5,
+          28
+        ],
+        [
+          -34,
+          5,
+          28
+        ],
+        [
+          92,
+          -2,
+          -42
+        ],
+        [
+          -92,
+          -2,
+          -42
+        ],
+        [
+          24,
+          10,
+          -86
+        ],
+        [
+          -24,
+          10,
+          -86
+        ],
+        [
+          24,
+          -9,
+          -92
+        ],
+        [
+          -24,
+          -9,
+          -92
+        ],
+        [
+          42,
+          -5,
+          56
+        ],
+        [
+          -42,
+          -5,
+          56
+        ],
+        [
+          0,
+          38,
+          -58
+        ],
+        [
+          0,
+          0,
+          -110
+        ],
+        [
+          0,
+          0,
+          150
+        ]
+      ],
+      "edges": [
+        [
+          0,
+          5
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          6
+        ],
+        [
+          0,
+          6
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          2,
+          13
+        ],
+        [
+          5,
+          13
+        ],
+        [
+          6,
+          14
+        ],
+        [
+          2,
+          14
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          7,
+          9
+        ],
+        [
+          3,
+          9
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          3,
+          10
+        ],
+        [
+          8,
+          10
+        ],
+        [
+          6,
+          8
+        ],
+        [
+          2,
+          11
+        ],
+        [
+          7,
+          11
+        ],
+        [
+          7,
+          13
+        ],
+        [
+          8,
+          14
+        ],
+        [
+          8,
+          12
+        ],
+        [
+          2,
+          12
+        ],
+        [
+          9,
+          16
+        ],
+        [
+          10,
+          16
+        ],
+        [
+          4,
+          12
+        ],
+        [
+          12,
+          16
+        ],
+        [
+          11,
+          16
+        ],
+        [
+          4,
+          11
+        ],
+        [
+          9,
+          11
+        ],
+        [
+          10,
+          12
+        ],
+        [
+          3,
+          15
+        ],
+        [
+          9,
+          15
+        ],
+        [
+          10,
+          15
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          0,
+          17
+        ],
+        [
+          15,
+          16
+        ]
+      ],
+      "edgeFaces": [
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          6
+        ],
+        [
+          2,
+          8
+        ],
+        [
+          3,
+          9
+        ],
+        [
+          3,
+          7
+        ],
+        [
+          4,
+          8
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          4,
+          10
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          5,
+          10
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          5,
+          9
+        ],
+        [
+          6,
+          16
+        ],
+        [
+          6,
+          6
+        ],
+        [
+          6,
+          8
+        ],
+        [
+          7,
+          9
+        ],
+        [
+          7,
+          7
+        ],
+        [
+          7,
+          17
+        ],
+        [
+          10,
+          12
+        ],
+        [
+          10,
+          13
+        ],
+        [
+          11,
+          17
+        ],
+        [
+          11,
+          13
+        ],
+        [
+          11,
+          12
+        ],
+        [
+          11,
+          16
+        ],
+        [
+          12,
+          12
+        ],
+        [
+          13,
+          13
+        ],
+        [
+          14,
+          15
+        ],
+        [
+          14,
+          14
+        ],
+        [
+          15,
+          15
+        ],
+        [
+          16,
+          17
+        ],
+        [
+          -1,
+          -1
+        ],
+        [
+          -1,
+          -1
+        ]
+      ],
+      "edgeVisibility": [
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31
+      ],
+      "normals": [
+        [
+          37.97,
+          90.55,
+          18.95
+        ],
+        [
+          -37.97,
+          90.55,
+          18.95
+        ],
+        [
+          3.62,
+          -99.42,
+          10.14
+        ],
+        [
+          -41.1,
+          88.94,
+          20.02
+        ],
+        [
+          38.25,
+          89.55,
+          22.74
+        ],
+        [
+          -15.88,
+          98.67,
+          -3.4
+        ],
+        [
+          9.43,
+          -99.55,
+          1.11
+        ],
+        [
+          -10.12,
+          -99.46,
+          2.12
+        ],
+        [
+          37.05,
+          90.32,
+          21.67
+        ],
+        [
+          -37.05,
+          90.32,
+          21.67
+        ],
+        [
+          7.43,
+          89.2,
+          -44.6
+        ],
+        [
+          0,
+          -89.44,
+          -44.72
+        ],
+        [
+          63.78,
+          23.19,
+          -73.44
+        ],
+        [
+          -63.78,
+          23.19,
+          -73.44
+        ],
+        [
+          0,
+          70.71,
+          -70.71
+        ],
+        [
+          0,
+          70.71,
+          -70.71
+        ],
+        [
+          -4.02,
+          -99.9,
+          -1.72
+        ],
+        [
+          4.02,
+          -99.9,
+          -1.72
+        ]
+      ],
+      "details": [
+        {
+          "type": "engine",
+          "color": "#74f7ff",
+          "normal": [
+            0.42,
+            0,
+            -0.9
+          ],
+          "points": [
+            [
+              20,
+              5.17,
+              -91
+            ],
+            [
+              20,
+              -4.33,
+              -94
+            ],
+            [
+              8,
+              0.17,
+              -103
+            ]
+          ],
+          "stroke": "#ffffff",
+          "lift": 1.5
+        },
+        {
+          "type": "engine",
+          "color": "#74f7ff",
+          "normal": [
+            -0.42,
+            0,
+            -0.9
+          ],
+          "points": [
+            [
+              -20,
+              5.17,
+              -91
+            ],
+            [
+              -8,
+              0.17,
+              -103
+            ],
+            [
+              -20,
+              -4.33,
+              -94
+            ]
+          ],
+          "stroke": "#ffffff",
+          "lift": 1.5
+        },
+        {
+          "type": "window",
+          "color": "#05090f",
+          "normal": [
+            0.18,
+            0.92,
+            0.33
+          ],
+          "points": [
+            [
+              8.61,
+              5.83,
+              74.91
+            ],
+            [
+              16.77,
+              7.03,
+              52.83
+            ],
+            [
+              8.61,
+              10.15,
+              54.27
+            ]
+          ]
+        },
+        {
+          "type": "window",
+          "color": "#05090f",
+          "normal": [
+            -0.18,
+            0.92,
+            0.33
+          ],
+          "points": [
+            [
+              -8.61,
+              5.83,
+              74.91
+            ],
+            [
+              -8.61,
+              10.15,
+              54.27
+            ],
+            [
+              -16.77,
+              7.03,
+              52.83
+            ]
+          ]
+        },
+        {
+          "type": "line",
+          "color": "#39d4ff",
+          "normal": [
+            0.383,
+            0.896,
+            0.227
+          ],
+          "points": [
+            [
+              32.96,
+              6.04,
+              13.02
+            ],
+            [
+              25.56,
+              9.74,
+              -71.34
+            ]
+          ]
+        },
+        {
+          "type": "line",
+          "color": "#39d4ff",
+          "normal": [
+            -0.159,
+            0.987,
+            -0.034
+          ],
+          "points": [
+            [
+              -32.96,
+              6.04,
+              13.02
+            ],
+            [
+              -25.56,
+              9.74,
+              -71.34
+            ]
+          ]
+        },
+        {
+          "type": "line",
+          "color": "#64748b",
+          "normal": [
+            0.094,
+            -0.995,
+            0.011
+          ],
+          "points": [
+            [
+              41.05,
+              -5.57,
+              29.4
+            ],
+            [
+              72.05,
+              -3.71,
+              -31.36
+            ]
+          ]
+        },
+        {
+          "type": "line",
+          "color": "#64748b",
+          "normal": [
+            -0.101,
+            -0.995,
+            0.021
+          ],
+          "points": [
+            [
+              -41.05,
+              -5.57,
+              29.4
+            ],
+            [
+              -72.05,
+              -3.71,
+              -31.36
+            ]
+          ]
+        },
+        {
+          "type": "beacon",
+          "index": 15,
+          "color": "#38bdf8",
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "lift": 2
+        }
+      ],
+      "imageProjection": {
+        "faceSides": [
+          "top",
+          "top",
+          "bottom",
+          "bottom",
+          "top",
+          "top",
+          "bottom",
+          "bottom",
+          "top",
+          "top",
+          "back",
+          "back",
+          "back",
+          "back",
+          "top",
+          "top",
+          "bottom",
+          "bottom"
+        ],
+        "faceColors": [
+          "#202a3b",
+          "#202a3b",
+          "#111827",
+          "#111827",
+          "#172033",
+          "#172033",
+          "#0a0f18",
+          "#0a0f18",
+          "#253249",
+          "#253249",
+          "#111722",
+          "#070b12",
+          "#0d1320",
+          "#0d1320",
+          "#2a3550",
+          "#2a3550",
+          "#090d14",
+          "#090d14"
+        ]
+      },
+      "gameMeta": {
+        "class": "interceptor",
+        "npcRole": "military",
+        "aiProfile": "bountyHunter",
+        "decalRole": "none",
+        "baseColor": "#111827",
+        "description": "The Nightlance is a classified deep-space interceptor built around a narrow pressure hull, overpowered drives and almost no concession to comfort. It is quick, pointy and deeply unfriendly.",
+        "missionLore": "Black-budget naval interceptor. Most registries deny it exists.",
+        "valueCr": 3600000,
+        "stats": {
+          "r": 150,
+          "hp": 240,
+          "speed": 2.55,
+          "cargo": 4,
+          "missiles": 4,
+          "laser": "military"
+        },
+        "lists": {
+          "trader": false,
+          "pirate": false,
+          "police": false,
+          "alien": false
+        },
+        "flags": {
+          "escapePod": true,
+          "hiddenUntilDiscovered": true
+        },
+        "imageDecalMirrorX": {
+          "top": true,
+          "bottom": true,
+          "back": false
+        }
+      }
+    }
+  },
   "plate": {
     "format": "ultra-elite-ship-builder/v1",
     "id": "plate",
@@ -24784,6 +26122,1392 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "top": true,
         "bottom": true,
         "back": false
+      }
+    }
+  },
+  "umbra": {
+    "format": "ultra-elite-ship-builder/v1",
+    "id": "umbra",
+    "name": "Umbra",
+    "symmetry": "x-locked",
+    "gameMeta": {
+      "class": "strike craft",
+      "npcRole": "military",
+      "aiProfile": "hunter",
+      "decalRole": "none",
+      "baseColor": "#0b1020",
+      "description": "The Umbra is a naval strike craft with a flattened stealth hull, forward blade spars and enough missile capacity to make traffic controllers speak more carefully.",
+      "missionLore": "Restricted strike craft issued only to special operations squadrons.",
+      "valueCr": 4800000,
+      "stats": {
+        "r": 132,
+        "hp": 360,
+        "speed": 2.35,
+        "cargo": 8,
+        "missiles": 6,
+        "laser": "military"
+      },
+      "lists": {
+        "trader": false,
+        "pirate": false,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": true
+      },
+      "imageDecalMirrorX": {
+        "top": true,
+        "bottom": true,
+        "back": false
+      }
+    },
+    "verts": [
+      {
+        "id": 1,
+        "x": 0,
+        "y": 2,
+        "z": 108,
+        "mirrorId": null,
+        "center": true
+      },
+      {
+        "id": 2,
+        "x": 0,
+        "y": 22,
+        "z": 30,
+        "mirrorId": null,
+        "center": true
+      },
+      {
+        "id": 3,
+        "x": 0,
+        "y": -12,
+        "z": 24,
+        "mirrorId": null,
+        "center": true
+      },
+      {
+        "id": 4,
+        "x": 0,
+        "y": 16,
+        "z": -78,
+        "mirrorId": null,
+        "center": true
+      },
+      {
+        "id": 5,
+        "x": 0,
+        "y": -10,
+        "z": -88,
+        "mirrorId": null,
+        "center": true
+      },
+      {
+        "id": 6,
+        "x": 38,
+        "y": 8,
+        "z": 18,
+        "mirrorId": 7,
+        "center": false
+      },
+      {
+        "id": 7,
+        "x": -38,
+        "y": 8,
+        "z": 18,
+        "mirrorId": 6,
+        "center": false
+      },
+      {
+        "id": 8,
+        "x": 108,
+        "y": 0,
+        "z": -28,
+        "mirrorId": 9,
+        "center": false
+      },
+      {
+        "id": 9,
+        "x": -108,
+        "y": 0,
+        "z": -28,
+        "mirrorId": 8,
+        "center": false
+      },
+      {
+        "id": 10,
+        "x": 56,
+        "y": 5,
+        "z": -96,
+        "mirrorId": 11,
+        "center": false
+      },
+      {
+        "id": 11,
+        "x": -56,
+        "y": 5,
+        "z": -96,
+        "mirrorId": 10,
+        "center": false
+      },
+      {
+        "id": 12,
+        "x": 30,
+        "y": -10,
+        "z": -56,
+        "mirrorId": 13,
+        "center": false
+      },
+      {
+        "id": 13,
+        "x": -30,
+        "y": -10,
+        "z": -56,
+        "mirrorId": 12,
+        "center": false
+      },
+      {
+        "id": 14,
+        "x": 0,
+        "y": 44,
+        "z": -48,
+        "mirrorId": null,
+        "center": true
+      },
+      {
+        "id": 15,
+        "x": 0,
+        "y": 0,
+        "z": -116,
+        "mirrorId": null,
+        "center": true
+      },
+      {
+        "id": 16,
+        "x": 48,
+        "y": -3,
+        "z": 62,
+        "mirrorId": 17,
+        "center": false
+      },
+      {
+        "id": 17,
+        "x": -48,
+        "y": -3,
+        "z": 62,
+        "mirrorId": 16,
+        "center": false
+      },
+      {
+        "id": 18,
+        "x": 0,
+        "y": 9,
+        "z": 132,
+        "mirrorId": null,
+        "center": true
+      }
+    ],
+    "faces": [
+      {
+        "id": 1000,
+        "verts": [
+          1,
+          6,
+          2
+        ],
+        "mirrored": false,
+        "faceColor": "#1f2937",
+        "bitmapSide": "top"
+      },
+      {
+        "id": 1001,
+        "verts": [
+          1,
+          2,
+          7
+        ],
+        "mirrored": true,
+        "faceColor": "#1f2937",
+        "bitmapSide": "top"
+      },
+      {
+        "id": 1002,
+        "verts": [
+          1,
+          3,
+          16,
+          6
+        ],
+        "mirrored": false,
+        "faceColor": "#0b1020",
+        "bitmapSide": "bottom"
+      },
+      {
+        "id": 1003,
+        "verts": [
+          1,
+          7,
+          17,
+          3
+        ],
+        "mirrored": true,
+        "faceColor": "#0b1020",
+        "bitmapSide": "bottom"
+      },
+      {
+        "id": 1004,
+        "verts": [
+          2,
+          6,
+          8,
+          10,
+          4
+        ],
+        "mirrored": false,
+        "faceColor": "#151b2e",
+        "bitmapSide": "top"
+      },
+      {
+        "id": 1005,
+        "verts": [
+          2,
+          4,
+          11,
+          9,
+          7
+        ],
+        "mirrored": true,
+        "faceColor": "#151b2e",
+        "bitmapSide": "top"
+      },
+      {
+        "id": 1006,
+        "verts": [
+          3,
+          12,
+          8,
+          16
+        ],
+        "mirrored": false,
+        "faceColor": "#080d18",
+        "bitmapSide": "bottom"
+      },
+      {
+        "id": 1007,
+        "verts": [
+          3,
+          17,
+          9,
+          13
+        ],
+        "mirrored": true,
+        "faceColor": "#080d18",
+        "bitmapSide": "bottom"
+      },
+      {
+        "id": 1008,
+        "verts": [
+          6,
+          16,
+          8
+        ],
+        "mirrored": false,
+        "faceColor": "#263145",
+        "bitmapSide": "top"
+      },
+      {
+        "id": 1009,
+        "verts": [
+          7,
+          9,
+          17
+        ],
+        "mirrored": true,
+        "faceColor": "#263145",
+        "bitmapSide": "top"
+      },
+      {
+        "id": 1010,
+        "verts": [
+          4,
+          10,
+          15,
+          11
+        ],
+        "mirrored": false,
+        "faceColor": "#111827",
+        "bitmapSide": "back"
+      },
+      {
+        "id": 1011,
+        "verts": [
+          5,
+          13,
+          15,
+          12
+        ],
+        "mirrored": false,
+        "faceColor": "#050815",
+        "bitmapSide": "back"
+      },
+      {
+        "id": 1012,
+        "verts": [
+          10,
+          12,
+          15
+        ],
+        "mirrored": false,
+        "faceColor": "#09111f",
+        "bitmapSide": "back"
+      },
+      {
+        "id": 1013,
+        "verts": [
+          11,
+          15,
+          13
+        ],
+        "mirrored": true,
+        "faceColor": "#09111f",
+        "bitmapSide": "back"
+      },
+      {
+        "id": 1014,
+        "verts": [
+          4,
+          14,
+          10
+        ],
+        "mirrored": false,
+        "faceColor": "#334155",
+        "bitmapSide": "top"
+      },
+      {
+        "id": 1015,
+        "verts": [
+          4,
+          11,
+          14
+        ],
+        "mirrored": true,
+        "faceColor": "#334155",
+        "bitmapSide": "top"
+      },
+      {
+        "id": 1016,
+        "verts": [
+          3,
+          5,
+          12
+        ],
+        "mirrored": false,
+        "faceColor": "#060914",
+        "bitmapSide": "bottom"
+      },
+      {
+        "id": 1017,
+        "verts": [
+          3,
+          13,
+          5
+        ],
+        "mirrored": true,
+        "faceColor": "#060914",
+        "bitmapSide": "bottom"
+      },
+      {
+        "id": 1018,
+        "verts": [
+          1,
+          18,
+          2
+        ],
+        "mirrored": false,
+        "faceColor": "#2dd4bf",
+        "bitmapSide": "top"
+      }
+    ],
+    "edges": [
+      {
+        "id": 2000,
+        "a": 8,
+        "b": 10,
+        "kind": "stick",
+        "mirrored": false
+      },
+      {
+        "id": 2001,
+        "a": 9,
+        "b": 11,
+        "kind": "stick",
+        "mirrored": true
+      },
+      {
+        "id": 2002,
+        "a": 14,
+        "b": 15,
+        "kind": "stick",
+        "mirrored": false
+      },
+      {
+        "id": 2003,
+        "a": 1,
+        "b": 18,
+        "kind": "edge",
+        "mirrored": false
+      }
+    ],
+    "details": [
+      {
+        "id": 3000,
+        "type": "engine",
+        "faceId": 1012,
+        "inset": 0.48,
+        "color": "#a78bfa",
+        "normal": [
+          0.55,
+          0,
+          -0.84
+        ]
+      },
+      {
+        "id": 3001,
+        "type": "engine",
+        "faceId": 1013,
+        "inset": 0.48,
+        "color": "#a78bfa",
+        "normal": [
+          -0.55,
+          0,
+          -0.84
+        ]
+      },
+      {
+        "id": 3002,
+        "type": "window",
+        "faceId": 1000,
+        "inset": 0.18,
+        "color": "#020617",
+        "normal": [
+          0.2,
+          0.94,
+          0.28
+        ]
+      },
+      {
+        "id": 3003,
+        "type": "window",
+        "faceId": 1001,
+        "inset": 0.18,
+        "color": "#020617",
+        "normal": [
+          -0.2,
+          0.94,
+          0.28
+        ]
+      },
+      {
+        "id": 3004,
+        "type": "panel",
+        "faceId": 1004,
+        "inset": 0.7,
+        "color": "#7dd3fc",
+        "segment": [
+          6,
+          10
+        ]
+      },
+      {
+        "id": 3005,
+        "type": "panel",
+        "faceId": 1005,
+        "inset": 0.7,
+        "color": "#7dd3fc",
+        "segment": [
+          7,
+          11
+        ]
+      },
+      {
+        "id": 3006,
+        "type": "panel",
+        "faceId": 1006,
+        "inset": 0.62,
+        "color": "#475569",
+        "segment": [
+          16,
+          8
+        ]
+      },
+      {
+        "id": 3007,
+        "type": "panel",
+        "faceId": 1007,
+        "inset": 0.62,
+        "color": "#475569",
+        "segment": [
+          17,
+          9
+        ]
+      },
+      {
+        "id": 3008,
+        "type": "beacon",
+        "vertexId": 14,
+        "color": "#a78bfa",
+        "normal": [
+          0,
+          1,
+          0
+        ],
+        "lift": 2
+      },
+      {
+        "id": 3009,
+        "type": "beacon",
+        "vertexId": 18,
+        "color": "#22d3ee",
+        "normal": [
+          0,
+          1,
+          0
+        ],
+        "lift": 1
+      }
+    ],
+    "blueprint": {
+      "verts": [
+        [
+          0,
+          2,
+          108
+        ],
+        [
+          0,
+          22,
+          30
+        ],
+        [
+          0,
+          -12,
+          24
+        ],
+        [
+          0,
+          16,
+          -78
+        ],
+        [
+          0,
+          -10,
+          -88
+        ],
+        [
+          38,
+          8,
+          18
+        ],
+        [
+          -38,
+          8,
+          18
+        ],
+        [
+          108,
+          0,
+          -28
+        ],
+        [
+          -108,
+          0,
+          -28
+        ],
+        [
+          56,
+          5,
+          -96
+        ],
+        [
+          -56,
+          5,
+          -96
+        ],
+        [
+          30,
+          -10,
+          -56
+        ],
+        [
+          -30,
+          -10,
+          -56
+        ],
+        [
+          0,
+          44,
+          -48
+        ],
+        [
+          0,
+          0,
+          -116
+        ],
+        [
+          48,
+          -3,
+          62
+        ],
+        [
+          -48,
+          -3,
+          62
+        ],
+        [
+          0,
+          9,
+          132
+        ]
+      ],
+      "edges": [
+        [
+          0,
+          5
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          6
+        ],
+        [
+          0,
+          6
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          2,
+          15
+        ],
+        [
+          5,
+          15
+        ],
+        [
+          6,
+          16
+        ],
+        [
+          2,
+          16
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          7,
+          9
+        ],
+        [
+          3,
+          9
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          3,
+          10
+        ],
+        [
+          8,
+          10
+        ],
+        [
+          6,
+          8
+        ],
+        [
+          2,
+          11
+        ],
+        [
+          7,
+          11
+        ],
+        [
+          7,
+          15
+        ],
+        [
+          8,
+          16
+        ],
+        [
+          8,
+          12
+        ],
+        [
+          2,
+          12
+        ],
+        [
+          9,
+          14
+        ],
+        [
+          10,
+          14
+        ],
+        [
+          4,
+          12
+        ],
+        [
+          12,
+          14
+        ],
+        [
+          11,
+          14
+        ],
+        [
+          4,
+          11
+        ],
+        [
+          9,
+          11
+        ],
+        [
+          10,
+          12
+        ],
+        [
+          3,
+          13
+        ],
+        [
+          9,
+          13
+        ],
+        [
+          10,
+          13
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          0,
+          17
+        ],
+        [
+          1,
+          17
+        ],
+        [
+          13,
+          14
+        ]
+      ],
+      "edgeFaces": [
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          6
+        ],
+        [
+          2,
+          8
+        ],
+        [
+          3,
+          9
+        ],
+        [
+          3,
+          7
+        ],
+        [
+          4,
+          8
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          4,
+          10
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          5,
+          10
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          5,
+          9
+        ],
+        [
+          6,
+          16
+        ],
+        [
+          6,
+          6
+        ],
+        [
+          6,
+          8
+        ],
+        [
+          7,
+          9
+        ],
+        [
+          7,
+          7
+        ],
+        [
+          7,
+          17
+        ],
+        [
+          10,
+          12
+        ],
+        [
+          10,
+          13
+        ],
+        [
+          11,
+          17
+        ],
+        [
+          11,
+          13
+        ],
+        [
+          11,
+          12
+        ],
+        [
+          11,
+          16
+        ],
+        [
+          12,
+          12
+        ],
+        [
+          13,
+          13
+        ],
+        [
+          14,
+          15
+        ],
+        [
+          14,
+          14
+        ],
+        [
+          15,
+          15
+        ],
+        [
+          16,
+          17
+        ],
+        [
+          18,
+          18
+        ],
+        [
+          18,
+          18
+        ],
+        [
+          -1,
+          -1
+        ]
+      ],
+      "edgeVisibility": [
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31
+      ],
+      "normals": [
+        [
+          39.91,
+          88.82,
+          22.77
+        ],
+        [
+          -39.91,
+          88.82,
+          22.77
+        ],
+        [
+          5.47,
+          -98.49,
+          16.42
+        ],
+        [
+          -26.74,
+          94.74,
+          17.61
+        ],
+        [
+          43.57,
+          72.2,
+          53.75
+        ],
+        [
+          -17.55,
+          98.3,
+          -5.46
+        ],
+        [
+          12,
+          -99.26,
+          2.02
+        ],
+        [
+          -13.84,
+          -98.86,
+          5.93
+        ],
+        [
+          23.14,
+          95.49,
+          18.61
+        ],
+        [
+          -23.14,
+          95.49,
+          18.61
+        ],
+        [
+          5.62,
+          92.02,
+          -38.74
+        ],
+        [
+          -33.77,
+          -88.64,
+          -31.66
+        ],
+        [
+          17.28,
+          -95.39,
+          -24.54
+        ],
+        [
+          -17.28,
+          -95.39,
+          -24.54
+        ],
+        [
+          -7.55,
+          72.9,
+          -68.04
+        ],
+        [
+          7.55,
+          72.9,
+          -68.04
+        ],
+        [
+          1.9,
+          -99.97,
+          -1.79
+        ],
+        [
+          -1.9,
+          -99.97,
+          -1.79
+        ],
+        [
+          -100,
+          0,
+          0
+        ]
+      ],
+      "details": [
+        {
+          "type": "engine",
+          "color": "#a78bfa",
+          "normal": [
+            0.55,
+            0,
+            -0.84
+          ],
+          "points": [
+            [
+              41.79,
+              1.53,
+              -92.53
+            ],
+            [
+              29.31,
+              -5.67,
+              -73.33
+            ],
+            [
+              14.91,
+              -0.87,
+              -102.13
+            ]
+          ],
+          "stroke": "#ffffff",
+          "lift": 1.5
+        },
+        {
+          "type": "engine",
+          "color": "#a78bfa",
+          "normal": [
+            -0.55,
+            0,
+            -0.84
+          ],
+          "points": [
+            [
+              -41.79,
+              1.53,
+              -92.53
+            ],
+            [
+              -14.91,
+              -0.87,
+              -102.13
+            ],
+            [
+              -29.31,
+              -5.67,
+              -73.33
+            ]
+          ],
+          "stroke": "#ffffff",
+          "lift": 1.5
+        },
+        {
+          "type": "window",
+          "color": "#020617",
+          "normal": [
+            0.2,
+            0.94,
+            0.28
+          ],
+          "points": [
+            [
+              10.39,
+              9.11,
+              62.08
+            ],
+            [
+              17.23,
+              10.19,
+              45.88
+            ],
+            [
+              10.39,
+              12.71,
+              48.04
+            ]
+          ]
+        },
+        {
+          "type": "window",
+          "color": "#020617",
+          "normal": [
+            -0.2,
+            0.94,
+            0.28
+          ],
+          "points": [
+            [
+              -10.39,
+              9.11,
+              62.08
+            ],
+            [
+              -10.39,
+              12.71,
+              48.04
+            ],
+            [
+              -17.23,
+              10.19,
+              45.88
+            ]
+          ]
+        },
+        {
+          "type": "line",
+          "color": "#7dd3fc",
+          "normal": [
+            0.436,
+            0.722,
+            0.538
+          ],
+          "points": [
+            [
+              38.72,
+              8.66,
+              3.36
+            ],
+            [
+              51.32,
+              6.56,
+              -76.44
+            ]
+          ]
+        },
+        {
+          "type": "line",
+          "color": "#7dd3fc",
+          "normal": [
+            -0.176,
+            0.983,
+            -0.055
+          ],
+          "points": [
+            [
+              -38.72,
+              8.66,
+              3.36
+            ],
+            [
+              -51.32,
+              6.56,
+              -76.44
+            ]
+          ]
+        },
+        {
+          "type": "line",
+          "color": "#475569",
+          "normal": [
+            0.12,
+            -0.993,
+            0.02
+          ],
+          "points": [
+            [
+              47.43,
+              -4.23,
+              38.63
+            ],
+            [
+              84.63,
+              -2.37,
+              -17.17
+            ]
+          ]
+        },
+        {
+          "type": "line",
+          "color": "#475569",
+          "normal": [
+            -0.138,
+            -0.989,
+            0.059
+          ],
+          "points": [
+            [
+              -47.43,
+              -4.23,
+              38.63
+            ],
+            [
+              -84.63,
+              -2.37,
+              -17.17
+            ]
+          ]
+        },
+        {
+          "type": "beacon",
+          "index": 13,
+          "color": "#a78bfa",
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "lift": 2
+        },
+        {
+          "type": "beacon",
+          "index": 17,
+          "color": "#22d3ee",
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "lift": 1
+        }
+      ],
+      "imageProjection": {
+        "faceSides": [
+          "top",
+          "top",
+          "bottom",
+          "bottom",
+          "top",
+          "top",
+          "bottom",
+          "bottom",
+          "top",
+          "top",
+          "back",
+          "back",
+          "back",
+          "back",
+          "top",
+          "top",
+          "bottom",
+          "bottom",
+          "top"
+        ],
+        "faceColors": [
+          "#1f2937",
+          "#1f2937",
+          "#0b1020",
+          "#0b1020",
+          "#151b2e",
+          "#151b2e",
+          "#080d18",
+          "#080d18",
+          "#263145",
+          "#263145",
+          "#111827",
+          "#050815",
+          "#09111f",
+          "#09111f",
+          "#334155",
+          "#334155",
+          "#060914",
+          "#060914",
+          "#2dd4bf"
+        ]
+      },
+      "gameMeta": {
+        "class": "strike craft",
+        "npcRole": "military",
+        "aiProfile": "hunter",
+        "decalRole": "none",
+        "baseColor": "#0b1020",
+        "description": "The Umbra is a naval strike craft with a flattened stealth hull, forward blade spars and enough missile capacity to make traffic controllers speak more carefully.",
+        "missionLore": "Restricted strike craft issued only to special operations squadrons.",
+        "valueCr": 4800000,
+        "stats": {
+          "r": 132,
+          "hp": 360,
+          "speed": 2.35,
+          "cargo": 8,
+          "missiles": 6,
+          "laser": "military"
+        },
+        "lists": {
+          "trader": false,
+          "pirate": false,
+          "police": false,
+          "alien": false
+        },
+        "flags": {
+          "escapePod": true,
+          "hiddenUntilDiscovered": true
+        },
+        "imageDecalMirrorX": {
+          "top": true,
+          "bottom": true,
+          "back": false
+        }
       }
     }
   },

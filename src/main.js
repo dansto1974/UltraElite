@@ -16838,6 +16838,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       } : undefined;
 
       const stationPreview = modelName === "coriolis" || modelName === "dodoStation" || model?.id === "coriolis" || model?.id === "dodoStation";
+      const benchMeta = modelGameMeta(modelName);
       const renderBenchEntity = {
         type: stationPreview ? "station" : "ship",
         model: modelName,
@@ -16845,8 +16846,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         rot: Number(opts.yaw) || 0,
         pitch: Number(opts.pitch) || 0,
         roll: Number(opts.roll) || 0,
-        color: opts.baseColor || modelGameMeta(modelName).baseColor || shipColor(modelName, false),
-        role: opts.role || opts.decalRole || previewDecalRole(modelName),
+        color: opts.baseColor || benchMeta.baseColor || shipColor(modelName, false),
+        role: opts.role || opts.decalRole || benchMeta.decalRole || (benchMeta.hiddenUntilDiscovered ? "project" : undefined),
         decalSeed: hash32(`bench:${modelName}`),
         hp: 100,
         maxHp: 100,

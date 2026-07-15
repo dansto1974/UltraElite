@@ -1,0 +1,98 @@
+{
+  "format": "ultra-elite-ship-builder/v1",
+  "id": "umbra",
+  "name": "Umbra",
+  "symmetry": "x-locked",
+  "gameMeta": {
+    "class": "strike craft",
+    "npcRole": "military",
+    "aiProfile": "hunter",
+    "decalRole": "none",
+    "baseColor": "#0b1020",
+    "description": "The Umbra is a naval strike craft with a flattened stealth hull, forward blade spars and enough missile capacity to make traffic controllers speak more carefully.",
+    "missionLore": "Restricted strike craft issued only to special operations squadrons.",
+    "valueCr": 4800000,
+    "stats": {
+      "r": 132,
+      "hp": 360,
+      "speed": 2.35,
+      "cargo": 8,
+      "missiles": 6,
+      "laser": "military"
+    },
+    "lists": {
+      "trader": false,
+      "pirate": false,
+      "police": false,
+      "alien": false
+    },
+    "flags": {
+      "escapePod": true,
+      "hiddenUntilDiscovered": true
+    },
+    "imageDecalMirrorX": {
+      "top": true,
+      "bottom": true,
+      "back": false
+    }
+  },
+  "verts": [
+    { "id": 1, "x": 0, "y": 2, "z": 108, "mirrorId": null, "center": true },
+    { "id": 2, "x": 0, "y": 22, "z": 30, "mirrorId": null, "center": true },
+    { "id": 3, "x": 0, "y": -12, "z": 24, "mirrorId": null, "center": true },
+    { "id": 4, "x": 0, "y": 16, "z": -78, "mirrorId": null, "center": true },
+    { "id": 5, "x": 0, "y": -10, "z": -88, "mirrorId": null, "center": true },
+    { "id": 6, "x": 38, "y": 8, "z": 18, "mirrorId": 7, "center": false },
+    { "id": 7, "x": -38, "y": 8, "z": 18, "mirrorId": 6, "center": false },
+    { "id": 8, "x": 108, "y": 0, "z": -28, "mirrorId": 9, "center": false },
+    { "id": 9, "x": -108, "y": 0, "z": -28, "mirrorId": 8, "center": false },
+    { "id": 10, "x": 56, "y": 5, "z": -96, "mirrorId": 11, "center": false },
+    { "id": 11, "x": -56, "y": 5, "z": -96, "mirrorId": 10, "center": false },
+    { "id": 12, "x": 30, "y": -10, "z": -56, "mirrorId": 13, "center": false },
+    { "id": 13, "x": -30, "y": -10, "z": -56, "mirrorId": 12, "center": false },
+    { "id": 14, "x": 0, "y": 44, "z": -48, "mirrorId": null, "center": true },
+    { "id": 15, "x": 0, "y": 0, "z": -116, "mirrorId": null, "center": true },
+    { "id": 16, "x": 48, "y": -3, "z": 62, "mirrorId": 17, "center": false },
+    { "id": 17, "x": -48, "y": -3, "z": 62, "mirrorId": 16, "center": false },
+    { "id": 18, "x": 0, "y": 9, "z": 132, "mirrorId": null, "center": true }
+  ],
+  "faces": [
+    { "id": 1000, "verts": [1, 6, 2], "mirrored": false, "faceColor": "#1f2937", "bitmapSide": "top" },
+    { "id": 1001, "verts": [1, 2, 7], "mirrored": true, "faceColor": "#1f2937", "bitmapSide": "top" },
+    { "id": 1002, "verts": [1, 3, 16, 6], "mirrored": false, "faceColor": "#0b1020", "bitmapSide": "bottom" },
+    { "id": 1003, "verts": [1, 7, 17, 3], "mirrored": true, "faceColor": "#0b1020", "bitmapSide": "bottom" },
+    { "id": 1004, "verts": [2, 6, 8, 10, 4], "mirrored": false, "faceColor": "#151b2e", "bitmapSide": "top" },
+    { "id": 1005, "verts": [2, 4, 11, 9, 7], "mirrored": true, "faceColor": "#151b2e", "bitmapSide": "top" },
+    { "id": 1006, "verts": [3, 12, 8, 16], "mirrored": false, "faceColor": "#080d18", "bitmapSide": "bottom" },
+    { "id": 1007, "verts": [3, 17, 9, 13], "mirrored": true, "faceColor": "#080d18", "bitmapSide": "bottom" },
+    { "id": 1008, "verts": [6, 16, 8], "mirrored": false, "faceColor": "#263145", "bitmapSide": "top" },
+    { "id": 1009, "verts": [7, 9, 17], "mirrored": true, "faceColor": "#263145", "bitmapSide": "top" },
+    { "id": 1010, "verts": [4, 10, 15, 11], "mirrored": false, "faceColor": "#111827", "bitmapSide": "back" },
+    { "id": 1011, "verts": [5, 13, 15, 12], "mirrored": false, "faceColor": "#050815", "bitmapSide": "back" },
+    { "id": 1012, "verts": [10, 12, 15], "mirrored": false, "faceColor": "#09111f", "bitmapSide": "back" },
+    { "id": 1013, "verts": [11, 15, 13], "mirrored": true, "faceColor": "#09111f", "bitmapSide": "back" },
+    { "id": 1014, "verts": [4, 14, 10], "mirrored": false, "faceColor": "#334155", "bitmapSide": "top" },
+    { "id": 1015, "verts": [4, 11, 14], "mirrored": true, "faceColor": "#334155", "bitmapSide": "top" },
+    { "id": 1016, "verts": [3, 5, 12], "mirrored": false, "faceColor": "#060914", "bitmapSide": "bottom" },
+    { "id": 1017, "verts": [3, 13, 5], "mirrored": true, "faceColor": "#060914", "bitmapSide": "bottom" },
+    { "id": 1018, "verts": [1, 18, 2], "mirrored": false, "faceColor": "#2dd4bf", "bitmapSide": "top" }
+  ],
+  "edges": [
+    { "id": 2000, "a": 8, "b": 10, "kind": "stick", "mirrored": false },
+    { "id": 2001, "a": 9, "b": 11, "kind": "stick", "mirrored": true },
+    { "id": 2002, "a": 14, "b": 15, "kind": "stick", "mirrored": false },
+    { "id": 2003, "a": 1, "b": 18, "kind": "edge", "mirrored": false }
+  ],
+  "details": [
+    { "id": 3000, "type": "engine", "faceId": 1012, "inset": 0.48, "color": "#a78bfa", "normal": [0.55, 0, -0.84] },
+    { "id": 3001, "type": "engine", "faceId": 1013, "inset": 0.48, "color": "#a78bfa", "normal": [-0.55, 0, -0.84] },
+    { "id": 3002, "type": "window", "faceId": 1000, "inset": 0.18, "color": "#020617", "normal": [0.2, 0.94, 0.28] },
+    { "id": 3003, "type": "window", "faceId": 1001, "inset": 0.18, "color": "#020617", "normal": [-0.2, 0.94, 0.28] },
+    { "id": 3004, "type": "panel", "faceId": 1004, "inset": 0.7, "color": "#7dd3fc", "segment": [6, 10] },
+    { "id": 3005, "type": "panel", "faceId": 1005, "inset": 0.7, "color": "#7dd3fc", "segment": [7, 11] },
+    { "id": 3006, "type": "panel", "faceId": 1006, "inset": 0.62, "color": "#475569", "segment": [16, 8] },
+    { "id": 3007, "type": "panel", "faceId": 1007, "inset": 0.62, "color": "#475569", "segment": [17, 9] },
+    { "id": 3008, "type": "beacon", "vertexId": 14, "color": "#a78bfa", "normal": [0, 1, 0], "lift": 2 },
+    { "id": 3009, "type": "beacon", "vertexId": 18, "color": "#22d3ee", "normal": [0, 1, 0], "lift": 1 }
+  ]
+}
