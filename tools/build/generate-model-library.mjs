@@ -247,6 +247,17 @@ function sourceImageProjection(data) {
     return side === "top" || side === "bottom" || side === "back" ? side : null;
   });
   const faceTextures = sourceFaces.map((face) => cleanBitmapKey(face?.bitmapFaceKey) || null);
+  const cleanFaceUv = (uv) => Array.isArray(uv)
+    ? uv.map((p) => Array.isArray(p) && Number.isFinite(Number(p[0])) && Number.isFinite(Number(p[1]))
+      ? [round(Number(p[0]), 3), round(Number(p[1]), 3)]
+      : null).filter(Boolean)
+    : null;
+  const faceTextureUv = sourceFaces.map((face) => {
+    const uv = cleanFaceUv(face?.bitmapUv);
+    return uv?.length >= 3 ? uv : null;
+  });
+  const faceTextureBaseW = sourceFaces.map((face) => Number.isFinite(Number(face?.bitmapBaseW)) && Number(face.bitmapBaseW) > 0 ? Math.round(Number(face.bitmapBaseW)) : null);
+  const faceTextureBaseH = sourceFaces.map((face) => Number.isFinite(Number(face?.bitmapBaseH)) && Number(face.bitmapBaseH) > 0 ? Math.round(Number(face.bitmapBaseH)) : null);
   const faceColors = sourceFaces.map((face) =>
     cleanHexColor(face?.faceColor || face?.color)
     || averageBitmapFaceColor(data.id, face?.bitmapFaceKey)
@@ -282,12 +293,15 @@ function sourceImageProjection(data) {
     ...(primaryAxis !== "y" ? { primaryAxis } : {}),
     ...(faceSides.some(Boolean) ? { faceSides } : {}),
     ...(faceTextures.some(Boolean) ? { faceTextures } : {}),
+    ...(faceTextureUv.some(Boolean) ? { faceTextureUv } : {}),
+    ...(faceTextureBaseW.some(Boolean) ? { faceTextureBaseW } : {}),
+    ...(faceTextureBaseH.some(Boolean) ? { faceTextureBaseH } : {}),
     ...(faceColors.some(Boolean) ? { faceColors } : {}),
     ...(faceAngles.some((angle) => angle != null) ? { faceAngles } : {}),
     ...(faceMirrorX.some(Boolean) ? { faceMirrorX } : {}),
     ...(faceDecals.some((decals) => decals?.length) ? { faceDecals } : {})
   };
-  return imageProjection.primaryAxis || imageProjection.faceSides || imageProjection.faceTextures || imageProjection.faceColors || imageProjection.faceAngles || imageProjection.faceMirrorX || imageProjection.faceDecals ? imageProjection : null;
+  return imageProjection.primaryAxis || imageProjection.faceSides || imageProjection.faceTextures || imageProjection.faceTextureUv || imageProjection.faceColors || imageProjection.faceAngles || imageProjection.faceMirrorX || imageProjection.faceDecals ? imageProjection : null;
 }
 
 function normalizeBlueprintDetails(data, blueprint) {
@@ -400,7 +414,7 @@ function deriveBlueprint(data) {
     edgeVisibility: edges.map(() => 31),
     normals,
     details,
-    ...(imageProjection.primaryAxis || imageProjection.faceSides || imageProjection.faceTextures || imageProjection.faceColors || imageProjection.faceAngles || imageProjection.faceMirrorX || imageProjection.faceDecals ? { imageProjection } : {}),
+    ...(imageProjection.primaryAxis || imageProjection.faceSides || imageProjection.faceTextures || imageProjection.faceTextureUv || imageProjection.faceColors || imageProjection.faceAngles || imageProjection.faceMirrorX || imageProjection.faceDecals ? { imageProjection } : {}),
     gameMeta: data.gameMeta || {}
   };
 }

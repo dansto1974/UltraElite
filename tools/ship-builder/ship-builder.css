@@ -522,6 +522,32 @@ h3 {
   white-space: nowrap;
 }
 
+.projection-view-toolbar {
+  display: inline-grid;
+  grid-template-columns: repeat(6, minmax(3.2rem, auto));
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid rgba(102, 232, 255, .2);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, .36);
+  box-shadow: var(--shadow);
+}
+
+.projection-view-toolbar button {
+  height: 1.8rem;
+  padding: 0 .42rem;
+  border-radius: 8px;
+  font-size: .68rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.projection-view-toolbar button.active {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  background: rgba(102, 232, 255, .14);
+}
+
 .blueprint-toggle.active {
   color: #020402;
   border-color: var(--text);
@@ -691,7 +717,10 @@ h3 {
 .asset-library-window {
   width: min(1520px, calc(100vw - 28px));
   height: min(920px, calc(100vh - 28px));
-  min-height: 0;
+  min-width: min(760px, calc(100vw - 28px));
+  min-height: min(520px, calc(100vh - 28px));
+  max-width: calc(100vw - 28px);
+  max-height: calc(100vh - 28px);
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   border: 1px solid rgba(81, 255, 74, .32);
@@ -699,6 +728,7 @@ h3 {
   background: rgba(4, 10, 8, .98);
   box-shadow: 0 22px 80px rgba(0, 0, 0, .62);
   overflow: hidden;
+  resize: both;
 }
 
 .asset-library-head {
@@ -729,23 +759,23 @@ h3 {
 
 .asset-library-layout {
   min-height: 0;
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: minmax(150px, .65fr) minmax(150px, .65fr) minmax(260px, 1.35fr);
+  display: flex;
+  flex-direction: column;
   gap: 10px;
   padding: 10px;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .asset-library-section {
-  min-height: 0;
+  flex: 0 0 auto;
+  min-height: max-content;
   display: flex;
   flex-direction: column;
   border: 1px solid rgba(81, 255, 74, .16);
   border-radius: 8px;
   padding: 8px;
   background: rgba(0, 0, 0, .22);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .asset-library-section h2 {
@@ -753,11 +783,12 @@ h3 {
 }
 
 .asset-library-section .bitmap-asset-grid {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
   max-height: none;
   min-height: 0;
   align-content: start;
+  overflow: visible;
 }
 
 .asset-library-shared .asset-filter-grid {
@@ -1413,15 +1444,17 @@ canvas {
     max-height: 100%;
   }
 
+  .asset-library-window {
+    min-width: min(420px, calc(100vw - 28px));
+    min-height: min(420px, calc(100vh - 28px));
+  }
+
   .asset-library-layout {
-    grid-template-columns: 1fr;
-    grid-template-rows: none;
-    grid-auto-rows: minmax(300px, auto);
     overflow: auto;
   }
 
   .asset-library-section {
-    min-height: 300px;
+    min-height: max-content;
   }
 
   .asset-library-head {

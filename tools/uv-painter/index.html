@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ultra Elite UV Painter</title>
+  <link rel="stylesheet" href="uv-painter.css">
+</head>
+<body>
+  <main class="app">
+    <aside class="panel sidebar">
+      <header class="brand">
+        <p>Ultra Elite Workshop</p>
+        <h1>UV Painter</h1>
+      </header>
+
+      <section>
+        <h2>Model</h2>
+        <select id="modelSelect"></select>
+        <div id="modelReadout" class="readout">Loading models...</div>
+      </section>
+
+      <section>
+        <h2>Face Group</h2>
+        <button id="selectGroupBtn" class="primary" type="button">Select Face Group</button>
+        <button id="clearGroupBtn" type="button">Clear Group</button>
+        <div id="groupReadout" class="readout">0 faces selected</div>
+      </section>
+
+      <section>
+        <h2>Projection View</h2>
+        <div class="view-grid">
+          <button type="button" data-view="top">Top</button>
+          <button type="button" data-view="bottom">Bottom</button>
+          <button type="button" data-view="left">Left</button>
+          <button type="button" data-view="right">Right</button>
+          <button type="button" data-view="front">Front</button>
+          <button type="button" data-view="back">Back</button>
+          <button type="button" data-view="camera" class="wide">Use Current Camera</button>
+        </div>
+        <div id="viewReadout" class="readout">Top projection</div>
+      </section>
+
+      <section>
+        <h2>UV Asset</h2>
+        <select id="assetSelect"></select>
+        <label class="file-label">Import Bitmap
+          <input id="importBitmap" type="file" accept="image/png,image/jpeg,image/*">
+        </label>
+        <div id="assetReadout" class="readout">No asset selected</div>
+      </section>
+
+      <section>
+        <h2>Apply</h2>
+        <button id="projectBtn" class="primary" type="button">Project UV To Selected Faces</button>
+        <button id="clearSelectedUvBtn" type="button">Clear UV From Selected Faces</button>
+        <button id="saveBtn" type="button">Save UV Changes</button>
+        <button id="rebuildBtn" type="button">Rebuild Game</button>
+      </section>
+    </aside>
+
+    <section class="stage">
+      <div class="toolbar">
+        <label><input id="showBlankUv" type="checkbox"> Blank UV</label>
+        <span id="status">Ready.</span>
+      </div>
+      <div class="preview-stack">
+        <iframe id="previewFrame" src="/tools/ship-builder/render-preview.html" title="Real renderer preview"></iframe>
+        <canvas id="overlay" width="1280" height="720"></canvas>
+      </div>
+    </section>
+  </main>
+
+  <script src="/tools/uv-painter/uv-painter.js"></script>
+</body>
+</html>

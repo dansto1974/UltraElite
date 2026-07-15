@@ -3,7 +3,14 @@
 const TAU = Math.PI * 2;
 const EPS = 0.0001;
 const STANDARD_VIEW = Object.freeze({ rx: -0.35, ry: 0.72 });
-
+const PROJECTION_VIEW_PRESETS = Object.freeze({
+  front: { rx: 0, ry: Math.PI, label: "FRONT" },
+  back: { rx: 0, ry: 0, label: "BACK" },
+  top: { rx: -Math.PI / 2, ry: 0, label: "TOP" },
+  bottom: { rx: Math.PI / 2, ry: Math.PI, label: "BOTTOM" },
+  left: { rx: 0, ry: -Math.PI / 2, label: "LEFT" },
+  right: { rx: 0, ry: Math.PI / 2, label: "RIGHT" }
+});
 const els = {
   shipId: document.getElementById("shipId"),
   shipName: document.getElementById("shipName"),
@@ -64,6 +71,7 @@ const els = {
   detailInset: document.getElementById("detailInset"),
   detailColor: document.getElementById("detailColor"),
   showFaceNormals: document.getElementById("showFaceNormals"),
+  showBlankUv: document.getElementById("showBlankUv"),
   mirrorNewGeometry: document.getElementById("mirrorNewGeometry"),
   previewRenderMode: document.getElementById("previewRenderMode"),
   skinReadout: document.getElementById("skinReadout"),
@@ -109,6 +117,7 @@ const els = {
   clearImportedSkinsBtn: document.getElementById("clearImportedSkinsBtn"),
   clearFaceSkinBtn: document.getElementById("clearFaceSkinBtn"),
   clearAllFaceUvBtn: document.getElementById("clearAllFaceUvBtn"),
+  clearFaceGroupBtn: document.getElementById("clearFaceGroupBtn"),
   clearTopSkinBtn: document.getElementById("clearTopSkinBtn"),
   clearBottomSkinBtn: document.getElementById("clearBottomSkinBtn"),
   clearBackSkinBtn: document.getElementById("clearBackSkinBtn"),
@@ -172,13 +181,16 @@ const state = {
   decalImages: {},
   bitmapShelf: [],
   toolServer: { available: false, skins: [], version: 0 },
+  selectedBitmapShelfId: "",
   sideSkinAngle: 0,
   assetVersion: Date.now(),
   previewSkinVersion: Date.now(),
   gamePreviewInfo: null,
   gamePreviewProjection: null,
   faceDecalUiKey: "",
+  sourceModelId: "",
   selected: null,
+  selectedFaceIds: new Set(),
   pick: [],
   view: { rx: STANDARD_VIEW.rx, ry: STANDARD_VIEW.ry, zoom: 2.9, panX: 0, panY: 0 },
   orthoScale: 1,
@@ -294,6 +306,11 @@ function sourceFace(face, index) {
   const bitmapFaceKey = cleanBitmapKey(face?.bitmapFaceKey);
   const bitmapAngle = normalizeBitmapAngle(face?.bitmapAngle);
   const bitmapMirrorX = !!face?.bitmapMirrorX;
+  const bitmapUv = Array.isArray(face?.bitmapUv)
+    ? face.bitmapUv.map((p) => Array.isArray(p) ? [round(Number(p[0]) || 0, 3), round(Number(p[1]) || 0, 3)] : null).filter(Boolean)
+    : null;
+  const bitmapBaseW = Math.max(0, Math.round(Number(face?.bitmapBaseW) || 0));
+  const bitmapBaseH = Math.max(0, Math.round(Number(face?.bitmapBaseH) || 0));
   const bitmapDecals = cleanFaceDecals(face?.bitmapDecals);
   const faceColor = optionalHexColor(face?.faceColor || face?.color);
   return {
@@ -303,6 +320,8 @@ function sourceFace(face, index) {
     ...(faceColor ? { faceColor } : {}),
     ...(bitmapSide ? { bitmapSide } : {}),
     ...(bitmapFaceKey ? { bitmapFaceKey } : {}),
+    ...(bitmapUv?.length >= 3 ? { bitmapUv } : {}),
+    ...(bitmapBaseW && bitmapBaseH ? { bitmapBaseW, bitmapBaseH } : {}),
     ...(bitmapAngle ? { bitmapAngle } : {}),
     ...(bitmapMirrorX ? { bitmapMirrorX } : {}),
     ...(bitmapDecals.length ? { bitmapDecals } : {})
@@ -471,6 +490,19 @@ function selectedFace() {
   return state.selected?.type === "face" ? faceById(state.selected.id) : null;
 }
 
+function selectedFaceGroup() {
+  return [...state.selectedFaceIds].map(faceById).filter(Boolean);
+}
+
+function clearFaceGroup(statusText = "FACE GROUP CLEARED.") {
+  const hadGroup = state.selectedFaceIds.size > 0;
+  state.selectedFaceIds.clear();
+  if (hadGroup) {
+    setStatus(statusText);
+    renderAll();
+  }
+}
+
 function detailById(id) {
   return state.details.find((d) => d.id === id) || null;
 }
@@ -616,10 +648,16 @@ function mirroredDetailOf(detail) {
   ) || null;
 }
 
-function syncMirroredFace(face) {
+function syncMirroredFace(face, options = {}) {
   const mf = mirroredFaceOf(face);
   const mids = mirrorIds(face.verts);
   if (mf && mids) {
+    const previousMirrorKey = cleanBitmapKey(mf.bitmapFaceKey);
+    const previousMirrorUv = Array.isArray(mf.bitmapUv) && mf.bitmapUv.length >= 3
+      ? mf.bitmapUv.map((p) => [round(Number(p[0]) || 0, 3), round(Number(p[1]) || 0, 3)])
+      : null;
+    const previousMirrorBaseW = Math.round(Number(mf.bitmapBaseW) || TEMPLATE_SIZE);
+    const previousMirrorBaseH = Math.round(Number(mf.bitmapBaseH) || TEMPLATE_SIZE);
     mf.verts = mids;
     const side = validBitmapFaceSide(face.bitmapSide);
     if (side) mf.bitmapSide = side;
@@ -627,6 +665,21 @@ function syncMirroredFace(face) {
     const key = cleanBitmapKey(face.bitmapFaceKey);
     if (key) mf.bitmapFaceKey = key;
     else delete mf.bitmapFaceKey;
+    if (Array.isArray(face.bitmapUv) && face.bitmapUv.length >= 3) {
+      if (!options.forceBitmapUv && previousMirrorKey === key && previousMirrorUv) {
+        mf.bitmapUv = previousMirrorUv;
+        mf.bitmapBaseW = previousMirrorBaseW;
+        mf.bitmapBaseH = previousMirrorBaseH;
+      } else {
+        mf.bitmapUv = face.bitmapUv.map((p) => [round(Number(p[0]) || 0, 3), round(Number(p[1]) || 0, 3)]);
+        mf.bitmapBaseW = Math.round(Number(face.bitmapBaseW) || TEMPLATE_SIZE);
+        mf.bitmapBaseH = Math.round(Number(face.bitmapBaseH) || TEMPLATE_SIZE);
+      }
+    } else {
+      delete mf.bitmapUv;
+      delete mf.bitmapBaseW;
+      delete mf.bitmapBaseH;
+    }
     const angle = mirroredFaceAngle(face.bitmapAngle);
     if (angle) mf.bitmapAngle = angle;
     else delete mf.bitmapAngle;
@@ -1455,6 +1508,46 @@ function drawFaceNormals(ctx, projectFn) {
   if (selected) drawFaceNormal(ctx, selected, projectFn, true);
 }
 
+function faceHasLoadedSideSkin(face) {
+  const side = templateSideForFace(face);
+  const img = state.skinImages?.[side];
+  return !!(img?.complete && img.naturalWidth);
+}
+
+function faceHasUvCoverage(face, previewFace = null) {
+  const hasFaceTexture = !!cleanBitmapKey(face?.bitmapFaceKey);
+  if (hasFaceTexture) return previewFace?.hasImageProjection !== false;
+  return faceHasLoadedSideSkin(face);
+}
+
+function drawBlankUvFaceOverlay(ctx, canvas, projected) {
+  if (!els.showBlankUv?.checked) return;
+  const gameOverlay = gameRendererOverlayMode();
+  const faces = [...state.faces].sort((a, b) => faceSortDepthForMain(b) - faceSortDepthForMain(a));
+  ctx.save();
+  ctx.font = "10px Andale Mono, Menlo, Consolas, monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  for (const face of faces) {
+    const previewFace = previewFaceForBuilderFace(face);
+    if (gameOverlay && !previewFace?.visible) continue;
+    if (faceHasUvCoverage(face, previewFace)) continue;
+    const pts = face.verts.map((id) => projected.get(id)).filter(Boolean);
+    if (pts.length < 3) continue;
+    drawFace(ctx, pts, "rgba(255,217,54,.18)", "rgba(255,217,54,.95)", 1.8);
+    const center = pts.reduce((sum, p) => ({ x: sum.x + p.x, y: sum.y + p.y }), { x: 0, y: 0 });
+    center.x /= pts.length;
+    center.y /= pts.length;
+    const label = `NO UV #${face.id}`;
+    const width = ctx.measureText(label).width + 8;
+    ctx.fillStyle = "rgba(0,0,0,.74)";
+    ctx.fillRect(center.x - width / 2, center.y - 8, width, 16);
+    ctx.fillStyle = "#ffd936";
+    ctx.fillText(label, center.x, center.y + .5);
+  }
+  ctx.restore();
+}
+
 function drawStars(ctx, canvas) {
   ctx.save();
   ctx.fillStyle = "rgba(255,255,255,.55)";
@@ -1863,7 +1956,7 @@ function bitmapShelfItemById(id) {
 }
 
 function selectedBitmapShelfItem() {
-  return bitmapShelfItemById(els.bitmapShelfSelector?.value);
+  return bitmapShelfItemById(state.selectedBitmapShelfId) || bitmapShelfItemById(els.bitmapShelfSelector?.value);
 }
 
 function bitmapShelfItemKind(item) {
@@ -2153,7 +2246,7 @@ function renderBitmapAssetGrid(grid, items, selectedId, emptyText) {
 }
 
 function updateBitmapAssetGrid() {
-  const selectedId = els.bitmapShelfSelector?.value || "";
+  const selectedId = state.selectedBitmapShelfId || els.bitmapShelfSelector?.value || "";
   const currentItems = state.bitmapShelf.filter(bitmapShelfItemBelongsToCurrentModel);
   const localItems = state.bitmapShelf.filter(bitmapShelfItemIsLocal);
   const sharedItems = bitmapShelfSharedItems();
@@ -2177,6 +2270,7 @@ function updateBitmapAssetGrid() {
     state.bitmapShelf.some((item) => item.source === "asset") ? "No shared UVs match these filters." : "No shared UV thumbnails loaded."
   );
   if (!activeSelectedId && state.bitmapShelf[0] && els.bitmapShelfSelector) {
+    state.selectedBitmapShelfId = state.bitmapShelf[0].id;
     els.bitmapShelfSelector.value = state.bitmapShelf[0].id;
     updateBitmapAssetGrid();
     return;
@@ -2186,6 +2280,7 @@ function updateBitmapAssetGrid() {
 
 function selectBitmapShelfItem(id) {
   if (!els.bitmapShelfSelector || !id) return;
+  state.selectedBitmapShelfId = id;
   els.bitmapShelfSelector.value = id;
   updateBitmapAssetGrid();
   updateSelectedBitmapReadout();
@@ -2239,6 +2334,8 @@ function updateBitmapShelfSelector() {
     els.bitmapShelfSelector.append(option);
   }
   if (current && bitmapShelfItemById(current)) els.bitmapShelfSelector.value = current;
+  if (state.selectedBitmapShelfId && !bitmapShelfItemById(state.selectedBitmapShelfId)) state.selectedBitmapShelfId = "";
+  if (!state.selectedBitmapShelfId && current && bitmapShelfItemById(current)) state.selectedBitmapShelfId = current;
   updateBitmapAssetGrid();
 }
 
@@ -2457,6 +2554,9 @@ function clearCurrentModelDeletedAssetReferences(asset) {
     for (const face of state.faces) {
       if (cleanBitmapKey(face.bitmapFaceKey) !== currentAsset.key) continue;
       delete face.bitmapFaceKey;
+      delete face.bitmapUv;
+      delete face.bitmapBaseW;
+      delete face.bitmapBaseH;
       delete face.bitmapAngle;
       delete face.bitmapMirrorX;
       changed = true;
@@ -2552,6 +2652,7 @@ async function deleteBitmapAsset(itemId) {
     clearCurrentModelDeletedAssetReferences(asset);
     state.assetVersion = Date.now();
     state.bitmapShelf = state.bitmapShelf.filter((entry) => entry.asset?.file !== asset.file);
+    if (state.selectedBitmapShelfId && !bitmapShelfItemById(state.selectedBitmapShelfId)) state.selectedBitmapShelfId = "";
     updateBitmapShelfSelector();
     await refreshAvailableSkinAssets();
     setStatus(`ASSET DELETED: ${result.deleted}.`);
@@ -2565,6 +2666,7 @@ function clearBitmapShelf() {
     if (item.url) URL.revokeObjectURL(item.url);
   }
   state.bitmapShelf = [];
+  state.selectedBitmapShelfId = "";
   updateBitmapShelfSelector();
   populateAssetModelSelector();
   setStatus("BITMAP SHELF CLEARED.");
@@ -2635,6 +2737,87 @@ function selectedFaceSkinTargetKey(face, options = {}) {
   return faceSkinKeyUsage(current, face) ? uniqueFaceSkinKey(face) : current;
 }
 
+function faceSkinKeyUsageOutsideGroup(key, faces) {
+  const cleanKey = cleanBitmapKey(key);
+  if (!cleanKey) return 0;
+  const group = new Set(faces);
+  return state.faces.filter((face) => !group.has(face) && cleanBitmapKey(face.bitmapFaceKey) === cleanKey).length;
+}
+
+function uniqueFaceGroupSkinKey(preferred, faces) {
+  const base = cleanBitmapKey(preferred || `face_group_${Date.now()}`, `face_group_${Date.now()}`);
+  if (!faceSkinKeyUsageOutsideGroup(base, faces)) return base;
+  const suffix = cleanBitmapKey(`${base}-group`, base);
+  if (!faceSkinKeyUsageOutsideGroup(suffix, faces)) return suffix;
+  let i = 2;
+  while (faceSkinKeyUsageOutsideGroup(`${suffix}-${i}`, faces)) i++;
+  return `${suffix}-${i}`;
+}
+
+function bitmapItemPreferredFaceKey(item) {
+  if (!item) return "";
+  const asset = item.source === "asset" ? assetAliasForCurrentModel(item.asset) : null;
+  if (asset?.kind === "face" && asset.key) return asset.key;
+  if (asset?.model && asset?.side) return `${asset.model}_${asset.side}`;
+  if (asset?.model && asset?.key) return `${asset.model}_${asset.key}`;
+  const name = String(item.name || "face_group").replace(/\.[^.]+$/, "");
+  return cleanBitmapKey(name, "face_group");
+}
+
+function faceGroupSkinTargetKey(faces, item, options = {}) {
+  const requested = cleanBitmapKey(options.key || bitmapItemPreferredFaceKey(item));
+  const asset = item?.source === "asset" ? assetAliasForCurrentModel(item.asset) : null;
+  const sameModelFaceAsset = !!asset && asset.kind === "face" && asset.model === templateShipId();
+  if (requested && (options.shareKey || sameModelFaceAsset)) return requested;
+  const existing = [...new Set(faces.map((face) => cleanBitmapKey(face.bitmapFaceKey)).filter(Boolean))];
+  if (!requested && existing.length === 1) return existing[0];
+  return uniqueFaceGroupSkinKey(requested || existing[0] || "face_group", faces);
+}
+
+function uniqueFaceList(faces) {
+  const seen = new Set();
+  const out = [];
+  for (const face of faces) {
+    if (!face || seen.has(face.id)) continue;
+    seen.add(face.id);
+    out.push(face);
+  }
+  return out;
+}
+
+function faceGroupProjectionTargets(faces) {
+  return uniqueFaceList(faces);
+}
+
+function applyCurrentViewGroupUv(faces, img) {
+  const verts = [];
+  for (const face of faces) {
+    for (const id of face.verts) {
+      const v = vertexById(id);
+      if (v) verts.push(rotatePoint(v));
+    }
+  }
+  if (verts.length < 3) return false;
+  const minX = Math.min(...verts.map((v) => v.x));
+  const maxX = Math.max(...verts.map((v) => v.x));
+  const minY = Math.min(...verts.map((v) => v.y));
+  const maxY = Math.max(...verts.map((v) => v.y));
+  const rangeX = maxX - minX || 1;
+  const rangeY = maxY - minY || 1;
+  const width = Math.max(1, Math.round(img?.naturalWidth || img?.width || TEMPLATE_SIZE));
+  const height = Math.max(1, Math.round(img?.naturalHeight || img?.height || TEMPLATE_SIZE));
+  for (const face of faces) {
+    face.bitmapUv = face.verts.map((id) => {
+      const v = vertexById(id);
+      const p = rotatePoint(v || vec());
+      return [round(((p.x - minX) / rangeX) * width, 3), round(((maxY - p.y) / rangeY) * height, 3)];
+    });
+    face.bitmapBaseW = width;
+    face.bitmapBaseH = height;
+  }
+  return true;
+}
+
 function setSelectedFaceSkinFromImage(img, source = "imported", url = "", name = "bitmap", options = {}) {
   const face = selectedFace();
   if (!face) {
@@ -2669,6 +2852,44 @@ function setSelectedFaceSkinFromImage(img, source = "imported", url = "", name =
   renderAll();
 }
 
+function setFaceGroupSkinFromImage(faces, img, source = "imported", url = "", name = "bitmap", options = {}) {
+  const selectedTargets = uniqueFaceList(faces.filter(Boolean));
+  if (!selectedTargets.length) {
+    if (url) URL.revokeObjectURL(url);
+    setStatus("SELECT ONE OR MORE FACES FIRST.");
+    return;
+  }
+  const targets = faceGroupProjectionTargets(selectedTargets);
+  const key = faceGroupSkinTargetKey(targets, options.item || null, options);
+  const mirrorX = options.mirrorX == null ? importMirroredSkinEnabled() : !!options.mirrorX;
+  const averageColor = averageImageColor(img);
+  for (const face of targets) {
+    delete face.bitmapSide;
+    delete face.bitmapFaceKey;
+    delete face.bitmapUv;
+    delete face.bitmapBaseW;
+    delete face.bitmapBaseH;
+    delete face.bitmapAngle;
+    delete face.bitmapMirrorX;
+    face.bitmapFaceKey = key;
+    if (mirrorX) face.bitmapMirrorX = true;
+    else delete face.bitmapMirrorX;
+    if (averageColor) face.faceColor = averageColor;
+  }
+  applyCurrentViewGroupUv(targets, img);
+  if (state.faceSkinUrls[key] && state.faceSkinUrls[key] !== url) URL.revokeObjectURL(state.faceSkinUrls[key]);
+  state.faceSkinImages[key] = img;
+  state.faceSkinSources[key] = source;
+  if (url) state.faceSkinUrls[key] = url;
+  markPreviewSkinsDirty();
+  updateSkinReadout();
+  updateFaceUvAngleControls();
+  const colorText = averageColor ? `, COLOUR ${averageColor}` : "";
+  const mirrorText = targets.length !== selectedTargets.length ? ` (${targets.length - selectedTargets.length} MIRRORED)` : "";
+  setStatus(`${name} APPLIED TO ${selectedTargets.length} FACE${selectedTargets.length === 1 ? "" : "S"}${mirrorText} AS ${key}${mirrorX ? " AS MIRRORED HALF UV" : ""}${colorText}. SAVE AS ${templateShipId()}-face-${key}.png TO MAKE PERMANENT.`);
+  renderAll();
+}
+
 function clearSelectedFaceSkin() {
   const face = selectedFace();
   if (!face) {
@@ -2677,6 +2898,9 @@ function clearSelectedFaceSkin() {
   }
   const key = cleanBitmapKey(face.bitmapFaceKey);
   delete face.bitmapFaceKey;
+  delete face.bitmapUv;
+  delete face.bitmapBaseW;
+  delete face.bitmapBaseH;
   delete face.bitmapAngle;
   delete face.bitmapMirrorX;
   if (mirrorActionsEnabled()) syncMirroredFace(face);
@@ -2691,6 +2915,7 @@ function clearSelectedFacePaint() {
   if (!face) return setStatus("SELECT A FACE FIRST.");
   const hadPaint =
     cleanBitmapKey(face.bitmapFaceKey) ||
+    (Array.isArray(face.bitmapUv) && face.bitmapUv.length >= 3) ||
     validBitmapFaceSide(face.bitmapSide) ||
     normalizeBitmapAngle(face.bitmapAngle) ||
     face.bitmapMirrorX ||
@@ -2698,6 +2923,9 @@ function clearSelectedFacePaint() {
     optionalHexColor(face.faceColor);
   delete face.bitmapSide;
   delete face.bitmapFaceKey;
+  delete face.bitmapUv;
+  delete face.bitmapBaseW;
+  delete face.bitmapBaseH;
   delete face.bitmapAngle;
   delete face.bitmapMirrorX;
   delete face.bitmapDecals;
@@ -2713,6 +2941,7 @@ function clearSelectedFacePaint() {
 function clearAllFaceUv() {
   const affected = state.faces.filter((face) =>
     cleanBitmapKey(face.bitmapFaceKey)
+    || (Array.isArray(face.bitmapUv) && face.bitmapUv.length >= 3)
     || validBitmapFaceSide(face.bitmapSide)
     || normalizeBitmapAngle(face.bitmapAngle)
     || face.bitmapMirrorX
@@ -2726,6 +2955,9 @@ function clearAllFaceUv() {
   for (const face of affected) {
     delete face.bitmapSide;
     delete face.bitmapFaceKey;
+    delete face.bitmapUv;
+    delete face.bitmapBaseW;
+    delete face.bitmapBaseH;
     delete face.bitmapAngle;
     delete face.bitmapMirrorX;
   }
@@ -2756,31 +2988,51 @@ function clearSkinSide(side) {
 }
 
 function applyShelfBitmap(side) {
+  const hadPickList = state.pick.length > 0;
+  state.pick = [];
   const item = selectedBitmapShelfItem();
   if (!item) {
     setStatus("SELECT A UV THUMBNAIL FIRST.");
+    if (hadPickList) renderAll();
     return;
   }
-  clearEditorSelection();
   const mirrored = importMirroredSkinEnabled();
   setSkinSideFromImage(side, item.img, "shelf", "", mirrored);
-  setStatus(`${item.name} APPLIED TO ${side.toUpperCase()}${mirrored ? " AS MIRRORED HALF UV" : ""}.`);
+  setStatus(`${item.name} APPLIED TO ${side.toUpperCase()}${mirrored ? " AS MIRRORED HALF UV" : ""}${hadPickList ? "; PICK LIST CLEARED" : ""}.`);
 }
 
-function applyShelfBitmapToSelectedFace(options = {}) {
+function selectedShelfFaceTextureOptions(options = {}) {
   const item = selectedBitmapShelfItem();
   if (!item) {
     setStatus("SELECT A UV THUMBNAIL FIRST.");
-    return;
+    return null;
   }
   const asset = item.source === "asset" ? assetAliasForCurrentModel(item.asset) : null;
   const assetKey = asset?.kind === "face" ? cleanBitmapKey(asset.key) : "";
   const sameModelAsset = !!asset && asset.model === templateShipId();
   const source = sameModelAsset ? "asset" : item.source === "asset" ? "shelf" : "imported";
-  setSelectedFaceSkinFromImage(item.img, source, "", item.name, {
-    ...options,
-    ...(assetKey ? { key: assetKey, shareKey: sameModelAsset } : {})
-  });
+  return {
+    item,
+    img: item.img,
+    source,
+    name: item.name,
+    options: {
+      ...options,
+      item,
+      ...(assetKey ? { key: assetKey, shareKey: sameModelAsset } : {})
+    }
+  };
+}
+
+function applyShelfBitmapToSelectedFace(options = {}) {
+  const texture = selectedShelfFaceTextureOptions(options);
+  if (!texture) return;
+  const faces = selectedFaceGroup();
+  if (faces.length) {
+    setFaceGroupSkinFromImage(faces, texture.img, texture.source, "", texture.name, texture.options);
+    return;
+  }
+  setSelectedFaceSkinFromImage(texture.img, texture.source, "", texture.name, texture.options);
 }
 
 function selectedFaceDecals(face = selectedFace()) {
@@ -2927,15 +3179,21 @@ function importSelectedFaceSkinFile(file, addToShelf = true) {
     setStatus("SELECT AN IMAGE FILE.");
     return;
   }
-  if (!selectedFace()) {
-    setStatus("SELECT A FACE FIRST.");
+  const targets = selectedFaceGroup();
+  const face = selectedFace();
+  if (!targets.length && !face) {
+    setStatus("SELECT ONE OR MORE FACES FIRST.");
     return;
   }
   const url = URL.createObjectURL(file);
   const img = new Image();
   img.onload = () => {
     const shelfId = addToShelf ? addBitmapToShelf(file, img, url) : "";
-    setSelectedFaceSkinFromImage(img, addToShelf ? "shelf" : "imported", addToShelf ? "" : url, file.name || "FACE PNG", { orientToView: true });
+    if (targets.length) {
+      setFaceGroupSkinFromImage(targets, img, addToShelf ? "shelf" : "imported", addToShelf ? "" : url, file.name || "FACE PNG", { key: cleanBitmapKey(file.name.replace(/\.[^.]+$/, ""), "face_group") });
+    } else {
+      setSelectedFaceSkinFromImage(img, addToShelf ? "shelf" : "imported", addToShelf ? "" : url, file.name || "FACE PNG", { orientToView: true });
+    }
     if (shelfId) selectBitmapShelfItem(shelfId);
     renderAll();
   };
@@ -3322,6 +3580,21 @@ function createSelectedFaceTemplateCanvas() {
 }
 
 function selectedFaceTextureMapping(face, options = {}) {
+  if (Array.isArray(face?.bitmapUv) && face.bitmapUv.length >= 3) {
+    const uv = face.bitmapUv.map((p) => ({ x: Number(p[0]) || 0, y: Number(p[1]) || 0 }));
+    return {
+      side: templateSideForFace(face),
+      project: (p) => p,
+      uv,
+      rawUv: uv,
+      angle: 0,
+      width: Math.max(1, Math.round(Number(face.bitmapBaseW) || TEMPLATE_SIZE)),
+      height: Math.max(1, Math.round(Number(face.bitmapBaseH) || TEMPLATE_SIZE)),
+      minX: 0,
+      minY: 0,
+      pad: 0
+    };
+  }
   const side = templateSideForFace(face);
   const project = faceTextureProjection(face, templateProjection(side, "footprint"));
   const pts = face.verts.map(vertexById).filter(Boolean).map(project);
@@ -3653,18 +3926,19 @@ function renderMain() {
       const pts = face.verts.map((id) => projected.get(id)).filter(Boolean);
       const n = faceNormal(face);
       const selected = state.selected?.type === "face" && state.selected.id === face.id;
+      const grouped = state.selectedFaceIds.has(face.id);
       if (drawBitmapGuide) {
         drawFace(ctx, pts, builderBitmapFill(n, face), "rgba(0,0,0,0)", 0);
         const textured = drawFaceBitmapSkin(ctx, face, pts);
         drawFaceBitmapDecals(ctx, face, pts);
         if (!textured) drawFaceTextureGuide(ctx, pts, previewMode === "bitmap" ? .22 : .16);
-        if (selected || drawWire) {
+        if (selected || grouped || drawWire) {
           drawFace(
             ctx,
             pts,
-            selected ? "rgba(255,217,54,.18)" : "rgba(0,0,0,0)",
-            selected ? "#ffd936" : "rgba(85,255,78,.32)",
-            selected ? 2 : 1
+            selected ? "rgba(255,217,54,.18)" : grouped ? "rgba(102,232,255,.14)" : "rgba(0,0,0,0)",
+            selected ? "#ffd936" : grouped ? "#66e8ff" : "rgba(85,255,78,.32)",
+            selected || grouped ? 2 : 1
           );
           if (selected) drawFaceMirrorSeam(ctx, face, pts);
         }
@@ -3672,14 +3946,15 @@ function renderMain() {
         drawFace(
           ctx,
           pts,
-          selected ? "rgba(255,217,54,.24)" : shadedFaceColor(n, optionalHexColor(face.faceColor) || els.baseColor.value),
-          selected ? "#ffd936" : drawWire ? "rgba(85,255,78,.32)" : "rgba(0,0,0,0)",
-          selected ? 2 : drawWire ? 1 : 0
+          selected ? "rgba(255,217,54,.24)" : grouped ? "rgba(102,232,255,.16)" : shadedFaceColor(n, optionalHexColor(face.faceColor) || els.baseColor.value),
+          selected ? "#ffd936" : grouped ? "#66e8ff" : drawWire ? "rgba(85,255,78,.32)" : "rgba(0,0,0,0)",
+          selected || grouped ? 2 : drawWire ? 1 : 0
         );
         if (selected) drawFaceMirrorSeam(ctx, face, pts);
       }
     }
   }
+  drawBlankUvFaceOverlay(ctx, canvas, projected);
   if (gameOverlay) drawGameRendererFaceNormals(ctx, canvas);
   else drawFaceNormals(ctx, (v) => project3d(v, canvas));
 
@@ -3720,6 +3995,19 @@ function renderMain() {
       ctx.moveTo(a.x, a.y);
       ctx.lineTo(b.x, b.y);
       ctx.stroke();
+    }
+  }
+
+  if (gameOverlay && state.selectedFaceIds.size) {
+    const groupedFaces = [...state.selectedFaceIds]
+      .map(faceById)
+      .filter(Boolean)
+      .sort((a, b) => faceSortDepthForMain(b) - faceSortDepthForMain(a));
+    for (const face of groupedFaces) {
+      const previewFace = previewFaceForBuilderFace(face);
+      if (previewFace && !previewFace.visible) continue;
+      const pts = face.verts.map((id) => projected.get(id)).filter(Boolean);
+      if (pts.length >= 3) drawFace(ctx, pts, "rgba(102,232,255,.15)", "#66e8ff", 2);
     }
   }
 
@@ -4304,7 +4592,10 @@ function updateUi() {
   els.vertexCount.textContent = `${state.verts.length} vertices`;
   els.faceCount.textContent = `${state.faces.length} faces`;
   els.edgeCount.textContent = `${state.edges.length} lines`;
-  els.pickList.textContent = state.pick.length ? state.pick.map((id) => `#${id}`).join("  ") : "Pick list empty";
+  const faceGroupText = state.selectedFaceIds.size
+    ? ` | Face group ${[...state.selectedFaceIds].map((id) => `#${id}`).join(" ")}`
+    : "";
+  els.pickList.textContent = `${state.pick.length ? state.pick.map((id) => `#${id}`).join("  ") : "Pick list empty"}${faceGroupText}`;
 
   if (!state.selected) els.selectionReadout.textContent = "Nothing selected";
   else if (state.selected.type === "vertex") {
@@ -4445,14 +4736,14 @@ function nearestDetail(point, maxLineDist = 10) {
   return bestDetail;
 }
 
-function selectInMain(point) {
+function selectInMain(point, options = {}) {
   const projected = projectedMapForMain(els.mainView);
   if (state.mode === "vertex") {
     const id = nearestVertex(point, projected);
     if (id) selectVertex(id);
     return;
   }
-  if (state.mode === "face" || state.mode === "edge") {
+  if (state.mode === "edge") {
     const id = nearestVertex(point, projected);
     if (id) {
       selectVertex(id);
@@ -4468,7 +4759,18 @@ function selectInMain(point) {
     });
     if (hit) {
       state.selected = { type: "face", id: hit.id };
-      setStatus(`FACE #${hit.id} SELECTED.`);
+      if (options.multiSelect) {
+        if (state.selectedFaceIds.has(hit.id)) {
+          state.selectedFaceIds.delete(hit.id);
+          setStatus(`FACE #${hit.id} REMOVED FROM FACE GROUP (${state.selectedFaceIds.size} SELECTED).`);
+        } else {
+          state.selectedFaceIds.add(hit.id);
+          setStatus(`FACE #${hit.id} ADDED TO FACE GROUP (${state.selectedFaceIds.size} SELECTED).`);
+        }
+      } else {
+        state.selectedFaceIds.clear();
+        setStatus(`FACE #${hit.id} SELECTED. SHIFT-CLICK TO BUILD A FACE GROUP.`);
+      }
       renderAll();
     }
     return;
@@ -4552,6 +4854,36 @@ function fitView() {
 function setStandardView() {
   state.view.rx = STANDARD_VIEW.rx;
   state.view.ry = STANDARD_VIEW.ry;
+  updateProjectionViewButtons();
+}
+
+function activeProjectionViewName() {
+  for (const [name, view] of Object.entries(PROJECTION_VIEW_PRESETS)) {
+    if (Math.abs(normalizeRadians(state.view.rx - view.rx)) < .001
+      && Math.abs(normalizeRadians(state.view.ry - view.ry)) < .001) {
+      return name;
+    }
+  }
+  return "";
+}
+
+function updateProjectionViewButtons() {
+  const active = activeProjectionViewName();
+  document.querySelectorAll("[data-view-preset]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.viewPreset === active);
+  });
+}
+
+function setProjectionView(name, options = {}) {
+  const preset = PROJECTION_VIEW_PRESETS[name];
+  if (!preset) return false;
+  state.view.rx = preset.rx;
+  state.view.ry = preset.ry;
+  if (options.fit !== false) fitView();
+  updateProjectionViewButtons();
+  if (options.status !== false) setStatus(`${preset.label} PROJECTION VIEW.`);
+  if (options.redraw !== false) renderAll();
+  return true;
 }
 
 function deleteSelected() {
@@ -4574,6 +4906,7 @@ function deleteSelected() {
     const ids = new Set([id, mirror?.id].filter(Boolean));
     state.faces = state.faces.filter((f) => !ids.has(f.id));
     state.details = state.details.filter((d) => !ids.has(d.faceId));
+    for (const faceId of ids) state.selectedFaceIds.delete(faceId);
   } else if (type === "edge") {
     const edge = state.edges.find((e) => e.id === id);
     const mirror = edge && mirrorActionsEnabled() ? mirroredEdgeOf(edge) : null;
@@ -4709,6 +5042,9 @@ function derivedBlueprint() {
   }).filter(Boolean);
   const faceSides = state.faces.map((f) => validBitmapFaceSide(f.bitmapSide) || null);
   const faceTextures = state.faces.map((f) => cleanBitmapKey(f.bitmapFaceKey) || null);
+  const faceTextureUv = state.faces.map((f) => Array.isArray(f.bitmapUv) && f.bitmapUv.length >= 3 ? f.bitmapUv.map((p) => [round(Number(p[0]) || 0, 3), round(Number(p[1]) || 0, 3)]) : null);
+  const faceTextureBaseW = state.faces.map((f) => Number.isFinite(Number(f.bitmapBaseW)) && Number(f.bitmapBaseW) > 0 ? Math.round(Number(f.bitmapBaseW)) : null);
+  const faceTextureBaseH = state.faces.map((f) => Number.isFinite(Number(f.bitmapBaseH)) && Number(f.bitmapBaseH) > 0 ? Math.round(Number(f.bitmapBaseH)) : null);
   const faceColors = state.faces.map((f) => optionalHexColor(f.faceColor) || null);
   const faceAngles = state.faces.map((f) => normalizeBitmapAngle(f.bitmapAngle) || null);
   const faceMirrorX = state.faces.map((f) => !!f.bitmapMirrorX);
@@ -4721,12 +5057,15 @@ function derivedBlueprint() {
     ...(primaryAxis !== "y" ? { primaryAxis } : {}),
     ...(faceSides.some(Boolean) ? { faceSides } : {}),
     ...(faceTextures.some(Boolean) ? { faceTextures } : {}),
+    ...(faceTextureUv.some(Boolean) ? { faceTextureUv } : {}),
+    ...(faceTextureBaseW.some(Boolean) ? { faceTextureBaseW } : {}),
+    ...(faceTextureBaseH.some(Boolean) ? { faceTextureBaseH } : {}),
     ...(faceColors.some(Boolean) ? { faceColors } : {}),
     ...(faceAngles.some((angle) => angle != null) ? { faceAngles } : {}),
     ...(faceMirrorX.some(Boolean) ? { faceMirrorX } : {}),
     ...(faceDecals.some((decals) => decals?.length) ? { faceDecals } : {})
   };
-  const hasImageProjection = !!imageProjection.primaryAxis || !!imageProjection.faceSides || !!imageProjection.faceTextures || !!imageProjection.faceColors || !!imageProjection.faceAngles || !!imageProjection.faceMirrorX || !!imageProjection.faceDecals;
+  const hasImageProjection = !!imageProjection.primaryAxis || !!imageProjection.faceSides || !!imageProjection.faceTextures || !!imageProjection.faceTextureUv || !!imageProjection.faceColors || !!imageProjection.faceAngles || !!imageProjection.faceMirrorX || !!imageProjection.faceDecals;
   return {
     verts,
     edges,
@@ -4843,6 +5182,8 @@ function builderExport() {
       ...(optionalHexColor(f.faceColor) ? { faceColor: optionalHexColor(f.faceColor) } : {}),
       ...(validBitmapFaceSide(f.bitmapSide) ? { bitmapSide: f.bitmapSide } : {}),
       ...(cleanBitmapKey(f.bitmapFaceKey) ? { bitmapFaceKey: cleanBitmapKey(f.bitmapFaceKey) } : {}),
+      ...(Array.isArray(f.bitmapUv) && f.bitmapUv.length >= 3 ? { bitmapUv: f.bitmapUv.map((p) => [round(Number(p[0]) || 0, 3), round(Number(p[1]) || 0, 3)]) } : {}),
+      ...(Number.isFinite(Number(f.bitmapBaseW)) && Number(f.bitmapBaseW) > 0 && Number.isFinite(Number(f.bitmapBaseH)) && Number(f.bitmapBaseH) > 0 ? { bitmapBaseW: Math.round(Number(f.bitmapBaseW)), bitmapBaseH: Math.round(Number(f.bitmapBaseH)) } : {}),
       ...(normalizeBitmapAngle(f.bitmapAngle) ? { bitmapAngle: normalizeBitmapAngle(f.bitmapAngle) } : {}),
       ...(f.bitmapMirrorX ? { bitmapMirrorX: true } : {}),
       ...(cleanFaceDecals(f.bitmapDecals).length ? { bitmapDecals: cleanFaceDecals(f.bitmapDecals) } : {})
@@ -4905,6 +5246,7 @@ function importBuilderJson() {
       };
     });
     inferMirrorVertexIds();
+    state.sourceModelId = "";
     els.shipId.value = data.id || els.shipId.value;
     els.shipName.value = data.name || els.shipName.value;
     if (data.gameMeta) {
@@ -4940,6 +5282,7 @@ function importBuilderJson() {
     }
     state.selected = null;
     state.pick = [];
+    state.selectedFaceIds.clear();
     loadSkinBitmaps(data.id || els.shipId.value, mirrorFlagsFromMeta(data.gameMeta || {}));
     fitView();
     setStatus("BUILDER JSON IMPORTED.");
@@ -5012,6 +5355,7 @@ function loadLibraryModel(id) {
   });
   inferMirrorVertexIds();
   const meta = source.gameMeta || {};
+  state.sourceModelId = cleanBitmapKey(source.id || id);
   els.shipId.value = source.id || id;
   els.shipName.value = source.name || id;
   els.shipDescription.value = libraryDescription(source, id);
@@ -5042,6 +5386,7 @@ function loadLibraryModel(id) {
   }
   state.selected = null;
   state.pick = [];
+  state.selectedFaceIds.clear();
   loadSkinBitmaps(source.id || id, mirrorFlagsFromMeta(meta));
   fitView();
   setStatus(`LOADED ${els.shipName.value.toUpperCase()} FROM GAME LIBRARY.`);
@@ -5069,6 +5414,53 @@ function imageToPngDataUrl(img) {
   const ctx = canvas.getContext("2d");
   ctx.drawImage(img, 0, 0);
   return canvas.toDataURL("image/png");
+}
+
+function coalesceDuplicateVisibleFaceSkins() {
+  const canonicalByImage = new Map();
+  const replacements = new Map();
+  for (const face of state.faces) {
+    const key = cleanBitmapKey(face.bitmapFaceKey);
+    const img = key ? state.faceSkinImages?.[key] : null;
+    if (!img?.naturalWidth) continue;
+    let dataUrl = "";
+    try {
+      dataUrl = imageToPngDataUrl(img);
+    } catch {
+      continue;
+    }
+    const canonical = canonicalByImage.get(dataUrl);
+    if (!canonical) {
+      canonicalByImage.set(dataUrl, key);
+    } else if (canonical !== key) {
+      replacements.set(key, canonical);
+    }
+  }
+  if (!replacements.size) return { changedFaces: 0, replacements };
+
+  let changedFaces = 0;
+  for (const face of state.faces) {
+    const key = cleanBitmapKey(face.bitmapFaceKey);
+    const replacement = replacements.get(key);
+    if (!replacement) continue;
+    face.bitmapFaceKey = replacement;
+    changedFaces++;
+  }
+  for (const [oldKey, newKey] of replacements) {
+    if (!state.faceSkinImages[newKey] && state.faceSkinImages[oldKey]) state.faceSkinImages[newKey] = state.faceSkinImages[oldKey];
+    if (!state.faceSkinSources[newKey] && state.faceSkinSources[oldKey]) state.faceSkinSources[newKey] = state.faceSkinSources[oldKey];
+    const oldUrl = state.faceSkinUrls[oldKey];
+    if (!state.faceSkinUrls[newKey] && oldUrl) state.faceSkinUrls[newKey] = oldUrl;
+    else if (oldUrl && oldUrl !== state.faceSkinUrls[newKey]) URL.revokeObjectURL(oldUrl);
+    delete state.faceSkinImages[oldKey];
+    delete state.faceSkinSources[oldKey];
+    delete state.faceSkinUrls[oldKey];
+  }
+  markPreviewSkinsDirty();
+  updateSkinReadout();
+  updateFaceUvAngleControls();
+  renderAll();
+  return { changedFaces, replacements };
 }
 
 function referencedVisibleFaceSkinUploads() {
@@ -5115,8 +5507,11 @@ async function uploadFaceSkinAsset(model, key, img) {
 async function saveModelAsset() {
   try {
     if (!await requireToolServer()) return;
+    const coalesced = coalesceDuplicateVisibleFaceSkins();
     const data = builderExport();
     const cleanId = cleanBitmapKey(data.id, "custom_ship");
+    const previousId = cleanBitmapKey(state.sourceModelId || "");
+    const renameCleanup = previousId && previousId !== cleanId && !!gameLibrary()[previousId];
     const sideSkins = referencedVisibleSideSkinUploads();
     const faceSkins = referencedVisibleFaceSkinUploads();
     const sideSkinFiles = sideSkins.map((skin) => `assets/skins/${cleanId}-${skin.side}.png`);
@@ -5138,9 +5533,18 @@ async function saveModelAsset() {
           lines: [
             ...sideSkinFiles,
             ...faceSkinFiles,
+            coalesced.changedFaces ? `Reused matching face PNG keys on ${coalesced.changedFaces} face${coalesced.changedFaces === 1 ? "" : "s"} to avoid duplicate identical assets.` : "",
             !sideSkinFiles.length && !faceSkinFiles.length ? "No loaded/referenced skin PNGs will be written." : ""
           ]
         },
+        ...(renameCleanup ? [{
+          title: "Rename Cleanup",
+          lines: [
+            `Remove old model assets/models/${previousId}.ultraship.json`,
+            `Remove old skins assets/skins/${previousId}-*.png`,
+            "This is treated as a rename, so the old library entry will not remain as a duplicate."
+          ]
+        }] : []),
         {
           title: "Build Outputs",
           lines: [
@@ -5175,17 +5579,30 @@ async function saveModelAsset() {
       method: "POST",
       body: JSON.stringify(data)
     });
+    let cleanupResult = null;
+    if (renameCleanup) {
+      setStatus(`REMOVING OLD ${previousId.toUpperCase()} MODEL...`);
+      cleanupResult = await apiJson(`/api/models/${encodeURIComponent(previousId)}`, { method: "DELETE" });
+      if (window.ULTRA_ELITE_MODEL_LIBRARY) delete window.ULTRA_ELITE_MODEL_LIBRARY[previousId];
+    }
+    setStatus("REBUILDING LOCAL GAME FILES...");
+    await apiJson("/api/rebuild", {
+      method: "POST",
+      body: JSON.stringify({ scope: "all" })
+    });
     window.ULTRA_ELITE_MODEL_LIBRARY = window.ULTRA_ELITE_MODEL_LIBRARY || {};
     window.ULTRA_ELITE_MODEL_LIBRARY[cleanId] = { ...data, id: cleanId };
     populateLibrarySelector();
     if (els.librarySelector) els.librarySelector.value = cleanId;
+    state.sourceModelId = cleanId;
     state.assetVersion = Date.now();
     if (sideSkins.length || faceSkins.length) await refreshAvailableSkinAssets();
     const savedParts = [
       sideSkins.length ? `${sideSkins.length} SIDE PNG${sideSkins.length === 1 ? "" : "S"}` : "",
       faceSkins.length ? `${faceSkins.length} FACE PNG${faceSkins.length === 1 ? "" : "S"}` : ""
     ].filter(Boolean).join(", ");
-    setStatus(`MODEL UPDATED: ${result.path}${savedParts ? `; ${savedParts} SAVED.` : "."}`);
+    const cleanupText = cleanupResult?.deleted?.length ? `; OLD ${previousId} REMOVED` : "";
+    setStatus(`MODEL UPDATED: ${result.path}${savedParts ? `; ${savedParts} SAVED` : ""}${cleanupText}.`);
     showBuildCompleteModal(`${data.name || cleanId} is built into the local dev.html test files. Click below to test locally.`);
   } catch (error) {
     setStatus(`MODEL SAVE FAILED: ${error.message}`);
@@ -5353,19 +5770,22 @@ function bindEvents() {
   });
   els.mainView.addEventListener("pointerdown", (ev) => {
     const point = getCanvasPoint(ev, els.mainView);
-    state.drag = { x: ev.clientX, y: ev.clientY, moved: false };
+    const faceGroupClick = ev.button === 0 && state.mode === "face" && ev.shiftKey;
+    state.drag = { x: ev.clientX, y: ev.clientY, moved: false, lockView: faceGroupClick };
     els.mainView.setPointerCapture(ev.pointerId);
-    if (ev.button === 0) selectInMain(point);
+    if (ev.button === 0) selectInMain(point, { multiSelect: ev.shiftKey });
   });
   els.mainView.addEventListener("pointermove", (ev) => {
     if (!state.drag) return;
     const dx = ev.clientX - state.drag.x;
     const dy = ev.clientY - state.drag.y;
     if (Math.abs(dx) + Math.abs(dy) > 2) state.drag.moved = true;
+    if (state.drag.lockView) return;
     state.view.ry += dx * 0.006;
     state.view.rx = clamp(state.view.rx + dy * 0.006, -1.45, 1.45);
     state.drag.x = ev.clientX;
     state.drag.y = ev.clientY;
+    updateProjectionViewButtons();
     if (gameRendererPreviewMode()) renderPreviewMotion();
     else renderAll();
   });
@@ -5390,6 +5810,7 @@ function bindEvents() {
   els.saveModelTopBtn?.addEventListener("click", saveModelAsset);
   els.rebuildGameTopBtn?.addEventListener("click", rebuildGameFiles);
   els.showFaceNormals.addEventListener("input", renderAll);
+  els.showBlankUv?.addEventListener("input", renderAll);
   els.previewRenderMode.addEventListener("input", renderAll);
   els.toggleBlueprintBtn?.addEventListener("click", () => {
     setBlueprintsVisible(!state.showBlueprints, { persist: true });
@@ -5479,6 +5900,7 @@ function bindEvents() {
   els.currentBitmapAssetGrid?.addEventListener("click", handleBitmapGridClick);
   els.localBitmapAssetGrid?.addEventListener("click", handleBitmapGridClick);
   els.bitmapShelfSelector?.addEventListener("change", () => {
+    state.selectedBitmapShelfId = els.bitmapShelfSelector.value || "";
     updateBitmapAssetGrid();
     updateSelectedBitmapReadout();
   });
@@ -5561,6 +5983,9 @@ function bindEvents() {
     setStandardView(); fitView(); renderAll();
   });
   document.getElementById("fitViewBtn").addEventListener("click", () => { fitView(); renderAll(); });
+  document.querySelectorAll("[data-view-preset]").forEach((button) => {
+    button.addEventListener("click", () => setProjectionView(button.dataset.viewPreset));
+  });
   els.syncGamePreviewBtn?.addEventListener("click", () => syncGamePreview(true));
   els.benchmarkRendererBtn?.addEventListener("click", runRendererBenchmark);
   window.addEventListener("message", (event) => {
@@ -5596,6 +6021,7 @@ function bindEvents() {
   document.getElementById("appendFacePointBtn").addEventListener("click", appendPickedToSelectedFace);
   document.getElementById("removeFacePointBtn").addEventListener("click", removePickedFromSelectedFace);
   document.getElementById("flipFaceBtn").addEventListener("click", flipSelectedFace);
+  els.clearFaceGroupBtn?.addEventListener("click", () => clearFaceGroup());
   document.getElementById("clearSelectionBtn").addEventListener("click", () => {
     clearEditorSelection();
     setStatus("SELECTION CLEARED.");
@@ -5657,6 +6083,19 @@ function bindEvents() {
   ].forEach((el) => el.addEventListener("input", updateExport));
 }
 
+function applyToolSurfaceMode() {
+  const params = new URLSearchParams(location.search);
+  if (params.get("surface") !== "model") return;
+  document.body.classList.add("model-surface-only");
+  const paintButton = document.querySelector('.tool-tab-btn[data-tool-tab-target="paint"]');
+  paintButton?.remove();
+  const paintPanel = document.querySelector('.tool-tab-panel[data-tool-tab-panel="paint"]');
+  paintPanel?.remove();
+  setToolTab("edit");
+  document.title = "Ultra Elite Model Builder";
+}
+
+applyToolSurfaceMode();
 bindEvents();
 setDefaultPreviewRenderMode();
 setBlueprintsVisible(state.showBlueprints);

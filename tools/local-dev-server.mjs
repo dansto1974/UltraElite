@@ -374,6 +374,63 @@ async function saveModel(req, res, modelId) {
   });
 }
 
+async function getModels(req, res) {
+  return sendJson(res, 200, {
+    ok: true,
+    models: listModelAssets().map((model) => ({
+      id: model.id,
+      name: model.name,
+      file: model.file,
+      data: model.data
+    }))
+  });
+}
+
+async function getModel(req, res, modelId) {
+  const cleanId = cleanKey(modelId);
+  const model = listModelAssets().find((item) => item.id === cleanId);
+  if (!model) return sendJson(res, 404, { ok: false, error: "Model not found." });
+  return sendJson(res, 200, {
+    ok: true,
+    id: model.id,
+    name: model.name,
+    file: model.file,
+    data: model.data
+  });
+}
+
+async function deleteModel(req, res, modelId) {
+  const cleanId = cleanKey(modelId);
+  if (!cleanId) return sendJson(res, 400, { ok: false, error: "Missing model id." });
+
+  const deleted = [];
+  const modelPath = path.join(root, "assets/models", `${cleanId}.ultraship.json`);
+  if (fs.existsSync(modelPath)) {
+    fs.unlinkSync(modelPath);
+    deleted.push(path.relative(root, modelPath));
+  }
+
+  const skinDir = path.join(root, "assets/skins");
+  if (fs.existsSync(skinDir)) {
+    for (const file of fs.readdirSync(skinDir)) {
+      const isSideSkin = file === `${cleanId}-top.png` || file === `${cleanId}-bottom.png` || file === `${cleanId}-back.png`;
+      const isFaceSkin = file.startsWith(`${cleanId}-face-`) && file.endsWith(".png");
+      if (!isSideSkin && !isFaceSkin) continue;
+      const filePath = path.join(skinDir, file);
+      fs.unlinkSync(filePath);
+      deleted.push(path.relative(root, filePath));
+    }
+  }
+
+  const steps = await rebuildScope("all");
+  return sendJson(res, 200, {
+    ok: true,
+    model: cleanId,
+    deleted,
+    steps
+  });
+}
+
 function decodePngDataUrl(dataUrl) {
   const match = String(dataUrl || "").match(/^data:image\/png;base64,([a-zA-Z0-9+/=]+)$/);
   if (!match) throw new Error("Expected a PNG data URL.");
@@ -490,7 +547,10 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === "GET" && pathname === "/api/skins/usage") return skinUsage(req, res);
     const modelMatch = pathname.match(/^\/api\/models\/([^/]+)$/);
+    if (req.method === "GET" && pathname === "/api/models") return getModels(req, res);
+    if (req.method === "GET" && modelMatch) return getModel(req, res, modelMatch[1]);
     if (req.method === "POST" && modelMatch) return saveModel(req, res, modelMatch[1]);
+    if (req.method === "DELETE" && modelMatch) return deleteModel(req, res, modelMatch[1]);
     if (req.method === "POST" && pathname === "/api/skins") return saveSkin(req, res);
     if (req.method === "PUT" && pathname === "/api/skins") return replaceSkin(req, res);
     if (req.method === "DELETE" && pathname === "/api/skins") return deleteSkin(req, res);
@@ -515,5 +575,8 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(port, host, () => {
   console.log(`Ultra Elite local tool server running at http://${host}:${port}/`);
-  console.log(`Ship Builder: http://${host}:${port}/tools/ship-builder/`);
+  console.log(`Tools Hub: http://${host}:${port}/tools/`);
+  console.log(`Model Builder: http://${host}:${port}/tools/model-builder/`);
+  console.log(`UV Painter: http://${host}:${port}/tools/uv-painter/`);
+  console.log(`Legacy Ship Builder: http://${host}:${port}/tools/ship-builder/`);
 });

@@ -536,29 +536,33 @@
 
     function viewCamera() {
       const cam = game.camera, mode = game.viewMode || "fwd";
+      if (game.transition?.kind === "death") return externalViewCamera(cam);
       if (mode === "fwd" || game.docked) return cam;
       ensureCameraQuat(cam);
-      if (mode === "ext") {
-        // Chase position scales with the player's hull so a Worm and an Anaconda both frame nicely.
-        const r = Math.max(60, modelBoundingRadius(MODELS[playerShipModel()]));
-        const st = game.externalView || {};
-        const yaw = st.yaw || 0;
-        const pitch = clamp(st.pitch ?? Math.atan2(1.1, 3.4), -.95, 1.15);
-        const zoom = clamp(st.zoom || 1, .42, 2.8);
-        const dist = r * Math.hypot(3.4, 1.1) * zoom;
-        const cp = Math.cos(pitch);
-        const local = vec(
-          Math.sin(yaw) * cp * dist,
-          Math.sin(pitch) * dist,
-          -Math.cos(yaw) * cp * dist
-        );
-        const pos = cameraLocalToWorld(cam, local);
-        return {
-          pos,
-          q: quatLookRotation(norm(sub(cam.pos, pos)), quatRotate(cam.q, vec(0, 1, 0)))
-        };
-      }
+      if (mode === "ext") return externalViewCamera(cam);
       return { pos: cam.pos, q: quatNorm(quatMul(cam.q, quatFromAxisAngle(vec(0, 1, 0), VIEW_YAW[mode]))) };
+    }
+
+    function externalViewCamera(cam) {
+      ensureCameraQuat(cam);
+      // Chase position scales with the player's hull so a Worm and an Anaconda both frame nicely.
+      const r = Math.max(60, modelBoundingRadius(MODELS[playerShipModel()]));
+      const st = game.externalView || {};
+      const yaw = st.yaw || 0;
+      const pitch = clamp(st.pitch ?? Math.atan2(1.1, 3.4), -.95, 1.15);
+      const zoom = clamp(st.zoom || 1, .42, 2.8);
+      const dist = r * Math.hypot(3.4, 1.1) * zoom;
+      const cp = Math.cos(pitch);
+      const local = vec(
+        Math.sin(yaw) * cp * dist,
+        Math.sin(pitch) * dist,
+        -Math.cos(yaw) * cp * dist
+      );
+      const pos = cameraLocalToWorld(cam, local);
+      return {
+        pos,
+        q: quatLookRotation(norm(sub(cam.pos, pos)), quatRotate(cam.q, vec(0, 1, 0)))
+      };
     }
 
     function transitionLocksView() {
@@ -2142,6 +2146,9 @@
       const primaryAxis = options.primaryAxis || "y";
       const faceSides = Array.isArray(options.faceSides) ? options.faceSides : [];
       const faceTextures = Array.isArray(options.faceTextures) ? options.faceTextures : [];
+      const faceTextureUv = Array.isArray(options.faceTextureUv) ? options.faceTextureUv : [];
+      const faceTextureBaseW = Array.isArray(options.faceTextureBaseW) ? options.faceTextureBaseW : [];
+      const faceTextureBaseH = Array.isArray(options.faceTextureBaseH) ? options.faceTextureBaseH : [];
       const faceAngles = Array.isArray(options.faceAngles) ? options.faceAngles : [];
       const faceMirrorX = Array.isArray(options.faceMirrorX) ? options.faceMirrorX : [];
       const faceDecals = Array.isArray(options.faceDecals) ? options.faceDecals : [];
@@ -2302,10 +2309,16 @@
         const faceKey = hasProjectionFaceSlot(faceTextures, faceIndex)
           ? cleanFaceTextureKey(faceTextures[faceIndex])
           : cleanFaceTextureKey(faceTextures[normalIndex]);
+        const authoredFaceSide = hasProjectionFaceSlot(faceSides, faceIndex) && validFaceSide(faceSides[faceIndex]);
+        const authoredFaceUv = hasProjectionFaceSlot(faceTextureUv, faceIndex) && Array.isArray(faceTextureUv[faceIndex]) && faceTextureUv[faceIndex].length === face.length
+          ? faceTextureUv[faceIndex].map((p) => Array.isArray(p) ? [Number(p[0]) || 0, Number(p[1]) || 0] : [0, 0])
+          : null;
         const decalsForFace = hasProjectionFaceSlot(faceDecals, faceIndex)
           ? cleanFaceDecals(faceDecals[faceIndex])
           : cleanFaceDecals(faceDecals[normalIndex]);
-        const faceTextureUv = (() => {
+        const faceTextureUvForFace = (() => {
+          if (authoredFaceUv && faceKey) return authoredFaceUv;
+          if (faceKey && authoredFaceSide) return uv;
           if (!(faceKey || decalsForFace.length)) return uv;
           const localUv = faceLocalTextureUv(face);
           if (localUv && uvPolygonArea(localUv) >= 1) return localUv;
@@ -2338,20 +2351,30 @@
           ? !!faceMirrorX[faceIndex]
           : !!faceMirrorX[normalIndex];
         if (faceKey || decalsForFace.length) {
-          const xs = faceTextureUv.map((p) => p[0]);
-          const ys = faceTextureUv.map((p) => p[1]);
-          const minFaceX = Math.min(...xs);
-          const maxFaceX = Math.max(...xs);
-          const minFaceY = Math.min(...ys);
-          const maxFaceY = Math.max(...ys);
-          const pad = 24;
-          faceBaseW = Math.max(24, Math.ceil(maxFaceX - minFaceX + pad * 2));
-          faceBaseH = Math.max(24, Math.ceil(maxFaceY - minFaceY + pad * 2));
-          faceUv = faceTextureUv.map(([u, v]) => [u - minFaceX + pad, v - minFaceY + pad]);
-          const fitted = fitRotatedFaceUv(faceUv, faceBaseW, faceBaseH, faceAngle, pad);
-          faceUv = fitted.uv;
-          faceBaseW = fitted.width;
-          faceBaseH = fitted.height;
+          if (authoredFaceUv && faceKey) {
+            faceBaseW = Math.max(1, Math.round(Number(faceTextureBaseW[faceIndex]) || DECAL_TEXTURE_SIZE));
+            faceBaseH = Math.max(1, Math.round(Number(faceTextureBaseH[faceIndex]) || DECAL_TEXTURE_SIZE));
+            faceUv = faceTextureUvForFace;
+          } else if (faceKey && authoredFaceSide) {
+            faceBaseW = Math.max(1, Math.round(fp.w || DECAL_TEXTURE_SIZE));
+            faceBaseH = Math.max(1, Math.round(fp.h || DECAL_TEXTURE_SIZE));
+            faceUv = faceTextureUvForFace;
+          } else {
+            const xs = faceTextureUvForFace.map((p) => p[0]);
+            const ys = faceTextureUvForFace.map((p) => p[1]);
+            const minFaceX = Math.min(...xs);
+            const maxFaceX = Math.max(...xs);
+            const minFaceY = Math.min(...ys);
+            const maxFaceY = Math.max(...ys);
+            const pad = 24;
+            faceBaseW = Math.max(24, Math.ceil(maxFaceX - minFaceX + pad * 2));
+            faceBaseH = Math.max(24, Math.ceil(maxFaceY - minFaceY + pad * 2));
+            faceUv = faceTextureUvForFace.map(([u, v]) => [u - minFaceX + pad, v - minFaceY + pad]);
+            const fitted = fitRotatedFaceUv(faceUv, faceBaseW, faceBaseH, faceAngle, pad);
+            faceUv = fitted.uv;
+            faceBaseW = fitted.width;
+            faceBaseH = fitted.height;
+          }
         }
         return {
           side,
@@ -11589,6 +11612,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (faceImageReady && item.imageProjection?.faceUv?.length) {
         const baseW = Math.max(1, item.imageProjection.faceBaseW || DECAL_TEXTURE_SIZE);
         const baseH = Math.max(1, item.imageProjection.faceBaseH || DECAL_TEXTURE_SIZE);
+        const faceAngle = item.imageProjection.faceAngle || 0;
         if (item.imageProjection.faceMirrorX) {
           drawMirroredImageDecalLayer(targetCtx, item, faceImage, item.imageDecals.alpha ?? .82, {
             sourceUv: item.imageProjection.faceUv,
@@ -11597,13 +11621,16 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
             sx: faceImage.width / Math.max(1, baseW / 2),
             sy: faceImage.height / baseH,
             mid: baseW / 2,
-            angle: 0,
+            angle: faceAngle,
             mirrorX: true
           }, "source-over");
         } else {
           const sx = faceImage.width / baseW;
           const sy = faceImage.height / baseH;
-          const uv = item.imageProjection.faceUv.map(([u, v]) => [u * sx, v * sy]);
+          const sourceUv = faceAngle
+            ? item.imageProjection.faceUv.map(([u, v]) => rotateImageDecalUv(u, v, baseW, baseH, faceAngle))
+            : item.imageProjection.faceUv;
+          const uv = sourceUv.map(([u, v]) => [u * sx, v * sy]);
           if (item.project && item.camVerts) {
             drawUVLayerPersp(targetCtx, item, faceImage, item.imageDecals.alpha ?? .82, uv, false, 42, 5, "source-over");
           } else {
@@ -12264,8 +12291,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const visible = buildRenderItems(game.camera, w, h);
       updateScenePerformanceLoad(visible);
       addWorldEffectItems(visible, game.smokePuffs, game.camera);
-      const deathExploded = game.transition?.kind === "death" && game.transition._exploded;
-      if (game.viewMode === "ext" && !game.docked && !deathExploded) {
+      const deathTransition = game.transition?.kind === "death";
+      const deathExploded = deathTransition && game.transition._exploded;
+      if ((game.viewMode === "ext" || deathTransition) && !game.docked && !deathExploded) {
         // The player's own ship only exists on screen in the external view; it rides the
         // flight camera exactly (same position, orientation via quat instead of Euler).
         const shipObj = playerWorldShip(flightCam, {
@@ -14808,6 +14836,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const rel = cameraTransform(e.pos, game.camera);
         const pr = project(rel, w, h);
         if (!pr) continue;
+        const explosionPoint = (dir, distance) => project(cameraTransform(add(e.pos, scale(dir, distance)), game.camera), w, h);
         const t = clamp(e.t / e.dur, 0, 1);
         if (e.kind === "eject") {
           // Expanding cyan-white ring + brief glints, no fire.
@@ -14821,8 +14850,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           ctx.lineWidth = 1;
           ctx.beginPath();
           for (const s of e.shards) {
-            const end = add(rel, scale(s.dir, s.len + s.speed * e.t));
-            const pe = project(end, w, h);
+            const pe = explosionPoint(s.dir, s.len + s.speed * e.t);
             if (!pe) continue;
             ctx.moveTo(pr.x, pr.y);
             ctx.lineTo(pe.x, pe.y);
@@ -14835,8 +14863,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           ctx.lineWidth = clamp(2.2 * pr.s, .6, 3);
           ctx.beginPath();
           for (const s of e.shards) {
-            const end = add(rel, scale(s.dir, s.len + s.speed * e.t));
-            const pe = project(end, w, h);
+            const pe = explosionPoint(s.dir, s.len + s.speed * e.t);
             if (!pe) continue;
             ctx.moveTo(pr.x, pr.y);
             ctx.lineTo(pe.x, pe.y);
@@ -14884,10 +14911,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ctx.lineCap = "round";
         for (const s of e.shards) {
           const travel = s.len + s.speed * e.t;
-          const tail = add(rel, scale(s.dir, travel * .32));
-          const head = add(rel, scale(s.dir, travel));
-          const p0 = project(tail, w, h);
-          const p1 = project(head, w, h);
+          const p0 = explosionPoint(s.dir, travel * .32);
+          const p1 = explosionPoint(s.dir, travel);
           if (!p0 || !p1) continue;
           const a = clamp(1 - t * 1.15, 0, 1) * (.52 + s.warm * .38);
           const grad = ctx.createLinearGradient(p0.x, p0.y, p1.x, p1.y);
@@ -14905,7 +14930,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         for (const s of e.sparks || []) {
           const sparkT = clamp(e.t / (e.dur * s.life), 0, 1);
           if (sparkT >= 1) continue;
-          const p = project(add(rel, scale(s.dir, s.speed * e.t)), w, h);
+          const p = explosionPoint(s.dir, s.speed * e.t);
           if (!p) continue;
           const a = (1 - sparkT) * .85;
           ctx.fillStyle = `rgba(255,230,125,${a})`;
@@ -14916,7 +14941,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
         ctx.globalCompositeOperation = "source-over";
         for (const f of e.fragments || []) {
-          const p = project(add(rel, scale(f.dir, f.speed * e.t)), w, h);
+          const p = explosionPoint(f.dir, f.speed * e.t);
           if (!p) continue;
           const fade = clamp(1 - t * 1.2, 0, 1);
           const size = clamp(f.size * pr.s * (1 - t * .35), 1.2, 12);

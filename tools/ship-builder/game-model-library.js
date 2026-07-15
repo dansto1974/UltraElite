@@ -22,7 +22,7 @@ window.ULTRA_ELITE_SHIP_DESCRIPTIONS = {
   "mamba": "",
   "missile": "",
   "moray": "",
-  "nightlance": "The Nightlance is a classified deep-space interceptor built around a narrow pressure hull, overpowered drives and almost no concession to comfort. It is quick, pointy and deeply unfriendly.",
+  "naga": "The X904D is a classified deep-space interceptor built around a narrow pressure hull, overpowered drives and almost no concession to comfort. It is quick, pointy and deeply unfriendly.",
   "plate": "A battered alloy plate drifting loose in space. Valuable only to commanders with a fuel scoop and a relaxed attitude to where things have been.",
   "python": "",
   "shuttle": "",
@@ -18548,22 +18548,27 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       }
     }
   },
-  "nightlance": {
+  "naga": {
     "format": "ultra-elite-ship-builder/v1",
-    "id": "nightlance",
-    "name": "Nightlance",
+    "id": "naga",
+    "name": "X904D Naga",
     "symmetry": "x-locked",
     "gameMeta": {
       "class": "interceptor",
-      "npcRole": "military",
+      "npcRole": "private",
       "aiProfile": "bountyHunter",
       "decalRole": "none",
       "baseColor": "#111827",
-      "description": "The Nightlance is a classified deep-space interceptor built around a narrow pressure hull, overpowered drives and almost no concession to comfort. It is quick, pointy and deeply unfriendly.",
+      "description": "The X904D is a classified deep-space interceptor built around a narrow pressure hull, overpowered drives and almost no concession to comfort. It is quick, pointy and deeply unfriendly.",
       "missionLore": "Black-budget naval interceptor. Most registries deny it exists.",
+      "imageDecalMirrorX": {
+        "top": false,
+        "bottom": false,
+        "back": true
+      },
       "valueCr": 3600000,
       "stats": {
-        "r": 150,
+        "r": 120,
         "hp": 240,
         "speed": 2.55,
         "cargo": 4,
@@ -18579,11 +18584,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       "flags": {
         "escapePod": true,
         "hiddenUntilDiscovered": true
-      },
-      "imageDecalMirrorX": {
-        "top": true,
-        "bottom": true,
-        "back": false
       }
     },
     "verts": [
@@ -18708,14 +18708,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "center": false
       },
       {
-        "id": 16,
-        "x": 0,
-        "y": 38,
-        "z": -58,
-        "mirrorId": null,
-        "center": true
-      },
-      {
         "id": 17,
         "x": 0,
         "y": 0,
@@ -18724,10 +18716,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "center": true
       },
       {
-        "id": 18,
+        "id": 3028,
         "x": 0,
-        "y": 0,
-        "z": 150,
+        "y": -11,
+        "z": -95,
         "mirrorId": null,
         "center": true
       }
@@ -18741,30 +18733,21 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2
         ],
         "mirrored": false,
-        "faceColor": "#202a3b",
-        "bitmapSide": "top"
+        "faceColor": "#03192d",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "naga-top-480x600_4"
       },
       {
         "id": 1001,
         "verts": [
-          1,
           2,
-          7
+          7,
+          1
         ],
         "mirrored": true,
-        "faceColor": "#202a3b",
+        "faceColor": "#03192d",
+        "bitmapFaceKey": "naga-top-480x600_4",
         "bitmapSide": "top"
-      },
-      {
-        "id": 1002,
-        "verts": [
-          1,
-          3,
-          14
-        ],
-        "mirrored": false,
-        "faceColor": "#111827",
-        "bitmapSide": "bottom"
       },
       {
         "id": 1018,
@@ -18774,30 +18757,21 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6
         ],
         "mirrored": false,
-        "faceColor": "#111827",
-        "bitmapSide": "bottom"
+        "faceColor": "#03192d",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "naga-top-480x600_4"
       },
       {
         "id": 1003,
         "verts": [
-          1,
           7,
-          15
-        ],
-        "mirrored": true,
-        "faceColor": "#111827",
-        "bitmapSide": "bottom"
-      },
-      {
-        "id": 1019,
-        "verts": [
-          1,
           15,
-          3
+          1
         ],
         "mirrored": true,
-        "faceColor": "#111827",
-        "bitmapSide": "bottom"
+        "faceColor": "#03192d",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "naga-top-480x600_4"
       },
       {
         "id": 1004,
@@ -18807,8 +18781,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8
         ],
         "mirrored": false,
-        "faceColor": "#172033",
-        "bitmapSide": "top"
+        "faceColor": "#03192d",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "naga-top-480x600_4"
       },
       {
         "id": 1020,
@@ -18818,8 +18793,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           10
         ],
         "mirrored": false,
-        "faceColor": "#172033",
-        "bitmapSide": "top"
+        "faceColor": "#03192d",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "naga-top-480x600_4"
       },
       {
         "id": 1021,
@@ -18829,52 +18805,45 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4
         ],
         "mirrored": false,
-        "faceColor": "#172033",
-        "bitmapSide": "top"
+        "faceColor": "#03192d",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "naga-top-480x600_4"
       },
       {
         "id": 1005,
         "verts": [
-          2,
           4,
-          11
+          11,
+          2
         ],
         "mirrored": true,
-        "faceColor": "#172033",
-        "bitmapSide": "top"
+        "faceColor": "#03192d",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "naga-top-480x600_4"
       },
       {
         "id": 1022,
         "verts": [
-          2,
           11,
-          9
+          9,
+          2
         ],
         "mirrored": true,
-        "faceColor": "#172033",
-        "bitmapSide": "top"
+        "faceColor": "#03192d",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "naga-top-480x600_4"
       },
       {
         "id": 1023,
         "verts": [
-          2,
           9,
-          7
+          7,
+          2
         ],
         "mirrored": true,
-        "faceColor": "#172033",
-        "bitmapSide": "top"
-      },
-      {
-        "id": 1006,
-        "verts": [
-          3,
-          12,
-          8
-        ],
-        "mirrored": false,
-        "faceColor": "#0a0f18",
-        "bitmapSide": "bottom"
+        "faceColor": "#03192d",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "naga-top-480x600_4"
       },
       {
         "id": 1024,
@@ -18884,30 +18853,21 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           14
         ],
         "mirrored": false,
-        "faceColor": "#0a0f18",
-        "bitmapSide": "bottom"
+        "faceColor": "#03192e",
+        "bitmapSide": "bottom",
+        "bitmapFaceKey": "naga_bottom_2"
       },
       {
         "id": 1007,
         "verts": [
-          3,
           15,
-          9
-        ],
-        "mirrored": true,
-        "faceColor": "#0a0f18",
-        "bitmapSide": "bottom"
-      },
-      {
-        "id": 1025,
-        "verts": [
-          3,
           9,
-          13
+          3
         ],
         "mirrored": true,
-        "faceColor": "#0a0f18",
-        "bitmapSide": "bottom"
+        "faceColor": "#03192e",
+        "bitmapSide": "bottom",
+        "bitmapFaceKey": "naga_bottom_2"
       },
       {
         "id": 1008,
@@ -18917,18 +18877,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8
         ],
         "mirrored": false,
-        "faceColor": "#253249",
-        "bitmapSide": "top"
+        "faceColor": "#03192d",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "naga-top-480x600_4"
       },
       {
         "id": 1009,
         "verts": [
-          7,
           9,
-          15
+          15,
+          7
         ],
         "mirrored": true,
-        "faceColor": "#253249",
+        "faceColor": "#03192d",
+        "bitmapFaceKey": "naga-top-480x600_4",
         "bitmapSide": "top"
       },
       {
@@ -18939,41 +18901,21 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           17
         ],
         "mirrored": false,
-        "faceColor": "#111722",
-        "bitmapSide": "back"
+        "faceColor": "#03192d",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "naga-top-480x600_4"
       },
       {
         "id": 1026,
         "verts": [
-          4,
           17,
-          11
+          11,
+          4
         ],
         "mirrored": false,
-        "faceColor": "#111722",
-        "bitmapSide": "back"
-      },
-      {
-        "id": 1011,
-        "verts": [
-          5,
-          13,
-          17
-        ],
-        "mirrored": false,
-        "faceColor": "#070b12",
-        "bitmapSide": "back"
-      },
-      {
-        "id": 1027,
-        "verts": [
-          5,
-          17,
-          12
-        ],
-        "mirrored": false,
-        "faceColor": "#070b12",
-        "bitmapSide": "back"
+        "faceColor": "#03192d",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "naga-top-480x600_4"
       },
       {
         "id": 1012,
@@ -18984,79 +18926,151 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "faceColor": "#0d1320",
-        "bitmapSide": "back"
+        "bitmapFaceKey": "nightlance-back-half-300x91-template",
+        "bitmapSide": "back",
+        "bitmapAngle": -90,
+        "bitmapMirrorX": true
       },
       {
         "id": 1013,
         "verts": [
-          11,
           17,
-          13
+          13,
+          11
         ],
         "mirrored": true,
         "faceColor": "#0d1320",
-        "bitmapSide": "back"
+        "bitmapSide": "back",
+        "bitmapFaceKey": "nightlance-back-half-300x91-template",
+        "bitmapAngle": -90,
+        "bitmapMirrorX": true
       },
       {
-        "id": 1014,
+        "id": 3009,
         "verts": [
-          4,
-          16,
+          11,
+          13,
+          9
+        ],
+        "mirrored": false,
+        "faceColor": "#021526",
+        "bitmapSide": "back",
+        "bitmapFaceKey": "nightlance-back-half-300x91-template",
+        "bitmapAngle": -90,
+        "bitmapMirrorX": true
+      },
+      {
+        "id": 3010,
+        "verts": [
+          8,
+          12,
           10
         ],
-        "mirrored": false,
-        "faceColor": "#2a3550",
-        "bitmapSide": "top"
+        "mirrored": true,
+        "faceColor": "#021526",
+        "bitmapFaceKey": "nightlance-back-half-300x91-template",
+        "bitmapSide": "back",
+        "bitmapAngle": -90,
+        "bitmapMirrorX": true
       },
       {
-        "id": 1015,
+        "id": 3019,
         "verts": [
-          4,
-          11,
-          16
+          1,
+          3,
+          14
+        ],
+        "mirrored": false,
+        "faceColor": "#03192e",
+        "bitmapSide": "bottom",
+        "bitmapFaceKey": "naga_bottom_2"
+      },
+      {
+        "id": 3020,
+        "verts": [
+          15,
+          3,
+          1
         ],
         "mirrored": true,
-        "faceColor": "#2a3550",
-        "bitmapSide": "top"
+        "faceColor": "#03192e",
+        "bitmapSide": "bottom",
+        "bitmapFaceKey": "naga_bottom_2"
       },
       {
-        "id": 1016,
+        "id": 3029,
         "verts": [
           3,
-          5,
-          12
+          9,
+          13
         ],
         "mirrored": false,
-        "faceColor": "#090d14",
-        "bitmapSide": "bottom"
+        "faceColor": "#03192e",
+        "bitmapSide": "bottom",
+        "bitmapFaceKey": "naga_bottom_2"
       },
       {
-        "id": 1017,
+        "id": 3030,
+        "verts": [
+          12,
+          8,
+          3
+        ],
+        "mirrored": true,
+        "faceColor": "#03192e",
+        "bitmapSide": "bottom",
+        "bitmapFaceKey": "naga_bottom_2"
+      },
+      {
+        "id": 3031,
         "verts": [
           3,
           13,
-          5
+          3028
+        ],
+        "mirrored": false,
+        "faceColor": "#03192e",
+        "bitmapSide": "bottom",
+        "bitmapFaceKey": "naga_bottom_2"
+      },
+      {
+        "id": 3032,
+        "verts": [
+          3028,
+          12,
+          3
         ],
         "mirrored": true,
-        "faceColor": "#090d14",
-        "bitmapSide": "bottom"
+        "faceColor": "#03192e",
+        "bitmapSide": "bottom",
+        "bitmapFaceKey": "naga_bottom_2"
+      },
+      {
+        "id": 3033,
+        "verts": [
+          17,
+          3028,
+          13
+        ],
+        "mirrored": false,
+        "faceColor": "#03192e",
+        "bitmapSide": "bottom",
+        "bitmapFaceKey": "naga_bottom_2"
+      },
+      {
+        "id": 3034,
+        "verts": [
+          12,
+          3028,
+          17
+        ],
+        "mirrored": true,
+        "faceColor": "#03192e",
+        "bitmapSide": "bottom",
+        "bitmapFaceKey": "naga_bottom_2"
       }
     ],
     "edges": [
-      {
-        "id": 2000,
-        "a": 1,
-        "b": 18,
-        "kind": "stick",
-        "mirrored": false
-      },
-      {
-        "id": 2001,
-        "a": 16,
-        "b": 17,
-        "kind": "stick",
-        "mirrored": false
-      },
       {
         "id": 2002,
         "a": 8,
@@ -19144,17 +19158,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ]
       },
       {
-        "id": 3006,
-        "type": "panel",
-        "faceId": 1006,
-        "inset": 0.62,
-        "color": "#64748b",
-        "segment": [
-          14,
-          8
-        ]
-      },
-      {
         "id": 3007,
         "type": "panel",
         "faceId": 1007,
@@ -19166,16 +19169,52 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ]
       },
       {
-        "id": 3008,
-        "type": "beacon",
-        "vertexId": 16,
-        "color": "#38bdf8",
+        "id": 3011,
+        "type": "engine",
+        "faceId": 1026,
+        "inset": 0.48,
+        "color": "#f7fff7",
         "normal": [
-          0,
-          1,
-          0
-        ],
-        "lift": 2
+          -0.07,
+          0.89,
+          -0.45
+        ]
+      },
+      {
+        "id": 3012,
+        "type": "engine",
+        "faceId": 1010,
+        "inset": 0.48,
+        "color": "#f7fff7",
+        "normal": [
+          0.07,
+          0.89,
+          -0.45
+        ]
+      },
+      {
+        "id": 3037,
+        "type": "engine",
+        "faceId": 3034,
+        "inset": 0.48,
+        "color": "#f7fff7",
+        "normal": [
+          0.14,
+          -0.8,
+          -0.59
+        ]
+      },
+      {
+        "id": 3038,
+        "type": "engine",
+        "faceId": 3033,
+        "inset": 0.48,
+        "color": "#f7fff7",
+        "normal": [
+          -0.14,
+          -0.8,
+          -0.59
+        ]
       }
     ],
     "blueprint": {
@@ -19257,18 +19296,155 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           0,
-          38,
-          -58
-        ],
-        [
-          0,
           0,
           -110
         ],
         [
           0,
+          -11,
+          -95
+        ]
+      ],
+      "faces": [
+        [
           0,
-          150
+          5,
+          1
+        ],
+        [
+          1,
+          6,
+          0
+        ],
+        [
+          0,
+          13,
+          5
+        ],
+        [
+          6,
+          14,
+          0
+        ],
+        [
+          1,
+          5,
+          7
+        ],
+        [
+          1,
+          7,
+          9
+        ],
+        [
+          1,
+          9,
+          3
+        ],
+        [
+          3,
+          10,
+          1
+        ],
+        [
+          10,
+          8,
+          1
+        ],
+        [
+          8,
+          6,
+          1
+        ],
+        [
+          2,
+          7,
+          13
+        ],
+        [
+          14,
+          8,
+          2
+        ],
+        [
+          5,
+          13,
+          7
+        ],
+        [
+          8,
+          14,
+          6
+        ],
+        [
+          3,
+          9,
+          15
+        ],
+        [
+          15,
+          10,
+          3
+        ],
+        [
+          9,
+          11,
+          15
+        ],
+        [
+          15,
+          12,
+          10
+        ],
+        [
+          10,
+          12,
+          8
+        ],
+        [
+          7,
+          11,
+          9
+        ],
+        [
+          0,
+          2,
+          13
+        ],
+        [
+          14,
+          2,
+          0
+        ],
+        [
+          2,
+          8,
+          12
+        ],
+        [
+          11,
+          7,
+          2
+        ],
+        [
+          2,
+          12,
+          16
+        ],
+        [
+          16,
+          11,
+          2
+        ],
+        [
+          15,
+          16,
+          12
+        ],
+        [
+          11,
+          16,
+          15
         ]
       ],
       "edges": [
@@ -19294,14 +19470,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           0,
-          2
-        ],
-        [
-          2,
-          13
-        ],
-        [
-          0,
           13
         ],
         [
@@ -19314,10 +19482,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           0,
-          14
-        ],
-        [
-          2,
           14
         ],
         [
@@ -19366,18 +19530,14 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           2,
-          11
-        ],
-        [
-          7,
-          11
-        ],
-        [
-          2,
           7
         ],
         [
           7,
+          13
+        ],
+        [
+          2,
           13
         ],
         [
@@ -19389,72 +19549,68 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8
         ],
         [
+          2,
+          14
+        ],
+        [
+          9,
+          15
+        ],
+        [
+          3,
+          15
+        ],
+        [
+          10,
+          15
+        ],
+        [
+          9,
+          11
+        ],
+        [
+          11,
+          15
+        ],
+        [
+          12,
+          15
+        ],
+        [
+          10,
+          12
+        ],
+        [
           8,
           12
+        ],
+        [
+          7,
+          11
+        ],
+        [
+          0,
+          2
         ],
         [
           2,
           12
         ],
         [
-          9,
-          16
-        ],
-        [
-          3,
-          16
-        ],
-        [
-          10,
-          16
-        ],
-        [
-          4,
-          12
+          2,
+          11
         ],
         [
           12,
           16
         ],
         [
-          4,
+          2,
           16
         ],
         [
           11,
           16
-        ],
-        [
-          4,
-          11
-        ],
-        [
-          9,
-          11
-        ],
-        [
-          10,
-          12
-        ],
-        [
-          3,
-          15
-        ],
-        [
-          9,
-          15
-        ],
-        [
-          10,
-          15
-        ],
-        [
-          2,
-          4
-        ],
-        [
-          0,
-          17
         ],
         [
           15,
@@ -19464,11 +19620,11 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       "edgeFaces": [
         [
           0,
-          3
+          2
         ],
         [
           0,
-          6
+          4
         ],
         [
           0,
@@ -19476,31 +19632,31 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           1,
-          11
+          9
         ],
         [
           1,
-          4
-        ],
-        [
-          2,
-          5
-        ],
-        [
-          2,
-          13
-        ],
-        [
-          2,
           3
         ],
         [
+          2,
+          20
+        ],
+        [
+          2,
+          12
+        ],
+        [
           3,
-          16
+          13
+        ],
+        [
+          3,
+          21
         ],
         [
           4,
-          17
+          12
         ],
         [
           4,
@@ -19508,11 +19664,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           5,
-          14
+          19
+        ],
+        [
+          5,
+          6
         ],
         [
           6,
-          16
+          14
         ],
         [
           6,
@@ -19520,7 +19680,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           7,
-          7
+          15
         ],
         [
           7,
@@ -19536,63 +19696,63 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           9,
-          19
-        ],
-        [
-          9,
-          10
-        ],
-        [
-          10,
-          10
-        ],
-        [
-          10,
-          11
-        ],
-        [
-          11,
-          17
-        ],
-        [
-          12,
-          26
-        ],
-        [
-          12,
-          12
-        ],
-        [
-          12,
           13
         ],
         [
-          13,
+          10,
+          23
+        ],
+        [
+          10,
+          12
+        ],
+        [
+          10,
+          20
+        ],
+        [
+          11,
+          13
+        ],
+        [
+          11,
+          22
+        ],
+        [
+          11,
+          21
+        ],
+        [
+          14,
           16
         ],
         [
           14,
+          15
+        ],
+        [
+          15,
           17
         ],
         [
-          14,
-          15
+          16,
+          19
         ],
         [
-          15,
-          15
-        ],
-        [
-          15,
+          16,
           27
+        ],
+        [
+          17,
+          26
+        ],
+        [
+          17,
+          18
         ],
         [
           18,
           22
-        ],
-        [
-          18,
-          19
         ],
         [
           19,
@@ -19600,63 +19760,34 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           20,
-          27
-        ],
-        [
-          20,
-          23
-        ],
-        [
-          20,
           21
         ],
         [
-          21,
-          22
-        ],
-        [
-          21,
-          26
-        ],
-        [
           22,
-          22
-        ],
-        [
-          23,
-          23
-        ],
-        [
-          24,
-          25
-        ],
-        [
-          24,
           24
         ],
         [
-          25,
+          23,
           25
+        ],
+        [
+          24,
+          26
+        ],
+        [
+          24,
+          25
+        ],
+        [
+          25,
+          27
         ],
         [
           26,
           27
-        ],
-        [
-          -1,
-          -1
-        ],
-        [
-          -1,
-          -1
         ]
       ],
       "edgeVisibility": [
-        31,
-        31,
-        31,
-        31,
-        31,
         31,
         31,
         31,
@@ -19702,144 +19833,144 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       ],
       "normals": [
         [
-          37.97,
+          37.967,
           90.55,
-          18.95
+          18.952
         ],
         [
-          -37.97,
+          -37.967,
           90.55,
-          18.95
+          18.952
         ],
         [
-          3.62,
-          -99.42,
-          10.14
+          41.097,
+          88.939,
+          20.022
         ],
         [
-          41.1,
-          88.94,
-          20.02
+          -41.097,
+          88.939,
+          20.022
         ],
         [
-          -41.1,
-          88.94,
-          20.02
-        ],
-        [
-          -3.62,
-          -99.42,
-          10.14
-        ],
-        [
-          38.25,
-          89.55,
-          22.74
+          38.253,
+          89.552,
+          22.741
         ],
         [
           19.08,
-          98.13,
-          -2.73
+          98.125,
+          -2.726
         ],
         [
-          15.88,
-          98.67,
-          -3.4
+          15.878,
+          98.673,
+          -3.403
         ],
         [
-          -15.88,
-          98.67,
-          -3.4
+          -15.878,
+          98.673,
+          -3.403
         ],
         [
           -19.08,
-          98.13,
-          -2.73
+          98.125,
+          -2.726
         ],
         [
-          -38.25,
-          89.55,
-          22.74
+          -38.253,
+          89.552,
+          22.741
         ],
         [
-          9.43,
-          -99.55,
-          1.11
+          10.124,
+          -99.464,
+          2.121
         ],
         [
-          10.12,
-          -99.46,
-          2.12
+          -10.124,
+          -99.464,
+          2.121
         ],
         [
-          -10.12,
-          -99.46,
-          2.12
+          37.054,
+          90.319,
+          21.67
+        ],
+        [
+          -37.054,
+          90.319,
+          21.67
+        ],
+        [
+          7.433,
+          89.195,
+          -44.598
+        ],
+        [
+          -7.433,
+          89.195,
+          -44.598
+        ],
+        [
+          63.781,
+          23.193,
+          -73.445
+        ],
+        [
+          -63.781,
+          23.193,
+          -73.445
+        ],
+        [
+          -55.671,
+          25.015,
+          -79.215
+        ],
+        [
+          55.671,
+          25.015,
+          -79.215
+        ],
+        [
+          3.623,
+          -99.418,
+          10.145
+        ],
+        [
+          -3.623,
+          -99.418,
+          10.145
         ],
         [
           -9.43,
-          -99.55,
-          1.11
+          -99.548,
+          1.112
         ],
         [
-          37.05,
-          90.32,
-          21.67
+          9.43,
+          -99.548,
+          1.112
         ],
         [
-          -37.05,
-          90.32,
-          21.67
+          -8.199,
+          -99.66,
+          0.852
         ],
         [
-          7.43,
-          89.2,
-          -44.6
+          8.199,
+          -99.66,
+          0.852
         ],
         [
-          -7.43,
-          89.2,
-          -44.6
+          -13.974,
+          -79.849,
+          -58.556
         ],
         [
-          0,
-          -89.44,
-          -44.72
-        ],
-        [
-          0,
-          -89.44,
-          -44.72
-        ],
-        [
-          63.78,
-          23.19,
-          -73.44
-        ],
-        [
-          -63.78,
-          23.19,
-          -73.44
-        ],
-        [
-          0,
-          70.71,
-          -70.71
-        ],
-        [
-          0,
-          70.71,
-          -70.71
-        ],
-        [
-          -4.02,
-          -99.9,
-          -1.72
-        ],
-        [
-          4.02,
-          -99.9,
-          -1.72
+          13.974,
+          -79.849,
+          -58.556
         ]
       ],
       "details": [
@@ -19847,10 +19978,11 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "type": "engine",
           "color": "#74f7ff",
           "normal": [
-            0.42,
-            0,
-            -0.9
+            0.64,
+            0.23,
+            -0.73
           ],
+          "lift": 0.5,
           "points": [
             [
               20,
@@ -19868,23 +20000,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -103
             ]
           ],
-          "stroke": "#ffffff",
-          "lift": 1.5
+          "stroke": "#ffffff"
         },
         {
           "type": "engine",
           "color": "#74f7ff",
           "normal": [
-            -0.42,
-            0,
-            -0.9
+            -0.64,
+            0.23,
+            -0.73
           ],
+          "lift": 0.5,
           "points": [
-            [
-              -20,
-              5.17,
-              -91
-            ],
             [
               -8,
               0.17,
@@ -19894,19 +20021,24 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -20,
               -4.33,
               -94
+            ],
+            [
+              -20,
+              5.17,
+              -91
             ]
           ],
-          "stroke": "#ffffff",
-          "lift": 1.5
+          "stroke": "#ffffff"
         },
         {
           "type": "window",
           "color": "#05090f",
           "normal": [
-            0.18,
-            0.92,
-            0.33
+            0.38,
+            0.91,
+            0.19
           ],
+          "lift": 0.5,
           "points": [
             [
               8.61,
@@ -19929,16 +20061,12 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "type": "window",
           "color": "#05090f",
           "normal": [
-            -0.18,
-            0.92,
-            0.33
+            -0.38,
+            0.91,
+            0.19
           ],
+          "lift": 0.5,
           "points": [
-            [
-              -8.61,
-              5.83,
-              74.91
-            ],
             [
               -8.61,
               10.15,
@@ -19948,17 +20076,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -16.77,
               7.03,
               52.83
+            ],
+            [
+              -8.61,
+              5.83,
+              74.91
             ]
           ]
         },
         {
-          "type": "line",
+          "type": "polyline",
           "color": "#39d4ff",
           "normal": [
-            0.383,
-            0.896,
-            0.227
+            0.38,
+            0.9,
+            0.23
           ],
+          "lift": 0.5,
           "points": [
             [
               36.08,
@@ -19970,16 +20104,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               9.22,
               -61.91
             ]
-          ]
+          ],
+          "width": 1.2
         },
         {
-          "type": "line",
+          "type": "polyline",
           "color": "#39d4ff",
           "normal": [
-            -0.159,
-            0.987,
-            -0.034
+            -0.16,
+            0.99,
+            -0.03
           ],
+          "lift": 0.5,
           "points": [
             [
               -27.24,
@@ -19991,37 +20127,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               11.04,
               -75.25
             ]
-          ]
+          ],
+          "width": 1.2
         },
         {
-          "type": "line",
+          "type": "polyline",
           "color": "#64748b",
           "normal": [
-            0.094,
-            -0.995,
-            0.011
+            -0.1,
+            -0.99,
+            0.02
           ],
-          "points": [
-            [
-              40.73,
-              -5.76,
-              20.53
-            ],
-            [
-              71.73,
-              -3.9,
-              -40.23
-            ]
-          ]
-        },
-        {
-          "type": "line",
-          "color": "#64748b",
-          "normal": [
-            -0.101,
-            -0.995,
-            0.021
-          ],
+          "lift": 0.5,
           "points": [
             [
               -43.01,
@@ -20033,93 +20150,380 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -3.39,
               -21.48
             ]
-          ]
+          ],
+          "width": 1.2
         },
         {
-          "type": "beacon",
-          "index": 15,
-          "color": "#38bdf8",
+          "type": "engine",
+          "color": "#f7fff7",
           "normal": [
-            0,
-            1,
-            0
+            -0.07,
+            0.89,
+            -0.45
           ],
-          "lift": 2
+          "lift": 0.5,
+          "points": [
+            [
+              -4.16,
+              4.16,
+              -100.99
+            ],
+            [
+              -15.68,
+              8.96,
+              -89.47
+            ],
+            [
+              -4.16,
+              10.88,
+              -87.55
+            ]
+          ],
+          "stroke": "#ffffff"
+        },
+        {
+          "type": "engine",
+          "color": "#f7fff7",
+          "normal": [
+            0.07,
+            0.89,
+            -0.45
+          ],
+          "lift": 0.5,
+          "points": [
+            [
+              4.16,
+              10.88,
+              -87.55
+            ],
+            [
+              15.68,
+              8.96,
+              -89.47
+            ],
+            [
+              4.16,
+              4.16,
+              -100.99
+            ]
+          ],
+          "stroke": "#ffffff"
+        },
+        {
+          "type": "engine",
+          "color": "#f7fff7",
+          "normal": [
+            0.14,
+            -0.8,
+            -0.59
+          ],
+          "lift": 0.5,
+          "points": [
+            [
+              15.68,
+              -7.79,
+              -95.64
+            ],
+            [
+              4.16,
+              -8.75,
+              -97.08
+            ],
+            [
+              4.16,
+              -3.47,
+              -104.28
+            ]
+          ],
+          "stroke": "#ffffff"
+        },
+        {
+          "type": "engine",
+          "color": "#f7fff7",
+          "normal": [
+            -0.14,
+            -0.8,
+            -0.59
+          ],
+          "lift": 0.5,
+          "points": [
+            [
+              -4.16,
+              -3.47,
+              -104.28
+            ],
+            [
+              -4.16,
+              -8.75,
+              -97.08
+            ],
+            [
+              -15.68,
+              -7.79,
+              -95.64
+            ]
+          ],
+          "stroke": "#ffffff"
         }
       ],
       "imageProjection": {
         "faceSides": [
           "top",
           "top",
-          "bottom",
-          "bottom",
-          "bottom",
-          "bottom",
           "top",
           "top",
           "top",
           "top",
           "top",
           "top",
+          "top",
+          "top",
           "bottom",
           "bottom",
-          "bottom",
-          "bottom",
+          "top",
+          "top",
           "top",
           "top",
           "back",
           "back",
           "back",
           "back",
-          "back",
-          "back",
-          "top",
-          "top",
+          "bottom",
+          "bottom",
+          "bottom",
+          "bottom",
+          "bottom",
+          "bottom",
           "bottom",
           "bottom"
         ],
+        "faceTextures": [
+          "naga-top-480x600_4",
+          "naga-top-480x600_4",
+          "naga-top-480x600_4",
+          "naga-top-480x600_4",
+          "naga-top-480x600_4",
+          "naga-top-480x600_4",
+          "naga-top-480x600_4",
+          "naga-top-480x600_4",
+          "naga-top-480x600_4",
+          "naga-top-480x600_4",
+          "naga_bottom_2",
+          "naga_bottom_2",
+          "naga-top-480x600_4",
+          "naga-top-480x600_4",
+          "naga-top-480x600_4",
+          "naga-top-480x600_4",
+          "nightlance-back-half-300x91-template",
+          "nightlance-back-half-300x91-template",
+          "nightlance-back-half-300x91-template",
+          "nightlance-back-half-300x91-template",
+          "naga_bottom_2",
+          "naga_bottom_2",
+          "naga_bottom_2",
+          "naga_bottom_2",
+          "naga_bottom_2",
+          "naga_bottom_2",
+          "naga_bottom_2",
+          "naga_bottom_2"
+        ],
+        "faceTextureUv": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "faceTextureBaseW": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "faceTextureBaseH": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
         "faceColors": [
-          "#202a3b",
-          "#202a3b",
-          "#111827",
-          "#111827",
-          "#111827",
-          "#111827",
-          "#172033",
-          "#172033",
-          "#172033",
-          "#172033",
-          "#172033",
-          "#172033",
-          "#0a0f18",
-          "#0a0f18",
-          "#0a0f18",
-          "#0a0f18",
-          "#253249",
-          "#253249",
-          "#111722",
-          "#111722",
-          "#070b12",
-          "#070b12",
+          "#03192d",
+          "#03192d",
+          "#03192d",
+          "#03192d",
+          "#03192d",
+          "#03192d",
+          "#03192d",
+          "#03192d",
+          "#03192d",
+          "#03192d",
+          "#03192e",
+          "#03192e",
+          "#03192d",
+          "#03192d",
+          "#03192d",
+          "#03192d",
           "#0d1320",
           "#0d1320",
-          "#2a3550",
-          "#2a3550",
-          "#090d14",
-          "#090d14"
+          "#021526",
+          "#021526",
+          "#03192e",
+          "#03192e",
+          "#03192e",
+          "#03192e",
+          "#03192e",
+          "#03192e",
+          "#03192e",
+          "#03192e"
+        ],
+        "faceMirrorX": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          true,
+          true,
+          true,
+          true,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "faceAngles": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          -90,
+          -90,
+          -90,
+          -90,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
         ]
       },
       "gameMeta": {
         "class": "interceptor",
-        "npcRole": "military",
+        "npcRole": "private",
         "aiProfile": "bountyHunter",
         "decalRole": "none",
         "baseColor": "#111827",
-        "description": "The Nightlance is a classified deep-space interceptor built around a narrow pressure hull, overpowered drives and almost no concession to comfort. It is quick, pointy and deeply unfriendly.",
+        "description": "The X904D is a classified deep-space interceptor built around a narrow pressure hull, overpowered drives and almost no concession to comfort. It is quick, pointy and deeply unfriendly.",
         "missionLore": "Black-budget naval interceptor. Most registries deny it exists.",
+        "imageDecalMirrorX": {
+          "top": false,
+          "bottom": false,
+          "back": true
+        },
         "valueCr": 3600000,
         "stats": {
-          "r": 150,
+          "r": 120,
           "hp": 240,
           "speed": 2.55,
           "cargo": 4,
@@ -20135,11 +20539,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "flags": {
           "escapePod": true,
           "hiddenUntilDiscovered": true
-        },
-        "imageDecalMirrorX": {
-          "top": true,
-          "bottom": true,
-          "back": false
         }
       }
     }

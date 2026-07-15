@@ -1,0 +1,1995 @@
+{
+  "format": "ultra-elite-ship-builder/v1",
+  "id": "naga",
+  "name": "X904D Naga",
+  "symmetry": "x-locked",
+  "gameMeta": {
+    "class": "interceptor",
+    "npcRole": "private",
+    "aiProfile": "bountyHunter",
+    "decalRole": "none",
+    "baseColor": "#111827",
+    "description": "The X904D is a classified deep-space interceptor built around a narrow pressure hull, overpowered drives and almost no concession to comfort. It is quick, pointy and deeply unfriendly.",
+    "missionLore": "Black-budget naval interceptor. Most registries deny it exists.",
+    "imageDecalMirrorX": {
+      "top": false,
+      "bottom": false,
+      "back": true
+    },
+    "valueCr": 3600000,
+    "stats": {
+      "r": 120,
+      "hp": 240,
+      "speed": 2.55,
+      "cargo": 4,
+      "missiles": 4,
+      "laser": "military"
+    },
+    "lists": {
+      "trader": false,
+      "pirate": false,
+      "police": false,
+      "alien": false
+    },
+    "flags": {
+      "escapePod": true,
+      "hiddenUntilDiscovered": true
+    }
+  },
+  "verts": [
+    {
+      "id": 1,
+      "x": 0,
+      "y": 0,
+      "z": 120,
+      "mirrorId": null,
+      "center": true
+    },
+    {
+      "id": 2,
+      "x": 0,
+      "y": 18,
+      "z": 34,
+      "mirrorId": null,
+      "center": true
+    },
+    {
+      "id": 3,
+      "x": 0,
+      "y": -10,
+      "z": 22,
+      "mirrorId": null,
+      "center": true
+    },
+    {
+      "id": 4,
+      "x": 0,
+      "y": 14,
+      "z": -82,
+      "mirrorId": null,
+      "center": true
+    },
+    {
+      "id": 5,
+      "x": 0,
+      "y": -8,
+      "z": -94,
+      "mirrorId": null,
+      "center": true
+    },
+    {
+      "id": 6,
+      "x": 34,
+      "y": 5,
+      "z": 28,
+      "mirrorId": 7,
+      "center": false
+    },
+    {
+      "id": 7,
+      "x": -34,
+      "y": 5,
+      "z": 28,
+      "mirrorId": 6,
+      "center": false
+    },
+    {
+      "id": 8,
+      "x": 92,
+      "y": -2,
+      "z": -42,
+      "mirrorId": 9,
+      "center": false
+    },
+    {
+      "id": 9,
+      "x": -92,
+      "y": -2,
+      "z": -42,
+      "mirrorId": 8,
+      "center": false
+    },
+    {
+      "id": 10,
+      "x": 24,
+      "y": 10,
+      "z": -86,
+      "mirrorId": 11,
+      "center": false
+    },
+    {
+      "id": 11,
+      "x": -24,
+      "y": 10,
+      "z": -86,
+      "mirrorId": 10,
+      "center": false
+    },
+    {
+      "id": 12,
+      "x": 24,
+      "y": -9,
+      "z": -92,
+      "mirrorId": 13,
+      "center": false
+    },
+    {
+      "id": 13,
+      "x": -24,
+      "y": -9,
+      "z": -92,
+      "mirrorId": 12,
+      "center": false
+    },
+    {
+      "id": 14,
+      "x": 42,
+      "y": -5,
+      "z": 56,
+      "mirrorId": 15,
+      "center": false
+    },
+    {
+      "id": 15,
+      "x": -42,
+      "y": -5,
+      "z": 56,
+      "mirrorId": 14,
+      "center": false
+    },
+    {
+      "id": 17,
+      "x": 0,
+      "y": 0,
+      "z": -110,
+      "mirrorId": null,
+      "center": true
+    },
+    {
+      "id": 3028,
+      "x": 0,
+      "y": -11,
+      "z": -95,
+      "mirrorId": null,
+      "center": true
+    }
+  ],
+  "faces": [
+    {
+      "id": 1000,
+      "verts": [
+        1,
+        6,
+        2
+      ],
+      "mirrored": false,
+      "faceColor": "#03192d",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "naga-top-480x600_4"
+    },
+    {
+      "id": 1001,
+      "verts": [
+        2,
+        7,
+        1
+      ],
+      "mirrored": true,
+      "faceColor": "#03192d",
+      "bitmapFaceKey": "naga-top-480x600_4",
+      "bitmapSide": "top"
+    },
+    {
+      "id": 1018,
+      "verts": [
+        1,
+        14,
+        6
+      ],
+      "mirrored": false,
+      "faceColor": "#03192d",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "naga-top-480x600_4"
+    },
+    {
+      "id": 1003,
+      "verts": [
+        7,
+        15,
+        1
+      ],
+      "mirrored": true,
+      "faceColor": "#03192d",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "naga-top-480x600_4"
+    },
+    {
+      "id": 1004,
+      "verts": [
+        2,
+        6,
+        8
+      ],
+      "mirrored": false,
+      "faceColor": "#03192d",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "naga-top-480x600_4"
+    },
+    {
+      "id": 1020,
+      "verts": [
+        2,
+        8,
+        10
+      ],
+      "mirrored": false,
+      "faceColor": "#03192d",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "naga-top-480x600_4"
+    },
+    {
+      "id": 1021,
+      "verts": [
+        2,
+        10,
+        4
+      ],
+      "mirrored": false,
+      "faceColor": "#03192d",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "naga-top-480x600_4"
+    },
+    {
+      "id": 1005,
+      "verts": [
+        4,
+        11,
+        2
+      ],
+      "mirrored": true,
+      "faceColor": "#03192d",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "naga-top-480x600_4"
+    },
+    {
+      "id": 1022,
+      "verts": [
+        11,
+        9,
+        2
+      ],
+      "mirrored": true,
+      "faceColor": "#03192d",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "naga-top-480x600_4"
+    },
+    {
+      "id": 1023,
+      "verts": [
+        9,
+        7,
+        2
+      ],
+      "mirrored": true,
+      "faceColor": "#03192d",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "naga-top-480x600_4"
+    },
+    {
+      "id": 1024,
+      "verts": [
+        3,
+        8,
+        14
+      ],
+      "mirrored": false,
+      "faceColor": "#03192e",
+      "bitmapSide": "bottom",
+      "bitmapFaceKey": "naga_bottom_2"
+    },
+    {
+      "id": 1007,
+      "verts": [
+        15,
+        9,
+        3
+      ],
+      "mirrored": true,
+      "faceColor": "#03192e",
+      "bitmapSide": "bottom",
+      "bitmapFaceKey": "naga_bottom_2"
+    },
+    {
+      "id": 1008,
+      "verts": [
+        6,
+        14,
+        8
+      ],
+      "mirrored": false,
+      "faceColor": "#03192d",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "naga-top-480x600_4"
+    },
+    {
+      "id": 1009,
+      "verts": [
+        9,
+        15,
+        7
+      ],
+      "mirrored": true,
+      "faceColor": "#03192d",
+      "bitmapFaceKey": "naga-top-480x600_4",
+      "bitmapSide": "top"
+    },
+    {
+      "id": 1010,
+      "verts": [
+        4,
+        10,
+        17
+      ],
+      "mirrored": false,
+      "faceColor": "#03192d",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "naga-top-480x600_4"
+    },
+    {
+      "id": 1026,
+      "verts": [
+        17,
+        11,
+        4
+      ],
+      "mirrored": false,
+      "faceColor": "#03192d",
+      "bitmapSide": "top",
+      "bitmapFaceKey": "naga-top-480x600_4"
+    },
+    {
+      "id": 1012,
+      "verts": [
+        10,
+        12,
+        17
+      ],
+      "mirrored": false,
+      "faceColor": "#0d1320",
+      "bitmapFaceKey": "nightlance-back-half-300x91-template",
+      "bitmapSide": "back",
+      "bitmapAngle": -90,
+      "bitmapMirrorX": true
+    },
+    {
+      "id": 1013,
+      "verts": [
+        17,
+        13,
+        11
+      ],
+      "mirrored": true,
+      "faceColor": "#0d1320",
+      "bitmapSide": "back",
+      "bitmapFaceKey": "nightlance-back-half-300x91-template",
+      "bitmapAngle": -90,
+      "bitmapMirrorX": true
+    },
+    {
+      "id": 3009,
+      "verts": [
+        11,
+        13,
+        9
+      ],
+      "mirrored": false,
+      "faceColor": "#021526",
+      "bitmapSide": "back",
+      "bitmapFaceKey": "nightlance-back-half-300x91-template",
+      "bitmapAngle": -90,
+      "bitmapMirrorX": true
+    },
+    {
+      "id": 3010,
+      "verts": [
+        8,
+        12,
+        10
+      ],
+      "mirrored": true,
+      "faceColor": "#021526",
+      "bitmapFaceKey": "nightlance-back-half-300x91-template",
+      "bitmapSide": "back",
+      "bitmapAngle": -90,
+      "bitmapMirrorX": true
+    },
+    {
+      "id": 3019,
+      "verts": [
+        1,
+        3,
+        14
+      ],
+      "mirrored": false,
+      "faceColor": "#03192e",
+      "bitmapSide": "bottom",
+      "bitmapFaceKey": "naga_bottom_2"
+    },
+    {
+      "id": 3020,
+      "verts": [
+        15,
+        3,
+        1
+      ],
+      "mirrored": true,
+      "faceColor": "#03192e",
+      "bitmapSide": "bottom",
+      "bitmapFaceKey": "naga_bottom_2"
+    },
+    {
+      "id": 3029,
+      "verts": [
+        3,
+        9,
+        13
+      ],
+      "mirrored": false,
+      "faceColor": "#03192e",
+      "bitmapSide": "bottom",
+      "bitmapFaceKey": "naga_bottom_2"
+    },
+    {
+      "id": 3030,
+      "verts": [
+        12,
+        8,
+        3
+      ],
+      "mirrored": true,
+      "faceColor": "#03192e",
+      "bitmapSide": "bottom",
+      "bitmapFaceKey": "naga_bottom_2"
+    },
+    {
+      "id": 3031,
+      "verts": [
+        3,
+        13,
+        3028
+      ],
+      "mirrored": false,
+      "faceColor": "#03192e",
+      "bitmapSide": "bottom",
+      "bitmapFaceKey": "naga_bottom_2"
+    },
+    {
+      "id": 3032,
+      "verts": [
+        3028,
+        12,
+        3
+      ],
+      "mirrored": true,
+      "faceColor": "#03192e",
+      "bitmapSide": "bottom",
+      "bitmapFaceKey": "naga_bottom_2"
+    },
+    {
+      "id": 3033,
+      "verts": [
+        17,
+        3028,
+        13
+      ],
+      "mirrored": false,
+      "faceColor": "#03192e",
+      "bitmapSide": "bottom",
+      "bitmapFaceKey": "naga_bottom_2"
+    },
+    {
+      "id": 3034,
+      "verts": [
+        12,
+        3028,
+        17
+      ],
+      "mirrored": true,
+      "faceColor": "#03192e",
+      "bitmapSide": "bottom",
+      "bitmapFaceKey": "naga_bottom_2"
+    }
+  ],
+  "edges": [
+    {
+      "id": 2002,
+      "a": 8,
+      "b": 12,
+      "kind": "stick",
+      "mirrored": false
+    },
+    {
+      "id": 2003,
+      "a": 9,
+      "b": 13,
+      "kind": "stick",
+      "mirrored": true
+    }
+  ],
+  "details": [
+    {
+      "id": 3000,
+      "type": "engine",
+      "faceId": 1012,
+      "inset": 0.5,
+      "color": "#74f7ff",
+      "normal": [
+        0.42,
+        0,
+        -0.9
+      ]
+    },
+    {
+      "id": 3001,
+      "type": "engine",
+      "faceId": 1013,
+      "inset": 0.5,
+      "color": "#74f7ff",
+      "normal": [
+        -0.42,
+        0,
+        -0.9
+      ]
+    },
+    {
+      "id": 3002,
+      "type": "window",
+      "faceId": 1000,
+      "inset": 0.24,
+      "color": "#05090f",
+      "normal": [
+        0.18,
+        0.92,
+        0.33
+      ]
+    },
+    {
+      "id": 3003,
+      "type": "window",
+      "faceId": 1001,
+      "inset": 0.24,
+      "color": "#05090f",
+      "normal": [
+        -0.18,
+        0.92,
+        0.33
+      ]
+    },
+    {
+      "id": 3004,
+      "type": "panel",
+      "faceId": 1004,
+      "inset": 0.74,
+      "color": "#39d4ff",
+      "segment": [
+        6,
+        10
+      ]
+    },
+    {
+      "id": 3005,
+      "type": "panel",
+      "faceId": 1005,
+      "inset": 0.74,
+      "color": "#39d4ff",
+      "segment": [
+        7,
+        11
+      ]
+    },
+    {
+      "id": 3007,
+      "type": "panel",
+      "faceId": 1007,
+      "inset": 0.62,
+      "color": "#64748b",
+      "segment": [
+        15,
+        9
+      ]
+    },
+    {
+      "id": 3011,
+      "type": "engine",
+      "faceId": 1026,
+      "inset": 0.48,
+      "color": "#f7fff7",
+      "normal": [
+        -0.07,
+        0.89,
+        -0.45
+      ]
+    },
+    {
+      "id": 3012,
+      "type": "engine",
+      "faceId": 1010,
+      "inset": 0.48,
+      "color": "#f7fff7",
+      "normal": [
+        0.07,
+        0.89,
+        -0.45
+      ]
+    },
+    {
+      "id": 3037,
+      "type": "engine",
+      "faceId": 3034,
+      "inset": 0.48,
+      "color": "#f7fff7",
+      "normal": [
+        0.14,
+        -0.8,
+        -0.59
+      ]
+    },
+    {
+      "id": 3038,
+      "type": "engine",
+      "faceId": 3033,
+      "inset": 0.48,
+      "color": "#f7fff7",
+      "normal": [
+        -0.14,
+        -0.8,
+        -0.59
+      ]
+    }
+  ],
+  "blueprint": {
+    "verts": [
+      [
+        0,
+        0,
+        120
+      ],
+      [
+        0,
+        18,
+        34
+      ],
+      [
+        0,
+        -10,
+        22
+      ],
+      [
+        0,
+        14,
+        -82
+      ],
+      [
+        0,
+        -8,
+        -94
+      ],
+      [
+        34,
+        5,
+        28
+      ],
+      [
+        -34,
+        5,
+        28
+      ],
+      [
+        92,
+        -2,
+        -42
+      ],
+      [
+        -92,
+        -2,
+        -42
+      ],
+      [
+        24,
+        10,
+        -86
+      ],
+      [
+        -24,
+        10,
+        -86
+      ],
+      [
+        24,
+        -9,
+        -92
+      ],
+      [
+        -24,
+        -9,
+        -92
+      ],
+      [
+        42,
+        -5,
+        56
+      ],
+      [
+        -42,
+        -5,
+        56
+      ],
+      [
+        0,
+        0,
+        -110
+      ],
+      [
+        0,
+        -11,
+        -95
+      ]
+    ],
+    "faces": [
+      [
+        0,
+        5,
+        1
+      ],
+      [
+        1,
+        6,
+        0
+      ],
+      [
+        0,
+        13,
+        5
+      ],
+      [
+        6,
+        14,
+        0
+      ],
+      [
+        1,
+        5,
+        7
+      ],
+      [
+        1,
+        7,
+        9
+      ],
+      [
+        1,
+        9,
+        3
+      ],
+      [
+        3,
+        10,
+        1
+      ],
+      [
+        10,
+        8,
+        1
+      ],
+      [
+        8,
+        6,
+        1
+      ],
+      [
+        2,
+        7,
+        13
+      ],
+      [
+        14,
+        8,
+        2
+      ],
+      [
+        5,
+        13,
+        7
+      ],
+      [
+        8,
+        14,
+        6
+      ],
+      [
+        3,
+        9,
+        15
+      ],
+      [
+        15,
+        10,
+        3
+      ],
+      [
+        9,
+        11,
+        15
+      ],
+      [
+        15,
+        12,
+        10
+      ],
+      [
+        10,
+        12,
+        8
+      ],
+      [
+        7,
+        11,
+        9
+      ],
+      [
+        0,
+        2,
+        13
+      ],
+      [
+        14,
+        2,
+        0
+      ],
+      [
+        2,
+        8,
+        12
+      ],
+      [
+        11,
+        7,
+        2
+      ],
+      [
+        2,
+        12,
+        16
+      ],
+      [
+        16,
+        11,
+        2
+      ],
+      [
+        15,
+        16,
+        12
+      ],
+      [
+        11,
+        16,
+        15
+      ]
+    ],
+    "edges": [
+      [
+        0,
+        5
+      ],
+      [
+        1,
+        5
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        6
+      ],
+      [
+        0,
+        6
+      ],
+      [
+        0,
+        13
+      ],
+      [
+        5,
+        13
+      ],
+      [
+        6,
+        14
+      ],
+      [
+        0,
+        14
+      ],
+      [
+        5,
+        7
+      ],
+      [
+        1,
+        7
+      ],
+      [
+        7,
+        9
+      ],
+      [
+        1,
+        9
+      ],
+      [
+        3,
+        9
+      ],
+      [
+        1,
+        3
+      ],
+      [
+        3,
+        10
+      ],
+      [
+        1,
+        10
+      ],
+      [
+        8,
+        10
+      ],
+      [
+        1,
+        8
+      ],
+      [
+        6,
+        8
+      ],
+      [
+        2,
+        7
+      ],
+      [
+        7,
+        13
+      ],
+      [
+        2,
+        13
+      ],
+      [
+        8,
+        14
+      ],
+      [
+        2,
+        8
+      ],
+      [
+        2,
+        14
+      ],
+      [
+        9,
+        15
+      ],
+      [
+        3,
+        15
+      ],
+      [
+        10,
+        15
+      ],
+      [
+        9,
+        11
+      ],
+      [
+        11,
+        15
+      ],
+      [
+        12,
+        15
+      ],
+      [
+        10,
+        12
+      ],
+      [
+        8,
+        12
+      ],
+      [
+        7,
+        11
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        2,
+        12
+      ],
+      [
+        2,
+        11
+      ],
+      [
+        12,
+        16
+      ],
+      [
+        2,
+        16
+      ],
+      [
+        11,
+        16
+      ],
+      [
+        15,
+        16
+      ]
+    ],
+    "edgeFaces": [
+      [
+        0,
+        2
+      ],
+      [
+        0,
+        4
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        9
+      ],
+      [
+        1,
+        3
+      ],
+      [
+        2,
+        20
+      ],
+      [
+        2,
+        12
+      ],
+      [
+        3,
+        13
+      ],
+      [
+        3,
+        21
+      ],
+      [
+        4,
+        12
+      ],
+      [
+        4,
+        5
+      ],
+      [
+        5,
+        19
+      ],
+      [
+        5,
+        6
+      ],
+      [
+        6,
+        14
+      ],
+      [
+        6,
+        7
+      ],
+      [
+        7,
+        15
+      ],
+      [
+        7,
+        8
+      ],
+      [
+        8,
+        18
+      ],
+      [
+        8,
+        9
+      ],
+      [
+        9,
+        13
+      ],
+      [
+        10,
+        23
+      ],
+      [
+        10,
+        12
+      ],
+      [
+        10,
+        20
+      ],
+      [
+        11,
+        13
+      ],
+      [
+        11,
+        22
+      ],
+      [
+        11,
+        21
+      ],
+      [
+        14,
+        16
+      ],
+      [
+        14,
+        15
+      ],
+      [
+        15,
+        17
+      ],
+      [
+        16,
+        19
+      ],
+      [
+        16,
+        27
+      ],
+      [
+        17,
+        26
+      ],
+      [
+        17,
+        18
+      ],
+      [
+        18,
+        22
+      ],
+      [
+        19,
+        23
+      ],
+      [
+        20,
+        21
+      ],
+      [
+        22,
+        24
+      ],
+      [
+        23,
+        25
+      ],
+      [
+        24,
+        26
+      ],
+      [
+        24,
+        25
+      ],
+      [
+        25,
+        27
+      ],
+      [
+        26,
+        27
+      ]
+    ],
+    "edgeVisibility": [
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31
+    ],
+    "normals": [
+      [
+        37.967,
+        90.55,
+        18.952
+      ],
+      [
+        -37.967,
+        90.55,
+        18.952
+      ],
+      [
+        41.097,
+        88.939,
+        20.022
+      ],
+      [
+        -41.097,
+        88.939,
+        20.022
+      ],
+      [
+        38.253,
+        89.552,
+        22.741
+      ],
+      [
+        19.08,
+        98.125,
+        -2.726
+      ],
+      [
+        15.878,
+        98.673,
+        -3.403
+      ],
+      [
+        -15.878,
+        98.673,
+        -3.403
+      ],
+      [
+        -19.08,
+        98.125,
+        -2.726
+      ],
+      [
+        -38.253,
+        89.552,
+        22.741
+      ],
+      [
+        10.124,
+        -99.464,
+        2.121
+      ],
+      [
+        -10.124,
+        -99.464,
+        2.121
+      ],
+      [
+        37.054,
+        90.319,
+        21.67
+      ],
+      [
+        -37.054,
+        90.319,
+        21.67
+      ],
+      [
+        7.433,
+        89.195,
+        -44.598
+      ],
+      [
+        -7.433,
+        89.195,
+        -44.598
+      ],
+      [
+        63.781,
+        23.193,
+        -73.445
+      ],
+      [
+        -63.781,
+        23.193,
+        -73.445
+      ],
+      [
+        -55.671,
+        25.015,
+        -79.215
+      ],
+      [
+        55.671,
+        25.015,
+        -79.215
+      ],
+      [
+        3.623,
+        -99.418,
+        10.145
+      ],
+      [
+        -3.623,
+        -99.418,
+        10.145
+      ],
+      [
+        -9.43,
+        -99.548,
+        1.112
+      ],
+      [
+        9.43,
+        -99.548,
+        1.112
+      ],
+      [
+        -8.199,
+        -99.66,
+        0.852
+      ],
+      [
+        8.199,
+        -99.66,
+        0.852
+      ],
+      [
+        -13.974,
+        -79.849,
+        -58.556
+      ],
+      [
+        13.974,
+        -79.849,
+        -58.556
+      ]
+    ],
+    "details": [
+      {
+        "type": "engine",
+        "color": "#74f7ff",
+        "normal": [
+          0.64,
+          0.23,
+          -0.73
+        ],
+        "lift": 0.5,
+        "points": [
+          [
+            20,
+            5.17,
+            -91
+          ],
+          [
+            20,
+            -4.33,
+            -94
+          ],
+          [
+            8,
+            0.17,
+            -103
+          ]
+        ],
+        "stroke": "#ffffff"
+      },
+      {
+        "type": "engine",
+        "color": "#74f7ff",
+        "normal": [
+          -0.64,
+          0.23,
+          -0.73
+        ],
+        "lift": 0.5,
+        "points": [
+          [
+            -8,
+            0.17,
+            -103
+          ],
+          [
+            -20,
+            -4.33,
+            -94
+          ],
+          [
+            -20,
+            5.17,
+            -91
+          ]
+        ],
+        "stroke": "#ffffff"
+      },
+      {
+        "type": "window",
+        "color": "#05090f",
+        "normal": [
+          0.38,
+          0.91,
+          0.19
+        ],
+        "lift": 0.5,
+        "points": [
+          [
+            8.61,
+            5.83,
+            74.91
+          ],
+          [
+            16.77,
+            7.03,
+            52.83
+          ],
+          [
+            8.61,
+            10.15,
+            54.27
+          ]
+        ]
+      },
+      {
+        "type": "window",
+        "color": "#05090f",
+        "normal": [
+          -0.38,
+          0.91,
+          0.19
+        ],
+        "lift": 0.5,
+        "points": [
+          [
+            -8.61,
+            10.15,
+            54.27
+          ],
+          [
+            -16.77,
+            7.03,
+            52.83
+          ],
+          [
+            -8.61,
+            5.83,
+            74.91
+          ]
+        ]
+      },
+      {
+        "type": "polyline",
+        "color": "#39d4ff",
+        "normal": [
+          0.38,
+          0.9,
+          0.23
+        ],
+        "lift": 0.5,
+        "points": [
+          [
+            36.08,
+            5.52,
+            22.45
+          ],
+          [
+            28.68,
+            9.22,
+            -61.91
+          ]
+        ],
+        "width": 1.2
+      },
+      {
+        "type": "polyline",
+        "color": "#39d4ff",
+        "normal": [
+          -0.16,
+          0.99,
+          -0.03
+        ],
+        "lift": 0.5,
+        "points": [
+          [
+            -27.24,
+            7.34,
+            9.11
+          ],
+          [
+            -19.84,
+            11.04,
+            -75.25
+          ]
+        ],
+        "width": 1.2
+      },
+      {
+        "type": "polyline",
+        "color": "#64748b",
+        "normal": [
+          -0.1,
+          -0.99,
+          0.02
+        ],
+        "lift": 0.5,
+        "points": [
+          [
+            -43.01,
+            -5.25,
+            39.28
+          ],
+          [
+            -74.01,
+            -3.39,
+            -21.48
+          ]
+        ],
+        "width": 1.2
+      },
+      {
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          -0.07,
+          0.89,
+          -0.45
+        ],
+        "lift": 0.5,
+        "points": [
+          [
+            -4.16,
+            4.16,
+            -100.99
+          ],
+          [
+            -15.68,
+            8.96,
+            -89.47
+          ],
+          [
+            -4.16,
+            10.88,
+            -87.55
+          ]
+        ],
+        "stroke": "#ffffff"
+      },
+      {
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0.07,
+          0.89,
+          -0.45
+        ],
+        "lift": 0.5,
+        "points": [
+          [
+            4.16,
+            10.88,
+            -87.55
+          ],
+          [
+            15.68,
+            8.96,
+            -89.47
+          ],
+          [
+            4.16,
+            4.16,
+            -100.99
+          ]
+        ],
+        "stroke": "#ffffff"
+      },
+      {
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0.14,
+          -0.8,
+          -0.59
+        ],
+        "lift": 0.5,
+        "points": [
+          [
+            15.68,
+            -7.79,
+            -95.64
+          ],
+          [
+            4.16,
+            -8.75,
+            -97.08
+          ],
+          [
+            4.16,
+            -3.47,
+            -104.28
+          ]
+        ],
+        "stroke": "#ffffff"
+      },
+      {
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          -0.14,
+          -0.8,
+          -0.59
+        ],
+        "lift": 0.5,
+        "points": [
+          [
+            -4.16,
+            -3.47,
+            -104.28
+          ],
+          [
+            -4.16,
+            -8.75,
+            -97.08
+          ],
+          [
+            -15.68,
+            -7.79,
+            -95.64
+          ]
+        ],
+        "stroke": "#ffffff"
+      }
+    ],
+    "imageProjection": {
+      "faceSides": [
+        "top",
+        "top",
+        "top",
+        "top",
+        "top",
+        "top",
+        "top",
+        "top",
+        "top",
+        "top",
+        "bottom",
+        "bottom",
+        "top",
+        "top",
+        "top",
+        "top",
+        "back",
+        "back",
+        "back",
+        "back",
+        "bottom",
+        "bottom",
+        "bottom",
+        "bottom",
+        "bottom",
+        "bottom",
+        "bottom",
+        "bottom"
+      ],
+      "faceTextures": [
+        "naga-top-480x600_4",
+        "naga-top-480x600_4",
+        "naga-top-480x600_4",
+        "naga-top-480x600_4",
+        "naga-top-480x600_4",
+        "naga-top-480x600_4",
+        "naga-top-480x600_4",
+        "naga-top-480x600_4",
+        "naga-top-480x600_4",
+        "naga-top-480x600_4",
+        "naga_bottom_2",
+        "naga_bottom_2",
+        "naga-top-480x600_4",
+        "naga-top-480x600_4",
+        "naga-top-480x600_4",
+        "naga-top-480x600_4",
+        "nightlance-back-half-300x91-template",
+        "nightlance-back-half-300x91-template",
+        "nightlance-back-half-300x91-template",
+        "nightlance-back-half-300x91-template",
+        "naga_bottom_2",
+        "naga_bottom_2",
+        "naga_bottom_2",
+        "naga_bottom_2",
+        "naga_bottom_2",
+        "naga_bottom_2",
+        "naga_bottom_2",
+        "naga_bottom_2"
+      ],
+      "faceTextureUv": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "faceTextureBaseW": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "faceTextureBaseH": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "faceColors": [
+        "#03192d",
+        "#03192d",
+        "#03192d",
+        "#03192d",
+        "#03192d",
+        "#03192d",
+        "#03192d",
+        "#03192d",
+        "#03192d",
+        "#03192d",
+        "#03192e",
+        "#03192e",
+        "#03192d",
+        "#03192d",
+        "#03192d",
+        "#03192d",
+        "#0d1320",
+        "#0d1320",
+        "#021526",
+        "#021526",
+        "#03192e",
+        "#03192e",
+        "#03192e",
+        "#03192e",
+        "#03192e",
+        "#03192e",
+        "#03192e",
+        "#03192e"
+      ],
+      "faceMirrorX": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "faceAngles": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        -90,
+        -90,
+        -90,
+        -90,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "gameMeta": {
+      "class": "interceptor",
+      "npcRole": "private",
+      "aiProfile": "bountyHunter",
+      "decalRole": "none",
+      "baseColor": "#111827",
+      "description": "The X904D is a classified deep-space interceptor built around a narrow pressure hull, overpowered drives and almost no concession to comfort. It is quick, pointy and deeply unfriendly.",
+      "missionLore": "Black-budget naval interceptor. Most registries deny it exists.",
+      "imageDecalMirrorX": {
+        "top": false,
+        "bottom": false,
+        "back": true
+      },
+      "valueCr": 3600000,
+      "stats": {
+        "r": 120,
+        "hp": 240,
+        "speed": 2.55,
+        "cargo": 4,
+        "missiles": 4,
+        "laser": "military"
+      },
+      "lists": {
+        "trader": false,
+        "pirate": false,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": true
+      }
+    }
+  }
+}

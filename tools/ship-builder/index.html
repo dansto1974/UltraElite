@@ -70,6 +70,7 @@
             <button id="addFaceBtn">Add Face From Picks</button>
             <button id="appendFacePointBtn">Add Picks To Face</button>
             <button id="removeFacePointBtn">Remove Picks From Face</button>
+            <button id="clearFaceGroupBtn" type="button">Clear Face Group</button>
             <button id="flipFaceBtn">Flip Face</button>
             <button id="deleteFaceBtn">Delete Face</button>
           </div>
@@ -123,7 +124,7 @@
               <section class="paint-group">
                 <h2>Reuse Selected UV</h2>
                 <div class="bitmap-target-grid">
-                  <button id="applyShelfFaceBtn" class="primary">Use On Face</button>
+                  <button id="applyShelfFaceBtn" class="primary">Use On Face Group</button>
                   <button id="applyShelfTopBtn">Use Top</button>
                   <button id="applyShelfBottomBtn">Use Bottom</button>
                   <button id="applyShelfBackBtn">Use Back</button>
@@ -394,6 +395,15 @@
               <button id="clearSelectionBtn" type="button" title="Clear selection">×</button>
             </div>
             <label class="toggle"><input id="showFaceNormals" type="checkbox" checked> Normals</label>
+            <label class="toggle"><input id="showBlankUv" type="checkbox"> Blank UV</label>
+            <div class="projection-view-toolbar" aria-label="Projection camera views">
+              <button type="button" data-view-preset="top" title="Top projection view">Top</button>
+              <button type="button" data-view-preset="bottom" title="Bottom projection view">Bottom</button>
+              <button type="button" data-view-preset="left" title="Left projection view">Left</button>
+              <button type="button" data-view-preset="right" title="Right projection view">Right</button>
+              <button type="button" data-view-preset="front" title="Front projection view">Front</button>
+              <button type="button" data-view-preset="back" title="Back projection view">Back</button>
+            </div>
             <button id="resetViewBtn">Reset View</button>
             <button id="fitViewBtn">Fit</button>
             <button id="toggleBlueprintBtn" class="blueprint-toggle active" type="button" aria-pressed="true">Blueprints On</button>
