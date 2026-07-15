@@ -18850,7 +18850,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const splashEl = byId("splash");
       const gettingStartedEl = byId("gettingStarted");
       let shouldAskCommanderName = false;
-      byId("splashVersion").textContent = GAME_VERSION;
+      byId("splashVersion").textContent = `v${GAME_VERSION}`;
 
       function dismissSplash(event = null) {
         if (!splashEl || splashEl.classList.contains("hidden")) return false;
