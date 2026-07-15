@@ -18760,6 +18760,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "verts": [
           1,
           3,
+          14
+        ],
+        "mirrored": false,
+        "faceColor": "#111827",
+        "bitmapSide": "bottom"
+      },
+      {
+        "id": 1018,
+        "verts": [
+          1,
           14,
           6
         ],
@@ -18772,6 +18782,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "verts": [
           1,
           7,
+          15
+        ],
+        "mirrored": true,
+        "faceColor": "#111827",
+        "bitmapSide": "bottom"
+      },
+      {
+        "id": 1019,
+        "verts": [
+          1,
           15,
           3
         ],
@@ -18784,7 +18804,27 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "verts": [
           2,
           6,
+          8
+        ],
+        "mirrored": false,
+        "faceColor": "#172033",
+        "bitmapSide": "top"
+      },
+      {
+        "id": 1020,
+        "verts": [
+          2,
           8,
+          10
+        ],
+        "mirrored": false,
+        "faceColor": "#172033",
+        "bitmapSide": "top"
+      },
+      {
+        "id": 1021,
+        "verts": [
+          2,
           10,
           4
         ],
@@ -18797,7 +18837,27 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "verts": [
           2,
           4,
+          11
+        ],
+        "mirrored": true,
+        "faceColor": "#172033",
+        "bitmapSide": "top"
+      },
+      {
+        "id": 1022,
+        "verts": [
+          2,
           11,
+          9
+        ],
+        "mirrored": true,
+        "faceColor": "#172033",
+        "bitmapSide": "top"
+      },
+      {
+        "id": 1023,
+        "verts": [
+          2,
           9,
           7
         ],
@@ -18810,6 +18870,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "verts": [
           3,
           12,
+          8
+        ],
+        "mirrored": false,
+        "faceColor": "#0a0f18",
+        "bitmapSide": "bottom"
+      },
+      {
+        "id": 1024,
+        "verts": [
+          3,
           8,
           14
         ],
@@ -18822,6 +18892,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "verts": [
           3,
           15,
+          9
+        ],
+        "mirrored": true,
+        "faceColor": "#0a0f18",
+        "bitmapSide": "bottom"
+      },
+      {
+        "id": 1025,
+        "verts": [
+          3,
           9,
           13
         ],
@@ -18856,6 +18936,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "verts": [
           4,
           10,
+          17
+        ],
+        "mirrored": false,
+        "faceColor": "#111722",
+        "bitmapSide": "back"
+      },
+      {
+        "id": 1026,
+        "verts": [
+          4,
           17,
           11
         ],
@@ -18868,6 +18958,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "verts": [
           5,
           13,
+          17
+        ],
+        "mirrored": false,
+        "faceColor": "#070b12",
+        "bitmapSide": "back"
+      },
+      {
+        "id": 1027,
+        "verts": [
+          5,
           17,
           12
         ],
@@ -19201,11 +19301,19 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           13
         ],
         [
+          0,
+          13
+        ],
+        [
           5,
           13
         ],
         [
           6,
+          14
+        ],
+        [
+          0,
           14
         ],
         [
@@ -19217,7 +19325,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7
         ],
         [
+          1,
+          7
+        ],
+        [
           7,
+          9
+        ],
+        [
+          1,
           9
         ],
         [
@@ -19233,8 +19349,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           10
         ],
         [
+          1,
+          10
+        ],
+        [
           8,
           10
+        ],
+        [
+          1,
+          8
         ],
         [
           6,
@@ -19249,12 +19373,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           11
         ],
         [
+          2,
+          7
+        ],
+        [
           7,
           13
         ],
         [
           8,
           14
+        ],
+        [
+          2,
+          8
         ],
         [
           8,
@@ -19269,6 +19401,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           16
         ],
         [
+          3,
+          16
+        ],
+        [
           10,
           16
         ],
@@ -19278,6 +19414,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           12,
+          16
+        ],
+        [
+          4,
           16
         ],
         [
@@ -19324,11 +19464,11 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       "edgeFaces": [
         [
           0,
-          2
+          3
         ],
         [
           0,
-          4
+          6
         ],
         [
           0,
@@ -19336,43 +19476,31 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           1,
-          5
+          11
         ],
         [
           1,
-          3
-        ],
-        [
-          2,
-          3
-        ],
-        [
-          2,
-          6
-        ],
-        [
-          2,
-          8
-        ],
-        [
-          3,
-          9
-        ],
-        [
-          3,
-          7
-        ],
-        [
-          4,
-          8
-        ],
-        [
-          4,
           4
         ],
         [
+          2,
+          5
+        ],
+        [
+          2,
+          13
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          16
+        ],
+        [
           4,
-          10
+          17
         ],
         [
           4,
@@ -19380,15 +19508,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           5,
-          10
-        ],
-        [
-          5,
-          5
-        ],
-        [
-          5,
-          9
+          14
         ],
         [
           6,
@@ -19396,15 +19516,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           6,
-          6
-        ],
-        [
-          6,
-          8
-        ],
-        [
-          7,
-          9
+          7
         ],
         [
           7,
@@ -19412,55 +19524,123 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           7,
-          17
+          8
+        ],
+        [
+          8,
+          18
+        ],
+        [
+          8,
+          9
+        ],
+        [
+          9,
+          19
+        ],
+        [
+          9,
+          10
         ],
         [
           10,
-          12
+          10
         ],
         [
           10,
-          13
+          11
         ],
         [
           11,
           17
         ],
         [
-          11,
-          13
-        ],
-        [
-          11,
-          12
-        ],
-        [
-          11,
-          16
+          12,
+          26
         ],
         [
           12,
           12
         ],
         [
-          13,
+          12,
           13
+        ],
+        [
+          13,
+          16
+        ],
+        [
+          14,
+          17
         ],
         [
           14,
           15
-        ],
-        [
-          14,
-          14
         ],
         [
           15,
           15
         ],
         [
-          16,
-          17
+          15,
+          27
+        ],
+        [
+          18,
+          22
+        ],
+        [
+          18,
+          19
+        ],
+        [
+          19,
+          23
+        ],
+        [
+          20,
+          27
+        ],
+        [
+          20,
+          23
+        ],
+        [
+          20,
+          21
+        ],
+        [
+          21,
+          22
+        ],
+        [
+          21,
+          26
+        ],
+        [
+          22,
+          22
+        ],
+        [
+          23,
+          23
+        ],
+        [
+          24,
+          25
+        ],
+        [
+          24,
+          24
+        ],
+        [
+          25,
+          25
+        ],
+        [
+          26,
+          27
         ],
         [
           -1,
@@ -19472,6 +19652,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ]
       ],
       "edgeVisibility": [
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
         31,
         31,
         31,
@@ -19527,9 +19717,19 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           10.14
         ],
         [
+          41.1,
+          88.94,
+          20.02
+        ],
+        [
           -41.1,
           88.94,
           20.02
+        ],
+        [
+          -3.62,
+          -99.42,
+          10.14
         ],
         [
           38.25,
@@ -19537,9 +19737,29 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           22.74
         ],
         [
+          19.08,
+          98.13,
+          -2.73
+        ],
+        [
+          15.88,
+          98.67,
+          -3.4
+        ],
+        [
           -15.88,
           98.67,
           -3.4
+        ],
+        [
+          -19.08,
+          98.13,
+          -2.73
+        ],
+        [
+          -38.25,
+          89.55,
+          22.74
         ],
         [
           9.43,
@@ -19547,9 +19767,19 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1.11
         ],
         [
+          10.12,
+          -99.46,
+          2.12
+        ],
+        [
           -10.12,
           -99.46,
           2.12
+        ],
+        [
+          -9.43,
+          -99.55,
+          1.11
         ],
         [
           37.05,
@@ -19565,6 +19795,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7.43,
           89.2,
           -44.6
+        ],
+        [
+          -7.43,
+          89.2,
+          -44.6
+        ],
+        [
+          0,
+          -89.44,
+          -44.72
         ],
         [
           0,
@@ -19721,14 +19961,14 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           ],
           "points": [
             [
-              32.96,
-              6.04,
-              13.02
+              36.08,
+              5.52,
+              22.45
             ],
             [
-              25.56,
-              9.74,
-              -71.34
+              28.68,
+              9.22,
+              -61.91
             ]
           ]
         },
@@ -19742,14 +19982,14 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           ],
           "points": [
             [
-              -32.96,
-              6.04,
-              13.02
+              -27.24,
+              7.34,
+              9.11
             ],
             [
-              -25.56,
-              9.74,
-              -71.34
+              -19.84,
+              11.04,
+              -75.25
             ]
           ]
         },
@@ -19763,14 +20003,14 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           ],
           "points": [
             [
-              41.05,
-              -5.57,
-              29.4
+              40.73,
+              -5.76,
+              20.53
             ],
             [
-              72.05,
-              -3.71,
-              -31.36
+              71.73,
+              -3.9,
+              -40.23
             ]
           ]
         },
@@ -19784,14 +20024,14 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           ],
           "points": [
             [
-              -41.05,
-              -5.57,
-              29.4
+              -43.01,
+              -5.25,
+              39.28
             ],
             [
-              -72.05,
-              -3.71,
-              -31.36
+              -74.01,
+              -3.39,
+              -21.48
             ]
           ]
         },
@@ -19813,12 +20053,22 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "top",
           "bottom",
           "bottom",
-          "top",
-          "top",
           "bottom",
           "bottom",
           "top",
           "top",
+          "top",
+          "top",
+          "top",
+          "top",
+          "bottom",
+          "bottom",
+          "bottom",
+          "bottom",
+          "top",
+          "top",
+          "back",
+          "back",
           "back",
           "back",
           "back",
@@ -19833,13 +20083,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#202a3b",
           "#111827",
           "#111827",
+          "#111827",
+          "#111827",
           "#172033",
           "#172033",
+          "#172033",
+          "#172033",
+          "#172033",
+          "#172033",
+          "#0a0f18",
+          "#0a0f18",
           "#0a0f18",
           "#0a0f18",
           "#253249",
           "#253249",
           "#111722",
+          "#111722",
+          "#070b12",
           "#070b12",
           "#0d1320",
           "#0d1320",
@@ -26337,6 +26597,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "verts": [
           1,
           3,
+          16
+        ],
+        "mirrored": false,
+        "faceColor": "#0b1020",
+        "bitmapSide": "bottom"
+      },
+      {
+        "id": 1019,
+        "verts": [
+          1,
           16,
           6
         ],
@@ -26349,6 +26619,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "verts": [
           1,
           7,
+          17
+        ],
+        "mirrored": true,
+        "faceColor": "#0b1020",
+        "bitmapSide": "bottom"
+      },
+      {
+        "id": 1020,
+        "verts": [
+          1,
           17,
           3
         ],
@@ -26361,7 +26641,27 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "verts": [
           2,
           6,
+          8
+        ],
+        "mirrored": false,
+        "faceColor": "#151b2e",
+        "bitmapSide": "top"
+      },
+      {
+        "id": 1021,
+        "verts": [
+          2,
           8,
+          10
+        ],
+        "mirrored": false,
+        "faceColor": "#151b2e",
+        "bitmapSide": "top"
+      },
+      {
+        "id": 1022,
+        "verts": [
+          2,
           10,
           4
         ],
@@ -26374,7 +26674,27 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "verts": [
           2,
           4,
+          11
+        ],
+        "mirrored": true,
+        "faceColor": "#151b2e",
+        "bitmapSide": "top"
+      },
+      {
+        "id": 1023,
+        "verts": [
+          2,
           11,
+          9
+        ],
+        "mirrored": true,
+        "faceColor": "#151b2e",
+        "bitmapSide": "top"
+      },
+      {
+        "id": 1024,
+        "verts": [
+          2,
           9,
           7
         ],
@@ -26387,6 +26707,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "verts": [
           3,
           12,
+          8
+        ],
+        "mirrored": false,
+        "faceColor": "#080d18",
+        "bitmapSide": "bottom"
+      },
+      {
+        "id": 1025,
+        "verts": [
+          3,
           8,
           16
         ],
@@ -26399,6 +26729,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "verts": [
           3,
           17,
+          9
+        ],
+        "mirrored": true,
+        "faceColor": "#080d18",
+        "bitmapSide": "bottom"
+      },
+      {
+        "id": 1026,
+        "verts": [
+          3,
           9,
           13
         ],
@@ -26433,6 +26773,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "verts": [
           4,
           10,
+          15
+        ],
+        "mirrored": false,
+        "faceColor": "#111827",
+        "bitmapSide": "back"
+      },
+      {
+        "id": 1027,
+        "verts": [
+          4,
           15,
           11
         ],
@@ -26445,6 +26795,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "verts": [
           5,
           13,
+          15
+        ],
+        "mirrored": false,
+        "faceColor": "#050815",
+        "bitmapSide": "back"
+      },
+      {
+        "id": 1028,
+        "verts": [
+          5,
           15,
           12
         ],
@@ -26801,11 +27161,19 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           15
         ],
         [
+          0,
+          15
+        ],
+        [
           5,
           15
         ],
         [
           6,
+          16
+        ],
+        [
+          0,
           16
         ],
         [
@@ -26817,7 +27185,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7
         ],
         [
+          1,
+          7
+        ],
+        [
           7,
+          9
+        ],
+        [
+          1,
           9
         ],
         [
@@ -26833,8 +27209,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           10
         ],
         [
+          1,
+          10
+        ],
+        [
           8,
           10
+        ],
+        [
+          1,
+          8
         ],
         [
           6,
@@ -26849,12 +27233,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           11
         ],
         [
+          2,
+          7
+        ],
+        [
           7,
           15
         ],
         [
           8,
           16
+        ],
+        [
+          2,
+          8
         ],
         [
           8,
@@ -26869,6 +27261,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           14
         ],
         [
+          3,
+          14
+        ],
+        [
           10,
           14
         ],
@@ -26878,6 +27274,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           12,
+          14
+        ],
+        [
+          4,
           14
         ],
         [
@@ -26928,11 +27328,11 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       "edgeFaces": [
         [
           0,
-          2
+          3
         ],
         [
           0,
-          4
+          6
         ],
         [
           0,
@@ -26940,43 +27340,31 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           1,
-          5
+          11
         ],
         [
           1,
-          3
-        ],
-        [
-          2,
-          3
-        ],
-        [
-          2,
-          6
-        ],
-        [
-          2,
-          8
-        ],
-        [
-          3,
-          9
-        ],
-        [
-          3,
-          7
-        ],
-        [
-          4,
-          8
-        ],
-        [
-          4,
           4
         ],
         [
+          2,
+          5
+        ],
+        [
+          2,
+          13
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          16
+        ],
+        [
           4,
-          10
+          17
         ],
         [
           4,
@@ -26984,15 +27372,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           5,
-          10
-        ],
-        [
-          5,
-          5
-        ],
-        [
-          5,
-          9
+          14
         ],
         [
           6,
@@ -27000,15 +27380,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           6,
-          6
-        ],
-        [
-          6,
-          8
-        ],
-        [
-          7,
-          9
+          7
         ],
         [
           7,
@@ -27016,63 +27388,131 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           7,
-          17
+          8
+        ],
+        [
+          8,
+          18
+        ],
+        [
+          8,
+          9
+        ],
+        [
+          9,
+          19
+        ],
+        [
+          9,
+          10
         ],
         [
           10,
-          12
+          10
         ],
         [
           10,
-          13
+          11
         ],
         [
           11,
           17
         ],
         [
-          11,
-          13
-        ],
-        [
-          11,
-          12
-        ],
-        [
-          11,
-          16
+          12,
+          26
         ],
         [
           12,
           12
         ],
         [
-          13,
+          12,
           13
+        ],
+        [
+          13,
+          16
+        ],
+        [
+          14,
+          17
         ],
         [
           14,
           15
-        ],
-        [
-          14,
-          14
         ],
         [
           15,
           15
         ],
         [
-          16,
-          17
+          15,
+          27
         ],
         [
           18,
-          18
+          22
         ],
         [
           18,
-          18
+          19
+        ],
+        [
+          19,
+          23
+        ],
+        [
+          20,
+          27
+        ],
+        [
+          20,
+          23
+        ],
+        [
+          20,
+          21
+        ],
+        [
+          21,
+          22
+        ],
+        [
+          21,
+          26
+        ],
+        [
+          22,
+          22
+        ],
+        [
+          23,
+          23
+        ],
+        [
+          24,
+          25
+        ],
+        [
+          24,
+          24
+        ],
+        [
+          25,
+          25
+        ],
+        [
+          26,
+          27
+        ],
+        [
+          28,
+          28
+        ],
+        [
+          28,
+          28
         ],
         [
           -1,
@@ -27080,6 +27520,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ]
       ],
       "edgeVisibility": [
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
         31,
         31,
         31,
@@ -27136,9 +27586,19 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           16.42
         ],
         [
+          26.74,
+          94.74,
+          17.61
+        ],
+        [
           -26.74,
           94.74,
           17.61
+        ],
+        [
+          -5.47,
+          -98.49,
+          16.42
         ],
         [
           43.57,
@@ -27146,9 +27606,29 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           53.75
         ],
         [
+          16.96,
+          98.38,
+          -5.74
+        ],
+        [
+          17.55,
+          98.3,
+          -5.46
+        ],
+        [
           -17.55,
           98.3,
           -5.46
+        ],
+        [
+          -16.96,
+          98.38,
+          -5.74
+        ],
+        [
+          -43.57,
+          72.2,
+          53.75
         ],
         [
           12,
@@ -27156,9 +27636,19 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2.02
         ],
         [
+          13.84,
+          -98.86,
+          5.93
+        ],
+        [
           -13.84,
           -98.86,
           5.93
+        ],
+        [
+          -12,
+          -99.26,
+          2.02
         ],
         [
           23.14,
@@ -27176,7 +27666,17 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -38.74
         ],
         [
+          -5.62,
+          92.02,
+          -38.74
+        ],
+        [
           -33.77,
+          -88.64,
+          -31.66
+        ],
+        [
+          33.77,
           -88.64,
           -31.66
         ],
@@ -27335,14 +27835,14 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           ],
           "points": [
             [
-              38.72,
-              8.66,
-              3.36
+              41.2,
+              8.6,
+              14.6
             ],
             [
-              51.32,
-              6.56,
-              -76.44
+              53.8,
+              6.5,
+              -65.2
             ]
           ]
         },
@@ -27356,14 +27856,14 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           ],
           "points": [
             [
-              -38.72,
-              8.66,
-              3.36
+              -32.2,
+              9.9,
+              -1.8
             ],
             [
-              -51.32,
-              6.56,
-              -76.44
+              -44.8,
+              7.8,
+              -81.6
             ]
           ]
         },
@@ -27377,14 +27877,14 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           ],
           "points": [
             [
-              47.43,
-              -4.23,
-              38.63
+              47.24,
+              -4.65,
+              30.84
             ],
             [
-              84.63,
-              -2.37,
-              -17.17
+              84.44,
+              -2.79,
+              -24.96
             ]
           ]
         },
@@ -27398,14 +27898,14 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           ],
           "points": [
             [
-              -47.43,
-              -4.23,
-              38.63
+              -49.52,
+              -3.76,
+              45.79
             ],
             [
-              -84.63,
-              -2.37,
-              -17.17
+              -86.72,
+              -1.9,
+              -10.01
             ]
           ]
         },
@@ -27438,12 +27938,22 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "top",
           "bottom",
           "bottom",
-          "top",
-          "top",
           "bottom",
           "bottom",
           "top",
           "top",
+          "top",
+          "top",
+          "top",
+          "top",
+          "bottom",
+          "bottom",
+          "bottom",
+          "bottom",
+          "top",
+          "top",
+          "back",
+          "back",
           "back",
           "back",
           "back",
@@ -27459,13 +27969,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#1f2937",
           "#0b1020",
           "#0b1020",
+          "#0b1020",
+          "#0b1020",
           "#151b2e",
           "#151b2e",
+          "#151b2e",
+          "#151b2e",
+          "#151b2e",
+          "#151b2e",
+          "#080d18",
+          "#080d18",
           "#080d18",
           "#080d18",
           "#263145",
           "#263145",
           "#111827",
+          "#111827",
+          "#050815",
           "#050815",
           "#09111f",
           "#09111f",
