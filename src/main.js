@@ -2019,9 +2019,10 @@
     }
 
     function ownedShipList() {
-      const owned = game?.missionUnlocks?.ownedShips || [];
+      const owned = Array.isArray(game?.missionUnlocks?.ownedShips) ? game.missionUnlocks.ownedShips : [];
       const current = game?.playerShip || "cobra";
-      return [...new Set(["cobra", current, ...owned].filter((model) => SHIP_NAMES[model]))];
+      const fallback = owned.length ? owned : [current || "cobra"];
+      return [...new Set([current, ...fallback].filter((model) => SHIP_NAMES[model]))];
     }
 
     function previewModelList() {
@@ -8474,27 +8475,33 @@
         return;
       }
       const cap = shipCargoCap(model);
-      if (usedCargo() > cap) {
+      const cargo = usedCargo();
+      if (cargo > cap) {
         eliteAudio.play("boop");
-        setMessage(`Cannot transfer: ${shipName(model)} hold is limited to ${cap}t.`);
+        setMessage(`Cannot transfer: ${shipName(model)} hold is limited to ${cap}t. Sell cargo first.`, true);
         return;
       }
       const owned = ownedShipList().includes(model);
       const price = shipPurchasePrice(model);
+      const localTech = currentSystem().tech + 1;
+      const requiredTech = shipTechLevel(model);
       if (!owned && !Number.isFinite(price)) {
         eliteAudio.play("boop");
         setMessage("Restricted hull: no shipyard price available.");
         return;
       }
-      const tradeIn = playerShipTradeInValue(playerShipModel()) || 0;
-      const net = owned ? 0 : Math.max(0, price - tradeIn);
-      if (game.credits < net) {
+      if (!owned && localTech < requiredTech) {
         eliteAudio.play("boop");
-        setMessage(`Insufficient credits. Need ${net.toLocaleString()} CR after trade-in.`);
+        setMessage(`${shipName(model)} requires a tech level ${requiredTech} shipyard. Local tech level is ${localTech}.`);
+        return;
+      }
+      if (!owned && game.credits < price) {
+        eliteAudio.play("boop");
+        setMessage(`Insufficient credits. Need ${price.toLocaleString()} CR.`);
         return;
       }
       if (!owned) {
-        game.credits -= net;
+        game.credits -= price;
         if (!game.missionUnlocks.ownedShips.includes(model)) game.missionUnlocks.ownedShips.push(model);
       }
       game.playerShip = model;
@@ -8502,7 +8509,35 @@
       restoreShipSystems();
       shipDiagramState.model = model;
       eliteAudio.play("beep");
-      setMessage(`${shipName(model)} ${owned ? "readied" : "purchased"} at shipyard.`, true);
+      setMessage(owned
+        ? `${shipName(model)} readied. Maintenance crews moved your equipment over.`
+        : `${shipName(model)} purchased and delivered. Maintenance crews are moving your equipment over.`, true);
+      renderPanel();
+    }
+
+    function sellShip(model) {
+      if (!game.docked) return;
+      missionState();
+      if (model === playerShipModel()) {
+        eliteAudio.play("boop");
+        setMessage("Cannot sell the ship you are currently aboard.");
+        return;
+      }
+      if (!ownedShipList().includes(model)) {
+        eliteAudio.play("boop");
+        setMessage("That hull is not in your dockyard inventory.");
+        return;
+      }
+      const value = shipResaleValue(model);
+      if (!Number.isFinite(value)) {
+        eliteAudio.play("boop");
+        setMessage("Dockyard cannot value that restricted hull.");
+        return;
+      }
+      game.missionUnlocks.ownedShips = game.missionUnlocks.ownedShips.filter((ownedModel) => ownedModel !== model);
+      game.credits += value;
+      eliteAudio.play("beep");
+      setMessage(`${shipName(model)} sold for ${value.toLocaleString()} CR.`, true);
       renderPanel();
     }
 
@@ -17219,7 +17254,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (!activeModels.includes(shipDiagramState.model)) shipDiagramState.model = activeModels[0] || "cobra";
       updatePanelDrawer();
       document.querySelectorAll(".tabs .btn").forEach((b) => b.classList.toggle("active", b.dataset.panel === game.panel));
-      const title = game.panel === "cheats" ? "Dev" : game.panel[0].toUpperCase() + game.panel.slice(1);
+      const title = game.panel === "cheats" ? "Dev" : game.panel === "shipyard" ? "Dockyard" : game.panel[0].toUpperCase() + game.panel.slice(1);
       byId("panelTitle").textContent = title;
       byId("panelSub").textContent = game.docked ? `Docked at ${game.dockedAt || currentSystem().name + " Station"}` : "In flight";
       const map = { market: renderMarket, missions: renderMissions, chart: renderChart, equip: renderEquip, shipyard: renderShipyard, status: renderStatus, ship: renderShip, library: renderLibrary, help: renderHelp, about: renderAbout, cheats: renderCheats };
@@ -17642,23 +17677,34 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function renderShipyard() {
+      const sys = currentSystem();
+      const localTech = sys.tech + 1;
       const current = playerShipModel();
       const owned = ownedShipList();
-      const tradeIn = playerShipTradeInValue(current) || 0;
       const docked = !!game.docked;
       const hulls = shipyardHullList();
       const rows = hulls.map((model) => {
         const currentHull = model === current;
         const ownedHull = owned.includes(model);
         const price = shipPurchasePrice(model);
+        const resale = shipResaleValue(model);
+        const requiredTech = shipTechLevel(model);
         const cap = shipCargoCap(model);
-        const cargoBlocked = usedCargo() > cap;
-        const net = ownedHull ? 0 : Math.max(0, (price || 0) - tradeIn);
-        const affordable = ownedHull || game.credits >= net;
-        const disabled = currentHull || !docked || cargoBlocked || !affordable || (!ownedHull && !Number.isFinite(price));
-        const action = currentHull ? "Current" : ownedHull ? "Switch" : `Buy ${net ? `${net.toLocaleString()} CR` : "with trade-in"}`;
+        const cargo = usedCargo();
+        const cargoBlocked = cargo > cap;
+        const techBlocked = !ownedHull && localTech < requiredTech;
+        const affordable = ownedHull || game.credits >= price;
+        const buyDisabled = currentHull || !docked || cargoBlocked || techBlocked || !affordable || (!ownedHull && !Number.isFinite(price));
+        const sellDisabled = currentHull || !docked || !ownedHull || !Number.isFinite(resale);
+        const action = currentHull ? "Current" : ownedHull ? "Ready Ship" : `Buy ${price.toLocaleString()} CR`;
         const status = currentHull ? "Current hull" : ownedHull ? "Owned" : (game.missionUnlocks.ships || []).includes(model) && !SHIP_MODEL_LIST.includes(model) ? "Authorised" : "For sale";
-        const note = cargoBlocked ? `Cargo ${usedCargo()}/${cap}t exceeds hold` : ownedHull ? "No charge" : `Price ${price.toLocaleString()} CR`;
+        const tradeNote = cargoBlocked
+          ? `Cargo ${cargo}/${cap}t - sell cargo first`
+          : techBlocked
+            ? `Requires TL ${requiredTech}; local TL ${localTech}`
+            : ownedHull
+              ? "Equipment transfer included"
+              : `Purchase ${price.toLocaleString()} CR`;
         const stats = shipStats(model);
         return `<div class="notice">
           <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
@@ -17669,14 +17715,20 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
             ${stat("Speed", `${Math.round(220 * (stats.speed || 1))} m/s`)}
             ${stat("Cargo", `${cap}t`)}
             ${stat("Hull HP", Math.round(stats.hp))}
-            ${stat("Trade", note)}
+            ${stat("Tech", `TL ${requiredTech}`)}
+            ${stat("Dockyard", tradeNote)}
+            ${ownedHull ? stat("Resale", currentHull ? "Current ship" : Number.isFinite(resale) ? `${resale.toLocaleString()} CR` : "Restricted") : stat("Resale", "Buy first")}
           </div>
-          <div style="margin-top:8px">
-            <button class="btn mini primary" data-shipyard-buy="${model}" ${disabled ? "disabled" : ""}>${action}</button>
+          <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn mini primary" data-shipyard-buy="${model}" ${buyDisabled ? "disabled" : ""}>${action}</button>
+            <button class="btn mini danger" data-shipyard-sell="${model}" ${sellDisabled ? "disabled" : ""}>Sell ${Number.isFinite(resale) ? `${resale.toLocaleString()} CR` : ""}</button>
           </div>
         </div>`;
       }).join("");
-      return `<div class="notice">Credits ${fmt(game.credits)} CR &nbsp; Current ${shipName(current)} trade-in ${tradeIn.toLocaleString()} CR. Ship transfers are dockside only.</div>
+      return `<div class="notice" style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+          <span>Credits ${fmt(game.credits)} CR. Local tech level ${localTech}. Owned ships can be readied for free; new purchases are delivered dockside and movable equipment is transferred.</span>
+          <button class="btn mini" data-shipyard-market ${docked ? "" : "disabled"}>Open Market</button>
+        </div>
         ${hulls.length ? rows : `<div class="notice">No shipyard hulls available at this station.</div>`}`;
     }
 
@@ -17775,7 +17827,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function playerShipValueText(modelName) {
-      const value = playerShipTradeInValue(modelName);
+      const value = shipResaleValue(modelName);
       return Number.isFinite(value) ? `${value.toLocaleString()} CR` : "Restricted";
     }
 
@@ -17784,12 +17836,40 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return Number.isFinite(price) ? Math.max(0, Math.round(price)) : null;
     }
 
-    function playerShipTradeInValue(modelName = playerShipModel()) {
+    const SHIP_TECH_LEVELS = {
+      shuttle: 1,
+      worm: 2,
+      adder: 3,
+      gecko: 4,
+      transporter: 5,
+      cobra1: 5,
+      moray: 6,
+      sidewinder: 6,
+      krait: 7,
+      cobra: 8,
+      mamba: 8,
+      python: 9,
+      boa: 10,
+      viper: 10,
+      asp: 11,
+      ferdelance: 12,
+      anaconda: 13,
+      constrictor: 13,
+      cougar: 14,
+      diamondback: 14,
+      thargoid: 14,
+      thargon: 14
+    };
+
+    function shipTechLevel(modelName) {
+      const level = SHIP_TECH_LEVELS[modelName] ?? modelGameMeta(modelName).techLevel ?? 8;
+      return clamp(Math.trunc(Number(level) || 8), 1, 14);
+    }
+
+    function shipResaleValue(modelName = playerShipModel()) {
       const base = shipPurchasePrice(modelName);
       if (!Number.isFinite(base)) return null;
-      const condition = clamp(Number.isFinite(game.energy) ? game.energy : 100, 0, 100) / 100;
-      const equipmentValue = EQUIPMENT.reduce((sum, item) => sum + (game.equipment[item.id] ? item.cost * .45 : 0), 0);
-      return Math.round((base * (.38 + condition * .52) + equipmentValue) / 100) * 100;
+      return Math.round((base * .62) / 100) * 100;
     }
 
     function shipCargoCap(modelName) {
@@ -18156,6 +18236,12 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       attachLocalMapDrag();
       panelBody.querySelectorAll("[data-equip]").forEach((b) => b.addEventListener("click", () => buyEquipment(b.dataset.equip)));
       panelBody.querySelectorAll("[data-shipyard-buy]").forEach((b) => b.addEventListener("click", () => buyShip(b.dataset.shipyardBuy)));
+      panelBody.querySelectorAll("[data-shipyard-sell]").forEach((b) => b.addEventListener("click", () => sellShip(b.dataset.shipyardSell)));
+      const shipyardMarket = panelBody.querySelector("[data-shipyard-market]");
+      if (shipyardMarket) shipyardMarket.addEventListener("click", () => {
+        game.panel = "market";
+        renderPanel();
+      });
       panelBody.querySelectorAll("[data-ship-nav]").forEach((b) => b.addEventListener("click", () => cycleShipDiagram(Number(b.dataset.shipNav))));
       panelBody.querySelectorAll("[data-shipselect]").forEach((select) => select.addEventListener("change", () => {
         shipDiagramState.model = select.value;
