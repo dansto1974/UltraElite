@@ -4624,15 +4624,33 @@ function imageToPngDataUrl(img) {
   return canvas.toDataURL("image/png");
 }
 
-function referencedLocalFaceSkinUploads() {
+function referencedVisibleFaceSkinUploads() {
   const keys = [...new Set(state.faces.map((face) => cleanBitmapKey(face.bitmapFaceKey)).filter(Boolean))];
   return keys.map((key) => {
     const img = state.faceSkinImages?.[key];
-    const source = state.faceSkinSources?.[key];
-    if (!img?.naturalWidth || source === "asset") return null;
-    if (source !== "imported" && source !== "shelf") return null;
+    if (!img?.naturalWidth) return null;
     return { key, img };
   }).filter(Boolean);
+}
+
+function referencedVisibleSideSkinUploads() {
+  return ["top", "bottom", "back"].map((side) => {
+    const img = state.skinImages?.[side];
+    if (!img?.naturalWidth) return null;
+    return { side, img };
+  }).filter(Boolean);
+}
+
+async function uploadSideSkinAsset(model, side, img) {
+  return apiJson("/api/skins", {
+    method: "POST",
+    body: JSON.stringify({
+      kind: "side",
+      model,
+      side,
+      dataUrl: imageToPngDataUrl(img)
+    })
+  });
 }
 
 async function uploadFaceSkinAsset(model, key, img) {
@@ -4652,17 +4670,21 @@ async function saveModelAsset() {
     if (!await requireToolServer()) return;
     const data = builderExport();
     const cleanId = cleanBitmapKey(data.id, "custom_ship");
-    const localFaceSkins = referencedLocalFaceSkinUploads();
-    const skinText = localFaceSkins.length
-      ? ` Also overwrite ${localFaceSkins.length} referenced local face PNG${localFaceSkins.length === 1 ? "" : "s"} in assets/skins/ first?`
-      : "";
-    if (!confirmWrite(`Overwrite assets/models/${cleanId}.ultraship.json and regenerate model libraries?${skinText}`)) {
+    const sideSkins = referencedVisibleSideSkinUploads();
+    const faceSkins = referencedVisibleFaceSkinUploads();
+    if (!confirmWrite(`Save the visible ship as assets/models/${cleanId}.ultraship.json, write loaded skin PNGs, and regenerate model libraries?`)) {
       setStatus("MODEL SAVE CANCELLED.");
       return;
     }
-    for (let i = 0; i < localFaceSkins.length; i++) {
-      const skin = localFaceSkins[i];
-      setStatus(`SAVING ${cleanId.toUpperCase()} FACE ${skin.key} (${i + 1}/${localFaceSkins.length})...`);
+    for (let i = 0; i < sideSkins.length; i++) {
+      const skin = sideSkins[i];
+      setStatus(`SAVING ${cleanId.toUpperCase()} ${skin.side.toUpperCase()} SKIN (${i + 1}/${sideSkins.length})...`);
+      await uploadSideSkinAsset(cleanId, skin.side, skin.img);
+      state.skinImages.source[skin.side] = "asset";
+    }
+    for (let i = 0; i < faceSkins.length; i++) {
+      const skin = faceSkins[i];
+      setStatus(`SAVING ${cleanId.toUpperCase()} FACE ${skin.key} (${i + 1}/${faceSkins.length})...`);
       await uploadFaceSkinAsset(cleanId, skin.key, skin.img);
       state.faceSkinSources[skin.key] = "asset";
     }
@@ -4676,8 +4698,12 @@ async function saveModelAsset() {
     populateLibrarySelector();
     if (els.librarySelector) els.librarySelector.value = cleanId;
     state.assetVersion = Date.now();
-    if (localFaceSkins.length) await refreshAvailableSkinAssets();
-    setStatus(`MODEL UPDATED: ${result.path}${localFaceSkins.length ? `; ${localFaceSkins.length} FACE PNG${localFaceSkins.length === 1 ? "" : "S"} SAVED.` : "."}`);
+    if (sideSkins.length || faceSkins.length) await refreshAvailableSkinAssets();
+    const savedParts = [
+      sideSkins.length ? `${sideSkins.length} SIDE PNG${sideSkins.length === 1 ? "" : "S"}` : "",
+      faceSkins.length ? `${faceSkins.length} FACE PNG${faceSkins.length === 1 ? "" : "S"}` : ""
+    ].filter(Boolean).join(", ");
+    setStatus(`MODEL UPDATED: ${result.path}${savedParts ? `; ${savedParts} SAVED.` : "."}`);
   } catch (error) {
     setStatus(`MODEL SAVE FAILED: ${error.message}`);
   }
@@ -4697,15 +4723,8 @@ async function uploadSkinSide(side) {
       return;
     }
     setStatus(`UPLOADING ${model.toUpperCase()} ${side.toUpperCase()} SKIN...`);
-    const result = await apiJson("/api/skins", {
-      method: "POST",
-      body: JSON.stringify({
-        kind: "side",
-        model,
-        side,
-        dataUrl: imageToPngDataUrl(img)
-      })
-    });
+    const result = await uploadSideSkinAsset(model, side, img);
+    state.skinImages.source[side] = "asset";
     state.assetVersion = Date.now();
     loadSkinBitmaps(model, state.skinImages?.mirrorX || currentModelMirrorFlags());
     await refreshAvailableSkinAssets();
