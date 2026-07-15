@@ -3690,7 +3690,15 @@
         if (mission.status !== "active" || !mission.target || mission.target.destroyed || mission.target.spawned) continue;
         if (!sameSystemRef(mission.destination)) continue;
         mission.target.spawnDelay = Math.max(0, (Number(mission.target.spawnDelay) || 0) - dt);
-        const nearBody = worldSnapshot().bodies.some((body) =>
+        const world = worldSnapshot();
+        const bodies = Array.isArray(world?.bodies)
+          ? world.bodies
+          : Array.isArray(world?.largeBodies)
+            ? world.largeBodies
+            : Array.isArray(world?.objects)
+              ? world.objects.filter((body) => body?.type === "planet" || body?.type === "sun" || body?.type === "station")
+              : [];
+        const nearBody = bodies.some((body) =>
           finiteVec3(body?.pos)
           && finiteVec3(game.camera?.pos)
           && len(sub(body.pos, game.camera.pos)) < (body.r || 500) + 2600
