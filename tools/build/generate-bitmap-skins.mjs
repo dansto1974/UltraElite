@@ -16,6 +16,11 @@ let size = DEFAULT_SKIN_SIZE;
 const force = process.argv.includes("--force");
 const recompress = process.argv.includes("--recompress");
 const dryRun = process.argv.includes("--dry-run");
+const forceModelNames = new Set((process.argv.find((arg) => arg.startsWith("--force-models=")) || "")
+  .replace(/^--force-models=/, "")
+  .split(",")
+  .map((model) => cleanBitmapKey(model))
+  .filter(Boolean));
 const preserveForceSkins = new Set(["adder", "cobra"]);
 const imageMimeByExt = new Map([
   [".png", "image/png"],
@@ -106,6 +111,7 @@ const sets = {
 
 const palettes = {
   project: ["#cf9b2a", "#ff2d86", "#16120d", "#f7e8ad"],
+  covert: ["#08111f", "#38d5ff", "#020611", "#93f7ff"],
   police: ["#234f68", "#5edfff", "#07111a", "#dff8ff"],
   alien: ["#5e35a0", "#49ff91", "#100819", "#d8b2ff"],
   pirate: ["#3d3431", "#ff4a34", "#090807", "#b8a098"],
@@ -118,7 +124,12 @@ const palettes = {
 };
 
 function roleFor(model) {
+  const meta = modelMeta(model);
   if (model === "diamondback") return "project";
+  if (meta.hiddenUntilDiscovered || meta.flags?.hiddenUntilDiscovered) {
+    const label = `${meta.class || ""} ${meta.npcRole || ""} ${meta.aiProfile || ""}`.toLowerCase();
+    return /military|interceptor|strike|hunter|bounty/.test(label) ? "covert" : "project";
+  }
   if (sets.station.has(model) || model === "hermit") return "station";
   if (sets.rock.has(model)) return "rock";
   if (sets.cargo.has(model)) return "cargo";
@@ -353,6 +364,7 @@ function sourceTextureFor(role, side) {
   if (role === "alien") return sourceTexture("alien") || sourceTexture(side);
   if (role === "rock") return sourceTexture("rock") || sourceTexture(side);
   if (role === "missile") return sourceTexture("missile") || sourceTexture(side);
+  if (role === "covert") return null;
   if (side === "back") return sourceTexture("back") || sourceTexture("top");
   return sourceTexture(side) || sourceTexture("top") || sourceTexture("back");
 }
@@ -514,12 +526,14 @@ function renderSkin(model, side) {
       }
     }
 
-    for (let i = 0; i < 24; i++) {
-      drawPanel(buf, rng() * size, rng() * size, size * (.08 + rng() * .24), size * (.04 + rng() * .16), line, role === "rock" ? .15 : .28);
+    const panelCount = role === "covert" ? 7 : 24;
+    for (let i = 0; i < panelCount; i++) {
+      drawPanel(buf, rng() * size, rng() * size, size * (.08 + rng() * .24), size * (.04 + rng() * .16), line, role === "rock" ? .15 : role === "covert" ? .1 : .28);
     }
-    for (let i = 0; i < 80; i++) {
+    const scratchCount = role === "covert" ? 14 : 80;
+    for (let i = 0; i < scratchCount; i++) {
       const x = rng() * size, y = rng() * size;
-      drawLine(buf, x, y, x + size * (.03 + rng() * .18), y + (rng() - .5) * size * .04, dark, .8 + rng() * 1.4, .18);
+      drawLine(buf, x, y, x + size * (.03 + rng() * .18), y + (rng() - .5) * size * .04, dark, .8 + rng() * 1.4, role === "covert" ? .06 : .18);
     }
     if (side !== "back" && (role === "station" || role === "hauler" || role === "cargo")) {
       for (let i = -8; i <= 18; i++) {
@@ -550,6 +564,10 @@ function renderSkin(model, side) {
     if (side !== "back" && role === "project") {
       drawLine(buf, size * .12, side === "top" ? size * .97 : size * .05, size * .7, side === "top" ? 0 : size * .97, accent, size * .15, .38);
       drawLine(buf, size * .25, side === "top" ? size * .97 : size * .05, size * .85, side === "top" ? 0 : size * .97, [255, 255, 255, 255], size * .045, .5);
+    }
+    if (side !== "back" && role === "covert") {
+      drawLine(buf, size * .12, side === "top" ? size * .82 : size * .18, size * .88, side === "top" ? size * .2 : size * .8, accent, size * .03, .48);
+      drawLine(buf, size * .16, side === "top" ? size * .7 : size * .3, size * .78, side === "top" ? size * .28 : size * .72, line, size * .012, .42);
     }
     if (role === "rock") {
       for (let i = 0; i < 60; i++) {
@@ -744,7 +762,7 @@ for (const model of models) {
         && !preserveForceSkins.has(model)
         && !!sizeInfo
         && sizeInfo.width > Math.ceil(expectedSize / 2) + 4;
-      if ((force && !preserveExisting) || !fs.existsSync(filePath) || needsMirrorRegen) {
+      if (((force || forceModelNames.has(model)) && !preserveExisting) || !fs.existsSync(filePath) || needsMirrorRegen) {
         let { rgba, width, height } = renderSkin(model, side);
         if (mirrorX) {
           const cropped = cropLeftHalfRgba(rgba, width, height);
@@ -771,7 +789,7 @@ for (const model of models) {
   for (const key of modelFaceTextureKeys(model)) {
     const file = `${model}-face-${key}.png`;
     const filePath = path.join(outDir, file);
-    if (force || !fs.existsSync(filePath)) {
+    if (force || forceModelNames.has(model) || !fs.existsSync(filePath)) {
       const { rgba, width, height } = renderFaceSkin(model, key);
       fs.writeFileSync(filePath, pngEncode(rgba, width, height));
       generatedCount++;
