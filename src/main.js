@@ -18589,9 +18589,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         type: "ship",
         model: modelName,
         scaleFactor,
-        rot: .64,
-        pitch: .34,
-        roll: .08,
+        rot: Math.PI - .58,
+        pitch: .42,
+        roll: -.08,
         police: POLICE_MODELS.includes(modelName),
         engineGlow: 1,
         color: hullColor
