@@ -694,8 +694,28 @@
       return remapped;
     }
 
+    function detailRenderIntent(detail) {
+      const type = detail?.type === "panel" ? "line" : detail?.type;
+      const line = type === "line" || type === "polyline";
+      const beacon = type === "beacon";
+      const engine = type === "engine";
+      const window = type === "window";
+      return {
+        kind: beacon ? "beacon" : line ? "line" : "poly",
+        solid: !line,
+        wire: !beacon,
+        glow: engine,
+        glass: window,
+        solidStroke: engine
+      };
+    }
+
     function buildBlueprint(data) {
       const model = { ...data };
+      model.details = (model.details || []).map((detail) => ({
+        ...detail,
+        detailRender: detail.detailRender || detailRenderIntent(detail)
+      }));
       const faceEntries = model.normals.map((normal, faceIndex) => {
         const ids = new Set();
         model.edges.forEach((edge, edgeIndex) => {
@@ -10554,18 +10574,19 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const orient = options.orient || o.orient || ((v) => o.quat ? quatRotate(o.quat, v) : rotateShipPoint(v, o.rot || 0, o.pitch || 0, roll));
       const details = [];
       for (const detail of model.details) {
-        if (options.beaconsOnly && detail.type !== "beacon") continue;
-        if (options.skipBeacons && detail.type === "beacon") continue;
-        if (options.enginesOnly && detail.type !== "engine") continue;
-        const isLineDetail = detail.type === "line" || detail.type === "polyline";
+        const renderIntent = detail.detailRender || detailRenderIntent(detail);
+        const isBeaconDetail = renderIntent.kind === "beacon";
+        const isLineDetail = renderIntent.kind === "line";
+        if (wireDetails ? !renderIntent.wire : !renderIntent.solid) continue;
+        if (options.beaconsOnly && !isBeaconDetail) continue;
+        if (options.skipBeacons && isBeaconDetail) continue;
+        if (options.enginesOnly && !renderIntent.glow) continue;
         const markedProtrudingEdge = isLineDetail && detail.indices?.length === 2
           ? model.wireCullEdgeKeys?.has(detail.indices[0] < detail.indices[1] ? `${detail.indices[0]},${detail.indices[1]}` : `${detail.indices[1]},${detail.indices[0]}`)
           : false;
-        if (!wireDetails && isLineDetail) continue;
         if (options.protrudingEdgesOnly && !markedProtrudingEdge) continue;
         if (options.skipProtrudingEdges && markedProtrudingEdge) continue;
-        if (detail.type === "beacon") {
-          if (wireDetails) continue;
+        if (isBeaconDetail) {
           const sourceIndex = Number.isInteger(detail.index)
             ? detail.index
             : Array.isArray(detail.indices) && detail.indices.length
@@ -10633,10 +10654,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           });
           continue;
         }
-        const engineVisual = detail.type === "engine"
+        const engineVisual = renderIntent.glow
           ? engineDetailVisual(o.engineGlow ?? 1, detail.stroke || "#ffffff")
           : null;
-        const glassVisual = !wireDetails && detail.type === "window" && normal
+        const glassVisual = !wireDetails && renderIntent.glass && normal
           ? windowGlintForSurface(normal, surfaceCenter, camera)
           : null;
         const wireColor = options.wireColor || "#e9f2e4";
@@ -10644,13 +10665,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           kind: "poly",
           projected,
           avgZ: verts.reduce((sum, p) => sum + p.z, 0) / verts.length,
-          fillStyle: wireDetails ? "#000" : (detail.type === "engine" ? engineVisual.fill : (detail.color || "#101915")),
-          strokeStyle: wireDetails ? (detail.stroke || wireColor) : (detail.type === "engine" ? engineVisual.stroke : null),
+          fillStyle: wireDetails ? "#000" : (renderIntent.glow ? engineVisual.fill : (detail.color || "#101915")),
+          strokeStyle: wireDetails ? (detail.stroke || wireColor) : (renderIntent.solidStroke ? engineVisual.stroke : null),
           lineWidth: detail.width || 1.2,
           fillInset: wireDetails ? (options.wireFillInset ?? 1.1) : 0,
-          glow: !wireDetails && detail.type === "engine",
+          glow: !wireDetails && renderIntent.glow,
           glowAlpha: wireDetails ? 0 : (engineVisual?.glowAlpha ?? 1),
-          glass: !wireDetails && detail.type === "window",
+          glass: !wireDetails && renderIntent.glass,
           glintAngle: glassVisual?.angle ?? 0,
           glintAlpha: glassVisual?.alpha ?? .58
         });

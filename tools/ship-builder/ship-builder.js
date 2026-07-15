@@ -5003,6 +5003,29 @@ function flipSelectedFace() {
   renderAll();
 }
 
+function detailRenderIntent(detail) {
+  const type = detail?.type === "panel" ? "line" : detail?.type;
+  const line = type === "line" || type === "polyline";
+  const beacon = type === "beacon";
+  const engine = type === "engine";
+  const windowDetail = type === "window";
+  return {
+    kind: beacon ? "beacon" : line ? "line" : "poly",
+    solid: !line,
+    wire: !beacon,
+    glow: engine,
+    glass: windowDetail,
+    solidStroke: engine
+  };
+}
+
+function withDetailRender(detail) {
+  return {
+    ...detail,
+    detailRender: detailRenderIntent(detail)
+  };
+}
+
 function derivedBlueprint() {
   const indexById = new Map(state.verts.map((v, i) => [v.id, i]));
   const verts = state.verts.map((v) => [round(v.x), round(v.y), round(v.z)]);
@@ -5048,11 +5071,11 @@ function derivedBlueprint() {
     if (d.type === "beacon") {
       const index = indexById.get(Number(d.vertexId));
       if (index === undefined) return null;
-      return {
+      return withDetailRender({
         type: "beacon",
         index,
         color: d.color || "#ffb642"
-      };
+      });
     }
     const face = faceById(d.faceId);
     if (!face && (Array.isArray(d.points) || Array.isArray(d.indices))) {
@@ -5070,10 +5093,10 @@ function derivedBlueprint() {
         const mapped = d.indices
           .map((id) => indexById.get(Number(id)))
           .filter((i) => i !== undefined);
-        if (mapped.length >= 2) return { ...detail, indices: mapped };
+        if (mapped.length >= 2) return withDetailRender({ ...detail, indices: mapped });
       }
       const points = detailModelPoints(d).map(toArray);
-      if (points.length >= 2) return { ...detail, points };
+      if (points.length >= 2) return withDetailRender({ ...detail, points });
       return null;
     }
     if (!face) return null;
@@ -5086,9 +5109,9 @@ function derivedBlueprint() {
       lift: 0.5
     };
     if (d.type === "panel") {
-      return { ...base, type: "polyline", points, width: 1.2 };
+      return withDetailRender({ ...base, type: "polyline", points, width: 1.2 });
     }
-    return { ...base, points, stroke: d.type === "engine" ? "#ffffff" : undefined };
+    return withDetailRender({ ...base, points, stroke: d.type === "engine" ? "#ffffff" : undefined });
   }).filter(Boolean);
   const projectionFaces = renderableFaces.map((face) => face.source);
   const faceSides = projectionFaces.map((f) => validBitmapFaceSide(f.bitmapSide) || null);

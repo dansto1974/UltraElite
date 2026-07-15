@@ -934,7 +934,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             15,
             16,
             17
-          ]
+          ],
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "engine",
@@ -967,7 +975,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -5,
               -40
             ]
-          ]
+          ],
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         }
       ],
       "gameMeta": {
@@ -1898,7 +1914,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               41.5,
               37
             ]
-          ]
+          ],
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "engine",
@@ -1936,7 +1960,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -18.3,
               -31.8
             ]
-          ]
+          ],
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "engine",
@@ -1974,7 +2006,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               35,
               -42.7
             ]
-          ]
+          ],
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "engine",
@@ -2012,7 +2052,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               35,
               -42.7
             ]
-          ]
+          ],
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         }
       ],
       "imageProjection": {
@@ -2974,7 +3022,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.91,
             0.4
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "line",
@@ -2990,7 +3046,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           ],
           "width": 1.4,
           "lift": 0.5,
-          "cull": false
+          "cull": false,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "engine",
@@ -3007,7 +3071,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         }
       ],
       "imageProjection": {
@@ -4503,7 +4575,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.97,
             0.25
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "engine",
@@ -4531,7 +4611,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         }
       ],
       "imageProjection": {
@@ -6791,7 +6879,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.89,
             0.45
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "line",
@@ -6807,7 +6903,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           ],
           "width": 1.2,
           "lift": 0.5,
-          "cull": false
+          "cull": false,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "engine",
@@ -6824,7 +6928,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "engine",
@@ -6841,7 +6953,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "engine",
@@ -6857,7 +6977,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "engine",
@@ -6873,7 +7001,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         }
       ],
       "imageProjection": {
@@ -7560,7 +7696,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.97,
             0.24
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "line",
@@ -7576,7 +7720,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           ],
           "width": 1.2,
           "lift": 0.5,
-          "cull": false
+          "cull": false,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "engine",
@@ -7604,7 +7756,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "engine",
@@ -7632,7 +7792,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         }
       ],
       "imageProjection": {
@@ -8466,7 +8634,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.96,
             0.26
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "window",
@@ -8481,7 +8657,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -1,
             0
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "window",
@@ -8496,7 +8680,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -1,
             0
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "engine",
@@ -8529,7 +8721,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         }
       ],
       "imageProjection": {
@@ -9521,7 +9721,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             0,
             1
-          ]
+          ],
+          "detailRender": {
+            "kind": "beacon",
+            "solid": true,
+            "wire": false,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "beacon",
@@ -9531,7 +9739,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             0,
             1
-          ]
+          ],
+          "detailRender": {
+            "kind": "beacon",
+            "solid": true,
+            "wire": false,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "beacon",
@@ -9541,7 +9757,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             0,
             1
-          ]
+          ],
+          "detailRender": {
+            "kind": "beacon",
+            "solid": true,
+            "wire": false,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "beacon",
@@ -9551,7 +9775,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             0,
             1
-          ]
+          ],
+          "detailRender": {
+            "kind": "beacon",
+            "solid": true,
+            "wire": false,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         }
       ],
       "imageProjection": {
@@ -10439,7 +10671,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.94,
             0.08
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "window",
@@ -10454,7 +10694,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.94,
             0.08
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "engine",
@@ -10471,7 +10719,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         }
       ],
       "imageProjection": {
@@ -11277,7 +11533,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -69.31
             ]
           ],
-          "stroke": "#ffffff"
+          "stroke": "#ffffff",
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "engine",
@@ -11305,7 +11569,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -69.25
             ]
           ],
-          "stroke": "#ffffff"
+          "stroke": "#ffffff",
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "window",
@@ -11332,7 +11604,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               26.99,
               -44.67
             ]
-          ]
+          ],
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "window",
@@ -11359,7 +11639,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               9.51,
               -38.59
             ]
-          ]
+          ],
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "window",
@@ -11386,7 +11674,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -3.68,
               -26.94
             ]
-          ]
+          ],
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "window",
@@ -11413,7 +11709,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -2.16,
               -25.99
             ]
-          ]
+          ],
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "polyline",
@@ -11436,7 +11740,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -54.83
             ]
           ],
-          "width": 1.2
+          "width": 1.2,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "polyline",
@@ -11459,7 +11771,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               59.35
             ]
           ],
-          "width": 1.2
+          "width": 1.2,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "polyline",
@@ -11482,7 +11802,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -51.53
             ]
           ],
-          "width": 1.2
+          "width": 1.2,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "polyline",
@@ -11505,7 +11833,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -54.83
             ]
           ],
-          "width": 1.2
+          "width": 1.2,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "polyline",
@@ -11528,7 +11864,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -52.77
             ]
           ],
-          "width": 1.2
+          "width": 1.2,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "polyline",
@@ -11551,7 +11895,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               58.11
             ]
           ],
-          "width": 1.2
+          "width": 1.2,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "polyline",
@@ -11574,7 +11926,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -63.33
             ]
           ],
-          "width": 1.2
+          "width": 1.2,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "polyline",
@@ -11597,7 +11957,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -52.77
             ]
           ],
-          "width": 1.2
+          "width": 1.2,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         }
       ],
       "gameMeta": {
@@ -12634,7 +13002,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             0,
             1
-          ]
+          ],
+          "detailRender": {
+            "kind": "beacon",
+            "solid": true,
+            "wire": false,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "beacon",
@@ -12644,7 +13020,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             0,
             1
-          ]
+          ],
+          "detailRender": {
+            "kind": "beacon",
+            "solid": true,
+            "wire": false,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "beacon",
@@ -12654,7 +13038,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             0,
             1
-          ]
+          ],
+          "detailRender": {
+            "kind": "beacon",
+            "solid": true,
+            "wire": false,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "beacon",
@@ -12664,7 +13056,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             0,
             1
-          ]
+          ],
+          "detailRender": {
+            "kind": "beacon",
+            "solid": true,
+            "wire": false,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         }
       ],
       "imageProjection": {
@@ -13043,7 +13443,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         }
       ],
       "imageProjection": {
@@ -13915,7 +14323,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             1,
             0.25
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "window",
@@ -13930,7 +14346,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             1,
             0.25
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "window",
@@ -13945,7 +14369,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -1,
             0
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "engine",
@@ -13978,7 +14410,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         }
       ],
       "imageProjection": {
@@ -14719,7 +15159,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.99,
             0.16
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "line",
@@ -14734,7 +15182,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.14
           ],
           "width": 1.4,
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "line",
@@ -14749,7 +15205,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.14
           ],
           "width": 1.4,
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "engine",
@@ -14782,7 +15246,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "engine",
@@ -14810,7 +15282,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.07,
             -0.92
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "engine",
@@ -14838,7 +15318,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.07,
             -0.92
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         }
       ],
       "imageProjection": {
@@ -15488,7 +15976,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         {
           "type": "beacon",
           "index": 0,
-          "color": "#ffb642"
+          "color": "#ffb642",
+          "detailRender": {
+            "kind": "beacon",
+            "solid": true,
+            "wire": false,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         }
       ],
       "imageProjection": {
@@ -16333,7 +16829,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           ],
           "width": 1.6,
           "lift": 0.5,
-          "cull": false
+          "cull": false,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "line",
@@ -16349,7 +16853,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           ],
           "width": 1.6,
           "lift": 0.5,
-          "cull": false
+          "cull": false,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "window",
@@ -16364,7 +16876,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.97,
             0.12
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "window",
@@ -16379,7 +16899,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.97,
             0.12
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "engine",
@@ -16395,7 +16923,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "engine",
@@ -16411,7 +16947,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         }
       ],
       "imageProjection": {
@@ -17388,7 +17932,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             1,
             0.08
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "window",
@@ -17403,7 +17955,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -1,
             0.08
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "window",
@@ -17418,7 +17978,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -1,
             0.08
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "engine",
@@ -17435,7 +18003,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "engine",
@@ -17451,7 +18027,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "engine",
@@ -17467,7 +18051,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         }
       ],
       "imageProjection": {
@@ -18337,7 +18929,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         }
       ],
       "imageProjection": {
@@ -19085,7 +19685,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.99,
             0.16
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "line",
@@ -19100,7 +19708,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.16
           ],
           "width": 1.4,
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "line",
@@ -19115,7 +19731,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.16
           ],
           "width": 1.4,
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "engine",
@@ -19131,7 +19755,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -0.55,
             -0.83
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         }
       ],
       "imageProjection": {
@@ -21069,7 +21701,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -103
             ]
           ],
-          "stroke": "#ffffff"
+          "stroke": "#ffffff",
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "engine",
@@ -21097,7 +21737,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -91
             ]
           ],
-          "stroke": "#ffffff"
+          "stroke": "#ffffff",
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "window",
@@ -21124,7 +21772,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               10.15,
               54.27
             ]
-          ]
+          ],
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "window",
@@ -21151,7 +21807,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               5.83,
               74.91
             ]
-          ]
+          ],
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "polyline",
@@ -21174,7 +21838,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -61.91
             ]
           ],
-          "width": 1.2
+          "width": 1.2,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "polyline",
@@ -21197,7 +21869,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -75.25
             ]
           ],
-          "width": 1.2
+          "width": 1.2,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "polyline",
@@ -21220,7 +21900,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -21.48
             ]
           ],
-          "width": 1.2
+          "width": 1.2,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "engine",
@@ -21248,7 +21936,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -87.55
             ]
           ],
-          "stroke": "#ffffff"
+          "stroke": "#ffffff",
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "engine",
@@ -21276,7 +21972,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -100.99
             ]
           ],
-          "stroke": "#ffffff"
+          "stroke": "#ffffff",
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "engine",
@@ -21304,7 +22008,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -104.28
             ]
           ],
-          "stroke": "#ffffff"
+          "stroke": "#ffffff",
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "engine",
@@ -21332,7 +22044,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -95.64
             ]
           ],
-          "stroke": "#ffffff"
+          "stroke": "#ffffff",
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         }
       ],
       "imageProjection": {
@@ -23023,7 +23743,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.81,
             0.22
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "window",
@@ -23050,7 +23778,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.81,
             0.22
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "line",
@@ -23065,7 +23801,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -0.23
           ],
           "width": 1.4,
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "line",
@@ -23080,7 +23824,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -0.23
           ],
           "width": 1.4,
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "line",
@@ -23095,7 +23847,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -0.23
           ],
           "width": 1.4,
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "line",
@@ -23110,7 +23870,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -0.23
           ],
           "width": 1.4,
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "engine",
@@ -23143,7 +23911,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         }
       ],
       "imageProjection": {
@@ -24044,7 +24820,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         }
       ],
       "imageProjection": {
@@ -24629,7 +25413,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.97,
             0.24
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "engine",
@@ -24646,7 +25438,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         }
       ],
       "imageProjection": {
@@ -25859,7 +26659,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "indices": [
             16,
             17
-          ]
+          ],
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "line",
@@ -25874,7 +26682,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "indices": [
             18,
             19
-          ]
+          ],
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "engine",
@@ -25927,7 +26743,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               0,
               60
             ]
-          ]
+          ],
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "window",
@@ -25979,7 +26803,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               0,
               30
             ]
-          ]
+          ],
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         }
       ],
       "imageProjection": {
@@ -26599,7 +27431,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               17.1,
               5.4
             ]
-          ]
+          ],
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "window",
@@ -26636,7 +27476,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               5,
               -16.5
             ]
-          ]
+          ],
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         }
       ],
       "imageProjection": {
@@ -28156,7 +29004,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.09
           ],
           "width": 1.2,
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "window",
@@ -28171,7 +29027,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.97,
             0.09
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "line",
@@ -28186,7 +29050,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.09
           ],
           "width": 1.2,
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "window",
@@ -28201,7 +29073,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.97,
             0.09
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "window",
@@ -28216,7 +29096,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.97,
             0.09
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "line",
@@ -28231,7 +29119,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.09
           ],
           "width": 1.2,
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "window",
@@ -28258,7 +29154,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "line",
@@ -28273,7 +29177,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0
           ],
           "width": 1.4,
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "line",
@@ -28288,7 +29200,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0
           ],
           "width": 1.4,
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "engine",
@@ -28305,7 +29225,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         }
       ],
       "imageProjection": {
@@ -29645,7 +30573,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -91.27
             ]
           ],
-          "stroke": "#ffffff"
+          "stroke": "#ffffff",
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "engine",
@@ -29673,7 +30609,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -68.47
             ]
           ],
-          "stroke": "#ffffff"
+          "stroke": "#ffffff",
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "polyline",
@@ -29696,7 +30640,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -65.2
             ]
           ],
-          "width": 1.2
+          "width": 1.2,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "polyline",
@@ -29719,7 +30671,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -81.6
             ]
           ],
-          "width": 1.2
+          "width": 1.2,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "polyline",
@@ -29742,7 +30702,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -24.96
             ]
           ],
-          "width": 1.2
+          "width": 1.2,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "polyline",
@@ -29765,7 +30733,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -10.01
             ]
           ],
-          "width": 1.2
+          "width": 1.2,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         },
         {
           "type": "window",
@@ -29792,7 +30768,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               6.85,
               76.64
             ]
-          ]
+          ],
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "window",
@@ -29819,7 +30803,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               9.49,
               37.04
             ]
-          ]
+          ],
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "engine",
@@ -29847,7 +30839,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -94.4
             ]
           ],
-          "stroke": "#ffffff"
+          "stroke": "#ffffff",
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "engine",
@@ -29875,7 +30875,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -86.99
             ]
           ],
-          "stroke": "#ffffff"
+          "stroke": "#ffffff",
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         }
       ],
       "imageProjection": {
@@ -30747,7 +31755,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.8,
             0.27
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "window",
@@ -30774,7 +31790,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0.8,
             0.27
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         },
         {
           "type": "engine",
@@ -30790,7 +31814,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "engine",
@@ -30806,7 +31838,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             -1
           ],
-          "lift": 0.5
+          "lift": 0.5,
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         }
       ],
       "imageProjection": {
@@ -31387,7 +32427,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -4,
               -25
             ]
-          ]
+          ],
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
         },
         {
           "type": "window",
@@ -31419,7 +32467,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -8.24,
               32.8
             ]
-          ]
+          ],
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
         }
       ],
       "gameMeta": {

@@ -160,7 +160,10 @@ if (js.includes('item.glass ? "#101915"')) {
 if (js.includes('detail.type === "engine" ? engineVisual.stroke : detail.stroke')) {
   throw new Error("Window/glass details must not inherit procedural outline strokes in solid mode.");
 }
-if (!js.includes('strokeStyle: wireDetails ? (detail.stroke || wireColor) : (detail.type === "engine" ? engineVisual.stroke : null)')) {
+if (!js.includes("function detailRenderIntent") || !js.includes("detail.detailRender || detailRenderIntent(detail)")) {
+  throw new Error("Renderer details must consume generated detailRender intent, with a compatibility fallback normalized by buildBlueprint.");
+}
+if (!js.includes("renderIntent.solidStroke ? engineVisual.stroke : null")) {
   throw new Error("Window/glass detail strokes must stay mode-aware: Old School/wire may use authored strokes, but Ultra solid mode may only stroke engine details.");
 }
 if (!js.includes("rgba(255,255,248,.42)") || !js.includes("targetCtx.globalAlpha = clamp(item.glintAlpha ?? .58, .12, .95)")) {
@@ -249,8 +252,8 @@ for (const [label, marker] of retiredSolidWireMarkers) {
 if (renderBenchHtml.includes('value="both"') || renderQaHtml.includes('value="both"')) {
   throw new Error('Retired "both" renderer mode still appears in render tools.');
 }
-if (!js.includes("if (!wireDetails && isLineDetail) continue;")) {
-  throw new Error("Solid/Ultra rendering must not draw model line/polyline details over bitmap hulls.");
+if (!js.includes("if (wireDetails ? !renderIntent.wire : !renderIntent.solid) continue;")) {
+  throw new Error("Solid/Ultra rendering must use precomputed detailRender mode intent, so line/polyline details do not draw over bitmap hulls.");
 }
 if (!js.includes("detail.lift ?? .5") || !builderJs.includes("lift: 0.5")) {
   throw new Error("Model detail lift defaults must stay at 0.5 so editor/game details sit close to bitmap hulls.");
@@ -460,6 +463,32 @@ function explicitEdgeKind(edge) {
   return String(edge.kind);
 }
 
+function expectedDetailRender(detail) {
+  const type = detail?.type === "panel" ? "line" : detail?.type;
+  const line = type === "line" || type === "polyline";
+  const beacon = type === "beacon";
+  const engine = type === "engine";
+  const windowDetail = type === "window";
+  return {
+    kind: beacon ? "beacon" : line ? "line" : "poly",
+    solid: !line,
+    wire: !beacon,
+    glow: engine,
+    glass: windowDetail,
+    solidStroke: engine
+  };
+}
+
+function assertDetailRenderIntent(label, details) {
+  if (!Array.isArray(details)) return;
+  for (const [index, detail] of details.entries()) {
+    const expected = expectedDetailRender(detail);
+    if (JSON.stringify(detail.detailRender) !== JSON.stringify(expected)) {
+      throw new Error(`${label} detail ${index} has stale or missing detailRender intent. Run npm run models or npm run build.`);
+    }
+  }
+}
+
 function expectedEdgeKindsForBlueprint(data, blueprint) {
   if (!Array.isArray(blueprint?.edges)) return null;
   const indexById = new Map((data.verts || []).map((vertex, index) => [sourceVertexId(vertex, index), index]));
@@ -523,6 +552,7 @@ for (const [modelId, model] of Object.entries(builderModels)) {
     }
   }
   assertGeneratedEdgeKinds(`tools/ship-builder/game-model-library.js ${modelId}`, model, model.blueprint);
+  assertDetailRenderIntent(`tools/ship-builder/game-model-library.js ${modelId}`, model.blueprint?.details);
 }
 
 if (fs.existsSync(modelDir)) {
@@ -555,6 +585,7 @@ if (fs.existsSync(modelDir)) {
     const usesOnlyFaceTextures = sourceFaces.length > 0 && faceTextures.every(Boolean);
     assertOptionalEmbeddedEdgeKinds(`${path.relative(root, filePath)} embedded blueprint`, data, data.blueprint);
     assertGeneratedEdgeKinds(`${path.relative(root, filePath)} generated blueprint`, data, generatedModels[modelId]);
+    assertDetailRenderIntent(`${path.relative(root, filePath)} generated blueprint`, generatedModels[modelId]?.details);
     if (!hasFaceSides && !hasFaceTextures && !hasFaceTextureUv && !hasFaceTextureBaseW && !hasFaceTextureBaseH && !hasAuthoredFaceColors && !hasFaceAngles && !hasFaceMirrorX && !hasFaceDecals) continue;
 
     const generatedProjection = generatedModels[modelId]?.imageProjection || {};

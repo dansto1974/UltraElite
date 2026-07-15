@@ -304,20 +304,43 @@ function sourceImageProjection(data) {
   return imageProjection.primaryAxis || imageProjection.faceSides || imageProjection.faceTextures || imageProjection.faceTextureUv || imageProjection.faceColors || imageProjection.faceAngles || imageProjection.faceMirrorX || imageProjection.faceDecals ? imageProjection : null;
 }
 
+function detailRenderIntent(detail) {
+  const type = detail?.type === "panel" ? "line" : detail?.type;
+  const line = type === "line" || type === "polyline";
+  const beacon = type === "beacon";
+  const engine = type === "engine";
+  const window = type === "window";
+  return {
+    kind: beacon ? "beacon" : line ? "line" : "poly",
+    solid: !line,
+    wire: !beacon,
+    glow: engine,
+    glass: window,
+    solidStroke: engine
+  };
+}
+
+function withDetailRender(detail) {
+  return {
+    ...detail,
+    detailRender: detailRenderIntent(detail)
+  };
+}
+
 function normalizeBlueprintDetails(data, blueprint) {
   if (!Array.isArray(blueprint.details)) return;
   const stationSlotBeacon = data.id === "coriolis" || data.id === "dodoStation";
   blueprint.details = blueprint.details.map((detail) => {
-    if (detail?.type !== "beacon") return detail;
+    if (detail?.type !== "beacon") return withDetailRender(detail);
     const normal = Array.isArray(detail.normal)
       ? toArray(vec(detail.normal), 3)
       : stationSlotBeacon
         ? [0, 0, 1]
         : null;
-    return {
+    return withDetailRender({
       ...detail,
       ...(normal ? { normal } : {})
-    };
+    });
   });
 }
 
@@ -397,13 +420,13 @@ function deriveBlueprint(data) {
         : slotBeacon
           ? [0, 0, 1]
           : null;
-      return {
+      return withDetailRender({
         type: "beacon",
         index: sourceIndex,
         color: detail.color || "#ffb642",
         ...(normal ? { normal } : {}),
         ...(detail.lift !== undefined ? { lift: round(Number(detail.lift)) } : {})
-      };
+      });
     }
     const face = faceById(detail.faceId);
     const normal = Array.isArray(detail.normal) ? vec(detail.normal) : face ? faceNormal(face) : vec(0, 0, 1);
@@ -421,13 +444,13 @@ function deriveBlueprint(data) {
     };
     if (Array.isArray(detail.indices)) {
       const indices = detail.indices.map((id) => indexById.get(Number(id))).filter((i) => i !== undefined);
-      if (indices.length >= 2) return { ...base, indices };
+      if (indices.length >= 2) return withDetailRender({ ...base, indices });
     }
-    return {
+    return withDetailRender({
       ...base,
       points,
       ...(detail.type === "engine" ? { stroke: detail.stroke || "#ffffff", lift: detail.lift || 1.5 } : {})
-    };
+    });
   }).filter(Boolean);
   const imageProjection = sourceImageProjection(data) || {};
   return {
