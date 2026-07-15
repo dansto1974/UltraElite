@@ -7,7 +7,7 @@ Read this first for Ultra Elite / Browser Elite tasks, then route to the private
 - Private docs repo: `/Users/dan/Documents/Ultra Elite Codex`.
 - Mandatory router: `/Users/dan/Documents/Ultra Elite Codex/project.md`.
 - GitHub remote: `github.com/dansto1974/UltraEliteCodex.git`.
-- Initial Ultra Elite responses should name the `.md` files being considered, then follow the private router.
+- Initial Ultra Elite responses should start with `considering: ` followed by a comma-separated list of short module titles, not full paths, then follow the private router.
 
 ## Boundary
 
