@@ -96,7 +96,10 @@ const els = {
   uvTransformScaleXRange: document.getElementById("uvTransformScaleXRange"),
   uvTransformScaleY: document.getElementById("uvTransformScaleY"),
   uvTransformScaleYRange: document.getElementById("uvTransformScaleYRange"),
+  uvTransformScaleLink: document.getElementById("uvTransformScaleLink"),
   uvTransformWrap: document.getElementById("uvTransformWrap"),
+  copyFacePropertiesBtn: document.getElementById("copyFacePropertiesBtn"),
+  pasteFacePropertiesBtn: document.getElementById("pasteFacePropertiesBtn"),
   resetUvTransformBtn: document.getElementById("resetUvTransformBtn"),
   orientUvToViewBtn: document.getElementById("orientUvToViewBtn"),
   resetUvAngleBtn: document.getElementById("resetUvAngleBtn"),
@@ -227,6 +230,7 @@ const state = {
   sourceModelId: "",
   selected: null,
   selectedFaceIds: new Set(),
+  facePropertyClipboard: null,
   selectedEdgeIds: new Set(),
   pick: [],
   view: { rx: STANDARD_VIEW.rx, ry: STANDARD_VIEW.ry, zoom: 2.9, panX: 0, panY: 0 },
@@ -572,6 +576,13 @@ function selectedFace() {
 
 function selectedFaceGroup() {
   return [...state.selectedFaceIds].map(faceById).filter(Boolean);
+}
+
+function selectedFacePropertyTargets() {
+  const grouped = selectedFaceGroup();
+  if (grouped.length) return grouped;
+  const face = selectedFace();
+  return face ? [face] : [];
 }
 
 function faceUvTypeInfo(face) {
@@ -2065,6 +2076,29 @@ function uvTransformControls() {
   return uvTransformControlPairs().flat().filter(Boolean);
 }
 
+function uvScaleLinkEnabled() {
+  return !!els.uvTransformScaleLink?.checked;
+}
+
+function setUvScaleControls(axis, value) {
+  const numberControl = axis === "x" ? els.uvTransformScaleX : els.uvTransformScaleY;
+  const rangeControl = axis === "x" ? els.uvTransformScaleXRange : els.uvTransformScaleYRange;
+  const n = Number(value);
+  if (!Number.isFinite(n)) return;
+  const clean = round(clamp(n, 0.05, 20), 3);
+  if (numberControl) numberControl.value = String(clean);
+  if (rangeControl) rangeControl.value = String(clamp(clean, Number(rangeControl.min), Number(rangeControl.max)));
+}
+
+function syncLinkedUvScaleControls(source) {
+  if (!uvScaleLinkEnabled()) return;
+  if (source === els.uvTransformScaleX || source === els.uvTransformScaleXRange) {
+    setUvScaleControls("y", source.value);
+  } else if (source === els.uvTransformScaleY || source === els.uvTransformScaleYRange) {
+    setUvScaleControls("x", source.value);
+  }
+}
+
 function syncUvTransformControlPair(source) {
   const pair = uvTransformControlPairs().find(([numberControl, rangeControl]) => source === numberControl || source === rangeControl);
   if (!pair) return;
@@ -2072,11 +2106,13 @@ function syncUvTransformControlPair(source) {
   if (!numberControl || !rangeControl) return;
   if (source === rangeControl) {
     numberControl.value = rangeControl.value;
+    syncLinkedUvScaleControls(source);
     return;
   }
   const value = Number(numberControl.value);
   if (!Number.isFinite(value)) return;
   rangeControl.value = String(clamp(value, Number(rangeControl.min), Number(rangeControl.max)));
+  syncLinkedUvScaleControls(source);
 }
 
 function updateFaceUvTransformControls() {
@@ -2087,6 +2123,9 @@ function updateFaceUvTransformControls() {
     els.uvTransformWrap.value = cleanBitmapWrap(face?.bitmapWrap);
     els.uvTransformWrap.disabled = !enabled;
   }
+  if (els.uvTransformScaleLink) els.uvTransformScaleLink.disabled = !enabled;
+  if (els.copyFacePropertiesBtn) els.copyFacePropertiesBtn.disabled = !enabled;
+  if (els.pasteFacePropertiesBtn) els.pasteFacePropertiesBtn.disabled = !selectedFacePropertyTargets().length || !state.facePropertyClipboard;
   for (const control of [...uvTransformControls(), els.resetUvTransformBtn]) {
     if (control) control.disabled = !enabled;
   }
@@ -2154,6 +2193,120 @@ function setSelectedFaceBitmapWrap(value) {
   if (mirrorActionsEnabled()) syncMirroredFace(face);
   markPreviewSkinsDirty();
   setStatus(`FACE #${face.id} UV WRAP SET TO ${wrap.toUpperCase()}.`);
+  renderAll();
+  syncLiveRenderPreviews();
+}
+
+function setUvScaleLinkEnabled(enabled) {
+  if (!els.uvTransformScaleLink) return;
+  els.uvTransformScaleLink.checked = !!enabled;
+  if (!enabled) return;
+  setUvScaleControls("y", els.uvTransformScaleX?.value || 1);
+  applySelectedFaceUvTransformFromControls({ normalizeInputs: false, status: false });
+}
+
+function cloneUvPoints(points) {
+  return Array.isArray(points) ? points.map((p) => [round(Number(p[0]) || 0, 3), round(Number(p[1]) || 0, 3)]) : null;
+}
+
+function facePropertySnapshot(face) {
+  if (!face) return null;
+  const bitmapUv = cleanFaceBitmapUv(face);
+  const bitmapUvTemplate = cleanFaceBitmapUvTemplate(face);
+  const bitmapUvTransform = cleanBitmapUvTransform(face.bitmapUvTransform);
+  const bitmapBaseW = Math.max(0, Math.round(Number(face.bitmapBaseW) || 0));
+  const bitmapBaseH = Math.max(0, Math.round(Number(face.bitmapBaseH) || 0));
+  const bitmapDecals = cleanFaceDecals(face.bitmapDecals);
+  return {
+    sourceFaceId: face.id,
+    vertexCount: Array.isArray(face.verts) ? face.verts.length : 0,
+    faceColor: optionalHexColor(face.faceColor) || "",
+    bitmapSide: validBitmapFaceSide(face.bitmapSide) || "",
+    bitmapFaceKey: cleanBitmapKey(face.bitmapFaceKey),
+    bitmapUv: cloneUvPoints(bitmapUv),
+    bitmapUvTemplate: cloneUvPoints(bitmapUvTemplate),
+    bitmapUvTransform,
+    bitmapBaseW,
+    bitmapBaseH,
+    bitmapAngle: normalizeBitmapAngle(face.bitmapAngle),
+    bitmapMirrorX: !!face.bitmapMirrorX,
+    bitmapWrap: cleanBitmapWrap(face.bitmapWrap),
+    bitmapDecals: bitmapDecals.map((decal) => ({ ...decal }))
+  };
+}
+
+function copySelectedFaceProperties() {
+  const face = selectedFace();
+  if (!face) {
+    setStatus("SELECT A FACE TO COPY PROPERTIES FROM.");
+    updateFaceUvTransformControls();
+    return;
+  }
+  state.facePropertyClipboard = facePropertySnapshot(face);
+  setStatus(`FACE #${face.id} PROPERTIES COPIED.`);
+  updateFaceUvTransformControls();
+}
+
+function applyFacePropertySnapshot(face, props) {
+  if (!face || !props) return false;
+  const hasUvPayload = !!(props.bitmapUv?.length || props.bitmapUvTemplate?.length || props.bitmapBaseW || props.bitmapBaseH || !bitmapUvTransformIsDefault(props.bitmapUvTransform) || props.bitmapAngle);
+  const uvCompatible = !hasUvPayload || Number(props.vertexCount) === (Array.isArray(face.verts) ? face.verts.length : 0);
+  if (props.faceColor) face.faceColor = props.faceColor;
+  else delete face.faceColor;
+  if (props.bitmapSide) face.bitmapSide = props.bitmapSide;
+  else delete face.bitmapSide;
+  if (props.bitmapFaceKey) face.bitmapFaceKey = props.bitmapFaceKey;
+  else delete face.bitmapFaceKey;
+  if (props.bitmapMirrorX) face.bitmapMirrorX = true;
+  else delete face.bitmapMirrorX;
+  if (cleanBitmapWrap(props.bitmapWrap) !== "clip") face.bitmapWrap = cleanBitmapWrap(props.bitmapWrap);
+  else delete face.bitmapWrap;
+  if (props.bitmapDecals?.length) face.bitmapDecals = props.bitmapDecals.map((decal) => ({ ...decal }));
+  else delete face.bitmapDecals;
+
+  if (uvCompatible) {
+    if (props.bitmapUv?.length) face.bitmapUv = cloneUvPoints(props.bitmapUv);
+    else delete face.bitmapUv;
+    if (props.bitmapUvTemplate?.length) face.bitmapUvTemplate = cloneUvPoints(props.bitmapUvTemplate);
+    else delete face.bitmapUvTemplate;
+    if (props.bitmapBaseW && props.bitmapBaseH) {
+      face.bitmapBaseW = props.bitmapBaseW;
+      face.bitmapBaseH = props.bitmapBaseH;
+    } else {
+      delete face.bitmapBaseW;
+      delete face.bitmapBaseH;
+    }
+    if (bitmapUvTransformIsDefault(props.bitmapUvTransform)) delete face.bitmapUvTransform;
+    else face.bitmapUvTransform = cleanBitmapUvTransform(props.bitmapUvTransform);
+    if (props.bitmapAngle) face.bitmapAngle = props.bitmapAngle;
+    else delete face.bitmapAngle;
+  }
+  if (mirrorActionsEnabled()) syncMirroredFace(face, { forceBitmapUv: uvCompatible });
+  return !uvCompatible;
+}
+
+function pasteFacePropertiesToSelection() {
+  const props = state.facePropertyClipboard;
+  if (!props) {
+    setStatus("COPY FACE PROPERTIES FIRST.");
+    updateFaceUvTransformControls();
+    return;
+  }
+  const targets = uniqueFaceList(selectedFacePropertyTargets());
+  if (!targets.length) {
+    setStatus("SELECT A FACE TO PASTE PROPERTIES TO.");
+    updateFaceUvTransformControls();
+    return;
+  }
+  const skippedUv = targets.filter((face) => applyFacePropertySnapshot(face, props)).length;
+  markPreviewSkinsDirty();
+  updateSkinReadout();
+  updateFaceUvAngleControls();
+  updateFaceUvTransformControls();
+  updateFaceDecalControls();
+  const targetText = targets.length === 1 ? `FACE #${targets[0].id}` : `${targets.length} FACES`;
+  const skipText = skippedUv ? ` UV SKIPPED ON ${skippedUv} VERTEX-MISMATCHED FACE${skippedUv === 1 ? "" : "S"}.` : "";
+  setStatus(`PASTED FACE #${props.sourceFaceId} PROPERTIES TO ${targetText}.${skipText}`);
   renderAll();
   syncLiveRenderPreviews();
 }
@@ -7273,6 +7426,9 @@ function bindEvents() {
     });
   }
   els.uvTransformWrap?.addEventListener("change", (event) => setSelectedFaceBitmapWrap(event.target.value));
+  els.uvTransformScaleLink?.addEventListener("change", (event) => setUvScaleLinkEnabled(event.target.checked));
+  els.copyFacePropertiesBtn?.addEventListener("click", copySelectedFaceProperties);
+  els.pasteFacePropertiesBtn?.addEventListener("click", pasteFacePropertiesToSelection);
   els.resetUvTransformBtn?.addEventListener("click", resetSelectedFaceUvTransform);
   document.querySelectorAll(".uv-rotate-btn").forEach((button) => {
     button.addEventListener("click", () => rotateSelectedFaceUvAngle(button.dataset.uvRotate));

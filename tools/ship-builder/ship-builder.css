@@ -691,6 +691,15 @@ h3 {
   width: 100%;
 }
 
+.uv-scale-link-control {
+  grid-template-columns: minmax(3.2rem, 4.2rem) auto minmax(0, 1fr);
+}
+
+.uv-scale-link-control input[type="checkbox"] {
+  width: auto;
+  justify-self: start;
+}
+
 .paint-subtab-btn.active {
   border-color: var(--yellow);
   color: var(--yellow);

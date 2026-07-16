@@ -552,9 +552,12 @@
             <label>Rotation <input id="uvTransformRotation" type="number" min="-180" max="180" step="1" value="0"><input id="uvTransformRotationRange" type="range" min="-180" max="180" step="1" value="0"></label>
             <label>Scale X <input id="uvTransformScaleX" type="number" min="0.05" max="20" step="0.05" value="1"><input id="uvTransformScaleXRange" type="range" min="0.05" max="6" step="0.05" value="1"></label>
             <label>Scale Y <input id="uvTransformScaleY" type="number" min="0.05" max="20" step="0.05" value="1"><input id="uvTransformScaleYRange" type="range" min="0.05" max="6" step="0.05" value="1"></label>
+            <label class="uv-scale-link-control"><span>Link</span><input id="uvTransformScaleLink" type="checkbox" checked> Scale X/Y</label>
             <label>Wrap <select id="uvTransformWrap"><option value="clip">Clip</option><option value="repeat">Repeat</option><option value="mirror">Mirror Repeat</option></select></label>
           </div>
           <div class="uv-orient-actions">
+            <button id="copyFacePropertiesBtn" type="button">Copy Props</button>
+            <button id="pasteFacePropertiesBtn" type="button">Paste Props</button>
             <button id="resetUvTransformBtn" type="button">Reset Transform</button>
           </div>
         </section>

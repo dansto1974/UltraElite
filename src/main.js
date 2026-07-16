@@ -10469,6 +10469,18 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return /^#[0-9a-f]{6}$/i.test(String(color || "")) ? color : fallback;
     }
 
+    function tiledFaceTextureReady(imageProjection, imageDecals) {
+      const face = imageProjection?.face || (imageProjection?.faceKey ? {
+        key: imageProjection.faceKey,
+        uv: imageProjection.faceUv,
+        wrap: imageProjection.faceWrap
+      } : null);
+      const wrap = face?.wrap;
+      if (wrap !== "repeat" && wrap !== "mirror") return false;
+      if (!face?.key || !Array.isArray(face.uv) || face.uv.length < 3) return false;
+      return imageTextureReady(imageDecals?.faces?.[face.key]);
+    }
+
     function faceNormal(a, b, c) {
       const u = sub(b, a);
       const v = sub(c, a);
@@ -10572,6 +10584,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const hasSideTexture = !!(projectionSide && options.imageDecals?.[projectionSide]);
         const hasFaceImageWork = !!(faceRenderFlags & (FACE_RENDER_FACE_TEXTURE | FACE_RENDER_DECAL));
         const hasImageProjection = !!imageProjection && (hasSideTexture || hasFaceImageWork);
+        const skipBaseFace = game.fxLevel !== "classic" && options.textures !== false && hasImageProjection && tiledFaceTextureReady(imageProjection, options.imageDecals);
         faces.push({
           kind: "poly",
           projected,
@@ -10586,6 +10599,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           avgZ,
           lightLevel: lit,
           fillStyle: shadedColor(faceBaseColor, lit * (.92 + grain * .12), alpha),
+          skipBaseFace,
+          skipBaseTexture: skipBaseFace,
           metal: options.textures !== false,
           metalAlpha: clamp((.34 + facing * .34) * (options.metalAlphaMul ?? 1), .18, .78),
           texture: clipped ? null : options.texture || null,
@@ -11915,7 +11930,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const hasImageTexture = !!(faceImageReady || projectionImageReady);
       // Perspective-correct subdivided path when the projector + camera-space verts are
       // available (main flight view); otherwise the plain affine fan (ship diagram etc).
-      if (!(hasImageTexture && item.imageDecals?.replaceBaseTexture)) {
+      if (!item.skipBaseTexture && !(hasImageTexture && item.imageDecals?.replaceBaseTexture)) {
         if (item.project && item.camVerts && item.uv) {
           drawUVLayerPersp(targetCtx, item, img, item.metalAlpha ?? .3);
         } else {
@@ -12245,11 +12260,12 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           continue;
         }
         targetCtx.closePath();
-        if (item.fillStyle) {
-          if (item.glass) {
+        const canDrawFaceTexture = item.metal && item.uv;
+        if (item.fillStyle || item.skipBaseFace) {
+          if (item.fillStyle && item.glass && !item.skipBaseFace) {
             drawWindowGlassTint(targetCtx, item, tracePoly);
             drawWindowGlint(targetCtx, item, tracePoly);
-          } else {
+          } else if (item.fillStyle && !item.skipBaseFace) {
             targetCtx.fillStyle = item.fillStyle;
             if (item.fillInset) {
               const inset = insetProjectedPolygon(item.projected, item.fillInset);
@@ -12260,7 +12276,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
             }
             targetCtx.fill();
           }
-          if (item.metal && item.uv) drawFaceTexture(targetCtx, item);
+          if (canDrawFaceTexture) drawFaceTexture(targetCtx, item);
           drawImageTextureLighting(targetCtx, item, tracePoly);
         }
         if (item.strokeStyle) {
