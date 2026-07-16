@@ -692,7 +692,7 @@
           : null;
       };
       const remapped = { ...projection };
-      for (const field of ["faceSides", "faceTextures", "faceTextureBaseW", "faceTextureBaseH", "faceColors", "faceAngles", "faceMirrorX", "faceDecals", "faceRenderFlags"]) {
+      for (const field of ["faceSides", "faceTextures", "faceTextureBaseW", "faceTextureBaseH", "faceTextureWrap", "faceColors", "faceAngles", "faceMirrorX", "faceDecals", "faceRenderFlags"]) {
         const values = remapArrayByNormal(field);
         if (values) remapped[field] = values;
       }
@@ -2259,11 +2259,13 @@
       const faceTextureUv = Array.isArray(options.faceTextureUv) ? options.faceTextureUv : [];
       const faceTextureBaseW = Array.isArray(options.faceTextureBaseW) ? options.faceTextureBaseW : [];
       const faceTextureBaseH = Array.isArray(options.faceTextureBaseH) ? options.faceTextureBaseH : [];
+      const faceTextureWrap = Array.isArray(options.faceTextureWrap) ? options.faceTextureWrap : [];
       const faceAngles = Array.isArray(options.faceAngles) ? options.faceAngles : [];
       const faceMirrorX = Array.isArray(options.faceMirrorX) ? options.faceMirrorX : [];
       const faceDecals = Array.isArray(options.faceDecals) ? options.faceDecals : [];
       const validFaceSide = (side) => (side === "top" || side === "bottom" || side === "back") ? side : "";
       const cleanFaceTextureKey = (value) => String(value || "").trim().replace(/[^a-zA-Z0-9_-]+/g, "_").replace(/^_+|_+$/g, "");
+      const cleanFaceTextureWrap = (value) => value === "repeat" || value === "mirror" ? value : "";
       const cleanFaceAngle = (value) => {
         let n = Number(value) || 0;
         n = ((n + 180) % 360 + 360) % 360 - 180;
@@ -2458,6 +2460,9 @@
         const mirrorFaceTextureX = hasProjectionFaceSlot(faceMirrorX, faceIndex)
           ? !!faceMirrorX[faceIndex]
           : !!faceMirrorX[normalIndex];
+        const faceWrap = hasProjectionFaceSlot(faceTextureWrap, faceIndex)
+          ? cleanFaceTextureWrap(faceTextureWrap[faceIndex])
+          : cleanFaceTextureWrap(faceTextureWrap[normalIndex]);
         let faceAngleForDraw = faceAngle;
         if (faceKey || decalsForFace.length) {
           if (authoredFaceUv && faceKey) {
@@ -2512,6 +2517,7 @@
             baseH: faceBaseH,
             ...(faceAngleForDraw ? { angle: faceAngleForDraw } : {}),
             ...(mirrorFaceTextureX ? { mirrorX: true } : {}),
+            ...(faceWrap ? { wrap: faceWrap } : {}),
             ...(decalsForFace.length ? { decals: decalsForFace } : {})
           }
           : null;
@@ -2523,7 +2529,7 @@
           baseH: projector.baseH,
           centerlineX: projector.centerlineX,
           uv: projector.uv,
-          ...((faceKey || decalsForFace.length) ? { ...(faceKey ? { faceKey } : {}), faceUv, faceBaseW, faceBaseH, ...(faceAngleForDraw ? { faceAngle: faceAngleForDraw } : {}), ...(mirrorFaceTextureX ? { faceMirrorX: true } : {}), ...(decalsForFace.length ? { faceDecals: decalsForFace } : {}) } : {}),
+          ...((faceKey || decalsForFace.length) ? { ...(faceKey ? { faceKey } : {}), faceUv, faceBaseW, faceBaseH, ...(faceAngleForDraw ? { faceAngle: faceAngleForDraw } : {}), ...(mirrorFaceTextureX ? { faceMirrorX: true } : {}), ...(faceWrap ? { faceWrap } : {}), ...(decalsForFace.length ? { faceDecals: decalsForFace } : {}) } : {}),
           squareUv
         };
       });
@@ -11557,6 +11563,96 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return out;
     }
 
+    function clipImageDecalPolygonByBounds(poly, bounds, projectFn = null) {
+      const eps = 1e-5;
+      const clipEdge = (items, axis, limit, keepGreater) => {
+        if (!items.length) return items;
+        const inside = (p) => keepGreater ? p.tex[axis] >= limit - eps : p.tex[axis] <= limit + eps;
+        const intersect = (a, b) => {
+          const delta = b.tex[axis] - a.tex[axis];
+          const t = Math.abs(delta) < eps ? 0 : clamp((limit - a.tex[axis]) / delta, 0, 1);
+          const cam = a.cam && b.cam ? lerpCamPoint(a.cam, b.cam, t) : null;
+          const p = cam && projectFn ? projectFn(cam) : lerpScreenPoint(a, b, t);
+          return p ? { cam, x: p.x, y: p.y, tex: lerpTexPair(a.tex, b.tex, t) } : null;
+        };
+        const out = [];
+        for (let i = 0; i < items.length; i++) {
+          const cur = items[i];
+          const prev = items[(i + items.length - 1) % items.length];
+          const curIn = inside(cur);
+          const prevIn = inside(prev);
+          if (curIn) {
+            if (!prevIn) {
+              const cut = intersect(prev, cur);
+              if (cut) out.push(cut);
+            }
+            out.push(cur);
+          } else if (prevIn) {
+            const cut = intersect(prev, cur);
+            if (cut) out.push(cut);
+          }
+        }
+        return out;
+      };
+      return [
+        [0, bounds.minX, true],
+        [0, bounds.maxX, false],
+        [1, bounds.minY, true],
+        [1, bounds.maxY, false]
+      ].reduce((items, args) => clipEdge(items, ...args), poly);
+    }
+
+    function textureWrapMode(value) {
+      return value === "repeat" || value === "mirror" ? value : "clip";
+    }
+
+    function imageDecalTilePieces(poly, bounds, wrap = "clip", projectFn = null) {
+      const mode = textureWrapMode(wrap);
+      const width = Math.max(1e-5, bounds.maxX - bounds.minX);
+      const height = Math.max(1e-5, bounds.maxY - bounds.minY);
+      const localTex = (p, tileX, tileY) => {
+        const localX = p.tex[0] - tileX * width;
+        const localY = p.tex[1] - tileY * height;
+        return [
+          mode === "mirror" && Math.abs(tileX) % 2 === 1 ? bounds.maxX - (localX - bounds.minX) : localX,
+          mode === "mirror" && Math.abs(tileY) % 2 === 1 ? bounds.maxY - (localY - bounds.minY) : localY
+        ];
+      };
+      const localizePiece = (piece, tileX, tileY) => piece.map((p) => ({
+        ...p,
+        tex: localTex(p, tileX, tileY)
+      }));
+      if (mode === "clip") {
+        const clipped = clipImageDecalPolygonByBounds(poly, bounds, projectFn);
+        return clipped.length >= 3 ? [clipped] : [];
+      }
+      const minTexX = Math.min(...poly.map((p) => p.tex[0]));
+      const maxTexX = Math.max(...poly.map((p) => p.tex[0]));
+      const minTexY = Math.min(...poly.map((p) => p.tex[1]));
+      const maxTexY = Math.max(...poly.map((p) => p.tex[1]));
+      const startX = Math.floor((minTexX - bounds.minX) / width);
+      const endX = Math.floor((maxTexX - bounds.minX) / width);
+      const startY = Math.floor((minTexY - bounds.minY) / height);
+      const endY = Math.floor((maxTexY - bounds.minY) / height);
+      const spanX = endX - startX + 1;
+      const spanY = endY - startY + 1;
+      if (spanX * spanY > 441) return [];
+      const pieces = [];
+      for (let tileY = startY; tileY <= endY; tileY++) {
+        for (let tileX = startX; tileX <= endX; tileX++) {
+          const tileBounds = {
+            minX: bounds.minX + tileX * width,
+            maxX: bounds.maxX + tileX * width,
+            minY: bounds.minY + tileY * height,
+            maxY: bounds.maxY + tileY * height
+          };
+          const clipped = clipImageDecalPolygonByBounds(poly, tileBounds, projectFn);
+          if (clipped.length >= 3) pieces.push(localizePiece(clipped, tileX, tileY));
+        }
+      }
+      return pieces;
+    }
+
     function ratioClose(a, b, tolerance = .36) {
       return Number.isFinite(a) && Number.isFinite(b) && a > 0 && b > 0 && Math.abs(Math.log(a / b)) <= tolerance;
     }
@@ -11633,6 +11729,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         return p ? { cam, x: p.x, y: p.y, tex: rotated } : null;
       }).filter(Boolean);
       if (poly.length !== info.sourceUv.length || poly.length < 3) return;
+      const sourcePieces = info.clipBounds
+        ? imageDecalTilePieces(poly, info.clipBounds, info.wrap, usePerspective ? projectFn : null)
+        : [poly];
+      if (!sourcePieces.length) return;
       targetCtx.save();
       targetCtx.globalCompositeOperation = composite;
       targetCtx.globalAlpha = alpha;
@@ -11660,8 +11760,53 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           }
         }
       };
-      drawPoly(clipImageDecalPolygon(poly, true, info.mid, usePerspective ? projectFn : null));
-      drawPoly(clipImageDecalPolygon(poly, false, info.mid, usePerspective ? projectFn : null));
+      for (const sourcePoly of sourcePieces) {
+        drawPoly(clipImageDecalPolygon(sourcePoly, true, info.mid, usePerspective ? projectFn : null));
+        drawPoly(clipImageDecalPolygon(sourcePoly, false, info.mid, usePerspective ? projectFn : null));
+      }
+      targetCtx.restore();
+    }
+
+    function drawBoundedFaceImageLayer(targetCtx, item, img, alpha, sourceUv, bounds, sx, sy, composite = "source-over", wrap = "clip") {
+      const pts = item.projected;
+      if (!pts || !sourceUv?.length) return;
+      const projectFn = item.project;
+      const camV = item.camVerts;
+      const usePerspective = !!(projectFn && camV);
+      const poly = sourceUv.map(([u, v], i) => {
+        const cam = usePerspective ? camV[i] : null;
+        const p = cam && projectFn ? projectFn(cam) : pts[i];
+        return p ? { cam, x: p.x, y: p.y, tex: [u, v] } : null;
+      }).filter(Boolean);
+      if (poly.length !== sourceUv.length || poly.length < 3) return;
+      const pieces = imageDecalTilePieces(poly, bounds, wrap, usePerspective ? projectFn : null);
+      if (!pieces.length) return;
+      targetCtx.save();
+      targetCtx.globalCompositeOperation = composite;
+      targetCtx.globalAlpha = alpha;
+      for (const clipped of pieces) {
+        const first = clipped[0];
+        const uv0 = { u: first.tex[0] * sx, v: first.tex[1] * sy };
+        for (let i = 1; i + 1 < clipped.length; i++) {
+          const uv1 = { u: clipped[i].tex[0] * sx, v: clipped[i].tex[1] * sy };
+          const uv2 = { u: clipped[i + 1].tex[0] * sx, v: clipped[i + 1].tex[1] * sy };
+          if (usePerspective && first.cam && clipped[i].cam && clipped[i + 1].cam) {
+            subdivideTexTri(
+              targetCtx,
+              img,
+              { cam: first.cam, x: first.x, y: first.y, u: uv0.u, v: uv0.v },
+              { cam: clipped[i].cam, x: clipped[i].x, y: clipped[i].y, u: uv1.u, v: uv1.v },
+              { cam: clipped[i + 1].cam, x: clipped[i + 1].x, y: clipped[i + 1].y, u: uv2.u, v: uv2.v },
+              projectFn,
+              0,
+              42,
+              5
+            );
+          } else {
+            drawTexturedTriangle(targetCtx, img, first.x, first.y, clipped[i].x, clipped[i].y, clipped[i + 1].x, clipped[i + 1].y, uv0.u, uv0.v, uv1.u, uv1.v, uv2.u, uv2.v);
+          }
+        }
+      }
       targetCtx.restore();
     }
 
@@ -11685,6 +11830,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         baseH: imageProjection.faceBaseH,
         ...(imageProjection.faceAngle ? { angle: imageProjection.faceAngle } : {}),
         ...(imageProjection.faceMirrorX ? { mirrorX: true } : {}),
+        ...(imageProjection.faceWrap ? { wrap: imageProjection.faceWrap } : {}),
         ...(imageProjection.faceDecals?.length ? { decals: imageProjection.faceDecals } : {})
       };
     }
@@ -11738,12 +11884,18 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const img = images[decal.key];
         if (!imageTextureReady(img)) continue;
         const layer = faceDecalLayerCanvas(img, decal, baseW, baseH);
-        const uv = faceTexture.uv;
-        if (item.project && item.camVerts) {
-          drawUVLayerPersp(targetCtx, item, layer, 1, uv, false, 42, 5, "source-over");
-        } else {
-          drawUVLayer(targetCtx, item, layer, 1, uv, false, "source-over");
-        }
+        drawBoundedFaceImageLayer(
+          targetCtx,
+          item,
+          layer,
+          1,
+          faceTexture.uv,
+          { minX: 0, minY: 0, maxX: baseW, maxY: baseH },
+          1,
+          1,
+          "source-over",
+          faceTexture.wrap
+        );
       }
     }
 
@@ -11791,7 +11943,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
             sy: faceImage.height / baseH,
             mid: baseW / 2,
             angle: faceAngle,
-            mirrorX: true
+            mirrorX: true,
+            clipBounds: { minX: 0, minY: 0, maxX: baseW, maxY: baseH },
+            wrap: faceTexture.wrap
           }, "source-over");
         } else {
           const sx = faceImage.width / baseW;
@@ -11799,12 +11953,18 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           const sourceUv = faceAngle
             ? faceTexture.uv.map(([u, v]) => rotateImageDecalUv(u, v, baseW, baseH, faceAngle))
             : faceTexture.uv;
-          const uv = sourceUv.map(([u, v]) => [u * sx, v * sy]);
-          if (item.project && item.camVerts) {
-            drawUVLayerPersp(targetCtx, item, faceImage, item.imageDecals.alpha ?? .82, uv, false, 42, 5, "source-over");
-          } else {
-            drawUVLayer(targetCtx, item, faceImage, item.imageDecals.alpha ?? .82, uv, false, "source-over");
-          }
+          drawBoundedFaceImageLayer(
+            targetCtx,
+            item,
+            faceImage,
+            item.imageDecals.alpha ?? .82,
+            sourceUv,
+            { minX: 0, minY: 0, maxX: baseW, maxY: baseH },
+            sx,
+            sy,
+            "source-over",
+            faceTexture.wrap
+          );
         }
       } else if (projectionImageReady) {
         const img = item.imageDecals[projectorTexture.side];

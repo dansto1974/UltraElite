@@ -16243,6 +16243,40 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
     "format": "ultra-elite-ship-builder/v1",
     "id": "krait",
     "name": "Krait",
+    "symmetry": "x-locked",
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "private",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "imageDecalMirrorX": {
+        "top": true,
+        "bottom": false,
+        "back": false
+      },
+      "valueCr": 250000,
+      "stats": {
+        "r": 125,
+        "hp": 120,
+        "speed": 1,
+        "cargo": 10,
+        "missiles": 1,
+        "laser": "none"
+      },
+      "lists": {
+        "trader": true,
+        "pirate": true,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": false
+      }
+    },
     "verts": [
       {
         "id": 1,
@@ -16457,76 +16491,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "b": 7,
         "kind": "stick",
         "mirrored": false
-      },
-      {
-        "id": 5011,
-        "a": 8,
-        "b": 11,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
-        "id": 5012,
-        "a": 9,
-        "b": 11,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
-        "id": 5013,
-        "a": 8,
-        "b": 10,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
-        "id": 5014,
-        "a": 9,
-        "b": 10,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
-        "id": 5015,
-        "a": 12,
-        "b": 14,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
-        "id": 5016,
-        "a": 14,
-        "b": 13,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
-        "id": 5017,
-        "a": 13,
-        "b": 12,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
-        "id": 5018,
-        "a": 15,
-        "b": 16,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
-        "id": 5019,
-        "a": 16,
-        "b": 17,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
-        "id": 5020,
-        "a": 17,
-        "b": 15,
-        "kind": "edge",
-        "mirrored": false
       }
     ],
     "details": [
@@ -16719,14 +16683,46 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -30
         ]
       ],
-      "edges": [
+      "faces": [
         [
+          3,
+          1,
+          0
+        ],
+        [
+          3,
           0,
-          1
+          2
+        ],
+        [
+          2,
+          0,
+          4
         ],
         [
           0,
+          1,
+          4
+        ],
+        [
+          1,
+          3,
           2
+        ],
+        [
+          4,
+          1,
+          2
+        ]
+      ],
+      "edges": [
+        [
+          1,
+          3
+        ],
+        [
+          0,
+          1
         ],
         [
           0,
@@ -16734,14 +16730,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           0,
-          4
-        ],
-        [
-          1,
-          4
-        ],
-        [
-          4,
           2
         ],
         [
@@ -16749,8 +16737,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3
         ],
         [
-          3,
-          1
+          0,
+          4
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          1,
+          2
         ],
         [
           3,
@@ -16759,84 +16759,57 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         [
           4,
           6
-        ],
-        [
-          1,
-          2
-        ],
-        [
-          7,
-          10
-        ],
-        [
-          8,
-          10
-        ],
-        [
-          7,
-          9
-        ],
-        [
-          8,
-          9
-        ],
-        [
-          11,
-          13
-        ],
-        [
-          13,
-          12
-        ],
-        [
-          12,
-          11
-        ],
-        [
-          14,
-          15
-        ],
-        [
-          15,
-          16
-        ],
-        [
-          16,
-          14
         ]
+      ],
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "stick",
+        "stick"
       ],
       "edgeFaces": [
         [
-          3,
-          0
+          0,
+          4
         ],
         [
-          2,
+          0,
+          3
+        ],
+        [
+          0,
           1
         ],
         [
           1,
-          0
-        ],
-        [
-          3,
           2
         ],
         [
-          5,
+          1,
+          4
+        ],
+        [
+          2,
           3
         ],
         [
-          5,
-          2
+          2,
+          5
+        ],
+        [
+          3,
+          5
         ],
         [
           4,
-          1
-        ],
-        [
-          4,
-          0
+          5
         ],
         [
           -1,
@@ -16845,50 +16818,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         [
           -1,
           -1
-        ],
-        [
-          5,
-          4
-        ],
-        [
-          0,
-          0
-        ],
-        [
-          0,
-          0
-        ],
-        [
-          3,
-          3
-        ],
-        [
-          3,
-          3
-        ],
-        [
-          4,
-          4
-        ],
-        [
-          4,
-          4
-        ],
-        [
-          4,
-          4
-        ],
-        [
-          5,
-          5
-        ],
-        [
-          5,
-          5
-        ],
-        [
-          5,
-          5
         ]
       ],
       "edgeVisibility": [
@@ -16900,69 +16829,58 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         31,
         31,
         31,
-        30,
-        30,
-        8,
-        9,
-        6,
-        9,
-        6,
-        8,
-        8,
-        7,
-        7,
-        8,
-        8
+        31,
+        31,
+        31
       ],
-      "hullVisibility": 31,
       "normals": [
         [
-          3,
-          24,
-          3
+          13.52,
+          98.32,
+          12.29
         ],
         [
-          3,
-          -24,
-          3
+          13.52,
+          -98.32,
+          12.29
         ],
         [
-          -3,
-          -24,
-          3
+          -13.52,
+          -98.32,
+          12.29
         ],
         [
-          -3,
-          24,
-          3
+          -13.52,
+          98.32,
+          12.29
         ],
         [
-          38,
+          44.72,
           0,
-          -77
+          -89.44
         ],
         [
-          -38,
+          -44.72,
           0,
-          -77
+          -89.44
         ]
       ],
       "details": [
         {
           "type": "line",
-          "indices": [
-            3,
-            5
-          ],
           "color": "#cccccc",
+          "width": 1.6,
+          "lift": 0.5,
+          "cull": false,
           "normal": [
             0,
             0,
             1
           ],
-          "width": 1.6,
-          "lift": 0.5,
-          "cull": false,
+          "indices": [
+            3,
+            5
+          ],
           "detailRender": {
             "kind": "line",
             "solid": false,
@@ -16974,19 +16892,19 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         },
         {
           "type": "line",
-          "indices": [
-            4,
-            6
-          ],
           "color": "#cccccc",
+          "width": 1.6,
+          "lift": 0.5,
+          "cull": false,
           "normal": [
             0,
             0,
             1
           ],
-          "width": 1.6,
-          "lift": 0.5,
-          "cull": false,
+          "indices": [
+            4,
+            6
+          ],
           "detailRender": {
             "kind": "line",
             "solid": false,
@@ -16998,18 +16916,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         },
         {
           "type": "window",
-          "indices": [
-            7,
-            10,
-            8
-          ],
           "color": "#101915",
+          "lift": 0.5,
           "normal": [
             0.12,
             0.97,
             0.12
           ],
-          "lift": 0.5,
+          "indices": [
+            7,
+            10,
+            8
+          ],
           "detailRender": {
             "kind": "poly",
             "solid": true,
@@ -17021,18 +16939,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         },
         {
           "type": "window",
-          "indices": [
-            7,
-            9,
-            8
-          ],
           "color": "#101915",
+          "lift": 0.5,
           "normal": [
             -0.12,
             0.97,
             0.12
           ],
-          "lift": 0.5,
+          "indices": [
+            7,
+            9,
+            8
+          ],
           "detailRender": {
             "kind": "poly",
             "solid": true,
@@ -17044,19 +16962,19 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         },
         {
           "type": "engine",
-          "indices": [
-            11,
-            13,
-            12
-          ],
           "color": "#f7fff7",
           "stroke": "#ffffff",
+          "lift": 0.5,
           "normal": [
             0,
             0,
             -1
           ],
-          "lift": 0.5,
+          "indices": [
+            11,
+            13,
+            12
+          ],
           "detailRender": {
             "kind": "poly",
             "solid": true,
@@ -17068,19 +16986,19 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         },
         {
           "type": "engine",
-          "indices": [
-            14,
-            15,
-            16
-          ],
           "color": "#f7fff7",
           "stroke": "#ffffff",
+          "lift": 0.5,
           "normal": [
             0,
             0,
             -1
           ],
-          "lift": 0.5,
+          "indices": [
+            14,
+            15,
+            16
+          ],
           "detailRender": {
             "kind": "poly",
             "solid": true,
@@ -17109,35 +17027,38 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8
         ]
       },
-      "edgeKinds": [
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "stick",
-        "stick",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge"
-      ]
-    },
-    "gameMeta": {
-      "imageDecalMirrorX": {
-        "top": true,
-        "bottom": true,
-        "back": false
+      "gameMeta": {
+        "class": "fighter",
+        "npcRole": "private",
+        "aiProfile": "standard",
+        "decalRole": "private",
+        "baseColor": "#e9f2e4",
+        "description": "",
+        "missionLore": "",
+        "imageDecalMirrorX": {
+          "top": true,
+          "bottom": false,
+          "back": false
+        },
+        "valueCr": 250000,
+        "stats": {
+          "r": 125,
+          "hp": 120,
+          "speed": 1,
+          "cargo": 10,
+          "missiles": 1,
+          "laser": "none"
+        },
+        "lists": {
+          "trader": true,
+          "pirate": true,
+          "police": false,
+          "alien": false
+        },
+        "flags": {
+          "escapePod": true,
+          "hiddenUntilDiscovered": false
+        }
       }
     }
   },

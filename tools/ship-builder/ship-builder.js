@@ -87,9 +87,16 @@ const els = {
   skinAngle: document.getElementById("skinAngle"),
   skinAngleValue: document.getElementById("skinAngleValue"),
   uvTransformX: document.getElementById("uvTransformX"),
+  uvTransformXRange: document.getElementById("uvTransformXRange"),
   uvTransformY: document.getElementById("uvTransformY"),
+  uvTransformYRange: document.getElementById("uvTransformYRange"),
   uvTransformRotation: document.getElementById("uvTransformRotation"),
-  uvTransformScale: document.getElementById("uvTransformScale"),
+  uvTransformRotationRange: document.getElementById("uvTransformRotationRange"),
+  uvTransformScaleX: document.getElementById("uvTransformScaleX"),
+  uvTransformScaleXRange: document.getElementById("uvTransformScaleXRange"),
+  uvTransformScaleY: document.getElementById("uvTransformScaleY"),
+  uvTransformScaleYRange: document.getElementById("uvTransformScaleYRange"),
+  uvTransformWrap: document.getElementById("uvTransformWrap"),
   resetUvTransformBtn: document.getElementById("resetUvTransformBtn"),
   orientUvToViewBtn: document.getElementById("orientUvToViewBtn"),
   resetUvAngleBtn: document.getElementById("resetUvAngleBtn"),
@@ -142,6 +149,7 @@ const els = {
   selectedAssetMeta: document.getElementById("selectedAssetMeta"),
   openUvPropertiesBtn: document.getElementById("openUvPropertiesBtn"),
   uvPropertiesModal: document.getElementById("uvPropertiesModal"),
+  uvPropertiesReadout: document.getElementById("uvPropertiesReadout"),
   closeUvPropertiesBtn: document.getElementById("closeUvPropertiesBtn"),
   browseModelsBtn: document.getElementById("browseModelsBtn"),
   profileSideCount: document.getElementById("profileSideCount"),
@@ -266,6 +274,10 @@ function validBitmapFaceSide(value) {
   return BITMAP_FACE_SIDES.has(value) ? value : "";
 }
 
+function cleanBitmapWrap(value) {
+  return value === "repeat" || value === "mirror" ? value : "clip";
+}
+
 function cleanBitmapKey(value, fallback = "") {
   const clean = String(value || "").trim().replace(/[^a-zA-Z0-9_-]+/g, "_").replace(/^_+|_+$/g, "");
   return clean || fallback;
@@ -307,18 +319,20 @@ function cleanFaceBitmapUvTemplate(face) {
 }
 
 function cleanBitmapUvTransform(value = {}) {
-  const scale = Number(value?.scale);
+  const scaleX = Number(value?.scaleX ?? value?.scale);
+  const scaleY = Number(value?.scaleY ?? value?.scale);
   return {
     x: round(Number(value?.x) || 0, 3),
     y: round(Number(value?.y) || 0, 3),
     rotation: normalizeBitmapAngle(value?.rotation),
-    scale: round(Number.isFinite(scale) && scale > 0 ? clamp(scale, 0.05, 20) : 1, 3)
+    scaleX: round(Number.isFinite(scaleX) && scaleX > 0 ? clamp(scaleX, 0.05, 20) : 1, 3),
+    scaleY: round(Number.isFinite(scaleY) && scaleY > 0 ? clamp(scaleY, 0.05, 20) : 1, 3)
   };
 }
 
 function bitmapUvTransformIsDefault(transform) {
   const clean = cleanBitmapUvTransform(transform);
-  return !clean.x && !clean.y && !clean.rotation && Math.abs(clean.scale - 1) < .0001;
+  return !clean.x && !clean.y && !clean.rotation && Math.abs(clean.scaleX - 1) < .0001 && Math.abs(clean.scaleY - 1) < .0001;
 }
 
 function mirroredFaceAngle(angle) {
@@ -368,6 +382,7 @@ function sourceFace(face, index) {
   const bitmapFaceKey = cleanBitmapKey(face?.bitmapFaceKey);
   const bitmapAngle = normalizeBitmapAngle(face?.bitmapAngle);
   const bitmapMirrorX = !!face?.bitmapMirrorX;
+  const bitmapWrap = cleanBitmapWrap(face?.bitmapWrap);
   const bitmapUv = cleanFaceBitmapUv(face);
   const bitmapUvTemplate = cleanFaceBitmapUvTemplate(face);
   const bitmapUvTransform = cleanBitmapUvTransform(face?.bitmapUvTransform);
@@ -388,6 +403,7 @@ function sourceFace(face, index) {
     ...(bitmapBaseW && bitmapBaseH ? { bitmapBaseW, bitmapBaseH } : {}),
     ...(bitmapAngle ? { bitmapAngle } : {}),
     ...(bitmapMirrorX ? { bitmapMirrorX } : {}),
+    ...(bitmapWrap !== "clip" ? { bitmapWrap } : {}),
     ...(bitmapDecals.length ? { bitmapDecals } : {})
   };
 }
@@ -820,6 +836,9 @@ function syncMirroredFace(face, options = {}) {
     else delete mf.bitmapAngle;
     if (face.bitmapMirrorX) mf.bitmapMirrorX = true;
     else delete mf.bitmapMirrorX;
+    const wrap = cleanBitmapWrap(face.bitmapWrap);
+    if (wrap !== "clip") mf.bitmapWrap = wrap;
+    else delete mf.bitmapWrap;
     const color = optionalHexColor(face.faceColor);
     if (color) mf.faceColor = color;
     else delete mf.faceColor;
@@ -2021,17 +2040,64 @@ function updateFaceColorControls() {
 function setUvTransformInputs(transform = {}) {
   const clean = cleanBitmapUvTransform(transform);
   if (els.uvTransformX) els.uvTransformX.value = String(round(clean.x, 2));
+  if (els.uvTransformXRange) els.uvTransformXRange.value = String(clamp(round(clean.x, 2), Number(els.uvTransformXRange.min), Number(els.uvTransformXRange.max)));
   if (els.uvTransformY) els.uvTransformY.value = String(round(clean.y, 2));
+  if (els.uvTransformYRange) els.uvTransformYRange.value = String(clamp(round(clean.y, 2), Number(els.uvTransformYRange.min), Number(els.uvTransformYRange.max)));
   if (els.uvTransformRotation) els.uvTransformRotation.value = String(round(clean.rotation, 2));
-  if (els.uvTransformScale) els.uvTransformScale.value = String(round(clean.scale, 3));
+  if (els.uvTransformRotationRange) els.uvTransformRotationRange.value = String(round(clean.rotation, 2));
+  if (els.uvTransformScaleX) els.uvTransformScaleX.value = String(round(clean.scaleX, 3));
+  if (els.uvTransformScaleXRange) els.uvTransformScaleXRange.value = String(clamp(round(clean.scaleX, 3), Number(els.uvTransformScaleXRange.min), Number(els.uvTransformScaleXRange.max)));
+  if (els.uvTransformScaleY) els.uvTransformScaleY.value = String(round(clean.scaleY, 3));
+  if (els.uvTransformScaleYRange) els.uvTransformScaleYRange.value = String(clamp(round(clean.scaleY, 3), Number(els.uvTransformScaleYRange.min), Number(els.uvTransformScaleYRange.max)));
+}
+
+function uvTransformControlPairs() {
+  return [
+    [els.uvTransformX, els.uvTransformXRange],
+    [els.uvTransformY, els.uvTransformYRange],
+    [els.uvTransformRotation, els.uvTransformRotationRange],
+    [els.uvTransformScaleX, els.uvTransformScaleXRange],
+    [els.uvTransformScaleY, els.uvTransformScaleYRange]
+  ];
+}
+
+function uvTransformControls() {
+  return uvTransformControlPairs().flat().filter(Boolean);
+}
+
+function syncUvTransformControlPair(source) {
+  const pair = uvTransformControlPairs().find(([numberControl, rangeControl]) => source === numberControl || source === rangeControl);
+  if (!pair) return;
+  const [numberControl, rangeControl] = pair;
+  if (!numberControl || !rangeControl) return;
+  if (source === rangeControl) {
+    numberControl.value = rangeControl.value;
+    return;
+  }
+  const value = Number(numberControl.value);
+  if (!Number.isFinite(value)) return;
+  rangeControl.value = String(clamp(value, Number(rangeControl.min), Number(rangeControl.max)));
 }
 
 function updateFaceUvTransformControls() {
   const face = selectedFace();
   const enabled = !!face;
   setUvTransformInputs(face?.bitmapUvTransform || {});
-  for (const control of [els.uvTransformX, els.uvTransformY, els.uvTransformRotation, els.uvTransformScale, els.resetUvTransformBtn]) {
+  if (els.uvTransformWrap) {
+    els.uvTransformWrap.value = cleanBitmapWrap(face?.bitmapWrap);
+    els.uvTransformWrap.disabled = !enabled;
+  }
+  for (const control of [...uvTransformControls(), els.resetUvTransformBtn]) {
     if (control) control.disabled = !enabled;
+  }
+  if (els.uvPropertiesReadout) {
+    if (!face) {
+      els.uvPropertiesReadout.textContent = "Select a face to edit UV transform.";
+    } else {
+      const transform = cleanBitmapUvTransform(face.bitmapUvTransform);
+      const uvInfo = faceUvTypeInfo(face);
+      els.uvPropertiesReadout.textContent = `Face #${face.id} | ${uvInfo.label} | ${cleanBitmapWrap(face.bitmapWrap)} | X ${round(transform.x, 2)} Y ${round(transform.y, 2)} R ${round(transform.rotation, 2)} SX ${round(transform.scaleX, 3)} SY ${round(transform.scaleY, 3)}`;
+    }
   }
 }
 
@@ -2040,36 +2106,56 @@ function readUvTransformInputs() {
     x: els.uvTransformX?.value,
     y: els.uvTransformY?.value,
     rotation: els.uvTransformRotation?.value,
-    scale: els.uvTransformScale?.value
+    scaleX: els.uvTransformScaleX?.value,
+    scaleY: els.uvTransformScaleY?.value
   });
 }
 
-function applySelectedFaceUvTransformFromControls() {
+function applySelectedFaceUvTransformFromControls(options = {}) {
+  const face = selectedFace();
+  if (!face) {
+    if (options.status !== false) setStatus("SELECT A FACE FIRST.");
+    updateFaceUvTransformControls();
+    return;
+  }
+  const transform = readUvTransformInputs();
+  if (!bakeFaceUvTransform(face, transform, { updateControls: options.normalizeInputs !== false })) {
+    if (options.status !== false) setStatus("SELECTED FACE CANNOT BUILD A UV TEMPLATE.");
+    updateFaceUvTransformControls();
+    return;
+  }
+  if (options.normalizeInputs !== false) setUvTransformInputs(transform);
+  if (options.status !== false) setStatus(`FACE #${face.id} UV TEMPLATE TRANSFORM UPDATED.`);
+  renderAll();
+  syncLiveRenderPreviews();
+}
+
+function resetSelectedFaceUvTransform() {
+  const face = selectedFace();
+  if (!face) return setStatus("SELECT A FACE FIRST.");
+  const transform = { x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1 };
+  if (!bakeFaceUvTransform(face, transform)) return setStatus("SELECTED FACE CANNOT BUILD A UV TEMPLATE.");
+  setUvTransformInputs(transform);
+  setStatus(`FACE #${face.id} UV TEMPLATE TRANSFORM RESET.`);
+  renderAll();
+  syncLiveRenderPreviews();
+}
+
+function setSelectedFaceBitmapWrap(value) {
   const face = selectedFace();
   if (!face) {
     setStatus("SELECT A FACE FIRST.");
     updateFaceUvTransformControls();
     return;
   }
-  const transform = readUvTransformInputs();
-  if (!bakeFaceUvTransform(face, transform)) {
-    setStatus("SELECTED FACE CANNOT BUILD A UV TEMPLATE.");
-    updateFaceUvTransformControls();
-    return;
-  }
-  setUvTransformInputs(transform);
-  setStatus(`FACE #${face.id} UV TEMPLATE TRANSFORM UPDATED.`);
+  const wrap = cleanBitmapWrap(value);
+  if (wrap === "clip") delete face.bitmapWrap;
+  else face.bitmapWrap = wrap;
+  if (mirrorActionsEnabled()) syncMirroredFace(face);
+  markPreviewSkinsDirty();
+  setStatus(`FACE #${face.id} UV WRAP SET TO ${wrap.toUpperCase()}.`);
   renderAll();
-}
-
-function resetSelectedFaceUvTransform() {
-  const face = selectedFace();
-  if (!face) return setStatus("SELECT A FACE FIRST.");
-  const transform = { x: 0, y: 0, rotation: 0, scale: 1 };
-  if (!bakeFaceUvTransform(face, transform)) return setStatus("SELECTED FACE CANNOT BUILD A UV TEMPLATE.");
-  setUvTransformInputs(transform);
-  setStatus(`FACE #${face.id} UV TEMPLATE TRANSFORM RESET.`);
-  renderAll();
+  syncLiveRenderPreviews();
 }
 
 function currentSelectedFaceImage(face = selectedFace()) {
@@ -3001,6 +3087,7 @@ function clearCurrentModelDeletedAssetReferences(asset) {
       delete face.bitmapBaseH;
       delete face.bitmapAngle;
       delete face.bitmapMirrorX;
+      delete face.bitmapWrap;
       changed = true;
     }
   } else if (currentAsset.kind === "side" && currentAsset.model === modelId) {
@@ -3247,7 +3334,7 @@ function applyCurrentViewGroupUv(faces, img) {
       face.bitmapBaseW = baseW;
       face.bitmapBaseH = baseH;
       face.bitmapUvTemplate = face.bitmapUv.map(([x, y]) => [x, y]);
-      face.bitmapUvTransform = { x: 0, y: 0, rotation: 0, scale: 1 };
+      face.bitmapUvTransform = { x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1 };
       delete face.bitmapAngle;
     }
     return true;
@@ -3277,7 +3364,7 @@ function applyCurrentViewGroupUv(faces, img) {
     face.bitmapBaseW = width;
     face.bitmapBaseH = height;
     face.bitmapUvTemplate = face.bitmapUv.map(([x, y]) => [x, y]);
-    face.bitmapUvTransform = { x: 0, y: 0, rotation: 0, scale: 1 };
+    face.bitmapUvTransform = { x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1 };
     delete face.bitmapAngle;
   }
   return true;
@@ -3327,6 +3414,7 @@ function clearFaceUvFields(face) {
   delete face.bitmapBaseH;
   delete face.bitmapAngle;
   delete face.bitmapMirrorX;
+  delete face.bitmapWrap;
 }
 
 function setFaceGroupSkinFromImage(faces, img, source = "imported", url = "", name = "bitmap", options = {}) {
@@ -3387,6 +3475,7 @@ function clearSelectedFacePaint() {
     validBitmapFaceSide(face.bitmapSide) ||
     normalizeBitmapAngle(face.bitmapAngle) ||
     face.bitmapMirrorX ||
+    cleanBitmapWrap(face.bitmapWrap) !== "clip" ||
     cleanFaceDecals(face.bitmapDecals).length ||
     optionalHexColor(face.faceColor);
   clearFaceUvFields(face);
@@ -4117,7 +4206,7 @@ function ensureFaceUvTemplate(face) {
   face.bitmapBaseH = source.height;
   if (!face.bitmapUvTransform) {
     const angle = normalizeBitmapAngle(face.bitmapAngle);
-    face.bitmapUvTransform = angle ? { x: 0, y: 0, rotation: angle, scale: 1 } : { x: 0, y: 0, rotation: 0, scale: 1 };
+    face.bitmapUvTransform = angle ? { x: 0, y: 0, rotation: angle, scaleX: 1, scaleY: 1 } : { x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1 };
   } else {
     face.bitmapUvTransform = cleanBitmapUvTransform(face.bitmapUvTransform);
   }
@@ -4132,8 +4221,8 @@ function transformedFaceUv(template, width, height, transform) {
   const c = Math.cos(a);
   const s = Math.sin(a);
   return template.map((p) => {
-    const dx = (p.x - cx) * clean.scale;
-    const dy = (p.y - cy) * clean.scale;
+    const dx = (p.x - cx) / clean.scaleX;
+    const dy = (p.y - cy) / clean.scaleY;
     return [
       round(cx + dx * c - dy * s + clean.x, 3),
       round(cy + dx * s + dy * c + clean.y, 3)
@@ -4152,7 +4241,7 @@ function bakeFaceUvTransform(face, transform = face?.bitmapUvTransform, options 
   delete face.bitmapAngle;
   if (mirrorActionsEnabled() && options.syncMirror !== false) syncMirroredFace(face, { forceBitmapUv: true });
   markPreviewSkinsDirty();
-  updateFaceUvAngleControls();
+  if (options.updateControls !== false) updateFaceUvAngleControls();
   return true;
 }
 
@@ -4251,6 +4340,121 @@ function clipTexturePolygon(poly, keepLeft, seamX) {
   return out;
 }
 
+function clipTexturePolygonByBounds(poly, bounds) {
+  const eps = 1e-5;
+  const clipEdge = (items, axis, limit, keepGreater) => {
+    if (!items.length) return items;
+    const inside = (p) => keepGreater ? p.tex[axis] >= limit - eps : p.tex[axis] <= limit + eps;
+    const intersect = (a, b) => {
+      const da = b.tex[axis] - a.tex[axis];
+      const t = Math.abs(da) < eps ? 0 : clamp((limit - a.tex[axis]) / da, 0, 1);
+      return {
+        screen: lerp2(a.screen, b.screen, t),
+        tex: lerp2(a.tex, b.tex, t)
+      };
+    };
+    const out = [];
+    for (let i = 0; i < items.length; i++) {
+      const cur = items[i];
+      const prev = items[(i + items.length - 1) % items.length];
+      const curIn = inside(cur);
+      const prevIn = inside(prev);
+      if (curIn) {
+        if (!prevIn) out.push(intersect(prev, cur));
+        out.push(cur);
+      } else if (prevIn) {
+        out.push(intersect(prev, cur));
+      }
+    }
+    return out;
+  };
+  return [
+    ["x", bounds.minX, true],
+    ["x", bounds.maxX, false],
+    ["y", bounds.minY, true],
+    ["y", bounds.maxY, false]
+  ].reduce((items, args) => clipEdge(items, ...args), poly);
+}
+
+function textureTilePieces(poly, bounds, wrap = "clip") {
+  const mode = cleanBitmapWrap(wrap);
+  const width = Math.max(1e-5, bounds.maxX - bounds.minX);
+  const height = Math.max(1e-5, bounds.maxY - bounds.minY);
+  const localTex = (p, tileX, tileY) => {
+    const localX = p.tex.x - tileX * width;
+    const localY = p.tex.y - tileY * height;
+    return {
+      x: mode === "mirror" && Math.abs(tileX) % 2 === 1 ? bounds.maxX - (localX - bounds.minX) : localX,
+      y: mode === "mirror" && Math.abs(tileY) % 2 === 1 ? bounds.maxY - (localY - bounds.minY) : localY
+    };
+  };
+  const localize = (piece, tileX, tileY) => piece.map((p) => ({ ...p, tex: localTex(p, tileX, tileY) }));
+  if (mode === "clip") {
+    const clipped = clipTexturePolygonByBounds(poly, bounds);
+    return clipped.length >= 3 ? [clipped] : [];
+  }
+  const minTexX = Math.min(...poly.map((p) => p.tex.x));
+  const maxTexX = Math.max(...poly.map((p) => p.tex.x));
+  const minTexY = Math.min(...poly.map((p) => p.tex.y));
+  const maxTexY = Math.max(...poly.map((p) => p.tex.y));
+  const startX = Math.floor((minTexX - bounds.minX) / width);
+  const endX = Math.floor((maxTexX - bounds.minX) / width);
+  const startY = Math.floor((minTexY - bounds.minY) / height);
+  const endY = Math.floor((maxTexY - bounds.minY) / height);
+  if ((endX - startX + 1) * (endY - startY + 1) > 441) return [];
+  const pieces = [];
+  for (let tileY = startY; tileY <= endY; tileY++) {
+    for (let tileX = startX; tileX <= endX; tileX++) {
+      const clipped = clipTexturePolygonByBounds(poly, {
+        minX: bounds.minX + tileX * width,
+        maxX: bounds.maxX + tileX * width,
+        minY: bounds.minY + tileY * height,
+        maxY: bounds.maxY + tileY * height
+      });
+      if (clipped.length >= 3) pieces.push(localize(clipped, tileX, tileY));
+    }
+  }
+  return pieces;
+}
+
+function fillScreenPolygon(ctx, pts) {
+  if (!pts || pts.length < 3) return;
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawSelectedFaceUvGapOverlay(ctx, face, pts) {
+  if (!face || state.selected?.type !== "face" || state.selected.id !== face.id || pts.length < 3) return;
+  const faceKey = cleanBitmapKey(face.bitmapFaceKey);
+  const faceImg = faceKey ? state.faceSkinImages?.[faceKey] : null;
+  if (!faceImg?.complete || !faceImg.naturalWidth) return;
+  const mapping = selectedFaceTextureMapping(face);
+  if (!mapping?.uv?.length || mapping.uv.length !== pts.length) return;
+  const poly = mapping.uv.map((tex, i) => ({ screen: pts[i], tex }));
+  const coveredPieces = textureTilePieces(poly, {
+    minX: 0,
+    minY: 0,
+    maxX: mapping.width,
+    maxY: mapping.height
+  }, face.bitmapWrap);
+  const overlay = document.createElement("canvas");
+  overlay.width = ctx.canvas.width;
+  overlay.height = ctx.canvas.height;
+  const oc = overlay.getContext("2d");
+  oc.fillStyle = "rgba(255, 72, 58, .34)";
+  fillScreenPolygon(oc, pts);
+  if (coveredPieces.length) {
+    oc.globalCompositeOperation = "destination-out";
+    oc.fillStyle = "rgba(0, 0, 0, 1)";
+    for (const covered of coveredPieces) fillScreenPolygon(oc, covered.map((p) => p.screen));
+    oc.globalCompositeOperation = "source-over";
+  }
+  ctx.drawImage(overlay, 0, 0);
+}
+
 function drawTexturedPolygon(ctx, img, poly, sx, sy, mirrorX, foldX) {
   if (!poly || poly.length < 3) return;
   const uvFor = (p) => {
@@ -4286,13 +4490,16 @@ function drawFaceBitmapSkin(ctx, face, pts) {
       const sx = faceImg.naturalWidth / (mirrorX ? Math.max(1, seamX) : mapping.width);
       const sy = faceImg.naturalHeight / mapping.height;
       const poly = mapping.uv.map((tex, i) => ({ screen: pts[i], tex }));
+      const pieces = textureTilePieces(poly, { minX: 0, minY: 0, maxX: mapping.width, maxY: mapping.height }, face.bitmapWrap);
       ctx.save();
       ctx.globalAlpha = .98;
-      if (mirrorX) {
-        drawTexturedPolygon(ctx, faceImg, clipTexturePolygon(poly, true, seamX), sx, sy, true, seamX);
-        drawTexturedPolygon(ctx, faceImg, clipTexturePolygon(poly, false, seamX), sx, sy, true, seamX);
-      } else {
-        drawTexturedPolygon(ctx, faceImg, poly, sx, sy, false, seamX);
+      for (const piece of pieces) {
+        if (mirrorX) {
+          drawTexturedPolygon(ctx, faceImg, clipTexturePolygon(piece, true, seamX), sx, sy, true, seamX);
+          drawTexturedPolygon(ctx, faceImg, clipTexturePolygon(piece, false, seamX), sx, sy, true, seamX);
+        } else {
+          drawTexturedPolygon(ctx, faceImg, piece, sx, sy, false, seamX);
+        }
       }
       ctx.restore();
       return true;
@@ -4638,6 +4845,7 @@ function renderMain() {
         drawFace(ctx, pts, builderBitmapFill(n, face), "rgba(0,0,0,0)", 0);
         const textured = drawFaceBitmapSkin(ctx, face, pts);
         drawFaceBitmapDecals(ctx, face, pts);
+        if (selected) drawSelectedFaceUvGapOverlay(ctx, face, pts);
         if (!textured) drawFaceTextureGuide(ctx, pts, previewMode === "bitmap" ? .22 : .16);
         if (selected || grouped || drawWire) {
           drawFace(
@@ -4723,6 +4931,7 @@ function renderMain() {
     const face = faceById(state.selected.id);
     const pts = face?.verts.map((id) => projected.get(id)).filter(Boolean) || [];
     if (face && pts.length >= 3) {
+      drawSelectedFaceUvGapOverlay(ctx, face, pts);
       drawFace(ctx, pts, "rgba(255,217,54,.13)", "#ffd936", 2);
       drawFaceMirrorSeam(ctx, face, pts);
     }
@@ -5273,6 +5482,13 @@ function scheduleGamePreviewSync(delay = 260, force = false) {
   if (gamePreviewSentBlueprintKey) queueGamePreviewViewSync();
   clearTimeout(gamePreviewTimer);
   gamePreviewTimer = setTimeout(() => syncGamePreview(false), delay);
+}
+
+function syncLiveRenderPreviews(delay = 0) {
+  scheduleGamePreviewSync(delay, true);
+  if (!els.spinPreviewModal?.classList.contains("is-hidden")) {
+    postSpinPreviewPayload(els.spinPreviewFrame?.contentWindow);
+  }
 }
 
 function kickInitialGamePreviewSync() {
@@ -5840,6 +6056,10 @@ function derivedBlueprint(options = {}) {
   const faceTextureUv = projectionFaces.map((f) => cleanFaceBitmapUv(f));
   const faceTextureBaseW = projectionFaces.map((f) => Number.isFinite(Number(f.bitmapBaseW)) && Number(f.bitmapBaseW) > 0 ? Math.round(Number(f.bitmapBaseW)) : null);
   const faceTextureBaseH = projectionFaces.map((f) => Number.isFinite(Number(f.bitmapBaseH)) && Number(f.bitmapBaseH) > 0 ? Math.round(Number(f.bitmapBaseH)) : null);
+  const faceTextureWrap = projectionFaces.map((f) => {
+    const wrap = cleanBitmapWrap(f.bitmapWrap);
+    return wrap === "clip" ? null : wrap;
+  });
   const faceColors = projectionFaces.map((f) => optionalHexColor(f.faceColor) || null);
   const faceAngles = projectionFaces.map((f) => normalizeBitmapAngle(f.bitmapAngle) || null);
   const faceMirrorX = projectionFaces.map((f) => !!f.bitmapMirrorX);
@@ -5866,13 +6086,14 @@ function derivedBlueprint(options = {}) {
     ...(faceTextureUv.some(Boolean) ? { faceTextureUv } : {}),
     ...(faceTextureBaseW.some(Boolean) ? { faceTextureBaseW } : {}),
     ...(faceTextureBaseH.some(Boolean) ? { faceTextureBaseH } : {}),
+    ...(faceTextureWrap.some(Boolean) ? { faceTextureWrap } : {}),
     ...(faceColors.some(Boolean) ? { faceColors } : {}),
     ...(faceAngles.some((angle) => angle != null) ? { faceAngles } : {}),
     ...(faceMirrorX.some(Boolean) ? { faceMirrorX } : {}),
     ...(faceDecals.some((decals) => decals?.length) ? { faceDecals } : {}),
     ...(faceRenderFlags.some(Boolean) ? { faceRenderFlags } : {})
   };
-  const hasImageProjection = !!imageProjection.primaryAxis || !!imageProjection.faceSides || !!imageProjection.faceTextures || !!imageProjection.faceTextureUv || !!imageProjection.faceColors || !!imageProjection.faceAngles || !!imageProjection.faceMirrorX || !!imageProjection.faceDecals || !!imageProjection.faceRenderFlags;
+  const hasImageProjection = !!imageProjection.primaryAxis || !!imageProjection.faceSides || !!imageProjection.faceTextures || !!imageProjection.faceTextureUv || !!imageProjection.faceTextureWrap || !!imageProjection.faceColors || !!imageProjection.faceAngles || !!imageProjection.faceMirrorX || !!imageProjection.faceDecals || !!imageProjection.faceRenderFlags;
   return {
     verts,
     faces,
@@ -5997,6 +6218,7 @@ function builderExport() {
       ...(Number.isFinite(Number(f.bitmapBaseW)) && Number(f.bitmapBaseW) > 0 && Number.isFinite(Number(f.bitmapBaseH)) && Number(f.bitmapBaseH) > 0 ? { bitmapBaseW: Math.round(Number(f.bitmapBaseW)), bitmapBaseH: Math.round(Number(f.bitmapBaseH)) } : {}),
       ...(normalizeBitmapAngle(f.bitmapAngle) ? { bitmapAngle: normalizeBitmapAngle(f.bitmapAngle) } : {}),
       ...(f.bitmapMirrorX ? { bitmapMirrorX: true } : {}),
+      ...(cleanBitmapWrap(f.bitmapWrap) !== "clip" ? { bitmapWrap: cleanBitmapWrap(f.bitmapWrap) } : {}),
       ...(cleanFaceDecals(f.bitmapDecals).length ? { bitmapDecals: cleanFaceDecals(f.bitmapDecals) } : {})
     })),
     edges: state.edges.map((e) => ({ id: e.id, a: e.a, b: e.b, kind: e.kind, mirrored: !!e.mirrored })),
@@ -6901,7 +7123,7 @@ function bindEvents() {
     if ((event.key === "Delete" || event.key === "Backspace")
       && state.selected
       && !isEditingFormControl(event.target)
-      && !modalIsOpen(els.writeSummaryModal, els.buildCompleteModal, els.assetLibraryModal, els.uvPropertiesModal, els.modelBrowserModal, els.spinPreviewModal)) {
+      && !modalIsOpen(els.writeSummaryModal, els.buildCompleteModal, els.assetLibraryModal, els.modelBrowserModal, els.spinPreviewModal)) {
       event.preventDefault();
       deleteSelected();
       return;
@@ -7040,9 +7262,17 @@ function bindEvents() {
   });
   els.skinAngle?.addEventListener("input", (ev) => setSelectedFaceUvAngle(ev.target.value));
   els.skinAngleValue?.addEventListener("change", (ev) => setSelectedFaceUvAngle(ev.target.value));
-  for (const control of [els.uvTransformX, els.uvTransformY, els.uvTransformRotation, els.uvTransformScale]) {
-    control?.addEventListener("change", applySelectedFaceUvTransformFromControls);
+  for (const control of uvTransformControls()) {
+    control.addEventListener("input", (event) => {
+      syncUvTransformControlPair(event.target);
+      applySelectedFaceUvTransformFromControls({ normalizeInputs: false, status: false });
+    });
+    control.addEventListener("change", (event) => {
+      syncUvTransformControlPair(event.target);
+      applySelectedFaceUvTransformFromControls({ normalizeInputs: true, status: true });
+    });
   }
+  els.uvTransformWrap?.addEventListener("change", (event) => setSelectedFaceBitmapWrap(event.target.value));
   els.resetUvTransformBtn?.addEventListener("click", resetSelectedFaceUvTransform);
   document.querySelectorAll(".uv-rotate-btn").forEach((button) => {
     button.addEventListener("click", () => rotateSelectedFaceUvAngle(button.dataset.uvRotate));

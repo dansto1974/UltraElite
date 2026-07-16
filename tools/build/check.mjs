@@ -401,6 +401,10 @@ function validBitmapFaceSide(value) {
   return value === "top" || value === "bottom" || value === "back" ? value : null;
 }
 
+function cleanBitmapWrap(value) {
+  return value === "repeat" || value === "mirror" ? value : null;
+}
+
 function cleanBitmapAngle(value) {
   let n = Number(value) || 0;
   n = ((n + 180) % 360 + 360) % 360 - 180;
@@ -590,6 +594,7 @@ if (fs.existsSync(modelDir)) {
     const faceTextureUv = sourceFaces.map((face) => cleanFaceUv(face?.bitmapUv));
     const faceTextureBaseW = sourceFaces.map((face) => Number.isFinite(Number(face?.bitmapBaseW)) && Number(face.bitmapBaseW) > 0 ? Math.round(Number(face.bitmapBaseW)) : null);
     const faceTextureBaseH = sourceFaces.map((face) => Number.isFinite(Number(face?.bitmapBaseH)) && Number(face.bitmapBaseH) > 0 ? Math.round(Number(face.bitmapBaseH)) : null);
+    const faceTextureWrap = sourceFaces.map((face) => cleanBitmapWrap(face?.bitmapWrap));
     const authoredFaceColors = sourceFaces.map((face) => cleanHexColor(face?.faceColor || face?.color));
     const faceAngles = sourceFaces.map((face) => cleanBitmapAngle(face?.bitmapAngle));
     const faceMirrorX = sourceFaces.map((face) => !!face?.bitmapMirrorX);
@@ -613,6 +618,7 @@ if (fs.existsSync(modelDir)) {
     const hasFaceTextureUv = faceTextureUv.some(Boolean);
     const hasFaceTextureBaseW = faceTextureBaseW.some(Boolean);
     const hasFaceTextureBaseH = faceTextureBaseH.some(Boolean);
+    const hasFaceTextureWrap = faceTextureWrap.some(Boolean);
     const hasAuthoredFaceColors = authoredFaceColors.some(Boolean);
     const hasFaceAngles = faceAngles.some((angle) => angle != null);
     const hasFaceMirrorX = faceMirrorX.some(Boolean);
@@ -622,7 +628,7 @@ if (fs.existsSync(modelDir)) {
     assertOptionalEmbeddedEdgeKinds(`${path.relative(root, filePath)} embedded blueprint`, data, data.blueprint);
     assertGeneratedEdgeKinds(`${path.relative(root, filePath)} generated blueprint`, data, generatedModels[modelId]);
     assertDetailRenderIntent(`${path.relative(root, filePath)} generated blueprint`, generatedModels[modelId]?.details);
-    if (!hasFaceSides && !hasFaceTextures && !hasFaceTextureUv && !hasFaceTextureBaseW && !hasFaceTextureBaseH && !hasAuthoredFaceColors && !hasFaceAngles && !hasFaceMirrorX && !hasFaceDecals) continue;
+    if (!hasFaceSides && !hasFaceTextures && !hasFaceTextureUv && !hasFaceTextureBaseW && !hasFaceTextureBaseH && !hasFaceTextureWrap && !hasAuthoredFaceColors && !hasFaceAngles && !hasFaceMirrorX && !hasFaceDecals) continue;
 
     const generatedProjection = generatedModels[modelId]?.imageProjection || {};
     if (hasFaceSides && JSON.stringify(generatedProjection.faceSides) !== JSON.stringify(faceSides)) {
@@ -639,6 +645,9 @@ if (fs.existsSync(modelDir)) {
     }
     if (hasFaceTextureBaseH && JSON.stringify(generatedProjection.faceTextureBaseH) !== JSON.stringify(faceTextureBaseH)) {
       throw new Error(`${path.relative(root, filePath)} bitmap faceTextureBaseH is out of sync with src/generated/model-library.js; run npm run models or npm run build.`);
+    }
+    if (hasFaceTextureWrap && JSON.stringify(generatedProjection.faceTextureWrap) !== JSON.stringify(faceTextureWrap)) {
+      throw new Error(`${path.relative(root, filePath)} bitmap faceTextureWrap is out of sync with src/generated/model-library.js; run npm run models or npm run build.`);
     }
     sourceFaces.forEach((face, faceIndex) => {
       if (Array.isArray(face?.bitmapUv)) {
@@ -686,6 +695,7 @@ if (fs.existsSync(modelDir)) {
       ["faceTextureUv", hasFaceTextureUv, faceTextureUv],
       ["faceTextureBaseW", hasFaceTextureBaseW, faceTextureBaseW],
       ["faceTextureBaseH", hasFaceTextureBaseH, faceTextureBaseH],
+      ["faceTextureWrap", hasFaceTextureWrap, faceTextureWrap],
       ["faceColors", hasAuthoredFaceColors, authoredFaceColors],
       ["faceAngles", hasFaceAngles, faceAngles],
       ["faceMirrorX", hasFaceMirrorX, faceMirrorX],

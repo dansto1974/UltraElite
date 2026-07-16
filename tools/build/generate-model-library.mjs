@@ -28,6 +28,10 @@ function cleanHexColor(value) {
   return /^#[0-9a-f]{6}$/i.test(text) ? text.toLowerCase() : null;
 }
 
+function cleanBitmapWrap(value) {
+  return value === "repeat" || value === "mirror" ? value : "clip";
+}
+
 function averagePngColor(filePath) {
   if (pngAverageColorCache.has(filePath)) return pngAverageColorCache.get(filePath);
   let color = null;
@@ -265,6 +269,10 @@ function sourceImageProjection(data) {
   });
   const faceTextureBaseW = sourceFaces.map((face) => Number.isFinite(Number(face?.bitmapBaseW)) && Number(face.bitmapBaseW) > 0 ? Math.round(Number(face.bitmapBaseW)) : null);
   const faceTextureBaseH = sourceFaces.map((face) => Number.isFinite(Number(face?.bitmapBaseH)) && Number(face.bitmapBaseH) > 0 ? Math.round(Number(face.bitmapBaseH)) : null);
+  const faceTextureWrap = sourceFaces.map((face) => {
+    const wrap = cleanBitmapWrap(face?.bitmapWrap);
+    return wrap === "clip" ? null : wrap;
+  });
   const faceColors = sourceFaces.map((face) =>
     cleanHexColor(face?.faceColor || face?.color)
     || averageBitmapFaceColor(data.id, face?.bitmapFaceKey)
@@ -314,13 +322,14 @@ function sourceImageProjection(data) {
     ...(faceTextureUv.some(Boolean) ? { faceTextureUv } : {}),
     ...(faceTextureBaseW.some(Boolean) ? { faceTextureBaseW } : {}),
     ...(faceTextureBaseH.some(Boolean) ? { faceTextureBaseH } : {}),
+    ...(faceTextureWrap.some(Boolean) ? { faceTextureWrap } : {}),
     ...(faceColors.some(Boolean) ? { faceColors } : {}),
     ...(faceAngles.some((angle) => angle != null) ? { faceAngles } : {}),
     ...(faceMirrorX.some(Boolean) ? { faceMirrorX } : {}),
     ...(faceDecals.some((decals) => decals?.length) ? { faceDecals } : {}),
     ...(faceRenderFlags.some(Boolean) ? { faceRenderFlags } : {})
   };
-  return imageProjection.primaryAxis || imageProjection.faceSides || imageProjection.faceTextures || imageProjection.faceTextureUv || imageProjection.faceColors || imageProjection.faceAngles || imageProjection.faceMirrorX || imageProjection.faceDecals || imageProjection.faceRenderFlags ? imageProjection : null;
+  return imageProjection.primaryAxis || imageProjection.faceSides || imageProjection.faceTextures || imageProjection.faceTextureUv || imageProjection.faceTextureWrap || imageProjection.faceColors || imageProjection.faceAngles || imageProjection.faceMirrorX || imageProjection.faceDecals || imageProjection.faceRenderFlags ? imageProjection : null;
 }
 
 function detailRenderIntent(detail) {
