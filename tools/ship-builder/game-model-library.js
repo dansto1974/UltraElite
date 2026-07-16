@@ -381,36 +381,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#85909d"
       }
     ],
-    "edges": [
-      {
-        "id": 5025,
-        "a": 15,
-        "b": 16,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
-        "id": 5026,
-        "a": 16,
-        "b": 17,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
-        "id": 5027,
-        "a": 17,
-        "b": 18,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
-        "id": 5028,
-        "a": 18,
-        "b": 15,
-        "kind": "edge",
-        "mirrored": false
-      }
-    ],
+    "edges": [],
     "details": [
       {
         "id": 5029,
@@ -665,22 +636,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         [
           0,
           7
-        ],
-        [
-          14,
-          15
-        ],
-        [
-          15,
-          16
-        ],
-        [
-          16,
-          17
-        ],
-        [
-          14,
-          17
         ]
       ],
       "edgeFaces": [
@@ -791,29 +746,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         [
           11,
           12
-        ],
-        [
-          -1,
-          -1
-        ],
-        [
-          -1,
-          -1
-        ],
-        [
-          -1,
-          -1
-        ],
-        [
-          -1,
-          -1
         ]
       ],
       "edgeVisibility": [
-        31,
-        31,
-        31,
-        31,
         31,
         31,
         31,
@@ -1056,10 +991,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ]
       },
       "edgeKinds": [
-        "edge",
-        "edge",
-        "edge",
-        "edge",
         "edge",
         "edge",
         "edge",
