@@ -8912,8 +8912,9 @@
       renderPanel();
     }
 
-    const GAME_VERSION = "1.0.19-beta";
+    const GAME_VERSION = "1.0.20-beta";
     const UPDATE_LOG = [
+      ["1.0.20-beta", "Ship and station surface polish: optimized several model assets, refreshed Diamondback skin textures, and tightened station panel mapping for cleaner Ultra-mode rendering."],
       ["1.0.19-beta", "Mission and dockyard polish: active contracts now report ship requirements more clearly, mission completion debriefs wait until landing is complete, and transition cameras lock the cockpit view cleanly."],
       ["1.0.18-beta", "Launch loading now gates the cockpit until assets are ready, Safari planet shadows are safer, and station/police beacons have clearer sequenced strobe behaviour."],
       ["1.0.17-beta", "Station render polish: bitmap faces, entrance forcefields, beacons and hangar transitions now line up more cleanly."],
