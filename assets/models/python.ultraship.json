@@ -2,6 +2,40 @@
   "format": "ultra-elite-ship-builder/v1",
   "id": "python",
   "name": "Python",
+  "symmetry": "x-locked",
+  "gameMeta": {
+    "class": "fighter",
+    "npcRole": "private",
+    "aiProfile": "standard",
+    "decalRole": "private",
+    "baseColor": "#e9f2e4",
+    "description": "",
+    "missionLore": "",
+    "imageDecalMirrorX": {
+      "top": true,
+      "bottom": true,
+      "back": false
+    },
+    "valueCr": 250000,
+    "stats": {
+      "r": 224,
+      "hp": 120,
+      "speed": 1,
+      "cargo": 10,
+      "missiles": 1,
+      "laser": "none"
+    },
+    "lists": {
+      "trader": true,
+      "pirate": true,
+      "police": false,
+      "alien": false
+    },
+    "flags": {
+      "escapePod": true,
+      "hiddenUntilDiscovered": false
+    }
+  },
   "verts": [
     {
       "id": 1,
@@ -229,36 +263,7 @@
       "faceColor": "#4f4d3e"
     }
   ],
-  "edges": [
-    {
-      "id": 5012,
-      "a": 4,
-      "b": 6,
-      "kind": "edge",
-      "mirrored": false
-    },
-    {
-      "id": 5013,
-      "a": 4,
-      "b": 11,
-      "kind": "edge",
-      "mirrored": false
-    },
-    {
-      "id": 5014,
-      "a": 3,
-      "b": 6,
-      "kind": "edge",
-      "mirrored": false
-    },
-    {
-      "id": 5015,
-      "a": 3,
-      "b": 11,
-      "kind": "edge",
-      "mirrored": false
-    }
-  ],
+  "edges": [],
   "details": [
     {
       "id": 5016,
@@ -413,6 +418,25 @@
           -112
         ]
       ]
+    },
+    {
+      "id": 5023,
+      "type": "panel",
+      "faceId": 1008,
+      "indices": [
+        3,
+        6,
+        4,
+        11,
+        3
+      ],
+      "color": "#ffd936",
+      "normal": [
+        -0.43,
+        0.86,
+        -0.26
+      ],
+      "lift": 0.5
     }
   ],
   "blueprint": {
@@ -473,49 +497,121 @@
         -112
       ]
     ],
-    "edges": [
+    "faces": [
       [
+        1,
+        3,
+        0
+      ],
+      [
+        1,
+        0,
+        2
+      ],
+      [
+        0,
+        3,
+        8
+      ],
+      [
+        2,
         0,
         8
       ],
       [
-        0,
+        1,
+        4,
+        3
+      ],
+      [
+        4,
+        1,
+        2
+      ],
+      [
+        3,
+        9,
+        8
+      ],
+      [
+        2,
+        8,
+        9
+      ],
+      [
+        4,
+        5,
+        6,
+        3
+      ],
+      [
+        5,
+        4,
+        2,
+        7
+      ],
+      [
+        7,
+        2,
+        9,
+        10
+      ],
+      [
+        3,
+        6,
+        10,
+        9
+      ],
+      [
+        6,
+        5,
+        7,
+        10
+      ]
+    ],
+    "edges": [
+      [
+        1,
         3
       ],
       [
         0,
-        2
+        3
       ],
       [
         0,
         1
       ],
       [
-        2,
-        4
+        0,
+        2
       ],
       [
         1,
         2
       ],
       [
+        3,
+        8
+      ],
+      [
+        0,
+        8
+      ],
+      [
         2,
         8
       ],
       [
         1,
-        3
+        4
       ],
       [
         3,
-        8
+        4
       ],
       [
         2,
-        9
-      ],
-      [
-        3,
         4
       ],
       [
@@ -523,36 +619,36 @@
         9
       ],
       [
-        3,
+        8,
+        9
+      ],
+      [
+        2,
+        9
+      ],
+      [
+        4,
         5
-      ],
-      [
-        3,
-        10
-      ],
-      [
-        2,
-        5
-      ],
-      [
-        2,
-        10
-      ],
-      [
-        2,
-        7
-      ],
-      [
-        3,
-        6
       ],
       [
         5,
         6
       ],
       [
+        3,
+        6
+      ],
+      [
+        2,
+        7
+      ],
+      [
         5,
         7
+      ],
+      [
+        9,
+        10
       ],
       [
         7,
@@ -561,128 +657,120 @@
       [
         6,
         10
-      ],
-      [
-        4,
-        5
-      ],
-      [
-        9,
-        10
-      ],
-      [
-        1,
-        4
-      ],
-      [
-        8,
-        9
       ]
+    ],
+    "edgeKinds": [
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge"
     ],
     "edgeFaces": [
       [
-        2,
-        3
+        0,
+        4
       ],
       [
         0,
         2
       ],
       [
-        1,
-        3
-      ],
-      [
         0,
         1
       ],
       [
-        9,
-        5
+        1,
+        3
       ],
       [
         1,
         5
-      ],
-      [
-        7,
-        3
-      ],
-      [
-        0,
-        4
       ],
       [
         2,
         6
       ],
       [
-        7,
-        10
+        2,
+        3
       ],
       [
-        4,
-        8
-      ],
-      [
-        6,
-        11
-      ],
-      [
-        8,
-        8
-      ],
-      [
-        11,
-        11
-      ],
-      [
-        9,
-        9
-      ],
-      [
-        10,
-        10
-      ],
-      [
-        9,
-        10
-      ],
-      [
-        8,
-        11
-      ],
-      [
-        8,
-        12
-      ],
-      [
-        9,
-        12
-      ],
-      [
-        12,
-        10
-      ],
-      [
-        11,
-        12
-      ],
-      [
-        8,
-        9
-      ],
-      [
-        10,
-        11
+        3,
+        7
       ],
       [
         4,
         5
       ],
       [
+        4,
+        8
+      ],
+      [
+        5,
+        9
+      ],
+      [
+        6,
+        11
+      ],
+      [
         6,
         7
+      ],
+      [
+        7,
+        10
+      ],
+      [
+        8,
+        9
+      ],
+      [
+        8,
+        12
+      ],
+      [
+        8,
+        11
+      ],
+      [
+        9,
+        10
+      ],
+      [
+        9,
+        12
+      ],
+      [
+        10,
+        11
+      ],
+      [
+        10,
+        12
+      ],
+      [
+        11,
+        12
       ]
     ],
     "edgeVisibility": [
@@ -698,10 +786,6 @@
       31,
       31,
       31,
-      7,
-      7,
-      7,
-      7,
       31,
       31,
       31,
@@ -715,74 +799,81 @@
     ],
     "normals": [
       [
-        -27,
-        40,
-        11
+        -54.96,
+        80.6,
+        21.98
       ],
       [
-        27,
-        40,
-        11
+        54.96,
+        80.6,
+        21.98
       ],
       [
-        -27,
-        -40,
-        11
+        -54.96,
+        -80.6,
+        21.98
       ],
       [
-        27,
-        -40,
-        11
+        54.96,
+        -80.6,
+        21.98
       ],
       [
-        -19,
-        38,
+        -44.72,
+        89.44,
         0
       ],
       [
-        19,
-        38,
+        44.72,
+        89.44,
         0
       ],
       [
-        -19,
-        -38,
+        -44.72,
+        -89.44,
         0
       ],
       [
-        19,
-        -38,
+        44.72,
+        -89.44,
         0
       ],
       [
-        -25,
-        37,
-        -11
+        -43.19,
+        86.39,
+        -25.92
       ],
       [
-        25,
-        37,
-        -11
+        46.61,
+        84.74,
+        -25.42
       ],
       [
-        25,
-        -37,
-        -11
+        46.57,
+        -85.38,
+        -23.28
       ],
       [
-        -25,
-        -37,
-        -11
+        -43.64,
+        -87.29,
+        -21.82
       ],
       [
         0,
         0,
-        -112
+        -100
       ]
     ],
     "details": [
       {
         "type": "window",
+        "color": "#101915",
+        "lift": 0.5,
+        "normal": [
+          0.55,
+          0.81,
+          0.22
+        ],
         "points": [
           [
             17.6,
@@ -800,16 +891,24 @@
             39.7
           ]
         ],
-        "color": "#101915",
-        "normal": [
-          0.55,
-          0.81,
-          0.22
-        ],
-        "lift": 0.5
+        "detailRender": {
+          "kind": "poly",
+          "solid": true,
+          "wire": true,
+          "glow": false,
+          "glass": true,
+          "solidStroke": false
+        }
       },
       {
         "type": "window",
+        "color": "#101915",
+        "lift": 0.5,
+        "normal": [
+          -0.55,
+          0.81,
+          0.22
+        ],
         "points": [
           [
             -17.6,
@@ -827,76 +926,117 @@
             39.7
           ]
         ],
-        "color": "#101915",
-        "normal": [
-          -0.55,
-          0.81,
-          0.22
-        ],
-        "lift": 0.5
+        "detailRender": {
+          "kind": "poly",
+          "solid": true,
+          "wire": true,
+          "glow": false,
+          "glass": true,
+          "solidStroke": false
+        }
       },
       {
         "type": "line",
-        "indices": [
-          3,
-          5
-        ],
         "color": "#101915",
+        "width": 1.4,
+        "lift": 0.5,
         "normal": [
           -0.52,
           0.77,
           -0.23
         ],
-        "width": 1.4,
-        "lift": 0.5
+        "indices": [
+          3,
+          5
+        ],
+        "detailRender": {
+          "kind": "line",
+          "solid": false,
+          "wire": true,
+          "glow": false,
+          "glass": false,
+          "solidStroke": false
+        }
       },
       {
         "type": "line",
-        "indices": [
-          2,
-          5
-        ],
         "color": "#101915",
+        "width": 1.4,
+        "lift": 0.5,
         "normal": [
           0.52,
           0.77,
           -0.23
         ],
-        "width": 1.4,
-        "lift": 0.5
+        "indices": [
+          2,
+          5
+        ],
+        "detailRender": {
+          "kind": "line",
+          "solid": false,
+          "wire": true,
+          "glow": false,
+          "glass": false,
+          "solidStroke": false
+        }
       },
       {
         "type": "line",
-        "indices": [
-          2,
-          10
-        ],
         "color": "#101915",
+        "width": 1.4,
+        "lift": 0.5,
         "normal": [
           0.52,
           -0.77,
           -0.23
         ],
-        "width": 1.4,
-        "lift": 0.5
+        "indices": [
+          2,
+          10
+        ],
+        "detailRender": {
+          "kind": "line",
+          "solid": false,
+          "wire": true,
+          "glow": false,
+          "glass": false,
+          "solidStroke": false
+        }
       },
       {
         "type": "line",
-        "indices": [
-          3,
-          10
-        ],
         "color": "#101915",
+        "width": 1.4,
+        "lift": 0.5,
         "normal": [
           -0.52,
           -0.77,
           -0.23
         ],
-        "width": 1.4,
-        "lift": 0.5
+        "indices": [
+          3,
+          10
+        ],
+        "detailRender": {
+          "kind": "line",
+          "solid": false,
+          "wire": true,
+          "glow": false,
+          "glass": false,
+          "solidStroke": false
+        }
       },
       {
         "type": "engine",
+        "color": "#f7fff7",
+        "stroke": "#ffffff",
+        "lift": 0.5,
+        "normal": [
+          0,
+          0,
+          -1
+        ],
         "points": [
           [
             0,
@@ -919,14 +1059,60 @@
             -112
           ]
         ],
-        "color": "#f7fff7",
-        "stroke": "#ffffff",
+        "detailRender": {
+          "kind": "poly",
+          "solid": true,
+          "wire": true,
+          "glow": true,
+          "glass": false,
+          "solidStroke": true
+        }
+      },
+      {
+        "type": "polyline",
+        "color": "#ffd936",
         "normal": [
-          0,
-          0,
-          -1
+          -0.43,
+          0.86,
+          -0.26
         ],
-        "lift": 0.5
+        "lift": 0.5,
+        "points": [
+          [
+            96,
+            0,
+            -16
+          ],
+          [
+            0,
+            24,
+            -112
+          ],
+          [
+            -96,
+            0,
+            -16
+          ],
+          [
+            0,
+            -24,
+            -112
+          ],
+          [
+            96,
+            0,
+            -16
+          ]
+        ],
+        "width": 1.2,
+        "detailRender": {
+          "kind": "line",
+          "solid": false,
+          "wire": true,
+          "glow": false,
+          "glass": false,
+          "solidStroke": false
+        }
       }
     ],
     "imageProjection": {
@@ -944,14 +1130,55 @@
         "#80774c",
         "#80764d",
         "#4f4d3e"
+      ],
+      "faceRenderFlags": [
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8
       ]
-    }
-  },
-  "gameMeta": {
-    "imageDecalMirrorX": {
-      "top": true,
-      "bottom": true,
-      "back": false
+    },
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "private",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "imageDecalMirrorX": {
+        "top": true,
+        "bottom": true,
+        "back": false
+      },
+      "valueCr": 250000,
+      "stats": {
+        "r": 224,
+        "hp": 120,
+        "speed": 1,
+        "cargo": 10,
+        "missiles": 1,
+        "laser": "none"
+      },
+      "lists": {
+        "trader": true,
+        "pirate": true,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": false
+      }
     }
   }
 }

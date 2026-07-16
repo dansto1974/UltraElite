@@ -7027,6 +7027,40 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
     "format": "ultra-elite-ship-builder/v1",
     "id": "cobra1",
     "name": "Cobra Mk I",
+    "symmetry": "x-locked",
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "private",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "imageDecalMirrorX": {
+        "top": true,
+        "bottom": true,
+        "back": false
+      },
+      "valueCr": 250000,
+      "stats": {
+        "r": 67,
+        "hp": 120,
+        "speed": 1,
+        "cargo": 10,
+        "missiles": 1,
+        "laser": "none"
+      },
+      "lists": {
+        "trader": true,
+        "pirate": true,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": false
+      }
+    },
     "verts": [
       {
         "id": 1,
@@ -7228,7 +7262,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "id": 5017,
         "a": 11,
         "b": 10,
-        "kind": "edge",
+        "kind": "stick",
         "mirrored": false
       }
     ],
@@ -7395,10 +7429,94 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           60
         ]
       ],
+      "faces": [
+        [
+          1,
+          8,
+          0
+        ],
+        [
+          7,
+          1,
+          0,
+          6
+        ],
+        [
+          0,
+          8,
+          4,
+          2
+        ],
+        [
+          0,
+          2,
+          6
+        ],
+        [
+          3,
+          5,
+          8,
+          1
+        ],
+        [
+          7,
+          3,
+          1
+        ],
+        [
+          5,
+          4,
+          8
+        ],
+        [
+          4,
+          5,
+          7,
+          6
+        ],
+        [
+          2,
+          4,
+          6
+        ],
+        [
+          5,
+          3,
+          7
+        ]
+      ],
       "edges": [
         [
           1,
-          0
+          8
+        ],
+        [
+          0,
+          8
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          7
+        ],
+        [
+          0,
+          6
+        ],
+        [
+          6,
+          7
+        ],
+        [
+          4,
+          8
+        ],
+        [
+          2,
+          4
         ],
         [
           0,
@@ -7409,20 +7527,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6
         ],
         [
-          6,
-          7
+          3,
+          5
         ],
         [
-          7,
+          5,
+          8
+        ],
+        [
+          1,
           3
         ],
         [
           3,
-          1
-        ],
-        [
-          2,
-          4
+          7
         ],
         [
           4,
@@ -7430,117 +7548,109 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           5,
-          3
-        ],
-        [
-          0,
-          8
-        ],
-        [
-          8,
-          1
-        ],
-        [
-          4,
-          8
-        ],
-        [
-          8,
-          5
+          7
         ],
         [
           4,
           6
         ],
         [
-          5,
-          7
-        ],
-        [
-          0,
-          6
-        ],
-        [
-          1,
-          7
-        ],
-        [
-          10,
-          9
+          9,
+          10
         ]
+      ],
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "stick"
       ],
       "edgeFaces": [
         [
-          1,
-          0
+          0,
+          4
         ],
         [
-          3,
+          0,
           2
         ],
         [
-          8,
-          3
-        ],
-        [
-          7,
+          0,
           1
         ],
         [
-          9,
+          1,
+          5
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          1,
+          7
+        ],
+        [
+          2,
+          6
+        ],
+        [
+          2,
+          8
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          8
+        ],
+        [
+          4,
+          9
+        ],
+        [
+          4,
+          6
+        ],
+        [
+          4,
           5
         ],
         [
           5,
-          4
+          9
         ],
         [
-          8,
-          2
+          6,
+          7
         ],
         [
           7,
-          6
+          9
         ],
         [
-          9,
-          4
+          7,
+          8
         ],
         [
-          2,
-          0
-        ],
-        [
-          4,
-          0
-        ],
-        [
-          6,
-          2
-        ],
-        [
-          6,
-          4
-        ],
-        [
-          8,
-          7
-        ],
-        [
-          9,
-          7
-        ],
-        [
-          3,
-          1
-        ],
-        [
-          5,
-          1
-        ],
-        [
-          0,
-          0
+          -1,
+          -1
         ]
       ],
       "edgeVisibility": [
@@ -7553,71 +7663,78 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         31,
         31,
         31,
-        20,
-        20,
-        16,
-        16,
         31,
         31,
-        20,
-        20,
-        2
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31
       ],
       "normals": [
         [
           0,
-          41,
-          10
+          97.41,
+          22.61
         ],
         [
           0,
-          -27,
-          3
+          -99.23,
+          12.4
         ],
         [
-          -8,
-          46,
-          8
+          -17.05,
+          97.05,
+          17.05
         ],
         [
-          -12,
-          -57,
-          12
+          -20.1,
+          -95.85,
+          20.2
         ],
         [
-          8,
-          46,
-          8
+          14.85,
+          97.77,
+          14.85
         ],
         [
-          12,
-          -57,
-          12
+          20.1,
+          -95.85,
+          20.2
         ],
         [
           0,
-          49,
+          100,
           0
         ],
         [
           0,
           0,
-          -154
+          -100
         ],
         [
-          -121,
-          111,
-          -62
+          -68.98,
+          63.23,
+          -35.26
         ],
         [
-          121,
-          111,
-          -62
+          68.98,
+          63.23,
+          -35.26
         ]
       ],
       "details": [
         {
           "type": "window",
+          "color": "#101915",
+          "lift": 0.5,
+          "normal": [
+            0,
+            0.97,
+            0.24
+          ],
           "points": [
             [
               -9,
@@ -7635,13 +7752,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               12.7
             ]
           ],
-          "color": "#101915",
-          "normal": [
-            0,
-            0.97,
-            0.24
-          ],
-          "lift": 0.5,
           "detailRender": {
             "kind": "poly",
             "solid": true,
@@ -7653,19 +7763,19 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         },
         {
           "type": "line",
-          "indices": [
-            9,
-            10
-          ],
           "color": "#cccccc",
+          "width": 1.2,
+          "lift": 0.5,
+          "cull": false,
           "normal": [
             0,
             0,
             1
           ],
-          "width": 1.2,
-          "lift": 0.5,
-          "cull": false,
+          "indices": [
+            9,
+            10
+          ],
           "detailRender": {
             "kind": "line",
             "solid": false,
@@ -7677,6 +7787,14 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         },
         {
           "type": "engine",
+          "color": "#f7fff7",
+          "stroke": "#ffffff",
+          "lift": 0.5,
+          "normal": [
+            0,
+            0,
+            -1
+          ],
           "points": [
             [
               -36,
@@ -7694,14 +7812,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -38
             ]
           ],
-          "color": "#f7fff7",
-          "stroke": "#ffffff",
-          "normal": [
-            0,
-            0,
-            -1
-          ],
-          "lift": 0.5,
           "detailRender": {
             "kind": "poly",
             "solid": true,
@@ -7713,6 +7823,14 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         },
         {
           "type": "engine",
+          "color": "#f7fff7",
+          "stroke": "#ffffff",
+          "lift": 0.5,
+          "normal": [
+            0,
+            0,
+            -1
+          ],
           "points": [
             [
               14,
@@ -7730,14 +7848,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -38
             ]
           ],
-          "color": "#f7fff7",
-          "stroke": "#ffffff",
-          "normal": [
-            0,
-            0,
-            -1
-          ],
-          "lift": 0.5,
           "detailRender": {
             "kind": "poly",
             "solid": true,
@@ -7774,32 +7884,38 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8
         ]
       },
-      "edgeKinds": [
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge"
-      ]
-    },
-    "gameMeta": {
-      "imageDecalMirrorX": {
-        "top": true,
-        "bottom": true,
-        "back": false
+      "gameMeta": {
+        "class": "fighter",
+        "npcRole": "private",
+        "aiProfile": "standard",
+        "decalRole": "private",
+        "baseColor": "#e9f2e4",
+        "description": "",
+        "missionLore": "",
+        "imageDecalMirrorX": {
+          "top": true,
+          "bottom": true,
+          "back": false
+        },
+        "valueCr": 250000,
+        "stats": {
+          "r": 67,
+          "hp": 120,
+          "speed": 1,
+          "cargo": 10,
+          "missiles": 1,
+          "laser": "none"
+        },
+        "lists": {
+          "trader": true,
+          "pirate": true,
+          "police": false,
+          "alien": false
+        },
+        "flags": {
+          "escapePod": true,
+          "hiddenUntilDiscovered": false
+        }
       }
     }
   },
@@ -20870,6 +20986,40 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
     "format": "ultra-elite-ship-builder/v1",
     "id": "moray",
     "name": "Moray",
+    "symmetry": "x-locked",
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "private",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "imageDecalMirrorX": {
+        "top": true,
+        "bottom": true,
+        "back": false
+      },
+      "valueCr": 250000,
+      "stats": {
+        "r": 67,
+        "hp": 120,
+        "speed": 1,
+        "cargo": 10,
+        "missiles": 1,
+        "laser": "none"
+      },
+      "lists": {
+        "trader": true,
+        "pirate": true,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": false
+      }
+    },
     "verts": [
       {
         "id": 1,
@@ -21079,38 +21229,17 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
     ],
     "edges": [
       {
-        "id": 5014,
-        "a": 8,
-        "b": 9,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
-        "id": 5015,
-        "a": 8,
-        "b": 10,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
-        "id": 5016,
-        "a": 9,
-        "b": 10,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
         "id": 5017,
         "a": 11,
         "b": 12,
-        "kind": "edge",
+        "kind": "stick",
         "mirrored": false
       },
       {
         "id": 5018,
         "a": 13,
         "b": 14,
-        "kind": "edge",
+        "kind": "stick",
         "mirrored": false
       }
     ],
@@ -21266,18 +21395,94 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           65
         ]
       ],
+      "faces": [
+        [
+          0,
+          2,
+          1
+        ],
+        [
+          1,
+          2,
+          3
+        ],
+        [
+          4,
+          2,
+          0
+        ],
+        [
+          3,
+          2,
+          6
+        ],
+        [
+          2,
+          5,
+          6
+        ],
+        [
+          2,
+          4,
+          5
+        ],
+        [
+          1,
+          3,
+          6
+        ],
+        [
+          5,
+          0,
+          1,
+          6
+        ],
+        [
+          4,
+          0,
+          5
+        ]
+      ],
       "edges": [
         [
           0,
+          2
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          0,
           1
+        ],
+        [
+          2,
+          3
         ],
         [
           1,
           3
         ],
         [
+          2,
+          4
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          2,
+          6
+        ],
+        [
           3,
           6
+        ],
+        [
+          2,
+          5
         ],
         [
           5,
@@ -21288,52 +21493,12 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5
         ],
         [
-          0,
-          4
-        ],
-        [
           1,
           6
         ],
         [
           0,
           5
-        ],
-        [
-          0,
-          2
-        ],
-        [
-          1,
-          2
-        ],
-        [
-          2,
-          3
-        ],
-        [
-          2,
-          4
-        ],
-        [
-          2,
-          5
-        ],
-        [
-          2,
-          6
-        ],
-        [
-          7,
-          8
-        ],
-        [
-          7,
-          9
-        ],
-        [
-          8,
-          9
         ],
         [
           10,
@@ -21344,156 +21509,165 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           13
         ]
       ],
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "stick",
+        "stick"
+      ],
       "edgeFaces": [
         [
-          7,
-          0
-        ],
-        [
-          6,
-          1
-        ],
-        [
-          6,
-          3
-        ],
-        [
-          7,
-          4
-        ],
-        [
-          8,
-          5
-        ],
-        [
-          8,
+          0,
           2
         ],
         [
-          7,
-          6
+          0,
+          1
         ],
         [
-          8,
+          0,
           7
         ],
         [
-          2,
-          0
-        ],
-        [
           1,
-          0
-        ],
-        [
-          3,
-          1
-        ],
-        [
-          5,
-          2
-        ],
-        [
-          5,
-          4
-        ],
-        [
-          4,
           3
         ],
         [
-          4,
+          1,
+          6
+        ],
+        [
+          2,
+          5
+        ],
+        [
+          2,
+          8
+        ],
+        [
+          3,
           4
         ],
         [
-          4,
-          4
+          3,
+          6
         ],
         [
           4,
-          4
+          5
         ],
         [
-          0,
-          0
+          4,
+          7
         ],
         [
-          0,
-          0
+          5,
+          8
+        ],
+        [
+          6,
+          7
+        ],
+        [
+          7,
+          8
+        ],
+        [
+          -1,
+          -1
+        ],
+        [
+          -1,
+          -1
         ]
       ],
       "edgeVisibility": [
         31,
         31,
-        24,
-        24,
-        24,
         31,
-        15,
-        15,
-        15,
-        15,
-        17,
-        17,
-        13,
-        13,
-        5,
-        7,
-        7,
-        5,
-        5
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31
       ],
-      "hullVisibility": 24,
       "normals": [
         [
           0,
-          43,
-          7
+          98.56,
+          16.9
         ],
         [
-          -10,
-          49,
-          7
+          -19.92,
+          97.02,
+          13.79
         ],
         [
-          10,
-          49,
-          7
+          19.92,
+          97.02,
+          13.79
         ],
         [
-          -59,
-          -28,
-          -101
-        ],
-        [
-          0,
-          -52,
-          -78
-        ],
-        [
-          59,
-          -28,
-          -101
-        ],
-        [
-          -72,
-          -99,
-          50
+          -49,
+          -23.33,
+          -83.99
         ],
         [
           0,
-          -83,
-          30
+          -55.47,
+          -83.21
         ],
         [
-          72,
-          -99,
-          50
+          49,
+          -23.33,
+          -83.99
+        ],
+        [
+          -54.64,
+          -74.72,
+          37.83
+        ],
+        [
+          0,
+          -94.09,
+          33.87
+        ],
+        [
+          54.64,
+          -74.72,
+          37.83
         ]
       ],
       "details": [
         {
           "type": "window",
+          "color": "#101915",
+          "lift": 0.5,
+          "normal": [
+            0,
+            0.99,
+            0.16
+          ],
           "points": [
             [
               0,
@@ -21511,13 +21685,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               15
             ]
           ],
-          "color": "#101915",
-          "normal": [
-            0,
-            0.99,
-            0.16
-          ],
-          "lift": 0.5,
           "detailRender": {
             "kind": "poly",
             "solid": true,
@@ -21529,18 +21696,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         },
         {
           "type": "line",
-          "indices": [
-            10,
-            11
-          ],
           "color": "#101915",
+          "width": 1.4,
+          "lift": 0.5,
           "normal": [
             0,
             1,
             0.16
           ],
-          "width": 1.4,
-          "lift": 0.5,
+          "indices": [
+            10,
+            11
+          ],
           "detailRender": {
             "kind": "line",
             "solid": false,
@@ -21552,18 +21719,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         },
         {
           "type": "line",
-          "indices": [
-            12,
-            13
-          ],
           "color": "#101915",
+          "width": 1.4,
+          "lift": 0.5,
           "normal": [
             0,
             1,
             0.16
           ],
-          "width": 1.4,
-          "lift": 0.5,
+          "indices": [
+            12,
+            13
+          ],
           "detailRender": {
             "kind": "line",
             "solid": false,
@@ -21575,19 +21742,19 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         },
         {
           "type": "engine",
-          "indices": [
-            7,
-            8,
-            9
-          ],
           "color": "#f7fff7",
           "stroke": "#ffffff",
+          "lift": 0.5,
           "normal": [
             0,
             -0.55,
             -0.83
           ],
-          "lift": 0.5,
+          "indices": [
+            7,
+            8,
+            9
+          ],
           "detailRender": {
             "kind": "poly",
             "solid": true,
@@ -21622,33 +21789,38 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8
         ]
       },
-      "edgeKinds": [
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge"
-      ]
-    },
-    "gameMeta": {
-      "imageDecalMirrorX": {
-        "top": true,
-        "bottom": true,
-        "back": false
+      "gameMeta": {
+        "class": "fighter",
+        "npcRole": "private",
+        "aiProfile": "standard",
+        "decalRole": "private",
+        "baseColor": "#e9f2e4",
+        "description": "",
+        "missionLore": "",
+        "imageDecalMirrorX": {
+          "top": true,
+          "bottom": true,
+          "back": false
+        },
+        "valueCr": 250000,
+        "stats": {
+          "r": 67,
+          "hp": 120,
+          "speed": 1,
+          "cargo": 10,
+          "missiles": 1,
+          "laser": "none"
+        },
+        "lists": {
+          "trader": true,
+          "pirate": true,
+          "police": false,
+          "alien": false
+        },
+        "flags": {
+          "escapePod": true,
+          "hiddenUntilDiscovered": false
+        }
       }
     }
   },
@@ -24816,6 +24988,40 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
     "format": "ultra-elite-ship-builder/v1",
     "id": "python",
     "name": "Python",
+    "symmetry": "x-locked",
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "private",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "imageDecalMirrorX": {
+        "top": true,
+        "bottom": true,
+        "back": false
+      },
+      "valueCr": 250000,
+      "stats": {
+        "r": 224,
+        "hp": 120,
+        "speed": 1,
+        "cargo": 10,
+        "missiles": 1,
+        "laser": "none"
+      },
+      "lists": {
+        "trader": true,
+        "pirate": true,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": false
+      }
+    },
     "verts": [
       {
         "id": 1,
@@ -25043,36 +25249,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#4f4d3e"
       }
     ],
-    "edges": [
-      {
-        "id": 5012,
-        "a": 4,
-        "b": 6,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
-        "id": 5013,
-        "a": 4,
-        "b": 11,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
-        "id": 5014,
-        "a": 3,
-        "b": 6,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
-        "id": 5015,
-        "a": 3,
-        "b": 11,
-        "kind": "edge",
-        "mirrored": false
-      }
-    ],
+    "edges": [],
     "details": [
       {
         "id": 5016,
@@ -25227,6 +25404,25 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -112
           ]
         ]
+      },
+      {
+        "id": 5023,
+        "type": "panel",
+        "faceId": 1008,
+        "indices": [
+          3,
+          6,
+          4,
+          11,
+          3
+        ],
+        "color": "#ffd936",
+        "normal": [
+          -0.43,
+          0.86,
+          -0.26
+        ],
+        "lift": 0.5
       }
     ],
     "blueprint": {
@@ -25287,49 +25483,121 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -112
         ]
       ],
-      "edges": [
+      "faces": [
         [
+          1,
+          3,
+          0
+        ],
+        [
+          1,
+          0,
+          2
+        ],
+        [
+          0,
+          3,
+          8
+        ],
+        [
+          2,
           0,
           8
         ],
         [
-          0,
+          1,
+          4,
+          3
+        ],
+        [
+          4,
+          1,
+          2
+        ],
+        [
+          3,
+          9,
+          8
+        ],
+        [
+          2,
+          8,
+          9
+        ],
+        [
+          4,
+          5,
+          6,
+          3
+        ],
+        [
+          5,
+          4,
+          2,
+          7
+        ],
+        [
+          7,
+          2,
+          9,
+          10
+        ],
+        [
+          3,
+          6,
+          10,
+          9
+        ],
+        [
+          6,
+          5,
+          7,
+          10
+        ]
+      ],
+      "edges": [
+        [
+          1,
           3
         ],
         [
           0,
-          2
+          3
         ],
         [
           0,
           1
         ],
         [
-          2,
-          4
+          0,
+          2
         ],
         [
           1,
           2
         ],
         [
+          3,
+          8
+        ],
+        [
+          0,
+          8
+        ],
+        [
           2,
           8
         ],
         [
           1,
-          3
+          4
         ],
         [
           3,
-          8
+          4
         ],
         [
           2,
-          9
-        ],
-        [
-          3,
           4
         ],
         [
@@ -25337,36 +25605,36 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9
         ],
         [
-          3,
+          8,
+          9
+        ],
+        [
+          2,
+          9
+        ],
+        [
+          4,
           5
-        ],
-        [
-          3,
-          10
-        ],
-        [
-          2,
-          5
-        ],
-        [
-          2,
-          10
-        ],
-        [
-          2,
-          7
-        ],
-        [
-          3,
-          6
         ],
         [
           5,
           6
         ],
         [
+          3,
+          6
+        ],
+        [
+          2,
+          7
+        ],
+        [
           5,
           7
+        ],
+        [
+          9,
+          10
         ],
         [
           7,
@@ -25375,128 +25643,120 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         [
           6,
           10
-        ],
-        [
-          4,
-          5
-        ],
-        [
-          9,
-          10
-        ],
-        [
-          1,
-          4
-        ],
-        [
-          8,
-          9
         ]
+      ],
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
       ],
       "edgeFaces": [
         [
-          2,
-          3
+          0,
+          4
         ],
         [
           0,
           2
         ],
         [
-          1,
-          3
-        ],
-        [
           0,
           1
         ],
         [
-          9,
-          5
+          1,
+          3
         ],
         [
           1,
           5
-        ],
-        [
-          7,
-          3
-        ],
-        [
-          0,
-          4
         ],
         [
           2,
           6
         ],
         [
-          7,
-          10
+          2,
+          3
         ],
         [
-          4,
-          8
-        ],
-        [
-          6,
-          11
-        ],
-        [
-          8,
-          8
-        ],
-        [
-          11,
-          11
-        ],
-        [
-          9,
-          9
-        ],
-        [
-          10,
-          10
-        ],
-        [
-          9,
-          10
-        ],
-        [
-          8,
-          11
-        ],
-        [
-          8,
-          12
-        ],
-        [
-          9,
-          12
-        ],
-        [
-          12,
-          10
-        ],
-        [
-          11,
-          12
-        ],
-        [
-          8,
-          9
-        ],
-        [
-          10,
-          11
+          3,
+          7
         ],
         [
           4,
           5
         ],
         [
+          4,
+          8
+        ],
+        [
+          5,
+          9
+        ],
+        [
+          6,
+          11
+        ],
+        [
           6,
           7
+        ],
+        [
+          7,
+          10
+        ],
+        [
+          8,
+          9
+        ],
+        [
+          8,
+          12
+        ],
+        [
+          8,
+          11
+        ],
+        [
+          9,
+          10
+        ],
+        [
+          9,
+          12
+        ],
+        [
+          10,
+          11
+        ],
+        [
+          10,
+          12
+        ],
+        [
+          11,
+          12
         ]
       ],
       "edgeVisibility": [
@@ -25512,10 +25772,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         31,
         31,
         31,
-        7,
-        7,
-        7,
-        7,
         31,
         31,
         31,
@@ -25529,74 +25785,81 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       ],
       "normals": [
         [
-          -27,
-          40,
-          11
+          -54.96,
+          80.6,
+          21.98
         ],
         [
-          27,
-          40,
-          11
+          54.96,
+          80.6,
+          21.98
         ],
         [
-          -27,
-          -40,
-          11
+          -54.96,
+          -80.6,
+          21.98
         ],
         [
-          27,
-          -40,
-          11
+          54.96,
+          -80.6,
+          21.98
         ],
         [
-          -19,
-          38,
+          -44.72,
+          89.44,
           0
         ],
         [
-          19,
-          38,
+          44.72,
+          89.44,
           0
         ],
         [
-          -19,
-          -38,
+          -44.72,
+          -89.44,
           0
         ],
         [
-          19,
-          -38,
+          44.72,
+          -89.44,
           0
         ],
         [
-          -25,
-          37,
-          -11
+          -43.19,
+          86.39,
+          -25.92
         ],
         [
-          25,
-          37,
-          -11
+          46.61,
+          84.74,
+          -25.42
         ],
         [
-          25,
-          -37,
-          -11
+          46.57,
+          -85.38,
+          -23.28
         ],
         [
-          -25,
-          -37,
-          -11
+          -43.64,
+          -87.29,
+          -21.82
         ],
         [
           0,
           0,
-          -112
+          -100
         ]
       ],
       "details": [
         {
           "type": "window",
+          "color": "#101915",
+          "lift": 0.5,
+          "normal": [
+            0.55,
+            0.81,
+            0.22
+          ],
           "points": [
             [
               17.6,
@@ -25614,13 +25877,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               39.7
             ]
           ],
-          "color": "#101915",
-          "normal": [
-            0.55,
-            0.81,
-            0.22
-          ],
-          "lift": 0.5,
           "detailRender": {
             "kind": "poly",
             "solid": true,
@@ -25632,6 +25888,13 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         },
         {
           "type": "window",
+          "color": "#101915",
+          "lift": 0.5,
+          "normal": [
+            -0.55,
+            0.81,
+            0.22
+          ],
           "points": [
             [
               -17.6,
@@ -25649,13 +25912,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               39.7
             ]
           ],
-          "color": "#101915",
-          "normal": [
-            -0.55,
-            0.81,
-            0.22
-          ],
-          "lift": 0.5,
           "detailRender": {
             "kind": "poly",
             "solid": true,
@@ -25667,18 +25923,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         },
         {
           "type": "line",
-          "indices": [
-            3,
-            5
-          ],
           "color": "#101915",
+          "width": 1.4,
+          "lift": 0.5,
           "normal": [
             -0.52,
             0.77,
             -0.23
           ],
-          "width": 1.4,
-          "lift": 0.5,
+          "indices": [
+            3,
+            5
+          ],
           "detailRender": {
             "kind": "line",
             "solid": false,
@@ -25690,18 +25946,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         },
         {
           "type": "line",
-          "indices": [
-            2,
-            5
-          ],
           "color": "#101915",
+          "width": 1.4,
+          "lift": 0.5,
           "normal": [
             0.52,
             0.77,
             -0.23
           ],
-          "width": 1.4,
-          "lift": 0.5,
+          "indices": [
+            2,
+            5
+          ],
           "detailRender": {
             "kind": "line",
             "solid": false,
@@ -25713,18 +25969,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         },
         {
           "type": "line",
-          "indices": [
-            2,
-            10
-          ],
           "color": "#101915",
+          "width": 1.4,
+          "lift": 0.5,
           "normal": [
             0.52,
             -0.77,
             -0.23
           ],
-          "width": 1.4,
-          "lift": 0.5,
+          "indices": [
+            2,
+            10
+          ],
           "detailRender": {
             "kind": "line",
             "solid": false,
@@ -25736,18 +25992,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         },
         {
           "type": "line",
-          "indices": [
-            3,
-            10
-          ],
           "color": "#101915",
+          "width": 1.4,
+          "lift": 0.5,
           "normal": [
             -0.52,
             -0.77,
             -0.23
           ],
-          "width": 1.4,
-          "lift": 0.5,
+          "indices": [
+            3,
+            10
+          ],
           "detailRender": {
             "kind": "line",
             "solid": false,
@@ -25759,6 +26015,14 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         },
         {
           "type": "engine",
+          "color": "#f7fff7",
+          "stroke": "#ffffff",
+          "lift": 0.5,
+          "normal": [
+            0,
+            0,
+            -1
+          ],
           "points": [
             [
               0,
@@ -25781,14 +26045,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -112
             ]
           ],
-          "color": "#f7fff7",
-          "stroke": "#ffffff",
-          "normal": [
-            0,
-            0,
-            -1
-          ],
-          "lift": 0.5,
           "detailRender": {
             "kind": "poly",
             "solid": true,
@@ -25796,6 +26052,52 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             "glow": true,
             "glass": false,
             "solidStroke": true
+          }
+        },
+        {
+          "type": "polyline",
+          "color": "#ffd936",
+          "normal": [
+            -0.43,
+            0.86,
+            -0.26
+          ],
+          "lift": 0.5,
+          "points": [
+            [
+              96,
+              0,
+              -16
+            ],
+            [
+              0,
+              24,
+              -112
+            ],
+            [
+              -96,
+              0,
+              -16
+            ],
+            [
+              0,
+              -24,
+              -112
+            ],
+            [
+              96,
+              0,
+              -16
+            ]
+          ],
+          "width": 1.2,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
           }
         }
       ],
@@ -25831,40 +26133,38 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8
         ]
       },
-      "edgeKinds": [
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge"
-      ]
-    },
-    "gameMeta": {
-      "imageDecalMirrorX": {
-        "top": true,
-        "bottom": true,
-        "back": false
+      "gameMeta": {
+        "class": "fighter",
+        "npcRole": "private",
+        "aiProfile": "standard",
+        "decalRole": "private",
+        "baseColor": "#e9f2e4",
+        "description": "",
+        "missionLore": "",
+        "imageDecalMirrorX": {
+          "top": true,
+          "bottom": true,
+          "back": false
+        },
+        "valueCr": 250000,
+        "stats": {
+          "r": 224,
+          "hp": 120,
+          "speed": 1,
+          "cargo": 10,
+          "missiles": 1,
+          "laser": "none"
+        },
+        "lists": {
+          "trader": true,
+          "pirate": true,
+          "police": false,
+          "alien": false
+        },
+        "flags": {
+          "escapePod": true,
+          "hiddenUntilDiscovered": false
+        }
       }
     }
   },
@@ -26891,6 +27191,40 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
     "format": "ultra-elite-ship-builder/v1",
     "id": "sidewinder",
     "name": "Sidewinder",
+    "symmetry": "x-locked",
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "private",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "imageDecalMirrorX": {
+        "top": true,
+        "bottom": true,
+        "back": false
+      },
+      "valueCr": 250000,
+      "stats": {
+        "r": 70,
+        "hp": 120,
+        "speed": 1,
+        "cargo": 10,
+        "missiles": 1,
+        "laser": "none"
+      },
+      "lists": {
+        "trader": true,
+        "pirate": true,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": false
+      }
+    },
     "verts": [
       {
         "id": 1,
@@ -27046,36 +27380,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#514f51"
       }
     ],
-    "edges": [
-      {
-        "id": 5011,
-        "a": 7,
-        "b": 8,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
-        "id": 5012,
-        "a": 8,
-        "b": 9,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
-        "id": 5013,
-        "a": 7,
-        "b": 10,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
-        "id": 5014,
-        "a": 9,
-        "b": 10,
-        "kind": "edge",
-        "mirrored": false
-      }
-    ],
+    "edges": [],
     "details": [
       {
         "id": 5015,
@@ -27177,21 +27482,59 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -28
         ]
       ],
-      "edges": [
+      "faces": [
+        [
+          1,
+          4,
+          0
+        ],
         [
           0,
+          4,
+          3
+        ],
+        [
+          2,
+          4,
           1
         ],
         [
-          1,
-          2
+          3,
+          4,
+          2,
+          5
         ],
+        [
+          5,
+          0,
+          3
+        ],
+        [
+          1,
+          0,
+          5
+        ],
+        [
+          2,
+          1,
+          5
+        ]
+      ],
+      "edges": [
         [
           1,
           4
         ],
         [
           0,
+          4
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          3,
           4
         ],
         [
@@ -27199,23 +27542,19 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3
         ],
         [
-          3,
-          4
-        ],
-        [
           2,
           4
-        ],
-        [
-          3,
-          5
-        ],
-        [
-          2,
-          5
         ],
         [
           1,
+          2
+        ],
+        [
+          2,
+          5
+        ],
+        [
+          3,
           5
         ],
         [
@@ -27223,33 +27562,26 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5
         ],
         [
-          6,
-          7
-        ],
-        [
-          7,
-          8
-        ],
-        [
-          6,
-          9
-        ],
-        [
-          8,
-          9
+          1,
+          5
         ]
+      ],
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
       ],
       "edgeFaces": [
         [
           0,
-          5
-        ],
-        [
-          2,
-          6
-        ],
-        [
-          0,
           2
         ],
         [
@@ -27257,48 +27589,40 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1
         ],
         [
-          1,
-          4
+          0,
+          5
         ],
         [
           1,
           3
+        ],
+        [
+          1,
+          4
         ],
         [
           2,
           3
         ],
         [
+          2,
+          6
+        ],
+        [
+          3,
+          6
+        ],
+        [
           3,
           4
-        ],
-        [
-          3,
-          6
-        ],
-        [
-          5,
-          6
         ],
         [
           4,
           5
         ],
         [
-          3,
-          3
-        ],
-        [
-          3,
-          3
-        ],
-        [
-          3,
-          3
-        ],
-        [
-          3,
-          3
+          5,
+          6
         ]
       ],
       "edgeVisibility": [
@@ -27312,52 +27636,55 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         31,
         31,
         31,
-        31,
-        15,
-        12,
-        12,
-        12
+        31
       ],
       "normals": [
         [
           0,
-          32,
-          8
+          97.01,
+          24.25
         ],
         [
-          -12,
-          47,
-          6
+          -24.08,
+          96.31,
+          12.04
         ],
         [
-          12,
-          47,
-          6
-        ],
-        [
-          0,
-          0,
-          -112
-        ],
-        [
-          -12,
-          -47,
-          6
+          24.08,
+          96.31,
+          12.04
         ],
         [
           0,
-          -32,
-          8
+          0,
+          -100
         ],
         [
-          12,
-          -47,
-          6
+          -24.08,
+          -96.31,
+          12.04
+        ],
+        [
+          0,
+          -97.01,
+          24.25
+        ],
+        [
+          24.08,
+          -96.31,
+          12.04
         ]
       ],
       "details": [
         {
           "type": "window",
+          "color": "#101915",
+          "lift": 0.5,
+          "normal": [
+            0,
+            0.97,
+            0.24
+          ],
           "points": [
             [
               -16,
@@ -27375,13 +27702,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -6.7
             ]
           ],
-          "color": "#101915",
-          "normal": [
-            0,
-            0.97,
-            0.24
-          ],
-          "lift": 0.5,
           "detailRender": {
             "kind": "poly",
             "solid": true,
@@ -27393,20 +27713,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         },
         {
           "type": "engine",
+          "color": "#f7fff7",
+          "stroke": "#ffffff",
+          "lift": 0.5,
+          "normal": [
+            0,
+            0,
+            -1
+          ],
           "indices": [
             6,
             7,
             8,
             9
           ],
-          "color": "#f7fff7",
-          "stroke": "#ffffff",
-          "normal": [
-            0,
-            0,
-            -1
-          ],
-          "lift": 0.5,
           "detailRender": {
             "kind": "poly",
             "solid": true,
@@ -27437,29 +27757,38 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8
         ]
       },
-      "edgeKinds": [
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge"
-      ]
-    },
-    "gameMeta": {
-      "imageDecalMirrorX": {
-        "top": true,
-        "bottom": true,
-        "back": false
+      "gameMeta": {
+        "class": "fighter",
+        "npcRole": "private",
+        "aiProfile": "standard",
+        "decalRole": "private",
+        "baseColor": "#e9f2e4",
+        "description": "",
+        "missionLore": "",
+        "imageDecalMirrorX": {
+          "top": true,
+          "bottom": true,
+          "back": false
+        },
+        "valueCr": 250000,
+        "stats": {
+          "r": 70,
+          "hp": 120,
+          "speed": 1,
+          "cargo": 10,
+          "missiles": 1,
+          "laser": "none"
+        },
+        "lists": {
+          "trader": true,
+          "pirate": true,
+          "police": false,
+          "alien": false
+        },
+        "flags": {
+          "escapePod": true,
+          "hiddenUntilDiscovered": false
+        }
       }
     }
   },
@@ -28076,22 +28405,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#421c79"
       }
     ],
-    "edges": [
-      {
-        "id": 5024,
-        "a": 17,
-        "b": 18,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
-        "id": 5025,
-        "a": 19,
-        "b": 20,
-        "kind": "edge",
-        "mirrored": false
-      }
-    ],
+    "edges": [],
     "details": [
       {
         "id": 5026,
@@ -28231,6 +28545,38 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             30
           ]
         ]
+      },
+      {
+        "id": 5030,
+        "type": "panel",
+        "faceId": 1009,
+        "indices": [
+          17,
+          18
+        ],
+        "color": "#ffd936",
+        "normal": [
+          -1,
+          0,
+          0
+        ],
+        "lift": 0.5
+      },
+      {
+        "id": 5031,
+        "type": "panel",
+        "faceId": 1009,
+        "indices": [
+          19,
+          20
+        ],
+        "color": "#ffd936",
+        "normal": [
+          -1,
+          0,
+          0
+        ],
+        "lift": 0.5
       }
     ],
     "blueprint": {
@@ -28336,6 +28682,76 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           80
         ]
       ],
+      "faces": [
+        [
+          1,
+          0,
+          8,
+          9
+        ],
+        [
+          2,
+          1,
+          9,
+          10
+        ],
+        [
+          11,
+          3,
+          2,
+          10
+        ],
+        [
+          12,
+          4,
+          3,
+          11
+        ],
+        [
+          4,
+          5,
+          6,
+          7,
+          0,
+          1,
+          2,
+          3
+        ],
+        [
+          12,
+          13,
+          5,
+          4
+        ],
+        [
+          13,
+          14,
+          6,
+          5
+        ],
+        [
+          6,
+          14,
+          15,
+          7
+        ],
+        [
+          7,
+          15,
+          8,
+          0
+        ],
+        [
+          15,
+          14,
+          13,
+          12,
+          11,
+          10,
+          9,
+          8
+        ]
+      ],
       "edges": [
         [
           0,
@@ -28432,15 +28848,33 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         [
           8,
           15
-        ],
-        [
-          16,
-          17
-        ],
-        [
-          18,
-          19
         ]
+      ],
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
       ],
       "edgeFaces": [
         [
@@ -28538,19 +28972,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         [
           8,
           9
-        ],
-        [
-          -1,
-          -1
-        ],
-        [
-          -1,
-          -1
         ]
       ],
       "edgeVisibility": [
-        31,
-        31,
         31,
         31,
         31,
@@ -28795,6 +29219,68 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             "glass": true,
             "solidStroke": false
           }
+        },
+        {
+          "type": "polyline",
+          "color": "#ffd936",
+          "normal": [
+            -1,
+            0,
+            0
+          ],
+          "lift": 0.5,
+          "points": [
+            [
+              -24,
+              64,
+              80
+            ],
+            [
+              -24,
+              64,
+              -80
+            ]
+          ],
+          "width": 1.2,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
+        },
+        {
+          "type": "polyline",
+          "color": "#ffd936",
+          "normal": [
+            -1,
+            0,
+            0
+          ],
+          "lift": 0.5,
+          "points": [
+            [
+              -24,
+              -64,
+              -80
+            ],
+            [
+              -24,
+              -64,
+              80
+            ]
+          ],
+          "width": 1.2,
+          "detailRender": {
+            "kind": "line",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         }
       ],
       "imageProjection": {
@@ -28851,35 +29337,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "escapePod": true,
           "hiddenUntilDiscovered": false
         }
-      },
-      "edgeKinds": [
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge"
-      ]
+      }
     }
   },
   "thargon": {
