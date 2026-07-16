@@ -11924,8 +11924,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const faceImageReady = imageTextureReady(faceImage);
       const projectionImageReady = imageTextureReady(imageProjection);
       const hasExplicitFaceTexture = !!(faceImageReady && faceTexture?.uv?.length);
+      const hasFaceDecalLayers = !!(faceTexture?.decals?.length && faceTexture?.uv?.length && item.imageDecals?.decals);
       const b = polygonBounds(item.projected);
-      if ((b.maxX - b.minX) * (b.maxY - b.minY) < 500 && !hasExplicitFaceTexture) return;
+      if ((b.maxX - b.minX) * (b.maxY - b.minY) < 500 && !hasExplicitFaceTexture && !hasFaceDecalLayers) return;
       const img = item.texture || getHullTexture();
       const hasImageTexture = !!(faceImageReady || projectionImageReady);
       // Perspective-correct subdivided path when the projector + camera-space verts are

@@ -486,6 +486,10 @@ function sourceEdgeKind(edge) {
   return !Array.isArray(edge) && edge?.kind === "stick" ? "stick" : "edge";
 }
 
+function validSourceEdgeKind(kind) {
+  return kind === "edge" || kind === "stick" || kind === "stationEntrance";
+}
+
 function explicitEdgeKind(edge) {
   if (Array.isArray(edge) || edge?.kind === undefined || edge?.kind === null) return null;
   return String(edge.kind);
@@ -523,8 +527,8 @@ function expectedEdgeKindsForBlueprint(data, blueprint) {
   const kindByKey = new Map();
   for (const [index, edge] of (data.edges || []).entries()) {
     const declaredKind = explicitEdgeKind(edge);
-    if (declaredKind && declaredKind !== "edge" && declaredKind !== "stick") {
-      throw new Error(`${data.id || "model"} editable edge ${index} has invalid kind "${declaredKind}". Use "edge" or "stick" so Ultra solid rendering never guesses from orphan edges.`);
+    if (declaredKind && !validSourceEdgeKind(declaredKind)) {
+      throw new Error(`${data.id || "model"} editable edge ${index} has invalid kind "${declaredKind}". Use "edge", "stick", or "stationEntrance" so authored intent stays explicit.`);
     }
     const [sourceA, sourceB] = sourceEdgeEnds(edge);
     const a = indexById.get(sourceA);

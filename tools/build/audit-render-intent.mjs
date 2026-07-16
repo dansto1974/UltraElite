@@ -32,6 +32,10 @@ function edgeKey(a, b) {
   return na < nb ? `${na},${nb}` : `${nb},${na}`;
 }
 
+function isIntentionalOrphanEdge(kind) {
+  return kind === "stick" || kind === "stationEntrance";
+}
+
 function cleanAngle(value) {
   let n = Number(value) || 0;
   n = ((n + 180) % 360 + 360) % 360 - 180;
@@ -99,17 +103,17 @@ function auditModel(filePath) {
       });
       return;
     }
-    if (!faceEdgeKeys.has(key) && explicit.kind !== "stick") {
+    if (!faceEdgeKeys.has(key) && !isIntentionalOrphanEdge(explicit.kind)) {
       reports.push({
         category: "orphan-edge-not-stick",
         severity: "warn",
         file,
         label,
         item: `edge[${index}]${explicit.id != null ? ` id ${explicit.id}` : ""} ${explicit.a}-${explicit.b}`,
-        message: "authored edge is not part of any source face and is not an explicit stick"
+        message: "authored edge is not part of any source face and is not an explicit stick or station entrance"
       });
     }
-    if (!["edge", "stick"].includes(explicit.kind)) {
+    if (!["edge", "stick", "stationEntrance"].includes(explicit.kind)) {
       reports.push({
         category: "unknown-edge-kind",
         severity: "error",

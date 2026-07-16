@@ -74,14 +74,31 @@
             <button id="flipFaceBtn">Flip Face</button>
             <button id="deleteFaceBtn">Delete Face</button>
           </div>
+          <div class="surface-insert-controls slider-stack">
+            <h3>Surface Insert</h3>
+            <label>X <input id="surfaceInsertX" type="range" min="-160" max="160" step="1" value="0"><input id="surfaceInsertXValue" type="number" step="1" value="0"></label>
+            <label>Y <input id="surfaceInsertY" type="range" min="-160" max="160" step="1" value="0"><input id="surfaceInsertYValue" type="number" step="1" value="0"></label>
+            <label>W <input id="surfaceInsertW" type="range" min="4" max="260" step="1" value="48"><input id="surfaceInsertWValue" type="number" min="4" step="1" value="48"></label>
+            <label>H <input id="surfaceInsertH" type="range" min="4" max="260" step="1" value="32"><input id="surfaceInsertHValue" type="number" min="4" step="1" value="32"></label>
+            <label>R <input id="surfaceInsertR" type="range" min="-180" max="180" step="1" value="0"><input id="surfaceInsertRValue" type="number" step="1" value="0"></label>
+            <label>L <input id="surfaceInsertLift" type="range" min="0" max="8" step="0.1" value="0.5"><input id="surfaceInsertLiftValue" type="number" min="0" step="0.1" value="0.5"></label>
+            <label class="toggle surface-insert-preview-toggle"><input id="surfaceInsertPreview" type="checkbox"> Preview</label>
+            <div class="button-grid compact-actions">
+              <button id="addSurfaceTriangleBtn" type="button">Add Triangle</button>
+              <button id="addSurfaceQuadBtn" type="button">Add Quad</button>
+            </div>
+          </div>
         </div>
 
         <div class="mode-panel mode-panel-edge">
-          <h2>Edge / Stick Tools</h2>
+          <h2>Edge / Stick / Entrance Tools</h2>
           <div class="button-grid">
             <button id="addEdgeBtn">Add Edge From Picks</button>
             <button id="addStickBtn">Add Stick From Picks</button>
             <button id="splitEdgeBtn">Split + Triangulate</button>
+            <button id="convertEdgeNormalBtn" type="button">Convert To Edge</button>
+            <button id="convertEdgeStickBtn" type="button">Convert To Stick</button>
+            <button id="convertEdgeEntranceBtn" type="button">Convert To Station Entrance</button>
             <button id="convertEdgeWindowBtn" type="button">Convert To Window</button>
             <button id="convertEdgeEngineBtn" type="button">Convert To Engine</button>
             <button id="convertEdgeDetailBtn" type="button">Convert To Surface Detail</button>
@@ -96,6 +113,8 @@
             <button id="addEngineBtn">Add Engine</button>
             <button id="addPanelBtn">Add Panel Line</button>
             <button id="addBeaconBtn">Add Beacon</button>
+            <button id="convertDetailEdgeBtn" type="button">Convert To Edge</button>
+            <button id="convertDetailStickBtn" type="button">Convert To Stick</button>
             <button id="deleteDetailBtn">Delete Detail</button>
           </div>
           <div class="detail-controls">
@@ -396,14 +415,14 @@
           </div>
           <div class="view-actions">
             <div class="preview-mode-toolbar" aria-label="Selection tools">
-              <button data-mode="vertex" class="mode-btn active" type="button" title="Vertex selection filter. Click for only vertices; Shift-click to toggle.">V</button>
-              <button data-mode="face" class="mode-btn" type="button" title="Face selection filter. Click for only faces; Shift-click to toggle.">F</button>
-              <button data-mode="edge" class="mode-btn" type="button" title="Edge or stick selection filter. Click for only edges; Shift-click to toggle.">E</button>
-              <button data-mode="detail" class="mode-btn" type="button" title="Detail selection filter. Click for only details; Shift-click to toggle.">D</button>
-              <button data-mode="uv" class="mode-btn" type="button" title="UV selection filter. Click for only UV-bearing faces; Shift-click to toggle.">UV</button>
-              <button data-mode="group" class="mode-btn" type="button" title="Group selection filter. Click for face texture groups; Shift-click to toggle.">G</button>
-              <button id="orientUvToViewBtn" class="selection-action-btn" type="button" title="Orient selected face to view">Face To View</button>
-              <button id="clearSelectionBtn" type="button" title="Clear selection">×</button>
+              <button data-mode="vertex" class="mode-btn active" type="button" aria-label="Vertex selection filter" title="Vertex selection filter. Click for only vertices; Shift-click to toggle."><span class="selector-icon selector-icon-vertex" aria-hidden="true"></span><span class="selector-label">Vertex</span></button>
+              <button data-mode="face" class="mode-btn" type="button" aria-label="Face selection filter" title="Face selection filter. Click for only faces; Shift-click to toggle."><span class="selector-icon selector-icon-face" aria-hidden="true"></span><span class="selector-label">Face</span></button>
+              <button data-mode="edge" class="mode-btn" type="button" aria-label="Edge or stick selection filter" title="Edge or stick selection filter. Click for only edges; Shift-click to toggle."><span class="selector-icon selector-icon-edge" aria-hidden="true"></span><span class="selector-label">Edge</span></button>
+              <button data-mode="detail" class="mode-btn" type="button" aria-label="Detail selection filter" title="Detail selection filter. Click for only details; Shift-click to toggle."><span class="selector-icon selector-icon-detail" aria-hidden="true"></span><span class="selector-label">Detail</span></button>
+              <button data-mode="uv" class="mode-btn" type="button" aria-label="UV selection filter" title="UV selection filter. Click for only UV-bearing faces; Shift-click to toggle."><span class="selector-icon selector-icon-uv" aria-hidden="true"></span><span class="selector-label">UV</span></button>
+              <button data-mode="group" class="mode-btn" type="button" aria-label="Group selection filter" title="Group selection filter. Click for face texture groups; Shift-click to toggle."><span class="selector-icon selector-icon-group" aria-hidden="true"></span><span class="selector-label">Group</span></button>
+              <button id="orientUvToViewBtn" class="selection-action-btn" type="button" aria-label="Orient selected face to view" title="Orient selected face to view"><span class="toolbar-icon toolbar-icon-face-view" aria-hidden="true"></span><span class="selector-label">Face To View</span></button>
+              <button id="clearSelectionBtn" type="button" aria-label="Clear selection" title="Clear selection">×</button>
             </div>
             <label class="toggle"><input id="showFaceNormals" type="checkbox" checked> Normals</label>
             <label class="toggle" title="P projected, F flat, S side projection, A auto projection"><input id="showFaceUvTypes" type="checkbox"> UV Type</label>
@@ -459,6 +478,7 @@
           <iframe id="gamePreviewFrame" title="Game renderer mirror" src="render-preview.html"></iframe>
           <canvas id="mainView" width="1120" height="680"></canvas>
           <div id="topStatus" class="status top-status">READY.</div>
+          <div id="selectionContextMenu" class="selection-context-menu is-hidden" role="menu" aria-label="Selection actions"></div>
         </div>
         <div class="ortho-grid">
           <article>

@@ -51,8 +51,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       "missionLore": "",
       "imageDecalMirrorX": {
         "top": true,
-        "bottom": false,
-        "back": false
+        "bottom": true,
+        "back": true
       },
       "valueCr": 250000,
       "stats": {
@@ -230,54 +230,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1
         ],
         "mirrored": false,
-        "faceColor": "#8a867b",
-        "bitmapSide": "top",
-        "bitmapFaceKey": "plate_panel",
-        "bitmapUv": [
-          [
-            307.504,
-            27.767
-          ],
-          [
-            307.504,
-            211.524
-          ],
-          [
-            62.496,
-            211.524
-          ],
-          [
-            62.496,
-            27.767
-          ]
-        ],
-        "bitmapUvTemplate": [
-          [
-            341.379,
-            41.379
-          ],
-          [
-            341.379,
-            215.948
-          ],
-          [
-            108.621,
-            215.948
-          ],
-          [
-            108.621,
-            41.379
-          ]
-        ],
-        "bitmapUvTransform": {
-          "x": -40,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.95,
-          "scaleY": 0.95
-        },
-        "bitmapBaseW": 450,
-        "bitmapBaseH": 600
+        "faceColor": "#8a867b"
       },
       {
         "id": 1001,
@@ -288,54 +241,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           13
         ],
         "mirrored": false,
-        "faceColor": "#8a867b",
-        "bitmapSide": "bottom",
-        "bitmapFaceKey": "plate_panel",
-        "bitmapUv": [
-          [
-            78.201,
-            223.589
-          ],
-          [
-            78.201,
-            64.89
-          ],
-          [
-            289.799,
-            64.89
-          ],
-          [
-            289.799,
-            223.589
-          ]
-        ],
-        "bitmapUvTemplate": [
-          [
-            108.621,
-            215.948
-          ],
-          [
-            108.621,
-            41.379
-          ],
-          [
-            341.379,
-            41.379
-          ],
-          [
-            341.379,
-            215.948
-          ]
-        ],
-        "bitmapUvTransform": {
-          "x": -41,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 1.1,
-          "scaleY": 1.1
-        },
-        "bitmapBaseW": 450,
-        "bitmapBaseH": 600
+        "faceColor": "#8a867b"
       },
       {
         "id": 1002,
@@ -345,46 +251,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3
         ],
         "mirrored": false,
-        "faceColor": "#8a867b",
-        "bitmapSide": "top",
-        "bitmapFaceKey": "plate_panel",
-        "bitmapUv": [
-          [
-            307.504,
-            211.524
-          ],
-          [
-            307.504,
-            27.767
-          ],
-          [
-            389.175,
-            463.339
-          ]
-        ],
-        "bitmapUvTemplate": [
-          [
-            341.379,
-            215.948
-          ],
-          [
-            341.379,
-            41.379
-          ],
-          [
-            418.966,
-            455.172
-          ]
-        ],
-        "bitmapUvTransform": {
-          "x": -40,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.95,
-          "scaleY": 0.95
-        },
-        "bitmapBaseW": 450,
-        "bitmapBaseH": 600
+        "faceColor": "#8a867b"
       },
       {
         "id": 1003,
@@ -394,46 +261,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           14
         ],
         "mirrored": false,
-        "faceColor": "#535961",
-        "bitmapSide": "bottom",
-        "bitmapFaceKey": "adder_top",
-        "bitmapUv": [
-          [
-            140.034,
-            455.172
-          ],
-          [
-            217.621,
-            41.379
-          ],
-          [
-            217.621,
-            215.948
-          ]
-        ],
-        "bitmapUvTemplate": [
-          [
-            31.034,
-            455.172
-          ],
-          [
-            108.621,
-            41.379
-          ],
-          [
-            108.621,
-            215.948
-          ]
-        ],
-        "bitmapUvTransform": {
-          "x": 109,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 1,
-          "scaleY": 1
-        },
-        "bitmapBaseW": 450,
-        "bitmapBaseH": 600
+        "faceColor": "#535961"
       },
       {
         "id": 1004,
@@ -444,54 +272,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4
         ],
         "mirrored": false,
-        "faceColor": "#8a867b",
-        "bitmapSide": "top",
-        "bitmapFaceKey": "plate_panel",
-        "bitmapUv": [
-          [
-            307.504,
-            572.233
-          ],
-          [
-            307.504,
-            211.524
-          ],
-          [
-            389.175,
-            463.339
-          ],
-          [
-            389.175,
-            572.233
-          ]
-        ],
-        "bitmapUvTemplate": [
-          [
-            341.379,
-            558.621
-          ],
-          [
-            341.379,
-            215.948
-          ],
-          [
-            418.966,
-            455.172
-          ],
-          [
-            418.966,
-            558.621
-          ]
-        ],
-        "bitmapUvTransform": {
-          "x": -40,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.95,
-          "scaleY": 0.95
-        },
-        "bitmapBaseW": 450,
-        "bitmapBaseH": 600
+        "faceColor": "#8a867b"
       },
       {
         "id": 1005,
@@ -502,54 +283,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5
         ],
         "mirrored": false,
-        "faceColor": "#535961",
-        "bitmapSide": "bottom",
-        "bitmapFaceKey": "adder_top",
-        "bitmapUv": [
-          [
-            140.034,
-            558.621
-          ],
-          [
-            140.034,
-            455.172
-          ],
-          [
-            217.621,
-            215.948
-          ],
-          [
-            217.621,
-            558.621
-          ]
-        ],
-        "bitmapUvTemplate": [
-          [
-            31.034,
-            558.621
-          ],
-          [
-            31.034,
-            455.172
-          ],
-          [
-            108.621,
-            215.948
-          ],
-          [
-            108.621,
-            558.621
-          ]
-        ],
-        "bitmapUvTransform": {
-          "x": 109,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 1,
-          "scaleY": 1
-        },
-        "bitmapBaseW": 450,
-        "bitmapBaseH": 600
+        "faceColor": "#535961"
       },
       {
         "id": 1006,
@@ -585,60 +319,13 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 1009,
         "verts": [
-          11,
-          9,
           7,
-          8
+          8,
+          11,
+          9
         ],
         "mirrored": false,
-        "faceColor": "#8a867b",
-        "bitmapSide": "top",
-        "bitmapFaceKey": "plate_panel",
-        "bitmapUv": [
-          [
-            62.496,
-            211.524
-          ],
-          [
-            62.496,
-            572.233
-          ],
-          [
-            -19.175,
-            572.233
-          ],
-          [
-            -19.175,
-            463.339
-          ]
-        ],
-        "bitmapUvTemplate": [
-          [
-            108.621,
-            215.948
-          ],
-          [
-            108.621,
-            558.621
-          ],
-          [
-            31.034,
-            558.621
-          ],
-          [
-            31.034,
-            455.172
-          ]
-        ],
-        "bitmapUvTransform": {
-          "x": -40,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.95,
-          "scaleY": 0.95
-        },
-        "bitmapBaseW": 450,
-        "bitmapBaseH": 600
+        "faceColor": "#8a867b"
       },
       {
         "id": 1010,
@@ -649,103 +336,17 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7
         ],
         "mirrored": false,
-        "faceColor": "#535961",
-        "bitmapSide": "bottom",
-        "bitmapFaceKey": "adder_top",
-        "bitmapUv": [
-          [
-            140.034,
-            558.621
-          ],
-          [
-            140.034,
-            455.172
-          ],
-          [
-            217.621,
-            215.948
-          ],
-          [
-            217.621,
-            558.621
-          ]
-        ],
-        "bitmapUvTemplate": [
-          [
-            31.034,
-            558.621
-          ],
-          [
-            31.034,
-            455.172
-          ],
-          [
-            108.621,
-            215.948
-          ],
-          [
-            108.621,
-            558.621
-          ]
-        ],
-        "bitmapUvTransform": {
-          "x": 109,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 1,
-          "scaleY": 1
-        },
-        "bitmapBaseW": 450,
-        "bitmapBaseH": 600
+        "faceColor": "#535961"
       },
       {
         "id": 1011,
         "verts": [
-          11,
           8,
-          1
+          1,
+          11
         ],
         "mirrored": false,
-        "faceColor": "#8a867b",
-        "bitmapSide": "top",
-        "bitmapFaceKey": "plate_panel",
-        "bitmapUv": [
-          [
-            62.496,
-            211.524
-          ],
-          [
-            -19.175,
-            463.339
-          ],
-          [
-            62.496,
-            27.767
-          ]
-        ],
-        "bitmapUvTemplate": [
-          [
-            108.621,
-            215.948
-          ],
-          [
-            31.034,
-            455.172
-          ],
-          [
-            108.621,
-            41.379
-          ]
-        ],
-        "bitmapUvTransform": {
-          "x": -40,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.95,
-          "scaleY": 0.95
-        },
-        "bitmapBaseW": 450,
-        "bitmapBaseH": 600
+        "faceColor": "#8a867b"
       },
       {
         "id": 1012,
@@ -755,46 +356,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8
         ],
         "mirrored": false,
-        "faceColor": "#535961",
-        "bitmapSide": "bottom",
-        "bitmapFaceKey": "adder_top",
-        "bitmapUv": [
-          [
-            140.034,
-            455.172
-          ],
-          [
-            217.621,
-            41.379
-          ],
-          [
-            217.621,
-            215.948
-          ]
-        ],
-        "bitmapUvTemplate": [
-          [
-            31.034,
-            455.172
-          ],
-          [
-            108.621,
-            41.379
-          ],
-          [
-            108.621,
-            215.948
-          ]
-        ],
-        "bitmapUvTransform": {
-          "x": 109,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 1,
-          "scaleY": 1
-        },
-        "bitmapBaseW": 450,
-        "bitmapBaseH": 600
+        "faceColor": "#535961"
       },
       {
         "id": 1013,
@@ -805,54 +367,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           11
         ],
         "mirrored": false,
-        "faceColor": "#8a867b",
-        "bitmapSide": "top",
-        "bitmapFaceKey": "plate_panel",
-        "bitmapUv": [
-          [
-            307.504,
-            211.524
-          ],
-          [
-            307.504,
-            572.233
-          ],
-          [
-            62.496,
-            572.233
-          ],
-          [
-            62.496,
-            211.524
-          ]
-        ],
-        "bitmapUvTemplate": [
-          [
-            341.379,
-            215.948
-          ],
-          [
-            341.379,
-            558.621
-          ],
-          [
-            108.621,
-            558.621
-          ],
-          [
-            108.621,
-            215.948
-          ]
-        ],
-        "bitmapUvTransform": {
-          "x": -40,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.95,
-          "scaleY": 0.95
-        },
-        "bitmapBaseW": 450,
-        "bitmapBaseH": 600
+        "faceColor": "#8a867b"
       },
       {
         "id": 1014,
@@ -863,54 +378,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6
         ],
         "mirrored": false,
-        "faceColor": "#8a867b",
-        "bitmapSide": "bottom",
-        "bitmapFaceKey": "plate_panel",
-        "bitmapUv": [
-          [
-            78.201,
-            535.11
-          ],
-          [
-            78.201,
-            223.589
-          ],
-          [
-            289.799,
-            223.589
-          ],
-          [
-            289.799,
-            535.11
-          ]
-        ],
-        "bitmapUvTemplate": [
-          [
-            108.621,
-            558.621
-          ],
-          [
-            108.621,
-            215.948
-          ],
-          [
-            341.379,
-            215.948
-          ],
-          [
-            341.379,
-            558.621
-          ]
-        ],
-        "bitmapUvTransform": {
-          "x": -41,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 1.1,
-          "scaleY": 1.1
-        },
-        "bitmapBaseW": 450,
-        "bitmapBaseH": 600
+        "faceColor": "#8a867b"
       }
     ],
     "edges": [],
@@ -1112,10 +580,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5
         ],
         [
-          10,
-          8,
           6,
-          7
+          7,
+          10,
+          8
         ],
         [
           5,
@@ -1124,9 +592,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6
         ],
         [
-          10,
           7,
-          0
+          0,
+          10
         ],
         [
           12,
@@ -1232,15 +700,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6
         ],
         [
-          8,
-          10
-        ],
-        [
           6,
           7
         ],
         [
           7,
+          10
+        ],
+        [
+          8,
           10
         ],
         [
@@ -1372,15 +840,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           9,
-          13
-        ],
-        [
-          9,
           10
         ],
         [
           9,
           11
+        ],
+        [
+          9,
+          13
         ],
         [
           10,
@@ -1569,279 +1037,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         }
       ],
       "imageProjection": {
-        "faceSides": [
-          "top",
-          "bottom",
-          "top",
-          "bottom",
-          "top",
-          "bottom",
-          null,
-          null,
-          null,
-          "top",
-          "bottom",
-          "top",
-          "bottom",
-          "top",
-          "bottom"
-        ],
-        "faceTextures": [
-          "plate_panel",
-          "plate_panel",
-          "plate_panel",
-          "adder_top",
-          "plate_panel",
-          "adder_top",
-          null,
-          null,
-          null,
-          "plate_panel",
-          "adder_top",
-          "plate_panel",
-          "adder_top",
-          "plate_panel",
-          "plate_panel"
-        ],
-        "faceTextureUv": [
-          [
-            [
-              307.504,
-              27.767
-            ],
-            [
-              307.504,
-              211.524
-            ],
-            [
-              62.496,
-              211.524
-            ],
-            [
-              62.496,
-              27.767
-            ]
-          ],
-          [
-            [
-              78.201,
-              223.589
-            ],
-            [
-              78.201,
-              64.89
-            ],
-            [
-              289.799,
-              64.89
-            ],
-            [
-              289.799,
-              223.589
-            ]
-          ],
-          [
-            [
-              307.504,
-              211.524
-            ],
-            [
-              307.504,
-              27.767
-            ],
-            [
-              389.175,
-              463.339
-            ]
-          ],
-          [
-            [
-              140.034,
-              455.172
-            ],
-            [
-              217.621,
-              41.379
-            ],
-            [
-              217.621,
-              215.948
-            ]
-          ],
-          [
-            [
-              307.504,
-              572.233
-            ],
-            [
-              307.504,
-              211.524
-            ],
-            [
-              389.175,
-              463.339
-            ],
-            [
-              389.175,
-              572.233
-            ]
-          ],
-          [
-            [
-              140.034,
-              558.621
-            ],
-            [
-              140.034,
-              455.172
-            ],
-            [
-              217.621,
-              215.948
-            ],
-            [
-              217.621,
-              558.621
-            ]
-          ],
-          null,
-          null,
-          null,
-          [
-            [
-              62.496,
-              211.524
-            ],
-            [
-              62.496,
-              572.233
-            ],
-            [
-              -19.175,
-              572.233
-            ],
-            [
-              -19.175,
-              463.339
-            ]
-          ],
-          [
-            [
-              140.034,
-              558.621
-            ],
-            [
-              140.034,
-              455.172
-            ],
-            [
-              217.621,
-              215.948
-            ],
-            [
-              217.621,
-              558.621
-            ]
-          ],
-          [
-            [
-              62.496,
-              211.524
-            ],
-            [
-              -19.175,
-              463.339
-            ],
-            [
-              62.496,
-              27.767
-            ]
-          ],
-          [
-            [
-              140.034,
-              455.172
-            ],
-            [
-              217.621,
-              41.379
-            ],
-            [
-              217.621,
-              215.948
-            ]
-          ],
-          [
-            [
-              307.504,
-              211.524
-            ],
-            [
-              307.504,
-              572.233
-            ],
-            [
-              62.496,
-              572.233
-            ],
-            [
-              62.496,
-              211.524
-            ]
-          ],
-          [
-            [
-              78.201,
-              535.11
-            ],
-            [
-              78.201,
-              223.589
-            ],
-            [
-              289.799,
-              223.589
-            ],
-            [
-              289.799,
-              535.11
-            ]
-          ]
-        ],
-        "faceTextureBaseW": [
-          450,
-          450,
-          450,
-          450,
-          450,
-          450,
-          null,
-          null,
-          null,
-          450,
-          450,
-          450,
-          450,
-          450,
-          450
-        ],
-        "faceTextureBaseH": [
-          600,
-          600,
-          600,
-          600,
-          600,
-          600,
-          null,
-          null,
-          null,
-          600,
-          600,
-          600,
-          600,
-          600,
-          600
-        ],
         "faceColors": [
           "#8a867b",
           "#8a867b",
@@ -1860,21 +1055,21 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#8a867b"
         ],
         "faceRenderFlags": [
-          75,
-          75,
-          75,
-          75,
-          75,
-          75,
           8,
           8,
           8,
-          75,
-          75,
-          75,
-          75,
-          75,
-          75
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
         ]
       },
       "gameMeta": {
@@ -1887,8 +1082,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "missionLore": "",
         "imageDecalMirrorX": {
           "top": true,
-          "bottom": false,
-          "back": false
+          "bottom": true,
+          "back": true
         },
         "valueCr": 250000,
         "stats": {
@@ -10462,28 +9657,28 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "id": 5024,
         "a": 13,
         "b": 14,
-        "kind": "edge",
+        "kind": "stationEntrance",
         "mirrored": false
       },
       {
         "id": 5025,
         "a": 14,
         "b": 15,
-        "kind": "edge",
+        "kind": "stationEntrance",
         "mirrored": false
       },
       {
         "id": 5026,
         "a": 15,
         "b": 16,
-        "kind": "edge",
+        "kind": "stationEntrance",
         "mirrored": false
       },
       {
         "id": 5027,
         "a": 16,
         "b": 13,
-        "kind": "edge",
+        "kind": "stationEntrance",
         "mirrored": false
       }
     ],
@@ -14665,28 +13860,28 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "id": 5030,
         "a": 21,
         "b": 22,
-        "kind": "edge",
+        "kind": "stationEntrance",
         "mirrored": false
       },
       {
         "id": 5031,
         "a": 22,
         "b": 24,
-        "kind": "edge",
+        "kind": "stationEntrance",
         "mirrored": false
       },
       {
         "id": 5032,
         "a": 24,
         "b": 23,
-        "kind": "edge",
+        "kind": "stationEntrance",
         "mirrored": false
       },
       {
         "id": 5033,
         "a": 23,
         "b": 21,
-        "kind": "edge",
+        "kind": "stationEntrance",
         "mirrored": false
       }
     ],

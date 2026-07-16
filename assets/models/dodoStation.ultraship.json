@@ -1060,28 +1060,28 @@
       "id": 5030,
       "a": 21,
       "b": 22,
-      "kind": "edge",
+      "kind": "stationEntrance",
       "mirrored": false
     },
     {
       "id": 5031,
       "a": 22,
       "b": 24,
-      "kind": "edge",
+      "kind": "stationEntrance",
       "mirrored": false
     },
     {
       "id": 5032,
       "a": 24,
       "b": 23,
-      "kind": "edge",
+      "kind": "stationEntrance",
       "mirrored": false
     },
     {
       "id": 5033,
       "a": 23,
       "b": 21,
-      "kind": "edge",
+      "kind": "stationEntrance",
       "mirrored": false
     }
   ],

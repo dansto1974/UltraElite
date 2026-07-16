@@ -439,6 +439,61 @@ h3 {
   color: var(--yellow);
 }
 
+.selection-context-menu {
+  position: absolute;
+  z-index: 12;
+  display: grid;
+  gap: 2px;
+  min-width: 190px;
+  max-width: min(260px, calc(100% - 16px));
+  padding: 5px;
+  border: 1px solid rgba(81, 255, 74, .34);
+  border-radius: 8px;
+  background: rgba(2, 8, 4, .96);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, .55);
+}
+
+.selection-context-menu-title {
+  padding: .25rem .36rem .32rem;
+  color: var(--muted);
+  font-size: .58rem;
+  line-height: 1.1;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(81, 255, 74, .14);
+}
+
+.selection-context-menu button {
+  width: 100%;
+  height: 1.85rem;
+  padding: 0 .48rem;
+  border: 0;
+  border-radius: 6px;
+  color: var(--text);
+  background: transparent;
+  font-size: .66rem;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.selection-context-menu button:hover,
+.selection-context-menu button:focus-visible {
+  color: #020402;
+  background: var(--text);
+  outline: 0;
+}
+
+.selection-context-menu button:disabled {
+  color: rgba(194, 255, 194, .32);
+  background: transparent;
+  cursor: not-allowed;
+}
+
+.selection-context-menu-divider {
+  height: 1px;
+  margin: 3px 2px;
+  background: rgba(81, 255, 74, .14);
+}
+
 .compact-readout {
   min-height: 0;
   margin-top: 6px;
@@ -497,29 +552,201 @@ h3 {
 
 .preview-mode-toolbar {
   display: inline-grid;
-  grid-template-columns: repeat(6, 2rem) minmax(5.8rem, auto) 2rem;
-  gap: 4px;
+  grid-template-columns: repeat(8, 1.72rem);
+  gap: 3px;
   padding: 4px;
   border: 1px solid rgba(81, 255, 74, .2);
-  border-radius: 10px;
+  border-radius: 9px;
   background: rgba(0, 0, 0, .42);
   box-shadow: var(--shadow);
 }
 
 .preview-mode-toolbar button {
   min-width: 0;
-  width: 2rem;
-  height: 1.8rem;
+  width: 1.72rem;
+  height: 1.72rem;
   padding: 0;
-  border-radius: 8px;
-  font-size: .72rem;
+  border-radius: 7px;
+  font-size: .62rem;
   line-height: 1;
 }
 
-.preview-mode-toolbar .selection-action-btn {
-  width: auto;
-  padding: 0 .5rem;
+.preview-mode-toolbar .mode-btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.selector-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
   white-space: nowrap;
+}
+
+.selector-icon {
+  position: relative;
+  display: block;
+  width: 1.02rem;
+  height: 1.02rem;
+  color: currentColor;
+}
+
+.selector-icon::before,
+.selector-icon::after {
+  content: "";
+  position: absolute;
+  display: block;
+  box-sizing: border-box;
+}
+
+.selector-icon-vertex::before {
+  inset: .31rem;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow:
+    -.33rem -.28rem 0 -.1rem currentColor,
+    .34rem -.2rem 0 -.1rem currentColor,
+    -.2rem .36rem 0 -.1rem currentColor;
+}
+
+.selector-icon-face::before {
+  left: .1rem;
+  top: .12rem;
+  width: .82rem;
+  height: .76rem;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  background: currentColor;
+  opacity: .82;
+}
+
+.selector-icon-face::after {
+  left: .31rem;
+  top: .38rem;
+  width: .4rem;
+  height: .32rem;
+  border-left: 1px solid rgba(2, 8, 4, .72);
+  border-bottom: 1px solid rgba(2, 8, 4, .72);
+  transform: skewX(-19deg);
+}
+
+.selector-icon-edge::before {
+  left: .14rem;
+  top: .47rem;
+  width: .78rem;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  transform: rotate(-28deg);
+  transform-origin: center;
+}
+
+.selector-icon-edge::after {
+  left: .15rem;
+  top: .29rem;
+  width: .74rem;
+  height: .48rem;
+  border-left: 2px solid currentColor;
+  border-right: 2px solid currentColor;
+  transform: rotate(-28deg);
+  opacity: .55;
+}
+
+.selector-icon-detail::before {
+  left: .14rem;
+  top: .26rem;
+  width: .74rem;
+  height: .5rem;
+  border-top: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+}
+
+.selector-icon-detail::after {
+  left: .2rem;
+  top: .49rem;
+  width: .62rem;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.selector-icon-uv::before {
+  inset: .12rem;
+  border: 1px solid currentColor;
+  background:
+    linear-gradient(90deg, transparent calc(50% - .5px), currentColor calc(50% - .5px), currentColor calc(50% + .5px), transparent calc(50% + .5px)),
+    linear-gradient(0deg, transparent calc(50% - .5px), currentColor calc(50% - .5px), currentColor calc(50% + .5px), transparent calc(50% + .5px));
+}
+
+.selector-icon-uv::after {
+  left: .31rem;
+  top: .31rem;
+  width: .16rem;
+  height: .16rem;
+  background: currentColor;
+  box-shadow: .34rem .34rem 0 currentColor;
+  opacity: .8;
+}
+
+.selector-icon-group::before {
+  left: .16rem;
+  top: .29rem;
+  width: .48rem;
+  height: .48rem;
+  border: 2px solid currentColor;
+  background: rgba(0, 0, 0, .22);
+}
+
+.selector-icon-group::after {
+  left: .38rem;
+  top: .16rem;
+  width: .48rem;
+  height: .48rem;
+  border: 2px solid currentColor;
+  background: rgba(0, 0, 0, .22);
+}
+
+.preview-mode-toolbar .selection-action-btn {
+  width: 1.72rem;
+  padding: 0;
+}
+
+.toolbar-icon {
+  position: relative;
+  display: block;
+  width: 1.02rem;
+  height: 1.02rem;
+  color: currentColor;
+}
+
+.toolbar-icon::before,
+.toolbar-icon::after {
+  content: "";
+  position: absolute;
+  display: block;
+  box-sizing: border-box;
+}
+
+.toolbar-icon-face-view::before {
+  left: .12rem;
+  top: .18rem;
+  width: .58rem;
+  height: .5rem;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  background: currentColor;
+  opacity: .86;
+}
+
+.toolbar-icon-face-view::after {
+  right: .1rem;
+  bottom: .16rem;
+  width: .46rem;
+  height: .28rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: skew(-18deg) rotate(-12deg);
 }
 
 .projection-view-toolbar {
@@ -590,6 +817,20 @@ h3 {
 
 .detail-controls label {
   grid-template-columns: 1fr;
+}
+
+.surface-insert-controls {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(81, 255, 74, .16);
+}
+
+.surface-insert-controls h3 {
+  margin: 0 0 3px;
+}
+
+.surface-insert-controls .button-grid {
+  margin-top: 7px;
 }
 
 .template-tools {

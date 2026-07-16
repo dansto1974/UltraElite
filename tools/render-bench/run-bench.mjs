@@ -14,6 +14,8 @@ const chrome = args.chrome || "/Applications/Google Chrome.app/Contents/MacOS/Go
 const duration = Number(args.duration || 6800);
 const iterations = Number(args.iterations || 160);
 const warmup = Number(args.warmup || 24);
+const runs = Number(args.runs || args.repeat || 1);
+const settleRuns = Number(args["settle-runs"] || args.settleRuns || (runs > 1 ? 3 : 0));
 const model = args.model || "cobra";
 const mode = args.mode || "solid";
 const fx = args.fx || "ultra";
@@ -62,6 +64,8 @@ function normalizeResult(result) {
     model: result.model,
     modelName: result.modelName,
     quality: result.quality,
+    settleRuns: result.settleRuns || 0,
+    runs: result.runs || 1,
     frames: result.frames,
     filteredFrames: result.filteredFrames,
     outlierFrames: result.outlierFrames,
@@ -78,6 +82,26 @@ function normalizeResult(result) {
     p95Ms: round(result.p95Ms, 3),
     worstMs: round(result.worstMs, 2),
     rawWorstMs: round(result.rawWorstMs, 2),
+    runStdDevMs: round(result.runStdDevMs, 3),
+    runFpsStdDev: round(result.runFpsStdDev, 2),
+    runP95StdDevMs: round(result.runP95StdDevMs, 3),
+    runJitterPct: round(result.runJitterPct, 1),
+    runMinAvgMs: round(result.runMinAvgMs, 3),
+    runMaxAvgMs: round(result.runMaxAvgMs, 3),
+    runResults: Array.isArray(result.runResults)
+      ? result.runResults.map((run) => ({
+        run: run.run,
+        frames: run.frames,
+        filteredFrames: run.filteredFrames,
+        avgMs: round(run.avgMs, 3),
+        avgFps: round(run.avgFps, 2),
+        p95Ms: round(run.p95Ms, 3),
+        stdDevMs: round(run.stdDevMs, 3),
+        spikeTaxMs: round(run.spikeTaxMs, 3),
+        rawWorstMs: round(run.rawWorstMs, 2),
+        wallMs: round(run.wallMs, 2)
+      }))
+      : undefined,
     faces: result.faces,
     edges: result.edges,
     details: result.details,
@@ -97,6 +121,8 @@ function normalizeSummary(summary, url, useRaf) {
       lod: summary.lod,
       iterations: summary.iterations,
       warmup: summary.warmup,
+      runs: summary.runs || runs,
+      settleRuns: summary.settleRuns || settleRuns,
       elapsedMs: round(summary.elapsedMs, 2),
       count: summary.results.length,
       results: summary.results.map(normalizeResult),
@@ -208,13 +234,16 @@ async function main() {
   const served = args.serve === "1" ? await startStaticServer() : null;
   const host = served?.host || args.host || "http://127.0.0.1:8765";
   const useRaf = args.raf === "1";
-  const runMode = batch ? `batch=1&iterations=${iterations}&warmup=${warmup}` : useRaf ? `auto=1&duration=${duration}` : `sync=1&iterations=${iterations}&warmup=${warmup}`;
+  const runMode = batch ? `batch=1&iterations=${iterations}&warmup=${warmup}&runs=${Math.max(1, runs || 1)}&settleRuns=${Math.max(0, settleRuns || 0)}` : useRaf ? `auto=1&duration=${duration}` : `sync=1&iterations=${iterations}&warmup=${warmup}`;
   const batchQuery = batch ? `&models=${encodeURIComponent(models)}&qualities=${encodeURIComponent(qualities)}` : "";
   const url = `${host}/tools/render-bench/?${runMode}&model=${encodeURIComponent(model)}&mode=${encodeURIComponent(mode)}&fx=${encodeURIComponent(fx)}&quality=${encodeURIComponent(quality)}&lod=${encodeURIComponent(lod)}&scale=${encodeURIComponent(scale)}${batchQuery}`;
+  const virtualTimeBudget = batch
+    ? Math.max(15000, 15000 * Math.max(1, Math.min(11, (runs || 1) + (settleRuns || 0))))
+    : useRaf ? duration + 1400 : 2200;
   const chromeArgs = [
     "--headless=new",
     "--disable-gpu",
-    `--virtual-time-budget=${batch ? 15000 : useRaf ? duration + 1400 : 2200}`,
+    `--virtual-time-budget=${virtualTimeBudget}`,
     "--run-all-compositor-stages-before-draw",
     "--dump-dom",
     url

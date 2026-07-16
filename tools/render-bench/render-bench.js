@@ -100,6 +100,32 @@ function standardDeviation(samples) {
   return Math.sqrt(variance);
 }
 
+function weightedAverage(items, valueKey, weightKey) {
+  let totalWeight = 0;
+  let totalValue = 0;
+  for (const item of items) {
+    const value = Number(item?.[valueKey]);
+    const weight = Math.max(0, Number(item?.[weightKey]) || 0);
+    if (!Number.isFinite(value) || !weight) continue;
+    totalValue += value * weight;
+    totalWeight += weight;
+  }
+  return totalWeight ? totalValue / totalWeight : 0;
+}
+
+function pooledStandardDeviation(items, meanKey, stdKey, weightKey) {
+  const totalWeight = items.reduce((sum, item) => sum + Math.max(0, Number(item?.[weightKey]) || 0), 0);
+  if (!totalWeight) return 0;
+  const mean = weightedAverage(items, meanKey, weightKey);
+  const variance = items.reduce((sum, item) => {
+    const weight = Math.max(0, Number(item?.[weightKey]) || 0);
+    const itemMean = Number(item?.[meanKey]) || 0;
+    const itemStd = Number(item?.[stdKey]) || 0;
+    return sum + weight * (itemStd ** 2 + (itemMean - mean) ** 2);
+  }, 0) / totalWeight;
+  return Math.sqrt(Math.max(0, variance));
+}
+
 function stableRenderSamples(samples) {
   const valid = samples.filter((value) => Number.isFinite(value) && value > 0);
   if (valid.length < 8) return valid;
@@ -132,6 +158,60 @@ function sampleStats(samples) {
     p95Ms: percentile(stable, .95),
     worstMs: stable.length ? Math.max(...stable) : 0,
     rawWorstMs: valid.length ? Math.max(...valid) : 0
+  };
+}
+
+function aggregateBenchmarkRuns(runResults) {
+  const runs = runResults.filter((item) => item?.summary?.frames);
+  if (!runs.length) return null;
+  const summaries = runs.map((item) => item.summary);
+  const frames = summaries.reduce((sum, item) => sum + (Number(item.frames) || 0), 0);
+  const filteredFrames = summaries.reduce((sum, item) => sum + (Number(item.filteredFrames) || 0), 0);
+  const outlierFrames = summaries.reduce((sum, item) => sum + (Number(item.outlierFrames) || 0), 0);
+  const avgMs = weightedAverage(summaries, "avgMs", "filteredFrames");
+  const rawAvgMs = weightedAverage(summaries, "rawAvgMs", "frames");
+  const stdDevMs = pooledStandardDeviation(summaries, "avgMs", "stdDevMs", "filteredFrames");
+  const rawStdDevMs = pooledStandardDeviation(summaries, "rawAvgMs", "rawStdDevMs", "frames");
+  const runAvgMs = summaries.map((item) => item.avgMs).filter((value) => Number.isFinite(value) && value > 0);
+  const runAvgFps = summaries.map((item) => item.avgFps).filter((value) => Number.isFinite(value) && value > 0);
+  const runP95 = summaries.map((item) => item.p95Ms).filter((value) => Number.isFinite(value) && value > 0);
+  return {
+    runs: runs.length,
+    frames,
+    filteredFrames,
+    outlierFrames,
+    avgMs,
+    rawAvgMs,
+    avgFps: avgMs ? 1000 / avgMs : 0,
+    rawAvgFps: rawAvgMs ? 1000 / rawAvgMs : 0,
+    stdDevMs,
+    rawStdDevMs,
+    jitterPct: avgMs ? stdDevMs / avgMs * 100 : 0,
+    spikeTaxMs: Math.max(0, rawAvgMs - avgMs),
+    spikeTaxPct: avgMs ? Math.max(0, rawAvgMs / avgMs - 1) * 100 : 0,
+    medianMs: weightedAverage(summaries, "medianMs", "filteredFrames"),
+    p95Ms: weightedAverage(summaries, "p95Ms", "filteredFrames"),
+    worstMs: Math.max(...summaries.map((item) => Number(item.worstMs) || 0)),
+    rawWorstMs: Math.max(...summaries.map((item) => Number(item.rawWorstMs) || 0)),
+    runStdDevMs: standardDeviation(runAvgMs),
+    runFpsStdDev: standardDeviation(runAvgFps),
+    runP95StdDevMs: standardDeviation(runP95),
+    runJitterPct: avgMs ? standardDeviation(runAvgMs) / avgMs * 100 : 0,
+    runMinAvgMs: runAvgMs.length ? Math.min(...runAvgMs) : 0,
+    runMaxAvgMs: runAvgMs.length ? Math.max(...runAvgMs) : 0,
+    wallMs: runs.reduce((sum, item) => sum + (Number(item.elapsed) || 0), 0),
+    runResults: runs.map((item, index) => ({
+      run: index + 1,
+      frames: item.summary.frames,
+      filteredFrames: item.summary.filteredFrames,
+      avgMs: item.summary.avgMs,
+      avgFps: item.summary.avgFps,
+      p95Ms: item.summary.p95Ms,
+      stdDevMs: item.summary.stdDevMs,
+      spikeTaxMs: item.summary.spikeTaxMs,
+      rawWorstMs: item.summary.rawWorstMs,
+      wallMs: item.elapsed
+    }))
   };
 }
 
@@ -371,11 +451,13 @@ function runBatchBenchmark() {
   const qualities = parseCsvParam("qualities", ["plain", "live", "full"]).filter((q) => ["plain", "live", "full"].includes(q));
   const iterations = Math.max(8, Math.min(1000, Number(params.get("iterations")) || 80));
   const warmup = Math.max(0, Math.min(300, Number(params.get("warmup")) || 20));
+  const runs = Math.max(1, Math.min(8, Number(params.get("runs") || params.get("repeat")) || 1));
+  const settleRuns = Math.max(0, Math.min(6, Number(params.get("settleRuns") || params.get("settle-runs")) || (runs > 1 ? 3 : 0)));
   const results = [];
   const started = performance.now();
 
   running = false;
-  statusText.textContent = `Batch running | ${models.length} models x ${qualities.length} methods`;
+  statusText.textContent = `Batch running | ${models.length} models x ${qualities.length} methods x ${runs} measured runs`;
   for (const model of models) {
     for (const quality of qualities) {
       applyRenderParams({
@@ -386,7 +468,17 @@ function runBatchBenchmark() {
         lod: params.get("lod") || saved.lod,
         scale: params.get("scale") || saved.scale
       });
-      const result = runSyncSamples(iterations, warmup);
+      for (let settle = 0; settle < settleRuns; settle++) {
+        statusText.textContent = `Batch warming | ${model} ${quality} | settle ${settle + 1}/${settleRuns}`;
+        runSyncSamples(iterations, warmup);
+      }
+      const runResults = [];
+      for (let run = 0; run < runs; run++) {
+        statusText.textContent = `Batch running | ${model} ${quality} | run ${run + 1}/${runs}`;
+        const result = runSyncSamples(iterations, warmup);
+        if (result) runResults.push(result);
+      }
+      const result = aggregateBenchmarkRuns(runResults);
       if (!result) continue;
       results.push({
         model,
@@ -395,27 +487,36 @@ function runBatchBenchmark() {
         fx: fxSelect.value,
         quality,
         lod: lodSelect.value,
-        frames: result.summary.frames,
-        filteredFrames: result.summary.filteredFrames,
-        outlierFrames: result.summary.outlierFrames,
-        avgMs: result.summary.avgMs,
-        rawAvgMs: result.summary.rawAvgMs,
-        avgFps: result.summary.avgFps,
-        rawAvgFps: result.summary.rawAvgFps,
-        stdDevMs: result.summary.stdDevMs,
-        rawStdDevMs: result.summary.rawStdDevMs,
-        jitterPct: result.summary.jitterPct,
-        spikeTaxMs: result.summary.spikeTaxMs,
-        spikeTaxPct: result.summary.spikeTaxPct,
-        medianMs: result.summary.medianMs,
-        p95Ms: result.summary.p95Ms,
-        worstMs: result.summary.worstMs,
-        rawWorstMs: result.summary.rawWorstMs,
-        faces: result.summary.lastRender?.faces || 0,
-        edges: result.summary.lastRender?.edges || 0,
-        details: result.summary.lastRender?.details || 0,
-        radius: result.summary.lastRender?.radius || 0,
-        wallMs: result.elapsed
+        settleRuns,
+        runs: result.runs,
+        frames: result.frames,
+        filteredFrames: result.filteredFrames,
+        outlierFrames: result.outlierFrames,
+        avgMs: result.avgMs,
+        rawAvgMs: result.rawAvgMs,
+        avgFps: result.avgFps,
+        rawAvgFps: result.rawAvgFps,
+        stdDevMs: result.stdDevMs,
+        rawStdDevMs: result.rawStdDevMs,
+        jitterPct: result.jitterPct,
+        spikeTaxMs: result.spikeTaxMs,
+        spikeTaxPct: result.spikeTaxPct,
+        medianMs: result.medianMs,
+        p95Ms: result.p95Ms,
+        worstMs: result.worstMs,
+        rawWorstMs: result.rawWorstMs,
+        runStdDevMs: result.runStdDevMs,
+        runFpsStdDev: result.runFpsStdDev,
+        runP95StdDevMs: result.runP95StdDevMs,
+        runJitterPct: result.runJitterPct,
+        runMinAvgMs: result.runMinAvgMs,
+        runMaxAvgMs: result.runMaxAvgMs,
+        runResults: result.runResults,
+        faces: runResults.at(-1)?.summary?.lastRender?.faces || 0,
+        edges: runResults.at(-1)?.summary?.lastRender?.edges || 0,
+        details: runResults.at(-1)?.summary?.lastRender?.details || 0,
+        radius: runResults.at(-1)?.summary?.lastRender?.radius || 0,
+        wallMs: result.wallMs
       });
     }
   }
@@ -428,6 +529,8 @@ function runBatchBenchmark() {
     lod: params.get("lod") || saved.lod,
     iterations,
     warmup,
+    runs,
+    settleRuns,
     elapsedMs: performance.now() - started,
     results
   };
@@ -435,12 +538,14 @@ function runBatchBenchmark() {
   renderCurrentBenchFrame(performance.now(), false);
   window.__renderBenchSummary = summary;
   if (summaryJson) summaryJson.textContent = JSON.stringify(summary);
-  statusText.textContent = `Batch complete | ${results.length} runs | ${(summary.elapsedMs / 1000).toFixed(1)} s`;
+  statusText.textContent = `Batch complete | ${results.length} results x ${runs} measured runs | ${(summary.elapsedMs / 1000).toFixed(1)} s`;
   phaseReadout.textContent = [
     `batch benchmark`,
     `models: ${models.join(", ")}`,
     `methods: ${qualities.join(", ")}`,
-    `runs: ${results.length}`,
+    `results: ${results.length}`,
+    `settle runs/result: ${settleRuns}`,
+    `runs/result: ${runs}`,
     `renders/run: ${iterations}`,
     `warmup/run: ${warmup}`
   ].join("\n");
