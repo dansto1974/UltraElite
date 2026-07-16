@@ -11313,11 +11313,11 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function getProjectedImageDecalSource(key, dataUrl, allowPending = false) {
       if (!dataUrl) return null;
       let entry = projectedImageDecalSourceCache.get(key);
-      if (!entry) {
+      if (!entry || entry.dataUrl !== dataUrl) {
         const img = new Image();
         img.decoding = "async";
         img.src = dataUrl;
-        entry = { img };
+        entry = { img, dataUrl };
         projectedImageDecalSourceCache.set(key, entry);
         if (projectedImageDecalSourceCache.size > 160) projectedImageDecalSourceCache.delete(projectedImageDecalSourceCache.keys().next().value);
       }
@@ -11949,24 +11949,32 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const baseW = Math.max(1, faceTexture.baseW || DECAL_TEXTURE_SIZE);
         const baseH = Math.max(1, faceTexture.baseH || DECAL_TEXTURE_SIZE);
         const faceAngle = faceTexture.angle || 0;
+        const sourceW = Math.max(1, faceImage.naturalWidth || faceImage.width || 1);
+        const sourceH = Math.max(1, faceImage.naturalHeight || faceImage.height || 1);
+        const sourceTileWrap = faceTexture.wrap === "repeat" || faceTexture.wrap === "mirror";
         if (faceTexture.mirrorX) {
+          const mirroredBaseW = sourceTileWrap ? sourceW * 2 : baseW;
+          const mirroredBaseH = sourceTileWrap ? sourceH : baseH;
+          const mirroredMid = sourceTileWrap ? sourceW : baseW / 2;
           drawMirroredImageDecalLayer(targetCtx, item, faceImage, item.imageDecals.alpha ?? .82, {
             sourceUv: faceTexture.uv,
-            projectionBaseW: baseW,
-            projectionBaseH: baseH,
-            sx: faceImage.width / Math.max(1, baseW / 2),
-            sy: faceImage.height / baseH,
-            mid: baseW / 2,
+            projectionBaseW: mirroredBaseW,
+            projectionBaseH: mirroredBaseH,
+            sx: sourceTileWrap ? 1 : sourceW / Math.max(1, baseW / 2),
+            sy: sourceTileWrap ? 1 : sourceH / baseH,
+            mid: mirroredMid,
             angle: faceAngle,
             mirrorX: true,
-            clipBounds: { minX: 0, minY: 0, maxX: baseW, maxY: baseH },
+            clipBounds: { minX: 0, minY: 0, maxX: mirroredBaseW, maxY: mirroredBaseH },
             wrap: faceTexture.wrap
           }, "source-over");
         } else {
-          const sx = faceImage.width / baseW;
-          const sy = faceImage.height / baseH;
+          const drawBaseW = sourceTileWrap ? sourceW : baseW;
+          const drawBaseH = sourceTileWrap ? sourceH : baseH;
+          const sx = sourceTileWrap ? 1 : sourceW / baseW;
+          const sy = sourceTileWrap ? 1 : sourceH / baseH;
           const sourceUv = faceAngle
-            ? faceTexture.uv.map(([u, v]) => rotateImageDecalUv(u, v, baseW, baseH, faceAngle))
+            ? faceTexture.uv.map(([u, v]) => rotateImageDecalUv(u, v, drawBaseW, drawBaseH, faceAngle))
             : faceTexture.uv;
           drawBoundedFaceImageLayer(
             targetCtx,
@@ -11974,7 +11982,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
             faceImage,
             item.imageDecals.alpha ?? .82,
             sourceUv,
-            { minX: 0, minY: 0, maxX: baseW, maxY: baseH },
+            { minX: 0, minY: 0, maxX: drawBaseW, maxY: drawBaseH },
             sx,
             sy,
             "source-over",

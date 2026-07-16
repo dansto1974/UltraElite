@@ -2,6 +2,7 @@
 Photoshop Assets/
 unused skins/
 .ultra-elite-publish.env
+tools/render-bench/reports/*.json
 ROADMAP.md
 PROJECT_MEMORY.md
 LESSONS.md

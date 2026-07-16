@@ -51,7 +51,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       "missionLore": "",
       "imageDecalMirrorX": {
         "top": true,
-        "bottom": true,
+        "bottom": false,
         "back": false
       },
       "valueCr": 250000,
@@ -230,7 +230,54 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1
         ],
         "mirrored": false,
-        "faceColor": "#838c97"
+        "faceColor": "#8a867b",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "plate_panel",
+        "bitmapUv": [
+          [
+            307.504,
+            27.767
+          ],
+          [
+            307.504,
+            211.524
+          ],
+          [
+            62.496,
+            211.524
+          ],
+          [
+            62.496,
+            27.767
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            341.379,
+            41.379
+          ],
+          [
+            341.379,
+            215.948
+          ],
+          [
+            108.621,
+            215.948
+          ],
+          [
+            108.621,
+            41.379
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": -40,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 0.95,
+          "scaleY": 0.95
+        },
+        "bitmapBaseW": 450,
+        "bitmapBaseH": 600
       },
       {
         "id": 1001,
@@ -241,7 +288,54 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           13
         ],
         "mirrored": false,
-        "faceColor": "#9fabb8"
+        "faceColor": "#8a867b",
+        "bitmapSide": "bottom",
+        "bitmapFaceKey": "plate_panel",
+        "bitmapUv": [
+          [
+            78.201,
+            223.589
+          ],
+          [
+            78.201,
+            64.89
+          ],
+          [
+            289.799,
+            64.89
+          ],
+          [
+            289.799,
+            223.589
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            108.621,
+            215.948
+          ],
+          [
+            108.621,
+            41.379
+          ],
+          [
+            341.379,
+            41.379
+          ],
+          [
+            341.379,
+            215.948
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": -41,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 1.1,
+          "scaleY": 1.1
+        },
+        "bitmapBaseW": 450,
+        "bitmapBaseH": 600
       },
       {
         "id": 1002,
@@ -251,7 +345,46 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           3
         ],
         "mirrored": false,
-        "faceColor": "#77818f"
+        "faceColor": "#8a867b",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "plate_panel",
+        "bitmapUv": [
+          [
+            307.504,
+            211.524
+          ],
+          [
+            307.504,
+            27.767
+          ],
+          [
+            389.175,
+            463.339
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            341.379,
+            215.948
+          ],
+          [
+            341.379,
+            41.379
+          ],
+          [
+            418.966,
+            455.172
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": -40,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 0.95,
+          "scaleY": 0.95
+        },
+        "bitmapBaseW": 450,
+        "bitmapBaseH": 600
       },
       {
         "id": 1003,
@@ -261,7 +394,46 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           14
         ],
         "mirrored": false,
-        "faceColor": "#616a76"
+        "faceColor": "#535961",
+        "bitmapSide": "bottom",
+        "bitmapFaceKey": "adder_top",
+        "bitmapUv": [
+          [
+            140.034,
+            455.172
+          ],
+          [
+            217.621,
+            41.379
+          ],
+          [
+            217.621,
+            215.948
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            31.034,
+            455.172
+          ],
+          [
+            108.621,
+            41.379
+          ],
+          [
+            108.621,
+            215.948
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": 109,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 1,
+          "scaleY": 1
+        },
+        "bitmapBaseW": 450,
+        "bitmapBaseH": 600
       },
       {
         "id": 1004,
@@ -272,7 +444,54 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4
         ],
         "mirrored": false,
-        "faceColor": "#76808d"
+        "faceColor": "#8a867b",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "plate_panel",
+        "bitmapUv": [
+          [
+            307.504,
+            572.233
+          ],
+          [
+            307.504,
+            211.524
+          ],
+          [
+            389.175,
+            463.339
+          ],
+          [
+            389.175,
+            572.233
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            341.379,
+            558.621
+          ],
+          [
+            341.379,
+            215.948
+          ],
+          [
+            418.966,
+            455.172
+          ],
+          [
+            418.966,
+            558.621
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": -40,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 0.95,
+          "scaleY": 0.95
+        },
+        "bitmapBaseW": 450,
+        "bitmapBaseH": 600
       },
       {
         "id": 1005,
@@ -283,7 +502,54 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5
         ],
         "mirrored": false,
-        "faceColor": "#69747e"
+        "faceColor": "#535961",
+        "bitmapSide": "bottom",
+        "bitmapFaceKey": "adder_top",
+        "bitmapUv": [
+          [
+            140.034,
+            558.621
+          ],
+          [
+            140.034,
+            455.172
+          ],
+          [
+            217.621,
+            215.948
+          ],
+          [
+            217.621,
+            558.621
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            31.034,
+            558.621
+          ],
+          [
+            31.034,
+            455.172
+          ],
+          [
+            108.621,
+            215.948
+          ],
+          [
+            108.621,
+            558.621
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": 109,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 1,
+          "scaleY": 1
+        },
+        "bitmapBaseW": 450,
+        "bitmapBaseH": 600
       },
       {
         "id": 1006,
@@ -325,18 +591,112 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8
         ],
         "mirrored": false,
-        "faceColor": "#77808e"
+        "faceColor": "#8a867b",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "plate_panel",
+        "bitmapUv": [
+          [
+            62.496,
+            211.524
+          ],
+          [
+            62.496,
+            572.233
+          ],
+          [
+            -19.175,
+            572.233
+          ],
+          [
+            -19.175,
+            463.339
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            108.621,
+            215.948
+          ],
+          [
+            108.621,
+            558.621
+          ],
+          [
+            31.034,
+            558.621
+          ],
+          [
+            31.034,
+            455.172
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": -40,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 0.95,
+          "scaleY": 0.95
+        },
+        "bitmapBaseW": 450,
+        "bitmapBaseH": 600
       },
       {
         "id": 1010,
         "verts": [
-          8,
-          7,
           6,
-          13
+          13,
+          8,
+          7
         ],
         "mirrored": false,
-        "faceColor": "#69747f"
+        "faceColor": "#535961",
+        "bitmapSide": "bottom",
+        "bitmapFaceKey": "adder_top",
+        "bitmapUv": [
+          [
+            140.034,
+            558.621
+          ],
+          [
+            140.034,
+            455.172
+          ],
+          [
+            217.621,
+            215.948
+          ],
+          [
+            217.621,
+            558.621
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            31.034,
+            558.621
+          ],
+          [
+            31.034,
+            455.172
+          ],
+          [
+            108.621,
+            215.948
+          ],
+          [
+            108.621,
+            558.621
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": 109,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 1,
+          "scaleY": 1
+        },
+        "bitmapBaseW": 450,
+        "bitmapBaseH": 600
       },
       {
         "id": 1011,
@@ -346,17 +706,95 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1
         ],
         "mirrored": false,
-        "faceColor": "#788290"
+        "faceColor": "#8a867b",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "plate_panel",
+        "bitmapUv": [
+          [
+            62.496,
+            211.524
+          ],
+          [
+            -19.175,
+            463.339
+          ],
+          [
+            62.496,
+            27.767
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            108.621,
+            215.948
+          ],
+          [
+            31.034,
+            455.172
+          ],
+          [
+            108.621,
+            41.379
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": -40,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 0.95,
+          "scaleY": 0.95
+        },
+        "bitmapBaseW": 450,
+        "bitmapBaseH": 600
       },
       {
         "id": 1012,
         "verts": [
+          13,
           1,
-          8,
-          13
+          8
         ],
         "mirrored": false,
-        "faceColor": "#656f7b"
+        "faceColor": "#535961",
+        "bitmapSide": "bottom",
+        "bitmapFaceKey": "adder_top",
+        "bitmapUv": [
+          [
+            140.034,
+            455.172
+          ],
+          [
+            217.621,
+            41.379
+          ],
+          [
+            217.621,
+            215.948
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            31.034,
+            455.172
+          ],
+          [
+            108.621,
+            41.379
+          ],
+          [
+            108.621,
+            215.948
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": 109,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 1,
+          "scaleY": 1
+        },
+        "bitmapBaseW": 450,
+        "bitmapBaseH": 600
       },
       {
         "id": 1013,
@@ -367,7 +805,54 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           11
         ],
         "mirrored": false,
-        "faceColor": "#808b96"
+        "faceColor": "#8a867b",
+        "bitmapSide": "top",
+        "bitmapFaceKey": "plate_panel",
+        "bitmapUv": [
+          [
+            307.504,
+            211.524
+          ],
+          [
+            307.504,
+            572.233
+          ],
+          [
+            62.496,
+            572.233
+          ],
+          [
+            62.496,
+            211.524
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            341.379,
+            215.948
+          ],
+          [
+            341.379,
+            558.621
+          ],
+          [
+            108.621,
+            558.621
+          ],
+          [
+            108.621,
+            215.948
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": -40,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 0.95,
+          "scaleY": 0.95
+        },
+        "bitmapBaseW": 450,
+        "bitmapBaseH": 600
       },
       {
         "id": 1014,
@@ -378,7 +863,54 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6
         ],
         "mirrored": false,
-        "faceColor": "#85909d"
+        "faceColor": "#8a867b",
+        "bitmapSide": "bottom",
+        "bitmapFaceKey": "plate_panel",
+        "bitmapUv": [
+          [
+            78.201,
+            535.11
+          ],
+          [
+            78.201,
+            223.589
+          ],
+          [
+            289.799,
+            223.589
+          ],
+          [
+            289.799,
+            535.11
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            108.621,
+            558.621
+          ],
+          [
+            108.621,
+            215.948
+          ],
+          [
+            341.379,
+            215.948
+          ],
+          [
+            341.379,
+            558.621
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": -41,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 1.1,
+          "scaleY": 1.1
+        },
+        "bitmapBaseW": 450,
+        "bitmapBaseH": 600
       }
     ],
     "edges": [],
@@ -528,6 +1060,92 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           24
         ]
       ],
+      "faces": [
+        [
+          1,
+          11,
+          10,
+          0
+        ],
+        [
+          13,
+          1,
+          0,
+          12
+        ],
+        [
+          11,
+          1,
+          2
+        ],
+        [
+          2,
+          1,
+          13
+        ],
+        [
+          9,
+          11,
+          2,
+          3
+        ],
+        [
+          3,
+          2,
+          13,
+          4
+        ],
+        [
+          9,
+          3,
+          4
+        ],
+        [
+          8,
+          9,
+          4,
+          5
+        ],
+        [
+          6,
+          8,
+          5
+        ],
+        [
+          10,
+          8,
+          6,
+          7
+        ],
+        [
+          5,
+          12,
+          7,
+          6
+        ],
+        [
+          10,
+          7,
+          0
+        ],
+        [
+          12,
+          0,
+          7
+        ],
+        [
+          11,
+          9,
+          8,
+          10
+        ],
+        [
+          4,
+          13,
+          12,
+          5
+        ]
+      ],
       "edges": [
         [
           1,
@@ -637,6 +1255,35 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0,
           7
         ]
+      ],
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
       ],
       "edgeFaces": [
         [
@@ -921,6 +1568,315 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           }
         }
       ],
+      "imageProjection": {
+        "faceSides": [
+          "top",
+          "bottom",
+          "top",
+          "bottom",
+          "top",
+          "bottom",
+          null,
+          null,
+          null,
+          "top",
+          "bottom",
+          "top",
+          "bottom",
+          "top",
+          "bottom"
+        ],
+        "faceTextures": [
+          "plate_panel",
+          "plate_panel",
+          "plate_panel",
+          "adder_top",
+          "plate_panel",
+          "adder_top",
+          null,
+          null,
+          null,
+          "plate_panel",
+          "adder_top",
+          "plate_panel",
+          "adder_top",
+          "plate_panel",
+          "plate_panel"
+        ],
+        "faceTextureUv": [
+          [
+            [
+              307.504,
+              27.767
+            ],
+            [
+              307.504,
+              211.524
+            ],
+            [
+              62.496,
+              211.524
+            ],
+            [
+              62.496,
+              27.767
+            ]
+          ],
+          [
+            [
+              78.201,
+              223.589
+            ],
+            [
+              78.201,
+              64.89
+            ],
+            [
+              289.799,
+              64.89
+            ],
+            [
+              289.799,
+              223.589
+            ]
+          ],
+          [
+            [
+              307.504,
+              211.524
+            ],
+            [
+              307.504,
+              27.767
+            ],
+            [
+              389.175,
+              463.339
+            ]
+          ],
+          [
+            [
+              140.034,
+              455.172
+            ],
+            [
+              217.621,
+              41.379
+            ],
+            [
+              217.621,
+              215.948
+            ]
+          ],
+          [
+            [
+              307.504,
+              572.233
+            ],
+            [
+              307.504,
+              211.524
+            ],
+            [
+              389.175,
+              463.339
+            ],
+            [
+              389.175,
+              572.233
+            ]
+          ],
+          [
+            [
+              140.034,
+              558.621
+            ],
+            [
+              140.034,
+              455.172
+            ],
+            [
+              217.621,
+              215.948
+            ],
+            [
+              217.621,
+              558.621
+            ]
+          ],
+          null,
+          null,
+          null,
+          [
+            [
+              62.496,
+              211.524
+            ],
+            [
+              62.496,
+              572.233
+            ],
+            [
+              -19.175,
+              572.233
+            ],
+            [
+              -19.175,
+              463.339
+            ]
+          ],
+          [
+            [
+              140.034,
+              558.621
+            ],
+            [
+              140.034,
+              455.172
+            ],
+            [
+              217.621,
+              215.948
+            ],
+            [
+              217.621,
+              558.621
+            ]
+          ],
+          [
+            [
+              62.496,
+              211.524
+            ],
+            [
+              -19.175,
+              463.339
+            ],
+            [
+              62.496,
+              27.767
+            ]
+          ],
+          [
+            [
+              140.034,
+              455.172
+            ],
+            [
+              217.621,
+              41.379
+            ],
+            [
+              217.621,
+              215.948
+            ]
+          ],
+          [
+            [
+              307.504,
+              211.524
+            ],
+            [
+              307.504,
+              572.233
+            ],
+            [
+              62.496,
+              572.233
+            ],
+            [
+              62.496,
+              211.524
+            ]
+          ],
+          [
+            [
+              78.201,
+              535.11
+            ],
+            [
+              78.201,
+              223.589
+            ],
+            [
+              289.799,
+              223.589
+            ],
+            [
+              289.799,
+              535.11
+            ]
+          ]
+        ],
+        "faceTextureBaseW": [
+          450,
+          450,
+          450,
+          450,
+          450,
+          450,
+          null,
+          null,
+          null,
+          450,
+          450,
+          450,
+          450,
+          450,
+          450
+        ],
+        "faceTextureBaseH": [
+          600,
+          600,
+          600,
+          600,
+          600,
+          600,
+          null,
+          null,
+          null,
+          600,
+          600,
+          600,
+          600,
+          600,
+          600
+        ],
+        "faceColors": [
+          "#8a867b",
+          "#8a867b",
+          "#8a867b",
+          "#535961",
+          "#8a867b",
+          "#535961",
+          "#4f575b",
+          "#606466",
+          "#4c5459",
+          "#8a867b",
+          "#535961",
+          "#8a867b",
+          "#535961",
+          "#8a867b",
+          "#8a867b"
+        ],
+        "faceRenderFlags": [
+          75,
+          75,
+          75,
+          75,
+          75,
+          75,
+          8,
+          8,
+          8,
+          75,
+          75,
+          75,
+          75,
+          75,
+          75
+        ]
+      },
       "gameMeta": {
         "class": "fighter",
         "npcRole": "private",
@@ -931,7 +1887,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "missionLore": "",
         "imageDecalMirrorX": {
           "top": true,
-          "bottom": true,
+          "bottom": false,
           "back": false
         },
         "valueCr": 250000,
@@ -953,72 +1909,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "escapePod": true,
           "hiddenUntilDiscovered": false
         }
-      },
-      "imageProjection": {
-        "faceColors": [
-          "#838c97",
-          "#9fabb8",
-          "#77818f",
-          "#616a76",
-          "#76808d",
-          "#69747e",
-          "#4f575b",
-          "#606466",
-          "#4c5459",
-          "#77808e",
-          "#69747f",
-          "#788290",
-          "#656f7b",
-          "#808b96",
-          "#85909d"
-        ],
-        "faceRenderFlags": [
-          8,
-          8,
-          8,
-          8,
-          8,
-          8,
-          8,
-          8,
-          8,
-          8,
-          8,
-          8,
-          8,
-          8,
-          8
-        ]
-      },
-      "edgeKinds": [
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge"
-      ]
+      }
     }
   },
   "anaconda": {
@@ -12953,7 +13844,61 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#495053",
         "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapMirrorX": true
+        "bitmapUv": [
+          [
+            699,
+            225.876
+          ],
+          [
+            323.141,
+            -47.5
+          ],
+          [
+            -51,
+            226.694
+          ],
+          [
+            91.861,
+            667.096
+          ],
+          [
+            557.11,
+            667.096
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            624,
+            242.701
+          ],
+          [
+            323.313,
+            24
+          ],
+          [
+            24,
+            243.355
+          ],
+          [
+            138.289,
+            595.677
+          ],
+          [
+            510.488,
+            595.677
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": 0,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 0.8,
+          "scaleY": 0.8
+        },
+        "bitmapBaseW": 648,
+        "bitmapBaseH": 620,
+        "bitmapMirrorX": true,
+        "bitmapWrap": "mirror"
       },
       {
         "id": 1001,
@@ -12968,7 +13913,61 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#495053",
         "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapMirrorX": true
+        "bitmapUv": [
+          [
+            699,
+            225.876
+          ],
+          [
+            323.141,
+            -47.5
+          ],
+          [
+            -51,
+            226.694
+          ],
+          [
+            91.861,
+            667.096
+          ],
+          [
+            557.11,
+            667.096
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            624,
+            242.701
+          ],
+          [
+            323.313,
+            24
+          ],
+          [
+            24,
+            243.355
+          ],
+          [
+            138.289,
+            595.677
+          ],
+          [
+            510.488,
+            595.677
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": 0,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 0.8,
+          "scaleY": 0.8
+        },
+        "bitmapBaseW": 648,
+        "bitmapBaseH": 620,
+        "bitmapMirrorX": true,
+        "bitmapWrap": "mirror"
       },
       {
         "id": 1002,
@@ -12983,7 +13982,61 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#495053",
         "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapMirrorX": true
+        "bitmapUv": [
+          [
+            699,
+            225.876
+          ],
+          [
+            323.141,
+            -47.5
+          ],
+          [
+            -51,
+            226.694
+          ],
+          [
+            91.861,
+            667.096
+          ],
+          [
+            557.11,
+            667.096
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            624,
+            242.701
+          ],
+          [
+            323.313,
+            24
+          ],
+          [
+            24,
+            243.355
+          ],
+          [
+            138.289,
+            595.677
+          ],
+          [
+            510.488,
+            595.677
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": 0,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 0.8,
+          "scaleY": 0.8
+        },
+        "bitmapBaseW": 648,
+        "bitmapBaseH": 620,
+        "bitmapMirrorX": true,
+        "bitmapWrap": "mirror"
       },
       {
         "id": 1003,
@@ -12998,7 +14051,61 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#495053",
         "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapMirrorX": true
+        "bitmapUv": [
+          [
+            699,
+            225.876
+          ],
+          [
+            323.141,
+            -47.5
+          ],
+          [
+            -51,
+            226.694
+          ],
+          [
+            91.861,
+            667.096
+          ],
+          [
+            557.11,
+            667.096
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            624,
+            242.701
+          ],
+          [
+            323.313,
+            24
+          ],
+          [
+            24,
+            243.355
+          ],
+          [
+            138.289,
+            595.677
+          ],
+          [
+            510.488,
+            595.677
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": 0,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 0.8,
+          "scaleY": 0.8
+        },
+        "bitmapBaseW": 648,
+        "bitmapBaseH": 620,
+        "bitmapMirrorX": true,
+        "bitmapWrap": "mirror"
       },
       {
         "id": 1004,
@@ -13013,7 +14120,61 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#495053",
         "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapMirrorX": true
+        "bitmapUv": [
+          [
+            699,
+            225.876
+          ],
+          [
+            323.141,
+            -47.5
+          ],
+          [
+            -51,
+            226.694
+          ],
+          [
+            91.861,
+            667.096
+          ],
+          [
+            557.11,
+            667.096
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            624,
+            242.701
+          ],
+          [
+            323.313,
+            24
+          ],
+          [
+            24,
+            243.355
+          ],
+          [
+            138.289,
+            595.677
+          ],
+          [
+            510.488,
+            595.677
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": 0,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 0.8,
+          "scaleY": 0.8
+        },
+        "bitmapBaseW": 648,
+        "bitmapBaseH": 620,
+        "bitmapMirrorX": true,
+        "bitmapWrap": "mirror"
       },
       {
         "id": 1005,
@@ -13028,7 +14189,61 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#495053",
         "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapMirrorX": true
+        "bitmapUv": [
+          [
+            699,
+            225.876
+          ],
+          [
+            323.141,
+            -47.5
+          ],
+          [
+            -51,
+            226.694
+          ],
+          [
+            91.861,
+            667.096
+          ],
+          [
+            557.11,
+            667.096
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            624,
+            242.701
+          ],
+          [
+            323.313,
+            24
+          ],
+          [
+            24,
+            243.355
+          ],
+          [
+            138.289,
+            595.677
+          ],
+          [
+            510.488,
+            595.677
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": 0,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 0.8,
+          "scaleY": 0.8
+        },
+        "bitmapBaseW": 648,
+        "bitmapBaseH": 620,
+        "bitmapMirrorX": true,
+        "bitmapWrap": "mirror"
       },
       {
         "id": 1006,
@@ -13043,7 +14258,61 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#495053",
         "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapMirrorX": true
+        "bitmapUv": [
+          [
+            699,
+            225.876
+          ],
+          [
+            323.141,
+            -47.5
+          ],
+          [
+            -51,
+            226.694
+          ],
+          [
+            91.861,
+            667.096
+          ],
+          [
+            557.11,
+            667.096
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            624,
+            242.701
+          ],
+          [
+            323.313,
+            24
+          ],
+          [
+            24,
+            243.355
+          ],
+          [
+            138.289,
+            595.677
+          ],
+          [
+            510.488,
+            595.677
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": 0,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 0.8,
+          "scaleY": 0.8
+        },
+        "bitmapBaseW": 648,
+        "bitmapBaseH": 620,
+        "bitmapMirrorX": true,
+        "bitmapWrap": "mirror"
       },
       {
         "id": 1007,
@@ -13058,7 +14327,61 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#495053",
         "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapMirrorX": true
+        "bitmapUv": [
+          [
+            699,
+            225.876
+          ],
+          [
+            323.141,
+            -47.5
+          ],
+          [
+            -51,
+            226.694
+          ],
+          [
+            91.861,
+            667.096
+          ],
+          [
+            557.11,
+            667.096
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            624,
+            242.701
+          ],
+          [
+            323.313,
+            24
+          ],
+          [
+            24,
+            243.355
+          ],
+          [
+            138.289,
+            595.677
+          ],
+          [
+            510.488,
+            595.677
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": 0,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 0.8,
+          "scaleY": 0.8
+        },
+        "bitmapBaseW": 648,
+        "bitmapBaseH": 620,
+        "bitmapMirrorX": true,
+        "bitmapWrap": "mirror"
       },
       {
         "id": 1008,
@@ -13073,7 +14396,61 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#495053",
         "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapMirrorX": true
+        "bitmapUv": [
+          [
+            699,
+            225.876
+          ],
+          [
+            323.141,
+            -47.5
+          ],
+          [
+            -51,
+            226.694
+          ],
+          [
+            91.861,
+            667.096
+          ],
+          [
+            557.11,
+            667.096
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            624,
+            242.701
+          ],
+          [
+            323.313,
+            24
+          ],
+          [
+            24,
+            243.355
+          ],
+          [
+            138.289,
+            595.677
+          ],
+          [
+            510.488,
+            595.677
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": 0,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 0.8,
+          "scaleY": 0.8
+        },
+        "bitmapBaseW": 648,
+        "bitmapBaseH": 620,
+        "bitmapMirrorX": true,
+        "bitmapWrap": "mirror"
       },
       {
         "id": 1009,
@@ -13088,7 +14465,61 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#495053",
         "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapMirrorX": true
+        "bitmapUv": [
+          [
+            699,
+            225.876
+          ],
+          [
+            323.141,
+            -47.5
+          ],
+          [
+            -51,
+            226.694
+          ],
+          [
+            91.861,
+            667.096
+          ],
+          [
+            557.11,
+            667.096
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            624,
+            242.701
+          ],
+          [
+            323.313,
+            24
+          ],
+          [
+            24,
+            243.355
+          ],
+          [
+            138.289,
+            595.677
+          ],
+          [
+            510.488,
+            595.677
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": 0,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 0.8,
+          "scaleY": 0.8
+        },
+        "bitmapBaseW": 648,
+        "bitmapBaseH": 620,
+        "bitmapMirrorX": true,
+        "bitmapWrap": "mirror"
       },
       {
         "id": 1010,
@@ -13103,7 +14534,61 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#495053",
         "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapMirrorX": true
+        "bitmapUv": [
+          [
+            699,
+            225.876
+          ],
+          [
+            323.141,
+            -47.5
+          ],
+          [
+            -51,
+            226.694
+          ],
+          [
+            91.861,
+            667.096
+          ],
+          [
+            557.11,
+            667.096
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            624,
+            242.701
+          ],
+          [
+            323.313,
+            24
+          ],
+          [
+            24,
+            243.355
+          ],
+          [
+            138.289,
+            595.677
+          ],
+          [
+            510.488,
+            595.677
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": 0,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 0.8,
+          "scaleY": 0.8
+        },
+        "bitmapBaseW": 648,
+        "bitmapBaseH": 620,
+        "bitmapMirrorX": true,
+        "bitmapWrap": "mirror"
       },
       {
         "id": 1011,
@@ -13118,7 +14603,61 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#495053",
         "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
-        "bitmapMirrorX": true
+        "bitmapUv": [
+          [
+            699,
+            225.876
+          ],
+          [
+            323.141,
+            -47.5
+          ],
+          [
+            -51,
+            226.694
+          ],
+          [
+            91.861,
+            667.096
+          ],
+          [
+            557.11,
+            667.096
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            624,
+            242.701
+          ],
+          [
+            323.313,
+            24
+          ],
+          [
+            24,
+            243.355
+          ],
+          [
+            138.289,
+            595.677
+          ],
+          [
+            510.488,
+            595.677
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": 0,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 0.8,
+          "scaleY": 0.8
+        },
+        "bitmapBaseW": 648,
+        "bitmapBaseH": 620,
+        "bitmapMirrorX": true,
+        "bitmapWrap": "mirror"
       }
     ],
     "edges": [
@@ -13300,6 +14839,92 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           196
         ]
       ],
+      "faces": [
+        [
+          1,
+          0,
+          4,
+          3,
+          2
+        ],
+        [
+          10,
+          5,
+          0,
+          1,
+          6
+        ],
+        [
+          2,
+          7,
+          11,
+          6,
+          1
+        ],
+        [
+          2,
+          3,
+          8,
+          12,
+          7
+        ],
+        [
+          4,
+          9,
+          13,
+          8,
+          3
+        ],
+        [
+          9,
+          4,
+          0,
+          5,
+          14
+        ],
+        [
+          14,
+          5,
+          10,
+          15,
+          19
+        ],
+        [
+          11,
+          16,
+          15,
+          10,
+          6
+        ],
+        [
+          7,
+          12,
+          17,
+          16,
+          11
+        ],
+        [
+          13,
+          18,
+          17,
+          12,
+          8
+        ],
+        [
+          9,
+          14,
+          19,
+          18,
+          13
+        ],
+        [
+          19,
+          15,
+          16,
+          17,
+          18
+        ]
+      ],
       "edges": [
         [
           0,
@@ -13437,6 +15062,42 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           20,
           22
         ]
+      ],
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
       ],
       "edgeFaces": [
         [
@@ -13679,11 +15340,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "type": "beacon",
           "index": 20,
           "color": "#ffb642",
-          "normal": [
-            0,
-            0,
-            1
-          ],
           "detailRender": {
             "kind": "beacon",
             "solid": true,
@@ -13691,17 +15347,17 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             "glow": false,
             "glass": false,
             "solidStroke": false
-          }
+          },
+          "normal": [
+            0,
+            0,
+            1
+          ]
         },
         {
           "type": "beacon",
           "index": 21,
           "color": "#ffb642",
-          "normal": [
-            0,
-            0,
-            1
-          ],
           "detailRender": {
             "kind": "beacon",
             "solid": true,
@@ -13709,17 +15365,17 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             "glow": false,
             "glass": false,
             "solidStroke": false
-          }
+          },
+          "normal": [
+            0,
+            0,
+            1
+          ]
         },
         {
           "type": "beacon",
           "index": 22,
           "color": "#ffb642",
-          "normal": [
-            0,
-            0,
-            1
-          ],
           "detailRender": {
             "kind": "beacon",
             "solid": true,
@@ -13727,17 +15383,17 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             "glow": false,
             "glass": false,
             "solidStroke": false
-          }
+          },
+          "normal": [
+            0,
+            0,
+            1
+          ]
         },
         {
           "type": "beacon",
           "index": 23,
           "color": "#ffb642",
-          "normal": [
-            0,
-            0,
-            1
-          ],
           "detailRender": {
             "kind": "beacon",
             "solid": true,
@@ -13745,7 +15401,12 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             "glow": false,
             "glass": false,
             "solidStroke": false
-          }
+          },
+          "normal": [
+            0,
+            0,
+            1
+          ]
         }
       ],
       "imageProjection": {
@@ -13777,6 +15438,314 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "station_panel",
           "station_panel"
         ],
+        "faceTextureUv": [
+          [
+            [
+              699,
+              225.876
+            ],
+            [
+              323.141,
+              -47.5
+            ],
+            [
+              -51,
+              226.694
+            ],
+            [
+              91.861,
+              667.096
+            ],
+            [
+              557.11,
+              667.096
+            ]
+          ],
+          [
+            [
+              699,
+              225.876
+            ],
+            [
+              323.141,
+              -47.5
+            ],
+            [
+              -51,
+              226.694
+            ],
+            [
+              91.861,
+              667.096
+            ],
+            [
+              557.11,
+              667.096
+            ]
+          ],
+          [
+            [
+              699,
+              225.876
+            ],
+            [
+              323.141,
+              -47.5
+            ],
+            [
+              -51,
+              226.694
+            ],
+            [
+              91.861,
+              667.096
+            ],
+            [
+              557.11,
+              667.096
+            ]
+          ],
+          [
+            [
+              699,
+              225.876
+            ],
+            [
+              323.141,
+              -47.5
+            ],
+            [
+              -51,
+              226.694
+            ],
+            [
+              91.861,
+              667.096
+            ],
+            [
+              557.11,
+              667.096
+            ]
+          ],
+          [
+            [
+              699,
+              225.876
+            ],
+            [
+              323.141,
+              -47.5
+            ],
+            [
+              -51,
+              226.694
+            ],
+            [
+              91.861,
+              667.096
+            ],
+            [
+              557.11,
+              667.096
+            ]
+          ],
+          [
+            [
+              699,
+              225.876
+            ],
+            [
+              323.141,
+              -47.5
+            ],
+            [
+              -51,
+              226.694
+            ],
+            [
+              91.861,
+              667.096
+            ],
+            [
+              557.11,
+              667.096
+            ]
+          ],
+          [
+            [
+              699,
+              225.876
+            ],
+            [
+              323.141,
+              -47.5
+            ],
+            [
+              -51,
+              226.694
+            ],
+            [
+              91.861,
+              667.096
+            ],
+            [
+              557.11,
+              667.096
+            ]
+          ],
+          [
+            [
+              699,
+              225.876
+            ],
+            [
+              323.141,
+              -47.5
+            ],
+            [
+              -51,
+              226.694
+            ],
+            [
+              91.861,
+              667.096
+            ],
+            [
+              557.11,
+              667.096
+            ]
+          ],
+          [
+            [
+              699,
+              225.876
+            ],
+            [
+              323.141,
+              -47.5
+            ],
+            [
+              -51,
+              226.694
+            ],
+            [
+              91.861,
+              667.096
+            ],
+            [
+              557.11,
+              667.096
+            ]
+          ],
+          [
+            [
+              699,
+              225.876
+            ],
+            [
+              323.141,
+              -47.5
+            ],
+            [
+              -51,
+              226.694
+            ],
+            [
+              91.861,
+              667.096
+            ],
+            [
+              557.11,
+              667.096
+            ]
+          ],
+          [
+            [
+              699,
+              225.876
+            ],
+            [
+              323.141,
+              -47.5
+            ],
+            [
+              -51,
+              226.694
+            ],
+            [
+              91.861,
+              667.096
+            ],
+            [
+              557.11,
+              667.096
+            ]
+          ],
+          [
+            [
+              699,
+              225.876
+            ],
+            [
+              323.141,
+              -47.5
+            ],
+            [
+              -51,
+              226.694
+            ],
+            [
+              91.861,
+              667.096
+            ],
+            [
+              557.11,
+              667.096
+            ]
+          ]
+        ],
+        "faceTextureBaseW": [
+          648,
+          648,
+          648,
+          648,
+          648,
+          648,
+          648,
+          648,
+          648,
+          648,
+          648,
+          648
+        ],
+        "faceTextureBaseH": [
+          620,
+          620,
+          620,
+          620,
+          620,
+          620,
+          620,
+          620,
+          620,
+          620,
+          620,
+          620
+        ],
+        "faceTextureWrap": [
+          "mirror",
+          "mirror",
+          "mirror",
+          "mirror",
+          "mirror",
+          "mirror",
+          "mirror",
+          "mirror",
+          "mirror",
+          "mirror",
+          "mirror",
+          "mirror"
+        ],
         "faceColors": [
           "#495053",
           "#495053",
@@ -13806,18 +15775,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           true
         ],
         "faceRenderFlags": [
-          89,
-          89,
-          89,
-          89,
-          89,
-          89,
-          89,
-          89,
-          89,
-          89,
-          89,
-          89
+          91,
+          91,
+          91,
+          91,
+          91,
+          91,
+          91,
+          91,
+          91,
+          91,
+          91,
+          91
         ]
       },
       "gameMeta": {
@@ -13847,43 +15816,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "escapePod": true,
           "hiddenUntilDiscovered": false
         }
-      },
-      "edgeKinds": [
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge"
-      ]
+      }
     }
   },
   "escapePod": {
@@ -18122,7 +20055,54 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2
         ],
         "mirrored": false,
-        "faceColor": "#2e2c2d"
+        "faceColor": "#484f51",
+        "bitmapFaceKey": "station_panel",
+        "bitmapUv": [
+          [
+            481.895,
+            22.026
+          ],
+          [
+            166.105,
+            22.026
+          ],
+          [
+            8.211,
+            100.974
+          ],
+          [
+            639.789,
+            100.974
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            474,
+            24
+          ],
+          [
+            174,
+            24
+          ],
+          [
+            24,
+            99
+          ],
+          [
+            624,
+            99
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": 0,
+          "y": 0,
+          "rotation": 0,
+          "scaleX": 0.95,
+          "scaleY": 0.95
+        },
+        "bitmapBaseW": 648,
+        "bitmapBaseH": 123,
+        "bitmapWrap": "mirror"
       }
     ],
     "edges": [],
@@ -18646,19 +20626,71 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         }
       ],
       "imageProjection": {
+        "faceTextures": [
+          null,
+          null,
+          null,
+          null,
+          "station_panel"
+        ],
+        "faceTextureUv": [
+          null,
+          null,
+          null,
+          null,
+          [
+            [
+              481.895,
+              22.026
+            ],
+            [
+              166.105,
+              22.026
+            ],
+            [
+              8.211,
+              100.974
+            ],
+            [
+              639.789,
+              100.974
+            ]
+          ]
+        ],
+        "faceTextureBaseW": [
+          null,
+          null,
+          null,
+          null,
+          648
+        ],
+        "faceTextureBaseH": [
+          null,
+          null,
+          null,
+          null,
+          123
+        ],
+        "faceTextureWrap": [
+          null,
+          null,
+          null,
+          null,
+          "mirror"
+        ],
         "faceColors": [
           "#616469",
           "#6e7177",
           "#717277",
           "#717277",
-          "#2e2c2d"
+          "#484f51"
         ],
         "faceRenderFlags": [
           8,
           8,
           8,
           8,
-          8
+          11
         ]
       },
       "gameMeta": {

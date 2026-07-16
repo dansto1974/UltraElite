@@ -288,7 +288,54 @@
         2
       ],
       "mirrored": false,
-      "faceColor": "#2e2c2d"
+      "faceColor": "#484f51",
+      "bitmapFaceKey": "station_panel",
+      "bitmapUv": [
+        [
+          481.895,
+          22.026
+        ],
+        [
+          166.105,
+          22.026
+        ],
+        [
+          8.211,
+          100.974
+        ],
+        [
+          639.789,
+          100.974
+        ]
+      ],
+      "bitmapUvTemplate": [
+        [
+          474,
+          24
+        ],
+        [
+          174,
+          24
+        ],
+        [
+          24,
+          99
+        ],
+        [
+          624,
+          99
+        ]
+      ],
+      "bitmapUvTransform": {
+        "x": 0,
+        "y": 0,
+        "rotation": 0,
+        "scaleX": 0.95,
+        "scaleY": 0.95
+      },
+      "bitmapBaseW": 648,
+      "bitmapBaseH": 123,
+      "bitmapWrap": "mirror"
     }
   ],
   "edges": [],
@@ -812,19 +859,71 @@
       }
     ],
     "imageProjection": {
+      "faceTextures": [
+        null,
+        null,
+        null,
+        null,
+        "station_panel"
+      ],
+      "faceTextureUv": [
+        null,
+        null,
+        null,
+        null,
+        [
+          [
+            481.895,
+            22.026
+          ],
+          [
+            166.105,
+            22.026
+          ],
+          [
+            8.211,
+            100.974
+          ],
+          [
+            639.789,
+            100.974
+          ]
+        ]
+      ],
+      "faceTextureBaseW": [
+        null,
+        null,
+        null,
+        null,
+        648
+      ],
+      "faceTextureBaseH": [
+        null,
+        null,
+        null,
+        null,
+        123
+      ],
+      "faceTextureWrap": [
+        null,
+        null,
+        null,
+        null,
+        "mirror"
+      ],
       "faceColors": [
         "#616469",
         "#6e7177",
         "#717277",
         "#717277",
-        "#2e2c2d"
+        "#484f51"
       ],
       "faceRenderFlags": [
         8,
         8,
         8,
         8,
-        8
+        11
       ]
     },
     "gameMeta": {

@@ -396,10 +396,12 @@
           </div>
           <div class="view-actions">
             <div class="preview-mode-toolbar" aria-label="Selection tools">
-              <button data-mode="vertex" class="mode-btn active" type="button" title="Vertex select">V</button>
-              <button data-mode="face" class="mode-btn" type="button" title="Face select">F</button>
-              <button data-mode="edge" class="mode-btn" type="button" title="Edge or stick select">E</button>
-              <button data-mode="detail" class="mode-btn" type="button" title="Detail select">D</button>
+              <button data-mode="vertex" class="mode-btn active" type="button" title="Vertex selection filter. Click for only vertices; Shift-click to toggle.">V</button>
+              <button data-mode="face" class="mode-btn" type="button" title="Face selection filter. Click for only faces; Shift-click to toggle.">F</button>
+              <button data-mode="edge" class="mode-btn" type="button" title="Edge or stick selection filter. Click for only edges; Shift-click to toggle.">E</button>
+              <button data-mode="detail" class="mode-btn" type="button" title="Detail selection filter. Click for only details; Shift-click to toggle.">D</button>
+              <button data-mode="uv" class="mode-btn" type="button" title="UV selection filter. Click for only UV-bearing faces; Shift-click to toggle.">UV</button>
+              <button data-mode="group" class="mode-btn" type="button" title="Group selection filter. Click for face texture groups; Shift-click to toggle.">G</button>
               <button id="orientUvToViewBtn" class="selection-action-btn" type="button" title="Orient selected face to view">Face To View</button>
               <button id="clearSelectionBtn" type="button" title="Clear selection">×</button>
             </div>
@@ -424,6 +426,8 @@
             </div>
             <button id="resetViewBtn">Reset View</button>
             <button id="fitViewBtn">Fit</button>
+            <button id="openObjectBrowserBtn" type="button">Objects</button>
+            <button id="openBenchmarkBrowserBtn" type="button">Benchmarks</button>
             <button id="toggleBlueprintBtn" class="blueprint-toggle active" type="button" aria-pressed="true">Blueprints On</button>
             <button id="syncGamePreviewBtn">Refresh Renderer</button>
             <button id="benchmarkRendererBtn">Benchmark</button>
@@ -510,21 +514,30 @@
         <header class="asset-library-head">
           <div>
             <p class="eyebrow">Ship Builder</p>
-            <h2>Choose A Starting Object</h2>
+            <h2 id="modelBrowserTitle">Object Browser</h2>
             <div id="modelBrowserReadout" class="readout compact-readout">Loading model library...</div>
           </div>
           <div class="asset-library-actions">
-            <label class="inline-number-control">Sides <input id="modelBrowserProfileSides" type="number" min="3" max="16" step="1" value="4"></label>
-            <label class="inline-number-control">Rotation <input id="modelBrowserProfileRotation" type="number" min="-180" max="180" step="1" value="45"></label>
-            <label class="inline-number-control"><input id="modelBrowserProfileCone" type="checkbox"> Cone</label>
-            <button id="modelBrowserNewProfileBtn" class="primary" type="button">New Profile</button>
+            <div class="model-browser-view-switch" aria-label="Browser view">
+              <button id="modelBrowserObjectsViewBtn" class="active" type="button">Objects</button>
+              <button id="modelBrowserBenchmarkViewBtn" type="button">Benchmark</button>
+            </div>
+            <div id="modelBrowserObjectActions" class="model-browser-action-group">
+              <label class="inline-number-control">Sides <input id="modelBrowserProfileSides" type="number" min="3" max="16" step="1" value="4"></label>
+              <label class="inline-number-control">Rotation <input id="modelBrowserProfileRotation" type="number" min="-180" max="180" step="1" value="45"></label>
+              <label class="inline-number-control"><input id="modelBrowserProfileCone" type="checkbox"> Cone</label>
+              <button id="modelBrowserNewProfileBtn" class="primary" type="button">New Profile</button>
+            </div>
+            <div id="modelBrowserBenchmarkActions" class="model-browser-action-group is-hidden">
+              <button id="modelBrowserBenchmarkBtn" type="button">Benchmark Library</button>
+            </div>
             <button id="closeModelBrowserBtn" type="button" aria-label="Close model browser">Close</button>
           </div>
         </header>
 
         <div class="asset-library-layout model-browser-layout">
           <section class="asset-library-section model-browser-section">
-            <h2>Model Library</h2>
+            <h2 id="modelBrowserSectionTitle">Model Library</h2>
             <div id="modelBrowserGrid" class="model-browser-grid" aria-label="Model library browser"></div>
           </section>
         </div>
@@ -544,8 +557,8 @@
           </div>
         </header>
 
-        <section class="uv-transform-tool" aria-label="Per-face UV transform">
-          <h3>UV Template Transform</h3>
+        <section class="uv-transform-tool" aria-label="UV projection transform">
+          <h3>UV / Projection Transform</h3>
           <div class="uv-transform-grid">
             <label>X <input id="uvTransformX" type="number" step="1" value="0"><input id="uvTransformXRange" type="range" min="-512" max="512" step="1" value="0"></label>
             <label>Y <input id="uvTransformY" type="number" step="1" value="0"><input id="uvTransformYRange" type="range" min="-512" max="512" step="1" value="0"></label>
@@ -559,6 +572,7 @@
             <button id="copyFacePropertiesBtn" type="button">Copy Props</button>
             <button id="pasteFacePropertiesBtn" type="button">Paste Props</button>
             <button id="resetUvTransformBtn" type="button">Reset Transform</button>
+            <button id="removeFaceGroupUvBtn" type="button">Remove Group UV</button>
           </div>
         </section>
       </div>

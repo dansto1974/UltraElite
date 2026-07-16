@@ -2,6 +2,9 @@
 
 const TAU = Math.PI * 2;
 const EPS = 0.0001;
+const UV_TILE_WARN_COUNT = 64;
+const UV_TILE_DANGER_COUNT = 160;
+const UV_TILE_RUNTIME_LIMIT = 441;
 const STANDARD_VIEW = Object.freeze({ rx: -0.35, ry: 0.72 });
 const PROJECTION_VIEW_PRESETS = Object.freeze({
   front: { rx: 0, ry: Math.PI, label: "FRONT" },
@@ -101,6 +104,7 @@ const els = {
   copyFacePropertiesBtn: document.getElementById("copyFacePropertiesBtn"),
   pasteFacePropertiesBtn: document.getElementById("pasteFacePropertiesBtn"),
   resetUvTransformBtn: document.getElementById("resetUvTransformBtn"),
+  removeFaceGroupUvBtn: document.getElementById("removeFaceGroupUvBtn"),
   orientUvToViewBtn: document.getElementById("orientUvToViewBtn"),
   resetUvAngleBtn: document.getElementById("resetUvAngleBtn"),
   faceColor: document.getElementById("faceColor"),
@@ -154,17 +158,26 @@ const els = {
   uvPropertiesModal: document.getElementById("uvPropertiesModal"),
   uvPropertiesReadout: document.getElementById("uvPropertiesReadout"),
   closeUvPropertiesBtn: document.getElementById("closeUvPropertiesBtn"),
+  openObjectBrowserBtn: document.getElementById("openObjectBrowserBtn"),
+  openBenchmarkBrowserBtn: document.getElementById("openBenchmarkBrowserBtn"),
   browseModelsBtn: document.getElementById("browseModelsBtn"),
   profileSideCount: document.getElementById("profileSideCount"),
   profileRotationDeg: document.getElementById("profileRotationDeg"),
   profileConeMode: document.getElementById("profileConeMode"),
   modelBrowserModal: document.getElementById("modelBrowserModal"),
   modelBrowserGrid: document.getElementById("modelBrowserGrid"),
+  modelBrowserTitle: document.getElementById("modelBrowserTitle"),
+  modelBrowserSectionTitle: document.getElementById("modelBrowserSectionTitle"),
   modelBrowserReadout: document.getElementById("modelBrowserReadout"),
   modelBrowserProfileSides: document.getElementById("modelBrowserProfileSides"),
   modelBrowserProfileRotation: document.getElementById("modelBrowserProfileRotation"),
   modelBrowserProfileCone: document.getElementById("modelBrowserProfileCone"),
+  modelBrowserObjectActions: document.getElementById("modelBrowserObjectActions"),
+  modelBrowserBenchmarkActions: document.getElementById("modelBrowserBenchmarkActions"),
+  modelBrowserObjectsViewBtn: document.getElementById("modelBrowserObjectsViewBtn"),
+  modelBrowserBenchmarkViewBtn: document.getElementById("modelBrowserBenchmarkViewBtn"),
   modelBrowserNewProfileBtn: document.getElementById("modelBrowserNewProfileBtn"),
+  modelBrowserBenchmarkBtn: document.getElementById("modelBrowserBenchmarkBtn"),
   closeModelBrowserBtn: document.getElementById("closeModelBrowserBtn"),
   openAssetLibraryBtn: document.getElementById("openAssetLibraryBtn"),
   openAssetLibraryPaintBtn: document.getElementById("openAssetLibraryPaintBtn"),
@@ -195,6 +208,7 @@ const els = {
 };
 
 const BLUEPRINT_VISIBLE_STORAGE_KEY = "ultraEliteShipBuilderBlueprintVisible";
+const SELECTABLE_TYPES = ["vertex", "face", "edge", "detail", "uv", "group"];
 
 function readBlueprintVisiblePreference() {
   try {
@@ -228,7 +242,17 @@ const state = {
   gamePreviewDetailProjectionIndexByStateIndex: new Map(),
   faceDecalUiKey: "",
   sourceModelId: "",
+  savedModelSnapshot: "",
+  savedModelSnapshotId: "",
+  modelBrowserBenchResults: new Map(),
+  modelBrowserBenchmarkRunning: false,
+  modelBrowserBenchmarkLoading: false,
+  modelBrowserBenchSavedAt: "",
+  modelBrowserBenchSourceModels: {},
+  modelBrowserStaleModelIds: new Set(),
+  modelBrowserView: "objects",
   selected: null,
+  selectionFilters: { vertex: true, face: false, edge: false, detail: false, uv: false, group: false },
   selectedFaceIds: new Set(),
   facePropertyClipboard: null,
   selectedEdgeIds: new Set(),
@@ -571,7 +595,7 @@ function faceById(id) {
 }
 
 function selectedFace() {
-  return state.selected?.type === "face" ? faceById(state.selected.id) : null;
+  return ["face", "uv", "group"].includes(state.selected?.type) ? faceById(state.selected.id) : null;
 }
 
 function selectedFaceGroup() {
@@ -583,6 +607,120 @@ function selectedFacePropertyTargets() {
   if (grouped.length) return grouped;
   const face = selectedFace();
   return face ? [face] : [];
+}
+
+function uvPropertyTargets() {
+  return uniqueFaceList(selectedFacePropertyTargets());
+}
+
+function uvPropertyTargetLabel(targets = uvPropertyTargets()) {
+  if (!targets.length) return "No Face Selected";
+  return targets.length === 1 ? `Face #${targets[0].id}` : `Projected Group (${targets.length} faces)`;
+}
+
+function commonUvTransform(targets) {
+  const faces = uniqueFaceList(targets || []);
+  if (!faces.length) return { transform: cleanBitmapUvTransform(), mixed: false };
+  const first = cleanBitmapUvTransform(faces[0].bitmapUvTransform);
+  const mixed = faces.slice(1).some((face) => {
+    const transform = cleanBitmapUvTransform(face.bitmapUvTransform);
+    return transform.x !== first.x
+      || transform.y !== first.y
+      || transform.rotation !== first.rotation
+      || transform.scaleX !== first.scaleX
+      || transform.scaleY !== first.scaleY;
+  });
+  return { transform: first, mixed };
+}
+
+function faceTextureSourceSize(face) {
+  const img = currentSelectedFaceImage(face);
+  if (img?.naturalWidth && img?.naturalHeight) {
+    return { width: img.naturalWidth, height: img.naturalHeight, loaded: true };
+  }
+  const baseW = Math.max(0, Math.round(Number(face?.bitmapBaseW) || 0));
+  const baseH = Math.max(0, Math.round(Number(face?.bitmapBaseH) || 0));
+  return { width: baseW, height: baseH, loaded: false };
+}
+
+function faceUvTileStats(face) {
+  const wrap = cleanBitmapWrap(face?.bitmapWrap);
+  if (wrap === "clip") return null;
+  if (!cleanBitmapKey(face?.bitmapFaceKey)) return null;
+  const uv = cleanFaceBitmapUv(face);
+  if (!uv?.length) return null;
+  const source = faceTextureSourceSize(face);
+  if (!source.width || !source.height) {
+    return { missingSize: true, wrap, faceId: face?.id };
+  }
+  const tileW = Math.max(1, face?.bitmapMirrorX ? source.width * 2 : source.width);
+  const tileH = Math.max(1, source.height);
+  const angle = normalizeBitmapAngle(face?.bitmapAngle);
+  const points = angle
+    ? uv.map(([u, v]) => {
+      const p = rotateTemplatePoint({ x: u, y: v }, tileW, tileH, angle);
+      return [p.x, p.y];
+    })
+    : uv;
+  const minX = Math.min(...points.map(([u]) => u));
+  const maxX = Math.max(...points.map(([u]) => u));
+  const minY = Math.min(...points.map(([, v]) => v));
+  const maxY = Math.max(...points.map(([, v]) => v));
+  const spanX = Math.max(1, Math.floor(maxX / tileW) - Math.floor(minX / tileW) + 1);
+  const spanY = Math.max(1, Math.floor(maxY / tileH) - Math.floor(minY / tileH) + 1);
+  const pieces = spanX * spanY;
+  return {
+    wrap,
+    faceId: face?.id,
+    pieces,
+    spanX,
+    spanY,
+    tileW,
+    tileH,
+    loaded: source.loaded,
+    overLimit: pieces > UV_TILE_RUNTIME_LIMIT
+  };
+}
+
+function uvTileSummary(targets = uvPropertyTargets()) {
+  const stats = uniqueFaceList(targets || []).map(faceUvTileStats).filter(Boolean);
+  if (!stats.length) return null;
+  const missingSize = stats.filter((stat) => stat.missingSize).length;
+  const drawable = stats.filter((stat) => !stat.missingSize);
+  const total = drawable.reduce((sum, stat) => sum + stat.pieces, 0);
+  const max = drawable.reduce((best, stat) => Math.max(best, stat.pieces), 0);
+  const overLimit = drawable.filter((stat) => stat.overLimit).length;
+  const danger = drawable.filter((stat) => stat.pieces > UV_TILE_DANGER_COUNT && !stat.overLimit).length;
+  const warn = drawable.filter((stat) => stat.pieces > UV_TILE_WARN_COUNT && stat.pieces <= UV_TILE_DANGER_COUNT).length;
+  const pendingSize = drawable.filter((stat) => !stat.loaded).length;
+  return {
+    faces: stats.length,
+    drawableFaces: drawable.length,
+    total,
+    max,
+    overLimit,
+    danger,
+    warn,
+    missingSize,
+    pendingSize
+  };
+}
+
+function uvTileSummaryText(targets = uvPropertyTargets()) {
+  const summary = uvTileSummary(targets);
+  if (!summary) return "";
+  if (!summary.drawableFaces) return `WRAP TILES: image size missing on ${summary.missingSize} face${summary.missingSize === 1 ? "" : "s"}`;
+  const faceText = summary.drawableFaces === 1 ? `${summary.max}` : `${summary.total} total, max ${summary.max}/face`;
+  const warning = summary.overLimit
+    ? ` - SKIPS ON ${summary.overLimit} FACE${summary.overLimit === 1 ? "" : "S"}`
+    : summary.danger
+      ? ` - HEAVY ON ${summary.danger} FACE${summary.danger === 1 ? "" : "S"}`
+      : summary.warn
+        ? ` - CHECK ${summary.warn} FACE${summary.warn === 1 ? "" : "S"}`
+        : "";
+  const pending = summary.pendingSize ? " (image size pending)" : "";
+  const missing = summary.missingSize ? `; missing size ${summary.missingSize}` : "";
+  return `WRAP TILES: ${faceText}${warning}${pending}${missing}`;
 }
 
 function faceUvTypeInfo(face) {
@@ -646,8 +784,9 @@ function faceUvTypeInfo(face) {
 function updateFaceUvTypeReadout() {
   if (!els.faceUvTypeReadout) return;
   const info = faceUvTypeInfo(selectedFace());
+  const tileText = uvTileSummaryText(selectedFacePropertyTargets());
   els.faceUvTypeReadout.dataset.uvType = info.kind;
-  els.faceUvTypeReadout.textContent = `${info.label}: ${info.detail}`;
+  els.faceUvTypeReadout.textContent = `${info.label}: ${info.detail}${tileText ? ` | ${tileText}` : ""}`;
 }
 
 function clearFaceGroup(statusText = "FACE GROUP CLEARED.") {
@@ -1224,7 +1363,7 @@ function addDetail(type) {
     addBeaconDetail();
     return;
   }
-  const face = state.selected?.type === "face" ? faceById(state.selected.id) : null;
+  const face = selectedFace();
   if (!face) {
     setStatus("SELECT A FACE FIRST.");
     return;
@@ -1462,6 +1601,8 @@ function resetPolygonProfile(sides = readProfileSideCount(), rotationDeg = readP
 
   els.shipId.value = `custom_${cleanSides}_${cone ? "cone" : "profile"}`;
   els.shipName.value = `${cleanSides}-Sided ${cone ? "Cone" : "Profile"}`;
+  state.sourceModelId = "";
+  clearCurrentModelSavedSnapshot();
   syncSkinAngle(0, false);
   clearSkinBitmaps();
   setStatus(`NEW ${cleanSides}-SIDED ${cone ? "CONE" : "PROFILE"} CREATED.`);
@@ -1857,7 +1998,7 @@ function drawFaceNormal(ctx, face, projectFn, selected = false) {
 
 function drawFaceNormals(ctx, projectFn) {
   if (!els.showFaceNormals?.checked) return;
-  const selectedFaceId = state.selected?.type === "face" ? state.selected.id : null;
+  const selectedFaceId = selectedFace()?.id || null;
   for (const face of state.faces) {
     if (face.id !== selectedFaceId) drawFaceNormal(ctx, face, projectFn, false);
   }
@@ -1916,7 +2057,7 @@ function drawFaceUvTypePin(ctx, face, projected, selected = false, scale = 1) {
 
 function drawFaceUvTypeOverlay(ctx, projected, { scale = 1 } = {}) {
   if (!els.showFaceUvTypes?.checked) return;
-  const selectedFaceId = state.selected?.type === "face" ? state.selected.id : null;
+  const selectedFaceId = selectedFace()?.id || null;
   for (const face of state.faces) {
     if (face.id !== selectedFaceId) drawFaceUvTypePin(ctx, face, projected, false, scale);
   }
@@ -2116,26 +2257,31 @@ function syncUvTransformControlPair(source) {
 }
 
 function updateFaceUvTransformControls() {
-  const face = selectedFace();
-  const enabled = !!face;
-  setUvTransformInputs(face?.bitmapUvTransform || {});
+  const targets = uvPropertyTargets();
+  const face = targets[0] || null;
+  const enabled = !!targets.length;
+  const common = commonUvTransform(targets);
+  setUvTransformInputs(common.transform);
   if (els.uvTransformWrap) {
     els.uvTransformWrap.value = cleanBitmapWrap(face?.bitmapWrap);
     els.uvTransformWrap.disabled = !enabled;
   }
   if (els.uvTransformScaleLink) els.uvTransformScaleLink.disabled = !enabled;
-  if (els.copyFacePropertiesBtn) els.copyFacePropertiesBtn.disabled = !enabled;
-  if (els.pasteFacePropertiesBtn) els.pasteFacePropertiesBtn.disabled = !selectedFacePropertyTargets().length || !state.facePropertyClipboard;
+  if (els.copyFacePropertiesBtn) els.copyFacePropertiesBtn.disabled = !selectedFace();
+  if (els.pasteFacePropertiesBtn) els.pasteFacePropertiesBtn.disabled = !targets.length || !state.facePropertyClipboard;
+  if (els.removeFaceGroupUvBtn) els.removeFaceGroupUvBtn.disabled = selectedGroupTargetsForRemoval().length < 2;
   for (const control of [...uvTransformControls(), els.resetUvTransformBtn]) {
     if (control) control.disabled = !enabled;
   }
   if (els.uvPropertiesReadout) {
-    if (!face) {
-      els.uvPropertiesReadout.textContent = "Select a face to edit UV transform.";
+    if (!targets.length) {
+      els.uvPropertiesReadout.textContent = "Select a face or face group to edit UV transform.";
     } else {
-      const transform = cleanBitmapUvTransform(face.bitmapUvTransform);
+      const transform = common.transform;
       const uvInfo = faceUvTypeInfo(face);
-      els.uvPropertiesReadout.textContent = `Face #${face.id} | ${uvInfo.label} | ${cleanBitmapWrap(face.bitmapWrap)} | X ${round(transform.x, 2)} Y ${round(transform.y, 2)} R ${round(transform.rotation, 2)} SX ${round(transform.scaleX, 3)} SY ${round(transform.scaleY, 3)}`;
+      const mixed = common.mixed ? " | mixed" : "";
+      const tileText = uvTileSummaryText(targets);
+      els.uvPropertiesReadout.textContent = `${uvPropertyTargetLabel(targets)} | ${uvInfo.label} | ${cleanBitmapWrap(face.bitmapWrap)}${mixed}${tileText ? ` | ${tileText}` : ""} | X ${round(transform.x, 2)} Y ${round(transform.y, 2)} R ${round(transform.rotation, 2)} SX ${round(transform.scaleX, 3)} SY ${round(transform.scaleY, 3)}`;
     }
   }
 }
@@ -2151,48 +2297,58 @@ function readUvTransformInputs() {
 }
 
 function applySelectedFaceUvTransformFromControls(options = {}) {
-  const face = selectedFace();
-  if (!face) {
-    if (options.status !== false) setStatus("SELECT A FACE FIRST.");
+  const targets = uvPropertyTargets();
+  if (!targets.length) {
+    if (options.status !== false) setStatus("SELECT A FACE OR FACE GROUP FIRST.");
     updateFaceUvTransformControls();
     return;
   }
   const transform = readUvTransformInputs();
-  if (!bakeFaceUvTransform(face, transform, { updateControls: options.normalizeInputs !== false })) {
-    if (options.status !== false) setStatus("SELECTED FACE CANNOT BUILD A UV TEMPLATE.");
+  const failed = targets.filter((face) => !bakeFaceUvTransform(face, transform, { updateControls: false })).length;
+  updateFaceUvAngleControls();
+  if (failed === targets.length) {
+    if (options.status !== false) setStatus("SELECTION CANNOT BUILD A UV TEMPLATE.");
     updateFaceUvTransformControls();
     return;
   }
   if (options.normalizeInputs !== false) setUvTransformInputs(transform);
-  if (options.status !== false) setStatus(`FACE #${face.id} UV TEMPLATE TRANSFORM UPDATED.`);
+  if (options.status !== false) {
+    const failedText = failed ? ` (${failed} skipped)` : "";
+    setStatus(`${uvPropertyTargetLabel(targets).toUpperCase()} UV TEMPLATE TRANSFORM UPDATED${failedText}.`);
+  }
   renderAll();
   syncLiveRenderPreviews();
 }
 
 function resetSelectedFaceUvTransform() {
-  const face = selectedFace();
-  if (!face) return setStatus("SELECT A FACE FIRST.");
+  const targets = uvPropertyTargets();
+  if (!targets.length) return setStatus("SELECT A FACE OR FACE GROUP FIRST.");
   const transform = { x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1 };
-  if (!bakeFaceUvTransform(face, transform)) return setStatus("SELECTED FACE CANNOT BUILD A UV TEMPLATE.");
+  const failed = targets.filter((face) => !bakeFaceUvTransform(face, transform, { updateControls: false })).length;
+  updateFaceUvAngleControls();
+  if (failed === targets.length) return setStatus("SELECTION CANNOT BUILD A UV TEMPLATE.");
   setUvTransformInputs(transform);
-  setStatus(`FACE #${face.id} UV TEMPLATE TRANSFORM RESET.`);
+  const failedText = failed ? ` (${failed} skipped)` : "";
+  setStatus(`${uvPropertyTargetLabel(targets).toUpperCase()} UV TEMPLATE TRANSFORM RESET${failedText}.`);
   renderAll();
   syncLiveRenderPreviews();
 }
 
 function setSelectedFaceBitmapWrap(value) {
-  const face = selectedFace();
-  if (!face) {
-    setStatus("SELECT A FACE FIRST.");
+  const targets = uvPropertyTargets();
+  if (!targets.length) {
+    setStatus("SELECT A FACE OR FACE GROUP FIRST.");
     updateFaceUvTransformControls();
     return;
   }
   const wrap = cleanBitmapWrap(value);
-  if (wrap === "clip") delete face.bitmapWrap;
-  else face.bitmapWrap = wrap;
-  if (mirrorActionsEnabled()) syncMirroredFace(face);
+  for (const face of targets) {
+    if (wrap === "clip") delete face.bitmapWrap;
+    else face.bitmapWrap = wrap;
+    if (mirrorActionsEnabled()) syncMirroredFace(face);
+  }
   markPreviewSkinsDirty();
-  setStatus(`FACE #${face.id} UV WRAP SET TO ${wrap.toUpperCase()}.`);
+  setStatus(`${uvPropertyTargetLabel(targets).toUpperCase()} UV WRAP SET TO ${wrap.toUpperCase()}.`);
   renderAll();
   syncLiveRenderPreviews();
 }
@@ -3471,6 +3627,22 @@ function faceGroupProjectionTargets(faces) {
   return uniqueFaceList(faces);
 }
 
+function sharedFaceTextureGroup(face) {
+  const key = cleanBitmapKey(face?.bitmapFaceKey);
+  if (!key) return [];
+  return state.faces.filter((candidate) => cleanBitmapKey(candidate.bitmapFaceKey) === key);
+}
+
+function faceHasUvSelectionTarget(face) {
+  return !!face && (
+    cleanBitmapKey(face.bitmapFaceKey) ||
+    cleanFaceBitmapUv(face) ||
+    cleanFaceBitmapUvTemplate(face) ||
+    cleanFaceDecals(face.bitmapDecals).length ||
+    validBitmapFaceSide(face.bitmapSide)
+  );
+}
+
 function applyCurrentViewGroupUv(faces, img) {
   const templateSide = activeProjectionViewName();
   if (["top", "bottom", "back"].includes(templateSide)) {
@@ -3534,12 +3706,12 @@ function setSelectedFaceSkinFromImage(img, source = "imported", url = "", name =
   const key = selectedFaceSkinTargetKey(face, options);
   const forked = previousKey && previousKey !== key;
   const mirrorX = options.mirrorX == null ? importMirroredSkinEnabled() : !!options.mirrorX;
+  clearFaceUvFields(face);
   face.bitmapFaceKey = key;
   if (mirrorX) face.bitmapMirrorX = true;
   else delete face.bitmapMirrorX;
   const averageColor = averageImageColor(img);
   if (averageColor) face.faceColor = averageColor;
-  if (mirrorActionsEnabled()) syncMirroredFace(face);
   if (state.faceSkinUrls[key] && state.faceSkinUrls[key] !== url) URL.revokeObjectURL(state.faceSkinUrls[key]);
   state.faceSkinImages[key] = img;
   state.faceSkinSources[key] = source;
@@ -3547,6 +3719,7 @@ function setSelectedFaceSkinFromImage(img, source = "imported", url = "", name =
   if (options.orientToView) {
     orientFaceToView(face, false, "");
   }
+  if (mirrorActionsEnabled()) syncMirroredFace(face, { forceBitmapUv: true });
   markPreviewSkinsDirty();
   updateSkinReadout();
   updateFaceUvAngleControls();
@@ -3568,6 +3741,62 @@ function clearFaceUvFields(face) {
   delete face.bitmapAngle;
   delete face.bitmapMirrorX;
   delete face.bitmapWrap;
+}
+
+function faceHasRemovableUvFields(face) {
+  return !!face && (
+    validBitmapFaceSide(face.bitmapSide) ||
+    cleanBitmapKey(face.bitmapFaceKey) ||
+    cleanFaceBitmapUv(face) ||
+    cleanFaceBitmapUvTemplate(face) ||
+    !bitmapUvTransformIsDefault(face.bitmapUvTransform) ||
+    Number(face.bitmapBaseW) > 0 ||
+    Number(face.bitmapBaseH) > 0 ||
+    normalizeBitmapAngle(face.bitmapAngle) ||
+    !!face.bitmapMirrorX ||
+    cleanBitmapWrap(face.bitmapWrap) !== "clip"
+  );
+}
+
+function selectedGroupTargetsForRemoval() {
+  const grouped = selectedFaceGroup();
+  if (grouped.length > 1) return uniqueFaceList(grouped);
+  const face = selectedFace();
+  const shared = sharedFaceTextureGroup(face);
+  return shared.length > 1 ? uniqueFaceList(shared) : [];
+}
+
+function removeSelectedFaceGroupUv() {
+  const targets = selectedGroupTargetsForRemoval();
+  if (targets.length < 2) {
+    setStatus("SELECT A FACE GROUP FIRST.");
+    updateFaceUvTransformControls();
+    return;
+  }
+  const uvTargets = targets.filter(faceHasRemovableUvFields);
+  if (uvTargets.length) {
+    const ok = window.confirm(`Remove this face group UV?\n\nThis will remove face texture/UV fields from ${uvTargets.length} face${uvTargets.length === 1 ? "" : "s"}. Geometry, decals and bitmap assets on disk will not be deleted.`);
+    if (!ok) {
+      setStatus("FACE GROUP UV REMOVAL CANCELLED.");
+      return;
+    }
+    for (const face of uvTargets) {
+      clearFaceUvFields(face);
+      if (mirrorActionsEnabled()) syncMirroredFace(face, { forceBitmapUv: true });
+    }
+    markPreviewSkinsDirty();
+    updateSkinReadout();
+  }
+  state.selectedFaceIds.clear();
+  state.selected = null;
+  updateFaceUvAngleControls();
+  updateFaceUvTransformControls();
+  updateFaceDecalControls();
+  setStatus(uvTargets.length
+    ? `FACE GROUP UV REMOVED FROM ${uvTargets.length} FACE${uvTargets.length === 1 ? "" : "S"}.`
+    : "FACE GROUP SELECTION CLEARED; NO UV DATA FOUND.");
+  renderAll();
+  syncLiveRenderPreviews();
 }
 
 function setFaceGroupSkinFromImage(faces, img, source = "imported", url = "", name = "bitmap", options = {}) {
@@ -4242,7 +4471,7 @@ function createTemplateCanvas(side, half = mirrorHalfSkinsEnabled()) {
 }
 
 function createSelectedFaceTemplateCanvas() {
-  const face = state.selected?.type === "face" ? faceById(state.selected.id) : null;
+  const face = selectedFace();
   if (!face) {
     setStatus("SELECT A FACE FIRST.");
     return null;
@@ -4580,7 +4809,7 @@ function fillScreenPolygon(ctx, pts) {
 }
 
 function drawSelectedFaceUvGapOverlay(ctx, face, pts) {
-  if (!face || state.selected?.type !== "face" || state.selected.id !== face.id || pts.length < 3) return;
+  if (!face || selectedFace()?.id !== face.id || pts.length < 3) return;
   const faceKey = cleanBitmapKey(face.bitmapFaceKey);
   const faceImg = faceKey ? state.faceSkinImages?.[faceKey] : null;
   if (!faceImg?.complete || !faceImg.naturalWidth) return;
@@ -4899,12 +5128,12 @@ function auditEdgeLabel(edge) {
 function selectEdge(edge, options = {}) {
   if (!edge) return;
   state.mode = "edge";
-  syncModeUi("edge");
   state.selected = { type: "edge", id: edge.id };
   state.selectedEdgeIds = selectedEdgeIdSetFor(edge, options);
   const loopText = state.selectedEdgeIds.size > 1 ? ` LOOP (${state.selectedEdgeIds.size} LINES)` : "";
   const label = options.audit ? `AUDIT EDGE${loopText} ${auditEdgeLabel(edge)}` : `${edge.kind.toUpperCase()} #${edge.id}`;
   setStatus(`${label} SELECTED.`);
+  setToolTab("edit", { redraw: false });
   if (options.render !== false) renderAll();
 }
 
@@ -4992,7 +5221,7 @@ function renderMain() {
     for (const face of sortedFaces) {
       const pts = face.verts.map((id) => projected.get(id)).filter(Boolean);
       const n = faceNormal(face);
-      const selected = state.selected?.type === "face" && state.selected.id === face.id;
+      const selected = selectedFace()?.id === face.id;
       const grouped = state.selectedFaceIds.has(face.id);
       if (drawBitmapGuide) {
         drawFace(ctx, pts, builderBitmapFill(n, face), "rgba(0,0,0,0)", 0);
@@ -5080,8 +5309,8 @@ function renderMain() {
     }
   }
 
-  if (gameOverlay && state.selected?.type === "face") {
-    const face = faceById(state.selected.id);
+  if (gameOverlay && selectedFace()) {
+    const face = selectedFace();
     const pts = face?.verts.map((id) => projected.get(id)).filter(Boolean) || [];
     if (face && pts.length >= 3) {
       drawSelectedFaceUvGapOverlay(ctx, face, pts);
@@ -5099,7 +5328,7 @@ function renderMain() {
     if (detail.type === "beacon") {
       const p = pts[0] || null;
       if (!p) continue;
-      if (gameOverlay && state.mode !== "detail" && !selected) continue;
+      if (gameOverlay && !selectionFilterAllows("detail") && !selected) continue;
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
       ctx.fillStyle = selected ? "rgba(255,217,54,.95)" : `${detail.color || "#ffb642"}cc`;
@@ -5119,7 +5348,7 @@ function renderMain() {
       continue;
     }
     if (pts.length < 2) continue;
-    if (gameOverlay && state.mode !== "detail" && !selected) continue;
+    if (gameOverlay && !selectionFilterAllows("detail") && !selected) continue;
     if (previewMode === "wire" && !selected) continue;
     if (detail.type === "panel") {
       ctx.strokeStyle = selected ? "#ffd936" : "rgba(255,217,54,.8)";
@@ -5140,7 +5369,7 @@ function renderMain() {
     const p = projected.get(v.id);
     const picked = state.pick.includes(v.id);
     const selected = state.selected?.type === "vertex" && state.selected.id === v.id;
-    const showIdleVertex = !gameOverlay && state.mode === "vertex" && previewMode !== "bitmap" && previewMode !== "wireBitmap";
+    const showIdleVertex = !gameOverlay && selectionFilterAllows("vertex") && previewMode !== "bitmap" && previewMode !== "wireBitmap";
     if (!picked && !selected && !showIdleVertex) continue;
     if (picked) {
       ctx.strokeStyle = "#66e8ff";
@@ -5492,22 +5721,41 @@ function rendererBenchmarkFrames() {
 }
 
 function rendererBenchmarkStats(samples) {
-  const sorted = samples.filter(Number.isFinite).slice().sort((a, b) => a - b);
-  if (!sorted.length) return { count: 0, avg: 0, median: 0, p95: 0, max: 0 };
-  const pick = (q) => sorted[Math.min(sorted.length - 1, Math.max(0, Math.floor(q * (sorted.length - 1))))];
-  const avg = sorted.reduce((sum, value) => sum + value, 0) / sorted.length;
+  const valid = samples.filter((value) => Number.isFinite(value) && value > 0).slice().sort((a, b) => a - b);
+  if (!valid.length) return { count: 0, filteredCount: 0, outliers: 0, avg: 0, rawAvg: 0, median: 0, p95: 0, max: 0, rawMax: 0, stdDev: 0, rawStdDev: 0, jitterPct: 0, spikeTax: 0 };
+  const trim = valid.length >= 8 ? Math.max(1, Math.floor(valid.length * .05)) : 0;
+  const sorted = valid.slice(0, Math.max(1, valid.length - trim));
+  const pick = (items, q) => items[Math.min(items.length - 1, Math.max(0, Math.floor(q * (items.length - 1))))];
+  const avgFor = (items) => items.reduce((sum, value) => sum + value, 0) / items.length;
+  const stdFor = (items) => {
+    if (items.length < 2) return 0;
+    const avg = avgFor(items);
+    return Math.sqrt(items.reduce((sum, value) => sum + (value - avg) ** 2, 0) / items.length);
+  };
+  const avg = avgFor(sorted);
+  const rawAvg = avgFor(valid);
+  const stdDev = stdFor(sorted);
+  const rawStdDev = stdFor(valid);
   return {
-    count: sorted.length,
+    count: valid.length,
+    filteredCount: sorted.length,
+    outliers: valid.length - sorted.length,
     avg,
-    median: pick(.5),
-    p95: pick(.95),
-    max: sorted[sorted.length - 1]
+    rawAvg,
+    median: pick(sorted, .5),
+    p95: pick(sorted, .95),
+    max: sorted[sorted.length - 1],
+    rawMax: valid[valid.length - 1],
+    stdDev,
+    rawStdDev,
+    jitterPct: avg ? stdDev / avg * 100 : 0,
+    spikeTax: Math.max(0, rawAvg - avg)
   };
 }
 
 function rendererBenchmarkReport(stats, wallMs, frames) {
   const fps = stats.avg > 0 ? 1000 / stats.avg : 0;
-  return `BENCH ${stats.count} FRAMES: MED ${stats.median.toFixed(1)}MS  P95 ${stats.p95.toFixed(1)}MS  MAX ${stats.max.toFixed(1)}MS  AVG ${stats.avg.toFixed(1)}MS (${fps.toFixed(0)} FPS)  WALL ${(wallMs / 1000).toFixed(1)}S  WARMUP ${frames.filter((frame) => frame.warmup).length}`;
+  return `BENCH ${stats.count} FRAMES: MED ${stats.median.toFixed(1)}MS  P95 ${stats.p95.toFixed(1)}MS  SD ${stats.stdDev.toFixed(1)}MS  AVG ${stats.avg.toFixed(1)}MS (${fps.toFixed(0)} FPS)  OUTLIERS ${stats.outliers}  RAW MAX ${stats.rawMax.toFixed(1)}MS  SPIKE +${stats.spikeTax.toFixed(1)}MS  WALL ${(wallMs / 1000).toFixed(1)}S  WARMUP ${frames.filter((frame) => frame.warmup).length}`;
 }
 
 function waitForBenchmarkReady(frame, timeoutMs = 6000) {
@@ -5677,6 +5925,7 @@ function handleGamePreviewResult(data) {
 }
 
 function updateUi() {
+  syncModeUi(panelModeForSelection());
   els.vertexCount.textContent = `${state.verts.length} vertices`;
   els.faceCount.textContent = `${state.faces.length} faces`;
   const auditEdges = renderAuditEdges();
@@ -5692,8 +5941,8 @@ function updateUi() {
     const v = vertexById(state.selected.id);
     const beaconText = v && hasBeaconAtVertex(v.id) ? "  beacon" : "";
     els.selectionReadout.textContent = v ? `Vertex #${v.id}  X ${round(v.x)}  Y ${round(v.y)}  Z ${round(v.z)}${v.mirrorId ? `  mirror #${v.mirrorId}` : "  centre"}${beaconText}` : "Missing vertex";
-  } else if (state.selected.type === "face") {
-    const face = faceById(state.selected.id);
+  } else if (["face", "uv", "group"].includes(state.selected.type)) {
+    const face = selectedFace();
     const n = face ? faceNormal(face) : null;
     const autoSide = face ? autoTemplateSideForFace(face) : "";
     const bitmapSide = face ? (validBitmapFaceSide(face.bitmapSide) || `auto/${autoSide}`) : "";
@@ -5702,9 +5951,12 @@ function updateUi() {
     const faceMirror = face?.bitmapMirrorX ? "  half-mirror" : "";
     const faceColor = optionalHexColor(face?.faceColor);
     const uvInfo = faceUvTypeInfo(face);
+    const tileText = uvTileSummaryText(face ? [face] : []);
+    const selectionLabel = state.selected.type === "group" ? "Group" : state.selected.type === "uv" ? "UV" : "Face";
+    const groupText = state.selectedFaceIds.size > 1 ? `  group ${state.selectedFaceIds.size} faces` : "";
     els.selectionReadout.textContent = n
-      ? `Face #${state.selected.id}  normal X ${round(n.x, 2)}  Y ${round(n.y, 2)}  Z ${round(n.z, 2)}  uv ${uvInfo.short}  bitmap ${bitmapSide}${faceSkin ? `  face ${faceSkin}` : ""}${faceAngle ? `  angle ${faceAngle}` : ""}${faceMirror}${faceColor ? `  colour ${faceColor}` : ""}`
-      : `Face #${state.selected.id}`;
+      ? `${selectionLabel} #${state.selected.id}${groupText}  normal X ${round(n.x, 2)}  Y ${round(n.y, 2)}  Z ${round(n.z, 2)}  uv ${uvInfo.short}  bitmap ${bitmapSide}${faceSkin ? `  face ${faceSkin}` : ""}${faceAngle ? `  angle ${faceAngle}` : ""}${faceMirror}${faceColor ? `  colour ${faceColor}` : ""}${tileText ? `  ${tileText}` : ""}`
+      : `${selectionLabel} #${state.selected.id}`;
   } else if (state.selected.type === "edge") {
     const selectedEdges = selectedEdgeSetEdges();
     const edgeIds = selectedEdges.map((edge) => `#${edge.id}`).join(" ");
@@ -5743,13 +5995,13 @@ function updateDetailControls() {
 
 function updateFaceBitmapSideControl() {
   if (!els.templateFaceSide) return;
-  const face = state.selected?.type === "face" ? faceById(state.selected.id) : null;
+  const face = selectedFace();
   els.templateFaceSide.disabled = !face;
   els.templateFaceSide.value = face ? (validBitmapFaceSide(face.bitmapSide) || "auto") : "auto";
 }
 
 function setSelectedFaceBitmapSide(value) {
-  const face = state.selected?.type === "face" ? faceById(state.selected.id) : null;
+  const face = selectedFace();
   if (!face) {
     setStatus("SELECT A FACE FIRST.");
     updateFaceBitmapSideControl();
@@ -5770,9 +6022,44 @@ function clearEditorSelection(options = {}) {
   if (options.redraw !== false) renderAll();
 }
 
-function syncModeUi(mode) {
+function selectionFilterAllows(type) {
+  return !!state.selectionFilters?.[type];
+}
+
+function activeSelectionFilters() {
+  return SELECTABLE_TYPES.filter(selectionFilterAllows);
+}
+
+function orderedSelectionFilters() {
+  const active = activeSelectionFilters();
+  if (state.mode && active.includes(state.mode)) {
+    return [state.mode, ...active.filter((type) => type !== state.mode)];
+  }
+  return active;
+}
+
+function clearSelectionBlockedByFilters() {
+  if (state.selected?.type && !selectionFilterAllows(state.selected.type)) {
+    if (state.selected.type === "group") state.selectedFaceIds.clear();
+    state.selected = null;
+    state.selectedEdgeIds.clear();
+  }
+  if (!selectionFilterAllows("face") && !selectionFilterAllows("uv") && !selectionFilterAllows("group")) state.selectedFaceIds.clear();
+}
+
+function panelModeForSelection() {
+  if (state.selected?.type && SELECTABLE_TYPES.includes(state.selected.type)) return state.selected.type;
+  const active = activeSelectionFilters();
+  return active.length === 1 ? active[0] : state.mode;
+}
+
+function syncModeUi(mode = panelModeForSelection()) {
   els.toolsPanel.dataset.mode = mode;
-  document.querySelectorAll(".mode-btn").forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
+  document.querySelectorAll(".mode-btn").forEach((b) => {
+    const active = selectionFilterAllows(b.dataset.mode);
+    b.classList.toggle("active", active);
+    b.setAttribute("aria-pressed", active ? "true" : "false");
+  });
 }
 
 function nearestVertex(point, projected, maxDist = 14) {
@@ -5836,94 +6123,121 @@ function nearestDetail(point, maxLineDist = 10) {
   return bestDetail;
 }
 
+function hitFaceAtPoint(point, projected, options = {}) {
+  const faces = [...state.faces].sort((a, b) => faceSortDepthForMain(a) - faceSortDepthForMain(b));
+  return faces.find((face) => {
+    if (options.uvOnly && !faceHasUvSelectionTarget(face)) return false;
+    if (options.groupOnly && sharedFaceTextureGroup(face).length < 2) return false;
+    const previewFace = previewFaceForBuilderFace(face);
+    if (gameRendererOverlayMode() && previewFace && !previewFace.visible) return false;
+    return pointInPoly(point, face.verts.map((id) => projected.get(id)).filter(Boolean));
+  }) || null;
+}
+
+function selectFaceTarget(face, options = {}) {
+  if (!face) return false;
+  state.mode = "face";
+  state.selected = { type: "face", id: face.id };
+  if (options.multiSelect) {
+    if (state.selectedFaceIds.has(face.id)) {
+      state.selectedFaceIds.delete(face.id);
+      setStatus(`FACE #${face.id} REMOVED FROM FACE GROUP (${state.selectedFaceIds.size} SELECTED).`);
+    } else {
+      state.selectedFaceIds.add(face.id);
+      setStatus(`FACE #${face.id} ADDED TO FACE GROUP (${state.selectedFaceIds.size} SELECTED).`);
+    }
+  } else {
+    state.selectedFaceIds.clear();
+    setStatus(`FACE #${face.id} SELECTED. SHIFT-CLICK TO BUILD A FACE GROUP.`);
+  }
+  setToolTab("edit", { redraw: false });
+  renderAll();
+  return true;
+}
+
+function selectUvTarget(face) {
+  if (!face || !faceHasUvSelectionTarget(face)) return false;
+  const group = sharedFaceTextureGroup(face);
+  state.mode = group.length > 1 ? "group" : "uv";
+  if (group.length > 1) {
+    state.selected = { type: "group", id: face.id };
+    state.selectedFaceIds = new Set(group.map((item) => item.id));
+    setStatus(`UV GROUP ${cleanBitmapKey(face.bitmapFaceKey)} SELECTED (${group.length} FACES).`);
+  } else {
+    state.selected = { type: "uv", id: face.id };
+    state.selectedFaceIds.clear();
+    const info = faceUvTypeInfo(face);
+    setStatus(`UV TARGET SELECTED: FACE #${face.id} ${info.label.toUpperCase()}.`);
+  }
+  setToolTab("paint", { redraw: false });
+  setPaintTab("face", { redraw: false });
+  openUvProperties();
+  renderAll();
+  return true;
+}
+
+function selectGroupTarget(face) {
+  const group = sharedFaceTextureGroup(face);
+  if (group.length < 2) return false;
+  state.mode = "group";
+  state.selected = { type: "group", id: face.id };
+  state.selectedFaceIds = new Set(group.map((item) => item.id));
+  setToolTab("paint", { redraw: false });
+  setPaintTab("face", { redraw: false });
+  openUvProperties();
+  setStatus(`FACE TEXTURE GROUP ${cleanBitmapKey(face.bitmapFaceKey)} SELECTED (${group.length} FACES).`);
+  renderAll();
+  return true;
+}
+
 function selectInMain(point, options = {}) {
   const projected = projectedMapForMain(els.mainView);
-  if (state.mode === "vertex") {
-    const id = nearestVertex(point, projected);
-    if (id) selectVertex(id);
-    return;
-  }
-  if (state.mode === "edge") {
-    const auditHit = els.showAuditEdges?.checked
-      ? nearestEdge(point, projected, renderAuditEdges(), 18)
-      : null;
-    if (auditHit) {
-      selectEdge(auditHit, { audit: true });
-      return;
-    }
-    const id = nearestVertex(point, projected);
-    if (id) {
-      selectVertex(id);
-      return;
-    }
-  }
-  if (state.mode === "face") {
-    const faces = [...state.faces].sort((a, b) => faceSortDepthForMain(a) - faceSortDepthForMain(b));
-    const hit = faces.find((face) => {
-      const previewFace = previewFaceForBuilderFace(face);
-      if (gameRendererOverlayMode() && previewFace && !previewFace.visible) return false;
-      return pointInPoly(point, face.verts.map((id) => projected.get(id)).filter(Boolean));
-    });
-    if (hit) {
-      state.selected = { type: "face", id: hit.id };
-      if (options.multiSelect) {
-        if (state.selectedFaceIds.has(hit.id)) {
-          state.selectedFaceIds.delete(hit.id);
-          setStatus(`FACE #${hit.id} REMOVED FROM FACE GROUP (${state.selectedFaceIds.size} SELECTED).`);
-        } else {
-          state.selectedFaceIds.add(hit.id);
-          setStatus(`FACE #${hit.id} ADDED TO FACE GROUP (${state.selectedFaceIds.size} SELECTED).`);
-        }
-      } else {
-        state.selectedFaceIds.clear();
-        setStatus(`FACE #${hit.id} SELECTED. SHIFT-CLICK TO BUILD A FACE GROUP.`);
+  for (const type of orderedSelectionFilters()) {
+    if (type === "vertex") {
+      const id = nearestVertex(point, projected);
+      if (id) {
+        selectVertex(id);
+        return;
       }
-      renderAll();
+    } else if (type === "edge") {
+      const auditHit = els.showAuditEdges?.checked
+        ? nearestEdge(point, projected, renderAuditEdges(), 18)
+        : null;
+      if (auditHit) {
+        selectEdge(auditHit, { audit: true });
+        return;
+      }
+      const best = nearestEdge(point, projected);
+      if (best) {
+        selectEdge(best);
+        return;
+      }
+    } else if (type === "detail") {
+      const bestDetail = nearestDetail(point);
+      if (bestDetail) {
+        state.mode = "detail";
+        state.selected = { type: "detail", id: bestDetail.id };
+        setToolTab("edit", { redraw: false });
+        setStatus(`${bestDetail.type === "panel" ? "PANEL LINE" : "DETAIL"} #${bestDetail.id} SELECTED.`);
+        renderAll();
+        return;
+      }
+    } else if (type === "face") {
+      if (selectFaceTarget(hitFaceAtPoint(point, projected), { multiSelect: options.multiSelect })) return;
+    } else if (type === "uv") {
+      if (selectUvTarget(hitFaceAtPoint(point, projected, { uvOnly: true }))) return;
+    } else if (type === "group") {
+      if (selectGroupTarget(hitFaceAtPoint(point, projected, { groupOnly: true }))) return;
     }
-    return;
-  }
-  if (state.mode === "edge") {
-    const best = nearestEdge(point, projected);
-    if (best) {
-      selectEdge(best);
-      return;
-    }
-    const detailHit = nearestDetail(point);
-    if (detailHit) {
-      state.mode = "detail";
-      syncModeUi("detail");
-      state.selected = { type: "detail", id: detailHit.id };
-      setStatus(`${detailHit.type === "panel" ? "PANEL LINE" : "DETAIL"} #${detailHit.id} SELECTED.`);
-      renderAll();
-    }
-    return;
-  }
-  const bestDetail = nearestDetail(point);
-  if (bestDetail) {
-    state.selected = { type: "detail", id: bestDetail.id };
-    setStatus(`${bestDetail.type === "panel" ? "PANEL LINE" : "DETAIL"} #${bestDetail.id} SELECTED.`);
-    renderAll();
-    return;
-  }
-  if (state.mode === "detail") {
-    const faces = [...state.faces].sort((a, b) => faceSortDepthForMain(a) - faceSortDepthForMain(b));
-    const hit = faces.find((face) => {
-      const previewFace = previewFaceForBuilderFace(face);
-      if (gameRendererOverlayMode() && previewFace && !previewFace.visible) return false;
-      return pointInPoly(point, face.verts.map((id) => projected.get(id)).filter(Boolean));
-    });
-    if (hit) {
-      state.selected = { type: "face", id: hit.id };
-      setStatus(`FACE #${hit.id} SELECTED FOR DETAILS.`);
-    }
-    renderAll();
   }
 }
 
 function selectVertex(id) {
   const v = vertexById(id);
   if (!v) return;
+  state.mode = "vertex";
   state.selected = { type: "vertex", id };
+  setToolTab("edit", { redraw: false });
   const existing = state.pick.indexOf(id);
   if (existing >= 0) {
     state.pick.splice(existing, 1);
@@ -5988,6 +6302,13 @@ function setProjectionView(name, options = {}) {
 function deleteSelected() {
   if (!state.selected) return;
   const { type, id } = state.selected;
+  if (type === "uv" || type === "group") {
+    state.selected = null;
+    state.selectedFaceIds.clear();
+    setStatus(`${type === "group" ? "GROUP" : "UV"} SELECTION CLEARED.`);
+    renderAll();
+    return;
+  }
   if (type === "vertex") {
     const v = vertexById(id);
     const ids = new Set([id, mirrorActionsEnabled() ? v?.mirrorId : null].filter(Boolean));
@@ -6380,6 +6701,39 @@ function builderExport() {
   };
 }
 
+function currentModelSnapshot() {
+  try {
+    return JSON.stringify(builderExport());
+  } catch {
+    return "";
+  }
+}
+
+function markCurrentModelSavedSnapshot(modelId = "") {
+  const cleanId = cleanBitmapKey(modelId || els.shipId?.value || "");
+  state.savedModelSnapshot = currentModelSnapshot();
+  state.savedModelSnapshotId = cleanId;
+}
+
+function clearCurrentModelSavedSnapshot() {
+  state.savedModelSnapshot = "";
+  state.savedModelSnapshotId = "";
+}
+
+function currentModelUnsavedBenchmarkWarning() {
+  const currentId = cleanBitmapKey(els.shipId?.value || "");
+  if (!state.savedModelSnapshot) {
+    return "Current builder model has not been saved or loaded from the generated library in this session.";
+  }
+  if (state.savedModelSnapshotId && currentId && state.savedModelSnapshotId !== currentId) {
+    return `Current builder id is ${currentId}, but the saved snapshot is ${state.savedModelSnapshotId}.`;
+  }
+  if (currentModelSnapshot() !== state.savedModelSnapshot) {
+    return "Current builder model has unsaved edits.";
+  }
+  return "";
+}
+
 function jsObject(value, indent = 2) {
   return JSON.stringify(value, null, indent)
     .replace(/"([a-zA-Z_$][\w$]*)":/g, "$1:")
@@ -6433,6 +6787,7 @@ function importBuilderJson() {
     });
     inferMirrorVertexIds();
     state.sourceModelId = "";
+    clearCurrentModelSavedSnapshot();
     els.shipId.value = data.id || els.shipId.value;
     els.shipName.value = data.name || els.shipName.value;
     if (data.gameMeta) {
@@ -6535,12 +6890,163 @@ function modelAuditWarnings(model) {
 function modelBrowserEntries() {
   return Object.entries(gameLibrary())
     .filter(([, model]) => model?.verts?.length)
-    .map(([id, model]) => ({ id, model, warnings: modelAuditWarnings(model) }))
-    .sort((a, b) => {
-      const problemSort = b.warnings.length - a.warnings.length;
-      if (problemSort) return problemSort;
-      return (a.model.name || a.id).localeCompare(b.model.name || b.id);
+    .map(([id, model]) => ({ id, model, warnings: modelAuditWarnings(model) }));
+}
+
+function modelBrowserRenderIntel(model) {
+  const faces = Array.isArray(model?.faces) ? model.faces : [];
+  const details = Array.isArray(model?.details) ? model.details : [];
+  let texturedFaces = 0;
+  let wrappedFaces = 0;
+  let faceDecals = 0;
+  for (const face of faces) {
+    if (cleanBitmapKey(face?.bitmapFaceKey) || cleanFaceBitmapUv(face)) texturedFaces++;
+    if (cleanBitmapWrap(face?.bitmapWrap) !== "clip") wrappedFaces++;
+    faceDecals += cleanFaceDecals(face?.bitmapDecals).length;
+  }
+  return {
+    verts: model?.verts?.length || 0,
+    faces: faces.length,
+    edges: model?.edges?.length || 0,
+    details: details.length,
+    texturedFaces,
+    wrappedFaces,
+    faceDecals
+  };
+}
+
+function appendModelBrowserMetric(parent, text, title, className = "") {
+  const item = document.createElement("span");
+  item.className = `model-browser-metric${className ? ` ${className}` : ""}`;
+  item.textContent = text;
+  item.title = title;
+  parent.appendChild(item);
+  return item;
+}
+
+function modelBrowserBenchmarkResult(id) {
+  return state.modelBrowserBenchResults instanceof Map ? state.modelBrowserBenchResults.get(id) : null;
+}
+
+function modelBrowserBenchmarkStale(id) {
+  return state.modelBrowserStaleModelIds instanceof Set && state.modelBrowserStaleModelIds.has(id);
+}
+
+function formatBenchMetric(value, places = 1) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number.toFixed(places) : "--";
+}
+
+function modelBrowserBenchmarkIssues(bench) {
+  if (!bench) return [];
+  const issues = [];
+  if (Number(bench.avgFps) > 0 && Number(bench.avgFps) < 120) {
+    issues.push(`Filtered FPS ${formatBenchMetric(bench.avgFps, 0)} is below 120.`);
+  }
+  if (Number(bench.p95Ms) >= 8) {
+    issues.push(`P95 frame time ${formatBenchMetric(bench.p95Ms, 1)}ms is high.`);
+  }
+  if (Number(bench.spikeTaxMs) >= 5) {
+    issues.push(`Spike tax +${formatBenchMetric(bench.spikeTaxMs, 1)}ms suggests outlier/cache turbulence.`);
+  }
+  if (Number(bench.rawWorstMs) >= 120) {
+    issues.push(`Raw worst frame ${formatBenchMetric(bench.rawWorstMs, 1)}ms needs attention.`);
+  }
+  return issues;
+}
+
+function modelBrowserEntryLabel(entry) {
+  return entry?.model?.name || entry?.id || "";
+}
+
+function benchmarkSdSortValue(entry) {
+  const bench = modelBrowserBenchmarkResult(entry.id);
+  return Number(bench?.stdDevMs) || 0;
+}
+
+function modelBrowserSortedEntries(entries) {
+  const alphaSort = (a, b) => modelBrowserEntryLabel(a).localeCompare(modelBrowserEntryLabel(b));
+  if (state.modelBrowserView === "benchmark") {
+    return entries.slice().sort((a, b) => {
+      const score = benchmarkSdSortValue(b) - benchmarkSdSortValue(a);
+      if (score) return score;
+      return alphaSort(a, b);
     });
+  }
+  return entries.slice().sort(alphaSort);
+}
+
+function setModelBrowserView(view) {
+  state.modelBrowserView = view === "benchmark" ? "benchmark" : "objects";
+  const benchmarkView = state.modelBrowserView === "benchmark";
+  els.modelBrowserObjectsViewBtn?.classList.toggle("active", state.modelBrowserView === "objects");
+  els.modelBrowserBenchmarkViewBtn?.classList.toggle("active", benchmarkView);
+  els.modelBrowserObjectsViewBtn?.setAttribute("aria-pressed", benchmarkView ? "false" : "true");
+  els.modelBrowserBenchmarkViewBtn?.setAttribute("aria-pressed", benchmarkView ? "true" : "false");
+  if (els.modelBrowserTitle) els.modelBrowserTitle.textContent = benchmarkView ? "Benchmark Browser" : "Object Browser";
+  if (els.modelBrowserSectionTitle) els.modelBrowserSectionTitle.textContent = benchmarkView ? "Render Benchmark Results" : "Model Library";
+  els.modelBrowserObjectActions?.classList.toggle("is-hidden", benchmarkView);
+  els.modelBrowserBenchmarkActions?.classList.toggle("is-hidden", !benchmarkView);
+  els.modelBrowserModal?.setAttribute("aria-label", benchmarkView ? "Benchmark browser" : "Object browser");
+  updateModelBrowser();
+}
+
+function formatBenchmarkRunTime(value) {
+  if (!value) return "";
+  const time = Date.parse(value);
+  if (!Number.isFinite(time)) return "";
+  const ageMs = Date.now() - time;
+  const minutes = Math.max(0, Math.round(ageMs / 60000));
+  const age = minutes < 1 ? "just now" : minutes < 120 ? `${minutes}m ago` : minutes < 2880 ? `${Math.round(minutes / 60)}h ago` : `${Math.round(minutes / 1440)}d ago`;
+  return `${new Date(time).toLocaleString()} (${age})`;
+}
+
+function preferredBenchmarkResults(report) {
+  const results = Array.isArray(report?.results) ? report.results : [];
+  const full = results.filter((result) => result.quality === "full");
+  return full.length ? full : results;
+}
+
+function applyModelBrowserBenchmarkReport(report, { saved = false } = {}) {
+  const results = preferredBenchmarkResults(report);
+  state.modelBrowserBenchResults = new Map(results.map((result) => [result.model, result]));
+  state.modelBrowserBenchSavedAt = report?.savedAt || new Date().toISOString();
+  state.modelBrowserBenchSourceModels = report?.sourceModels || {};
+  if (!saved) state.modelBrowserStaleModelIds = new Set();
+}
+
+function applyModelBrowserBenchmarkResult(result, savedAt = new Date().toISOString()) {
+  if (!result?.model) return;
+  if (!(state.modelBrowserBenchResults instanceof Map)) state.modelBrowserBenchResults = new Map();
+  state.modelBrowserBenchResults.set(result.model, result);
+  state.modelBrowserBenchSavedAt = savedAt;
+  state.modelBrowserStaleModelIds?.delete?.(result.model);
+}
+
+async function currentSourceModelMtimeMs(source) {
+  if (!source?.file) return 0;
+  try {
+    const response = await fetch(`../../${source.file}?mtime=${Date.now()}`, {
+      method: "HEAD",
+      cache: "no-store"
+    });
+    const modified = response.headers.get("last-modified");
+    const time = modified ? Date.parse(modified) : 0;
+    return Number.isFinite(time) ? time : 0;
+  } catch {
+    return 0;
+  }
+}
+
+async function updateModelBrowserStaleModels(report) {
+  const sourceModels = report?.sourceModels || {};
+  const stale = new Set();
+  await Promise.all(Object.entries(sourceModels).map(async ([id, source]) => {
+    if (!Number.isFinite(Number(source?.mtimeMs))) return;
+    const current = await currentSourceModelMtimeMs(source);
+    if (current && current > Number(source.mtimeMs) + 1000) stale.add(id);
+  }));
+  state.modelBrowserStaleModelIds = stale;
 }
 
 function thumbnailModelData(model) {
@@ -6620,18 +7126,31 @@ function drawModelBrowserThumbnail(canvas, model) {
 
 function updateModelBrowser() {
   if (!els.modelBrowserGrid) return;
-  const entries = modelBrowserEntries();
+  const benchmarkView = state.modelBrowserView === "benchmark";
+  const entries = modelBrowserSortedEntries(modelBrowserEntries());
+  els.modelBrowserGrid.dataset.view = benchmarkView ? "benchmark" : "objects";
   els.modelBrowserGrid.replaceChildren();
   if (els.modelBrowserReadout) {
     const warningCount = entries.filter((entry) => entry.warnings.length).length;
-    els.modelBrowserReadout.textContent = `${entries.length} objects | ${warningCount} with audit warnings`;
+    const benchCount = state.modelBrowserBenchResults?.size || 0;
+    const lastRun = formatBenchmarkRunTime(state.modelBrowserBenchSavedAt);
+    const staleCount = state.modelBrowserStaleModelIds?.size || 0;
+    const benchmarkProblemCount = entries.filter((entry) => modelBrowserBenchmarkIssues(modelBrowserBenchmarkResult(entry.id)).length).length;
+    els.modelBrowserReadout.textContent = benchmarkView
+      ? `${benchCount || 0} benchmarked | ${benchmarkProblemCount} benchmark warnings${lastRun ? ` | last run ${lastRun}` : ""}${staleCount ? ` | ${staleCount} updated since` : ""}`
+      : `${entries.length} objects | ${warningCount} with audit warnings`;
   }
   for (const entry of entries) {
+    const intel = modelBrowserRenderIntel(entry.model);
+    const bench = modelBrowserBenchmarkResult(entry.id);
+    const stale = modelBrowserBenchmarkStale(entry.id);
+    const benchmarkIssues = modelBrowserBenchmarkIssues(bench);
     const button = document.createElement("button");
     button.type = "button";
-    button.className = `model-browser-card${entry.warnings.length ? " has-audit" : ""}`;
+    button.className = `model-browser-card${benchmarkView ? " is-benchmark-card" : " is-object-card"}${!benchmarkView && entry.warnings.length ? " has-audit" : ""}${benchmarkView && benchmarkIssues.length ? " has-benchmark-warning" : ""}${benchmarkView && stale ? " has-stale-bench" : ""}`;
     button.dataset.modelId = entry.id;
-    if (entry.warnings.length) button.title = entry.warnings.join("\n");
+    if (!benchmarkView && entry.warnings.length) button.title = entry.warnings.join("\n");
+    if (benchmarkView && benchmarkIssues.length) button.title = benchmarkIssues.join("\n");
 
     const canvas = document.createElement("canvas");
     canvas.className = "model-browser-thumb";
@@ -6639,11 +7158,18 @@ function updateModelBrowser() {
     canvas.height = 160;
     button.appendChild(canvas);
 
-    if (entry.warnings.length) {
+    if (!benchmarkView && entry.warnings.length) {
       const badge = document.createElement("span");
       badge.className = "model-browser-warning";
       badge.textContent = "!";
       badge.title = `${entry.warnings.length} audit warning${entry.warnings.length === 1 ? "" : "s"}`;
+      button.appendChild(badge);
+    }
+    if (benchmarkView && benchmarkIssues.length) {
+      const badge = document.createElement("span");
+      badge.className = "model-browser-benchmark-warning";
+      badge.textContent = "!";
+      badge.title = benchmarkIssues.join("\n");
       button.appendChild(badge);
     }
 
@@ -6654,12 +7180,134 @@ function updateModelBrowser() {
 
     const meta = document.createElement("span");
     meta.className = "model-browser-meta";
-    meta.textContent = `${entry.id} | ${entry.model.verts?.length || 0}v ${entry.model.faces?.length || 0}f${entry.warnings.length ? ` | ${entry.warnings.length} warnings` : ""}`;
+    meta.textContent = entry.id;
     button.appendChild(meta);
+
+    const metrics = document.createElement("span");
+    metrics.className = `model-browser-metrics${benchmarkView ? " model-browser-bench" : ""}`;
+    if (!benchmarkView) {
+      appendModelBrowserMetric(metrics, `${intel.verts}v`, "Vertex count in the source model.");
+      appendModelBrowserMetric(metrics, `${intel.faces}f`, "Face count in the source model.");
+      appendModelBrowserMetric(metrics, `${intel.edges}e`, "Visible edge/stick count in the source model.");
+      appendModelBrowserMetric(metrics, `${intel.details}d`, "Surface detail count: windows, engines, panels, beacons and related authored details.");
+      appendModelBrowserMetric(metrics, `UV ${intel.texturedFaces}`, "Faces with explicit face texture keys or baked per-face UVs.");
+      if (intel.wrappedFaces) appendModelBrowserMetric(metrics, `WRAP ${intel.wrappedFaces}`, "Faces using repeat or mirror wrapping; these can create multiple renderer tile pieces.", "is-warn");
+      if (intel.faceDecals) appendModelBrowserMetric(metrics, `DECAL ${intel.faceDecals}`, "Face-local decal layer count.");
+      if (entry.warnings.length) appendModelBrowserMetric(metrics, `WARN ${entry.warnings.length}`, "Audit warnings for orphan non-stick edges, invalid edge kinds, or stroke hazards.", "is-warn");
+    } else if (bench) {
+      appendModelBrowserMetric(metrics, `FPS ${formatBenchMetric(bench.avgFps, 0)}`, "Filtered render FPS. High-end outlier frames are trimmed so startup/cache spikes do not poison the headline number.");
+      appendModelBrowserMetric(metrics, `P95 ms ${formatBenchMetric(bench.p95Ms, 1)}`, "95th percentile filtered frame time in milliseconds; 95% of measured frames are this fast or faster.");
+      appendModelBrowserMetric(metrics, `SD ${formatBenchMetric(bench.stdDevMs, 1)}`, "Filtered standard deviation in milliseconds. Lower means the normal render cost is more stable.");
+      appendModelBrowserMetric(metrics, `JIT ${formatBenchMetric(bench.jitterPct, 0)}%`, "Jitter: filtered standard deviation divided by filtered average frame time.");
+      appendModelBrowserMetric(metrics, `SPIKE +${formatBenchMetric(bench.spikeTaxMs, 1)}`, "Spike tax: how much raw average frame time was increased by outlier frames.");
+      appendModelBrowserMetric(metrics, `OUT ${bench.outlierFrames || 0}`, "Outlier frame count removed from filtered FPS and filtered timing metrics.");
+      if (stale) appendModelBrowserMetric(metrics, "STALE", "This source model file has changed since the saved benchmark report was generated.", "is-stale");
+    } else {
+      appendModelBrowserMetric(metrics, "NO BENCH", "Run Benchmark Library or npm run bench:render to measure filtered FPS, P95 ms, standard deviation, jitter, spike tax and outliers for every object.");
+    }
+    button.appendChild(metrics);
 
     els.modelBrowserGrid.appendChild(button);
     drawModelBrowserThumbnail(canvas, entry.model);
   }
+}
+
+function waitForModelBrowserBenchmark(frame, timeoutMs = 90000) {
+  return new Promise((resolve, reject) => {
+    const started = performance.now();
+    const poll = () => {
+      let summary = null;
+      try {
+        summary = frame.contentWindow?.__renderBenchSummary || null;
+      } catch (error) {
+        reject(error);
+        return;
+      }
+      if (summary?.status === "batch-complete" && Array.isArray(summary.results)) {
+        resolve(summary);
+        return;
+      }
+      if (performance.now() - started > timeoutMs) {
+        reject(new Error("library benchmark timed out"));
+        return;
+      }
+      setTimeout(poll, 240);
+    };
+    frame.addEventListener("load", () => setTimeout(poll, 80), { once: true });
+    poll();
+  });
+}
+
+async function runModelBrowserBenchmark() {
+  if (state.modelBrowserBenchmarkRunning) return;
+  state.modelBrowserBenchmarkRunning = true;
+  if (els.modelBrowserBenchmarkBtn) els.modelBrowserBenchmarkBtn.disabled = true;
+  try {
+    if (els.modelBrowserReadout) els.modelBrowserReadout.textContent = "Benchmarking library: full Ultra render path...";
+    setStatus("MODEL LIBRARY RENDER BENCHMARK STARTED.");
+    const summary = await runHiddenRenderBenchmark({ models: "all" });
+    applyModelBrowserBenchmarkReport({ ...summary, savedAt: new Date().toISOString() });
+    updateModelBrowser();
+    const results = [...state.modelBrowserBenchResults.values()];
+    const slowest = results.slice().sort((a, b) => (b.p95Ms || 0) - (a.p95Ms || 0)).slice(0, 3)
+      .map((result) => `${result.modelName || result.model} ${formatBenchMetric(result.p95Ms, 1)}ms`)
+      .join(", ");
+    const spikiest = results.slice().sort((a, b) => (b.spikeTaxMs || 0) - (a.spikeTaxMs || 0))[0];
+    const spikeText = spikiest ? ` | SPIKIEST ${spikiest.modelName || spikiest.model} +${formatBenchMetric(spikiest.spikeTaxMs, 1)}MS` : "";
+    setStatus(`MODEL LIBRARY BENCHMARK COMPLETE: ${results.length} OBJECTS. SLOWEST P95: ${slowest}${spikeText}.`);
+  } catch (error) {
+    const message = `MODEL LIBRARY BENCHMARK FAILED: ${error.message}`;
+    setStatus(message);
+    if (els.modelBrowserReadout) els.modelBrowserReadout.textContent = message;
+  } finally {
+    state.modelBrowserBenchmarkRunning = false;
+    if (els.modelBrowserBenchmarkBtn) els.modelBrowserBenchmarkBtn.disabled = false;
+  }
+}
+
+async function runHiddenRenderBenchmark({ models = "all", iterations = 80, warmup = 20, timeoutMs = 90000 } = {}) {
+  const frame = document.createElement("iframe");
+  frame.className = "renderer-benchmark-frame";
+  frame.title = "Model library renderer benchmark";
+  document.body.append(frame);
+  try {
+    const summaryPromise = waitForModelBrowserBenchmark(frame, timeoutMs);
+    frame.src = `../render-bench/?batch=1&models=${encodeURIComponent(models)}&qualities=full&iterations=${iterations}&warmup=${warmup}&mode=solid&fx=ultra&lod=0&scale=46&shipbuilder=${Date.now()}`;
+    return await summaryPromise;
+  } finally {
+    frame.remove();
+  }
+}
+
+async function loadSavedModelBrowserBenchmarkReport(options = {}) {
+  if (state.modelBrowserBenchmarkLoading) return;
+  if (!options.force && state.modelBrowserBenchResults?.size) return;
+  state.modelBrowserBenchmarkLoading = true;
+  try {
+    const response = await fetch(`../render-bench/reports/latest.json?cache=${Date.now()}`, { cache: "no-store" });
+    if (!response.ok) return;
+    const report = await response.json();
+    if (!Array.isArray(report?.results)) return;
+    applyModelBrowserBenchmarkReport(report, { saved: true });
+    await updateModelBrowserStaleModels(report);
+    updateModelBrowser();
+  } catch {
+    // No saved benchmark yet, or the local server cannot expose the report.
+  } finally {
+    state.modelBrowserBenchmarkLoading = false;
+  }
+}
+
+async function benchmarkSavedModelAfterBuild(modelId) {
+  const cleanId = cleanBitmapKey(modelId);
+  if (!cleanId) return { result: null, issues: ["Missing saved model id."] };
+  setStatus(`POST-BUILD BENCHMARKING ${cleanId.toUpperCase()}...`);
+  const summary = await runHiddenRenderBenchmark({ models: cleanId, timeoutMs: 45000 });
+  const result = preferredBenchmarkResults(summary).find((item) => item.model === cleanId) || null;
+  if (!result) return { result: null, issues: [`No benchmark result returned for ${cleanId}.`] };
+  applyModelBrowserBenchmarkResult(result);
+  const issues = modelBrowserBenchmarkIssues(result);
+  return { result, issues };
 }
 
 function openModelBrowser() {
@@ -6668,7 +7316,26 @@ function openModelBrowser() {
   if (els.modelBrowserProfileRotation && els.profileRotationDeg) els.modelBrowserProfileRotation.value = readProfileRotationDeg();
   if (els.modelBrowserProfileCone && els.profileConeMode) els.modelBrowserProfileCone.checked = readProfileConeMode();
   updateModelBrowser();
+  loadSavedModelBrowserBenchmarkReport();
   els.modelBrowserModal.classList.remove("is-hidden");
+}
+
+function openObjectBrowser() {
+  setModelBrowserView("objects");
+  openModelBrowser();
+}
+
+function openBenchmarkBrowser() {
+  const warning = currentModelUnsavedBenchmarkWarning();
+  if (warning) {
+    const ok = window.confirm(`${warning}\n\nThe benchmark browser uses saved generated-library data, so unsaved builder edits will not be measured. Open benchmark view anyway?`);
+    if (!ok) {
+      setStatus("BENCHMARK BROWSER CANCELLED: SAVE THE MODEL FIRST TO MEASURE CURRENT EDITS.");
+      return;
+    }
+  }
+  setModelBrowserView("benchmark");
+  openModelBrowser();
 }
 
 function closeModelBrowser() {
@@ -6758,6 +7425,7 @@ function loadLibraryModel(id) {
   state.selectedFaceIds.clear();
   state.selectedEdgeIds.clear();
   loadSkinBitmaps(source.id || id, mirrorFlagsFromMeta(meta));
+  markCurrentModelSavedSnapshot(source.id || id);
   fitView();
   setStatus(`LOADED ${els.shipName.value.toUpperCase()} FROM GAME LIBRARY.`);
   closeModelBrowser();
@@ -6966,6 +7634,7 @@ async function saveModelAsset() {
     populateLibrarySelector();
     if (els.librarySelector) els.librarySelector.value = cleanId;
     state.sourceModelId = cleanId;
+    markCurrentModelSavedSnapshot(cleanId);
     state.assetVersion = Date.now();
     if (sideSkins.length || faceSkins.length) await refreshAvailableSkinAssets();
     const savedParts = [
@@ -6973,8 +7642,20 @@ async function saveModelAsset() {
       faceSkins.length ? `${faceSkins.length} FACE PNG${faceSkins.length === 1 ? "" : "S"}` : ""
     ].filter(Boolean).join(", ");
     const cleanupText = cleanupResult?.deleted?.length ? `; OLD ${previousId} REMOVED` : "";
-    setStatus(`MODEL UPDATED: ${result.path}${savedParts ? `; ${savedParts} SAVED` : ""}${cleanupText}.`);
-    showBuildCompleteModal(`${data.name || cleanId} is built into the local dev.html test files. Click below to test locally.`);
+    let benchmarkText = "";
+    try {
+      const benchmark = await benchmarkSavedModelAfterBuild(cleanId);
+      const bench = benchmark.result;
+      if (bench) {
+        benchmarkText = benchmark.issues.length
+          ? ` Benchmark warning: ${benchmark.issues.join(" ")}`
+          : ` Benchmark ok: FPS ${formatBenchMetric(bench.avgFps, 0)}, P95 ms ${formatBenchMetric(bench.p95Ms, 1)}, spike +${formatBenchMetric(bench.spikeTaxMs, 1)}.`;
+      }
+    } catch (error) {
+      benchmarkText = ` Benchmark failed: ${error.message}.`;
+    }
+    setStatus(`MODEL UPDATED: ${result.path}${savedParts ? `; ${savedParts} SAVED` : ""}${cleanupText}.${benchmarkText}`);
+    showBuildCompleteModal(`${data.name || cleanId} is built into the local dev.html test files.${benchmarkText ? ` ${benchmarkText}` : ""} Click below to test locally.`);
   } catch (error) {
     setStatus(`MODEL SAVE FAILED: ${error.message}`);
   }
@@ -7078,9 +7759,31 @@ function setExportVisible(visible) {
 }
 
 function setMode(mode, announce = true) {
+  if (!SELECTABLE_TYPES.includes(mode)) return;
+  state.selectionFilters = Object.fromEntries(SELECTABLE_TYPES.map((type) => [type, type === mode]));
+  clearSelectionBlockedByFilters();
   state.mode = mode;
+  setToolTab(mode === "uv" || mode === "group" ? "paint" : "edit", { redraw: false });
+  if (mode === "uv" || mode === "group") setPaintTab("face", { redraw: false });
   syncModeUi(mode);
-  if (announce) setStatus(`${mode.toUpperCase()} MODE.`);
+  if (announce) setStatus(`${mode.toUpperCase()} SELECT FILTER.`);
+  renderAll();
+}
+
+function toggleSelectionFilter(mode, options = {}) {
+  if (!SELECTABLE_TYPES.includes(mode)) return;
+  if (!options.additive) {
+    setMode(mode);
+    return;
+  }
+  state.selectionFilters[mode] = !selectionFilterAllows(mode);
+  if (!activeSelectionFilters().length) state.selectionFilters[mode] = true;
+  clearSelectionBlockedByFilters();
+  state.mode = mode;
+  setToolTab(mode === "uv" || mode === "group" ? "paint" : "edit", { redraw: false });
+  if (mode === "uv" || mode === "group") setPaintTab("face", { redraw: false });
+  syncModeUi(panelModeForSelection());
+  setStatus(`SELECT FILTERS: ${activeSelectionFilters().map((type) => type.toUpperCase()).join(", ")}.`);
   renderAll();
 }
 
@@ -7145,8 +7848,8 @@ function bindEvents() {
   document.querySelectorAll(".paint-subtab-btn").forEach((btn) => btn.addEventListener("click", () => {
     setPaintTab(btn.dataset.paintTabTarget);
   }));
-  document.querySelectorAll(".mode-btn").forEach((btn) => btn.addEventListener("click", () => {
-    setMode(btn.dataset.mode);
+  document.querySelectorAll(".mode-btn").forEach((btn) => btn.addEventListener("click", (event) => {
+    toggleSelectionFilter(btn.dataset.mode, { additive: event.shiftKey });
   }));
   document.querySelectorAll(".axis-btn").forEach((btn) => btn.addEventListener("click", () => {
     state.axis = btn.dataset.axis;
@@ -7165,7 +7868,7 @@ function bindEvents() {
   });
   els.mainView.addEventListener("pointerdown", (ev) => {
     const point = getCanvasPoint(ev, els.mainView);
-    const faceGroupClick = ev.button === 0 && state.mode === "face" && ev.shiftKey;
+    const faceGroupClick = ev.button === 0 && selectionFilterAllows("face") && ev.shiftKey;
     state.drag = { x: ev.clientX, y: ev.clientY, moved: false, lockView: faceGroupClick };
     els.mainView.setPointerCapture(ev.pointerId);
     if (ev.button === 0) selectInMain(point, { multiSelect: ev.shiftKey });
@@ -7195,18 +7898,24 @@ function bindEvents() {
     canvas.addEventListener("click", (ev) => {
       const point = getCanvasPoint(ev, canvas);
       const projected = new Map(state.verts.map((v) => [v.id, orthoProject(v, canvas, canvas.dataset.view)]));
-      if (state.mode === "edge") {
-        const auditHit = els.showAuditEdges?.checked
-          ? nearestEdge(point, projected, renderAuditEdges(), 14)
-          : null;
-        const edgeHit = auditHit || nearestEdge(point, projected, state.edges, 10);
-        if (edgeHit) {
-          selectEdge(edgeHit, { audit: edgeHit === auditHit });
-          return;
+      for (const type of orderedSelectionFilters()) {
+        if (type === "edge") {
+          const auditHit = els.showAuditEdges?.checked
+            ? nearestEdge(point, projected, renderAuditEdges(), 14)
+            : null;
+          const edgeHit = auditHit || nearestEdge(point, projected, state.edges, 10);
+          if (edgeHit) {
+            selectEdge(edgeHit, { audit: edgeHit === auditHit });
+            return;
+          }
+        } else if (type === "vertex") {
+          const id = nearestVertex(point, projected, 12);
+          if (id) {
+            selectVertex(id);
+            return;
+          }
         }
       }
-      const id = nearestVertex(point, projected, 12);
-      if (id) selectVertex(id);
     });
   });
   const startNewProfile = (sideInput = els.profileSideCount, rotationInput = els.profileRotationDeg, coneInput = els.profileConeMode) => {
@@ -7214,8 +7923,13 @@ function bindEvents() {
     resetPolygonProfile(readProfileSideCount(sideInput), readProfileRotationDeg(rotationInput), readProfileConeMode(coneInput));
   };
   document.getElementById("newProfileBtn")?.addEventListener("click", () => startNewProfile());
-  els.browseModelsBtn?.addEventListener("click", openModelBrowser);
+  els.openObjectBrowserBtn?.addEventListener("click", openObjectBrowser);
+  els.openBenchmarkBrowserBtn?.addEventListener("click", openBenchmarkBrowser);
+  els.browseModelsBtn?.addEventListener("click", openObjectBrowser);
   els.modelBrowserNewProfileBtn?.addEventListener("click", () => startNewProfile(els.modelBrowserProfileSides, els.modelBrowserProfileRotation, els.modelBrowserProfileCone));
+  els.modelBrowserObjectsViewBtn?.addEventListener("click", () => setModelBrowserView("objects"));
+  els.modelBrowserBenchmarkViewBtn?.addEventListener("click", () => setModelBrowserView("benchmark"));
+  els.modelBrowserBenchmarkBtn?.addEventListener("click", runModelBrowserBenchmark);
   els.closeModelBrowserBtn?.addEventListener("click", closeModelBrowser);
   els.modelBrowserGrid?.addEventListener("click", (event) => {
     const card = event.target.closest("[data-model-id]");
@@ -7430,6 +8144,7 @@ function bindEvents() {
   els.copyFacePropertiesBtn?.addEventListener("click", copySelectedFaceProperties);
   els.pasteFacePropertiesBtn?.addEventListener("click", pasteFacePropertiesToSelection);
   els.resetUvTransformBtn?.addEventListener("click", resetSelectedFaceUvTransform);
+  els.removeFaceGroupUvBtn?.addEventListener("click", removeSelectedFaceGroupUv);
   document.querySelectorAll(".uv-rotate-btn").forEach((button) => {
     button.addEventListener("click", () => rotateSelectedFaceUvAngle(button.dataset.uvRotate));
   });

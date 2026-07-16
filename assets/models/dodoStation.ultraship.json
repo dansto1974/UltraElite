@@ -239,7 +239,61 @@
       "faceColor": "#495053",
       "bitmapSide": "top",
       "bitmapFaceKey": "station_panel",
-      "bitmapMirrorX": true
+      "bitmapUv": [
+        [
+          699,
+          225.876
+        ],
+        [
+          323.141,
+          -47.5
+        ],
+        [
+          -51,
+          226.694
+        ],
+        [
+          91.861,
+          667.096
+        ],
+        [
+          557.11,
+          667.096
+        ]
+      ],
+      "bitmapUvTemplate": [
+        [
+          624,
+          242.701
+        ],
+        [
+          323.313,
+          24
+        ],
+        [
+          24,
+          243.355
+        ],
+        [
+          138.289,
+          595.677
+        ],
+        [
+          510.488,
+          595.677
+        ]
+      ],
+      "bitmapUvTransform": {
+        "x": 0,
+        "y": 0,
+        "rotation": 0,
+        "scaleX": 0.8,
+        "scaleY": 0.8
+      },
+      "bitmapBaseW": 648,
+      "bitmapBaseH": 620,
+      "bitmapMirrorX": true,
+      "bitmapWrap": "mirror"
     },
     {
       "id": 1001,
@@ -254,7 +308,61 @@
       "faceColor": "#495053",
       "bitmapSide": "top",
       "bitmapFaceKey": "station_panel",
-      "bitmapMirrorX": true
+      "bitmapUv": [
+        [
+          699,
+          225.876
+        ],
+        [
+          323.141,
+          -47.5
+        ],
+        [
+          -51,
+          226.694
+        ],
+        [
+          91.861,
+          667.096
+        ],
+        [
+          557.11,
+          667.096
+        ]
+      ],
+      "bitmapUvTemplate": [
+        [
+          624,
+          242.701
+        ],
+        [
+          323.313,
+          24
+        ],
+        [
+          24,
+          243.355
+        ],
+        [
+          138.289,
+          595.677
+        ],
+        [
+          510.488,
+          595.677
+        ]
+      ],
+      "bitmapUvTransform": {
+        "x": 0,
+        "y": 0,
+        "rotation": 0,
+        "scaleX": 0.8,
+        "scaleY": 0.8
+      },
+      "bitmapBaseW": 648,
+      "bitmapBaseH": 620,
+      "bitmapMirrorX": true,
+      "bitmapWrap": "mirror"
     },
     {
       "id": 1002,
@@ -269,7 +377,61 @@
       "faceColor": "#495053",
       "bitmapSide": "top",
       "bitmapFaceKey": "station_panel",
-      "bitmapMirrorX": true
+      "bitmapUv": [
+        [
+          699,
+          225.876
+        ],
+        [
+          323.141,
+          -47.5
+        ],
+        [
+          -51,
+          226.694
+        ],
+        [
+          91.861,
+          667.096
+        ],
+        [
+          557.11,
+          667.096
+        ]
+      ],
+      "bitmapUvTemplate": [
+        [
+          624,
+          242.701
+        ],
+        [
+          323.313,
+          24
+        ],
+        [
+          24,
+          243.355
+        ],
+        [
+          138.289,
+          595.677
+        ],
+        [
+          510.488,
+          595.677
+        ]
+      ],
+      "bitmapUvTransform": {
+        "x": 0,
+        "y": 0,
+        "rotation": 0,
+        "scaleX": 0.8,
+        "scaleY": 0.8
+      },
+      "bitmapBaseW": 648,
+      "bitmapBaseH": 620,
+      "bitmapMirrorX": true,
+      "bitmapWrap": "mirror"
     },
     {
       "id": 1003,
@@ -284,7 +446,61 @@
       "faceColor": "#495053",
       "bitmapSide": "top",
       "bitmapFaceKey": "station_panel",
-      "bitmapMirrorX": true
+      "bitmapUv": [
+        [
+          699,
+          225.876
+        ],
+        [
+          323.141,
+          -47.5
+        ],
+        [
+          -51,
+          226.694
+        ],
+        [
+          91.861,
+          667.096
+        ],
+        [
+          557.11,
+          667.096
+        ]
+      ],
+      "bitmapUvTemplate": [
+        [
+          624,
+          242.701
+        ],
+        [
+          323.313,
+          24
+        ],
+        [
+          24,
+          243.355
+        ],
+        [
+          138.289,
+          595.677
+        ],
+        [
+          510.488,
+          595.677
+        ]
+      ],
+      "bitmapUvTransform": {
+        "x": 0,
+        "y": 0,
+        "rotation": 0,
+        "scaleX": 0.8,
+        "scaleY": 0.8
+      },
+      "bitmapBaseW": 648,
+      "bitmapBaseH": 620,
+      "bitmapMirrorX": true,
+      "bitmapWrap": "mirror"
     },
     {
       "id": 1004,
@@ -299,7 +515,61 @@
       "faceColor": "#495053",
       "bitmapSide": "top",
       "bitmapFaceKey": "station_panel",
-      "bitmapMirrorX": true
+      "bitmapUv": [
+        [
+          699,
+          225.876
+        ],
+        [
+          323.141,
+          -47.5
+        ],
+        [
+          -51,
+          226.694
+        ],
+        [
+          91.861,
+          667.096
+        ],
+        [
+          557.11,
+          667.096
+        ]
+      ],
+      "bitmapUvTemplate": [
+        [
+          624,
+          242.701
+        ],
+        [
+          323.313,
+          24
+        ],
+        [
+          24,
+          243.355
+        ],
+        [
+          138.289,
+          595.677
+        ],
+        [
+          510.488,
+          595.677
+        ]
+      ],
+      "bitmapUvTransform": {
+        "x": 0,
+        "y": 0,
+        "rotation": 0,
+        "scaleX": 0.8,
+        "scaleY": 0.8
+      },
+      "bitmapBaseW": 648,
+      "bitmapBaseH": 620,
+      "bitmapMirrorX": true,
+      "bitmapWrap": "mirror"
     },
     {
       "id": 1005,
@@ -314,7 +584,61 @@
       "faceColor": "#495053",
       "bitmapSide": "top",
       "bitmapFaceKey": "station_panel",
-      "bitmapMirrorX": true
+      "bitmapUv": [
+        [
+          699,
+          225.876
+        ],
+        [
+          323.141,
+          -47.5
+        ],
+        [
+          -51,
+          226.694
+        ],
+        [
+          91.861,
+          667.096
+        ],
+        [
+          557.11,
+          667.096
+        ]
+      ],
+      "bitmapUvTemplate": [
+        [
+          624,
+          242.701
+        ],
+        [
+          323.313,
+          24
+        ],
+        [
+          24,
+          243.355
+        ],
+        [
+          138.289,
+          595.677
+        ],
+        [
+          510.488,
+          595.677
+        ]
+      ],
+      "bitmapUvTransform": {
+        "x": 0,
+        "y": 0,
+        "rotation": 0,
+        "scaleX": 0.8,
+        "scaleY": 0.8
+      },
+      "bitmapBaseW": 648,
+      "bitmapBaseH": 620,
+      "bitmapMirrorX": true,
+      "bitmapWrap": "mirror"
     },
     {
       "id": 1006,
@@ -329,7 +653,61 @@
       "faceColor": "#495053",
       "bitmapSide": "top",
       "bitmapFaceKey": "station_panel",
-      "bitmapMirrorX": true
+      "bitmapUv": [
+        [
+          699,
+          225.876
+        ],
+        [
+          323.141,
+          -47.5
+        ],
+        [
+          -51,
+          226.694
+        ],
+        [
+          91.861,
+          667.096
+        ],
+        [
+          557.11,
+          667.096
+        ]
+      ],
+      "bitmapUvTemplate": [
+        [
+          624,
+          242.701
+        ],
+        [
+          323.313,
+          24
+        ],
+        [
+          24,
+          243.355
+        ],
+        [
+          138.289,
+          595.677
+        ],
+        [
+          510.488,
+          595.677
+        ]
+      ],
+      "bitmapUvTransform": {
+        "x": 0,
+        "y": 0,
+        "rotation": 0,
+        "scaleX": 0.8,
+        "scaleY": 0.8
+      },
+      "bitmapBaseW": 648,
+      "bitmapBaseH": 620,
+      "bitmapMirrorX": true,
+      "bitmapWrap": "mirror"
     },
     {
       "id": 1007,
@@ -344,7 +722,61 @@
       "faceColor": "#495053",
       "bitmapSide": "top",
       "bitmapFaceKey": "station_panel",
-      "bitmapMirrorX": true
+      "bitmapUv": [
+        [
+          699,
+          225.876
+        ],
+        [
+          323.141,
+          -47.5
+        ],
+        [
+          -51,
+          226.694
+        ],
+        [
+          91.861,
+          667.096
+        ],
+        [
+          557.11,
+          667.096
+        ]
+      ],
+      "bitmapUvTemplate": [
+        [
+          624,
+          242.701
+        ],
+        [
+          323.313,
+          24
+        ],
+        [
+          24,
+          243.355
+        ],
+        [
+          138.289,
+          595.677
+        ],
+        [
+          510.488,
+          595.677
+        ]
+      ],
+      "bitmapUvTransform": {
+        "x": 0,
+        "y": 0,
+        "rotation": 0,
+        "scaleX": 0.8,
+        "scaleY": 0.8
+      },
+      "bitmapBaseW": 648,
+      "bitmapBaseH": 620,
+      "bitmapMirrorX": true,
+      "bitmapWrap": "mirror"
     },
     {
       "id": 1008,
@@ -359,7 +791,61 @@
       "faceColor": "#495053",
       "bitmapSide": "top",
       "bitmapFaceKey": "station_panel",
-      "bitmapMirrorX": true
+      "bitmapUv": [
+        [
+          699,
+          225.876
+        ],
+        [
+          323.141,
+          -47.5
+        ],
+        [
+          -51,
+          226.694
+        ],
+        [
+          91.861,
+          667.096
+        ],
+        [
+          557.11,
+          667.096
+        ]
+      ],
+      "bitmapUvTemplate": [
+        [
+          624,
+          242.701
+        ],
+        [
+          323.313,
+          24
+        ],
+        [
+          24,
+          243.355
+        ],
+        [
+          138.289,
+          595.677
+        ],
+        [
+          510.488,
+          595.677
+        ]
+      ],
+      "bitmapUvTransform": {
+        "x": 0,
+        "y": 0,
+        "rotation": 0,
+        "scaleX": 0.8,
+        "scaleY": 0.8
+      },
+      "bitmapBaseW": 648,
+      "bitmapBaseH": 620,
+      "bitmapMirrorX": true,
+      "bitmapWrap": "mirror"
     },
     {
       "id": 1009,
@@ -374,7 +860,61 @@
       "faceColor": "#495053",
       "bitmapSide": "top",
       "bitmapFaceKey": "station_panel",
-      "bitmapMirrorX": true
+      "bitmapUv": [
+        [
+          699,
+          225.876
+        ],
+        [
+          323.141,
+          -47.5
+        ],
+        [
+          -51,
+          226.694
+        ],
+        [
+          91.861,
+          667.096
+        ],
+        [
+          557.11,
+          667.096
+        ]
+      ],
+      "bitmapUvTemplate": [
+        [
+          624,
+          242.701
+        ],
+        [
+          323.313,
+          24
+        ],
+        [
+          24,
+          243.355
+        ],
+        [
+          138.289,
+          595.677
+        ],
+        [
+          510.488,
+          595.677
+        ]
+      ],
+      "bitmapUvTransform": {
+        "x": 0,
+        "y": 0,
+        "rotation": 0,
+        "scaleX": 0.8,
+        "scaleY": 0.8
+      },
+      "bitmapBaseW": 648,
+      "bitmapBaseH": 620,
+      "bitmapMirrorX": true,
+      "bitmapWrap": "mirror"
     },
     {
       "id": 1010,
@@ -389,7 +929,61 @@
       "faceColor": "#495053",
       "bitmapSide": "top",
       "bitmapFaceKey": "station_panel",
-      "bitmapMirrorX": true
+      "bitmapUv": [
+        [
+          699,
+          225.876
+        ],
+        [
+          323.141,
+          -47.5
+        ],
+        [
+          -51,
+          226.694
+        ],
+        [
+          91.861,
+          667.096
+        ],
+        [
+          557.11,
+          667.096
+        ]
+      ],
+      "bitmapUvTemplate": [
+        [
+          624,
+          242.701
+        ],
+        [
+          323.313,
+          24
+        ],
+        [
+          24,
+          243.355
+        ],
+        [
+          138.289,
+          595.677
+        ],
+        [
+          510.488,
+          595.677
+        ]
+      ],
+      "bitmapUvTransform": {
+        "x": 0,
+        "y": 0,
+        "rotation": 0,
+        "scaleX": 0.8,
+        "scaleY": 0.8
+      },
+      "bitmapBaseW": 648,
+      "bitmapBaseH": 620,
+      "bitmapMirrorX": true,
+      "bitmapWrap": "mirror"
     },
     {
       "id": 1011,
@@ -404,7 +998,61 @@
       "faceColor": "#495053",
       "bitmapSide": "top",
       "bitmapFaceKey": "station_panel",
-      "bitmapMirrorX": true
+      "bitmapUv": [
+        [
+          699,
+          225.876
+        ],
+        [
+          323.141,
+          -47.5
+        ],
+        [
+          -51,
+          226.694
+        ],
+        [
+          91.861,
+          667.096
+        ],
+        [
+          557.11,
+          667.096
+        ]
+      ],
+      "bitmapUvTemplate": [
+        [
+          624,
+          242.701
+        ],
+        [
+          323.313,
+          24
+        ],
+        [
+          24,
+          243.355
+        ],
+        [
+          138.289,
+          595.677
+        ],
+        [
+          510.488,
+          595.677
+        ]
+      ],
+      "bitmapUvTransform": {
+        "x": 0,
+        "y": 0,
+        "rotation": 0,
+        "scaleX": 0.8,
+        "scaleY": 0.8
+      },
+      "bitmapBaseW": 648,
+      "bitmapBaseH": 620,
+      "bitmapMirrorX": true,
+      "bitmapWrap": "mirror"
     }
   ],
   "edges": [
@@ -586,6 +1234,92 @@
         196
       ]
     ],
+    "faces": [
+      [
+        1,
+        0,
+        4,
+        3,
+        2
+      ],
+      [
+        10,
+        5,
+        0,
+        1,
+        6
+      ],
+      [
+        2,
+        7,
+        11,
+        6,
+        1
+      ],
+      [
+        2,
+        3,
+        8,
+        12,
+        7
+      ],
+      [
+        4,
+        9,
+        13,
+        8,
+        3
+      ],
+      [
+        9,
+        4,
+        0,
+        5,
+        14
+      ],
+      [
+        14,
+        5,
+        10,
+        15,
+        19
+      ],
+      [
+        11,
+        16,
+        15,
+        10,
+        6
+      ],
+      [
+        7,
+        12,
+        17,
+        16,
+        11
+      ],
+      [
+        13,
+        18,
+        17,
+        12,
+        8
+      ],
+      [
+        9,
+        14,
+        19,
+        18,
+        13
+      ],
+      [
+        19,
+        15,
+        16,
+        17,
+        18
+      ]
+    ],
     "edges": [
       [
         0,
@@ -723,6 +1457,42 @@
         20,
         22
       ]
+    ],
+    "edgeKinds": [
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge"
     ],
     "edgeFaces": [
       [
@@ -964,22 +1734,54 @@
       {
         "type": "beacon",
         "index": 20,
-        "color": "#ffb642"
+        "color": "#ffb642",
+        "detailRender": {
+          "kind": "beacon",
+          "solid": true,
+          "wire": false,
+          "glow": false,
+          "glass": false,
+          "solidStroke": false
+        }
       },
       {
         "type": "beacon",
         "index": 21,
-        "color": "#ffb642"
+        "color": "#ffb642",
+        "detailRender": {
+          "kind": "beacon",
+          "solid": true,
+          "wire": false,
+          "glow": false,
+          "glass": false,
+          "solidStroke": false
+        }
       },
       {
         "type": "beacon",
         "index": 22,
-        "color": "#ffb642"
+        "color": "#ffb642",
+        "detailRender": {
+          "kind": "beacon",
+          "solid": true,
+          "wire": false,
+          "glow": false,
+          "glass": false,
+          "solidStroke": false
+        }
       },
       {
         "type": "beacon",
         "index": 23,
-        "color": "#ffb642"
+        "color": "#ffb642",
+        "detailRender": {
+          "kind": "beacon",
+          "solid": true,
+          "wire": false,
+          "glow": false,
+          "glass": false,
+          "solidStroke": false
+        }
       }
     ],
     "imageProjection": {
@@ -1011,6 +1813,314 @@
         "station_panel",
         "station_panel"
       ],
+      "faceTextureUv": [
+        [
+          [
+            699,
+            225.876
+          ],
+          [
+            323.141,
+            -47.5
+          ],
+          [
+            -51,
+            226.694
+          ],
+          [
+            91.861,
+            667.096
+          ],
+          [
+            557.11,
+            667.096
+          ]
+        ],
+        [
+          [
+            699,
+            225.876
+          ],
+          [
+            323.141,
+            -47.5
+          ],
+          [
+            -51,
+            226.694
+          ],
+          [
+            91.861,
+            667.096
+          ],
+          [
+            557.11,
+            667.096
+          ]
+        ],
+        [
+          [
+            699,
+            225.876
+          ],
+          [
+            323.141,
+            -47.5
+          ],
+          [
+            -51,
+            226.694
+          ],
+          [
+            91.861,
+            667.096
+          ],
+          [
+            557.11,
+            667.096
+          ]
+        ],
+        [
+          [
+            699,
+            225.876
+          ],
+          [
+            323.141,
+            -47.5
+          ],
+          [
+            -51,
+            226.694
+          ],
+          [
+            91.861,
+            667.096
+          ],
+          [
+            557.11,
+            667.096
+          ]
+        ],
+        [
+          [
+            699,
+            225.876
+          ],
+          [
+            323.141,
+            -47.5
+          ],
+          [
+            -51,
+            226.694
+          ],
+          [
+            91.861,
+            667.096
+          ],
+          [
+            557.11,
+            667.096
+          ]
+        ],
+        [
+          [
+            699,
+            225.876
+          ],
+          [
+            323.141,
+            -47.5
+          ],
+          [
+            -51,
+            226.694
+          ],
+          [
+            91.861,
+            667.096
+          ],
+          [
+            557.11,
+            667.096
+          ]
+        ],
+        [
+          [
+            699,
+            225.876
+          ],
+          [
+            323.141,
+            -47.5
+          ],
+          [
+            -51,
+            226.694
+          ],
+          [
+            91.861,
+            667.096
+          ],
+          [
+            557.11,
+            667.096
+          ]
+        ],
+        [
+          [
+            699,
+            225.876
+          ],
+          [
+            323.141,
+            -47.5
+          ],
+          [
+            -51,
+            226.694
+          ],
+          [
+            91.861,
+            667.096
+          ],
+          [
+            557.11,
+            667.096
+          ]
+        ],
+        [
+          [
+            699,
+            225.876
+          ],
+          [
+            323.141,
+            -47.5
+          ],
+          [
+            -51,
+            226.694
+          ],
+          [
+            91.861,
+            667.096
+          ],
+          [
+            557.11,
+            667.096
+          ]
+        ],
+        [
+          [
+            699,
+            225.876
+          ],
+          [
+            323.141,
+            -47.5
+          ],
+          [
+            -51,
+            226.694
+          ],
+          [
+            91.861,
+            667.096
+          ],
+          [
+            557.11,
+            667.096
+          ]
+        ],
+        [
+          [
+            699,
+            225.876
+          ],
+          [
+            323.141,
+            -47.5
+          ],
+          [
+            -51,
+            226.694
+          ],
+          [
+            91.861,
+            667.096
+          ],
+          [
+            557.11,
+            667.096
+          ]
+        ],
+        [
+          [
+            699,
+            225.876
+          ],
+          [
+            323.141,
+            -47.5
+          ],
+          [
+            -51,
+            226.694
+          ],
+          [
+            91.861,
+            667.096
+          ],
+          [
+            557.11,
+            667.096
+          ]
+        ]
+      ],
+      "faceTextureBaseW": [
+        648,
+        648,
+        648,
+        648,
+        648,
+        648,
+        648,
+        648,
+        648,
+        648,
+        648,
+        648
+      ],
+      "faceTextureBaseH": [
+        620,
+        620,
+        620,
+        620,
+        620,
+        620,
+        620,
+        620,
+        620,
+        620,
+        620,
+        620
+      ],
+      "faceTextureWrap": [
+        "mirror",
+        "mirror",
+        "mirror",
+        "mirror",
+        "mirror",
+        "mirror",
+        "mirror",
+        "mirror",
+        "mirror",
+        "mirror",
+        "mirror",
+        "mirror"
+      ],
       "faceColors": [
         "#495053",
         "#495053",
@@ -1038,6 +2148,20 @@
         true,
         true,
         true
+      ],
+      "faceRenderFlags": [
+        91,
+        91,
+        91,
+        91,
+        91,
+        91,
+        91,
+        91,
+        91,
+        91,
+        91,
+        91
       ]
     },
     "gameMeta": {

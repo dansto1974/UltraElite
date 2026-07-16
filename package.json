@@ -14,6 +14,8 @@
     "skins:recompress:dry": "node tools/build/generate-bitmap-skins.mjs --recompress --dry-run",
     "skin-templates": "node tools/build/generate-skin-templates.mjs",
     "build": "node tools/build/generate-model-library.mjs && node tools/build/generate-bitmap-skins.mjs && node tools/build/build-single-file.mjs",
+    "bench:render": "node tools/render-bench/run-bench.mjs --serve=1 --batch=1 --models=all --qualities=full --iterations=80 --warmup=20 --mode=solid --fx=ultra --lod=0 --scale=46 --json-out=tools/render-bench/reports/latest.json",
+    "build:bench": "npm run build && npm run bench:render",
     "publish:site": "node tools/publish-site.mjs",
     "tools": "node tools/open-tool.mjs /tools/",
     "dev": "python3 -m http.server 8765",

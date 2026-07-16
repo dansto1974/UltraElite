@@ -89,18 +89,66 @@ function percentile(samples, p) {
   return sorted[index];
 }
 
+function average(samples) {
+  return samples.length ? samples.reduce((sum, value) => sum + value, 0) / samples.length : 0;
+}
+
+function standardDeviation(samples) {
+  if (samples.length < 2) return 0;
+  const mean = average(samples);
+  const variance = samples.reduce((sum, value) => sum + (value - mean) ** 2, 0) / samples.length;
+  return Math.sqrt(variance);
+}
+
+function stableRenderSamples(samples) {
+  const valid = samples.filter((value) => Number.isFinite(value) && value > 0);
+  if (valid.length < 8) return valid;
+  const sorted = [...valid].sort((a, b) => a - b);
+  const trim = Math.max(1, Math.floor(sorted.length * .05));
+  return sorted.slice(0, Math.max(1, sorted.length - trim));
+}
+
+function sampleStats(samples) {
+  const valid = samples.filter((value) => Number.isFinite(value) && value > 0);
+  const stable = stableRenderSamples(valid);
+  const stableAvg = average(stable);
+  const rawAvg = average(valid);
+  const stdDev = standardDeviation(stable);
+  const rawStdDev = standardDeviation(valid);
+  return {
+    frames: valid.length,
+    filteredFrames: stable.length,
+    outlierFrames: Math.max(0, valid.length - stable.length),
+    avgMs: stableAvg,
+    rawAvgMs: rawAvg,
+    avgFps: stableAvg ? 1000 / stableAvg : 0,
+    rawAvgFps: rawAvg ? 1000 / rawAvg : 0,
+    stdDevMs: stdDev,
+    rawStdDevMs: rawStdDev,
+    jitterPct: stableAvg ? stdDev / stableAvg * 100 : 0,
+    spikeTaxMs: Math.max(0, rawAvg - stableAvg),
+    spikeTaxPct: stableAvg ? Math.max(0, rawAvg / stableAvg - 1) * 100 : 0,
+    medianMs: percentile(stable, .5),
+    p95Ms: percentile(stable, .95),
+    worstMs: stable.length ? Math.max(...stable) : 0,
+    rawWorstMs: valid.length ? Math.max(...valid) : 0
+  };
+}
+
 function renderStats() {
-  avgFps.textContent = total.frames ? `${(1000 / (total.ms / total.frames)).toFixed(1)} FPS` : "-- FPS";
-  worstFrame.textContent = total.worst ? `${total.worst.toFixed(1)} MS WORST` : "-- MS";
+  const totalStats = sampleStats(total.samples);
+  avgFps.textContent = totalStats.frames ? `${totalStats.avgFps.toFixed(1)} FPS` : "-- FPS";
+  worstFrame.textContent = totalStats.rawWorstMs ? `${totalStats.rawWorstMs.toFixed(1)} MS RAW WORST` : "-- MS";
   phaseStats.innerHTML = phases.map((phase) => {
     const s = perPhase.get(phase.id) || { frames: 0, ms: 0, worst: 0, samples: [] };
-    const avg = s.frames ? 1000 / (s.ms / s.frames) : 0;
-    return `<tr><td>${phase.label}</td><td>${avg ? avg.toFixed(1) : "--"}</td><td>${s.worst ? s.worst.toFixed(1) : "--"}</td><td>${s.frames}</td></tr>`;
+    const stats = sampleStats(s.samples);
+    return `<tr><td>${phase.label}</td><td>${stats.avgFps ? stats.avgFps.toFixed(1) : "--"}</td><td>${stats.rawWorstMs ? stats.rawWorstMs.toFixed(1) : "--"}</td><td>${s.frames}</td></tr>`;
   }).join("");
   publishSummary(running ? "running" : "ready");
 }
 
 function buildSummary(status) {
+  const stats = sampleStats(total.samples);
   return {
     status,
     model: modelSelect.value,
@@ -109,21 +157,44 @@ function buildSummary(status) {
     quality: qualitySelect.value,
     lod: lodSelect.value,
     scale: Number(scaleSlider.value),
-    frames: total.frames,
-    avgFps: total.frames ? 1000 / (total.ms / total.frames) : 0,
-    medianMs: percentile(total.samples, .5),
-    p95Ms: percentile(total.samples, .95),
-    worstMs: total.worst || 0,
+    frames: stats.frames,
+    filteredFrames: stats.filteredFrames,
+    outlierFrames: stats.outlierFrames,
+    avgMs: stats.avgMs,
+    rawAvgMs: stats.rawAvgMs,
+    avgFps: stats.avgFps,
+    rawAvgFps: stats.rawAvgFps,
+    stdDevMs: stats.stdDevMs,
+    rawStdDevMs: stats.rawStdDevMs,
+    jitterPct: stats.jitterPct,
+    spikeTaxMs: stats.spikeTaxMs,
+    spikeTaxPct: stats.spikeTaxPct,
+    medianMs: stats.medianMs,
+    p95Ms: stats.p95Ms,
+    worstMs: stats.worstMs,
+    rawWorstMs: stats.rawWorstMs,
     phases: phases.map((phase) => {
       const s = perPhase.get(phase.id) || { frames: 0, ms: 0, worst: 0, samples: [] };
+      const phaseSummary = sampleStats(s.samples);
       return {
         id: phase.id,
         label: phase.label,
-        frames: s.frames,
-        avgFps: s.frames ? 1000 / (s.ms / s.frames) : 0,
-        medianMs: percentile(s.samples, .5),
-        p95Ms: percentile(s.samples, .95),
-        worstMs: s.worst || 0
+        frames: phaseSummary.frames,
+        filteredFrames: phaseSummary.filteredFrames,
+        outlierFrames: phaseSummary.outlierFrames,
+        avgMs: phaseSummary.avgMs,
+        rawAvgMs: phaseSummary.rawAvgMs,
+        avgFps: phaseSummary.avgFps,
+        rawAvgFps: phaseSummary.rawAvgFps,
+        stdDevMs: phaseSummary.stdDevMs,
+        rawStdDevMs: phaseSummary.rawStdDevMs,
+        jitterPct: phaseSummary.jitterPct,
+        spikeTaxMs: phaseSummary.spikeTaxMs,
+        spikeTaxPct: phaseSummary.spikeTaxPct,
+        medianMs: phaseSummary.medianMs,
+        p95Ms: phaseSummary.p95Ms,
+        worstMs: phaseSummary.worstMs,
+        rawWorstMs: phaseSummary.rawWorstMs
       };
     }),
     lastRender: lastRenderInfo
@@ -325,10 +396,21 @@ function runBatchBenchmark() {
         quality,
         lod: lodSelect.value,
         frames: result.summary.frames,
+        filteredFrames: result.summary.filteredFrames,
+        outlierFrames: result.summary.outlierFrames,
+        avgMs: result.summary.avgMs,
+        rawAvgMs: result.summary.rawAvgMs,
         avgFps: result.summary.avgFps,
+        rawAvgFps: result.summary.rawAvgFps,
+        stdDevMs: result.summary.stdDevMs,
+        rawStdDevMs: result.summary.rawStdDevMs,
+        jitterPct: result.summary.jitterPct,
+        spikeTaxMs: result.summary.spikeTaxMs,
+        spikeTaxPct: result.summary.spikeTaxPct,
         medianMs: result.summary.medianMs,
         p95Ms: result.summary.p95Ms,
         worstMs: result.summary.worstMs,
+        rawWorstMs: result.summary.rawWorstMs,
         faces: result.summary.lastRender?.faces || 0,
         edges: result.summary.lastRender?.edges || 0,
         details: result.summary.lastRender?.details || 0,
