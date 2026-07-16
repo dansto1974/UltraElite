@@ -2423,34 +2423,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
     ],
     "edges": [
       {
-        "id": 5023,
-        "a": 14,
-        "b": 16,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
-        "id": 5024,
-        "a": 16,
-        "b": 15,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
-        "id": 5025,
-        "a": 15,
-        "b": 17,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
-        "id": 5026,
-        "a": 17,
-        "b": 14,
-        "kind": "edge",
-        "mirrored": false
-      },
-      {
         "id": 5027,
         "a": 19,
         "b": 18,
@@ -2511,14 +2483,13 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       },
       {
         "id": 5030,
-        "type": "engine",
-        "color": "#f7fff7",
+        "type": "window",
+        "color": "#101915",
         "normal": [
           0,
           0,
           -1
         ],
-        "stroke": "#ffffff",
         "lift": 0.5,
         "indices": [
           14,
@@ -2720,22 +2691,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           10
         ],
         [
-          13,
-          15
-        ],
-        [
-          15,
-          14
-        ],
-        [
-          14,
-          16
-        ],
-        [
-          16,
-          13
-        ],
-        [
           18,
           17
         ]
@@ -2834,28 +2789,12 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           4
         ],
         [
-          11,
-          11
-        ],
-        [
-          11,
-          11
-        ],
-        [
-          11,
-          11
-        ],
-        [
-          11,
-          11
-        ],
-        [
           0,
           0
         ]
       ],
       "edgeCullNormals": {
-        "27": [
+        "23": [
           0,
           0,
           -1
@@ -2885,10 +2824,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         31,
         31,
         31,
-        10,
-        9,
-        8,
-        8,
         10
       ],
       "normals": [
@@ -3019,15 +2954,14 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           }
         },
         {
-          "type": "engine",
+          "type": "window",
           "indices": [
             13,
             15,
             14,
             16
           ],
-          "color": "#f7fff7",
-          "stroke": "#ffffff",
+          "color": "#101915",
           "normal": [
             0,
             0,
@@ -3038,9 +2972,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             "kind": "poly",
             "solid": true,
             "wire": true,
-            "glow": true,
-            "glass": false,
-            "solidStroke": true
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
           }
         }
       ],
@@ -3075,10 +3009,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ]
       },
       "edgeKinds": [
-        "edge",
-        "edge",
-        "edge",
-        "edge",
         "edge",
         "edge",
         "edge",
