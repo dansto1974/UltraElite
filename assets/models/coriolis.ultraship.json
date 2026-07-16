@@ -176,20 +176,20 @@
       "bitmapFaceKey": "station_panel",
       "bitmapUv": [
         [
-          -282.092,
+          20.954,
           324
         ],
         [
           324,
-          930.092
+          627.046
         ],
         [
-          930.092,
+          627.046,
           324
         ],
         [
           324,
-          -282.092
+          20.954
         ]
       ],
       "bitmapUvTemplate": [
@@ -214,13 +214,12 @@
         "x": 0,
         "y": 0,
         "rotation": 45,
-        "scaleX": 0.7,
-        "scaleY": 0.7
+        "scaleX": 1.4,
+        "scaleY": 1.4
       },
       "bitmapBaseW": 648,
       "bitmapBaseH": 648,
-      "bitmapMirrorX": true,
-      "bitmapWrap": "mirror"
+      "bitmapMirrorX": true
     },
     {
       "id": 1001,
@@ -235,16 +234,16 @@
       "bitmapFaceKey": "station_panel",
       "bitmapUv": [
         [
-          -51,
-          608.519
+          24,
+          543.615
         ],
         [
-          699,
-          608.519
+          624,
+          543.615
         ],
         [
           324,
-          -41
+          24
         ]
       ],
       "bitmapUvTemplate": [
@@ -261,17 +260,9 @@
           24
         ]
       ],
-      "bitmapUvTransform": {
-        "x": 0,
-        "y": 0,
-        "rotation": 0,
-        "scaleX": 0.8,
-        "scaleY": 0.8
-      },
       "bitmapBaseW": 648,
       "bitmapBaseH": 568,
-      "bitmapMirrorX": true,
-      "bitmapWrap": "mirror"
+      "bitmapMirrorX": true
     },
     {
       "id": 1002,
@@ -286,16 +277,16 @@
       "bitmapFaceKey": "station_panel",
       "bitmapUv": [
         [
-          -51,
-          608.519
+          24,
+          543.615
         ],
         [
-          699,
-          608.519
+          624,
+          543.615
         ],
         [
           324,
-          -41
+          24
         ]
       ],
       "bitmapUvTemplate": [
@@ -312,17 +303,9 @@
           24
         ]
       ],
-      "bitmapUvTransform": {
-        "x": 0,
-        "y": 0,
-        "rotation": 0,
-        "scaleX": 0.8,
-        "scaleY": 0.8
-      },
       "bitmapBaseW": 648,
       "bitmapBaseH": 568,
-      "bitmapMirrorX": true,
-      "bitmapWrap": "mirror"
+      "bitmapMirrorX": true
     },
     {
       "id": 1003,
@@ -337,16 +320,16 @@
       "bitmapFaceKey": "station_panel",
       "bitmapUv": [
         [
-          -51,
-          608.519
+          24,
+          543.615
         ],
         [
-          699,
-          608.519
+          624,
+          543.615
         ],
         [
           324,
-          -41
+          24
         ]
       ],
       "bitmapUvTemplate": [
@@ -363,17 +346,9 @@
           24
         ]
       ],
-      "bitmapUvTransform": {
-        "x": 0,
-        "y": 0,
-        "rotation": 0,
-        "scaleX": 0.8,
-        "scaleY": 0.8
-      },
       "bitmapBaseW": 648,
       "bitmapBaseH": 568,
-      "bitmapMirrorX": true,
-      "bitmapWrap": "mirror"
+      "bitmapMirrorX": true
     },
     {
       "id": 1004,
@@ -388,16 +363,16 @@
       "bitmapFaceKey": "station_panel",
       "bitmapUv": [
         [
-          -51,
-          608.519
+          24,
+          543.615
         ],
         [
-          699,
-          608.519
+          624,
+          543.615
         ],
         [
           324,
-          -41
+          24
         ]
       ],
       "bitmapUvTemplate": [
@@ -414,17 +389,9 @@
           24
         ]
       ],
-      "bitmapUvTransform": {
-        "x": 0,
-        "y": 0,
-        "rotation": 0,
-        "scaleX": 0.8,
-        "scaleY": 0.8
-      },
       "bitmapBaseW": 648,
       "bitmapBaseH": 568,
-      "bitmapMirrorX": true,
-      "bitmapWrap": "mirror"
+      "bitmapMirrorX": true
     },
     {
       "id": 1005,
@@ -440,20 +407,20 @@
       "bitmapFaceKey": "station_panel",
       "bitmapUv": [
         [
-          -104.571,
-          752.571
+          20.954,
+          324
         ],
         [
-          752.571,
-          752.571
+          324,
+          627.046
         ],
         [
-          752.571,
-          -104.571
+          627.046,
+          324
         ],
         [
-          -104.571,
-          -104.571
+          324,
+          20.954
         ]
       ],
       "bitmapUvTemplate": [
@@ -477,14 +444,13 @@
       "bitmapUvTransform": {
         "x": 0,
         "y": 0,
-        "rotation": 0,
-        "scaleX": 0.7,
-        "scaleY": 0.7
+        "rotation": 45,
+        "scaleX": 1.4,
+        "scaleY": 1.4
       },
       "bitmapBaseW": 648,
       "bitmapBaseH": 648,
-      "bitmapMirrorX": true,
-      "bitmapWrap": "mirror"
+      "bitmapMirrorX": true
     },
     {
       "id": 1006,
@@ -500,20 +466,20 @@
       "bitmapFaceKey": "station_panel",
       "bitmapUv": [
         [
-          -104.571,
-          752.571
+          20.954,
+          324
         ],
         [
-          752.571,
-          752.571
+          324,
+          627.046
         ],
         [
-          752.571,
-          -104.571
+          627.046,
+          324
         ],
         [
-          -104.571,
-          -104.571
+          324,
+          20.954
         ]
       ],
       "bitmapUvTemplate": [
@@ -537,14 +503,13 @@
       "bitmapUvTransform": {
         "x": 0,
         "y": 0,
-        "rotation": 0,
-        "scaleX": 0.7,
-        "scaleY": 0.7
+        "rotation": 45,
+        "scaleX": 1.4,
+        "scaleY": 1.4
       },
       "bitmapBaseW": 648,
       "bitmapBaseH": 648,
-      "bitmapMirrorX": true,
-      "bitmapWrap": "mirror"
+      "bitmapMirrorX": true
     },
     {
       "id": 1007,
@@ -560,20 +525,20 @@
       "bitmapFaceKey": "station_panel",
       "bitmapUv": [
         [
-          -104.571,
-          752.571
+          20.954,
+          324
         ],
         [
-          752.571,
-          752.571
+          324,
+          627.046
         ],
         [
-          752.571,
-          -104.571
+          627.046,
+          324
         ],
         [
-          -104.571,
-          -104.571
+          324,
+          20.954
         ]
       ],
       "bitmapUvTemplate": [
@@ -597,14 +562,13 @@
       "bitmapUvTransform": {
         "x": 0,
         "y": 0,
-        "rotation": 0,
-        "scaleX": 0.7,
-        "scaleY": 0.7
+        "rotation": 45,
+        "scaleX": 1.4,
+        "scaleY": 1.4
       },
       "bitmapBaseW": 648,
       "bitmapBaseH": 648,
-      "bitmapMirrorX": true,
-      "bitmapWrap": "mirror"
+      "bitmapMirrorX": true
     },
     {
       "id": 1008,
@@ -618,6 +582,51 @@
       "faceColor": "#495053",
       "bitmapSide": "top",
       "bitmapFaceKey": "station_panel",
+      "bitmapUv": [
+        [
+          20.954,
+          324
+        ],
+        [
+          324,
+          627.046
+        ],
+        [
+          627.046,
+          324
+        ],
+        [
+          324,
+          20.954
+        ]
+      ],
+      "bitmapUvTemplate": [
+        [
+          24,
+          624
+        ],
+        [
+          624,
+          624
+        ],
+        [
+          624,
+          24
+        ],
+        [
+          24,
+          24
+        ]
+      ],
+      "bitmapUvTransform": {
+        "x": 0,
+        "y": 0,
+        "rotation": 45,
+        "scaleX": 1.4,
+        "scaleY": 1.4
+      },
+      "bitmapBaseW": 648,
+      "bitmapBaseH": 648,
       "bitmapMirrorX": true
     },
     {
@@ -633,16 +642,16 @@
       "bitmapFaceKey": "station_panel",
       "bitmapUv": [
         [
-          -51,
-          608.519
+          24,
+          543.615
         ],
         [
-          699,
-          608.519
+          624,
+          543.615
         ],
         [
           324,
-          -41
+          24
         ]
       ],
       "bitmapUvTemplate": [
@@ -659,17 +668,9 @@
           24
         ]
       ],
-      "bitmapUvTransform": {
-        "x": 0,
-        "y": 0,
-        "rotation": 0,
-        "scaleX": 0.8,
-        "scaleY": 0.8
-      },
       "bitmapBaseW": 648,
       "bitmapBaseH": 568,
-      "bitmapMirrorX": true,
-      "bitmapWrap": "mirror"
+      "bitmapMirrorX": true
     },
     {
       "id": 1010,
@@ -684,16 +685,16 @@
       "bitmapFaceKey": "station_panel",
       "bitmapUv": [
         [
-          -51,
-          608.519
+          24,
+          543.615
         ],
         [
-          699,
-          608.519
+          624,
+          543.615
         ],
         [
           324,
-          -41
+          24
         ]
       ],
       "bitmapUvTemplate": [
@@ -710,17 +711,9 @@
           24
         ]
       ],
-      "bitmapUvTransform": {
-        "x": 0,
-        "y": 0,
-        "rotation": 0,
-        "scaleX": 0.8,
-        "scaleY": 0.8
-      },
       "bitmapBaseW": 648,
       "bitmapBaseH": 568,
-      "bitmapMirrorX": true,
-      "bitmapWrap": "mirror"
+      "bitmapMirrorX": true
     },
     {
       "id": 1011,
@@ -735,16 +728,16 @@
       "bitmapFaceKey": "station_panel",
       "bitmapUv": [
         [
-          -51,
-          608.519
+          24,
+          543.615
         ],
         [
-          699,
-          608.519
+          624,
+          543.615
         ],
         [
           324,
-          -41
+          24
         ]
       ],
       "bitmapUvTemplate": [
@@ -761,17 +754,9 @@
           24
         ]
       ],
-      "bitmapUvTransform": {
-        "x": 0,
-        "y": 0,
-        "rotation": 0,
-        "scaleX": 0.8,
-        "scaleY": 0.8
-      },
       "bitmapBaseW": 648,
       "bitmapBaseH": 568,
-      "bitmapMirrorX": true,
-      "bitmapWrap": "mirror"
+      "bitmapMirrorX": true
     },
     {
       "id": 1012,
@@ -786,16 +771,16 @@
       "bitmapFaceKey": "station_panel",
       "bitmapUv": [
         [
-          -51,
-          608.519
+          24,
+          543.615
         ],
         [
-          699,
-          608.519
+          624,
+          543.615
         ],
         [
           324,
-          -41
+          24
         ]
       ],
       "bitmapUvTemplate": [
@@ -812,17 +797,9 @@
           24
         ]
       ],
-      "bitmapUvTransform": {
-        "x": 0,
-        "y": 0,
-        "rotation": 0,
-        "scaleX": 0.8,
-        "scaleY": 0.8
-      },
       "bitmapBaseW": 648,
       "bitmapBaseH": 568,
-      "bitmapMirrorX": true,
-      "bitmapWrap": "mirror"
+      "bitmapMirrorX": true
     },
     {
       "id": 1013,
@@ -838,20 +815,20 @@
       "bitmapFaceKey": "station_panel",
       "bitmapUv": [
         [
-          -104.571,
-          752.571
+          20.954,
+          324
         ],
         [
-          752.571,
-          752.571
+          324,
+          627.046
         ],
         [
-          752.571,
-          -104.571
+          627.046,
+          324
         ],
         [
-          -104.571,
-          -104.571
+          324,
+          20.954
         ]
       ],
       "bitmapUvTemplate": [
@@ -875,14 +852,13 @@
       "bitmapUvTransform": {
         "x": 0,
         "y": 0,
-        "rotation": 0,
-        "scaleX": 0.7,
-        "scaleY": 0.7
+        "rotation": 45,
+        "scaleX": 1.4,
+        "scaleY": 1.4
       },
       "bitmapBaseW": 648,
       "bitmapBaseH": 648,
-      "bitmapMirrorX": true,
-      "bitmapWrap": "mirror"
+      "bitmapMirrorX": true
     }
   ],
   "edges": [
@@ -1552,205 +1528,222 @@
       "faceTextureUv": [
         [
           [
-            -282.092,
+            20.954,
             324
           ],
           [
             324,
-            930.092
+            627.046
           ],
           [
-            930.092,
+            627.046,
             324
           ],
           [
             324,
-            -282.092
+            20.954
           ]
         ],
         [
           [
-            -51,
-            608.519
+            24,
+            543.615
           ],
           [
-            699,
-            608.519
+            624,
+            543.615
           ],
           [
             324,
-            -41
+            24
           ]
         ],
         [
           [
-            -51,
-            608.519
+            24,
+            543.615
           ],
           [
-            699,
-            608.519
+            624,
+            543.615
           ],
           [
             324,
-            -41
+            24
           ]
         ],
         [
           [
-            -51,
-            608.519
+            24,
+            543.615
           ],
           [
-            699,
-            608.519
+            624,
+            543.615
           ],
           [
             324,
-            -41
+            24
           ]
         ],
         [
           [
-            -51,
-            608.519
+            24,
+            543.615
           ],
           [
-            699,
-            608.519
+            624,
+            543.615
           ],
           [
             324,
-            -41
+            24
           ]
         ],
         [
           [
-            -104.571,
-            752.571
-          ],
-          [
-            752.571,
-            752.571
-          ],
-          [
-            752.571,
-            -104.571
-          ],
-          [
-            -104.571,
-            -104.571
-          ]
-        ],
-        [
-          [
-            -104.571,
-            752.571
-          ],
-          [
-            752.571,
-            752.571
-          ],
-          [
-            752.571,
-            -104.571
-          ],
-          [
-            -104.571,
-            -104.571
-          ]
-        ],
-        [
-          [
-            -104.571,
-            752.571
-          ],
-          [
-            752.571,
-            752.571
-          ],
-          [
-            752.571,
-            -104.571
-          ],
-          [
-            -104.571,
-            -104.571
-          ]
-        ],
-        null,
-        [
-          [
-            -51,
-            608.519
-          ],
-          [
-            699,
-            608.519
+            20.954,
+            324
           ],
           [
             324,
-            -41
-          ]
-        ],
-        [
-          [
-            -51,
-            608.519
+            627.046
           ],
           [
-            699,
-            608.519
+            627.046,
+            324
           ],
           [
             324,
-            -41
+            20.954
           ]
         ],
         [
           [
-            -51,
-            608.519
-          ],
-          [
-            699,
-            608.519
+            20.954,
+            324
           ],
           [
             324,
-            -41
-          ]
-        ],
-        [
-          [
-            -51,
-            608.519
+            627.046
           ],
           [
-            699,
-            608.519
+            627.046,
+            324
           ],
           [
             324,
-            -41
+            20.954
           ]
         ],
         [
           [
-            -104.571,
-            752.571
+            20.954,
+            324
           ],
           [
-            752.571,
-            752.571
+            324,
+            627.046
           ],
           [
-            752.571,
-            -104.571
+            627.046,
+            324
           ],
           [
-            -104.571,
-            -104.571
+            324,
+            20.954
+          ]
+        ],
+        [
+          [
+            20.954,
+            324
+          ],
+          [
+            324,
+            627.046
+          ],
+          [
+            627.046,
+            324
+          ],
+          [
+            324,
+            20.954
+          ]
+        ],
+        [
+          [
+            24,
+            543.615
+          ],
+          [
+            624,
+            543.615
+          ],
+          [
+            324,
+            24
+          ]
+        ],
+        [
+          [
+            24,
+            543.615
+          ],
+          [
+            624,
+            543.615
+          ],
+          [
+            324,
+            24
+          ]
+        ],
+        [
+          [
+            24,
+            543.615
+          ],
+          [
+            624,
+            543.615
+          ],
+          [
+            324,
+            24
+          ]
+        ],
+        [
+          [
+            24,
+            543.615
+          ],
+          [
+            624,
+            543.615
+          ],
+          [
+            324,
+            24
+          ]
+        ],
+        [
+          [
+            20.954,
+            324
+          ],
+          [
+            324,
+            627.046
+          ],
+          [
+            627.046,
+            324
+          ],
+          [
+            324,
+            20.954
           ]
         ]
       ],
@@ -1763,7 +1756,7 @@
         648,
         648,
         648,
-        null,
+        648,
         648,
         648,
         648,
@@ -1779,28 +1772,12 @@
         648,
         648,
         648,
-        null,
+        648,
         568,
         568,
         568,
         568,
         648
-      ],
-      "faceTextureWrap": [
-        "mirror",
-        "mirror",
-        "mirror",
-        "mirror",
-        "mirror",
-        "mirror",
-        "mirror",
-        "mirror",
-        null,
-        "mirror",
-        "mirror",
-        "mirror",
-        "mirror",
-        "mirror"
       ],
       "faceColors": [
         "#495053",
@@ -1843,7 +1820,7 @@
         91,
         91,
         91,
-        89,
+        91,
         91,
         91,
         91,

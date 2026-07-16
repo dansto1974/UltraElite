@@ -9059,20 +9059,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "station_panel",
         "bitmapUv": [
           [
-            -282.092,
+            20.954,
             324
           ],
           [
             324,
-            930.092
+            627.046
           ],
           [
-            930.092,
+            627.046,
             324
           ],
           [
             324,
-            -282.092
+            20.954
           ]
         ],
         "bitmapUvTemplate": [
@@ -9097,13 +9097,12 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "x": 0,
           "y": 0,
           "rotation": 45,
-          "scaleX": 0.7,
-          "scaleY": 0.7
+          "scaleX": 1.4,
+          "scaleY": 1.4
         },
         "bitmapBaseW": 648,
         "bitmapBaseH": 648,
-        "bitmapMirrorX": true,
-        "bitmapWrap": "mirror"
+        "bitmapMirrorX": true
       },
       {
         "id": 1001,
@@ -9118,16 +9117,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "station_panel",
         "bitmapUv": [
           [
-            -51,
-            608.519
+            24,
+            543.615
           ],
           [
-            699,
-            608.519
+            624,
+            543.615
           ],
           [
             324,
-            -41
+            24
           ]
         ],
         "bitmapUvTemplate": [
@@ -9144,17 +9143,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             24
           ]
         ],
-        "bitmapUvTransform": {
-          "x": 0,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.8,
-          "scaleY": 0.8
-        },
         "bitmapBaseW": 648,
         "bitmapBaseH": 568,
-        "bitmapMirrorX": true,
-        "bitmapWrap": "mirror"
+        "bitmapMirrorX": true
       },
       {
         "id": 1002,
@@ -9169,16 +9160,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "station_panel",
         "bitmapUv": [
           [
-            -51,
-            608.519
+            24,
+            543.615
           ],
           [
-            699,
-            608.519
+            624,
+            543.615
           ],
           [
             324,
-            -41
+            24
           ]
         ],
         "bitmapUvTemplate": [
@@ -9195,17 +9186,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             24
           ]
         ],
-        "bitmapUvTransform": {
-          "x": 0,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.8,
-          "scaleY": 0.8
-        },
         "bitmapBaseW": 648,
         "bitmapBaseH": 568,
-        "bitmapMirrorX": true,
-        "bitmapWrap": "mirror"
+        "bitmapMirrorX": true
       },
       {
         "id": 1003,
@@ -9220,16 +9203,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "station_panel",
         "bitmapUv": [
           [
-            -51,
-            608.519
+            24,
+            543.615
           ],
           [
-            699,
-            608.519
+            624,
+            543.615
           ],
           [
             324,
-            -41
+            24
           ]
         ],
         "bitmapUvTemplate": [
@@ -9246,17 +9229,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             24
           ]
         ],
-        "bitmapUvTransform": {
-          "x": 0,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.8,
-          "scaleY": 0.8
-        },
         "bitmapBaseW": 648,
         "bitmapBaseH": 568,
-        "bitmapMirrorX": true,
-        "bitmapWrap": "mirror"
+        "bitmapMirrorX": true
       },
       {
         "id": 1004,
@@ -9271,16 +9246,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "station_panel",
         "bitmapUv": [
           [
-            -51,
-            608.519
+            24,
+            543.615
           ],
           [
-            699,
-            608.519
+            624,
+            543.615
           ],
           [
             324,
-            -41
+            24
           ]
         ],
         "bitmapUvTemplate": [
@@ -9297,17 +9272,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             24
           ]
         ],
-        "bitmapUvTransform": {
-          "x": 0,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.8,
-          "scaleY": 0.8
-        },
         "bitmapBaseW": 648,
         "bitmapBaseH": 568,
-        "bitmapMirrorX": true,
-        "bitmapWrap": "mirror"
+        "bitmapMirrorX": true
       },
       {
         "id": 1005,
@@ -9323,20 +9290,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "station_panel",
         "bitmapUv": [
           [
-            -104.571,
-            752.571
+            20.954,
+            324
           ],
           [
-            752.571,
-            752.571
+            324,
+            627.046
           ],
           [
-            752.571,
-            -104.571
+            627.046,
+            324
           ],
           [
-            -104.571,
-            -104.571
+            324,
+            20.954
           ]
         ],
         "bitmapUvTemplate": [
@@ -9360,14 +9327,13 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapUvTransform": {
           "x": 0,
           "y": 0,
-          "rotation": 0,
-          "scaleX": 0.7,
-          "scaleY": 0.7
+          "rotation": 45,
+          "scaleX": 1.4,
+          "scaleY": 1.4
         },
         "bitmapBaseW": 648,
         "bitmapBaseH": 648,
-        "bitmapMirrorX": true,
-        "bitmapWrap": "mirror"
+        "bitmapMirrorX": true
       },
       {
         "id": 1006,
@@ -9383,20 +9349,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "station_panel",
         "bitmapUv": [
           [
-            -104.571,
-            752.571
+            20.954,
+            324
           ],
           [
-            752.571,
-            752.571
+            324,
+            627.046
           ],
           [
-            752.571,
-            -104.571
+            627.046,
+            324
           ],
           [
-            -104.571,
-            -104.571
+            324,
+            20.954
           ]
         ],
         "bitmapUvTemplate": [
@@ -9420,14 +9386,13 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapUvTransform": {
           "x": 0,
           "y": 0,
-          "rotation": 0,
-          "scaleX": 0.7,
-          "scaleY": 0.7
+          "rotation": 45,
+          "scaleX": 1.4,
+          "scaleY": 1.4
         },
         "bitmapBaseW": 648,
         "bitmapBaseH": 648,
-        "bitmapMirrorX": true,
-        "bitmapWrap": "mirror"
+        "bitmapMirrorX": true
       },
       {
         "id": 1007,
@@ -9443,20 +9408,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "station_panel",
         "bitmapUv": [
           [
-            -104.571,
-            752.571
+            20.954,
+            324
           ],
           [
-            752.571,
-            752.571
+            324,
+            627.046
           ],
           [
-            752.571,
-            -104.571
+            627.046,
+            324
           ],
           [
-            -104.571,
-            -104.571
+            324,
+            20.954
           ]
         ],
         "bitmapUvTemplate": [
@@ -9480,14 +9445,13 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapUvTransform": {
           "x": 0,
           "y": 0,
-          "rotation": 0,
-          "scaleX": 0.7,
-          "scaleY": 0.7
+          "rotation": 45,
+          "scaleX": 1.4,
+          "scaleY": 1.4
         },
         "bitmapBaseW": 648,
         "bitmapBaseH": 648,
-        "bitmapMirrorX": true,
-        "bitmapWrap": "mirror"
+        "bitmapMirrorX": true
       },
       {
         "id": 1008,
@@ -9501,6 +9465,51 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#495053",
         "bitmapSide": "top",
         "bitmapFaceKey": "station_panel",
+        "bitmapUv": [
+          [
+            20.954,
+            324
+          ],
+          [
+            324,
+            627.046
+          ],
+          [
+            627.046,
+            324
+          ],
+          [
+            324,
+            20.954
+          ]
+        ],
+        "bitmapUvTemplate": [
+          [
+            24,
+            624
+          ],
+          [
+            624,
+            624
+          ],
+          [
+            624,
+            24
+          ],
+          [
+            24,
+            24
+          ]
+        ],
+        "bitmapUvTransform": {
+          "x": 0,
+          "y": 0,
+          "rotation": 45,
+          "scaleX": 1.4,
+          "scaleY": 1.4
+        },
+        "bitmapBaseW": 648,
+        "bitmapBaseH": 648,
         "bitmapMirrorX": true
       },
       {
@@ -9516,16 +9525,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "station_panel",
         "bitmapUv": [
           [
-            -51,
-            608.519
+            24,
+            543.615
           ],
           [
-            699,
-            608.519
+            624,
+            543.615
           ],
           [
             324,
-            -41
+            24
           ]
         ],
         "bitmapUvTemplate": [
@@ -9542,17 +9551,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             24
           ]
         ],
-        "bitmapUvTransform": {
-          "x": 0,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.8,
-          "scaleY": 0.8
-        },
         "bitmapBaseW": 648,
         "bitmapBaseH": 568,
-        "bitmapMirrorX": true,
-        "bitmapWrap": "mirror"
+        "bitmapMirrorX": true
       },
       {
         "id": 1010,
@@ -9567,16 +9568,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "station_panel",
         "bitmapUv": [
           [
-            -51,
-            608.519
+            24,
+            543.615
           ],
           [
-            699,
-            608.519
+            624,
+            543.615
           ],
           [
             324,
-            -41
+            24
           ]
         ],
         "bitmapUvTemplate": [
@@ -9593,17 +9594,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             24
           ]
         ],
-        "bitmapUvTransform": {
-          "x": 0,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.8,
-          "scaleY": 0.8
-        },
         "bitmapBaseW": 648,
         "bitmapBaseH": 568,
-        "bitmapMirrorX": true,
-        "bitmapWrap": "mirror"
+        "bitmapMirrorX": true
       },
       {
         "id": 1011,
@@ -9618,16 +9611,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "station_panel",
         "bitmapUv": [
           [
-            -51,
-            608.519
+            24,
+            543.615
           ],
           [
-            699,
-            608.519
+            624,
+            543.615
           ],
           [
             324,
-            -41
+            24
           ]
         ],
         "bitmapUvTemplate": [
@@ -9644,17 +9637,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             24
           ]
         ],
-        "bitmapUvTransform": {
-          "x": 0,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.8,
-          "scaleY": 0.8
-        },
         "bitmapBaseW": 648,
         "bitmapBaseH": 568,
-        "bitmapMirrorX": true,
-        "bitmapWrap": "mirror"
+        "bitmapMirrorX": true
       },
       {
         "id": 1012,
@@ -9669,16 +9654,16 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "station_panel",
         "bitmapUv": [
           [
-            -51,
-            608.519
+            24,
+            543.615
           ],
           [
-            699,
-            608.519
+            624,
+            543.615
           ],
           [
             324,
-            -41
+            24
           ]
         ],
         "bitmapUvTemplate": [
@@ -9695,17 +9680,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             24
           ]
         ],
-        "bitmapUvTransform": {
-          "x": 0,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.8,
-          "scaleY": 0.8
-        },
         "bitmapBaseW": 648,
         "bitmapBaseH": 568,
-        "bitmapMirrorX": true,
-        "bitmapWrap": "mirror"
+        "bitmapMirrorX": true
       },
       {
         "id": 1013,
@@ -9721,20 +9698,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "station_panel",
         "bitmapUv": [
           [
-            -104.571,
-            752.571
+            20.954,
+            324
           ],
           [
-            752.571,
-            752.571
+            324,
+            627.046
           ],
           [
-            752.571,
-            -104.571
+            627.046,
+            324
           ],
           [
-            -104.571,
-            -104.571
+            324,
+            20.954
           ]
         ],
         "bitmapUvTemplate": [
@@ -9758,14 +9735,13 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapUvTransform": {
           "x": 0,
           "y": 0,
-          "rotation": 0,
-          "scaleX": 0.7,
-          "scaleY": 0.7
+          "rotation": 45,
+          "scaleX": 1.4,
+          "scaleY": 1.4
         },
         "bitmapBaseW": 648,
         "bitmapBaseH": 648,
-        "bitmapMirrorX": true,
-        "bitmapWrap": "mirror"
+        "bitmapMirrorX": true
       }
     ],
     "edges": [
@@ -10455,205 +10431,222 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceTextureUv": [
           [
             [
-              -282.092,
+              20.954,
               324
             ],
             [
               324,
-              930.092
+              627.046
             ],
             [
-              930.092,
+              627.046,
               324
             ],
             [
               324,
-              -282.092
+              20.954
             ]
           ],
           [
             [
-              -51,
-              608.519
+              24,
+              543.615
             ],
             [
-              699,
-              608.519
+              624,
+              543.615
             ],
             [
               324,
-              -41
+              24
             ]
           ],
           [
             [
-              -51,
-              608.519
+              24,
+              543.615
             ],
             [
-              699,
-              608.519
+              624,
+              543.615
             ],
             [
               324,
-              -41
+              24
             ]
           ],
           [
             [
-              -51,
-              608.519
+              24,
+              543.615
             ],
             [
-              699,
-              608.519
+              624,
+              543.615
             ],
             [
               324,
-              -41
+              24
             ]
           ],
           [
             [
-              -51,
-              608.519
+              24,
+              543.615
             ],
             [
-              699,
-              608.519
+              624,
+              543.615
             ],
             [
               324,
-              -41
+              24
             ]
           ],
           [
             [
-              -104.571,
-              752.571
-            ],
-            [
-              752.571,
-              752.571
-            ],
-            [
-              752.571,
-              -104.571
-            ],
-            [
-              -104.571,
-              -104.571
-            ]
-          ],
-          [
-            [
-              -104.571,
-              752.571
-            ],
-            [
-              752.571,
-              752.571
-            ],
-            [
-              752.571,
-              -104.571
-            ],
-            [
-              -104.571,
-              -104.571
-            ]
-          ],
-          [
-            [
-              -104.571,
-              752.571
-            ],
-            [
-              752.571,
-              752.571
-            ],
-            [
-              752.571,
-              -104.571
-            ],
-            [
-              -104.571,
-              -104.571
-            ]
-          ],
-          null,
-          [
-            [
-              -51,
-              608.519
-            ],
-            [
-              699,
-              608.519
+              20.954,
+              324
             ],
             [
               324,
-              -41
-            ]
-          ],
-          [
-            [
-              -51,
-              608.519
+              627.046
             ],
             [
-              699,
-              608.519
+              627.046,
+              324
             ],
             [
               324,
-              -41
+              20.954
             ]
           ],
           [
             [
-              -51,
-              608.519
-            ],
-            [
-              699,
-              608.519
+              20.954,
+              324
             ],
             [
               324,
-              -41
-            ]
-          ],
-          [
-            [
-              -51,
-              608.519
+              627.046
             ],
             [
-              699,
-              608.519
+              627.046,
+              324
             ],
             [
               324,
-              -41
+              20.954
             ]
           ],
           [
             [
-              -104.571,
-              752.571
+              20.954,
+              324
             ],
             [
-              752.571,
-              752.571
+              324,
+              627.046
             ],
             [
-              752.571,
-              -104.571
+              627.046,
+              324
             ],
             [
-              -104.571,
-              -104.571
+              324,
+              20.954
+            ]
+          ],
+          [
+            [
+              20.954,
+              324
+            ],
+            [
+              324,
+              627.046
+            ],
+            [
+              627.046,
+              324
+            ],
+            [
+              324,
+              20.954
+            ]
+          ],
+          [
+            [
+              24,
+              543.615
+            ],
+            [
+              624,
+              543.615
+            ],
+            [
+              324,
+              24
+            ]
+          ],
+          [
+            [
+              24,
+              543.615
+            ],
+            [
+              624,
+              543.615
+            ],
+            [
+              324,
+              24
+            ]
+          ],
+          [
+            [
+              24,
+              543.615
+            ],
+            [
+              624,
+              543.615
+            ],
+            [
+              324,
+              24
+            ]
+          ],
+          [
+            [
+              24,
+              543.615
+            ],
+            [
+              624,
+              543.615
+            ],
+            [
+              324,
+              24
+            ]
+          ],
+          [
+            [
+              20.954,
+              324
+            ],
+            [
+              324,
+              627.046
+            ],
+            [
+              627.046,
+              324
+            ],
+            [
+              324,
+              20.954
             ]
           ]
         ],
@@ -10666,7 +10659,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           648,
           648,
           648,
-          null,
+          648,
           648,
           648,
           648,
@@ -10682,28 +10675,12 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           648,
           648,
           648,
-          null,
+          648,
           568,
           568,
           568,
           568,
           648
-        ],
-        "faceTextureWrap": [
-          "mirror",
-          "mirror",
-          "mirror",
-          "mirror",
-          "mirror",
-          "mirror",
-          "mirror",
-          "mirror",
-          null,
-          "mirror",
-          "mirror",
-          "mirror",
-          "mirror",
-          "mirror"
         ],
         "faceColors": [
           "#495053",
@@ -10746,7 +10723,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           91,
           91,
           91,
-          89,
+          91,
           91,
           91,
           91,
@@ -11663,6 +11640,12 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       "decalRole": "none",
       "baseColor": "#cf9b2a",
       "description": "The Diamondback is an off-books hunter craft: Sleek like a running shoe, over-engined and fully fitted out with the latest Sirius Cybernetics Corp. GPP technology.",
+      "missionLore": "",
+      "imageDecalMirrorX": {
+        "top": true,
+        "bottom": true,
+        "back": false
+      },
       "valueCr": 2500000,
       "stats": {
         "r": 139,
@@ -11681,11 +11664,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       "flags": {
         "escapePod": true,
         "hiddenUntilDiscovered": true
-      },
-      "imageDecalMirrorX": {
-        "top": true,
-        "bottom": true,
-        "back": false
       }
     },
     "verts": [
@@ -12157,6 +12135,58 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           139
         ]
       ],
+      "faces": [
+        [
+          0,
+          3,
+          1
+        ],
+        [
+          0,
+          1,
+          4
+        ],
+        [
+          0,
+          2,
+          3
+        ],
+        [
+          0,
+          4,
+          2
+        ],
+        [
+          5,
+          3,
+          2
+        ],
+        [
+          2,
+          4,
+          5
+        ],
+        [
+          6,
+          1,
+          3
+        ],
+        [
+          4,
+          1,
+          6
+        ],
+        [
+          3,
+          5,
+          6
+        ],
+        [
+          6,
+          5,
+          4
+        ]
+      ],
       "edges": [
         [
           0,
@@ -12230,6 +12260,26 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0,
           9
         ]
+      ],
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "stick",
+        "stick",
+        "stick"
       ],
       "edgeFaces": [
         [
@@ -12839,33 +12889,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           }
         }
       ],
-      "gameMeta": {
-        "class": "fighter",
-        "npcRole": "private",
-        "aiProfile": "bountyHunter",
-        "decalRole": "none",
-        "baseColor": "#cf9b2a",
-        "description": "The Diamondback is an off-books hunter craft: Sleek like a running shoe, over-engined and fully fitted out with the latest Sirius Cybernetics Corp. GPP technology.",
-        "valueCr": 2500000,
-        "stats": {
-          "r": 139,
-          "hp": 300,
-          "speed": 2.2,
-          "cargo": 14,
-          "missiles": 6,
-          "laser": "military"
-        },
-        "lists": {
-          "trader": false,
-          "pirate": false,
-          "police": false,
-          "alien": false
-        },
-        "flags": {
-          "escapePod": true,
-          "hiddenUntilDiscovered": true
-        }
-      },
       "imageProjection": {
         "faceColors": [
           "#d35080",
@@ -12892,26 +12915,39 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8
         ]
       },
-      "edgeKinds": [
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "stick",
-        "stick",
-        "stick"
-      ]
+      "gameMeta": {
+        "class": "fighter",
+        "npcRole": "private",
+        "aiProfile": "bountyHunter",
+        "decalRole": "none",
+        "baseColor": "#cf9b2a",
+        "description": "The Diamondback is an off-books hunter craft: Sleek like a running shoe, over-engined and fully fitted out with the latest Sirius Cybernetics Corp. GPP technology.",
+        "missionLore": "",
+        "imageDecalMirrorX": {
+          "top": true,
+          "bottom": true,
+          "back": false
+        },
+        "valueCr": 2500000,
+        "stats": {
+          "r": 139,
+          "hp": 300,
+          "speed": 2.2,
+          "cargo": 14,
+          "missiles": 6,
+          "laser": "military"
+        },
+        "lists": {
+          "trader": false,
+          "pirate": false,
+          "police": false,
+          "alien": false
+        },
+        "flags": {
+          "escapePod": true,
+          "hiddenUntilDiscovered": true
+        }
+      }
     }
   },
   "dodoStation": {
@@ -13157,24 +13193,24 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "station_panel",
         "bitmapUv": [
           [
-            699,
-            225.876
+            624,
+            242.701
           ],
           [
-            323.141,
-            -47.5
+            323.313,
+            24
           ],
           [
-            -51,
-            226.694
+            24,
+            243.355
           ],
           [
-            91.861,
-            667.096
+            138.289,
+            595.677
           ],
           [
-            557.11,
-            667.096
+            510.488,
+            595.677
           ]
         ],
         "bitmapUvTemplate": [
@@ -13199,17 +13235,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             595.677
           ]
         ],
-        "bitmapUvTransform": {
-          "x": 0,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.8,
-          "scaleY": 0.8
-        },
         "bitmapBaseW": 648,
-        "bitmapBaseH": 620,
-        "bitmapMirrorX": true,
-        "bitmapWrap": "mirror"
+        "bitmapBaseH": 620
       },
       {
         "id": 1001,
@@ -13226,24 +13253,24 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "station_panel",
         "bitmapUv": [
           [
-            699,
-            225.876
+            624,
+            242.701
           ],
           [
-            323.141,
-            -47.5
+            323.313,
+            24
           ],
           [
-            -51,
-            226.694
+            24,
+            243.355
           ],
           [
-            91.861,
-            667.096
+            138.289,
+            595.677
           ],
           [
-            557.11,
-            667.096
+            510.488,
+            595.677
           ]
         ],
         "bitmapUvTemplate": [
@@ -13268,17 +13295,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             595.677
           ]
         ],
-        "bitmapUvTransform": {
-          "x": 0,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.8,
-          "scaleY": 0.8
-        },
         "bitmapBaseW": 648,
-        "bitmapBaseH": 620,
-        "bitmapMirrorX": true,
-        "bitmapWrap": "mirror"
+        "bitmapBaseH": 620
       },
       {
         "id": 1002,
@@ -13295,24 +13313,24 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "station_panel",
         "bitmapUv": [
           [
-            699,
-            225.876
+            624,
+            242.701
           ],
           [
-            323.141,
-            -47.5
+            323.313,
+            24
           ],
           [
-            -51,
-            226.694
+            24,
+            243.355
           ],
           [
-            91.861,
-            667.096
+            138.289,
+            595.677
           ],
           [
-            557.11,
-            667.096
+            510.488,
+            595.677
           ]
         ],
         "bitmapUvTemplate": [
@@ -13337,17 +13355,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             595.677
           ]
         ],
-        "bitmapUvTransform": {
-          "x": 0,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.8,
-          "scaleY": 0.8
-        },
         "bitmapBaseW": 648,
-        "bitmapBaseH": 620,
-        "bitmapMirrorX": true,
-        "bitmapWrap": "mirror"
+        "bitmapBaseH": 620
       },
       {
         "id": 1003,
@@ -13364,24 +13373,24 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "station_panel",
         "bitmapUv": [
           [
-            699,
-            225.876
+            624,
+            242.701
           ],
           [
-            323.141,
-            -47.5
+            323.313,
+            24
           ],
           [
-            -51,
-            226.694
+            24,
+            243.355
           ],
           [
-            91.861,
-            667.096
+            138.289,
+            595.677
           ],
           [
-            557.11,
-            667.096
+            510.488,
+            595.677
           ]
         ],
         "bitmapUvTemplate": [
@@ -13406,17 +13415,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             595.677
           ]
         ],
-        "bitmapUvTransform": {
-          "x": 0,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.8,
-          "scaleY": 0.8
-        },
         "bitmapBaseW": 648,
-        "bitmapBaseH": 620,
-        "bitmapMirrorX": true,
-        "bitmapWrap": "mirror"
+        "bitmapBaseH": 620
       },
       {
         "id": 1004,
@@ -13433,24 +13433,24 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "station_panel",
         "bitmapUv": [
           [
-            699,
-            225.876
+            624,
+            242.701
           ],
           [
-            323.141,
-            -47.5
+            323.313,
+            24
           ],
           [
-            -51,
-            226.694
+            24,
+            243.355
           ],
           [
-            91.861,
-            667.096
+            138.289,
+            595.677
           ],
           [
-            557.11,
-            667.096
+            510.488,
+            595.677
           ]
         ],
         "bitmapUvTemplate": [
@@ -13475,17 +13475,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             595.677
           ]
         ],
-        "bitmapUvTransform": {
-          "x": 0,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.8,
-          "scaleY": 0.8
-        },
         "bitmapBaseW": 648,
-        "bitmapBaseH": 620,
-        "bitmapMirrorX": true,
-        "bitmapWrap": "mirror"
+        "bitmapBaseH": 620
       },
       {
         "id": 1005,
@@ -13502,24 +13493,24 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "station_panel",
         "bitmapUv": [
           [
-            699,
-            225.876
+            624,
+            242.701
           ],
           [
-            323.141,
-            -47.5
+            323.313,
+            24
           ],
           [
-            -51,
-            226.694
+            24,
+            243.355
           ],
           [
-            91.861,
-            667.096
+            138.289,
+            595.677
           ],
           [
-            557.11,
-            667.096
+            510.488,
+            595.677
           ]
         ],
         "bitmapUvTemplate": [
@@ -13544,17 +13535,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             595.677
           ]
         ],
-        "bitmapUvTransform": {
-          "x": 0,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.8,
-          "scaleY": 0.8
-        },
         "bitmapBaseW": 648,
-        "bitmapBaseH": 620,
-        "bitmapMirrorX": true,
-        "bitmapWrap": "mirror"
+        "bitmapBaseH": 620
       },
       {
         "id": 1006,
@@ -13640,24 +13622,24 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "station_panel",
         "bitmapUv": [
           [
-            699,
-            225.876
+            624,
+            242.701
           ],
           [
-            323.141,
-            -47.5
+            323.313,
+            24
           ],
           [
-            -51,
-            226.694
+            24,
+            243.355
           ],
           [
-            91.861,
-            667.096
+            138.289,
+            595.677
           ],
           [
-            557.11,
-            667.096
+            510.488,
+            595.677
           ]
         ],
         "bitmapUvTemplate": [
@@ -13682,17 +13664,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             595.677
           ]
         ],
-        "bitmapUvTransform": {
-          "x": 0,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.8,
-          "scaleY": 0.8
-        },
         "bitmapBaseW": 648,
-        "bitmapBaseH": 620,
-        "bitmapMirrorX": true,
-        "bitmapWrap": "mirror"
+        "bitmapBaseH": 620
       },
       {
         "id": 1008,
@@ -13709,24 +13682,24 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "station_panel",
         "bitmapUv": [
           [
-            699,
-            225.876
+            624,
+            242.701
           ],
           [
-            323.141,
-            -47.5
+            323.313,
+            24
           ],
           [
-            -51,
-            226.694
+            24,
+            243.355
           ],
           [
-            91.861,
-            667.096
+            138.289,
+            595.677
           ],
           [
-            557.11,
-            667.096
+            510.488,
+            595.677
           ]
         ],
         "bitmapUvTemplate": [
@@ -13751,17 +13724,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             595.677
           ]
         ],
-        "bitmapUvTransform": {
-          "x": 0,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.8,
-          "scaleY": 0.8
-        },
         "bitmapBaseW": 648,
-        "bitmapBaseH": 620,
-        "bitmapMirrorX": true,
-        "bitmapWrap": "mirror"
+        "bitmapBaseH": 620
       },
       {
         "id": 1009,
@@ -13778,24 +13742,24 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "station_panel",
         "bitmapUv": [
           [
-            699,
-            225.876
+            624,
+            242.701
           ],
           [
-            323.141,
-            -47.5
+            323.313,
+            24
           ],
           [
-            -51,
-            226.694
+            24,
+            243.355
           ],
           [
-            91.861,
-            667.096
+            138.289,
+            595.677
           ],
           [
-            557.11,
-            667.096
+            510.488,
+            595.677
           ]
         ],
         "bitmapUvTemplate": [
@@ -13820,17 +13784,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             595.677
           ]
         ],
-        "bitmapUvTransform": {
-          "x": 0,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.8,
-          "scaleY": 0.8
-        },
         "bitmapBaseW": 648,
-        "bitmapBaseH": 620,
-        "bitmapMirrorX": true,
-        "bitmapWrap": "mirror"
+        "bitmapBaseH": 620
       },
       {
         "id": 1010,
@@ -13847,24 +13802,24 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "station_panel",
         "bitmapUv": [
           [
-            699,
-            225.876
+            624,
+            242.701
           ],
           [
-            323.141,
-            -47.5
+            323.313,
+            24
           ],
           [
-            -51,
-            226.694
+            24,
+            243.355
           ],
           [
-            91.861,
-            667.096
+            138.289,
+            595.677
           ],
           [
-            557.11,
-            667.096
+            510.488,
+            595.677
           ]
         ],
         "bitmapUvTemplate": [
@@ -13889,17 +13844,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             595.677
           ]
         ],
-        "bitmapUvTransform": {
-          "x": 0,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.8,
-          "scaleY": 0.8
-        },
         "bitmapBaseW": 648,
-        "bitmapBaseH": 620,
-        "bitmapMirrorX": true,
-        "bitmapWrap": "mirror"
+        "bitmapBaseH": 620
       },
       {
         "id": 1011,
@@ -13916,24 +13862,24 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapFaceKey": "station_panel",
         "bitmapUv": [
           [
-            699,
-            225.876
+            624,
+            242.701
           ],
           [
-            323.141,
-            -47.5
+            323.313,
+            24
           ],
           [
-            -51,
-            226.694
+            24,
+            243.355
           ],
           [
-            91.861,
-            667.096
+            138.289,
+            595.677
           ],
           [
-            557.11,
-            667.096
+            510.488,
+            595.677
           ]
         ],
         "bitmapUvTemplate": [
@@ -13958,17 +13904,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             595.677
           ]
         ],
-        "bitmapUvTransform": {
-          "x": 0,
-          "y": 0,
-          "rotation": 0,
-          "scaleX": 0.8,
-          "scaleY": 0.8
-        },
         "bitmapBaseW": 648,
-        "bitmapBaseH": 620,
-        "bitmapMirrorX": true,
-        "bitmapWrap": "mirror"
+        "bitmapBaseH": 620
       }
     ],
     "edges": [
@@ -14752,24 +14689,134 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceTextureUv": [
           [
             [
-              699,
-              225.876
+              624,
+              242.701
             ],
             [
-              323.141,
-              -47.5
+              323.313,
+              24
             ],
             [
-              -51,
-              226.694
+              24,
+              243.355
             ],
             [
-              91.861,
-              667.096
+              138.289,
+              595.677
             ],
             [
-              557.11,
-              667.096
+              510.488,
+              595.677
+            ]
+          ],
+          [
+            [
+              624,
+              242.701
+            ],
+            [
+              323.313,
+              24
+            ],
+            [
+              24,
+              243.355
+            ],
+            [
+              138.289,
+              595.677
+            ],
+            [
+              510.488,
+              595.677
+            ]
+          ],
+          [
+            [
+              624,
+              242.701
+            ],
+            [
+              323.313,
+              24
+            ],
+            [
+              24,
+              243.355
+            ],
+            [
+              138.289,
+              595.677
+            ],
+            [
+              510.488,
+              595.677
+            ]
+          ],
+          [
+            [
+              624,
+              242.701
+            ],
+            [
+              323.313,
+              24
+            ],
+            [
+              24,
+              243.355
+            ],
+            [
+              138.289,
+              595.677
+            ],
+            [
+              510.488,
+              595.677
+            ]
+          ],
+          [
+            [
+              624,
+              242.701
+            ],
+            [
+              323.313,
+              24
+            ],
+            [
+              24,
+              243.355
+            ],
+            [
+              138.289,
+              595.677
+            ],
+            [
+              510.488,
+              595.677
+            ]
+          ],
+          [
+            [
+              624,
+              242.701
+            ],
+            [
+              323.313,
+              24
+            ],
+            [
+              24,
+              243.355
+            ],
+            [
+              138.289,
+              595.677
+            ],
+            [
+              510.488,
+              595.677
             ]
           ],
           [
@@ -14796,222 +14843,112 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           ],
           [
             [
-              699,
-              225.876
+              624,
+              242.701
             ],
             [
-              323.141,
-              -47.5
+              323.313,
+              24
             ],
             [
-              -51,
-              226.694
+              24,
+              243.355
             ],
             [
-              91.861,
-              667.096
+              138.289,
+              595.677
             ],
             [
-              557.11,
-              667.096
+              510.488,
+              595.677
             ]
           ],
           [
             [
-              699,
-              225.876
+              624,
+              242.701
             ],
             [
-              323.141,
-              -47.5
+              323.313,
+              24
             ],
             [
-              -51,
-              226.694
+              24,
+              243.355
             ],
             [
-              91.861,
-              667.096
+              138.289,
+              595.677
             ],
             [
-              557.11,
-              667.096
+              510.488,
+              595.677
             ]
           ],
           [
             [
-              699,
-              225.876
+              624,
+              242.701
             ],
             [
-              323.141,
-              -47.5
+              323.313,
+              24
             ],
             [
-              -51,
-              226.694
+              24,
+              243.355
             ],
             [
-              91.861,
-              667.096
+              138.289,
+              595.677
             ],
             [
-              557.11,
-              667.096
+              510.488,
+              595.677
             ]
           ],
           [
             [
-              699,
-              225.876
+              624,
+              242.701
             ],
             [
-              323.141,
-              -47.5
+              323.313,
+              24
             ],
             [
-              -51,
-              226.694
+              24,
+              243.355
             ],
             [
-              91.861,
-              667.096
+              138.289,
+              595.677
             ],
             [
-              557.11,
-              667.096
+              510.488,
+              595.677
             ]
           ],
           [
             [
-              699,
-              225.876
+              624,
+              242.701
             ],
             [
-              323.141,
-              -47.5
+              323.313,
+              24
             ],
             [
-              -51,
-              226.694
+              24,
+              243.355
             ],
             [
-              91.861,
-              667.096
+              138.289,
+              595.677
             ],
             [
-              557.11,
-              667.096
-            ]
-          ],
-          [
-            [
-              699,
-              225.876
-            ],
-            [
-              323.141,
-              -47.5
-            ],
-            [
-              -51,
-              226.694
-            ],
-            [
-              91.861,
-              667.096
-            ],
-            [
-              557.11,
-              667.096
-            ]
-          ],
-          [
-            [
-              699,
-              225.876
-            ],
-            [
-              323.141,
-              -47.5
-            ],
-            [
-              -51,
-              226.694
-            ],
-            [
-              91.861,
-              667.096
-            ],
-            [
-              557.11,
-              667.096
-            ]
-          ],
-          [
-            [
-              699,
-              225.876
-            ],
-            [
-              323.141,
-              -47.5
-            ],
-            [
-              -51,
-              226.694
-            ],
-            [
-              91.861,
-              667.096
-            ],
-            [
-              557.11,
-              667.096
-            ]
-          ],
-          [
-            [
-              699,
-              225.876
-            ],
-            [
-              323.141,
-              -47.5
-            ],
-            [
-              -51,
-              226.694
-            ],
-            [
-              91.861,
-              667.096
-            ],
-            [
-              557.11,
-              667.096
-            ]
-          ],
-          [
-            [
-              699,
-              225.876
-            ],
-            [
-              323.141,
-              -47.5
-            ],
-            [
-              -51,
-              226.694
-            ],
-            [
-              91.861,
-              667.096
-            ],
-            [
-              557.11,
-              667.096
+              510.488,
+              595.677
             ]
           ]
         ],
@@ -15044,18 +14981,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           620
         ],
         "faceTextureWrap": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
           "mirror",
-          "mirror",
-          "mirror",
-          "mirror",
-          "mirror",
-          "mirror",
-          "mirror",
-          "mirror",
-          "mirror",
-          "mirror",
-          "mirror",
-          "mirror"
+          null,
+          null,
+          null,
+          null,
+          null
         ],
         "faceColors": [
           "#495053",
@@ -15072,32 +15009,32 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#495053"
         ],
         "faceMirrorX": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
           true,
-          true,
-          true,
-          true,
-          true,
-          true,
-          true,
-          true,
-          true,
-          true,
-          true,
-          true
+          false,
+          false,
+          false,
+          false,
+          false
         ],
         "faceRenderFlags": [
+          75,
+          75,
+          75,
+          75,
+          75,
+          75,
           91,
-          91,
-          91,
-          91,
-          91,
-          91,
-          91,
-          91,
-          91,
-          91,
-          91,
-          91
+          75,
+          75,
+          75,
+          75,
+          75
         ]
       },
       "gameMeta": {
