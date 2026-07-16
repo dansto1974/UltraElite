@@ -71,14 +71,26 @@ const els = {
   detailInset: document.getElementById("detailInset"),
   detailColor: document.getElementById("detailColor"),
   showFaceNormals: document.getElementById("showFaceNormals"),
+  showFaceUvTypes: document.getElementById("showFaceUvTypes"),
   showBlankUv: document.getElementById("showBlankUv"),
+  showWindowDetails: document.getElementById("showWindowDetails"),
+  showSurfaceDetails: document.getElementById("showSurfaceDetails"),
+  showEngineDetails: document.getElementById("showEngineDetails"),
+  showBeaconDetails: document.getElementById("showBeaconDetails"),
+  showAuditEdges: document.getElementById("showAuditEdges"),
   mirrorNewGeometry: document.getElementById("mirrorNewGeometry"),
   previewRenderMode: document.getElementById("previewRenderMode"),
   skinReadout: document.getElementById("skinReadout"),
+  faceUvTypeReadout: document.getElementById("faceUvTypeReadout"),
   mirrorHalfSkins: document.getElementById("mirrorHalfSkins"),
   importMirroredSkin: document.getElementById("importMirroredSkin"),
   skinAngle: document.getElementById("skinAngle"),
   skinAngleValue: document.getElementById("skinAngleValue"),
+  uvTransformX: document.getElementById("uvTransformX"),
+  uvTransformY: document.getElementById("uvTransformY"),
+  uvTransformRotation: document.getElementById("uvTransformRotation"),
+  uvTransformScale: document.getElementById("uvTransformScale"),
+  resetUvTransformBtn: document.getElementById("resetUvTransformBtn"),
   orientUvToViewBtn: document.getElementById("orientUvToViewBtn"),
   resetUvAngleBtn: document.getElementById("resetUvAngleBtn"),
   faceColor: document.getElementById("faceColor"),
@@ -128,6 +140,21 @@ const els = {
   selectedAssetThumb: document.getElementById("selectedAssetThumb"),
   selectedAssetTitle: document.getElementById("selectedAssetTitle"),
   selectedAssetMeta: document.getElementById("selectedAssetMeta"),
+  openUvPropertiesBtn: document.getElementById("openUvPropertiesBtn"),
+  uvPropertiesModal: document.getElementById("uvPropertiesModal"),
+  closeUvPropertiesBtn: document.getElementById("closeUvPropertiesBtn"),
+  browseModelsBtn: document.getElementById("browseModelsBtn"),
+  profileSideCount: document.getElementById("profileSideCount"),
+  profileRotationDeg: document.getElementById("profileRotationDeg"),
+  profileConeMode: document.getElementById("profileConeMode"),
+  modelBrowserModal: document.getElementById("modelBrowserModal"),
+  modelBrowserGrid: document.getElementById("modelBrowserGrid"),
+  modelBrowserReadout: document.getElementById("modelBrowserReadout"),
+  modelBrowserProfileSides: document.getElementById("modelBrowserProfileSides"),
+  modelBrowserProfileRotation: document.getElementById("modelBrowserProfileRotation"),
+  modelBrowserProfileCone: document.getElementById("modelBrowserProfileCone"),
+  modelBrowserNewProfileBtn: document.getElementById("modelBrowserNewProfileBtn"),
+  closeModelBrowserBtn: document.getElementById("closeModelBrowserBtn"),
   openAssetLibraryBtn: document.getElementById("openAssetLibraryBtn"),
   openAssetLibraryPaintBtn: document.getElementById("openAssetLibraryPaintBtn"),
   closeAssetLibraryBtn: document.getElementById("closeAssetLibraryBtn"),
@@ -187,10 +214,12 @@ const state = {
   previewSkinVersion: Date.now(),
   gamePreviewInfo: null,
   gamePreviewProjection: null,
+  gamePreviewDetailProjectionIndexByStateIndex: new Map(),
   faceDecalUiKey: "",
   sourceModelId: "",
   selected: null,
   selectedFaceIds: new Set(),
+  selectedEdgeIds: new Set(),
   pick: [],
   view: { rx: STANDARD_VIEW.rx, ry: STANDARD_VIEW.ry, zoom: 2.9, panX: 0, panY: 0 },
   orthoScale: 1,
@@ -268,6 +297,30 @@ function cleanFaceBitmapUv(face) {
   return uv.length === verts.length ? uv : null;
 }
 
+function cleanFaceBitmapUvTemplate(face) {
+  const verts = Array.isArray(face) ? face : face?.verts || [];
+  if (!Array.isArray(face?.bitmapUvTemplate) || verts.length < 3) return null;
+  const uv = face.bitmapUvTemplate
+    .map((p) => Array.isArray(p) ? [round(Number(p[0]) || 0, 3), round(Number(p[1]) || 0, 3)] : null)
+    .filter(Boolean);
+  return uv.length === verts.length ? uv : null;
+}
+
+function cleanBitmapUvTransform(value = {}) {
+  const scale = Number(value?.scale);
+  return {
+    x: round(Number(value?.x) || 0, 3),
+    y: round(Number(value?.y) || 0, 3),
+    rotation: normalizeBitmapAngle(value?.rotation),
+    scale: round(Number.isFinite(scale) && scale > 0 ? clamp(scale, 0.05, 20) : 1, 3)
+  };
+}
+
+function bitmapUvTransformIsDefault(transform) {
+  const clean = cleanBitmapUvTransform(transform);
+  return !clean.x && !clean.y && !clean.rotation && Math.abs(clean.scale - 1) < .0001;
+}
+
 function mirroredFaceAngle(angle) {
   return normalizeBitmapAngle(-normalizeBitmapAngle(angle));
 }
@@ -316,6 +369,8 @@ function sourceFace(face, index) {
   const bitmapAngle = normalizeBitmapAngle(face?.bitmapAngle);
   const bitmapMirrorX = !!face?.bitmapMirrorX;
   const bitmapUv = cleanFaceBitmapUv(face);
+  const bitmapUvTemplate = cleanFaceBitmapUvTemplate(face);
+  const bitmapUvTransform = cleanBitmapUvTransform(face?.bitmapUvTransform);
   const bitmapBaseW = Math.max(0, Math.round(Number(face?.bitmapBaseW) || 0));
   const bitmapBaseH = Math.max(0, Math.round(Number(face?.bitmapBaseH) || 0));
   const bitmapDecals = cleanFaceDecals(face?.bitmapDecals);
@@ -328,6 +383,8 @@ function sourceFace(face, index) {
     ...(bitmapSide ? { bitmapSide } : {}),
     ...(bitmapFaceKey ? { bitmapFaceKey } : {}),
     ...(bitmapUv?.length >= 3 ? { bitmapUv } : {}),
+    ...(bitmapUvTemplate?.length >= 3 ? { bitmapUvTemplate } : {}),
+    ...(!bitmapUvTransformIsDefault(bitmapUvTransform) ? { bitmapUvTransform } : {}),
     ...(bitmapBaseW && bitmapBaseH ? { bitmapBaseW, bitmapBaseH } : {}),
     ...(bitmapAngle ? { bitmapAngle } : {}),
     ...(bitmapMirrorX ? { bitmapMirrorX } : {}),
@@ -499,6 +556,71 @@ function selectedFace() {
 
 function selectedFaceGroup() {
   return [...state.selectedFaceIds].map(faceById).filter(Boolean);
+}
+
+function faceUvTypeInfo(face) {
+  if (!face) {
+    return {
+      kind: "none",
+      label: "No Face Selected",
+      detail: "Select a face to inspect UV type.",
+      short: "none"
+    };
+  }
+  const uv = cleanFaceBitmapUv(face);
+  const key = cleanBitmapKey(face.bitmapFaceKey);
+  const side = validBitmapFaceSide(face.bitmapSide);
+  const autoSide = autoTemplateSideForFace(face);
+  const route = side || `auto/${autoSide}`;
+  const decals = cleanFaceDecals(face.bitmapDecals);
+  const angle = normalizeBitmapAngle(face.bitmapAngle);
+  const mirrorText = face.bitmapMirrorX ? " | half-mirror" : "";
+  const angleText = angle ? ` | angle ${angle}` : "";
+  if (uv) {
+    return {
+      kind: "projected",
+      label: "Projected UV",
+      detail: `${uv.length} points | ${route}${key ? ` | ${key}` : ""}${angleText}${mirrorText}`,
+      short: `projected ${route}`
+    };
+  }
+  if (key) {
+    return {
+      kind: "flat",
+      label: "Flat Face UV",
+      detail: `${key} | ${route}${angleText}${mirrorText}`,
+      short: `flat ${route}`
+    };
+  }
+  if (decals.length) {
+    return {
+      kind: "flat",
+      label: "Flat Decal UV",
+      detail: `${decals.length} decal${decals.length === 1 ? "" : "s"} | ${route}${angleText}${mirrorText}`,
+      short: `flat decal ${route}`
+    };
+  }
+  if (side) {
+    return {
+      kind: "side",
+      label: "Side Projection",
+      detail: `${side} side skin route | no face bitmap`,
+      short: `${side} projection`
+    };
+  }
+  return {
+    kind: "auto",
+    label: "Auto Projection",
+    detail: `auto/${autoSide} side route | no face bitmap`,
+    short: `auto/${autoSide}`
+  };
+}
+
+function updateFaceUvTypeReadout() {
+  if (!els.faceUvTypeReadout) return;
+  const info = faceUvTypeInfo(selectedFace());
+  els.faceUvTypeReadout.dataset.uvType = info.kind;
+  els.faceUvTypeReadout.textContent = `${info.label}: ${info.detail}`;
 }
 
 function clearFaceGroup(statusText = "FACE GROUP CLEARED.") {
@@ -687,6 +809,12 @@ function syncMirroredFace(face, options = {}) {
       delete mf.bitmapBaseW;
       delete mf.bitmapBaseH;
     }
+    const template = cleanFaceBitmapUvTemplate(face);
+    if (template) mf.bitmapUvTemplate = template.map((p) => [round(Number(p[0]) || 0, 3), round(Number(p[1]) || 0, 3)]);
+    else delete mf.bitmapUvTemplate;
+    const transform = cleanBitmapUvTransform(face.bitmapUvTransform);
+    if (bitmapUvTransformIsDefault(transform)) delete mf.bitmapUvTransform;
+    else mf.bitmapUvTransform = transform;
     const angle = mirroredFaceAngle(face.bitmapAngle);
     if (angle) mf.bitmapAngle = angle;
     else delete mf.bitmapAngle;
@@ -1105,13 +1233,162 @@ function addDetail(type) {
   renderAll();
 }
 
+function edgeComponentIsClosed(edges) {
+  if (edges.length < 3) return false;
+  const degree = new Map();
+  for (const edge of edges) {
+    degree.set(edge.a, (degree.get(edge.a) || 0) + 1);
+    degree.set(edge.b, (degree.get(edge.b) || 0) + 1);
+  }
+  return degree.size >= 3 && [...degree.values()].every((count) => count === 2);
+}
+
+function inferFaceForEdgeVertices(vertexIds) {
+  const ids = new Set(vertexIds);
+  let best = null;
+  let bestScore = 0;
+  for (const face of state.faces) {
+    const score = face.verts.reduce((count, id) => count + (ids.has(id) ? 1 : 0), 0);
+    if (score > bestScore) {
+      best = face;
+      bestScore = score;
+    }
+  }
+  if (bestScore >= 2) return best;
+  const points = [...ids].map(vertexById).filter(Boolean).map((v) => vec(v.x, v.y, v.z));
+  if (!points.length) return null;
+  const center = mul(points.reduce((sum, point) => add(sum, point), vec()), 1 / points.length);
+  const radius = modelRadius();
+  let nearest = null;
+  let nearestDistance = Infinity;
+  for (const face of state.faces) {
+    const n = faceNormal(face);
+    const c = faceCenter(face);
+    const distance = Math.abs(dot(sub(center, c), n));
+    if (distance < nearestDistance) {
+      nearest = face;
+      nearestDistance = distance;
+    }
+  }
+  return nearest && nearestDistance <= Math.max(4, radius * 0.18) ? nearest : null;
+}
+
+function detailColorForConvertedEdge(type) {
+  if (type === "engine") return "#f7fff7";
+  if (type === "window") return "#101915";
+  return "#ffd936";
+}
+
+function convertedEdgeDetailLabel(type) {
+  if (type === "panel") return "SURFACE DETAIL";
+  return type.toUpperCase();
+}
+
+function selectedEdgeConversionComponent(edge) {
+  if (!edge) return [];
+  const selected = selectedEdgeSetEdges();
+  if (selected.some((item) => item.id === edge.id)) return selected;
+  const auditEdges = renderAuditEdges();
+  return auditEdges.some((item) => item.id === edge.id)
+    ? edgeComponentFrom(edge, auditEdges)
+    : [edge];
+}
+
+function makeConvertedEdgeDetail(type, edges, preferredEdge) {
+  const closed = edgeComponentIsClosed(edges);
+  let vertexIds = orderedVerticesForEdges(edges, preferredEdge);
+  if (type === "panel" && closed && vertexIds.length && vertexIds[0] !== vertexIds[vertexIds.length - 1]) {
+    vertexIds = [...vertexIds, vertexIds[0]];
+  }
+  if (type !== "panel" && !closed) {
+    setStatus(`${convertedEdgeDetailLabel(type)} CONVERSION NEEDS A CLOSED EDGE LOOP.`);
+    return null;
+  }
+  if (vertexIds.length < (type === "panel" ? 2 : 3)) {
+    setStatus(`${convertedEdgeDetailLabel(type)} CONVERSION NEEDS MORE LOOP POINTS.`);
+    return null;
+  }
+  const face = inferFaceForEdgeVertices(vertexIds);
+  if (!face) {
+    setStatus("SELECTED EDGE LOOP DOES NOT SHARE A SURFACE FACE.");
+    return null;
+  }
+  return {
+    id: newId(),
+    type,
+    faceId: face.id,
+    indices: vertexIds,
+    color: detailColorForConvertedEdge(type),
+    normal: toArray(faceNormal(face)),
+    lift: 0.5,
+    ...(type === "engine" ? { stroke: "#ffffff" } : {})
+  };
+}
+
+function convertSelectedEdgeToDetail(type) {
+  const selectedEdge = state.selected?.type === "edge"
+    ? state.edges.find((edge) => edge.id === state.selected.id)
+    : null;
+  if (!selectedEdge) {
+    setStatus("SELECT AN EDGE OR AUDIT LOOP FIRST.");
+    return;
+  }
+  const primaryEdges = selectedEdgeConversionComponent(selectedEdge);
+  if (!primaryEdges.length) {
+    setStatus("SELECTED EDGE LOOP NOT FOUND.");
+    return;
+  }
+  const added = [];
+  const removeIds = new Set();
+  const primaryDetail = makeConvertedEdgeDetail(type, primaryEdges, selectedEdge);
+  if (!primaryDetail) {
+    renderAll();
+    return;
+  }
+  added.push(primaryDetail);
+  primaryEdges.forEach((edge) => removeIds.add(edge.id));
+
+  if (mirrorActionsEnabled()) {
+    const mirrorEdge = mirroredEdgeOf(selectedEdge);
+    if (mirrorEdge && !removeIds.has(mirrorEdge.id)) {
+      const mirrorEdges = selectedEdgeConversionComponent(mirrorEdge);
+      const mirrorDetail = makeConvertedEdgeDetail(type, mirrorEdges, mirrorEdge);
+      if (mirrorDetail) {
+        added.push(mirrorDetail);
+        mirrorEdges.forEach((edge) => removeIds.add(edge.id));
+      }
+    }
+  }
+
+  state.details.push(...added);
+  state.edges = state.edges.filter((edge) => !removeIds.has(edge.id));
+  state.selectedEdgeIds.clear();
+  state.mode = "detail";
+  syncModeUi("detail");
+  state.selected = { type: "detail", id: primaryDetail.id };
+  setStatus(`${added.length > 1 ? "MIRRORED " : ""}${convertedEdgeDetailLabel(type)} CONVERTED FROM ${removeIds.size} EDGE${removeIds.size === 1 ? "" : "S"}.`);
+  renderAll();
+}
+
 function patchMirroredDetail(detail, patch) {
   if (!detail || !mirrorActionsEnabled()) return;
   const mirror = mirroredDetailOf(detail);
   if (mirror) Object.assign(mirror, patch);
 }
 
-function resetWedge() {
+function readProfileSideCount(input = els.profileSideCount) {
+  return Math.round(clamp(Number(input?.value) || 4, 3, 16));
+}
+
+function readProfileRotationDeg(input = els.profileRotationDeg) {
+  return normalizeBitmapAngle(Number(input?.value) || 0);
+}
+
+function readProfileConeMode(input = els.profileConeMode) {
+  return !!input?.checked;
+}
+
+function resetPolygonProfile(sides = readProfileSideCount(), rotationDeg = readProfileRotationDeg(), cone = readProfileConeMode()) {
   resetGamePreviewSyncState();
   state.nextId = 1;
   state.verts = [];
@@ -1119,24 +1396,45 @@ function resetWedge() {
   state.edges = [];
   state.details = [];
   state.selected = null;
+  state.selectedEdgeIds.clear();
   state.pick = [];
 
-  const nose = addCenterPoint(0, 98);
-  const top = addCenterPoint(28, -70);
-  const bottom = addCenterPoint(-24, -70);
-  const right = addPointPair(82, 0, -70);
-  const left = vertexById(right.mirrorId);
+  const cleanSides = Math.round(clamp(Number(sides) || 4, 3, 16));
+  const rotation = normalizeBitmapAngle(rotationDeg) * Math.PI / 180;
+  const profile = [];
+  const radiusX = 64;
+  const radiusY = 42;
+  const halfDepth = 72;
+  for (let i = 0; i < cleanSides; i++) {
+    const angle = rotation + i * TAU / cleanSides;
+    profile.push({
+      x: round(Math.sin(angle) * radiusX, 3),
+      y: round(Math.cos(angle) * radiusY, 3)
+    });
+  }
+  const back = profile.map((point) => addVertex(Math.abs(point.x) < .001 ? 0 : point.x, point.y, -halfDepth, null, Math.abs(point.x) < .001));
+  addFace(back.map((vertex) => vertex.id));
+  if (cone) {
+    const apex = addCenterPoint(0, halfDepth);
+    for (let i = 0; i < cleanSides; i++) {
+      const next = (i + 1) % cleanSides;
+      addFace([apex.id, back[next].id, back[i].id]);
+    }
+  } else {
+    const front = profile.map((point) => addVertex(Math.abs(point.x) < .001 ? 0 : point.x, point.y, halfDepth, null, Math.abs(point.x) < .001));
+    addFace(front.map((vertex) => vertex.id).reverse());
+    for (let i = 0; i < cleanSides; i++) {
+      const next = (i + 1) % cleanSides;
+      addFace([front[i].id, front[next].id, back[next].id, back[i].id]);
+    }
+  }
+  inferMirrorVertexIds();
 
-  addFace([nose.id, right.id, top.id]);
-  addFace([nose.id, top.id, left.id]);
-  addFace([nose.id, bottom.id, right.id]);
-  addFace([nose.id, left.id, bottom.id]);
-  addFace([top.id, right.id, left.id]);
-  addFace([bottom.id, left.id, right.id]);
-
+  els.shipId.value = `custom_${cleanSides}_${cone ? "cone" : "profile"}`;
+  els.shipName.value = `${cleanSides}-Sided ${cone ? "Cone" : "Profile"}`;
   syncSkinAngle(0, false);
   clearSkinBitmaps();
-  setStatus("NEW SIMPLE PYRAMID WEDGE CREATED.");
+  setStatus(`NEW ${cleanSides}-SIDED ${cone ? "CONE" : "PROFILE"} CREATED.`);
   fitView();
   renderAll();
   scheduleGamePreviewSync(0, true);
@@ -1348,7 +1646,11 @@ function updatePreviewTrustUi() {
     ? `${summary.missingUv} UV gap${summary.missingUv === 1 ? "" : "s"}`
     : `${summary.faceTextureRefs} face UV${summary.faceTextureRefs === 1 ? "" : "s"}`;
   const overlayText = overlay ? "overlay on | renderer solid" : "overlay off | solid";
-  els.previewTrustReadout.textContent = `${summary.visibleFaces}/${summary.faces} visible faces | ${summary.projectedPoints} points | ${uvText} | ${overlayText}`;
+  const auditCount = renderAuditEdges().length;
+  const auditText = auditCount ? ` | ${auditCount} audit edge${auditCount === 1 ? "" : "s"}` : "";
+  const hiddenDetailCount = state.details.length - filteredDetailsForView().length;
+  const detailFilterText = hiddenDetailCount ? ` | ${hiddenDetailCount} detail${hiddenDetailCount === 1 ? "" : "s"} hidden` : "";
+  els.previewTrustReadout.textContent = `${summary.visibleFaces}/${summary.faces} visible faces | ${summary.projectedPoints} points | ${uvText} | ${overlayText}${auditText}${detailFilterText}`;
 }
 
 function drawGameRendererFaceNormals(ctx, canvas) {
@@ -1371,8 +1673,9 @@ function drawGameRendererFaceNormals(ctx, canvas) {
 
 function previewDetailForBuilderDetail(detail) {
   if (!gameRendererOverlayMode() || !state.gamePreviewProjection?.details?.length) return null;
-  const index = state.details.indexOf(detail);
-  return index >= 0 ? state.gamePreviewProjection.details[index] || null : null;
+  const stateIndex = state.details.indexOf(detail);
+  const projectionIndex = state.gamePreviewDetailProjectionIndexByStateIndex.get(stateIndex);
+  return Number.isInteger(projectionIndex) ? state.gamePreviewProjection.details[projectionIndex] || null : null;
 }
 
 function projectedDetailPointsForMain(detail, canvas = els.mainView) {
@@ -1532,6 +1835,65 @@ function drawFaceNormals(ctx, projectFn) {
   if (selected) drawFaceNormal(ctx, selected, projectFn, true);
 }
 
+function faceUvTypeVisual(kind) {
+  if (kind === "projected") return { color: "#66e8ff", label: "P" };
+  if (kind === "flat") return { color: "#ffd936", label: "F" };
+  if (kind === "side") return { color: "#55ff4e", label: "S" };
+  return { color: "rgba(166,211,160,.78)", label: "A" };
+}
+
+function faceProjectedCentroid(face, projected) {
+  const pts = face.verts.map((id) => projected.get(id)).filter(Boolean);
+  if (pts.length < 3) return null;
+  return {
+    x: pts.reduce((sum, p) => sum + p.x, 0) / pts.length,
+    y: pts.reduce((sum, p) => sum + p.y, 0) / pts.length
+  };
+}
+
+function drawFaceUvTypePin(ctx, face, projected, selected = false, scale = 1) {
+  const center = faceProjectedCentroid(face, projected);
+  if (!center) return;
+  const info = faceUvTypeInfo(face);
+  const visual = faceUvTypeVisual(info.kind);
+  const length = (selected ? 24 : 18) * scale;
+  const radius = (selected ? 8 : 6) * scale;
+  const end = { x: center.x, y: center.y - length };
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.shadowColor = "rgba(0,0,0,.9)";
+  ctx.shadowBlur = 4 * scale;
+  ctx.strokeStyle = visual.color;
+  ctx.fillStyle = "rgba(0,0,0,.72)";
+  ctx.lineWidth = selected ? 2.4 * scale : 1.4 * scale;
+  ctx.beginPath();
+  ctx.moveTo(center.x, center.y);
+  ctx.lineTo(end.x, end.y);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(end.x, end.y, radius, 0, TAU);
+  ctx.fill();
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = selected ? "#ffffff" : visual.color;
+  ctx.font = `${Math.max(9, Math.round((selected ? 11 : 9) * scale))}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(visual.label, end.x, end.y + .5);
+  ctx.restore();
+}
+
+function drawFaceUvTypeOverlay(ctx, projected, { scale = 1 } = {}) {
+  if (!els.showFaceUvTypes?.checked) return;
+  const selectedFaceId = state.selected?.type === "face" ? state.selected.id : null;
+  for (const face of state.faces) {
+    if (face.id !== selectedFaceId) drawFaceUvTypePin(ctx, face, projected, false, scale);
+  }
+  const selected = selectedFaceId ? faceById(selectedFaceId) : null;
+  if (selected) drawFaceUvTypePin(ctx, selected, projected, true, scale);
+}
+
 function faceHasLoadedSideSkin(face) {
   const side = templateSideForFace(face);
   const img = state.skinImages?.[side];
@@ -1641,6 +2003,8 @@ function updateFaceUvAngleControls() {
   }
   document.querySelectorAll(".uv-rotate-btn").forEach((button) => { button.disabled = !enabled; });
   updateFaceColorControls();
+  updateFaceUvTypeReadout();
+  updateFaceUvTransformControls();
 }
 
 function updateFaceColorControls() {
@@ -1652,6 +2016,60 @@ function updateFaceColorControls() {
   }
   if (els.clearFaceColorBtn) els.clearFaceColorBtn.disabled = !face || !color;
   if (els.averageFaceColorBtn) els.averageFaceColorBtn.disabled = !face || !currentSelectedFaceImage(face);
+}
+
+function setUvTransformInputs(transform = {}) {
+  const clean = cleanBitmapUvTransform(transform);
+  if (els.uvTransformX) els.uvTransformX.value = String(round(clean.x, 2));
+  if (els.uvTransformY) els.uvTransformY.value = String(round(clean.y, 2));
+  if (els.uvTransformRotation) els.uvTransformRotation.value = String(round(clean.rotation, 2));
+  if (els.uvTransformScale) els.uvTransformScale.value = String(round(clean.scale, 3));
+}
+
+function updateFaceUvTransformControls() {
+  const face = selectedFace();
+  const enabled = !!face;
+  setUvTransformInputs(face?.bitmapUvTransform || {});
+  for (const control of [els.uvTransformX, els.uvTransformY, els.uvTransformRotation, els.uvTransformScale, els.resetUvTransformBtn]) {
+    if (control) control.disabled = !enabled;
+  }
+}
+
+function readUvTransformInputs() {
+  return cleanBitmapUvTransform({
+    x: els.uvTransformX?.value,
+    y: els.uvTransformY?.value,
+    rotation: els.uvTransformRotation?.value,
+    scale: els.uvTransformScale?.value
+  });
+}
+
+function applySelectedFaceUvTransformFromControls() {
+  const face = selectedFace();
+  if (!face) {
+    setStatus("SELECT A FACE FIRST.");
+    updateFaceUvTransformControls();
+    return;
+  }
+  const transform = readUvTransformInputs();
+  if (!bakeFaceUvTransform(face, transform)) {
+    setStatus("SELECTED FACE CANNOT BUILD A UV TEMPLATE.");
+    updateFaceUvTransformControls();
+    return;
+  }
+  setUvTransformInputs(transform);
+  setStatus(`FACE #${face.id} UV TEMPLATE TRANSFORM UPDATED.`);
+  renderAll();
+}
+
+function resetSelectedFaceUvTransform() {
+  const face = selectedFace();
+  if (!face) return setStatus("SELECT A FACE FIRST.");
+  const transform = { x: 0, y: 0, rotation: 0, scale: 1 };
+  if (!bakeFaceUvTransform(face, transform)) return setStatus("SELECTED FACE CANNOT BUILD A UV TEMPLATE.");
+  setUvTransformInputs(transform);
+  setStatus(`FACE #${face.id} UV TEMPLATE TRANSFORM RESET.`);
+  renderAll();
 }
 
 function currentSelectedFaceImage(face = selectedFace()) {
@@ -2828,6 +3246,9 @@ function applyCurrentViewGroupUv(faces, img) {
       });
       face.bitmapBaseW = baseW;
       face.bitmapBaseH = baseH;
+      face.bitmapUvTemplate = face.bitmapUv.map(([x, y]) => [x, y]);
+      face.bitmapUvTransform = { x: 0, y: 0, rotation: 0, scale: 1 };
+      delete face.bitmapAngle;
     }
     return true;
   }
@@ -2855,6 +3276,9 @@ function applyCurrentViewGroupUv(faces, img) {
     });
     face.bitmapBaseW = width;
     face.bitmapBaseH = height;
+    face.bitmapUvTemplate = face.bitmapUv.map(([x, y]) => [x, y]);
+    face.bitmapUvTransform = { x: 0, y: 0, rotation: 0, scale: 1 };
+    delete face.bitmapAngle;
   }
   return true;
 }
@@ -2893,6 +3317,18 @@ function setSelectedFaceSkinFromImage(img, source = "imported", url = "", name =
   renderAll();
 }
 
+function clearFaceUvFields(face) {
+  delete face.bitmapSide;
+  delete face.bitmapFaceKey;
+  delete face.bitmapUv;
+  delete face.bitmapUvTemplate;
+  delete face.bitmapUvTransform;
+  delete face.bitmapBaseW;
+  delete face.bitmapBaseH;
+  delete face.bitmapAngle;
+  delete face.bitmapMirrorX;
+}
+
 function setFaceGroupSkinFromImage(faces, img, source = "imported", url = "", name = "bitmap", options = {}) {
   const selectedTargets = uniqueFaceList(faces.filter(Boolean));
   if (!selectedTargets.length) {
@@ -2905,13 +3341,7 @@ function setFaceGroupSkinFromImage(faces, img, source = "imported", url = "", na
   const mirrorX = options.mirrorX == null ? importMirroredSkinEnabled() : !!options.mirrorX;
   const averageColor = averageImageColor(img);
   for (const face of targets) {
-    delete face.bitmapSide;
-    delete face.bitmapFaceKey;
-    delete face.bitmapUv;
-    delete face.bitmapBaseW;
-    delete face.bitmapBaseH;
-    delete face.bitmapAngle;
-    delete face.bitmapMirrorX;
+    clearFaceUvFields(face);
     face.bitmapFaceKey = key;
     if (mirrorX) face.bitmapMirrorX = true;
     else delete face.bitmapMirrorX;
@@ -2938,12 +3368,7 @@ function clearSelectedFaceSkin() {
     return;
   }
   const key = cleanBitmapKey(face.bitmapFaceKey);
-  delete face.bitmapFaceKey;
-  delete face.bitmapUv;
-  delete face.bitmapBaseW;
-  delete face.bitmapBaseH;
-  delete face.bitmapAngle;
-  delete face.bitmapMirrorX;
+  clearFaceUvFields(face);
   if (mirrorActionsEnabled()) syncMirroredFace(face);
   markPreviewSkinsDirty();
   updateFaceUvAngleControls();
@@ -2957,18 +3382,14 @@ function clearSelectedFacePaint() {
   const hadPaint =
     cleanBitmapKey(face.bitmapFaceKey) ||
     (Array.isArray(face.bitmapUv) && face.bitmapUv.length >= 3) ||
+    (Array.isArray(face.bitmapUvTemplate) && face.bitmapUvTemplate.length >= 3) ||
+    !bitmapUvTransformIsDefault(face.bitmapUvTransform) ||
     validBitmapFaceSide(face.bitmapSide) ||
     normalizeBitmapAngle(face.bitmapAngle) ||
     face.bitmapMirrorX ||
     cleanFaceDecals(face.bitmapDecals).length ||
     optionalHexColor(face.faceColor);
-  delete face.bitmapSide;
-  delete face.bitmapFaceKey;
-  delete face.bitmapUv;
-  delete face.bitmapBaseW;
-  delete face.bitmapBaseH;
-  delete face.bitmapAngle;
-  delete face.bitmapMirrorX;
+  clearFaceUvFields(face);
   delete face.bitmapDecals;
   delete face.faceColor;
   if (mirrorActionsEnabled()) syncMirroredFace(face);
@@ -2983,6 +3404,8 @@ function clearAllFaceUv() {
   const affected = state.faces.filter((face) =>
     cleanBitmapKey(face.bitmapFaceKey)
     || (Array.isArray(face.bitmapUv) && face.bitmapUv.length >= 3)
+    || (Array.isArray(face.bitmapUvTemplate) && face.bitmapUvTemplate.length >= 3)
+    || !bitmapUvTransformIsDefault(face.bitmapUvTransform)
     || validBitmapFaceSide(face.bitmapSide)
     || normalizeBitmapAngle(face.bitmapAngle)
     || face.bitmapMirrorX
@@ -2994,13 +3417,7 @@ function clearAllFaceUv() {
   const confirmClear = window.confirm(`Clear face UV assignments from ${affected.length} face${affected.length === 1 ? "" : "s"}?`);
   if (!confirmClear) return;
   for (const face of affected) {
-    delete face.bitmapSide;
-    delete face.bitmapFaceKey;
-    delete face.bitmapUv;
-    delete face.bitmapBaseW;
-    delete face.bitmapBaseH;
-    delete face.bitmapAngle;
-    delete face.bitmapMirrorX;
+    clearFaceUvFields(face);
   }
   if (mirrorActionsEnabled()) {
     for (const face of affected) syncMirroredFace(face);
@@ -3198,7 +3615,7 @@ function importSkinFile(side, file, addToShelf = true) {
   const url = URL.createObjectURL(file);
   const img = new Image();
   img.onload = () => {
-    clearEditorSelection();
+    clearEditorSelection({ redraw: false });
     const shelfId = addToShelf ? addBitmapToShelf(file, img, url) : "";
     const mirrored = importMirroredSkinEnabled();
     setSkinSideFromImage(side, img, addToShelf ? "shelf" : "imported", addToShelf ? "" : url, mirrored);
@@ -3665,6 +4082,80 @@ function selectedFaceTextureMapping(face, options = {}) {
   return { side, project, uv, rawUv, angle, width: fittedWidth, height: fittedHeight, minX, minY, pad };
 }
 
+function faceUvTemplateSource(face) {
+  const template = cleanFaceBitmapUvTemplate(face);
+  const cleanUv = cleanFaceBitmapUv(face);
+  if (template) {
+    return {
+      uv: template.map(([x, y]) => ({ x, y })),
+      width: Math.max(1, Math.round(Number(face.bitmapBaseW) || TEMPLATE_SIZE)),
+      height: Math.max(1, Math.round(Number(face.bitmapBaseH) || TEMPLATE_SIZE))
+    };
+  }
+  if (cleanUv) {
+    return {
+      uv: cleanUv.map(([x, y]) => ({ x, y })),
+      width: Math.max(1, Math.round(Number(face.bitmapBaseW) || TEMPLATE_SIZE)),
+      height: Math.max(1, Math.round(Number(face.bitmapBaseH) || TEMPLATE_SIZE))
+    };
+  }
+  const mapping = selectedFaceTextureMapping(face, { applyAngle: false });
+  if (!mapping?.rawUv?.length) return null;
+  return {
+    uv: mapping.rawUv.map((p) => ({ x: round(p.x, 3), y: round(p.y, 3) })),
+    width: Math.max(1, Math.round(mapping.width || TEMPLATE_SIZE)),
+    height: Math.max(1, Math.round(mapping.height || TEMPLATE_SIZE))
+  };
+}
+
+function ensureFaceUvTemplate(face) {
+  if (!face) return null;
+  const source = faceUvTemplateSource(face);
+  if (!source?.uv?.length) return null;
+  face.bitmapUvTemplate = source.uv.map((p) => [round(p.x, 3), round(p.y, 3)]);
+  face.bitmapBaseW = source.width;
+  face.bitmapBaseH = source.height;
+  if (!face.bitmapUvTransform) {
+    const angle = normalizeBitmapAngle(face.bitmapAngle);
+    face.bitmapUvTransform = angle ? { x: 0, y: 0, rotation: angle, scale: 1 } : { x: 0, y: 0, rotation: 0, scale: 1 };
+  } else {
+    face.bitmapUvTransform = cleanBitmapUvTransform(face.bitmapUvTransform);
+  }
+  return { ...source, transform: cleanBitmapUvTransform(face.bitmapUvTransform) };
+}
+
+function transformedFaceUv(template, width, height, transform) {
+  const clean = cleanBitmapUvTransform(transform);
+  const cx = width / 2;
+  const cy = height / 2;
+  const a = clean.rotation * Math.PI / 180;
+  const c = Math.cos(a);
+  const s = Math.sin(a);
+  return template.map((p) => {
+    const dx = (p.x - cx) * clean.scale;
+    const dy = (p.y - cy) * clean.scale;
+    return [
+      round(cx + dx * c - dy * s + clean.x, 3),
+      round(cy + dx * s + dy * c + clean.y, 3)
+    ];
+  });
+}
+
+function bakeFaceUvTransform(face, transform = face?.bitmapUvTransform, options = {}) {
+  const source = ensureFaceUvTemplate(face);
+  if (!source) return false;
+  const clean = cleanBitmapUvTransform(transform);
+  face.bitmapUvTransform = clean;
+  face.bitmapUv = transformedFaceUv(source.uv, source.width, source.height, clean);
+  face.bitmapBaseW = source.width;
+  face.bitmapBaseH = source.height;
+  delete face.bitmapAngle;
+  if (mirrorActionsEnabled() && options.syncMirror !== false) syncMirroredFace(face, { forceBitmapUv: true });
+  markPreviewSkinsDirty();
+  updateFaceUvAngleControls();
+  return true;
+}
+
 function faceTextureMirrorX(face) {
   return !!face?.bitmapMirrorX;
 }
@@ -3949,6 +4440,177 @@ function derivedFaceEdges() {
   return edges;
 }
 
+function edgeKey(a, b) {
+  const na = Number(a);
+  const nb = Number(b);
+  if (!Number.isFinite(na) || !Number.isFinite(nb) || na === nb) return "";
+  return na < nb ? `${na},${nb}` : `${nb},${na}`;
+}
+
+function faceEdgeKeySet() {
+  const keys = new Set();
+  for (const face of state.faces) {
+    const ids = face.verts || [];
+    for (let i = 0; i < ids.length; i++) {
+      const key = edgeKey(ids[i], ids[(i + 1) % ids.length]);
+      if (key) keys.add(key);
+    }
+  }
+  return keys;
+}
+
+function renderAuditEdges() {
+  const faceEdges = faceEdgeKeySet();
+  return state.edges.filter((edge) => edge.kind !== "stick" && !faceEdges.has(edgeKey(edge.a, edge.b)));
+}
+
+function edgeComponentFrom(edge, edges = state.edges) {
+  if (!edge) return [];
+  const remaining = new Set(edges.map((item) => item.id));
+  const byVertex = new Map();
+  for (const item of edges) {
+    if (!byVertex.has(item.a)) byVertex.set(item.a, []);
+    if (!byVertex.has(item.b)) byVertex.set(item.b, []);
+    byVertex.get(item.a).push(item);
+    byVertex.get(item.b).push(item);
+  }
+  const component = [];
+  const stack = [edge];
+  while (stack.length) {
+    const item = stack.pop();
+    if (!item || !remaining.delete(item.id)) continue;
+    component.push(item);
+    for (const vertexId of [item.a, item.b]) {
+      for (const next of byVertex.get(vertexId) || []) {
+        if (remaining.has(next.id)) stack.push(next);
+      }
+    }
+  }
+  return component;
+}
+
+function selectedEdgeSetEdges() {
+  if (state.selected?.type !== "edge") return [];
+  const selectedIds = state.selectedEdgeIds?.size
+    ? state.selectedEdgeIds
+    : new Set([state.selected.id]);
+  return state.edges.filter((edge) => selectedIds.has(edge.id));
+}
+
+function selectedEdgeIdSetFor(edge, options = {}) {
+  if (!edge) return new Set();
+  if (!options.audit) return new Set([edge.id]);
+  return new Set(edgeComponentFrom(edge, renderAuditEdges()).map((item) => item.id));
+}
+
+function orderedVerticesForEdges(edges, preferredEdge = null) {
+  if (!edges.length) return [];
+  if (edges.length === 1) return [edges[0].a, edges[0].b];
+  const byVertex = new Map();
+  const add = (vertexId, edge) => {
+    if (!byVertex.has(vertexId)) byVertex.set(vertexId, []);
+    byVertex.get(vertexId).push(edge);
+  };
+  for (const edge of edges) {
+    add(edge.a, edge);
+    add(edge.b, edge);
+  }
+  const endpoints = [...byVertex.entries()].filter(([, items]) => items.length === 1).map(([id]) => id);
+  const start = endpoints[0] ?? preferredEdge?.a ?? edges[0].a;
+  const ordered = [start];
+  const used = new Set();
+  let current = start;
+  while (used.size < edges.length) {
+    const nextEdge = (byVertex.get(current) || []).find((edge) => !used.has(edge.id));
+    if (!nextEdge) break;
+    used.add(nextEdge.id);
+    const nextVertex = nextEdge.a === current ? nextEdge.b : nextEdge.a;
+    if (nextVertex === start && used.size === edges.length) break;
+    ordered.push(nextVertex);
+    current = nextVertex;
+  }
+  return ordered;
+}
+
+function auditEdgeLabel(edge) {
+  return `#${edge.id} ${edge.a}-${edge.b}`;
+}
+
+function selectEdge(edge, options = {}) {
+  if (!edge) return;
+  state.mode = "edge";
+  syncModeUi("edge");
+  state.selected = { type: "edge", id: edge.id };
+  state.selectedEdgeIds = selectedEdgeIdSetFor(edge, options);
+  const loopText = state.selectedEdgeIds.size > 1 ? ` LOOP (${state.selectedEdgeIds.size} LINES)` : "";
+  const label = options.audit ? `AUDIT EDGE${loopText} ${auditEdgeLabel(edge)}` : `${edge.kind.toUpperCase()} #${edge.id}`;
+  setStatus(`${label} SELECTED.`);
+  if (options.render !== false) renderAll();
+}
+
+function nearestEdge(point, projected, edges = state.edges, maxLineDist = 12) {
+  let best = null;
+  let bestDist = maxLineDist;
+  for (const edge of edges) {
+    const a = projected.get(edge.a), b = projected.get(edge.b);
+    if (!a || !b) continue;
+    const dist = distToSegment(point, a, b);
+    if (dist < bestDist) {
+      best = edge;
+      bestDist = dist;
+    }
+  }
+  return best;
+}
+
+function drawAuditEdgeOverlay(ctx, projected, { label = true, scale = 1 } = {}) {
+  if (!els.showAuditEdges?.checked) return 0;
+  const auditEdges = renderAuditEdges();
+  if (!auditEdges.length) return 0;
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.font = `${Math.max(10, Math.round(11 * scale))}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
+  ctx.textBaseline = "middle";
+  for (const edge of auditEdges) {
+    const a = projected.get(edge.a), b = projected.get(edge.b);
+    if (!a || !b) continue;
+    const selected = state.selected?.type === "edge" && (state.selected.id === edge.id || state.selectedEdgeIds.has(edge.id));
+    ctx.shadowColor = "rgba(0,0,0,.95)";
+    ctx.shadowBlur = 5 * scale;
+    ctx.strokeStyle = selected ? "#ffd936" : "rgba(255, 20, 20, .98)";
+    ctx.lineWidth = selected ? 7 * scale : 5 * scale;
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = "rgba(255,255,255,.92)";
+    ctx.lineWidth = Math.max(1, 1.4 * scale);
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+    if (label) {
+      const mx = (a.x + b.x) / 2;
+      const my = (a.y + b.y) / 2;
+      const text = `#${edge.id}`;
+      const padX = 4 * scale;
+      const w = ctx.measureText(text).width + padX * 2;
+      const h = 14 * scale;
+      ctx.fillStyle = "rgba(30,0,0,.86)";
+      ctx.fillRect(mx - w / 2, my - h / 2, w, h);
+      ctx.strokeStyle = "rgba(255,255,255,.84)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(mx - w / 2, my - h / 2, w, h);
+      ctx.fillStyle = "#ff3030";
+      ctx.fillText(text, mx - w / 2 + padX, my + .5);
+    }
+  }
+  ctx.restore();
+  return auditEdges.length;
+}
+
 function renderMain() {
   const canvas = els.mainView;
   const ctx = canvas.getContext("2d");
@@ -4002,6 +4664,7 @@ function renderMain() {
   drawBlankUvFaceOverlay(ctx, canvas, projected);
   if (gameOverlay) drawGameRendererFaceNormals(ctx, canvas);
   else drawFaceNormals(ctx, (v) => project3d(v, canvas));
+  drawFaceUvTypeOverlay(ctx, projected, { scale: 1.05 });
 
   if (drawWire) {
     if (!drawFaces) {
@@ -4019,7 +4682,7 @@ function renderMain() {
     for (const e of state.edges) {
       const a = projected.get(e.a), b = projected.get(e.b);
       if (!a || !b) continue;
-      const selected = state.selected?.type === "edge" && state.selected.id === e.id;
+      const selected = state.selected?.type === "edge" && (state.selected.id === e.id || state.selectedEdgeIds.has(e.id));
       ctx.strokeStyle = selected ? "#ffd936" : e.kind === "stick" ? "#d9d9d9" : "rgba(85,255,78,.72)";
       ctx.lineWidth = selected ? 3 : e.kind === "stick" ? 2.2 : 1.2;
       ctx.beginPath();
@@ -4030,10 +4693,10 @@ function renderMain() {
   }
 
   if (gameOverlay && state.selected?.type === "edge") {
-    const edge = state.edges.find((item) => item.id === state.selected.id);
-    const a = edge ? projected.get(edge.a) : null;
-    const b = edge ? projected.get(edge.b) : null;
-    if (a && b) {
+    for (const edge of selectedEdgeSetEdges()) {
+      const a = projected.get(edge.a);
+      const b = projected.get(edge.b);
+      if (!a || !b) continue;
       ctx.strokeStyle = "#ffd936";
       ctx.lineWidth = 3;
       ctx.beginPath();
@@ -4065,12 +4728,15 @@ function renderMain() {
     }
   }
 
+  drawAuditEdgeOverlay(ctx, projected, { label: true, scale: 1.15 });
+
   for (const detail of state.details) {
+    const selected = state.selected?.type === "detail" && state.selected.id === detail.id;
+    if (!detailVisibleInView(detail) && !selected) continue;
     const pts = projectedDetailPointsForMain(detail, canvas);
     if (detail.type === "beacon") {
       const p = pts[0] || null;
       if (!p) continue;
-      const selected = state.selected?.type === "detail" && state.selected.id === detail.id;
       if (gameOverlay && state.mode !== "detail" && !selected) continue;
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
@@ -4091,7 +4757,6 @@ function renderMain() {
       continue;
     }
     if (pts.length < 2) continue;
-    const selected = state.selected?.type === "detail" && state.selected.id === detail.id;
     if (gameOverlay && state.mode !== "detail" && !selected) continue;
     if (previewMode === "wire" && !selected) continue;
     if (detail.type === "panel") {
@@ -4150,6 +4815,7 @@ function drawOrthoCanvas(canvas, viewName) {
     drawFace(ctx, pts, "rgba(85,255,78,.06)", "rgba(85,255,78,.28)", 1);
   });
   drawFaceNormals(ctx, (v) => orthoProject(v, canvas, viewName));
+  drawFaceUvTypeOverlay(ctx, projected, { scale: .82 });
   state.edges.forEach((e) => {
     const a = projected.get(e.a), b = projected.get(e.b);
     if (!a || !b) return;
@@ -4160,6 +4826,7 @@ function drawOrthoCanvas(canvas, viewName) {
     ctx.lineTo(b.x, b.y);
     ctx.stroke();
   });
+  drawAuditEdgeOverlay(ctx, projected, { label: true, scale: .82 });
   state.verts.forEach((v) => {
     const p = projected.get(v.id);
     const selected = state.selected?.type === "vertex" && state.selected.id === v.id;
@@ -4243,7 +4910,12 @@ function gamePreviewBitmapSkins() {
 
 function gamePreviewPayload(options = {}) {
   const force = !!options.force;
-  const blueprint = derivedBlueprint();
+  const previewDetails = filteredDetailsForView();
+  const previewDetailIndexes = previewDetails.map((detail) => state.details.indexOf(detail));
+  const blueprint = derivedBlueprint({ details: previewDetails });
+  state.gamePreviewDetailProjectionIndexByStateIndex = new Map(
+    previewDetailIndexes.map((stateIndex, projectionIndex) => [stateIndex, projectionIndex])
+  );
   const blueprintKey = JSON.stringify(blueprint);
   const skinVersion = state.previewSkinVersion || 0;
   const includeBlueprint = force || blueprintKey !== gamePreviewSentBlueprintKey || blueprintKey !== gamePreviewConfirmedBlueprintKey;
@@ -4262,7 +4934,7 @@ function gamePreviewPayload(options = {}) {
     mode,
     fxLevel,
     quality: "live",
-    lightMode: "camera",
+    lightMode: "front",
     projection: gameRendererOverlayMode(),
     targetScale: .56
   };
@@ -4281,6 +4953,7 @@ function gamePreviewSyncKey(payload) {
     mode: payload.mode,
     fxLevel: payload.fxLevel,
     quality: payload.quality,
+    lightMode: payload.lightMode,
     projection: !!payload.projection,
     targetScale: payload.targetScale,
     baseColor: payload.gameMeta?.baseColor,
@@ -4298,7 +4971,7 @@ function gamePreviewViewPayload() {
     mode: gamePreviewRendererMode(),
     fxLevel: gamePreviewFxLevel(),
     quality: "live",
-    lightMode: "camera",
+    lightMode: "front",
     projection: gameRendererOverlayMode(),
     targetScale: .56
   };
@@ -4361,6 +5034,7 @@ function resetGamePreviewSyncState() {
   gamePreviewSentSkinVersion = 0;
   state.gamePreviewInfo = null;
   state.gamePreviewProjection = null;
+  state.gamePreviewDetailProjectionIndexByStateIndex.clear();
   updatePreviewTrustUi();
 }
 
@@ -4636,7 +5310,9 @@ function handleGamePreviewResult(data) {
 function updateUi() {
   els.vertexCount.textContent = `${state.verts.length} vertices`;
   els.faceCount.textContent = `${state.faces.length} faces`;
-  els.edgeCount.textContent = `${state.edges.length} lines`;
+  const auditEdges = renderAuditEdges();
+  const auditEdgeCount = auditEdges.length;
+  els.edgeCount.textContent = `${state.edges.length} lines${auditEdgeCount ? ` (${auditEdgeCount} audit)` : ""}`;
   const faceGroupText = state.selectedFaceIds.size
     ? ` | Face group ${[...state.selectedFaceIds].map((id) => `#${id}`).join(" ")}`
     : "";
@@ -4656,9 +5332,16 @@ function updateUi() {
     const faceAngle = face ? normalizeBitmapAngle(face.bitmapAngle) : 0;
     const faceMirror = face?.bitmapMirrorX ? "  half-mirror" : "";
     const faceColor = optionalHexColor(face?.faceColor);
+    const uvInfo = faceUvTypeInfo(face);
     els.selectionReadout.textContent = n
-      ? `Face #${state.selected.id}  normal X ${round(n.x, 2)}  Y ${round(n.y, 2)}  Z ${round(n.z, 2)}  bitmap ${bitmapSide}${faceSkin ? `  face ${faceSkin}` : ""}${faceAngle ? `  angle ${faceAngle}` : ""}${faceMirror}${faceColor ? `  colour ${faceColor}` : ""}`
+      ? `Face #${state.selected.id}  normal X ${round(n.x, 2)}  Y ${round(n.y, 2)}  Z ${round(n.z, 2)}  uv ${uvInfo.short}  bitmap ${bitmapSide}${faceSkin ? `  face ${faceSkin}` : ""}${faceAngle ? `  angle ${faceAngle}` : ""}${faceMirror}${faceColor ? `  colour ${faceColor}` : ""}`
       : `Face #${state.selected.id}`;
+  } else if (state.selected.type === "edge") {
+    const selectedEdges = selectedEdgeSetEdges();
+    const edgeIds = selectedEdges.map((edge) => `#${edge.id}`).join(" ");
+    els.selectionReadout.textContent = selectedEdges.length > 1
+      ? `EDGE LOOP ${selectedEdges.length} lines  ${edgeIds}`
+      : `EDGE #${state.selected.id}`;
   } else {
     els.selectionReadout.textContent = `${state.selected.type.toUpperCase()} #${state.selected.id}`;
   }
@@ -4711,9 +5394,11 @@ function setSelectedFaceBitmapSide(value) {
   renderAll();
 }
 
-function clearEditorSelection() {
+function clearEditorSelection(options = {}) {
   state.selected = null;
+  state.selectedEdgeIds.clear();
   state.pick = [];
+  if (options.redraw !== false) renderAll();
 }
 
 function syncModeUi(mode) {
@@ -4754,6 +5439,7 @@ function nearestDetail(point, maxLineDist = 10) {
   let bestDetail = null;
   let bestLineDist = maxLineDist;
   for (const d of state.details) {
+    if (!detailVisibleInView(d)) continue;
     const pts = projectedDetailPointsForMain(d, els.mainView);
     if (d.type === "beacon") {
       const p = pts[0];
@@ -4789,6 +5475,13 @@ function selectInMain(point, options = {}) {
     return;
   }
   if (state.mode === "edge") {
+    const auditHit = els.showAuditEdges?.checked
+      ? nearestEdge(point, projected, renderAuditEdges(), 18)
+      : null;
+    if (auditHit) {
+      selectEdge(auditHit, { audit: true });
+      return;
+    }
     const id = nearestVertex(point, projected);
     if (id) {
       selectVertex(id);
@@ -4821,17 +5514,9 @@ function selectInMain(point, options = {}) {
     return;
   }
   if (state.mode === "edge") {
-    let best = null, bestDist = 12;
-    for (const e of state.edges) {
-      const a = projected.get(e.a), b = projected.get(e.b);
-      if (!a || !b) continue;
-      const d = distToSegment(point, a, b);
-      if (d < bestDist) { best = e; bestDist = d; }
-    }
+    const best = nearestEdge(point, projected);
     if (best) {
-      state.selected = { type: "edge", id: best.id };
-      setStatus(`${best.kind.toUpperCase()} #${best.id} SELECTED.`);
-      renderAll();
+      selectEdge(best);
       return;
     }
     const detailHit = nearestDetail(point);
@@ -4955,7 +5640,13 @@ function deleteSelected() {
   } else if (type === "edge") {
     const edge = state.edges.find((e) => e.id === id);
     const mirror = edge && mirrorActionsEnabled() ? mirroredEdgeOf(edge) : null;
-    const ids = new Set([id, mirror?.id].filter(Boolean));
+    const ids = new Set([
+      ...(state.selectedEdgeIds?.size ? state.selectedEdgeIds : [id]),
+      mirror?.id
+    ].filter(Boolean));
+    if (mirror && state.selectedEdgeIds?.size) {
+      for (const item of edgeComponentFrom(mirror, renderAuditEdges())) ids.add(item.id);
+    }
     state.edges = state.edges.filter((e) => !ids.has(e.id));
   } else if (type === "detail") {
     const detail = detailById(id);
@@ -4964,6 +5655,7 @@ function deleteSelected() {
     state.details = state.details.filter((d) => !ids.has(d.id));
   }
   state.selected = null;
+  state.selectedEdgeIds.clear();
   setStatus("SELECTION DELETED.");
   renderAll();
 }
@@ -5026,6 +5718,26 @@ function withDetailRender(detail) {
   };
 }
 
+function detailViewCategory(detail) {
+  const type = detail?.type;
+  if (type === "window") return "window";
+  if (type === "engine") return "engine";
+  if (type === "beacon") return "beacon";
+  return "surface";
+}
+
+function detailVisibleInView(detail) {
+  const category = detailViewCategory(detail);
+  if (category === "window") return els.showWindowDetails?.checked !== false;
+  if (category === "engine") return els.showEngineDetails?.checked !== false;
+  if (category === "beacon") return els.showBeaconDetails?.checked !== false;
+  return els.showSurfaceDetails?.checked !== false;
+}
+
+function filteredDetailsForView() {
+  return state.details.filter((detail) => detailVisibleInView(detail));
+}
+
 const FACE_RENDER_FACE_TEXTURE = 1;
 const FACE_RENDER_EXPLICIT_UV = 2;
 const FACE_RENDER_DECAL = 4;
@@ -5034,7 +5746,8 @@ const FACE_RENDER_MIRROR_X = 16;
 const FACE_RENDER_ANGLE = 32;
 const FACE_RENDER_SIDE = 64;
 
-function derivedBlueprint() {
+function derivedBlueprint(options = {}) {
+  const sourceDetails = Array.isArray(options.details) ? options.details : state.details;
   const indexById = new Map(state.verts.map((v, i) => [v.id, i]));
   const verts = state.verts.map((v) => [round(v.x), round(v.y), round(v.z)]);
   const renderableFaces = state.faces
@@ -5075,7 +5788,7 @@ function derivedBlueprint() {
     return [unique[0], unique[1]];
   });
   const edgeVisibility = edges.map(() => 31);
-  const details = state.details.map((d) => {
+  const details = sourceDetails.map((d) => {
     if (d.type === "beacon") {
       const index = indexById.get(Number(d.vertexId));
       if (index === undefined) return null;
@@ -5279,6 +5992,8 @@ function builderExport() {
       ...(validBitmapFaceSide(f.bitmapSide) ? { bitmapSide: f.bitmapSide } : {}),
       ...(cleanBitmapKey(f.bitmapFaceKey) ? { bitmapFaceKey: cleanBitmapKey(f.bitmapFaceKey) } : {}),
       ...(cleanFaceBitmapUv(f) ? { bitmapUv: cleanFaceBitmapUv(f) } : {}),
+      ...(cleanFaceBitmapUvTemplate(f) ? { bitmapUvTemplate: cleanFaceBitmapUvTemplate(f) } : {}),
+      ...(!bitmapUvTransformIsDefault(f.bitmapUvTransform) ? { bitmapUvTransform: cleanBitmapUvTransform(f.bitmapUvTransform) } : {}),
       ...(Number.isFinite(Number(f.bitmapBaseW)) && Number(f.bitmapBaseW) > 0 && Number.isFinite(Number(f.bitmapBaseH)) && Number(f.bitmapBaseH) > 0 ? { bitmapBaseW: Math.round(Number(f.bitmapBaseW)), bitmapBaseH: Math.round(Number(f.bitmapBaseH)) } : {}),
       ...(normalizeBitmapAngle(f.bitmapAngle) ? { bitmapAngle: normalizeBitmapAngle(f.bitmapAngle) } : {}),
       ...(f.bitmapMirrorX ? { bitmapMirrorX: true } : {}),
@@ -5379,6 +6094,7 @@ function importBuilderJson() {
     state.selected = null;
     state.pick = [];
     state.selectedFaceIds.clear();
+    state.selectedEdgeIds.clear();
     loadSkinBitmaps(data.id || els.shipId.value, mirrorFlagsFromMeta(data.gameMeta || {}));
     fitView();
     setStatus("BUILDER JSON IMPORTED.");
@@ -5401,6 +6117,188 @@ function libraryDescription(source, id) {
   const meta = source?.gameMeta || {};
   const descriptions = gameLibraryDescriptions();
   return meta.description || source?.description || descriptions[source?.id] || descriptions[id] || "";
+}
+
+function modelAuditWarnings(model) {
+  const warnings = [];
+  const faceEdges = new Set();
+  const faces = Array.isArray(model?.faces) ? model.faces : [];
+  const edges = Array.isArray(model?.edges) ? model.edges : [];
+  for (const face of faces) {
+    const ids = (Array.isArray(face) ? face : face?.verts || []).map(Number);
+    for (let i = 0; i < ids.length; i++) {
+      const key = edgeKey(ids[i], ids[(i + 1) % ids.length]);
+      if (key) faceEdges.add(key);
+    }
+  }
+  edges.forEach((edge, index) => {
+    const source = sourceEdge(edge, index);
+    const key = edgeKey(source.a, source.b);
+    const label = `edge ${source.id} ${source.a}-${source.b}`;
+    if (!key) {
+      warnings.push(`${label}: invalid endpoints`);
+      return;
+    }
+    if (!["edge", "stick"].includes(source.kind)) warnings.push(`${label}: unknown kind ${source.kind}`);
+    if (source.kind !== "stick" && !faceEdges.has(key)) warnings.push(`${label}: orphan non-stick edge`);
+  });
+  (model?.details || []).forEach((detail, index) => {
+    const type = String(detail?.type || "detail");
+    const stroke = String(detail?.stroke || "");
+    const rgb = /^#([0-9a-f]{6})$/i.exec(stroke)?.[1];
+    const nearWhite = rgb
+      ? [0, 2, 4].every((offset) => parseInt(rgb.slice(offset, offset + 2), 16) >= 235)
+      : false;
+    if (stroke && ["window", "glass", "portal", "forcefield", "forceField"].includes(type)) {
+      warnings.push(`detail ${detail?.id ?? index}: ${type} carries a stroke`);
+    }
+    if (nearWhite && type !== "engine") warnings.push(`detail ${detail?.id ?? index}: non-engine near-white stroke`);
+  });
+  return warnings;
+}
+
+function modelBrowserEntries() {
+  return Object.entries(gameLibrary())
+    .filter(([, model]) => model?.verts?.length)
+    .map(([id, model]) => ({ id, model, warnings: modelAuditWarnings(model) }))
+    .sort((a, b) => {
+      const problemSort = b.warnings.length - a.warnings.length;
+      if (problemSort) return problemSort;
+      return (a.model.name || a.id).localeCompare(b.model.name || b.id);
+    });
+}
+
+function thumbnailModelData(model) {
+  const verts = (model.verts || []).map(sourceVertex);
+  const vertexBySourceId = new Map(verts.map((vertex) => [vertex.id, vertex]));
+  const faces = (model.faces || [])
+    .map(sourceFace)
+    .filter((face) => face.verts.length >= 3 && face.verts.every((id) => vertexBySourceId.has(id)));
+  const edges = (model.edges || [])
+    .map(sourceEdge)
+    .filter((edge) => vertexBySourceId.has(edge.a) && vertexBySourceId.has(edge.b));
+  return { verts, vertexBySourceId, faces, edges };
+}
+
+function rotateThumbnailPoint(v) {
+  const ry = 0.74;
+  const rx = -0.42;
+  const cy = Math.cos(ry), sy = Math.sin(ry);
+  const cx = Math.cos(rx), sx = Math.sin(rx);
+  const x1 = v.x * cy - v.z * sy;
+  const z1 = v.x * sy + v.z * cy;
+  const y1 = v.y * cx - z1 * sx;
+  const z2 = v.y * sx + z1 * cx;
+  return vec(x1, y1, z2);
+}
+
+function drawModelBrowserThumbnail(canvas, model) {
+  const ctx = canvas.getContext("2d");
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = "#010201";
+  ctx.fillRect(0, 0, w, h);
+  const data = thumbnailModelData(model);
+  if (!data.verts.length) return;
+  const rotated = new Map(data.verts.map((vertex) => [vertex.id, rotateThumbnailPoint(vertex)]));
+  const xs = [...rotated.values()].map((p) => p.x);
+  const ys = [...rotated.values()].map((p) => p.y);
+  const rangeX = Math.max(1, Math.max(...xs) - Math.min(...xs));
+  const rangeY = Math.max(1, Math.max(...ys) - Math.min(...ys));
+  const scale = Math.min((w - 26) / rangeX, (h - 24) / rangeY);
+  const centerX = (Math.max(...xs) + Math.min(...xs)) / 2;
+  const centerY = (Math.max(...ys) + Math.min(...ys)) / 2;
+  const project = (point) => ({
+    x: w / 2 + (point.x - centerX) * scale,
+    y: h / 2 - (point.y - centerY) * scale,
+    z: point.z
+  });
+  const base = model?.gameMeta?.baseColor || "#e9f2e4";
+  const sortedFaces = data.faces
+    .map((face) => {
+      const points = face.verts.map((id) => rotated.get(id)).filter(Boolean);
+      const avgZ = points.reduce((sum, point) => sum + point.z, 0) / points.length;
+      return { face, points, projected: points.map(project), avgZ };
+    })
+    .sort((a, b) => a.avgZ - b.avgZ);
+  for (const item of sortedFaces) {
+    const n = norm(cross(sub(item.points[1], item.points[0]), sub(item.points[2], item.points[0])));
+    drawFace(ctx, item.projected, shadedFaceColor(n, optionalHexColor(item.face.faceColor) || base), "rgba(85,255,78,.2)", 0.7);
+  }
+  ctx.save();
+  ctx.strokeStyle = "rgba(194,255,194,.38)";
+  ctx.lineWidth = 1.05;
+  ctx.beginPath();
+  for (const edge of data.edges) {
+    const a = rotated.get(edge.a);
+    const b = rotated.get(edge.b);
+    if (!a || !b) continue;
+    const pa = project(a);
+    const pb = project(b);
+    ctx.moveTo(pa.x, pa.y);
+    ctx.lineTo(pb.x, pb.y);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function updateModelBrowser() {
+  if (!els.modelBrowserGrid) return;
+  const entries = modelBrowserEntries();
+  els.modelBrowserGrid.replaceChildren();
+  if (els.modelBrowserReadout) {
+    const warningCount = entries.filter((entry) => entry.warnings.length).length;
+    els.modelBrowserReadout.textContent = `${entries.length} objects | ${warningCount} with audit warnings`;
+  }
+  for (const entry of entries) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `model-browser-card${entry.warnings.length ? " has-audit" : ""}`;
+    button.dataset.modelId = entry.id;
+    if (entry.warnings.length) button.title = entry.warnings.join("\n");
+
+    const canvas = document.createElement("canvas");
+    canvas.className = "model-browser-thumb";
+    canvas.width = 260;
+    canvas.height = 160;
+    button.appendChild(canvas);
+
+    if (entry.warnings.length) {
+      const badge = document.createElement("span");
+      badge.className = "model-browser-warning";
+      badge.textContent = "!";
+      badge.title = `${entry.warnings.length} audit warning${entry.warnings.length === 1 ? "" : "s"}`;
+      button.appendChild(badge);
+    }
+
+    const title = document.createElement("span");
+    title.className = "model-browser-title";
+    title.textContent = entry.model.name || entry.id;
+    button.appendChild(title);
+
+    const meta = document.createElement("span");
+    meta.className = "model-browser-meta";
+    meta.textContent = `${entry.id} | ${entry.model.verts?.length || 0}v ${entry.model.faces?.length || 0}f${entry.warnings.length ? ` | ${entry.warnings.length} warnings` : ""}`;
+    button.appendChild(meta);
+
+    els.modelBrowserGrid.appendChild(button);
+    drawModelBrowserThumbnail(canvas, entry.model);
+  }
+}
+
+function openModelBrowser() {
+  if (!els.modelBrowserModal) return;
+  if (els.modelBrowserProfileSides && els.profileSideCount) els.modelBrowserProfileSides.value = readProfileSideCount();
+  if (els.modelBrowserProfileRotation && els.profileRotationDeg) els.modelBrowserProfileRotation.value = readProfileRotationDeg();
+  if (els.modelBrowserProfileCone && els.profileConeMode) els.modelBrowserProfileCone.checked = readProfileConeMode();
+  updateModelBrowser();
+  els.modelBrowserModal.classList.remove("is-hidden");
+}
+
+function closeModelBrowser() {
+  els.modelBrowserModal?.classList.add("is-hidden");
+  renderAll();
 }
 
 function populateLibrarySelector() {
@@ -5483,9 +6381,11 @@ function loadLibraryModel(id) {
   state.selected = null;
   state.pick = [];
   state.selectedFaceIds.clear();
+  state.selectedEdgeIds.clear();
   loadSkinBitmaps(source.id || id, mirrorFlagsFromMeta(meta));
   fitView();
   setStatus(`LOADED ${els.shipName.value.toUpperCase()} FROM GAME LIBRARY.`);
+  closeModelBrowser();
   renderAll();
   scheduleGamePreviewSync(0, true);
 }
@@ -5799,6 +6699,7 @@ function setExportVisible(visible) {
   els.workspace.classList.toggle("export-hidden", !visible);
   els.exportPanel.classList.toggle("is-hidden", !visible);
   els.toggleExportBtn.textContent = visible ? "Hide Advanced" : "Advanced";
+  renderAll();
 }
 
 function setMode(mode, announce = true) {
@@ -5808,7 +6709,7 @@ function setMode(mode, announce = true) {
   renderAll();
 }
 
-function setToolTab(tab) {
+function setToolTab(tab, options = {}) {
   els.toolsPanel.dataset.toolTab = tab;
   document.querySelectorAll(".tool-tab-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.toolTabTarget === tab);
@@ -5816,15 +6717,17 @@ function setToolTab(tab) {
   document.querySelectorAll(".tool-tab-panel").forEach((panel) => {
     panel.classList.toggle("active", panel.dataset.toolTabPanel === tab);
   });
+  if (options.redraw !== false) renderAll();
 }
 
-function setPaintTab(tab) {
+function setPaintTab(tab, options = {}) {
   document.querySelectorAll(".paint-subtab-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.paintTabTarget === tab);
   });
   document.querySelectorAll(".paint-tab-panel").forEach((panel) => {
     panel.classList.toggle("active", panel.dataset.paintTabPanel === tab);
   });
+  if (options.redraw !== false) renderAll();
 }
 
 function openAssetLibrary() {
@@ -5838,6 +6741,26 @@ function openAssetLibrary() {
 
 function closeAssetLibrary() {
   els.assetLibraryModal?.classList.add("is-hidden");
+  renderAll();
+}
+
+function openUvProperties() {
+  if (!els.uvPropertiesModal) return;
+  updateFaceUvTransformControls();
+  els.uvPropertiesModal.classList.remove("is-hidden");
+}
+
+function closeUvProperties() {
+  els.uvPropertiesModal?.classList.add("is-hidden");
+  renderAll();
+}
+
+function isEditingFormControl(target) {
+  return !!target?.closest?.("input, textarea, select, [contenteditable='true'], [contenteditable='']");
+}
+
+function modalIsOpen(...modals) {
+  return modals.some((modal) => modal && !modal.classList.contains("is-hidden"));
 }
 
 function bindEvents() {
@@ -5853,6 +6776,7 @@ function bindEvents() {
   document.querySelectorAll(".axis-btn").forEach((btn) => btn.addEventListener("click", () => {
     state.axis = btn.dataset.axis;
     document.querySelectorAll(".axis-btn").forEach((b) => b.classList.toggle("active", b === btn));
+    renderAll();
   }));
   ["x", "y", "z"].forEach((axis) => {
     const apply = (value) => {
@@ -5896,17 +6820,51 @@ function bindEvents() {
     canvas.addEventListener("click", (ev) => {
       const point = getCanvasPoint(ev, canvas);
       const projected = new Map(state.verts.map((v) => [v.id, orthoProject(v, canvas, canvas.dataset.view)]));
+      if (state.mode === "edge") {
+        const auditHit = els.showAuditEdges?.checked
+          ? nearestEdge(point, projected, renderAuditEdges(), 14)
+          : null;
+        const edgeHit = auditHit || nearestEdge(point, projected, state.edges, 10);
+        if (edgeHit) {
+          selectEdge(edgeHit, { audit: edgeHit === auditHit });
+          return;
+        }
+      }
       const id = nearestVertex(point, projected, 12);
       if (id) selectVertex(id);
     });
   });
-  document.getElementById("newWedgeBtn").addEventListener("click", resetWedge);
+  const startNewProfile = (sideInput = els.profileSideCount, rotationInput = els.profileRotationDeg, coneInput = els.profileConeMode) => {
+    closeModelBrowser();
+    resetPolygonProfile(readProfileSideCount(sideInput), readProfileRotationDeg(rotationInput), readProfileConeMode(coneInput));
+  };
+  document.getElementById("newProfileBtn")?.addEventListener("click", () => startNewProfile());
+  els.browseModelsBtn?.addEventListener("click", openModelBrowser);
+  els.modelBrowserNewProfileBtn?.addEventListener("click", () => startNewProfile(els.modelBrowserProfileSides, els.modelBrowserProfileRotation, els.modelBrowserProfileCone));
+  els.closeModelBrowserBtn?.addEventListener("click", closeModelBrowser);
+  els.modelBrowserGrid?.addEventListener("click", (event) => {
+    const card = event.target.closest("[data-model-id]");
+    if (!card) return;
+    loadLibraryModel(card.dataset.modelId);
+  });
+  els.modelBrowserModal?.addEventListener("click", (event) => {
+    if (event.target === els.modelBrowserModal) closeModelBrowser();
+  });
   els.loadLibraryModelBtn.addEventListener("click", () => loadLibraryModel(els.librarySelector.value));
   els.toggleExportBtn.addEventListener("click", () => setExportVisible(els.exportPanel.classList.contains("is-hidden")));
   els.saveModelTopBtn?.addEventListener("click", saveModelAsset);
   els.rebuildGameTopBtn?.addEventListener("click", rebuildGameFiles);
   els.showFaceNormals.addEventListener("input", renderAll);
+  els.showFaceUvTypes?.addEventListener("input", renderAll);
   els.showBlankUv?.addEventListener("input", renderAll);
+  els.showAuditEdges?.addEventListener("input", renderAll);
+  for (const input of [els.showWindowDetails, els.showSurfaceDetails, els.showEngineDetails, els.showBeaconDetails]) {
+    input?.addEventListener("input", () => {
+      resetGamePreviewSyncState();
+      renderAll();
+      scheduleGamePreviewSync(0, true);
+    });
+  }
   els.previewRenderMode.addEventListener("input", renderAll);
   els.toggleBlueprintBtn?.addEventListener("click", () => {
     setBlueprintsVisible(!state.showBlueprints, { persist: true });
@@ -5924,6 +6882,11 @@ function bindEvents() {
   els.assetLibraryModal?.addEventListener("click", (event) => {
     if (event.target === els.assetLibraryModal) closeAssetLibrary();
   });
+  els.openUvPropertiesBtn?.addEventListener("click", openUvProperties);
+  els.closeUvPropertiesBtn?.addEventListener("click", closeUvProperties);
+  els.uvPropertiesModal?.addEventListener("click", (event) => {
+    if (event.target === els.uvPropertiesModal) closeUvProperties();
+  });
   els.confirmWriteSummaryBtn?.addEventListener("click", () => closeWriteSummaryModal(true));
   els.cancelWriteSummaryBtn?.addEventListener("click", () => closeWriteSummaryModal(false));
   els.writeSummaryModal?.addEventListener("click", (event) => {
@@ -5935,6 +6898,14 @@ function bindEvents() {
     if (event.target === els.buildCompleteModal) closeBuildCompleteModal();
   });
   window.addEventListener("keydown", (event) => {
+    if ((event.key === "Delete" || event.key === "Backspace")
+      && state.selected
+      && !isEditingFormControl(event.target)
+      && !modalIsOpen(els.writeSummaryModal, els.buildCompleteModal, els.assetLibraryModal, els.uvPropertiesModal, els.modelBrowserModal, els.spinPreviewModal)) {
+      event.preventDefault();
+      deleteSelected();
+      return;
+    }
     if (event.key !== "Escape") return;
     if (!els.writeSummaryModal?.classList.contains("is-hidden")) {
       closeWriteSummaryModal(false);
@@ -5946,6 +6917,14 @@ function bindEvents() {
     }
     if (!els.assetLibraryModal?.classList.contains("is-hidden")) {
       closeAssetLibrary();
+      return;
+    }
+    if (!els.uvPropertiesModal?.classList.contains("is-hidden")) {
+      closeUvProperties();
+      return;
+    }
+    if (!els.modelBrowserModal?.classList.contains("is-hidden")) {
+      closeModelBrowser();
       return;
     }
     if (!els.spinPreviewModal?.classList.contains("is-hidden")) closeSpinPreviewWindow();
@@ -6061,6 +7040,10 @@ function bindEvents() {
   });
   els.skinAngle?.addEventListener("input", (ev) => setSelectedFaceUvAngle(ev.target.value));
   els.skinAngleValue?.addEventListener("change", (ev) => setSelectedFaceUvAngle(ev.target.value));
+  for (const control of [els.uvTransformX, els.uvTransformY, els.uvTransformRotation, els.uvTransformScale]) {
+    control?.addEventListener("change", applySelectedFaceUvTransformFromControls);
+  }
+  els.resetUvTransformBtn?.addEventListener("click", resetSelectedFaceUvTransform);
   document.querySelectorAll(".uv-rotate-btn").forEach((button) => {
     button.addEventListener("click", () => rotateSelectedFaceUvAngle(button.dataset.uvRotate));
   });
@@ -6121,7 +7104,6 @@ function bindEvents() {
   document.getElementById("clearSelectionBtn").addEventListener("click", () => {
     clearEditorSelection();
     setStatus("SELECTION CLEARED.");
-    renderAll();
   });
   document.getElementById("addFaceBtn").addEventListener("click", () => {
     if (state.pick.length < 3) return setStatus("PICK AT LEAST THREE VERTICES.");
@@ -6145,6 +7127,9 @@ function bindEvents() {
     renderAll();
   });
   document.getElementById("splitEdgeBtn").addEventListener("click", splitSelectedLine);
+  document.getElementById("convertEdgeWindowBtn")?.addEventListener("click", () => convertSelectedEdgeToDetail("window"));
+  document.getElementById("convertEdgeEngineBtn")?.addEventListener("click", () => convertSelectedEdgeToDetail("engine"));
+  document.getElementById("convertEdgeDetailBtn")?.addEventListener("click", () => convertSelectedEdgeToDetail("panel"));
   document.getElementById("addWindowBtn").addEventListener("click", () => addDetail("window"));
   document.getElementById("addEngineBtn").addEventListener("click", () => addDetail("engine"));
   document.getElementById("addPanelBtn").addEventListener("click", () => addDetail("panel"));
@@ -6187,7 +7172,7 @@ function applyToolSurfaceMode() {
   paintButton?.remove();
   const paintPanel = document.querySelector('.tool-tab-panel[data-tool-tab-panel="paint"]');
   paintPanel?.remove();
-  setToolTab("edit");
+  setToolTab("edit", { redraw: false });
   document.title = "Ultra Elite Model Builder";
 }
 
@@ -6196,7 +7181,8 @@ bindEvents();
 setDefaultPreviewRenderMode();
 setBlueprintsVisible(state.showBlueprints);
 populateLibrarySelector();
-resetWedge();
+renderAll();
+openModelBrowser();
 kickInitialGamePreviewSync();
 checkLocalToolServer().then((ok) => {
   if (ok) refreshAvailableSkinAssets().catch(() => {});

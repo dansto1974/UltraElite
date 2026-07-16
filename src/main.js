@@ -10485,6 +10485,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function modelFaceLightDirection(center, options = {}) {
+      if (options.lightMode === "front") return vec(0, 0, -1);
       if (options.lightMode === "camera") return norm(scale(center, -1));
       return starLightDirection(center);
     }

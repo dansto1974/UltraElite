@@ -2,6 +2,35 @@
   "format": "ultra-elite-ship-builder/v1",
   "id": "cobra",
   "name": "Cobra Mk III",
+  "symmetry": "x-locked",
+  "gameMeta": {
+    "class": "fighter",
+    "npcRole": "private",
+    "aiProfile": "standard",
+    "decalRole": "private",
+    "baseColor": "#e9f2e4",
+    "description": "",
+    "missionLore": "",
+    "valueCr": 250000,
+    "stats": {
+      "r": 134,
+      "hp": 120,
+      "speed": 1,
+      "cargo": 10,
+      "missiles": 1,
+      "laser": "none"
+    },
+    "lists": {
+      "trader": true,
+      "pirate": true,
+      "police": false,
+      "alien": false
+    },
+    "flags": {
+      "escapePod": true,
+      "hiddenUntilDiscovered": false
+    }
+  },
   "verts": [
     {
       "id": 1,
@@ -374,135 +403,9 @@
       "b": 22,
       "kind": "stick",
       "mirrored": false
-    },
-    {
-      "id": 5023,
-      "a": 13,
-      "b": 14,
-      "kind": "edge",
-      "mirrored": false
-    },
-    {
-      "id": 5024,
-      "a": 19,
-      "b": 20,
-      "kind": "edge",
-      "mirrored": false
-    },
-    {
-      "id": 5025,
-      "a": 15,
-      "b": 16,
-      "kind": "edge",
-      "mirrored": false
-    },
-    {
-      "id": 5026,
-      "a": 17,
-      "b": 18,
-      "kind": "edge",
-      "mirrored": false
-    },
-    {
-      "id": 5027,
-      "a": 16,
-      "b": 17,
-      "kind": "edge",
-      "mirrored": false
-    },
-    {
-      "id": 5028,
-      "a": 15,
-      "b": 18,
-      "kind": "edge",
-      "mirrored": false
-    },
-    {
-      "id": 5029,
-      "a": 14,
-      "b": 19,
-      "kind": "edge",
-      "mirrored": false
-    },
-    {
-      "id": 5030,
-      "a": 13,
-      "b": 20,
-      "kind": "edge",
-      "mirrored": false
-    },
-    {
-      "id": 5032,
-      "a": 23,
-      "b": 25,
-      "kind": "edge",
-      "mirrored": false
-    },
-    {
-      "id": 5033,
-      "a": 24,
-      "b": 25,
-      "kind": "edge",
-      "mirrored": false
-    },
-    {
-      "id": 5034,
-      "a": 23,
-      "b": 24,
-      "kind": "edge",
-      "mirrored": false
-    },
-    {
-      "id": 5035,
-      "a": 26,
-      "b": 27,
-      "kind": "edge",
-      "mirrored": false
-    },
-    {
-      "id": 5036,
-      "a": 27,
-      "b": 28,
-      "kind": "edge",
-      "mirrored": false
-    },
-    {
-      "id": 5037,
-      "a": 26,
-      "b": 28,
-      "kind": "edge",
-      "mirrored": false
     }
   ],
   "details": [
-    {
-      "id": 5038,
-      "type": "window",
-      "color": "#101915",
-      "normal": [
-        0,
-        0.89,
-        0.45
-      ],
-      "lift": 0.5,
-      "points": [
-        [
-          16,
-          4.3,
-          67.3
-        ],
-        [
-          -16,
-          4.3,
-          67.3
-        ],
-        [
-          0,
-          17.3,
-          41.3
-        ]
-      ]
-    },
     {
       "id": 5039,
       "type": "line",
@@ -588,6 +491,18 @@
         26,
         27,
         28
+      ]
+    },
+    {
+      "id": 5044,
+      "type": "window",
+      "faceId": 1000,
+      "inset": 0.47,
+      "color": "#101915",
+      "normal": [
+        0,
+        0.89,
+        0.45
       ]
     }
   ],
@@ -734,78 +649,164 @@
         -40
       ]
     ],
+    "faces": [
+      [
+        2,
+        1,
+        0
+      ],
+      [
+        1,
+        2,
+        5
+      ],
+      [
+        6,
+        2,
+        0
+      ],
+      [
+        1,
+        5,
+        3
+      ],
+      [
+        4,
+        6,
+        0
+      ],
+      [
+        2,
+        9,
+        5
+      ],
+      [
+        6,
+        9,
+        2
+      ],
+      [
+        5,
+        8,
+        3
+      ],
+      [
+        6,
+        4,
+        7
+      ],
+      [
+        5,
+        9,
+        6,
+        7,
+        11,
+        10,
+        8
+      ],
+      [
+        10,
+        1,
+        3,
+        8
+      ],
+      [
+        11,
+        0,
+        1,
+        10
+      ],
+      [
+        7,
+        4,
+        0,
+        11
+      ]
+    ],
     "edges": [
+      [
+        1,
+        2
+      ],
       [
         0,
         1
       ],
       [
         0,
-        4
+        2
+      ],
+      [
+        2,
+        5
+      ],
+      [
+        1,
+        5
+      ],
+      [
+        2,
+        6
+      ],
+      [
+        0,
+        6
+      ],
+      [
+        3,
+        5
       ],
       [
         1,
         3
       ],
       [
-        3,
-        8
-      ],
-      [
-        4,
-        7
-      ],
-      [
-        6,
-        7
-      ],
-      [
-        6,
-        9
-      ],
-      [
-        5,
-        9
-      ],
-      [
-        5,
-        8
-      ],
-      [
-        2,
-        5
-      ],
-      [
-        2,
-        6
-      ],
-      [
-        3,
-        5
-      ],
-      [
         4,
         6
-      ],
-      [
-        1,
-        2
       ],
       [
         0,
-        2
+        4
       ],
       [
-        8,
-        10
+        2,
+        9
+      ],
+      [
+        5,
+        9
+      ],
+      [
+        6,
+        9
+      ],
+      [
+        5,
+        8
+      ],
+      [
+        3,
+        8
+      ],
+      [
+        4,
+        7
+      ],
+      [
+        6,
+        7
+      ],
+      [
+        7,
+        11
       ],
       [
         10,
         11
       ],
       [
-        7,
-        11
+        8,
+        10
       ],
       [
         1,
@@ -814,103 +815,89 @@
       [
         0,
         11
+      ],
+      [
+        20,
+        21
+      ]
+    ],
+    "edgeKinds": [
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "stick"
+    ],
+    "edgeFaces": [
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        11
+      ],
+      [
+        0,
+        2
       ],
       [
         1,
         5
       ],
       [
-        0,
-        6
-      ],
-      [
-        20,
-        21
-      ],
-      [
-        12,
-        13
-      ],
-      [
-        18,
-        19
-      ],
-      [
-        14,
-        15
-      ],
-      [
-        16,
-        17
-      ],
-      [
-        15,
-        16
-      ],
-      [
-        14,
-        17
-      ],
-      [
-        13,
-        18
-      ],
-      [
-        12,
-        19
+        1,
+        3
       ],
       [
         2,
-        9
+        6
       ],
       [
-        22,
-        24
+        2,
+        4
       ],
       [
-        23,
-        24
-      ],
-      [
-        22,
-        23
-      ],
-      [
-        25,
-        26
-      ],
-      [
-        26,
-        27
-      ],
-      [
-        25,
-        27
-      ]
-    ],
-    "edgeFaces": [
-      [
-        0,
-        11
-      ],
-      [
-        4,
-        12
+        3,
+        7
       ],
       [
         3,
         10
       ],
       [
-        7,
-        10
+        4,
+        8
       ],
       [
-        8,
+        4,
         12
       ],
       [
-        8,
+        5,
+        6
+      ],
+      [
+        5,
         9
       ],
       [
@@ -918,40 +905,24 @@
         9
       ],
       [
-        5,
-        9
-      ],
-      [
         7,
         9
       ],
       [
-        1,
-        5
+        7,
+        10
       ],
       [
-        2,
-        6
+        8,
+        12
       ],
       [
-        3,
-        7
-      ],
-      [
-        4,
-        8
-      ],
-      [
-        0,
-        1
-      ],
-      [
-        0,
-        2
+        8,
+        9
       ],
       [
         9,
-        10
+        12
       ],
       [
         9,
@@ -959,7 +930,7 @@
       ],
       [
         9,
-        12
+        10
       ],
       [
         10,
@@ -970,85 +941,10 @@
         12
       ],
       [
-        1,
-        3
-      ],
-      [
-        2,
-        4
-      ],
-      [
-        0,
-        0
-      ],
-      [
-        9,
-        9
-      ],
-      [
-        9,
-        9
-      ],
-      [
-        9,
-        9
-      ],
-      [
-        9,
-        9
-      ],
-      [
-        9,
-        9
-      ],
-      [
-        9,
-        9
-      ],
-      [
-        9,
-        9
-      ],
-      [
-        9,
-        9
-      ],
-      [
-        5,
-        6
-      ],
-      [
-        9,
-        9
-      ],
-      [
-        9,
-        9
-      ],
-      [
-        9,
-        9
-      ],
-      [
-        9,
-        9
-      ],
-      [
-        9,
-        9
-      ],
-      [
-        9,
-        9
-      ]
-    ],
-    "edgeCullNormals": {
-      "22": [
-        0,
-        0,
+        -1,
         -1
       ]
-    },
+    ],
     "edgeVisibility": [
       31,
       31,
@@ -1070,201 +966,235 @@
       31,
       31,
       31,
-      29,
-      29,
-      6,
-      20,
-      20,
-      20,
-      20,
-      19,
-      17,
-      19,
-      19,
-      30,
-      6,
-      6,
-      8,
-      6,
-      6,
-      8
+      31,
+      31,
+      31,
+      31
     ],
     "normals": [
       [
         0,
-        62,
-        31
+        89.44,
+        44.72
       ],
       [
-        -18,
-        55,
-        16
+        -30.14,
+        91.4,
+        27.16
       ],
       [
-        18,
-        55,
-        16
+        30.14,
+        91.4,
+        27.16
       ],
       [
-        -16,
-        52,
-        14
+        -28.34,
+        92.19,
+        26.4
       ],
       [
-        16,
-        52,
-        14
+        28.34,
+        92.19,
+        26.4
       ],
       [
-        -14,
-        47,
+        -11.29,
+        99.36,
         0
       ],
       [
-        14,
-        47,
+        11.29,
+        99.36,
         0
       ],
       [
-        -61,
-        102,
-        0
+        -51.45,
+        85.75,
+        -0.54
       ],
       [
-        61,
-        102,
-        0
+        51.45,
+        85.75,
+        -0.54
       ],
       [
         0,
         0,
-        -80
+        -100
       ],
       [
-        -7,
-        -42,
-        9
+        -15.8,
+        -96.7,
+        20.01
       ],
       [
         0,
-        -30,
-        6
+        -97.93,
+        20.26
       ],
       [
-        7,
-        -42,
-        9
+        14.67,
+        -97.11,
+        18.84
       ]
     ],
     "details": [
       {
-        "type": "window",
-        "points": [
-          [
-            16,
-            4.3,
-            67.3
-          ],
-          [
-            -16,
-            4.3,
-            67.3
-          ],
-          [
-            0,
-            17.3,
-            41.3
-          ]
-        ],
-        "color": "#101915",
-        "normal": [
-          0,
-          0.89,
-          0.45
-        ],
-        "lift": 0.5
-      },
-      {
         "type": "line",
-        "indices": [
-          20,
-          21
-        ],
         "color": "#cccccc",
+        "width": 1.2,
+        "lift": 0.5,
+        "cull": false,
         "normal": [
           0,
           0,
           1
         ],
-        "width": 1.2,
-        "lift": 0.5,
-        "cull": false
+        "indices": [
+          20,
+          21
+        ],
+        "detailRender": {
+          "kind": "line",
+          "solid": false,
+          "wire": true,
+          "glow": false,
+          "glass": false,
+          "solidStroke": false
+        }
       },
       {
         "type": "engine",
+        "color": "#f7fff7",
+        "stroke": "#ffffff",
+        "lift": 0.5,
+        "normal": [
+          0,
+          0,
+          -1
+        ],
         "indices": [
           12,
           13,
           18,
           19
         ],
+        "detailRender": {
+          "kind": "poly",
+          "solid": true,
+          "wire": true,
+          "glow": true,
+          "glass": false,
+          "solidStroke": true
+        }
+      },
+      {
+        "type": "engine",
         "color": "#f7fff7",
         "stroke": "#ffffff",
+        "lift": 0.5,
         "normal": [
           0,
           0,
           -1
         ],
-        "lift": 0.5
-      },
-      {
-        "type": "engine",
         "indices": [
           14,
           15,
           16,
           17
         ],
+        "detailRender": {
+          "kind": "poly",
+          "solid": true,
+          "wire": true,
+          "glow": true,
+          "glass": false,
+          "solidStroke": true
+        }
+      },
+      {
+        "type": "engine",
         "color": "#f7fff7",
         "stroke": "#ffffff",
+        "lift": 0.5,
         "normal": [
           0,
           0,
           -1
         ],
-        "lift": 0.5
-      },
-      {
-        "type": "engine",
         "indices": [
           22,
           24,
           23
         ],
+        "detailRender": {
+          "kind": "poly",
+          "solid": true,
+          "wire": true,
+          "glow": true,
+          "glass": false,
+          "solidStroke": true
+        }
+      },
+      {
+        "type": "engine",
         "color": "#f7fff7",
         "stroke": "#ffffff",
+        "lift": 0.5,
         "normal": [
           0,
           0,
           -1
         ],
-        "lift": 0.5
-      },
-      {
-        "type": "engine",
         "indices": [
           25,
           26,
           27
         ],
-        "color": "#f7fff7",
-        "stroke": "#ffffff",
+        "detailRender": {
+          "kind": "poly",
+          "solid": true,
+          "wire": true,
+          "glow": true,
+          "glass": false,
+          "solidStroke": true
+        }
+      },
+      {
+        "type": "window",
+        "color": "#101915",
         "normal": [
           0,
-          0,
-          -1
+          0.89,
+          0.45
         ],
-        "lift": 0.5
+        "lift": 0.5,
+        "points": [
+          [
+            0,
+            16.81,
+            42.37
+          ],
+          [
+            -15.04,
+            4.59,
+            66.81
+          ],
+          [
+            15.04,
+            4.59,
+            66.81
+          ]
+        ],
+        "detailRender": {
+          "kind": "poly",
+          "solid": true,
+          "wire": true,
+          "glow": false,
+          "glass": true,
+          "solidStroke": false
+        }
       }
     ],
     "imageProjection": {
@@ -1282,14 +1212,50 @@
         "#98a0ad",
         "#babfc3",
         "#9ba6b5"
+      ],
+      "faceRenderFlags": [
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8
       ]
-    }
-  },
-  "gameMeta": {
-    "imageDecalMirrorX": {
-      "top": false,
-      "bottom": false,
-      "back": false
+    },
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "private",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "valueCr": 250000,
+      "stats": {
+        "r": 134,
+        "hp": 120,
+        "speed": 1,
+        "cargo": 10,
+        "missiles": 1,
+        "laser": "none"
+      },
+      "lists": {
+        "trader": true,
+        "pirate": true,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": false
+      }
     }
   }
 }

@@ -82,6 +82,9 @@
             <button id="addEdgeBtn">Add Edge From Picks</button>
             <button id="addStickBtn">Add Stick From Picks</button>
             <button id="splitEdgeBtn">Split + Triangulate</button>
+            <button id="convertEdgeWindowBtn" type="button">Convert To Window</button>
+            <button id="convertEdgeEngineBtn" type="button">Convert To Engine</button>
+            <button id="convertEdgeDetailBtn" type="button">Convert To Surface Detail</button>
             <button id="deleteEdgeBtn">Delete Edge</button>
           </div>
         </div>
@@ -107,9 +110,11 @@
             <h2>Paint / UV</h2>
             <div id="skinReadout" class="readout compact-readout">No skin bitmaps loaded.</div>
             <div id="selectedBitmapReadout" class="readout compact-readout">No UV selected.</div>
+            <div id="faceUvTypeReadout" class="readout compact-readout uv-type-readout">Select a face to inspect UV type.</div>
             <input id="replaceAssetInput" class="hidden-file-input" type="file" accept="image/png,image/jpeg,image/svg+xml">
             <div class="paint-toolbar">
               <label class="toggle"><input id="importMirroredSkin" type="checkbox"> Apply as mirrored half UV</label>
+              <button id="openUvPropertiesBtn" type="button">UV Properties</button>
               <button id="openAssetLibraryPaintBtn" type="button">Asset Library</button>
             </div>
 
@@ -252,7 +257,11 @@
         <section class="model-project-tools">
           <h2>Workspace</h2>
           <div class="button-grid compact-actions">
-            <button id="newWedgeBtn" class="primary">New Wedge</button>
+            <button id="browseModelsBtn" type="button">Browse Models</button>
+            <label class="inline-number-control">Profile Sides <input id="profileSideCount" type="number" min="3" max="16" step="1" value="4"></label>
+            <label class="inline-number-control">Rotation <input id="profileRotationDeg" type="number" min="-180" max="180" step="1" value="45"></label>
+            <label class="inline-number-control"><input id="profileConeMode" type="checkbox"> Cone</label>
+            <button id="newProfileBtn" class="primary">New Profile</button>
             <button id="saveModelTopBtn" class="primary">Save Ship</button>
             <button id="rebuildGameTopBtn">Rebuild Game</button>
             <button id="toggleExportBtn">Advanced</button>
@@ -395,7 +404,16 @@
               <button id="clearSelectionBtn" type="button" title="Clear selection">×</button>
             </div>
             <label class="toggle"><input id="showFaceNormals" type="checkbox" checked> Normals</label>
+            <label class="toggle" title="P projected, F flat, S side projection, A auto projection"><input id="showFaceUvTypes" type="checkbox"> UV Type</label>
             <label class="toggle"><input id="showBlankUv" type="checkbox"> Blank UV</label>
+            <div class="detail-view-filter" aria-label="Detail view filters">
+              <span>Details</span>
+              <label><input id="showWindowDetails" type="checkbox" checked> Windows</label>
+              <label><input id="showSurfaceDetails" type="checkbox" checked> Surface</label>
+              <label><input id="showEngineDetails" type="checkbox" checked> Engines</label>
+              <label><input id="showBeaconDetails" type="checkbox" checked> Beacons</label>
+            </div>
+            <label class="toggle audit-toggle"><input id="showAuditEdges" type="checkbox" checked> Audit Edges</label>
             <div class="projection-view-toolbar" aria-label="Projection camera views">
               <button type="button" data-view-preset="top" title="Top projection view">Top</button>
               <button type="button" data-view-preset="bottom" title="Bottom projection view">Bottom</button>
@@ -485,6 +503,60 @@
         </div>
         <div id="status" class="status">READY.</div>
       </aside>
+    </section>
+
+    <section id="modelBrowserModal" class="asset-library-modal model-browser-modal is-hidden" aria-modal="true" aria-label="Model browser">
+      <div class="asset-library-window model-browser-window">
+        <header class="asset-library-head">
+          <div>
+            <p class="eyebrow">Ship Builder</p>
+            <h2>Choose A Starting Object</h2>
+            <div id="modelBrowserReadout" class="readout compact-readout">Loading model library...</div>
+          </div>
+          <div class="asset-library-actions">
+            <label class="inline-number-control">Sides <input id="modelBrowserProfileSides" type="number" min="3" max="16" step="1" value="4"></label>
+            <label class="inline-number-control">Rotation <input id="modelBrowserProfileRotation" type="number" min="-180" max="180" step="1" value="45"></label>
+            <label class="inline-number-control"><input id="modelBrowserProfileCone" type="checkbox"> Cone</label>
+            <button id="modelBrowserNewProfileBtn" class="primary" type="button">New Profile</button>
+            <button id="closeModelBrowserBtn" type="button" aria-label="Close model browser">Close</button>
+          </div>
+        </header>
+
+        <div class="asset-library-layout model-browser-layout">
+          <section class="asset-library-section model-browser-section">
+            <h2>Model Library</h2>
+            <div id="modelBrowserGrid" class="model-browser-grid" aria-label="Model library browser"></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section id="uvPropertiesModal" class="asset-library-modal uv-properties-modal is-hidden" aria-modal="true" aria-label="UV properties">
+      <div class="asset-library-window uv-properties-window">
+        <header class="asset-library-head">
+          <div>
+            <p class="eyebrow">Paint / UV</p>
+            <h2>UV Properties</h2>
+            <div class="readout compact-readout">Adjusts the selected face UV template and rebakes its per-face UVs.</div>
+          </div>
+          <div class="asset-library-actions">
+            <button id="closeUvPropertiesBtn" type="button" aria-label="Close UV properties">Close</button>
+          </div>
+        </header>
+
+        <section class="uv-transform-tool" aria-label="Per-face UV transform">
+          <h3>UV Template Transform</h3>
+          <div class="uv-transform-grid">
+            <label>X <input id="uvTransformX" type="number" step="1" value="0"></label>
+            <label>Y <input id="uvTransformY" type="number" step="1" value="0"></label>
+            <label>Rotation <input id="uvTransformRotation" type="number" min="-180" max="180" step="1" value="0"></label>
+            <label>Scale <input id="uvTransformScale" type="number" min="0.05" max="20" step="0.05" value="1"></label>
+          </div>
+          <div class="uv-orient-actions">
+            <button id="resetUvTransformBtn" type="button">Reset Transform</button>
+          </div>
+        </section>
+      </div>
     </section>
 
     <section id="assetLibraryModal" class="asset-library-modal is-hidden" aria-modal="true" aria-label="Asset library">
