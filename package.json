@@ -5,6 +5,7 @@
   "scripts": {
     "check": "node tools/build/check.mjs",
     "check:fix": "node tools/build/check.mjs --fix",
+    "audit:obsidian": "node tools/obsidian/audit-notes.mjs && node tools/obsidian/audit-local-skills.mjs && node tools/obsidian/audit-link-graph.mjs && node tools/obsidian/audit-release-flow.mjs",
     "audit:render-intent": "node tools/build/audit-render-intent.mjs",
     "audit:render-intent:strict": "node tools/build/audit-render-intent.mjs --strict",
     "models": "node tools/build/generate-model-library.mjs",

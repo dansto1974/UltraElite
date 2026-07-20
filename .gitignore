@@ -1,8 +1,25 @@
 .DS_Store
+node_modules/
+
+# Large/local source asset folders.
 Photoshop Assets/
 unused skins/
+
+# Local private Codex/Obsidian knowledgebase.
+/Ultra Elite Codex/
+/project.md
+/project *.md
+
+# Local credentials and machine-specific publish config.
+.env
+.env.*
+*.env
+*.env.*
 .ultra-elite-publish.env
+
+# Local/generated runtime reports.
 tools/render-bench/reports/*.json
+tools/render-bench/reports/
 ROADMAP.md
 PROJECT_MEMORY.md
 LESSONS.md
