@@ -23,11 +23,15 @@ function mustContain(file, pattern, label) {
 mustContain("project.md", /\[\[Knowledge\/Maps\/Task Router\|Task Router\]\]/, "Task Router startup link");
 mustContain("Knowledge/Maps/Task Router.md", /\[\[Knowledge\/Maps\/Fresh Task Contract\|Fresh Task Contract\]\]/, "Fresh Task Contract link");
 mustContain("Knowledge/Maps/Task Router.md", /\[\[Knowledge\/Maps\/Release Router\|Release Router\]\]/, "Release Router route");
+mustContain("Knowledge/Maps/Task Router.md", /\[\[Knowledge\/Index\|Knowledge Index\]\]/, "Knowledge Index route");
 mustContain("Knowledge/Maps/Fresh Task Contract.md", /Announce the route with `considering: `/, "considering route announcement");
+mustContain("Knowledge/Maps/Fresh Task Contract.md", /npm run index:obsidian -- --search/, "index search route");
+mustContain("Knowledge/Maps/Linking Rules.md", /Reference notes may be longer when tagged `#reference`/, "reference note rule");
 mustContain("Knowledge/Maps/Fresh Task Contract.md", /\[\[Skills\/ultra-elite-build\/SKILL\|ultra-elite-build\]\]/, "build skill route");
 mustContain("Knowledge/Maps/Fresh Task Contract.md", /\[\[Skills\/ultra-elite-release\/SKILL\|ultra-elite-release\]\]/, "release skill route");
 mustContain("Knowledge/Maps/Release Router.md", /Build before every website publish\./, "build-before-publish rule");
 mustContain("Skills/ultra-elite-project/SKILL.md", /Start replies with `considering: `/, "project considering rule");
+mustContain("Skills/ultra-elite-project/SKILL.md", /\[\[Knowledge\/Index\|Knowledge Index\]\]/, "project index route");
 mustContain("Skills/ultra-elite-release/SKILL.md", /\[\[Skills\/ultra-elite-build\/SKILL\|ultra-elite-build\]\]/, "release depends on build skill");
 
 const buildSkill = mustContain("Skills/ultra-elite-build/SKILL.md", /Do not hand-edit generated `index\.html`/, "generated index guardrail");

@@ -4,8 +4,6 @@ import path from "node:path";
 const projectRoot = process.cwd();
 const nestedVaultRoot = path.join(projectRoot, "Ultra Elite Codex");
 const root = fs.existsSync(path.join(nestedVaultRoot, "Knowledge")) ? nestedVaultRoot : projectRoot;
-const copiedRoot = "Knowledge/Copied Codex";
-const archiveCatalogue = `${copiedRoot}/Archive Catalogue.md`;
 const startupFiles = ["project.md", "Knowledge/Maps/Task Router.md"];
 const failures = [];
 
@@ -117,98 +115,10 @@ function reachableFrom(starts) {
   return seen;
 }
 
-function numberedCopiedFolders() {
-  const folders = new Map();
-
-  for (const rel of markdownFiles) {
-    if (!rel.startsWith(`${copiedRoot}/`)) continue;
-    const basename = path.posix.basename(rel);
-    const match = basename.match(/^(\d\d) /);
-    if (!match) continue;
-
-    const folder = path.posix.dirname(rel);
-    if (!folders.has(folder)) folders.set(folder, []);
-    folders.get(folder).push({ rel, number: Number(match[1]) });
-  }
-
-  return folders;
-}
-
-function nextTarget(rel) {
-  for (const link of wikiLinks(read(rel))) {
-    if (link.alias.toLowerCase() !== "next") continue;
-    const resolved = resolveLink(rel, link.target);
-    return resolved.file || null;
-  }
-  return null;
-}
-
 const startupReachable = reachableFrom(startupFiles);
-const catalogueReachable = markdownSet.has(archiveCatalogue) ? reachableFrom([archiveCatalogue]) : new Set();
-const copiedFolders = numberedCopiedFolders();
-const catalogueLinks = new Set(linksByFile.get(archiveCatalogue) || []);
-
-if (!markdownSet.has(archiveCatalogue)) {
-  fail(`missing ${archiveCatalogue}`);
-}
 
 for (const rel of markdownFiles.filter((file) => file.startsWith("Knowledge/Maps/"))) {
   if (!startupReachable.has(rel)) fail(`${rel}: router is not reachable from startup`);
-}
-
-for (const [folder, entries] of [...copiedFolders.entries()].sort()) {
-  const sorted = entries.sort((a, b) => a.number - b.number || a.rel.localeCompare(b.rel));
-  const first = sorted.find((entry) => entry.number === 1)?.rel;
-  const numbers = sorted.map((entry) => entry.number);
-  const expected = Array.from({ length: sorted.length }, (_, index) => index + 1);
-  const byNumber = new Map(sorted.map((entry) => [entry.number, entry.rel]));
-
-  if (!first) {
-    fail(`${folder}: missing 01 entry note`);
-    continue;
-  }
-
-  if (numbers.join(",") !== expected.join(",")) {
-    fail(`${folder}: skipped or duplicated numbers; found ${numbers.join(",")}`);
-  }
-
-  if (!catalogueLinks.has(first)) {
-    fail(`${folder}: 01 entry is missing from Archive Catalogue`);
-  }
-
-  if (!startupReachable.has(first) && !catalogueReachable.has(first)) {
-    fail(`${folder}: 01 entry is not reachable from startup or Archive Catalogue`);
-  }
-
-  for (let number = 1; number <= sorted.length; number++) {
-    const rel = byNumber.get(number);
-    if (!rel) continue;
-
-    const next = nextTarget(rel);
-    const expectedNext = byNumber.get(number + 1) || null;
-
-    if (next !== expectedNext) {
-      const label = next || "missing";
-      fail(`${rel}: next chain expected ${expectedNext || "end"} but found ${label}`);
-    }
-  }
-}
-
-for (const [folder, entries] of copiedFolders) {
-  const first = entries.find((entry) => entry.number === 1)?.rel;
-  if (!first) continue;
-
-  const text = read(first);
-  const upLinks = wikiLinks(text).filter((link) => /^up:\s*\[\[/.test(text.split(/\r?\n/).find((line) => line.includes(`[[${link.raw}]]`)) || ""));
-
-  for (const link of upLinks) {
-    const up = resolveLink(first, link.target).file;
-    if (!up || !up.startsWith("Knowledge/Maps/")) continue;
-    const routerLinks = new Set(linksByFile.get(up) || []);
-    if (!routerLinks.has(first) && !catalogueLinks.has(first)) {
-      fail(`${first}: parent router ${up} does not link back and catalogue does not cover it`);
-    }
-  }
 }
 
 if (failures.length) {
@@ -218,5 +128,5 @@ if (failures.length) {
 }
 
 console.log(
-  `Obsidian link graph audit ok: ${markdownFiles.length} Markdown files, ${copiedFolders.size} copied index chains.`
+  `Obsidian link graph audit ok: ${markdownFiles.length} Markdown files.`
 );
