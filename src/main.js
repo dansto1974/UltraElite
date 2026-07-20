@@ -2157,7 +2157,19 @@
     }
 
     function modelOverallSize(model) {
-      if (!model?.verts?.length) return 1;
+      return modelBounds(model).size;
+    }
+
+    function modelBounds(model) {
+      if (!model?.verts?.length) {
+        return {
+          min: vec(),
+          max: vec(),
+          center: vec(),
+          span: vec(1, 1, 1),
+          size: 1
+        };
+      }
       const min = [Infinity, Infinity, Infinity];
       const max = [-Infinity, -Infinity, -Infinity];
       for (const v of model.verts) {
@@ -2166,7 +2178,14 @@
           max[i] = Math.max(max[i], v[i]);
         }
       }
-      return Math.max(max[0] - min[0], max[1] - min[1], max[2] - min[2], 1);
+      const span = vec(max[0] - min[0], max[1] - min[1], max[2] - min[2]);
+      return {
+        min: vec(min[0], min[1], min[2]),
+        max: vec(max[0], max[1], max[2]),
+        center: vec((min[0] + max[0]) * .5, (min[1] + max[1]) * .5, (min[2] + max[2]) * .5),
+        span,
+        size: Math.max(span.x, span.y, span.z, 1)
+      };
     }
 
     function authorizedShipList() {
@@ -8912,8 +8931,9 @@
       renderPanel();
     }
 
-    const GAME_VERSION = "1.0.20-beta";
+    const GAME_VERSION = "1.0.21-beta";
     const UPDATE_LOG = [
+      ["1.0.21-beta", "Ship Builder overhaul: added a fullscreen-ready workshop with undo/redo, view-cube controls, better selection tools, surface/extrude workflows, and refreshed Boa and Canister asset rendering."],
       ["1.0.20-beta", "Ship and station surface polish: optimized several model assets, refreshed Diamondback skin textures, and tightened station panel mapping for cleaner Ultra-mode rendering."],
       ["1.0.19-beta", "Mission and dockyard polish: active contracts now report ship requirements more clearly, mission completion debriefs wait until landing is complete, and transition cameras lock the cockpit view cleanly."],
       ["1.0.18-beta", "Launch loading now gates the cockpit until assets are ready, Safari planet shadows are safer, and station/police beacons have clearer sequenced strobe behaviour."],
@@ -17256,8 +17276,25 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       game.objects = [];
 
       const radius = Math.max(1, modelBoundingRadius(model));
-      const targetPx = Math.min(w, h) * clamp(Number(opts.targetScale) || .46, .12, .9);
-      const distance = Math.max(40, radius * Math.min(w, h) * .82 / Math.max(1, targetPx));
+      const previewBounds = modelBounds(model);
+      const previewSize = Math.max(1, previewBounds.size);
+      const previewScaleFactor = Number(opts.scaleFactor) || 1;
+      const previewYaw = Number(opts.yaw) || 0;
+      const previewPitch = Number(opts.pitch) || 0;
+      const previewRoll = Number(opts.roll) || 0;
+      const closePreview = !!opts.allowClosePreview;
+      const targetScale = clamp(Number(opts.targetScale) || .46, .05, opts.orthographic ? 8 : closePreview ? 24 : .9);
+      const targetPx = Math.min(w, h) * targetScale;
+      const scaledPreviewSize = previewSize * previewScaleFactor;
+      const fitDistance = Math.max(40, scaledPreviewSize * Math.min(w, h) * .82 / Math.max(1, targetPx));
+      const perspectiveMinDistance = closePreview ? Math.max(24, scaledPreviewSize * .08) : scaledPreviewSize * .75 + 80;
+      const distance = opts.orthographic ? Math.max(fitDistance, scaledPreviewSize * 2.5 + 80) : Math.max(fitDistance, perspectiveMinDistance);
+      const orientedCenter = rotateShipPoint(previewBounds.center, previewYaw, previewPitch, previewRoll);
+      const previewCenterCam = vec(
+        -orientedCenter.x * previewScaleFactor,
+        -orientedCenter.y * previewScaleFactor,
+        distance - orientedCenter.z * previewScaleFactor
+      );
       const camera = makeCamera(0);
       const qualityMode = opts.quality || "live";
       let quality = qualityMode === "full" ? {
@@ -17288,9 +17325,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           effects: false
         };
       }
-      const orthographicScale = targetPx / Math.max(1, radius * 2);
+      const orthographicScale = targetPx / Math.max(1, scaledPreviewSize);
       const orthographicProject = (p) => {
-        if (!p || p.z <= 1) return null;
+        if (!p) return null;
         return {
           x: w / 2 + p.x * orthographicScale,
           y: h / 2 - p.y * orthographicScale,
@@ -17304,10 +17341,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const renderBenchEntity = {
         type: stationPreview ? "station" : "ship",
         model: modelName,
-        scaleFactor: Number(opts.scaleFactor) || 1,
-        rot: Number(opts.yaw) || 0,
-        pitch: Number(opts.pitch) || 0,
-        roll: Number(opts.roll) || 0,
+        scaleFactor: previewScaleFactor,
+        rot: previewYaw,
+        pitch: previewPitch,
+        roll: previewRoll,
         color: opts.baseColor || benchMeta.baseColor || shipColor(modelName, false),
         role: opts.role || opts.decalRole || benchMeta.decalRole || (benchMeta.hiddenUntilDiscovered ? "project" : undefined),
         decalSeed: hash32(`bench:${modelName}`),
@@ -17399,7 +17436,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
       const routed = renderObject(targetCtx, {
         camera,
-        centerCam: vec(0, 0, distance),
+        centerCam: previewCenterCam,
         w,
         h,
         mode: game.graphicsMode,
@@ -17441,6 +17478,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         rendered: !!result,
         route: routed.route,
         radius,
+        size: previewSize,
         distance,
         points: result?.points?.filter(Boolean).length || 0,
         faces: model.faces?.length || 0,

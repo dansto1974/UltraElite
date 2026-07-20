@@ -15,11 +15,52 @@ const PROJECTION_VIEW_PRESETS = Object.freeze({
   left: { rx: 0, ry: -Math.PI / 2, label: "LEFT" },
   right: { rx: 0, ry: Math.PI / 2, label: "RIGHT" }
 });
+const VIEW_CUBE_CORNER_PRESETS = Object.freeze({
+  front: {
+    tl: { vector: { x: -1, y: 1, z: 1 }, adjacent: ["left", "top"], label: "FRONT TOP LEFT CORNER" },
+    tr: { vector: { x: 1, y: 1, z: 1 }, adjacent: ["right", "top"], label: "FRONT TOP RIGHT CORNER" },
+    bl: { vector: { x: -1, y: -1, z: 1 }, adjacent: ["left", "bottom"], label: "FRONT BOTTOM LEFT CORNER" },
+    br: { vector: { x: 1, y: -1, z: 1 }, adjacent: ["right", "bottom"], label: "FRONT BOTTOM RIGHT CORNER" }
+  },
+  back: {
+    tl: { vector: { x: 1, y: 1, z: -1 }, adjacent: ["right", "top"], label: "BACK TOP LEFT CORNER" },
+    tr: { vector: { x: -1, y: 1, z: -1 }, adjacent: ["left", "top"], label: "BACK TOP RIGHT CORNER" },
+    bl: { vector: { x: 1, y: -1, z: -1 }, adjacent: ["right", "bottom"], label: "BACK BOTTOM LEFT CORNER" },
+    br: { vector: { x: -1, y: -1, z: -1 }, adjacent: ["left", "bottom"], label: "BACK BOTTOM RIGHT CORNER" }
+  },
+  right: {
+    tl: { vector: { x: 1, y: 1, z: 1 }, adjacent: ["front", "top"], label: "RIGHT TOP LEFT CORNER" },
+    tr: { vector: { x: 1, y: 1, z: -1 }, adjacent: ["back", "top"], label: "RIGHT TOP RIGHT CORNER" },
+    bl: { vector: { x: 1, y: -1, z: 1 }, adjacent: ["front", "bottom"], label: "RIGHT BOTTOM LEFT CORNER" },
+    br: { vector: { x: 1, y: -1, z: -1 }, adjacent: ["back", "bottom"], label: "RIGHT BOTTOM RIGHT CORNER" }
+  },
+  left: {
+    tl: { vector: { x: -1, y: 1, z: -1 }, adjacent: ["back", "top"], label: "LEFT TOP LEFT CORNER" },
+    tr: { vector: { x: -1, y: 1, z: 1 }, adjacent: ["front", "top"], label: "LEFT TOP RIGHT CORNER" },
+    bl: { vector: { x: -1, y: -1, z: -1 }, adjacent: ["back", "bottom"], label: "LEFT BOTTOM LEFT CORNER" },
+    br: { vector: { x: -1, y: -1, z: 1 }, adjacent: ["front", "bottom"], label: "LEFT BOTTOM RIGHT CORNER" }
+  },
+  top: {
+    tl: { vector: { x: -1, y: 1, z: -1 }, adjacent: ["left", "back"], label: "TOP BACK LEFT CORNER" },
+    tr: { vector: { x: 1, y: 1, z: -1 }, adjacent: ["right", "back"], label: "TOP BACK RIGHT CORNER" },
+    bl: { vector: { x: -1, y: 1, z: 1 }, adjacent: ["left", "front"], label: "TOP FRONT LEFT CORNER" },
+    br: { vector: { x: 1, y: 1, z: 1 }, adjacent: ["right", "front"], label: "TOP FRONT RIGHT CORNER" }
+  },
+  bottom: {
+    tl: { vector: { x: -1, y: -1, z: 1 }, adjacent: ["left", "front"], label: "BOTTOM FRONT LEFT CORNER" },
+    tr: { vector: { x: 1, y: -1, z: 1 }, adjacent: ["right", "front"], label: "BOTTOM FRONT RIGHT CORNER" },
+    bl: { vector: { x: -1, y: -1, z: -1 }, adjacent: ["left", "back"], label: "BOTTOM BACK LEFT CORNER" },
+    br: { vector: { x: 1, y: -1, z: -1 }, adjacent: ["right", "back"], label: "BOTTOM BACK RIGHT CORNER" }
+  }
+});
 const els = {
   shipId: document.getElementById("shipId"),
   shipName: document.getElementById("shipName"),
   shipDescription: document.getElementById("shipDescription"),
   shipMissionLore: document.getElementById("shipMissionLore"),
+  builderPreloadSplash: document.getElementById("builderPreloadSplash"),
+  builderPreloadText: document.getElementById("builderPreloadText"),
+  builderFullscreenBtn: document.getElementById("builderFullscreenBtn"),
   librarySelector: document.getElementById("librarySelector"),
   loadLibraryModelBtn: document.getElementById("loadLibraryModelBtn"),
   toolsPanel: document.getElementById("toolsPanel"),
@@ -56,11 +97,22 @@ const els = {
   mainPreviewStack: document.getElementById("mainPreviewStack"),
   mainView: document.getElementById("mainView"),
   selectionContextMenu: document.getElementById("selectionContextMenu"),
+  selectionPickMenu: document.getElementById("selectionPickMenu"),
+  viewCube: document.getElementById("viewCube"),
+  viewCubeBody: document.getElementById("viewCubeBody"),
+  viewCubeRotateLeft: document.getElementById("viewCubeRotateLeft"),
+  viewCubeRotateRight: document.getElementById("viewCubeRotateRight"),
+  viewCubeRotateUp: document.getElementById("viewCubeRotateUp"),
+  viewCubeRotateDown: document.getElementById("viewCubeRotateDown"),
+  viewProjectionToggle: document.getElementById("viewProjectionToggle"),
+  viewModeColumn: document.getElementById("viewModeColumn"),
+  fullscreenViewBtn: document.getElementById("fullscreenViewBtn"),
+  undoEditBtn: document.getElementById("undoEditBtn"),
+  redoEditBtn: document.getElementById("redoEditBtn"),
   gamePreviewFrame: document.getElementById("gamePreviewFrame"),
   gamePreviewReadout: document.getElementById("gamePreviewReadout"),
   previewTrustBadge: document.getElementById("previewTrustBadge"),
   previewTrustReadout: document.getElementById("previewTrustReadout"),
-  syncGamePreviewBtn: document.getElementById("syncGamePreviewBtn"),
   benchmarkRendererBtn: document.getElementById("benchmarkRendererBtn"),
   spinPreviewBtn: document.getElementById("spinPreviewBtn"),
   toggleBlueprintBtn: document.getElementById("toggleBlueprintBtn"),
@@ -146,6 +198,18 @@ const els = {
   clearFaceSkinBtn: document.getElementById("clearFaceSkinBtn"),
   clearAllFaceUvBtn: document.getElementById("clearAllFaceUvBtn"),
   clearFaceGroupBtn: document.getElementById("clearFaceGroupBtn"),
+  surfaceInsertMenu: document.getElementById("surfaceInsertMenu"),
+  closeSurfaceInsertMenuBtn: document.getElementById("closeSurfaceInsertMenuBtn"),
+  surfaceInsertLinkSize: document.getElementById("surfaceInsertLinkSize"),
+  addSurfacePolygonBtn: document.getElementById("addSurfacePolygonBtn"),
+  confirmSurfaceInsertBtn: document.getElementById("confirmSurfaceInsertBtn"),
+  faceExtrudeMenu: document.getElementById("faceExtrudeMenu"),
+  closeFaceExtrudeMenuBtn: document.getElementById("closeFaceExtrudeMenuBtn"),
+  addFaceExtrudeBtn: document.getElementById("addFaceExtrudeBtn"),
+  addFacePointExtrudeBtn: document.getElementById("addFacePointExtrudeBtn"),
+  extrudeEdgeLoopBtn: document.getElementById("extrudeEdgeLoopBtn"),
+  confirmFaceExtrudeBtn: document.getElementById("confirmFaceExtrudeBtn"),
+  faceExtrudeDeleteSource: document.getElementById("faceExtrudeDeleteSource"),
   clearTopSkinBtn: document.getElementById("clearTopSkinBtn"),
   clearBottomSkinBtn: document.getElementById("clearBottomSkinBtn"),
   clearBackSkinBtn: document.getElementById("clearBackSkinBtn"),
@@ -153,6 +217,7 @@ const els = {
   assetShelfCategory: document.getElementById("assetShelfCategory"),
   refreshAssetShelfBtn: document.getElementById("refreshAssetShelfBtn"),
   loadCurrentShipAssetsBtn: document.getElementById("loadCurrentShipAssetsBtn"),
+  selectedAssetCard: document.getElementById("selectedAssetCard"),
   selectedAssetThumb: document.getElementById("selectedAssetThumb"),
   selectedAssetTitle: document.getElementById("selectedAssetTitle"),
   selectedAssetMeta: document.getElementById("selectedAssetMeta"),
@@ -211,6 +276,21 @@ const els = {
 
 const BLUEPRINT_VISIBLE_STORAGE_KEY = "ultraEliteShipBuilderBlueprintVisible";
 const SELECTABLE_TYPES = ["vertex", "face", "edge", "detail", "uv", "group"];
+const BUILDER_PRELOAD_MIN_MS = 850;
+const BUILDER_PRELOAD_TIMEOUT_MS = 2800;
+const VIEW_FIT_MARGIN = 0.738;
+const VIEW_FIT_PERSPECTIVE_MARGIN = 0.62;
+const VIEW_CUBE_BUTTON_STEP = Math.PI / 4;
+const VIEW_ZOOM_MIN = 0.04;
+const VIEW_ZOOM_MAX = 240;
+const GAME_PREVIEW_SCALE_MIN = 0.05;
+const GAME_PREVIEW_PERSPECTIVE_SCALE = 0.84;
+const GAME_PREVIEW_PERSPECTIVE_SCALE_MAX = 24;
+const GAME_PREVIEW_WARMUP_RETRY_MAX = 12;
+const SELECTION_EDGE_PICK_RADIUS = 28;
+const EDIT_HISTORY_MAX = 120;
+const SAFARI_FULLSCREEN_KEY_GUARD = typeof navigator !== "undefined"
+  && /^((?!chrome|android).)*safari/i.test(navigator.userAgent || "");
 
 function readBlueprintVisiblePreference() {
   try {
@@ -241,11 +321,21 @@ const state = {
   previewSkinVersion: Date.now(),
   gamePreviewInfo: null,
   gamePreviewProjection: null,
+  gamePreviewScaleAnchor: null,
   gamePreviewDetailProjectionIndexByStateIndex: new Map(),
   faceDecalUiKey: "",
   sourceModelId: "",
   savedModelSnapshot: "",
   savedModelSnapshotId: "",
+  editHistory: {
+    undo: [],
+    redo: [],
+    lastSnapshot: "",
+    initialized: false,
+    restoring: false,
+    continuousBaseSnapshot: "",
+    continuousRecorded: false
+  },
   modelBrowserBenchResults: new Map(),
   modelBrowserBenchmarkRunning: false,
   modelBrowserBenchmarkLoading: false,
@@ -254,16 +344,41 @@ const state = {
   modelBrowserStaleModelIds: new Set(),
   modelBrowserView: "objects",
   selected: null,
-  selectionFilters: { vertex: true, face: false, edge: false, detail: false, uv: false, group: false },
+  selectionFilters: { vertex: true, face: true, edge: true, detail: true, uv: true, group: true },
+  selectionPickCandidates: [],
+  selectionPickHover: null,
+  selectionPickOptions: {},
   selectedFaceIds: new Set(),
   facePropertyClipboard: null,
   selectedEdgeIds: new Set(),
   pick: [],
-  surfaceInsertShape: "quad",
+  surfaceInsertShape: "polygon",
   surfaceInsertPreview: false,
-  view: { rx: STANDARD_VIEW.rx, ry: STANDARD_VIEW.ry, zoom: 2.9, panX: 0, panY: 0 },
+  surfaceInsertConfig: null,
+  faceExtrudePreview: false,
+  faceExtrudeConfig: null,
+  view: { rx: STANDARD_VIEW.rx, ry: STANDARD_VIEW.ry, zoom: 2.9, panX: 0, panY: 0, orthographic: false },
+  viewCubeDrag: null,
+  viewCubeSuppressClick: false,
+  activeViewCubeCornerKey: "",
+  viewTweenFrame: 0,
   orthoScale: 1,
-  showBlueprints: readBlueprintVisiblePreference(),
+  openModelBrowserAfterPreload: false,
+  builderPreload: {
+    visible: true,
+    generation: 0,
+    startedAt: performance.now(),
+    startup: true,
+    userReady: false,
+    library: false,
+    textures: true,
+    rendered: false,
+    rendererResult: false,
+    timeout: false,
+    hideTimer: 0,
+    timeoutTimer: 0
+  },
+  showBlueprints: false,
   drag: null
 };
 
@@ -279,6 +394,8 @@ let gamePreviewLastKey = "";
 let gamePreviewSentBlueprintKey = "";
 let gamePreviewConfirmedBlueprintKey = "";
 let gamePreviewSentSkinVersion = 0;
+let gamePreviewRetryCount = 0;
+let builderViewportRefreshTimer = 0;
 let rendererBenchmarkRunning = false;
 let writeSummaryResolver = null;
 const previewImageDataUrlCache = new WeakMap();
@@ -456,6 +573,173 @@ function sourceEdge(edge, index) {
 function setStatus(text) {
   if (els.status) els.status.textContent = text;
   if (els.topStatus) els.topStatus.textContent = text;
+}
+
+function setBuilderPreloadText(text) {
+  if (els.builderPreloadText && text) els.builderPreloadText.textContent = text;
+}
+
+function currentFullscreenElement() {
+  return document.fullscreenElement || document.webkitFullscreenElement || null;
+}
+
+function requestBuilderFullscreen(pointerGesture = false, options = {}) {
+  if (SAFARI_FULLSCREEN_KEY_GUARD && !pointerGesture) return false;
+  if (currentFullscreenElement() && !options.refresh) return true;
+  const root = document.documentElement;
+  try {
+    const request = root.requestFullscreen
+      ? root.requestFullscreen({ navigationUI: "hide" })
+      : root.webkitRequestFullscreen
+        ? root.webkitRequestFullscreen()
+        : null;
+    if (!request) {
+      if (options.status !== false) setStatus("FULLSCREEN NOT AVAILABLE IN THIS BROWSER.");
+      return false;
+    }
+    if (request.catch) {
+      request.catch(() => {
+        if (options.status !== false) setStatus("FULLSCREEN REQUEST CANCELLED.");
+      });
+    }
+    return true;
+  } catch (_) {
+    if (options.status !== false) setStatus("FULLSCREEN REQUEST CANCELLED.");
+    return false;
+  }
+}
+
+function exitBuilderFullscreen() {
+  try {
+    if (!currentFullscreenElement()) return Promise.resolve(true);
+    const exit = document.exitFullscreen
+      ? document.exitFullscreen()
+      : document.webkitExitFullscreen
+        ? document.webkitExitFullscreen()
+        : null;
+    if (exit?.then) return exit.then(() => true).catch(() => false);
+    return Promise.resolve(!!exit);
+  } catch (_) {
+    return Promise.resolve(false);
+  }
+}
+
+async function toggleBuilderFullscreenFromUserGesture(event = null) {
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
+  if (currentFullscreenElement()) {
+    const ok = await exitBuilderFullscreen();
+    scheduleBuilderViewportRefresh(140, { invalidatePreload: state.builderPreload.visible, message: "Fullscreen changed; confirming renderer preview..." });
+    setStatus(ok ? "FULLSCREEN EXITED." : "FULLSCREEN EXIT FAILED.");
+    return ok;
+  }
+  const ok = requestBuilderFullscreen(true, { status: false });
+  scheduleBuilderViewportRefresh(140, { invalidatePreload: state.builderPreload.visible, message: "Fullscreen changed; confirming renderer preview..." });
+  setStatus(ok ? "FULLSCREEN REQUESTED." : "FULLSCREEN NOT AVAILABLE IN THIS BROWSER.");
+  return ok;
+}
+
+function hideBuilderPreloadSplash(generation = state.builderPreload.generation) {
+  const preload = state.builderPreload;
+  if (!preload.visible || generation !== preload.generation) return;
+  clearTimeout(preload.hideTimer);
+  clearTimeout(preload.timeoutTimer);
+  preload.hideTimer = 0;
+  preload.timeoutTimer = 0;
+  preload.visible = false;
+  els.builderPreloadSplash?.classList.add("is-hidden");
+  els.builderPreloadSplash?.setAttribute("aria-hidden", "true");
+  if (state.openModelBrowserAfterPreload) {
+    state.openModelBrowserAfterPreload = false;
+    setTimeout(() => openModelBrowser(), 0);
+  }
+}
+
+function checkBuilderPreloadReady() {
+  const preload = state.builderPreload;
+  if (!preload.visible) return;
+  const rendererReady = !gameRendererPreviewMode() || preload.rendererResult || (!state.faces.length && preload.timeout);
+  if (!preload.library || !preload.textures || !preload.rendered || !rendererReady) return;
+  if (preload.startup && !preload.userReady) {
+    setBuilderPreloadText("Ready. Press Space to continue.");
+    return;
+  }
+  const generation = preload.generation;
+  const elapsed = performance.now() - preload.startedAt;
+  const delay = Math.max(0, BUILDER_PRELOAD_MIN_MS - elapsed);
+  clearTimeout(preload.hideTimer);
+  preload.hideTimer = setTimeout(() => hideBuilderPreloadSplash(generation), delay);
+}
+
+function armBuilderPreloadTimeout(message = "Renderer still warming; opening builder.") {
+  const preload = state.builderPreload;
+  clearTimeout(preload.timeoutTimer);
+  const generation = preload.generation;
+  preload.timeoutTimer = setTimeout(() => {
+    if (generation !== state.builderPreload.generation || !state.builderPreload.visible) return;
+    markBuilderPreloadStep("timeout", message);
+    if (state.faces.length && !state.builderPreload.rendererResult) {
+      gamePreviewLastKey = "";
+      scheduleGamePreviewSync(0, true);
+      armBuilderPreloadTimeout("Renderer still warming; retrying model preview...");
+    }
+  }, BUILDER_PRELOAD_TIMEOUT_MS);
+}
+
+function markBuilderPreloadStep(step, message = "") {
+  const preload = state.builderPreload;
+  if (!preload.visible) return;
+  preload[step] = true;
+  setBuilderPreloadText(message);
+  checkBuilderPreloadReady();
+}
+
+function invalidateBuilderPreloadRenderer(message = "") {
+  const preload = state.builderPreload;
+  if (!preload.visible || !gameRendererPreviewMode()) return;
+  clearTimeout(preload.hideTimer);
+  preload.hideTimer = 0;
+  preload.rendererResult = false;
+  preload.timeout = false;
+  if (message) setBuilderPreloadText(message);
+  armBuilderPreloadTimeout();
+}
+
+function scheduleBuilderViewportRefresh(delay = 90, options = {}) {
+  clearTimeout(builderViewportRefreshTimer);
+  if (options.invalidatePreload) {
+    invalidateBuilderPreloadRenderer(options.message || "Renderer viewport changed; warming renderer...");
+  }
+  builderViewportRefreshTimer = setTimeout(() => {
+    builderViewportRefreshTimer = 0;
+    if (options.fit) fitView();
+    gamePreviewLastKey = "";
+    renderAll();
+    scheduleGamePreviewSync(0, true);
+  }, Math.max(0, delay));
+}
+
+function showBuilderPreloadSplash(message = "Preparing builder...", options = {}) {
+  const preload = state.builderPreload;
+  clearTimeout(preload.hideTimer);
+  clearTimeout(preload.timeoutTimer);
+  preload.visible = true;
+  preload.generation += 1;
+  preload.startedAt = performance.now();
+  preload.startup = !!options.startup;
+  preload.userReady = !preload.startup;
+  state.openModelBrowserAfterPreload = !!options.openModelBrowserOnHide;
+  preload.library = !!options.libraryReady;
+  preload.textures = options.texturesReady !== false;
+  preload.rendered = false;
+  preload.rendererResult = false;
+  preload.timeout = false;
+  preload.hideTimer = 0;
+  armBuilderPreloadTimeout();
+  els.builderPreloadSplash?.classList.remove("is-hidden");
+  els.builderPreloadSplash?.removeAttribute("aria-hidden");
+  els.builderPreloadSplash?.classList.toggle("is-startup", preload.startup);
+  setBuilderPreloadText(message);
 }
 
 function confirmWrite(message) {
@@ -1119,6 +1403,7 @@ function splitEdgeOnce(a, b, midpointId) {
 }
 
 function splitSelectedLine() {
+  cancelSurfaceInsertPreview({ redraw: false });
   let targets = [];
   if (state.selected?.type === "edge") {
     const edge = state.edges.find((item) => item.id === state.selected.id);
@@ -1191,10 +1476,26 @@ function splitSelectedLine() {
 function faceNormal(face) {
   const verts = face.verts.map(vertexById).filter(Boolean);
   if (verts.length < 3) return vec(0, 0, 1);
-  const a = vec(verts[0].x, verts[0].y, verts[0].z);
-  const b = vec(verts[1].x, verts[1].y, verts[1].z);
-  const c = vec(verts[2].x, verts[2].y, verts[2].z);
-  return norm(cross(sub(b, a), sub(c, a)));
+  let nx = 0;
+  let ny = 0;
+  let nz = 0;
+  for (let i = 0; i < verts.length; i++) {
+    const a = verts[i];
+    const b = verts[(i + 1) % verts.length];
+    nx += (a.y - b.y) * (a.z + b.z);
+    ny += (a.z - b.z) * (a.x + b.x);
+    nz += (a.x - b.x) * (a.y + b.y);
+  }
+  const normal = vec(nx, ny, nz);
+  if (len(normal) > EPS) return norm(normal);
+  for (let i = 1; i < verts.length - 1; i++) {
+    const a = vec(verts[0].x, verts[0].y, verts[0].z);
+    const b = vec(verts[i].x, verts[i].y, verts[i].z);
+    const c = vec(verts[i + 1].x, verts[i + 1].y, verts[i + 1].z);
+    const candidate = cross(sub(b, a), sub(c, a));
+    if (len(candidate) > EPS) return norm(candidate);
+  }
+  return vec(0, 0, 1);
 }
 
 function faceFacesBuilderCamera(face) {
@@ -1241,6 +1542,22 @@ function pairedSurfaceInput(name) {
   };
 }
 
+function setSurfaceInputValue(name, value) {
+  const { range, number } = pairedSurfaceInput(name);
+  const text = String(value);
+  if (range) range.value = text;
+  if (number) number.value = text;
+}
+
+function linkedSurfaceSizeEnabled() {
+  return !!els.surfaceInsertLinkSize?.checked;
+}
+
+function syncLinkedSurfaceSize(sourceName, value) {
+  if (!linkedSurfaceSizeEnabled() || !["W", "H"].includes(sourceName)) return;
+  setSurfaceInputValue(sourceName === "W" ? "H" : "W", value);
+}
+
 function readSurfaceInput(name, fallback) {
   const { range, number } = pairedSurfaceInput(name);
   const source = document.activeElement === number ? number : range || number;
@@ -1254,79 +1571,244 @@ function readSurfaceInsertConfig() {
     y: clamp(readSurfaceInput("Y", 0), -500, 500),
     width: clamp(readSurfaceInput("W", 48), 1, 800),
     height: clamp(readSurfaceInput("H", 32), 1, 800),
+    sides: Math.round(clamp(readSurfaceInput("Sides", 4), 3, 32)),
     rotation: normalizeBitmapAngle(readSurfaceInput("R", 0)) * Math.PI / 180,
-    lift: clamp(readSurfaceInput("Lift", 0.5), 0, 80)
+    lift: clamp(readSurfaceInput("Lift", 0), 0, 80)
   };
 }
 
 function syncSurfaceInsertControlPair(target) {
   const id = target?.id || "";
-  const match = id.match(/^surfaceInsert(X|Y|W|H|R|Lift)(Value)?$/);
+  const match = id.match(/^surfaceInsert(X|Y|W|H|Sides|R|Lift)(Value)?$/);
   if (!match) return;
   const { range, number } = pairedSurfaceInput(match[1]);
   const value = target.value;
   if (target === range && number) number.value = value;
   if (target === number && range) range.value = value;
+  syncLinkedSurfaceSize(match[1], value);
 }
 
 function surfaceInsertControls() {
-  return ["X", "Y", "W", "H", "R", "Lift"]
+  return ["X", "Y", "W", "H", "Sides", "R", "Lift"]
     .flatMap((name) => Object.values(pairedSurfaceInput(name)))
     .filter(Boolean);
 }
 
-function localSurfaceInsertPoints(shape, width, height) {
-  const halfW = width * 0.5;
-  const halfH = height * 0.5;
-  if (shape === "triangle") {
-    return [
-      { x: 0, y: halfH },
-      { x: halfW, y: -halfH },
-      { x: -halfW, y: -halfH }
-    ];
-  }
-  return [
-    { x: -halfW, y: -halfH },
-    { x: halfW, y: -halfH },
-    { x: halfW, y: halfH },
-    { x: -halfW, y: halfH }
-  ];
+function pairedFaceExtrudeInput(name = "Distance") {
+  return {
+    range: document.getElementById(`faceExtrude${name}`),
+    number: document.getElementById(`faceExtrude${name}Value`)
+  };
 }
 
-function surfaceShapePoints(face, shape = state.surfaceInsertShape, config = readSurfaceInsertConfig()) {
+function setFaceExtrudeInputValue(name, value) {
+  const { range, number } = pairedFaceExtrudeInput(name);
+  const text = String(value);
+  if (range) range.value = text;
+  if (number) number.value = text;
+}
+
+function readFaceExtrudeInput(name, fallback = 0) {
+  const { range, number } = pairedFaceExtrudeInput(name);
+  const source = document.activeElement === number ? number : range || number;
+  const value = Number(source?.value);
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function cleanFaceExtrudeMode(mode) {
+  return mode === "point" ? "point" : "cap";
+}
+
+function setFaceExtrudeMode(mode = "cap") {
+  const clean = cleanFaceExtrudeMode(mode);
+  document.querySelectorAll("input[name='faceExtrudeMode']").forEach((input) => {
+    input.checked = input.value === clean;
+  });
+  return clean;
+}
+
+function readFaceExtrudeMode() {
+  return cleanFaceExtrudeMode(document.querySelector("input[name='faceExtrudeMode']:checked")?.value);
+}
+
+function readFaceExtrudeConfig() {
+  return {
+    mode: readFaceExtrudeMode(),
+    distance: clamp(readFaceExtrudeInput("Distance", 24), -800, 800),
+    taperAngle: clamp(readFaceExtrudeInput("Taper", 0), -85, 85),
+    deleteSource: els.faceExtrudeDeleteSource?.checked !== false
+  };
+}
+
+function syncFaceExtrudeControlPair(target) {
+  const match = (target?.id || "").match(/^faceExtrude(Distance|Taper)(Value)?$/);
+  if (!match) return;
+  const { range, number } = pairedFaceExtrudeInput(match[1]);
+  if (target !== range && target !== number) return;
+  if (target === range && number) number.value = target.value;
+  if (target === number && range) range.value = target.value;
+}
+
+function faceExtrudeControls() {
+  return ["Distance", "Taper"]
+    .flatMap((name) => Object.values(pairedFaceExtrudeInput(name)))
+    .filter(Boolean);
+}
+
+function syncFaceExtrudeModeUi(mode = currentFaceExtrudeConfig().mode) {
+  const pointMode = cleanFaceExtrudeMode(mode) === "point";
+  els.faceExtrudeMenu?.classList.toggle("is-point-extrude", pointMode);
+  els.addFaceExtrudeBtn?.classList.toggle("active", state.faceExtrudePreview && !pointMode);
+  els.addFaceExtrudeBtn?.setAttribute("aria-pressed", state.faceExtrudePreview && !pointMode ? "true" : "false");
+  els.addFacePointExtrudeBtn?.classList.toggle("active", state.faceExtrudePreview && pointMode);
+  els.addFacePointExtrudeBtn?.setAttribute("aria-pressed", state.faceExtrudePreview && pointMode ? "true" : "false");
+  els.extrudeEdgeLoopBtn?.classList.toggle("active", state.faceExtrudePreview);
+  els.extrudeEdgeLoopBtn?.setAttribute("aria-pressed", state.faceExtrudePreview ? "true" : "false");
+}
+
+function surfaceInsertRotationFromUv(face) {
+  const uv = cleanFaceBitmapUv(face);
+  const verts = face?.verts?.map(vertexById).filter(Boolean) || [];
+  if (!uv || uv.length !== verts.length || verts.length < 3) return null;
+  const basis = faceBasis(face);
+  let best = null;
+  for (let i = 0; i < verts.length; i++) {
+    const next = (i + 1) % verts.length;
+    const edge = sub(vec(verts[next].x, verts[next].y, verts[next].z), vec(verts[i].x, verts[i].y, verts[i].z));
+    const localX = dot(edge, basis.right);
+    const localY = dot(edge, basis.up);
+    const geomLen = Math.hypot(localX, localY);
+    const uvX = Number(uv[next][0]) - Number(uv[i][0]);
+    const uvY = Number(uv[next][1]) - Number(uv[i][1]);
+    const uvLen = Math.hypot(uvX, uvY);
+    if (geomLen < EPS || uvLen < EPS) continue;
+    const score = geomLen * uvLen;
+    if (!best || score > best.score) {
+      const geomAngle = Math.atan2(localY, localX);
+      const uvAngle = Math.atan2(-uvY, uvX);
+      best = { score, angle: normalizeBitmapAngle((uvAngle - geomAngle) * 180 / Math.PI) };
+    }
+  }
+  return best?.angle ?? null;
+}
+
+function surfaceInsertDefaultRotationDeg(face) {
+  const uvRotation = surfaceInsertRotationFromUv(face);
+  if (Number.isFinite(uvRotation)) return uvRotation;
+  const transform = cleanBitmapUvTransform(face?.bitmapUvTransform);
+  const angle = transform.rotation || normalizeBitmapAngle(face?.bitmapAngle);
+  return normalizeBitmapAngle(-angle);
+}
+
+function syncSurfaceInsertPreviewConfig() {
+  state.surfaceInsertConfig = readSurfaceInsertConfig();
+  return state.surfaceInsertConfig;
+}
+
+function currentSurfaceInsertConfig() {
+  return state.surfaceInsertPreview && state.surfaceInsertConfig
+    ? state.surfaceInsertConfig
+    : readSurfaceInsertConfig();
+}
+
+function localSurfaceInsertPoints(width, height, sides = 4) {
+  const halfW = width * 0.5;
+  const halfH = height * 0.5;
+  const count = Math.round(clamp(sides, 3, 32));
+  if (count === 4) {
+    return [
+      { x: -halfW, y: -halfH },
+      { x: halfW, y: -halfH },
+      { x: halfW, y: halfH },
+      { x: -halfW, y: halfH }
+    ];
+  }
+  return Array.from({ length: count }, (_, index) => {
+    const angle = Math.PI / 2 - index * TAU / count;
+    return { x: Math.cos(angle) * halfW, y: Math.sin(angle) * halfH };
+  });
+}
+
+function surfaceShapePoints(face, config = currentSurfaceInsertConfig()) {
   const verts = face.verts.map(vertexById).filter(Boolean);
   if (verts.length < 3) return [];
   const { center, normal, right, up } = faceBasis(face);
   const cos = Math.cos(config.rotation);
   const sin = Math.sin(config.rotation);
   const origin = add(center, add(mul(right, config.x), add(mul(up, config.y), mul(normal, config.lift))));
-  return localSurfaceInsertPoints(shape, config.width, config.height).map((point) => {
+  return localSurfaceInsertPoints(config.width, config.height, config.sides).map((point) => {
     const x = point.x * cos - point.y * sin;
     const y = point.x * sin + point.y * cos;
     return add(origin, add(mul(right, x), mul(up, y)));
   });
 }
 
-function surfaceInsertShapeLabel(shape) {
-  return shape === "triangle" ? "TRIANGLE" : "QUAD";
+function surfaceInsertShapeLabel() {
+  return "POLYGON";
 }
 
-function addSurfaceShapeToSelectedFace(shape = "quad") {
+function setSurfaceInsertPreview(visible) {
+  state.surfaceInsertPreview = !!visible;
+  if (state.surfaceInsertPreview) syncSurfaceInsertPreviewConfig();
+  else state.surfaceInsertConfig = null;
+  els.surfaceInsertMenu?.classList.toggle("is-hidden", !state.surfaceInsertPreview);
+  els.addSurfacePolygonBtn?.classList.toggle("active", state.surfaceInsertPreview);
+  els.addSurfacePolygonBtn?.setAttribute("aria-pressed", state.surfaceInsertPreview ? "true" : "false");
+  els.confirmSurfaceInsertBtn?.classList.toggle("is-hidden", !state.surfaceInsertPreview);
+}
+
+function cancelSurfaceInsertPreview(options = {}) {
+  let changed = false;
+  if (state.surfaceInsertPreview || state.surfaceInsertConfig) {
+    setSurfaceInsertPreview(false);
+    changed = true;
+  }
+  if (state.faceExtrudePreview || state.faceExtrudeConfig) {
+    setFaceExtrudePreview(false);
+    changed = true;
+  }
+  if (changed && options.redraw) renderAll();
+  return changed;
+}
+
+function prepareSurfaceInsertPreview() {
+  cancelFaceExtrudePreview({ redraw: false });
+  const face = selectedFace();
+  state.surfaceInsertShape = "polygon";
+  if (!face) {
+    setSurfaceInsertPreview(false);
+    setStatus("SELECT A FACE FIRST.");
+    renderAll();
+    return;
+  }
+  state.mode = "face";
+  setSurfaceInputValue("X", 0);
+  setSurfaceInputValue("Y", 0);
+  setSurfaceInputValue("R", surfaceInsertDefaultRotationDeg(face));
+  setSurfaceInputValue("Lift", 0);
+  if (linkedSurfaceSizeEnabled()) setSurfaceInputValue("H", readSurfaceInput("W", 48));
+  setSurfaceInsertPreview(true);
+  syncModeUi("face");
+  setStatus(`SURFACE ${surfaceInsertShapeLabel()} PREVIEW READY. ADJUST SETTINGS, THEN OK TO ADD.`);
+  renderAll();
+}
+
+function addSurfaceShapeToSelectedFace() {
   const face = selectedFace();
   if (!face) {
     setStatus("SELECT A FACE FIRST.");
     return;
   }
-  state.surfaceInsertShape = shape === "triangle" ? "triangle" : "quad";
-  const points = surfaceShapePoints(face, state.surfaceInsertShape);
+  state.surfaceInsertShape = "polygon";
+  const points = surfaceShapePoints(face);
   if (points.length < 3) {
-    setStatus(`SELECTED FACE CANNOT HOST A SURFACE ${surfaceInsertShapeLabel(state.surfaceInsertShape)}.`);
+    setStatus(`SELECTED FACE CANNOT HOST A SURFACE ${surfaceInsertShapeLabel()}.`);
     return;
   }
-  const vertices = points.map((point) => addVertex(round(point.x), round(point.y), round(point.z)));
-  const quad = addFace(vertices.map((vertex) => vertex.id), false);
-  if (!quad) {
-    setStatus(`SURFACE ${surfaceInsertShapeLabel(state.surfaceInsertShape)} FACE ALREADY EXISTS OR COULD NOT BE ADDED.`);
+  const vertices = points.map((point) => addVertex(point.x, point.y, point.z));
+  const insertedFace = addFace(vertices.map((vertex) => vertex.id), false);
+  if (!insertedFace) {
+    setStatus(`SURFACE ${surfaceInsertShapeLabel()} FACE ALREADY EXISTS OR COULD NOT BE ADDED.`);
     renderAll();
     return;
   }
@@ -1343,10 +1825,255 @@ function addSurfaceShapeToSelectedFace(shape = "quad") {
     state.selected = { type: "edge", id: edges[0].id };
     state.selectedEdgeIds = new Set(edges.map((edge) => edge.id));
   } else {
-    state.selected = { type: "face", id: quad.id };
+    state.selected = { type: "face", id: insertedFace.id };
     state.selectedEdgeIds.clear();
   }
-  setStatus(`SURFACE ${surfaceInsertShapeLabel(state.surfaceInsertShape)} ADDED ON FACE #${face.id}${edges.length ? " AND BOUNDARY LOOP SELECTED" : ""}.`);
+  setStatus(`SURFACE ${surfaceInsertShapeLabel()} ADDED ON FACE #${face.id}${edges.length ? " AND BOUNDARY LOOP SELECTED" : ""}.`);
+  renderAll();
+}
+
+function confirmSurfaceInsertPreview() {
+  if (!state.surfaceInsertPreview) {
+    setStatus("CHOOSE ADD POLYGON FIRST.");
+    return;
+  }
+  addSurfaceShapeToSelectedFace();
+  setSurfaceInsertPreview(false);
+  renderAll();
+}
+
+function selectedEdgeLoopFace() {
+  if (state.selected?.type !== "edge" || !state.selectedEdgeIds?.size) return null;
+  const edges = [...state.selectedEdgeIds].map((id) => state.edges.find((edge) => edge.id === id)).filter(Boolean);
+  if (edges.length < 3) return null;
+  const vertexIds = [...new Set(edges.flatMap((edge) => [edge.a, edge.b]))];
+  if (vertexIds.length < 3) return null;
+  return state.faces.find((face) => sameIdSet(face.verts, vertexIds)) || null;
+}
+
+function selectedExtrudeFace() {
+  return selectedFace() || selectedEdgeLoopFace();
+}
+
+function syncFaceExtrudePreviewConfig() {
+  state.faceExtrudeConfig = readFaceExtrudeConfig();
+  return state.faceExtrudeConfig;
+}
+
+function currentFaceExtrudeConfig() {
+  return state.faceExtrudePreview && state.faceExtrudeConfig
+    ? state.faceExtrudeConfig
+    : readFaceExtrudeConfig();
+}
+
+function setFaceExtrudePreview(visible) {
+  state.faceExtrudePreview = !!visible;
+  if (state.faceExtrudePreview) syncFaceExtrudePreviewConfig();
+  else state.faceExtrudeConfig = null;
+  els.faceExtrudeMenu?.classList.toggle("is-hidden", !state.faceExtrudePreview);
+  els.confirmFaceExtrudeBtn?.classList.toggle("is-hidden", !state.faceExtrudePreview);
+  syncFaceExtrudeModeUi(state.faceExtrudeConfig?.mode || readFaceExtrudeMode());
+}
+
+function cancelFaceExtrudePreview(options = {}) {
+  if (!state.faceExtrudePreview && !state.faceExtrudeConfig) return false;
+  setFaceExtrudePreview(false);
+  if (options.redraw) renderAll();
+  return true;
+}
+
+function prepareFaceExtrudePreview(mode = "cap") {
+  cancelSurfaceInsertPreview({ redraw: false });
+  const face = selectedExtrudeFace();
+  if (!face) {
+    setFaceExtrudePreview(false);
+    setStatus("SELECT A FACE OR ITS EDGE LOOP FIRST.");
+    renderAll();
+    return;
+  }
+  state.mode = "face";
+  state.selected = { type: "face", id: face.id };
+  state.selectedEdgeIds.clear();
+  setFaceExtrudeMode(mode);
+  setFaceExtrudeInputValue("Taper", 0);
+  if (els.faceExtrudeDeleteSource) els.faceExtrudeDeleteSource.checked = true;
+  setFaceExtrudePreview(true);
+  syncModeUi("face");
+  const modeLabel = cleanFaceExtrudeMode(mode) === "point" ? "POINT EXTRUDE" : "EXTRUDE";
+  setStatus(`${modeLabel} PREVIEW READY FOR FACE #${face.id}. SET DISTANCE, THEN OK.`);
+  renderAll();
+}
+
+function extrudedFacePoints(face, config = currentFaceExtrudeConfig()) {
+  const source = face.verts.map(vertexById).filter(Boolean);
+  if (source.length < 3) return [];
+  const center = faceCenter(face);
+  const normal = faceNormal(face);
+  const distance = Number(config.distance) || 0;
+  if (cleanFaceExtrudeMode(config.mode) === "point") {
+    const apex = add(center, mul(normal, distance));
+    return source.map(() => apex);
+  }
+  const radius = Math.max(EPS, ...source.map((vertex) => len(sub(vec(vertex.x, vertex.y, vertex.z), center))));
+  const taperOffset = Math.tan((Number(config.taperAngle) || 0) * Math.PI / 180) * Math.abs(distance);
+  const scale = clamp((radius + taperOffset) / radius, 0.02, 8);
+  return source.map((vertex) => {
+    const base = vec(vertex.x, vertex.y, vertex.z);
+    const tapered = add(center, mul(sub(base, center), scale));
+    return add(tapered, mul(normal, distance));
+  });
+}
+
+function facePlaneUvAtPoint(face, point, sourceUv = cleanFaceBitmapUv(face)) {
+  const verts = face.verts.map(vertexById).filter(Boolean);
+  if (!sourceUv || sourceUv.length !== verts.length) return null;
+  const basis = faceBasis(face);
+  const local = (() => {
+    const offset = sub(point, basis.center);
+    return { x: dot(offset, basis.right), y: dot(offset, basis.up) };
+  })();
+  const samples = verts.map((vertex, index) => {
+    const offset = sub(vec(vertex.x, vertex.y, vertex.z), basis.center);
+    return {
+      x: dot(offset, basis.right),
+      y: dot(offset, basis.up),
+      uv: sourceUv[index]
+    };
+  });
+  let total = 0;
+  let u = 0;
+  let v = 0;
+  for (const sample of samples) {
+    const d2 = (sample.x - local.x) ** 2 + (sample.y - local.y) ** 2;
+    if (d2 < 1e-8) return [round(sample.uv[0], 3), round(sample.uv[1], 3)];
+    const weight = 1 / Math.max(1e-8, d2);
+    total += weight;
+    u += sample.uv[0] * weight;
+    v += sample.uv[1] * weight;
+  }
+  return total > 0 ? [round(u / total, 3), round(v / total, 3)] : null;
+}
+
+function applyExtrudeSideFacePaint(sourceFace, sideFace, sidePoints) {
+  if (!sourceFace || !sideFace) return;
+  const faceColor = optionalHexColor(sourceFace.faceColor);
+  if (faceColor) sideFace.faceColor = faceColor;
+  const sourceUv = cleanFaceBitmapUv(sourceFace);
+  const key = cleanBitmapKey(sourceFace.bitmapFaceKey);
+  if (!key || !sourceUv) return;
+  const sideUv = sidePoints.map((point) => facePlaneUvAtPoint(sourceFace, point, sourceUv));
+  if (sideUv.length !== sideFace.verts.length || sideUv.some((point) => !point)) return;
+  sideFace.bitmapFaceKey = key;
+  const side = validBitmapFaceSide(sourceFace.bitmapSide);
+  if (side) sideFace.bitmapSide = side;
+  sideFace.bitmapUv = sideUv;
+  sideFace.bitmapUvTemplate = cloneUvPoints(sideUv);
+  delete sideFace.bitmapUvTransform;
+  const baseW = Math.max(0, Math.round(Number(sourceFace.bitmapBaseW) || 0));
+  const baseH = Math.max(0, Math.round(Number(sourceFace.bitmapBaseH) || 0));
+  if (baseW && baseH) {
+    sideFace.bitmapBaseW = baseW;
+    sideFace.bitmapBaseH = baseH;
+  }
+  const angle = normalizeBitmapAngle(sourceFace.bitmapAngle);
+  if (angle) sideFace.bitmapAngle = angle;
+  if (sourceFace.bitmapMirrorX) sideFace.bitmapMirrorX = true;
+  const wrap = cleanBitmapWrap(sourceFace.bitmapWrap);
+  if (wrap !== "clip") sideFace.bitmapWrap = wrap;
+}
+
+function extrudeFaceGeometry(face, config, mirrored = false) {
+  const sourceFaceId = face.id;
+  const oldIds = [...face.verts];
+  const oldVerts = oldIds.map(vertexById);
+  if (oldVerts.length < 3 || oldVerts.length !== oldIds.length) return null;
+  const newPoints = extrudedFacePoints(face, config);
+  if (newPoints.length !== oldIds.length) return null;
+  const pointMode = cleanFaceExtrudeMode(config.mode) === "point";
+  const newVerts = pointMode
+    ? [addVertex(newPoints[0].x, newPoints[0].y, newPoints[0].z, null, false)]
+    : newPoints.map((point) => addVertex(point.x, point.y, point.z, null, false));
+  const newIds = newVerts.map((vertex) => vertex.id);
+  const capFace = pointMode ? null : JSON.parse(JSON.stringify(face));
+  if (capFace) {
+    capFace.id = newId();
+    capFace.verts = newIds;
+    capFace.mirrored = !!mirrored;
+  }
+  if (config.deleteSource !== false) {
+    state.faces = state.faces.filter((item) => item.id !== sourceFaceId);
+    state.details = state.details.filter((detail) => Number(detail.faceId) !== sourceFaceId);
+  }
+  if (capFace) state.faces.push(capFace);
+  if (config.deleteSource !== false) state.selectedFaceIds.delete(sourceFaceId);
+  const sideFaces = [];
+  for (let i = 0; i < oldIds.length; i++) {
+    const next = (i + 1) % oldIds.length;
+    const sideIds = pointMode
+      ? [oldIds[i], oldIds[next], newIds[0]]
+      : [oldIds[i], oldIds[next], newIds[next], newIds[i]];
+    const sidePoints = pointMode
+      ? [
+        vec(oldVerts[i].x, oldVerts[i].y, oldVerts[i].z),
+        vec(oldVerts[next].x, oldVerts[next].y, oldVerts[next].z),
+        newPoints[i]
+      ]
+      : [
+        vec(oldVerts[i].x, oldVerts[i].y, oldVerts[i].z),
+        vec(oldVerts[next].x, oldVerts[next].y, oldVerts[next].z),
+        newPoints[next],
+        newPoints[i]
+      ];
+    const sideFace = addFace(sideIds, mirrored);
+    if (sideFace) {
+      applyExtrudeSideFacePaint(face, sideFace, sidePoints);
+      sideFaces.push(sideFace);
+    }
+    addEdge(oldIds[i], pointMode ? newIds[0] : newIds[i], "edge", mirrored);
+    if (!pointMode) addEdge(newIds[i], newIds[next], "edge", mirrored);
+  }
+  return { capFace, sideFaces, newVerts, sourceFaceId, mode: pointMode ? "point" : "cap" };
+}
+
+function confirmFaceExtrudePreview() {
+  if (!state.faceExtrudePreview) {
+    setStatus("CHOOSE EXTRUDE FIRST.");
+    return;
+  }
+  const face = selectedExtrudeFace();
+  if (!face) {
+    setStatus("SELECT A FACE OR ITS EDGE LOOP FIRST.");
+    return;
+  }
+  const config = currentFaceExtrudeConfig();
+  const { distance, taperAngle, deleteSource } = config;
+  if (Math.abs(distance) < EPS) {
+    setStatus("EXTRUDE DISTANCE MUST NOT BE ZERO.");
+    return;
+  }
+  const mirror = mirrorActionsEnabled() ? mirroredFaceOf(face) : null;
+  const primaryResult = extrudeFaceGeometry(face, config, false);
+  const mirrorResult = mirror ? extrudeFaceGeometry(mirror, config, true) : null;
+  if (!primaryResult) {
+    setStatus(`FACE #${face.id} COULD NOT BE EXTRUDED.`);
+    renderAll();
+    return;
+  }
+  if (mirrorResult) inferMirrorVertexIds();
+  state.selected = primaryResult.capFace
+    ? { type: "face", id: primaryResult.capFace.id }
+    : { type: "vertex", id: primaryResult.newVerts[0].id };
+  state.selectedFaceIds.clear();
+  state.selectedEdgeIds.clear();
+  state.pick = [];
+  setFaceExtrudePreview(false);
+  const pointMode = cleanFaceExtrudeMode(config.mode) === "point";
+  const taperText = !pointMode && Math.abs(taperAngle) > EPS ? `, TAPER ${round(taperAngle, 1)} DEG` : "";
+  const sourceText = deleteSource === false ? ", SOURCE KEPT" : ", SOURCE DELETED";
+  const resultText = pointMode
+    ? `POINT EXTRUDED TO VERTEX #${primaryResult.newVerts[0].id}`
+    : `FACE #${primaryResult.capFace.id} EXTRUDED`;
+  setStatus(`${resultText} ${round(distance, 2)}${taperText}${sourceText}${mirrorResult ? " WITH MIRROR" : ""}.`);
   renderAll();
 }
 
@@ -1451,6 +2178,7 @@ function hasBeaconAtVertex(vertexId) {
 }
 
 function addBeaconDetail(options = {}) {
+  cancelSurfaceInsertPreview({ redraw: false });
   const { stayInVertexMode = false } = options;
   const vertex = selectedBeaconVertex();
   if (!vertex) {
@@ -1488,6 +2216,7 @@ function addBeaconDetail(options = {}) {
 }
 
 function removeBeaconAtSelectedVertex() {
+  cancelSurfaceInsertPreview({ redraw: false });
   const vertex = selectedBeaconVertex();
   if (!vertex) {
     setStatus("SELECT ONE VERTEX FIRST.");
@@ -1505,6 +2234,7 @@ function removeBeaconAtSelectedVertex() {
 }
 
 function addDetail(type) {
+  cancelSurfaceInsertPreview({ redraw: false });
   if (type === "beacon") {
     addBeaconDetail();
     return;
@@ -1716,6 +2446,7 @@ function makeConvertedEdgeDetail(type, edges, preferredEdge) {
 }
 
 function convertSelectedEdgeToDetail(type) {
+  cancelSurfaceInsertPreview({ redraw: false });
   const selectedEdge = state.selected?.type === "edge"
     ? state.edges.find((edge) => edge.id === state.selected.id)
     : null;
@@ -1761,6 +2492,7 @@ function convertSelectedEdgeToDetail(type) {
 }
 
 function convertSelectedDetailToEdges(kind = "edge") {
+  cancelSurfaceInsertPreview({ redraw: false });
   const selectedDetail = state.selected?.type === "detail" ? detailById(state.selected.id) : null;
   if (!selectedDetail) {
     setStatus("SELECT A SURFACE DETAIL FIRST.");
@@ -1824,6 +2556,7 @@ function readProfileConeMode(input = els.profileConeMode) {
 
 function resetPolygonProfile(sides = readProfileSideCount(), rotationDeg = readProfileRotationDeg(), cone = readProfileConeMode()) {
   resetGamePreviewSyncState();
+  cancelSurfaceInsertPreview({ redraw: false });
   state.nextId = 1;
   state.verts = [];
   state.faces = [];
@@ -1887,12 +2620,15 @@ function rotatePoint(v) {
   return vec(x1, y1, z2);
 }
 
+function rotateViewPoint(v) {
+  return rotatePoint(sub(v, modelCenter()));
+}
+
 function normalizeRadians(value) {
   return Math.atan2(Math.sin(value), Math.cos(value));
 }
 
-function orientFaceViewAngles(face) {
-  const n = faceNormal(face);
+function viewAnglesForVector(n) {
   if (len(n) < EPS) return null;
   const ry = Math.atan2(-n.x, -n.z);
   const sy = Math.sin(ry);
@@ -1902,13 +2638,21 @@ function orientFaceViewAngles(face) {
   return { rx: normalizeRadians(rx), ry: normalizeRadians(ry) };
 }
 
+function viewAnglesForCubeCornerVector(n) {
+  return viewAnglesForVector({ x: -n.x, y: n.y, z: n.z });
+}
+
+function orientFaceViewAngles(face) {
+  return viewAnglesForVector(faceNormal(face));
+}
+
 function orientFaceToView(face = selectedFace(), redraw = true, statusText = "") {
   if (!face) {
     setStatus("SELECT A FACE FIRST.");
     updateFaceUvAngleControls();
     return false;
   }
-  setStandardView();
+  setStandardView({ resetProjection: false });
   const view = orientFaceViewAngles(face);
   if (!view) {
     setStatus("FACE NORMAL IS TOO SMALL TO ORIENT VIEW.");
@@ -1923,9 +2667,9 @@ function orientFaceToView(face = selectedFace(), redraw = true, statusText = "")
 }
 
 function project3d(v, canvas) {
-  const r = rotatePoint(v);
+  const r = rotateViewPoint(v);
   const scale = state.view.zoom * Math.min(canvas.width, canvas.height) / 360;
-  const perspective = 600 / (600 + r.z);
+  const perspective = state.view.orthographic ? 1 : 600 / (600 + r.z);
   return {
     x: canvas.width / 2 + state.view.panX + r.x * scale * perspective,
     y: canvas.height / 2 + state.view.panY - r.y * scale * perspective,
@@ -1966,6 +2710,23 @@ function setDefaultPreviewRenderMode() {
   els.previewRenderMode.value = DEFAULT_PREVIEW_RENDER_MODE;
 }
 
+function syncPreviewModeButtons(mode = els.previewRenderMode?.value || DEFAULT_PREVIEW_RENDER_MODE) {
+  els.viewModeColumn?.querySelectorAll("[data-preview-mode]").forEach((button) => {
+    const active = button.dataset.previewMode === mode;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+}
+
+function setPreviewRenderMode(value) {
+  if (!els.previewRenderMode || !value) return;
+  if (els.previewRenderMode.value !== value) {
+    els.previewRenderMode.value = value;
+  }
+  renderAll();
+  setStatus(`${previewModeLabel(value).toUpperCase()} VIEW.`);
+}
+
 function setBlueprintsVisible(visible, options = {}) {
   state.showBlueprints = !!visible;
   const stage = els.mainPreviewStack?.closest(".stage");
@@ -1974,7 +2735,8 @@ function setBlueprintsVisible(visible, options = {}) {
     els.toggleBlueprintBtn.classList.toggle("active", state.showBlueprints);
     els.toggleBlueprintBtn.classList.toggle("is-off", !state.showBlueprints);
     els.toggleBlueprintBtn.setAttribute("aria-pressed", state.showBlueprints ? "true" : "false");
-    els.toggleBlueprintBtn.textContent = state.showBlueprints ? "Blueprints On" : "Blueprints Off";
+    els.toggleBlueprintBtn.setAttribute("aria-label", state.showBlueprints ? "Blueprints on" : "Blueprints off");
+    els.toggleBlueprintBtn.title = state.showBlueprints ? "Hide blueprints" : "Show blueprints";
   }
   if (options.persist) {
     try {
@@ -2025,6 +2787,128 @@ function projectedMapForMain(canvas) {
   return new Map(state.verts.map((v) => [v.id, project3d(v, canvas)]));
 }
 
+function solveLinearSystem(matrix, values) {
+  const n = values.length;
+  if (!n || matrix.length !== n) return null;
+  const rows = matrix.map((row, index) => [...row, values[index]]);
+  for (let col = 0; col < n; col++) {
+    let pivot = col;
+    for (let row = col + 1; row < n; row++) {
+      if (Math.abs(rows[row][col]) > Math.abs(rows[pivot][col])) pivot = row;
+    }
+    if (Math.abs(rows[pivot][col]) < 1e-9) return null;
+    if (pivot !== col) [rows[pivot], rows[col]] = [rows[col], rows[pivot]];
+    const scale = rows[col][col];
+    for (let item = col; item <= n; item++) rows[col][item] /= scale;
+    for (let row = 0; row < n; row++) {
+      if (row === col) continue;
+      const factor = rows[row][col];
+      if (Math.abs(factor) < 1e-12) continue;
+      for (let item = col; item <= n; item++) rows[row][item] -= factor * rows[col][item];
+    }
+  }
+  return rows.map((row) => row[n]);
+}
+
+function signedArea2(points) {
+  let area = 0;
+  for (let i = 0; i < points.length; i++) {
+    const a = points[i];
+    const b = points[(i + 1) % points.length];
+    area += a.x * b.y - b.x * a.y;
+  }
+  return area;
+}
+
+function bestPointCombination(points, count) {
+  if (points.length < count) return null;
+  let best = null;
+  let bestScore = -1;
+  const visit = (start, combo) => {
+    if (combo.length === count) {
+      const src = combo.map((index) => points[index].source);
+      const screen = combo.map((index) => points[index].screen);
+      const score = Math.abs(signedArea2(src)) * Math.abs(signedArea2(screen));
+      if (score > bestScore) {
+        bestScore = score;
+        best = combo.slice();
+      }
+      return;
+    }
+    for (let index = start; index <= points.length - (count - combo.length); index++) {
+      combo.push(index);
+      visit(index + 1, combo);
+      combo.pop();
+    }
+  };
+  visit(0, []);
+  return bestScore > 1e-6 ? best : null;
+}
+
+function homographyProjector(pairs) {
+  const indexes = bestPointCombination(pairs, 4);
+  if (!indexes) return null;
+  const rows = [];
+  const values = [];
+  for (const index of indexes) {
+    const { source, screen } = pairs[index];
+    const u = source.x;
+    const v = source.y;
+    rows.push([u, v, 1, 0, 0, 0, -u * screen.x, -v * screen.x]);
+    values.push(screen.x);
+    rows.push([0, 0, 0, u, v, 1, -u * screen.y, -v * screen.y]);
+    values.push(screen.y);
+  }
+  const h = solveLinearSystem(rows, values);
+  if (!h) return null;
+  return (point) => {
+    const den = h[6] * point.x + h[7] * point.y + 1;
+    if (Math.abs(den) < 1e-9) return null;
+    return {
+      x: (h[0] * point.x + h[1] * point.y + h[2]) / den,
+      y: (h[3] * point.x + h[4] * point.y + h[5]) / den
+    };
+  };
+}
+
+function affineProjector(pairs) {
+  const indexes = bestPointCombination(pairs, 3);
+  if (!indexes) return null;
+  const rows = [];
+  const values = [];
+  for (const index of indexes) {
+    const { source, screen } = pairs[index];
+    rows.push([source.x, source.y, 1, 0, 0, 0]);
+    values.push(screen.x);
+    rows.push([0, 0, 0, source.x, source.y, 1]);
+    values.push(screen.y);
+  }
+  const h = solveLinearSystem(rows, values);
+  if (!h) return null;
+  return (point) => ({
+    x: h[0] * point.x + h[1] * point.y + h[2],
+    y: h[3] * point.x + h[4] * point.y + h[5]
+  });
+}
+
+function rendererFacePlaneProjector(face, projected) {
+  if (!gameRendererOverlayMode() || !projected || !previewFaceForBuilderFace(face)?.visible) return null;
+  const basis = faceBasis(face);
+  const pairs = face.verts
+    .map((id) => {
+      const vertex = vertexById(id);
+      const screen = projected.get(id);
+      if (!vertex || !screen) return null;
+      const offset = sub(vec(vertex.x, vertex.y, vertex.z), basis.center);
+      return {
+        source: { x: dot(offset, basis.right), y: dot(offset, basis.up) },
+        screen
+      };
+    })
+    .filter(Boolean);
+  return homographyProjector(pairs) || affineProjector(pairs);
+}
+
 function previewFaceForBuilderFace(face) {
   if (!gameRendererOverlayMode() || !state.gamePreviewProjection?.faces?.length) return null;
   const index = renderableFaceIndex(face);
@@ -2055,6 +2939,7 @@ function gamePreviewProjectionSummary(info = state.gamePreviewInfo) {
 
 function updatePreviewTrustUi() {
   const mode = els.previewRenderMode?.value || "gameOverlay";
+  syncPreviewModeButtons(mode);
   const renderer = gameRendererPreviewMode(mode);
   const overlay = gameRendererOverlayMode(mode);
   els.mainPreviewStack?.classList.toggle("is-game-renderer", renderer);
@@ -2136,10 +3021,52 @@ function modelRadius() {
   return Math.max(1, ...state.verts.map((v) => Math.hypot(v.x, v.y, v.z)));
 }
 
+function modelBounds() {
+  const emptyBounds = {
+    minX: 0,
+    maxX: 0,
+    minY: 0,
+    maxY: 0,
+    minZ: 0,
+    maxZ: 0
+  };
+  if (!state.verts.length) return emptyBounds;
+  const bounds = state.verts.reduce((box, vertex) => ({
+    minX: Math.min(box.minX, vertex.x),
+    maxX: Math.max(box.maxX, vertex.x),
+    minY: Math.min(box.minY, vertex.y),
+    maxY: Math.max(box.maxY, vertex.y),
+    minZ: Math.min(box.minZ, vertex.z),
+    maxZ: Math.max(box.maxZ, vertex.z)
+  }), {
+    minX: Infinity,
+    maxX: -Infinity,
+    minY: Infinity,
+    maxY: -Infinity,
+    minZ: Infinity,
+    maxZ: -Infinity
+  });
+  return Number.isFinite(bounds.minX) ? bounds : emptyBounds;
+}
+
+function modelCenter() {
+  const bounds = modelBounds();
+  return vec(
+    (bounds.minX + bounds.maxX) * 0.5,
+    (bounds.minY + bounds.maxY) * 0.5,
+    (bounds.minZ + bounds.maxZ) * 0.5
+  );
+}
+
+function modelOverallSize() {
+  const bounds = modelBounds();
+  return Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY, bounds.maxZ - bounds.minZ, 1);
+}
+
 function faceDepth(face) {
   return face.verts.reduce((sum, id) => {
     const v = vertexById(id);
-    return sum + (v ? rotatePoint(v).z : 0);
+    return sum + (v ? rotateViewPoint(v).z : 0);
   }, 0) / face.verts.length;
 }
 
@@ -2356,7 +3283,7 @@ function drawBlankUvFaceOverlay(ctx, canvas, projected) {
     if (faceHasUvCoverage(face, previewFace)) continue;
     const pts = face.verts.map((id) => projected.get(id)).filter(Boolean);
     if (pts.length < 3) continue;
-    drawFace(ctx, pts, "rgba(255,217,54,.18)", "rgba(255,217,54,.95)", 1.8);
+    drawFace(ctx, pts, "rgba(69, 30, 104, .34)", "rgba(188, 112, 255, .95)", 1.8);
     const center = pts.reduce((sum, p) => ({ x: sum.x + p.x, y: sum.y + p.y }), { x: 0, y: 0 });
     center.x /= pts.length;
     center.y /= pts.length;
@@ -2364,7 +3291,7 @@ function drawBlankUvFaceOverlay(ctx, canvas, projected) {
     const width = ctx.measureText(label).width + 8;
     ctx.fillStyle = "rgba(0,0,0,.74)";
     ctx.fillRect(center.x - width / 2, center.y - 8, width, 16);
-    ctx.fillStyle = "#ffd936";
+    ctx.fillStyle = "#bc70ff";
     ctx.fillText(label, center.x, center.y + .5);
   }
   ctx.restore();
@@ -3011,6 +3938,24 @@ function loadSkinBitmaps(modelId = templateShipId(), mirrorX = null) {
   state.decalImages = {};
   markPreviewSkinsDirty();
   updateSkinReadout();
+  const faceKeys = [...new Set(state.faces.map((face) => cleanBitmapKey(face.bitmapFaceKey)).filter(Boolean))];
+  const textureLoad = {
+    pending: 3 + faceKeys.length,
+    settled: false
+  };
+  const settleTextureLoad = () => {
+    if (state.skinImages !== bundle || textureLoad.settled) return;
+    textureLoad.pending -= 1;
+    if (textureLoad.pending > 0) return;
+    textureLoad.settled = true;
+    if (state.builderPreload.visible) {
+      state.builderPreload.rendererResult = false;
+      state.builderPreload.timeout = false;
+      armBuilderPreloadTimeout("Post-texture renderer still warming; opening builder.");
+    }
+    markBuilderPreloadStep("textures", "Texture assets ready; warming renderer...");
+    scheduleGamePreviewSync(0, true);
+  };
   for (const side of ["top", "bottom", "back"]) {
     const img = new Image();
     img.decoding = "async";
@@ -3021,16 +3966,17 @@ function loadSkinBitmaps(modelId = templateShipId(), mirrorX = null) {
       markPreviewSkinsDirty();
       updateSkinReadout();
       renderAll();
+      settleTextureLoad();
     };
     img.onerror = () => {
       if (state.skinImages !== bundle) return;
       bundle.failed++;
       updateSkinReadout();
+      settleTextureLoad();
     };
     img.src = skinPath(cleanId, side);
     bundle[side] = img;
   }
-  const faceKeys = [...new Set(state.faces.map((face) => cleanBitmapKey(face.bitmapFaceKey)).filter(Boolean))];
   for (const key of faceKeys) {
     const img = new Image();
     img.decoding = "async";
@@ -3040,17 +3986,30 @@ function loadSkinBitmaps(modelId = templateShipId(), mirrorX = null) {
       markPreviewSkinsDirty();
       updateSkinReadout();
       renderAll();
+      settleTextureLoad();
     };
     img.onerror = () => {
       if (state.skinImages !== bundle) return;
       delete state.faceSkinImages[key];
       updateSkinReadout();
+      settleTextureLoad();
     };
     img.src = faceSkinPath(cleanId, key);
     state.faceSkinImages[key] = img;
   }
   const decalKeys = [...new Set(state.faces.flatMap((face) => cleanFaceDecals(face.bitmapDecals).map((decal) => decal.key)))];
   for (const key of decalKeys) loadDecalImage(key);
+  setTimeout(() => {
+    if (state.skinImages !== bundle || textureLoad.settled) return;
+    textureLoad.settled = true;
+    if (state.builderPreload.visible) {
+      state.builderPreload.rendererResult = false;
+      state.builderPreload.timeout = false;
+      armBuilderPreloadTimeout("Post-texture renderer still warming; opening builder.");
+    }
+    markBuilderPreloadStep("textures", "Texture requests still settling; opening builder.");
+    scheduleGamePreviewSync(0, true);
+  }, 2200);
 }
 
 function bitmapShelfItemById(id) {
@@ -5357,6 +6316,7 @@ function selectedEdgeSetEdges() {
 
 function selectedEdgeIdSetFor(edge, options = {}) {
   if (!edge) return new Set();
+  if (Array.isArray(options.edgeIds) && options.edgeIds.length) return new Set(options.edgeIds);
   if (!options.audit) return new Set([edge.id]);
   return new Set(edgeComponentFrom(edge, renderAuditEdges()).map((item) => item.id));
 }
@@ -5396,6 +6356,7 @@ function auditEdgeLabel(edge) {
 
 function selectEdge(edge, options = {}) {
   if (!edge) return;
+  cancelSurfaceInsertPreview({ redraw: false });
   state.mode = "edge";
   state.selected = { type: "edge", id: edge.id };
   state.selectedEdgeIds = selectedEdgeIdSetFor(edge, options);
@@ -5406,19 +6367,40 @@ function selectEdge(edge, options = {}) {
   if (options.render !== false) renderAll();
 }
 
-function nearestEdge(point, projected, edges = state.edges, maxLineDist = 12) {
-  let best = null;
-  let bestDist = maxLineDist;
+function projectedPointDepth(point) {
+  return Number.isFinite(point?.z) ? point.z : 0;
+}
+
+function averageProjectedDepth(points) {
+  const zs = points.map(projectedPointDepth).filter(Number.isFinite);
+  return zs.length ? zs.reduce((sum, z) => sum + z, 0) / zs.length : 0;
+}
+
+function edgeHitCandidates(point, projected, edges = state.edges, maxLineDist = 12, options = {}) {
+  const candidates = [];
   for (const edge of edges) {
     const a = projected.get(edge.a), b = projected.get(edge.b);
     if (!a || !b) continue;
     const dist = distToSegment(point, a, b);
-    if (dist < bestDist) {
-      best = edge;
-      bestDist = dist;
-    }
+    if (dist > maxLineDist) continue;
+    const edgeGroup = edgeComponentFrom(edge, edges);
+    candidates.push({
+      type: "edge",
+      id: edge.id,
+      edge,
+      edgeIds: [edge.id],
+      edgeGroupIds: edgeGroup.map((item) => item.id),
+      audit: !!options.audit,
+      distance: dist,
+      depth: averageProjectedDepth([a, b])
+    });
   }
-  return best;
+  candidates.sort((a, b) => a.distance - b.distance || a.depth - b.depth || a.id - b.id);
+  return candidates;
+}
+
+function nearestEdge(point, projected, edges = state.edges, maxLineDist = 12) {
+  return edgeHitCandidates(point, projected, edges, maxLineDist)[0]?.edge || null;
 }
 
 function drawAuditEdgeOverlay(ctx, projected, { label = true, scale = 1 } = {}) {
@@ -5469,11 +6451,70 @@ function drawAuditEdgeOverlay(ctx, projected, { label = true, scale = 1 } = {}) 
   return auditEdges.length;
 }
 
-function drawSurfaceInsertPreview(ctx, canvas) {
+function surfaceInsertPreviewProjectedPoints(face, canvas, projected) {
+  const points = surfaceShapePoints(face);
+  const projector = rendererFacePlaneProjector(face, projected);
+  if (gameRendererOverlayMode() && !projector) return [];
+  if (!projector) return points.map((point) => project3d(point, canvas)).filter(Boolean);
+  const basis = faceBasis(face);
+  return points
+    .map((point) => {
+      const offset = sub(point, basis.center);
+      return projector({ x: dot(offset, basis.right), y: dot(offset, basis.up) });
+    })
+    .filter(Boolean);
+}
+
+function facePlanePreviewPoint(point, basis, projector) {
+  const offset = sub(point, basis.center);
+  return projector({ x: dot(offset, basis.right), y: dot(offset, basis.up) });
+}
+
+function faceNormalPreviewOffset(face, distance, canvas) {
+  const normalLine = previewFaceForBuilderFace(face)?.normalLine;
+  if (!normalLine?.from || !normalLine?.to) return null;
+  const from = previewProjectionPointToCanvas(normalLine.from, canvas);
+  const to = previewProjectionPointToCanvas(normalLine.to, canvas);
+  if (!from || !to) return null;
+  const normalLen = Math.max(8, modelRadius() * .09);
+  const scale = (Number(distance) || 0) / normalLen;
+  return {
+    x: (to.x - from.x) * scale,
+    y: (to.y - from.y) * scale
+  };
+}
+
+function faceExtrudePreviewProjectedPoints(face, canvas, projected) {
+  const basePoints = face.verts.map(vertexById).filter(Boolean);
+  const capPoints = extrudedFacePoints(face);
+  if (basePoints.length < 3 || capPoints.length !== basePoints.length) return null;
+  const projector = rendererFacePlaneProjector(face, projected);
+  if (gameRendererOverlayMode() && !projector) return null;
+  if (!projector) {
+    return {
+      basePts: basePoints.map((point) => project3d(point, canvas)).filter(Boolean),
+      capPts: capPoints.map((point) => project3d(point, canvas)).filter(Boolean)
+    };
+  }
+  const basis = faceBasis(face);
+  const distanceOffset = faceNormalPreviewOffset(face, currentFaceExtrudeConfig().distance, canvas);
+  if (!distanceOffset) return null;
+  const basePts = basePoints.map((point) => facePlanePreviewPoint(point, basis, projector)).filter(Boolean);
+  const capPts = capPoints
+    .map((point) => facePlanePreviewPoint(point, basis, projector))
+    .filter(Boolean)
+    .map((point) => ({
+      x: point.x + distanceOffset.x,
+      y: point.y + distanceOffset.y
+    }));
+  return { basePts, capPts };
+}
+
+function drawSurfaceInsertPreview(ctx, canvas, projected = null) {
   if (!state.surfaceInsertPreview) return;
   const face = selectedFace();
   if (!face || state.mode !== "face") return;
-  const pts = surfaceShapePoints(face, state.surfaceInsertShape).map((point) => project3d(point, canvas)).filter(Boolean);
+  const pts = surfaceInsertPreviewProjectedPoints(face, canvas, projected);
   if (pts.length < 3) return;
   ctx.save();
   ctx.setLineDash([8, 5]);
@@ -5487,6 +6528,92 @@ function drawSurfaceInsertPreview(ctx, canvas) {
     ctx.arc(point.x, point.y, 3.5, 0, TAU);
     ctx.fill();
     ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawFaceExtrudePreview(ctx, canvas, projected = null) {
+  if (!state.faceExtrudePreview) return;
+  const face = selectedExtrudeFace();
+  if (!face) return;
+  const previewPoints = faceExtrudePreviewProjectedPoints(face, canvas, projected);
+  if (!previewPoints) return;
+  const { basePts, capPts } = previewPoints;
+  if (basePts.length < 3 || capPts.length !== basePts.length) return;
+  ctx.save();
+  ctx.setLineDash([8, 5]);
+  drawFace(ctx, capPts, "rgba(255,217,54,.12)", "#ffd936", 2.2);
+  ctx.setLineDash([]);
+  ctx.strokeStyle = "rgba(255,217,54,.82)";
+  ctx.lineWidth = 1.4;
+  for (let i = 0; i < basePts.length; i++) {
+    ctx.beginPath();
+    ctx.moveTo(basePts[i].x, basePts[i].y);
+    ctx.lineTo(capPts[i].x, capPts[i].y);
+    ctx.stroke();
+  }
+  ctx.fillStyle = "#ffd936";
+  ctx.strokeStyle = "rgba(0,0,0,.75)";
+  ctx.lineWidth = 2;
+  for (const point of capPts) {
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, 3.5, 0, TAU);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawSelectionPickHover(ctx, canvas, projected) {
+  const candidate = state.selectionPickHover;
+  if (!candidate) return;
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,.8)";
+  ctx.shadowBlur = 6;
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  ctx.strokeStyle = "#66e8ff";
+  ctx.fillStyle = "rgba(102,232,255,.14)";
+  ctx.lineWidth = 3;
+  if (["face", "uv", "group"].includes(candidate.type)) {
+    const face = faceById(candidate.id);
+    const pts = face ? projectedFacePoints(face, projected) : [];
+    if (pts.length >= 3) drawFace(ctx, pts, "rgba(102,232,255,.18)", "#66e8ff", 3);
+  } else if (candidate.type === "edge") {
+    const sourceEdges = candidate.audit ? renderAuditEdges() : state.edges;
+    const edgeIds = candidate.edgeIds?.length ? new Set(candidate.edgeIds) : new Set([candidate.id]);
+    for (const edge of sourceEdges.filter((item) => edgeIds.has(item.id))) {
+      const a = projected.get(edge.a);
+      const b = projected.get(edge.b);
+      if (!a || !b) continue;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
+  } else if (candidate.type === "detail") {
+    const detail = detailById(candidate.id);
+    const pts = detail ? projectedDetailPointsForMain(detail, canvas) : [];
+    if (detail?.type === "beacon" && pts[0]) {
+      ctx.beginPath();
+      ctx.arc(pts[0].x, pts[0].y, 9, 0, TAU);
+      ctx.fill();
+      ctx.stroke();
+    } else if (pts.length >= 2) {
+      ctx.beginPath();
+      pts.forEach((point, index) => index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y));
+      if (detail?.type === "window" || detail?.type === "engine") ctx.closePath();
+      if (detail?.type === "window" || detail?.type === "engine") ctx.fill();
+      ctx.stroke();
+    }
+  } else if (candidate.type === "vertex") {
+    const p = projected.get(candidate.id);
+    if (p) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 9, 0, TAU);
+      ctx.fill();
+      ctx.stroke();
+    }
   }
   ctx.restore();
 }
@@ -5610,7 +6737,8 @@ function renderMain() {
     }
   }
 
-  drawSurfaceInsertPreview(ctx, canvas);
+  drawSurfaceInsertPreview(ctx, canvas, projected);
+  drawFaceExtrudePreview(ctx, canvas, projected);
   drawAuditEdgeOverlay(ctx, projected, { label: true, scale: 1.15 });
 
   for (const detail of state.details) {
@@ -5678,6 +6806,7 @@ function renderMain() {
     ctx.fill();
     ctx.stroke();
   }
+  drawSelectionPickHover(ctx, canvas, projected);
 }
 
 function drawOrthoCanvas(canvas, viewName) {
@@ -5730,6 +6859,7 @@ function drawOrthoCanvas(canvas, viewName) {
 
 function renderAll() {
   updateUi();
+  updateProjectionViewButtons();
   updateSelectedBitmapReadout();
   updateFaceDecalControls();
   renderMain();
@@ -5738,6 +6868,7 @@ function renderAll() {
   }
   updateExport();
   scheduleGamePreviewSync();
+  markBuilderPreloadStep("rendered", "Builder canvas ready; warming renderer...");
 }
 
 function renderPreviewMotion() {
@@ -5791,6 +6922,44 @@ function gamePreviewBitmapSkins() {
   return skins;
 }
 
+function gamePreviewFitScale() {
+  const canvas = els.mainView;
+  const bounds = projectedModelBoundsAtZoomOne(canvas);
+  if (!canvas || !bounds) return state.view.zoom * modelOverallSize() / 360;
+  const width = Math.max(1, bounds.maxX - bounds.minX) * state.view.zoom;
+  const height = Math.max(1, bounds.maxY - bounds.minY) * state.view.zoom;
+  return Math.max(width, height) / Math.max(1, Math.min(canvas.width, canvas.height));
+}
+
+function projectedGamePreviewTargetScale() {
+  const fitScale = gamePreviewFitScale();
+  if (state.view.orthographic) return clamp(fitScale, GAME_PREVIEW_SCALE_MIN, 8);
+  return clamp(fitScale * GAME_PREVIEW_PERSPECTIVE_SCALE, GAME_PREVIEW_SCALE_MIN, GAME_PREVIEW_PERSPECTIVE_SCALE_MAX);
+}
+
+function anchorGamePreviewTargetScale() {
+  const scale = projectedGamePreviewTargetScale();
+  state.gamePreviewScaleAnchor = {
+    zoom: Math.max(EPS, state.view.zoom),
+    scale,
+    orthographic: !!state.view.orthographic
+  };
+  return scale;
+}
+
+function resetGamePreviewTargetScale() {
+  state.gamePreviewScaleAnchor = null;
+}
+
+function gamePreviewTargetScale() {
+  const max = state.view.orthographic ? 8 : GAME_PREVIEW_PERSPECTIVE_SCALE_MAX;
+  const anchor = state.gamePreviewScaleAnchor;
+  if (anchor && anchor.orthographic === !!state.view.orthographic && anchor.zoom > EPS) {
+    return clamp(anchor.scale * state.view.zoom / anchor.zoom, GAME_PREVIEW_SCALE_MIN, max);
+  }
+  return anchorGamePreviewTargetScale();
+}
+
 function gamePreviewPayload(options = {}) {
   const force = !!options.force;
   const previewDetails = filteredDetailsForView();
@@ -5814,12 +6983,14 @@ function gamePreviewPayload(options = {}) {
     gameMeta: gameMetadata(),
     ...(includeSkins ? { bitmapSkins: gamePreviewBitmapSkins() } : {}),
     view: { rx: state.view.rx, ry: state.view.ry, roll: 0 },
+    orthographic: !!state.view.orthographic,
     mode,
     fxLevel,
     quality: "live",
     lightMode: "front",
     projection: gameRendererOverlayMode(),
-    targetScale: .56
+    allowClosePreview: true,
+    targetScale: Number.isFinite(Number(options.targetScale)) ? Number(options.targetScale) : gamePreviewTargetScale()
   };
 }
 
@@ -5833,6 +7004,7 @@ function gamePreviewSyncKey(payload) {
       ry: Math.round((payload.view?.ry || 0) * 1000) / 1000,
       roll: Math.round((payload.view?.roll || 0) * 1000) / 1000
     },
+    orthographic: !!payload.orthographic,
     mode: payload.mode,
     fxLevel: payload.fxLevel,
     quality: payload.quality,
@@ -5851,12 +7023,13 @@ function gamePreviewViewPayload() {
     blueprintKey: gamePreviewSentBlueprintKey,
     bitmapSkinVersion: gamePreviewSentSkinVersion || state.previewSkinVersion || 0,
     view: { rx: state.view.rx, ry: state.view.ry, roll: 0 },
+    orthographic: !!state.view.orthographic,
     mode: gamePreviewRendererMode(),
     fxLevel: gamePreviewFxLevel(),
     quality: "live",
     lightMode: "front",
     projection: gameRendererOverlayMode(),
-    targetScale: .56
+    targetScale: gamePreviewTargetScale()
   };
 }
 
@@ -5915,6 +7088,8 @@ function resetGamePreviewSyncState() {
   gamePreviewSentBlueprintKey = "";
   gamePreviewConfirmedBlueprintKey = "";
   gamePreviewSentSkinVersion = 0;
+  gamePreviewRetryCount = 0;
+  resetGamePreviewTargetScale();
   state.gamePreviewInfo = null;
   state.gamePreviewProjection = null;
   state.gamePreviewDetailProjectionIndexByStateIndex.clear();
@@ -6199,21 +7374,51 @@ function summarizeGamePreviewInfo(info) {
   return `REAL RENDERER: ${summary.visibleFaces}/${summary.faces} VISIBLE FACES  ${summary.projectedPoints} POINTS  ${summary.faceTextureRefs} FACE UVS${suffix}`;
 }
 
+function gamePreviewRenderReady(info) {
+  if (!state.faces.length) return true;
+  const summary = gamePreviewProjectionSummary(info);
+  return !!summary && summary.faces > 0 && summary.visibleFaces > 0 && summary.projectedPoints > 0;
+}
+
+function retryGamePreviewWarmup() {
+  if (gamePreviewRetryCount >= GAME_PREVIEW_WARMUP_RETRY_MAX) return false;
+  gamePreviewRetryCount += 1;
+  gamePreviewLastKey = "";
+  const delay = 160 + gamePreviewRetryCount * 170;
+  if (els.gamePreviewReadout) {
+    els.gamePreviewReadout.textContent = `REAL RENDERER WARMING (${gamePreviewRetryCount}/${GAME_PREVIEW_WARMUP_RETRY_MAX})...`;
+  }
+  scheduleGamePreviewSync(delay, true);
+  return true;
+}
+
 function handleGamePreviewResult(data) {
-  if (data?.blueprintKey && gamePreviewSentBlueprintKey && data.blueprintKey !== gamePreviewSentBlueprintKey) {
+  if (state.faces.length && gamePreviewSentBlueprintKey && data?.blueprintKey !== gamePreviewSentBlueprintKey) {
     gamePreviewLastKey = "";
     scheduleGamePreviewSync(0, true);
     return;
   }
+  const info = data?.info || null;
+  if (!gamePreviewRenderReady(info)) {
+    if (retryGamePreviewWarmup()) return;
+    if (state.builderPreload.visible) {
+      gamePreviewRetryCount = 0;
+      setBuilderPreloadText("Renderer preview did not draw the model yet; retrying...");
+      gamePreviewLastKey = "";
+      scheduleGamePreviewSync(400, true);
+      return;
+    }
+  }
   if (data?.blueprintKey && data.blueprintKey === gamePreviewSentBlueprintKey) {
     gamePreviewConfirmedBlueprintKey = data.blueprintKey;
   }
-  const info = data?.info || null;
+  gamePreviewRetryCount = 0;
   state.gamePreviewInfo = info;
   state.gamePreviewProjection = info?.projection || null;
   if (els.gamePreviewReadout) els.gamePreviewReadout.textContent = summarizeGamePreviewInfo(info);
   updatePreviewTrustUi();
   renderMain();
+  markBuilderPreloadStep("rendererResult", "Renderer preview ready.");
 }
 
 function updateUi() {
@@ -6308,20 +7513,24 @@ function setSelectedFaceBitmapSide(value) {
 }
 
 function clearEditorSelection(options = {}) {
+  cancelSurfaceInsertPreview({ redraw: false });
   state.selected = null;
   state.selectedFaceIds.clear();
   state.selectedEdgeIds.clear();
   state.pick = [];
+  hideSelectionPickMenu();
   hideSelectionContextMenu();
   if (options.redraw !== false) renderAll();
 }
 
 function clearSelectionForSelectorChange() {
+  cancelSurfaceInsertPreview({ redraw: false });
   state.selected = null;
   state.selectedFaceIds.clear();
   state.selectedEdgeIds.clear();
   state.pick = [];
   state.drag = null;
+  hideSelectionPickMenu();
   hideSelectionContextMenu();
   closeUvProperties({ redraw: false });
 }
@@ -6387,35 +7596,36 @@ function distToSegment(p, a, b) {
 }
 
 function nearestDetail(point, maxLineDist = 10) {
-  let bestDetail = null;
-  let bestLineDist = maxLineDist;
+  return detailHitCandidates(point, maxLineDist)[0]?.detail || null;
+}
+
+function detailHitCandidates(point, maxLineDist = 10) {
+  const candidates = [];
   for (const d of state.details) {
     if (!detailVisibleInView(d)) continue;
     const pts = projectedDetailPointsForMain(d, els.mainView);
+    const depth = averageProjectedDepth(pts);
     if (d.type === "beacon") {
       const p = pts[0];
       if (!p) continue;
       const dist = Math.hypot(p.x - point.x, p.y - point.y);
-      if (dist < bestLineDist) {
-        bestLineDist = dist;
-        bestDetail = d;
-      }
+      if (dist <= maxLineDist) candidates.push({ type: "detail", id: d.id, detail: d, distance: dist, depth });
       continue;
     }
     if (pts.length < 2) continue;
+    let bestDist = Infinity;
     if (d.type === "panel" || d.type === "line" || d.type === "polyline") {
       for (let i = 0; i < pts.length - 1; i++) {
         const dist = distToSegment(point, pts[i], pts[i + 1]);
-        if (dist < bestLineDist) {
-          bestLineDist = dist;
-          bestDetail = d;
-        }
+        if (dist < bestDist) bestDist = dist;
       }
+      if (bestDist <= maxLineDist) candidates.push({ type: "detail", id: d.id, detail: d, distance: bestDist, depth });
     } else if (pointInPoly(point, pts)) {
-      bestDetail = d;
+      candidates.push({ type: "detail", id: d.id, detail: d, distance: 0, depth });
     }
   }
-  return bestDetail;
+  candidates.sort((a, b) => a.distance - b.distance || a.depth - b.depth || a.id - b.id);
+  return candidates;
 }
 
 function hitFaceAtPoint(point, projected, options = {}) {
@@ -6423,14 +7633,126 @@ function hitFaceAtPoint(point, projected, options = {}) {
   return faces.find((face) => {
     if (options.uvOnly && !faceHasUvSelectionTarget(face)) return false;
     if (options.groupOnly && sharedFaceTextureGroup(face).length < 2) return false;
-    const previewFace = previewFaceForBuilderFace(face);
-    if (gameRendererOverlayMode() && previewFace && !previewFace.visible) return false;
     return pointInPoly(point, face.verts.map((id) => projected.get(id)).filter(Boolean));
   }) || null;
 }
 
+function projectedFacePoints(face, projected) {
+  return face.verts.map((id) => projected.get(id)).filter(Boolean);
+}
+
+function faceHitCandidates(point, projected, targetType = "face") {
+  const candidates = [];
+  const seen = new Set();
+  for (const face of state.faces) {
+    if (targetType === "uv" && !faceHasUvSelectionTarget(face)) continue;
+    const group = sharedFaceTextureGroup(face);
+    if (targetType === "group" && group.length < 2) continue;
+    const pts = projectedFacePoints(face, projected);
+    if (pts.length < 3 || !pointInPoly(point, pts)) continue;
+    const key = targetType === "group" && cleanBitmapKey(face.bitmapFaceKey)
+      ? `${targetType}:${cleanBitmapKey(face.bitmapFaceKey)}`
+      : targetType === "uv" && group.length > 1 && cleanBitmapKey(face.bitmapFaceKey)
+        ? `uv-group:${cleanBitmapKey(face.bitmapFaceKey)}`
+        : `${targetType}:${face.id}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    candidates.push({
+      type: targetType,
+      id: face.id,
+      face,
+      groupCount: group.length,
+      groupKey: cleanBitmapKey(face.bitmapFaceKey),
+      distance: 0,
+      depth: faceSortDepthForMain(face)
+    });
+  }
+  candidates.sort((a, b) => a.depth - b.depth || a.id - b.id);
+  return candidates;
+}
+
+function vertexHitCandidates(point, projected, maxDist = 14) {
+  const candidates = [];
+  for (const [id, p] of projected) {
+    const dist = Math.hypot(p.x - point.x, p.y - point.y);
+    if (dist > maxDist) continue;
+    candidates.push({
+      type: "vertex",
+      id,
+      vertex: vertexById(id),
+      distance: dist,
+      depth: projectedPointDepth(p)
+    });
+  }
+  candidates.sort((a, b) => a.distance - b.distance || a.depth - b.depth || a.id - b.id);
+  return candidates;
+}
+
+function pickCandidateKey(candidate) {
+  if (candidate.type === "edge" && candidate.edgeGroup && candidate.edgeIds?.length > 1) {
+    return `${candidate.audit ? "audit-" : ""}edge-group:${[...candidate.edgeIds].sort((a, b) => a - b).join(",")}`;
+  }
+  if (candidate.type === "edge" && candidate.audit) return `audit-edge:${candidate.id}`;
+  if ((candidate.type === "group" || candidate.type === "uv") && candidate.groupKey && candidate.groupCount > 1) {
+    return `${candidate.type}-group:${candidate.groupKey}`;
+  }
+  return `${candidate.type}:${candidate.id}`;
+}
+
+function edgeGroupPickCandidate(candidate) {
+  const edgeIds = Array.isArray(candidate.edgeGroupIds) ? candidate.edgeGroupIds : [];
+  if (edgeIds.length < 2) return null;
+  return {
+    ...candidate,
+    edgeGroup: true,
+    edgeIds
+  };
+}
+
+function collectSelectionCandidates(point) {
+  const projected = projectedMapForMain(els.mainView);
+  const candidates = [];
+  const seen = new Set();
+  const add = (candidate) => {
+    const key = pickCandidateKey(candidate);
+    if (seen.has(key)) return;
+    seen.add(key);
+    candidates.push({ ...candidate, key, order: SELECTABLE_TYPES.indexOf(candidate.type) });
+  };
+  for (const type of SELECTABLE_TYPES) {
+    if (!selectionFilterAllows(type)) continue;
+    if (type === "vertex") vertexHitCandidates(point, projected).forEach(add);
+    else if (type === "edge") {
+      const addEdgeHit = (candidate) => {
+        add(candidate);
+        const groupCandidate = edgeGroupPickCandidate(candidate);
+        if (groupCandidate) add(groupCandidate);
+      };
+      if (els.showAuditEdges?.checked) edgeHitCandidates(point, projected, renderAuditEdges(), SELECTION_EDGE_PICK_RADIUS, { audit: true }).forEach(addEdgeHit);
+      edgeHitCandidates(point, projected, state.edges, SELECTION_EDGE_PICK_RADIUS).forEach(addEdgeHit);
+    } else if (type === "detail") detailHitCandidates(point).forEach(add);
+    else if (type === "face") faceHitCandidates(point, projected, "face").forEach(add);
+    else if (type === "uv") faceHitCandidates(point, projected, "uv").forEach(add);
+    else if (type === "group") faceHitCandidates(point, projected, "group").forEach(add);
+  }
+  candidates.sort((a, b) => a.depth - b.depth || a.distance - b.distance || a.order - b.order || a.id - b.id);
+  return candidates;
+}
+
+function selectDetailTarget(detail, options = {}) {
+  if (!detail) return false;
+  cancelSurfaceInsertPreview({ redraw: false });
+  state.mode = "detail";
+  state.selected = { type: "detail", id: detail.id };
+  setToolTab("edit", { redraw: false });
+  setStatus(`${detail.type === "panel" ? "PANEL LINE" : "DETAIL"} #${detail.id} SELECTED.`);
+  if (options.render !== false) renderAll();
+  return true;
+}
+
 function selectFaceTarget(face, options = {}) {
   if (!face) return false;
+  cancelSurfaceInsertPreview({ redraw: false });
   state.mode = "face";
   state.selected = { type: "face", id: face.id };
   if (options.multiSelect) {
@@ -6452,6 +7774,7 @@ function selectFaceTarget(face, options = {}) {
 
 function selectUvTarget(face) {
   if (!face || !faceHasUvSelectionTarget(face)) return false;
+  cancelSurfaceInsertPreview({ redraw: false });
   const group = sharedFaceTextureGroup(face);
   state.mode = group.length > 1 ? "group" : "uv";
   if (group.length > 1) {
@@ -6474,6 +7797,7 @@ function selectUvTarget(face) {
 function selectGroupTarget(face) {
   const group = sharedFaceTextureGroup(face);
   if (group.length < 2) return false;
+  cancelSurfaceInsertPreview({ redraw: false });
   state.mode = "group";
   state.selected = { type: "group", id: face.id };
   state.selectedFaceIds = new Set(group.map((item) => item.id));
@@ -6485,52 +7809,75 @@ function selectGroupTarget(face) {
   return true;
 }
 
-function selectInMain(point, options = {}) {
-  const projected = projectedMapForMain(els.mainView);
-  for (const type of orderedSelectionFilters()) {
-    if (type === "vertex") {
-      const id = nearestVertex(point, projected);
-      if (id) {
-        selectVertex(id);
-        return true;
-      }
-    } else if (type === "edge") {
-      const auditHit = els.showAuditEdges?.checked
-        ? nearestEdge(point, projected, renderAuditEdges(), 18)
-        : null;
-      if (auditHit) {
-        selectEdge(auditHit, { audit: true });
-        return true;
-      }
-      const best = nearestEdge(point, projected);
-      if (best) {
-        selectEdge(best);
-        return true;
-      }
-    } else if (type === "detail") {
-      const bestDetail = nearestDetail(point);
-      if (bestDetail) {
-        state.mode = "detail";
-        state.selected = { type: "detail", id: bestDetail.id };
-        setToolTab("edit", { redraw: false });
-        setStatus(`${bestDetail.type === "panel" ? "PANEL LINE" : "DETAIL"} #${bestDetail.id} SELECTED.`);
-        renderAll();
-        return true;
-      }
-    } else if (type === "face") {
-      if (selectFaceTarget(hitFaceAtPoint(point, projected), { multiSelect: options.multiSelect })) return true;
-    } else if (type === "uv") {
-      if (selectUvTarget(hitFaceAtPoint(point, projected, { uvOnly: true }))) return true;
-    } else if (type === "group") {
-      if (selectGroupTarget(hitFaceAtPoint(point, projected, { groupOnly: true }))) return true;
-    }
+function selectionPickCandidateLabel(candidate) {
+  if (candidate.type === "vertex") return `Vertex #${candidate.id}`;
+  if (candidate.type === "face") return `Face #${candidate.id}`;
+  if (candidate.type === "edge") {
+    const edge = candidate.edge || (candidate.audit ? renderAuditEdges() : state.edges).find((item) => item.id === candidate.id);
+    const loopText = candidate.edgeIds?.length > 1 ? ` Loop (${candidate.edgeIds.length})` : "";
+    return candidate.audit
+      ? `Audit Edge${loopText} ${auditEdgeLabel(edge || candidate)}`
+      : `${edgeKindLabel(edge?.kind)}${loopText} #${candidate.id}`;
   }
+  if (candidate.type === "detail") {
+    const detail = candidate.detail || detailById(candidate.id);
+    return `${detail?.type === "panel" ? "Surface Detail" : detail?.type || "Detail"} #${candidate.id}`;
+  }
+  if (candidate.type === "uv") {
+    return candidate.groupCount > 1 && candidate.groupKey
+      ? `UV Group ${candidate.groupKey}`
+      : `UV Face #${candidate.id}`;
+  }
+  if (candidate.type === "group") return `Face Group ${candidate.groupKey || `#${candidate.id}`}`;
+  return `${candidate.type} #${candidate.id}`;
+}
+
+function selectionPickCandidateMeta(candidate) {
+  const depth = Number.isFinite(candidate.depth) ? `Z ${round(candidate.depth, 1)}` : "";
+  const distance = Number.isFinite(candidate.distance) && candidate.distance > 0 ? `D ${round(candidate.distance, 1)}` : "";
+  const count = candidate.groupCount > 1
+    ? `${candidate.groupCount} faces`
+    : candidate.type === "edge" && candidate.edgeIds?.length > 1
+      ? `${candidate.edgeIds.length} lines`
+      : "";
+  return [candidate.type.toUpperCase(), count, depth, distance].filter(Boolean).join(" | ");
+}
+
+function selectSelectionCandidate(candidate, options = {}) {
+  if (!candidate) return false;
+  hideSelectionPickMenu();
+  if (candidate.type === "vertex") {
+    selectVertex(candidate.id);
+    return true;
+  }
+  if (candidate.type === "edge") {
+    const edge = candidate.edge || (candidate.audit ? renderAuditEdges() : state.edges).find((item) => item.id === candidate.id);
+    if (!edge) return false;
+    selectEdge(edge, { audit: candidate.audit, edgeIds: candidate.edgeIds });
+    return true;
+  }
+  if (candidate.type === "detail") return selectDetailTarget(candidate.detail || detailById(candidate.id));
+  if (candidate.type === "face") return selectFaceTarget(candidate.face || faceById(candidate.id), { multiSelect: options.multiSelect });
+  if (candidate.type === "uv") return selectUvTarget(candidate.face || faceById(candidate.id));
+  if (candidate.type === "group") return selectGroupTarget(candidate.face || faceById(candidate.id));
   return false;
+}
+
+function selectInMain(point, options = {}) {
+  const candidates = collectSelectionCandidates(point);
+  if (!candidates.length) return false;
+  if (options.allowPickMenu !== false && candidates.length > 1) {
+    openSelectionPickMenuAt(options.clientX, options.clientY, candidates, { multiSelect: options.multiSelect });
+    setStatus(`${candidates.length} SELECTABLE OBJECTS UNDER POINTER.`);
+    return "menu";
+  }
+  return selectSelectionCandidate(candidates[0], options);
 }
 
 function selectVertex(id) {
   const v = vertexById(id);
   if (!v) return;
+  cancelSurfaceInsertPreview({ redraw: false });
   state.mode = "vertex";
   state.selected = { type: "vertex", id };
   setToolTab("edit", { redraw: false });
@@ -6553,16 +7900,51 @@ function getCanvasPoint(ev, canvas) {
   };
 }
 
-function fitView() {
-  const r = modelRadius();
-  state.view.zoom = clamp(300 / r, 1.35, 4.2);
-  state.view.panX = 0;
-  state.view.panY = 0;
+function projectedModelBoundsAtZoomOne(canvas = els.mainView) {
+  if (!canvas || !state.verts.length) return null;
+  const baseScale = Math.min(canvas.width, canvas.height) / 360;
+  const bounds = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
+  for (const vertex of state.verts) {
+    const r = rotateViewPoint(vertex);
+    const perspective = state.view.orthographic ? 1 : 600 / Math.max(80, 600 + r.z);
+    const x = r.x * baseScale * perspective;
+    const y = -r.y * baseScale * perspective;
+    bounds.minX = Math.min(bounds.minX, x);
+    bounds.maxX = Math.max(bounds.maxX, x);
+    bounds.minY = Math.min(bounds.minY, y);
+    bounds.maxY = Math.max(bounds.maxY, y);
+  }
+  if (!Number.isFinite(bounds.minX) || !Number.isFinite(bounds.minY)) return null;
+  return bounds;
 }
 
-function setStandardView() {
+function fitView(options = {}) {
+  const canvas = els.mainView;
+  const bounds = projectedModelBoundsAtZoomOne(canvas);
+  if (!canvas || !bounds) {
+    const size = modelOverallSize();
+    state.view.zoom = clamp(300 / size, VIEW_ZOOM_MIN, VIEW_ZOOM_MAX);
+    state.view.panX = 0;
+    state.view.panY = 0;
+    anchorGamePreviewTargetScale();
+    return;
+  }
+  const defaultMargin = state.view.orthographic ? VIEW_FIT_MARGIN : VIEW_FIT_PERSPECTIVE_MARGIN;
+  const margin = Number.isFinite(Number(options.margin)) ? Number(options.margin) : defaultMargin;
+  const width = Math.max(1, bounds.maxX - bounds.minX);
+  const height = Math.max(1, bounds.maxY - bounds.minY);
+  const targetZoom = Math.min(canvas.width * margin / width, canvas.height * margin / height);
+  state.view.zoom = clamp(targetZoom, VIEW_ZOOM_MIN, VIEW_ZOOM_MAX);
+  state.view.panX = -(bounds.minX + bounds.maxX) * 0.5 * state.view.zoom;
+  state.view.panY = -(bounds.minY + bounds.maxY) * 0.5 * state.view.zoom;
+  anchorGamePreviewTargetScale();
+}
+
+function setStandardView(options = {}) {
+  state.activeViewCubeCornerKey = "";
   state.view.rx = STANDARD_VIEW.rx;
   state.view.ry = STANDARD_VIEW.ry;
+  if (options.resetProjection !== false) state.view.orthographic = false;
   updateProjectionViewButtons();
 }
 
@@ -6576,23 +7958,268 @@ function activeProjectionViewName() {
   return "";
 }
 
+function viewCubeCornerKey(face, corner) {
+  return `${face}:${corner}`;
+}
+
+function viewCubeCornerPreset(face, corner) {
+  return VIEW_CUBE_CORNER_PRESETS[face]?.[corner] || null;
+}
+
+function sameViewCubeCornerVector(a, b) {
+  return !!a && !!b && a.x === b.x && a.y === b.y && a.z === b.z;
+}
+
+function activeProjectionCornerKey() {
+  for (const [face, corners] of Object.entries(VIEW_CUBE_CORNER_PRESETS)) {
+    for (const [corner, preset] of Object.entries(corners)) {
+      const view = viewAnglesForCubeCornerVector(preset.vector);
+      if (!view) continue;
+      if (Math.abs(normalizeRadians(state.view.rx - view.rx)) < .001
+        && Math.abs(normalizeRadians(state.view.ry - view.ry)) < .001) {
+        return viewCubeCornerKey(face, corner);
+      }
+    }
+  }
+  return "";
+}
+
+function clearViewCubeCornerHover() {
+  els.viewCubeBody?.querySelectorAll(".corner-hover, .corner-adjacent, .corner-target-hover, .face-hover").forEach((node) => {
+    node.classList.remove("corner-hover", "corner-adjacent", "corner-target-hover", "face-hover");
+  });
+}
+
+function setViewCubeCornerHover(cornerEl) {
+  const faceEl = cornerEl?.closest?.("[data-view-preset]");
+  const face = faceEl?.dataset?.viewPreset;
+  const corner = cornerEl?.dataset?.viewCorner;
+  const preset = viewCubeCornerPreset(face, corner);
+  if (!faceEl || !preset) return;
+  clearViewCubeCornerHover();
+  faceEl.classList.add("corner-target-hover");
+  cornerEl.classList.add("corner-hover");
+  preset.adjacent.forEach((name) => {
+    const adjacentFace = els.viewCubeBody?.querySelector(`[data-view-preset="${name}"]`);
+    adjacentFace?.classList.add("corner-target-hover");
+    const match = Object.entries(VIEW_CUBE_CORNER_PRESETS[name] || {})
+      .find(([, item]) => sameViewCubeCornerVector(item.vector, preset.vector));
+    if (!match) return;
+    adjacentFace?.querySelector(`[data-view-corner="${match[0]}"]`)?.classList.add("corner-adjacent");
+  });
+}
+
+function rectContainsPoint(rect, x, y, padding = 0) {
+  return x >= rect.left - padding && x <= rect.right + padding
+    && y >= rect.top - padding && y <= rect.bottom + padding;
+}
+
+function smallestRectElementAtPoint(nodes, clientX, clientY, padding = 0) {
+  return nodes
+    .map((node) => ({ node, rect: node.getBoundingClientRect() }))
+    .filter(({ rect }) => rectContainsPoint(rect, clientX, clientY, padding))
+    .sort((a, b) => (a.rect.width * a.rect.height) - (b.rect.width * b.rect.height))[0]?.node || null;
+}
+
+function viewCubeFaceMetrics(faceEl) {
+  const fallback = { depth: 0, normalZ: 1 };
+  if (!faceEl || typeof DOMMatrix === "undefined") return fallback;
+  try {
+    const bodyTransform = getComputedStyle(els.viewCubeBody).transform;
+    const faceTransform = getComputedStyle(faceEl).transform;
+    const bodyMatrix = bodyTransform && bodyTransform !== "none" ? new DOMMatrix(bodyTransform) : new DOMMatrix();
+    const faceMatrix = faceTransform && faceTransform !== "none" ? new DOMMatrix(faceTransform) : new DOMMatrix();
+    const matrix = bodyMatrix.multiply(faceMatrix);
+    let normalZ = matrix.m33 || 0;
+    if (typeof DOMPoint !== "undefined") {
+      normalZ = new DOMPoint(0, 0, 1, 0).matrixTransform(matrix).z;
+    }
+    return {
+      depth: matrix.m43 || 0,
+      normalZ
+    };
+  } catch (_) {
+    return fallback;
+  }
+}
+
+function frontmostFaceElementAtPoint(nodes, clientX, clientY, padding = 0) {
+  const candidates = nodes
+    .map((node) => ({ node, rect: node.getBoundingClientRect(), metrics: viewCubeFaceMetrics(node) }))
+    .filter(({ rect }) => rectContainsPoint(rect, clientX, clientY, padding));
+  const visible = candidates.filter(({ metrics }) => metrics.normalZ > EPS);
+  return (visible.length ? visible : candidates)
+    .sort((a, b) => (b.metrics.depth - a.metrics.depth) || (b.metrics.normalZ - a.metrics.normalZ) || ((a.rect.width * a.rect.height) - (b.rect.width * b.rect.height)))[0]?.node || null;
+}
+
+function cornerElementOnFaceAtPoint(faceEl, clientX, clientY, padding = 1) {
+  if (!faceEl) return null;
+  return smallestRectElementAtPoint([...faceEl.querySelectorAll("[data-view-corner]")], clientX, clientY, padding);
+}
+
+function viewCubePointerTargetAt(clientX, clientY) {
+  if (!Number.isFinite(clientX) || !Number.isFinite(clientY) || !els.viewCubeBody) return null;
+  const faces = [...els.viewCubeBody.querySelectorAll("[data-view-preset]")];
+  const face = frontmostFaceElementAtPoint(faces, clientX, clientY, 2);
+  if (!face) return null;
+  return cornerElementOnFaceAtPoint(face, clientX, clientY) || face;
+}
+
+function setViewCubeFaceHover(faceEl) {
+  clearViewCubeCornerHover();
+  faceEl?.classList.add("face-hover");
+}
+
+function syncViewCubeHover(event) {
+  const nativeTarget = event.target?.closest?.("[data-view-corner], [data-view-preset]") || null;
+  const target = nativeTarget || viewCubePointerTargetAt(event.clientX, event.clientY);
+  const corner = target?.closest?.("[data-view-corner]");
+  if (corner) {
+    setViewCubeCornerHover(corner);
+    return;
+  }
+  const face = target?.closest?.("[data-view-preset]");
+  if (face) {
+    setViewCubeFaceHover(face);
+    return;
+  }
+  clearViewCubeCornerHover();
+}
+
 function updateProjectionViewButtons() {
   const active = activeProjectionViewName();
+  const activeCorner = active ? "" : (state.activeViewCubeCornerKey || activeProjectionCornerKey());
   document.querySelectorAll("[data-view-preset]").forEach((button) => {
     button.classList.toggle("active", button.dataset.viewPreset === active);
   });
+  els.viewCubeBody?.querySelectorAll("[data-view-corner]").forEach((corner) => {
+    const face = corner.closest("[data-view-preset]")?.dataset?.viewPreset || "";
+    corner.classList.toggle("active", viewCubeCornerKey(face, corner.dataset.viewCorner) === activeCorner);
+  });
+  if (els.viewProjectionToggle) {
+    els.viewProjectionToggle.setAttribute("aria-pressed", state.view.orthographic ? "true" : "false");
+    els.viewProjectionToggle.setAttribute("aria-label", state.view.orthographic ? "Orthographic view" : "Perspective view");
+    els.viewProjectionToggle.title = state.view.orthographic ? "Switch to perspective view" : "Switch to orthographic view";
+  }
+  if (els.viewCubeBody) {
+    els.viewCubeBody.style.setProperty("--cube-rx", `${state.view.rx}rad`);
+    els.viewCubeBody.style.setProperty("--cube-ry", `${normalizeRadians(state.view.ry + Math.PI)}rad`);
+  }
+}
+
+function cancelViewTween() {
+  if (!state.viewTweenFrame) return;
+  cancelAnimationFrame(state.viewTweenFrame);
+  state.viewTweenFrame = 0;
 }
 
 function setProjectionView(name, options = {}) {
   const preset = PROJECTION_VIEW_PRESETS[name];
   if (!preset) return false;
+  cancelViewTween();
+  state.activeViewCubeCornerKey = "";
   state.view.rx = preset.rx;
   state.view.ry = preset.ry;
   if (options.fit !== false) fitView();
   updateProjectionViewButtons();
-  if (options.status !== false) setStatus(`${preset.label} PROJECTION VIEW.`);
+  if (options.status !== false) setStatus(`${preset.label} ${state.view.orthographic ? "ORTHOGRAPHIC" : "PERSPECTIVE"} VIEW.`);
   if (options.redraw !== false) renderAll();
   return true;
+}
+
+function setProjectionCornerView(face, corner, options = {}) {
+  const preset = viewCubeCornerPreset(face, corner);
+  const view = preset ? viewAnglesForCubeCornerVector(preset.vector) : null;
+  if (!preset || !view) return false;
+  cancelViewTween();
+  state.activeViewCubeCornerKey = viewCubeCornerKey(face, corner);
+  state.view.rx = view.rx;
+  state.view.ry = view.ry;
+  if (options.fit !== false) fitView();
+  updateProjectionViewButtons();
+  if (options.status !== false) setStatus(`${preset.label} ${state.view.orthographic ? "ORTHOGRAPHIC" : "PERSPECTIVE"} VIEW.`);
+  if (options.redraw !== false) renderAll();
+  return true;
+}
+
+function setViewProjectionMode(orthographic, options = {}) {
+  state.view.orthographic = !!orthographic;
+  if (options.fit !== false) fitView();
+  updateProjectionViewButtons();
+  if (options.status !== false) setStatus(state.view.orthographic ? "ORTHOGRAPHIC VIEW." : "PERSPECTIVE VIEW.");
+  if (options.redraw !== false) renderAll();
+}
+
+function rotateViewHorizontal(direction) {
+  state.activeViewCubeCornerKey = "";
+  animateViewRotation(state.view.ry + direction * VIEW_CUBE_BUTTON_STEP, direction < 0 ? "VIEW ROTATED LEFT." : "VIEW ROTATED RIGHT.");
+}
+
+function rotateViewVertical(direction) {
+  state.activeViewCubeCornerKey = "";
+  animateViewPitch(state.view.rx + direction * VIEW_CUBE_BUTTON_STEP, direction < 0 ? "VIEW ROTATED UP." : "VIEW ROTATED DOWN.");
+}
+
+function animateViewRotation(targetRy, statusText = "VIEW ROTATED.") {
+  cancelViewTween();
+  const startRy = state.view.ry;
+  const delta = normalizeRadians(targetRy - startRy);
+  const start = performance.now();
+  const duration = 260;
+  const ease = (t) => 1 - Math.pow(1 - t, 3);
+  const step = (now) => {
+    const t = clamp((now - start) / duration, 0, 1);
+    state.view.ry = startRy + delta * ease(t);
+    updateProjectionViewButtons();
+    if (gameRendererPreviewMode()) renderPreviewMotion();
+    else renderAll();
+    if (t < 1) {
+      state.viewTweenFrame = requestAnimationFrame(step);
+      return;
+    }
+    state.viewTweenFrame = 0;
+    state.view.ry = startRy + delta;
+    updateProjectionViewButtons();
+    setStatus(statusText);
+    renderAll();
+  };
+  state.viewTweenFrame = requestAnimationFrame(step);
+}
+
+function animateViewPitch(targetRx, statusText = "VIEW ROTATED.") {
+  cancelViewTween();
+  const startRx = state.view.rx;
+  const delta = targetRx - startRx;
+  const start = performance.now();
+  const duration = 260;
+  const ease = (t) => 1 - Math.pow(1 - t, 3);
+  const step = (now) => {
+    const t = clamp((now - start) / duration, 0, 1);
+    state.view.rx = startRx + delta * ease(t);
+    updateProjectionViewButtons();
+    if (gameRendererPreviewMode()) renderPreviewMotion();
+    else renderAll();
+    if (t < 1) {
+      state.viewTweenFrame = requestAnimationFrame(step);
+      return;
+    }
+    state.viewTweenFrame = 0;
+    state.view.rx = targetRx;
+    updateProjectionViewButtons();
+    setStatus(statusText);
+    renderAll();
+  };
+  state.viewTweenFrame = requestAnimationFrame(step);
+}
+
+function rotateViewFromCubeDrag(dx, dy) {
+  cancelViewTween();
+  state.activeViewCubeCornerKey = "";
+  state.view.ry += dx * 0.006;
+  state.view.rx = clamp(state.view.rx + dy * 0.006, -1.45, 1.45);
+  updateProjectionViewButtons();
+  if (gameRendererPreviewMode()) renderPreviewMotion();
+  else renderAll();
 }
 
 function deleteSelected() {
@@ -7005,6 +8632,194 @@ function currentModelSnapshot() {
   }
 }
 
+function updateEditHistoryControls() {
+  const history = state.editHistory;
+  if (els.undoEditBtn) {
+    els.undoEditBtn.disabled = !history.undo.length;
+    els.undoEditBtn.title = history.undo.length ? "Undo edit" : "Nothing to undo";
+    els.undoEditBtn.setAttribute("aria-disabled", history.undo.length ? "false" : "true");
+  }
+  if (els.redoEditBtn) {
+    els.redoEditBtn.disabled = !history.redo.length;
+    els.redoEditBtn.title = history.redo.length ? "Redo edit" : "Nothing to redo";
+    els.redoEditBtn.setAttribute("aria-disabled", history.redo.length ? "false" : "true");
+  }
+}
+
+function trimEditHistoryStack(stack) {
+  while (stack.length > EDIT_HISTORY_MAX) stack.shift();
+}
+
+function beginContinuousEditHistory() {
+  const history = state.editHistory;
+  if (history.restoring || history.continuousBaseSnapshot) return;
+  history.continuousBaseSnapshot = history.lastSnapshot || currentModelSnapshot();
+  history.continuousRecorded = false;
+}
+
+function endContinuousEditHistory() {
+  const history = state.editHistory;
+  history.continuousBaseSnapshot = "";
+  history.continuousRecorded = false;
+}
+
+function recordEditHistorySnapshot(snapshot) {
+  if (!snapshot) return;
+  const history = state.editHistory;
+  if (history.restoring) return;
+  if (!history.initialized) {
+    history.lastSnapshot = snapshot;
+    history.initialized = true;
+    updateEditHistoryControls();
+    return;
+  }
+  if (snapshot === history.lastSnapshot) return;
+
+  if (history.continuousBaseSnapshot) {
+    if (!history.continuousRecorded && history.continuousBaseSnapshot !== snapshot) {
+      history.undo.push(history.continuousBaseSnapshot);
+      trimEditHistoryStack(history.undo);
+      history.continuousRecorded = true;
+    }
+  } else if (history.lastSnapshot) {
+    history.undo.push(history.lastSnapshot);
+    trimEditHistoryStack(history.undo);
+  }
+  history.redo = [];
+  history.lastSnapshot = snapshot;
+  updateEditHistoryControls();
+}
+
+function selectExistingOption(select, value, fallback = "") {
+  if (!select) return;
+  const text = String(value || "");
+  select.value = [...select.options].some((option) => option.value === text) ? text : fallback;
+}
+
+function applyBuilderDataToEditor(data, options = {}) {
+  if (!data || !Array.isArray(data.verts) || !Array.isArray(data.faces)) throw new Error("Not builder JSON");
+  if (options.resetPreview !== false) resetGamePreviewSyncState();
+  cancelSurfaceInsertPreview({ redraw: false });
+  state.nextId = 1;
+  state.verts = data.verts.map((v, index) => {
+    const vertex = sourceVertex(v, index);
+    state.nextId = Math.max(state.nextId, vertex.id + 1);
+    return vertex;
+  });
+  state.faces = (data.faces || []).map((f, index) => {
+    const face = sourceFace(f, index);
+    state.nextId = Math.max(state.nextId, face.id + 1);
+    return face;
+  });
+  state.edges = (data.edges || []).map((e, index) => {
+    const edge = sourceEdge(e, index);
+    state.nextId = Math.max(state.nextId, edge.id + 1);
+    return edge;
+  });
+  state.details = (data.details || []).map((d) => {
+    const idNum = Number(d.id);
+    if (Number.isFinite(idNum)) state.nextId = Math.max(state.nextId, idNum + 1);
+    const faceId = Number(d.faceId);
+    return {
+      ...d,
+      id: Number.isFinite(idNum) ? idNum : newId(),
+      faceId: Number.isFinite(faceId) ? faceId : undefined,
+      vertexId: Number.isFinite(Number(d.vertexId)) ? Number(d.vertexId) : undefined,
+      indices: Array.isArray(d.indices) ? d.indices.map(Number) : undefined,
+      segment: Array.isArray(d.segment) ? d.segment.map(Number) : undefined
+    };
+  });
+  inferMirrorVertexIds();
+
+  const meta = data.gameMeta || {};
+  state.sourceModelId = options.sourceModelId ?? cleanBitmapKey(data.id || "");
+  els.shipId.value = data.id || "custom_ship";
+  els.shipName.value = data.name || "Custom Ship";
+  els.shipDescription.value = meta.description || data.description || "";
+  els.shipMissionLore.value = meta.missionLore || meta.mission || "";
+  selectExistingOption(els.shipClass, meta.class, "ship");
+  selectExistingOption(els.npcRole, meta.npcRole, "standard");
+  selectExistingOption(els.aiProfile, meta.aiProfile, "standard");
+  selectExistingOption(els.decalRole, meta.decalRole, "default");
+  els.baseColor.value = normalizeHexColor(meta.baseColor);
+  syncSkinAngle(skinAngleMetaValue(meta), false);
+  els.shipValue.value = Number.isFinite(Number(meta.valueCr)) ? Math.round(Number(meta.valueCr)) : 0;
+  const stats = meta.stats || {};
+  els.shipHp.value = Number.isFinite(Number(stats.hp)) ? Math.round(Number(stats.hp)) : 80;
+  els.speedMul.value = Number.isFinite(Number(stats.speed)) ? round(Number(stats.speed), 2) : 1;
+  els.cargoTons.value = Number.isFinite(Number(stats.cargo)) ? Math.round(Number(stats.cargo)) : 0;
+  els.missileCount.value = Number.isFinite(Number(stats.missiles)) ? Math.round(Number(stats.missiles)) : 0;
+  selectExistingOption(els.laserClass, stats.laser, "pulse");
+  const lists = meta.lists || {};
+  els.flagTrader.checked = !!lists.trader;
+  els.flagPirate.checked = !!lists.pirate;
+  els.flagPolice.checked = !!lists.police;
+  els.flagAlien.checked = !!lists.alien;
+  const flags = meta.flags || {};
+  els.flagEscapePod.checked = !!flags.escapePod;
+  els.flagHidden.checked = !!flags.hiddenUntilDiscovered;
+
+  state.selected = null;
+  state.pick = [];
+  state.selectedFaceIds.clear();
+  state.selectedEdgeIds.clear();
+  hideSelectionPickMenu({ redraw: false });
+  hideSelectionContextMenu();
+  closeUvProperties({ redraw: false });
+  if (options.loadSkins !== false) loadSkinBitmaps(data.id || els.shipId.value, mirrorFlagsFromMeta(meta));
+  if (options.fit) fitView();
+}
+
+function restoreEditHistorySnapshot(snapshot, statusText) {
+  const history = state.editHistory;
+  try {
+    const data = JSON.parse(snapshot);
+    history.restoring = true;
+    applyBuilderDataToEditor(data, { loadSkins: true, resetPreview: true });
+    renderAll();
+    scheduleGamePreviewSync(0, true);
+    history.lastSnapshot = currentModelSnapshot();
+    setStatus(statusText);
+  } catch (error) {
+    setStatus(`UNDO RESTORE FAILED: ${error.message}`);
+  } finally {
+    history.restoring = false;
+    updateEditHistoryControls();
+  }
+}
+
+function undoEditHistory() {
+  const history = state.editHistory;
+  if (!history.undo.length) {
+    setStatus("NOTHING TO UNDO.");
+    return;
+  }
+  endContinuousEditHistory();
+  const current = currentModelSnapshot();
+  const previous = history.undo.pop();
+  if (current && current !== previous) {
+    history.redo.push(current);
+    trimEditHistoryStack(history.redo);
+  }
+  restoreEditHistorySnapshot(previous, "UNDO.");
+}
+
+function redoEditHistory() {
+  const history = state.editHistory;
+  if (!history.redo.length) {
+    setStatus("NOTHING TO REDO.");
+    return;
+  }
+  endContinuousEditHistory();
+  const current = currentModelSnapshot();
+  const next = history.redo.pop();
+  if (current && current !== next) {
+    history.undo.push(current);
+    trimEditHistoryStack(history.undo);
+  }
+  restoreEditHistorySnapshot(next, "REDO.");
+}
+
 function markCurrentModelSavedSnapshot(modelId = "") {
   const cleanId = cleanBitmapKey(modelId || els.shipId?.value || "");
   state.savedModelSnapshot = currentModelSnapshot();
@@ -7030,6 +8845,12 @@ function currentModelUnsavedBenchmarkWarning() {
   return "";
 }
 
+function confirmDiscardCurrentModel(actionLabel = "Replace the current builder model") {
+  const warning = currentModelUnsavedBenchmarkWarning();
+  if (!warning) return true;
+  return window.confirm(`${warning}\n\n${actionLabel} will discard the current builder model data. Continue?`);
+}
+
 function jsObject(value, indent = 2) {
   return JSON.stringify(value, null, indent)
     .replace(/"([a-zA-Z_$][\w$]*)":/g, "$1:")
@@ -7038,6 +8859,11 @@ function jsObject(value, indent = 2) {
 
 function updateExport() {
   const data = builderExport();
+  try {
+    recordEditHistorySnapshot(JSON.stringify(data));
+  } catch {
+    // Export rendering still needs to continue even if history cannot serialize a transient edit.
+  }
   if (els.exportKind.value === "builder") {
     els.exportText.value = JSON.stringify(data, null, 2);
   } else {
@@ -7051,78 +8877,12 @@ function importBuilderJson() {
   try {
     const data = JSON.parse(els.importText.value);
     if (!data || !Array.isArray(data.verts) || !Array.isArray(data.faces)) throw new Error("Not builder JSON");
-    resetGamePreviewSyncState();
-    state.nextId = 1;
-    state.verts = data.verts.map((v, index) => {
-      const vertex = sourceVertex(v, index);
-      state.nextId = Math.max(state.nextId, vertex.id + 1);
-      return vertex;
-    });
-    state.faces = (data.faces || []).map((f, index) => {
-      const face = sourceFace(f, index);
-      state.nextId = Math.max(state.nextId, face.id + 1);
-      return face;
-    });
-    state.edges = (data.edges || []).map((e, index) => {
-      const edge = sourceEdge(e, index);
-      state.nextId = Math.max(state.nextId, edge.id + 1);
-      return edge;
-    });
-    state.details = (data.details || []).map((d) => {
-      const idNum = Number(d.id);
-      if (Number.isFinite(idNum)) state.nextId = Math.max(state.nextId, idNum + 1);
-      const faceId = Number(d.faceId);
-      return {
-        ...d,
-        id: Number.isFinite(idNum) ? idNum : newId(),
-        faceId: Number.isFinite(faceId) ? faceId : undefined,
-        vertexId: Number.isFinite(Number(d.vertexId)) ? Number(d.vertexId) : undefined,
-        indices: Array.isArray(d.indices) ? d.indices.map(Number) : undefined,
-        segment: Array.isArray(d.segment) ? d.segment.map(Number) : undefined
-      };
-    });
-    inferMirrorVertexIds();
-    state.sourceModelId = "";
-    clearCurrentModelSavedSnapshot();
-    els.shipId.value = data.id || els.shipId.value;
-    els.shipName.value = data.name || els.shipName.value;
-    if (data.gameMeta) {
-      const meta = data.gameMeta;
-      els.shipDescription.value = meta.description || data.description || "";
-      els.shipMissionLore.value = meta.missionLore || meta.mission || "";
-      if (meta.class) els.shipClass.value = meta.class;
-      if (meta.npcRole) els.npcRole.value = meta.npcRole;
-      if (meta.aiProfile) els.aiProfile.value = meta.aiProfile;
-      if (meta.decalRole) els.decalRole.value = meta.decalRole;
-      if (meta.baseColor) els.baseColor.value = normalizeHexColor(meta.baseColor);
-      syncSkinAngle(skinAngleMetaValue(meta), false);
-      if (Number.isFinite(meta.valueCr)) els.shipValue.value = meta.valueCr;
-      if (meta.stats) {
-        if (Number.isFinite(meta.stats.hp)) els.shipHp.value = meta.stats.hp;
-        if (Number.isFinite(meta.stats.speed)) els.speedMul.value = meta.stats.speed;
-        if (Number.isFinite(meta.stats.cargo)) els.cargoTons.value = meta.stats.cargo;
-        if (Number.isFinite(meta.stats.missiles)) els.missileCount.value = meta.stats.missiles;
-        if (meta.stats.laser) els.laserClass.value = meta.stats.laser;
-      }
-      if (meta.lists) {
-        els.flagTrader.checked = !!meta.lists.trader;
-        els.flagPirate.checked = !!meta.lists.pirate;
-        els.flagPolice.checked = !!meta.lists.police;
-        els.flagAlien.checked = !!meta.lists.alien;
-      }
-      if (meta.flags) {
-        els.flagEscapePod.checked = !!meta.flags.escapePod;
-        els.flagHidden.checked = !!meta.flags.hiddenUntilDiscovered;
-      }
-    } else if (data.description) {
-      els.shipDescription.value = data.description;
+    if (!confirmDiscardCurrentModel("Import builder JSON")) {
+      setStatus("IMPORT CANCELLED.");
+      return;
     }
-    state.selected = null;
-    state.pick = [];
-    state.selectedFaceIds.clear();
-    state.selectedEdgeIds.clear();
-    loadSkinBitmaps(data.id || els.shipId.value, mirrorFlagsFromMeta(data.gameMeta || {}));
-    fitView();
+    applyBuilderDataToEditor(data, { loadSkins: true, resetPreview: true, fit: true, sourceModelId: "" });
+    clearCurrentModelSavedSnapshot();
     setStatus("BUILDER JSON IMPORTED.");
     renderAll();
     scheduleGamePreviewSync(0, true);
@@ -7660,9 +9420,15 @@ function loadLibraryModel(id) {
   const source = gameLibrary()[id];
   if (!source) {
     setStatus("LIBRARY OBJECT NOT FOUND.");
-    return;
+    return false;
   }
+  if (!confirmDiscardCurrentModel(`Load ${(source.name || id).toUpperCase()} from the game library`)) {
+    setStatus("LOAD CANCELLED.");
+    return false;
+  }
+  showBuilderPreloadSplash(`Loading ${(source.name || id).toUpperCase()}...`, { libraryReady: true, texturesReady: false });
   resetGamePreviewSyncState();
+  cancelSurfaceInsertPreview({ redraw: false });
   state.nextId = 1;
   state.verts = (source.verts || []).map((v, index) => {
     const vertex = sourceVertex(v, index);
@@ -7734,6 +9500,7 @@ function loadLibraryModel(id) {
   closeModelBrowser();
   renderAll();
   scheduleGamePreviewSync(0, true);
+  return true;
 }
 
 function downloadShip() {
@@ -8075,16 +9842,15 @@ function setMode(mode, announce = true) {
 
 function toggleSelectionFilter(mode, options = {}) {
   if (!SELECTABLE_TYPES.includes(mode)) return;
-  if (!options.additive) {
-    setMode(mode);
-    return;
-  }
   state.selectionFilters[mode] = !selectionFilterAllows(mode);
   if (!activeSelectionFilters().length) state.selectionFilters[mode] = true;
-  clearSelectionForSelectorChange();
+  hideSelectionPickMenu();
+  hideSelectionContextMenu();
   state.mode = mode;
-  setToolTab(mode === "uv" || mode === "group" ? "paint" : "edit", { redraw: false });
-  if (mode === "uv" || mode === "group") setPaintTab("face", { redraw: false });
+  if (!state.selected) {
+    setToolTab(mode === "uv" || mode === "group" ? "paint" : "edit", { redraw: false });
+    if (mode === "uv" || mode === "group") setPaintTab("face", { redraw: false });
+  }
   syncModeUi(panelModeForSelection());
   setStatus(`SELECT FILTERS: ${activeSelectionFilters().map((type) => type.toUpperCase()).join(", ")}.`);
   renderAll();
@@ -8115,9 +9881,7 @@ function openAssetLibrary() {
   if (!els.assetLibraryModal) return;
   els.assetLibraryModal.classList.remove("is-hidden");
   updateBitmapAssetGrid();
-  refreshAvailableSkinAssets().catch((error) => {
-    setStatus(`ASSET LIBRARY REFRESH FAILED: ${error.message}`);
-  });
+  loadCurrentShipAssets();
 }
 
 function closeAssetLibrary() {
@@ -8134,6 +9898,16 @@ function openUvProperties() {
 function closeUvProperties(options = {}) {
   els.uvPropertiesModal?.classList.add("is-hidden");
   if (options.redraw !== false) renderAll();
+}
+
+function uvPropertiesOpen() {
+  return !!els.uvPropertiesModal && !els.uvPropertiesModal.classList.contains("is-hidden");
+}
+
+function closeUvPropertiesOnOutsidePointer(event) {
+  if (!uvPropertiesOpen()) return;
+  if (els.uvPropertiesModal?.contains(event.target)) return;
+  closeUvProperties();
 }
 
 function shelfItemIsDecal(item) {
@@ -8249,18 +10023,25 @@ const SELECTION_COMMANDS = [
     run: () => addDetail("panel")
   },
   {
-    id: "face-add-surface-triangle",
-    label: "Add Surface Triangle",
+    id: "face-add-surface-polygon",
+    label: "Add Surface Polygon",
     targetTypes: ["face"],
     enabled: (ctx) => !!ctx.face,
-    run: () => addSurfaceShapeToSelectedFace("triangle")
+    run: () => prepareSurfaceInsertPreview()
   },
   {
-    id: "face-add-surface-quad",
-    label: "Add Surface Quad",
+    id: "face-extrude",
+    label: "Extrude Face",
     targetTypes: ["face"],
     enabled: (ctx) => !!ctx.face,
-    run: () => addSurfaceShapeToSelectedFace("quad")
+    run: () => prepareFaceExtrudePreview()
+  },
+  {
+    id: "face-point-extrude",
+    label: "Point Extrude Face",
+    targetTypes: ["face"],
+    enabled: (ctx) => !!ctx.face,
+    run: () => prepareFaceExtrudePreview("point")
   },
   {
     id: "face-apply-shelf",
@@ -8431,13 +10212,102 @@ function visibleSelectionCommands(ctx = selectionContext()) {
   return SELECTION_COMMANDS.filter((command) => command.separator || selectionCommandVisible(command, ctx));
 }
 
+function renderSelectionPickMenu(candidates) {
+  const menu = els.selectionPickMenu;
+  if (!menu || !candidates.length) return false;
+  state.selectionPickCandidates = candidates;
+  state.selectionPickHover = null;
+  menu.replaceChildren();
+
+  const title = document.createElement("div");
+  title.className = "selection-menu-title";
+  title.textContent = "Select Object";
+  menu.appendChild(title);
+
+  candidates.forEach((candidate, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.setAttribute("role", "menuitem");
+    button.dataset.pickIndex = String(index);
+    const label = document.createElement("span");
+    label.className = "selection-pick-label";
+    label.textContent = selectionPickCandidateLabel(candidate);
+    const meta = document.createElement("span");
+    meta.className = "selection-pick-meta";
+    meta.textContent = selectionPickCandidateMeta(candidate);
+    button.append(label, meta);
+    menu.appendChild(button);
+  });
+  return true;
+}
+
+function hideSelectionPickMenu(options = {}) {
+  const menu = els.selectionPickMenu;
+  if (!menu) return;
+  const hadHover = !!state.selectionPickHover;
+  menu.classList.add("is-hidden");
+  menu.replaceChildren();
+  state.selectionPickCandidates = [];
+  state.selectionPickHover = null;
+  state.selectionPickOptions = {};
+  if (hadHover && options.redraw !== false) renderMain();
+}
+
+function selectionPickMenuOpen() {
+  return !!els.selectionPickMenu && !els.selectionPickMenu.classList.contains("is-hidden");
+}
+
+function positionFloatingSelectionMenu(menu, clientX, clientY) {
+  const stack = els.mainPreviewStack;
+  if (!menu || !stack) return false;
+  const rect = stack.getBoundingClientRect();
+  const fallbackX = rect.left + rect.width * .5;
+  const fallbackY = rect.top + rect.height * .5;
+  const targetX = Number.isFinite(clientX) ? clientX : fallbackX;
+  const targetY = Number.isFinite(clientY) ? clientY : fallbackY;
+  const maxX = Math.max(8, rect.width - menu.offsetWidth - 8);
+  const maxY = Math.max(8, rect.height - menu.offsetHeight - 8);
+  menu.style.left = `${clamp(targetX - rect.left, 8, maxX)}px`;
+  menu.style.top = `${clamp(targetY - rect.top, 8, maxY)}px`;
+  return true;
+}
+
+function openSelectionPickMenuAt(clientX, clientY, candidates, options = {}) {
+  const menu = els.selectionPickMenu;
+  if (!menu || !renderSelectionPickMenu(candidates)) {
+    hideSelectionPickMenu();
+    return false;
+  }
+  state.selectionPickOptions = options;
+  hideSelectionContextMenu();
+  menu.classList.remove("is-hidden");
+  positionFloatingSelectionMenu(menu, clientX, clientY);
+  const first = menu.querySelector("button");
+  first?.focus?.({ preventScroll: true });
+  setSelectionPickHover(0);
+  return true;
+}
+
+function setSelectionPickHover(index) {
+  const candidate = state.selectionPickCandidates[index] || null;
+  if (state.selectionPickHover?.key === candidate?.key) return;
+  state.selectionPickHover = candidate;
+  renderMain();
+}
+
+function runSelectionPick(index) {
+  const candidate = state.selectionPickCandidates[index] || null;
+  if (!candidate) return;
+  selectSelectionCandidate(candidate, state.selectionPickOptions || {});
+}
+
 function renderSelectionContextMenu(ctx = selectionContext()) {
   const menu = els.selectionContextMenu;
   if (!menu || !ctx.selected) return false;
   menu.replaceChildren();
 
   const title = document.createElement("div");
-  title.className = "selection-context-menu-title";
+  title.className = "selection-menu-title";
   title.textContent = selectionContextLabel(ctx);
   menu.appendChild(title);
 
@@ -8479,21 +10349,13 @@ function selectionContextMenuOpen() {
 
 function openSelectionContextMenuAt(clientX, clientY, ctx = selectionContext()) {
   const menu = els.selectionContextMenu;
-  const stack = els.mainPreviewStack;
-  if (!menu || !stack || !renderSelectionContextMenu(ctx)) {
+  if (!menu || !renderSelectionContextMenu(ctx)) {
     hideSelectionContextMenu();
     return false;
   }
+  hideSelectionPickMenu();
   menu.classList.remove("is-hidden");
-  const rect = stack.getBoundingClientRect();
-  const fallbackX = rect.left + rect.width * .5;
-  const fallbackY = rect.top + rect.height * .5;
-  const targetX = Number.isFinite(clientX) ? clientX : fallbackX;
-  const targetY = Number.isFinite(clientY) ? clientY : fallbackY;
-  const maxX = Math.max(8, rect.width - menu.offsetWidth - 8);
-  const maxY = Math.max(8, rect.height - menu.offsetHeight - 8);
-  menu.style.left = `${clamp(targetX - rect.left, 8, maxX)}px`;
-  menu.style.top = `${clamp(targetY - rect.top, 8, maxY)}px`;
+  positionFloatingSelectionMenu(menu, clientX, clientY);
   const first = menu.querySelector("button:not(:disabled)");
   first?.focus?.({ preventScroll: true });
   return true;
@@ -8515,16 +10377,64 @@ function modalIsOpen(...modals) {
   return modals.some((modal) => modal && !modal.classList.contains("is-hidden"));
 }
 
+function continuousHistoryTarget(target) {
+  const field = target?.closest?.("input, textarea");
+  if (!field || field.type === "file" || field.type === "checkbox" || field.type === "radio") return false;
+  if (field.tagName === "TEXTAREA") return true;
+  return ["range", "number", "text", "search", "color"].includes(String(field.type || "").toLowerCase());
+}
+
+function continueBuilderPreloadFromUserGesture(event = null) {
+  if (!state.builderPreload.visible || !state.builderPreload.startup || state.builderPreload.userReady) return false;
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
+  state.builderPreload.userReady = true;
+  invalidateBuilderPreloadRenderer("Entering fullscreen; refreshing renderer preview...");
+  requestBuilderFullscreen(true);
+  scheduleBuilderViewportRefresh(140, { invalidatePreload: true, message: "Fullscreen ready; confirming renderer preview..." });
+  checkBuilderPreloadReady();
+  return true;
+}
+
 function bindEvents() {
+  els.builderFullscreenBtn?.addEventListener("click", (event) => {
+    continueBuilderPreloadFromUserGesture(event);
+  });
+  els.undoEditBtn?.addEventListener("click", undoEditHistory);
+  els.redoEditBtn?.addEventListener("click", redoEditHistory);
+  document.addEventListener("input", (event) => {
+    if (continuousHistoryTarget(event.target)) beginContinuousEditHistory();
+  }, true);
+  document.addEventListener("change", endContinuousEditHistory, true);
+  document.addEventListener("pointerup", endContinuousEditHistory, true);
+  document.addEventListener("pointercancel", endContinuousEditHistory, true);
+  els.selectionPickMenu?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-pick-index]");
+    if (!button) return;
+    runSelectionPick(Number(button.dataset.pickIndex));
+  });
+  els.selectionPickMenu?.addEventListener("pointerover", (event) => {
+    const button = event.target.closest("[data-pick-index]");
+    if (!button) return;
+    setSelectionPickHover(Number(button.dataset.pickIndex));
+  });
+  els.selectionPickMenu?.addEventListener("focusin", (event) => {
+    const button = event.target.closest("[data-pick-index]");
+    if (!button) return;
+    setSelectionPickHover(Number(button.dataset.pickIndex));
+  });
+  els.selectionPickMenu?.addEventListener("pointerleave", () => {
+    state.selectionPickHover = null;
+    renderMain();
+  });
   els.selectionContextMenu?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-command-id]");
     if (!button || button.disabled) return;
     runSelectionContextCommand(button.dataset.commandId);
   });
   document.addEventListener("pointerdown", (event) => {
-    if (!selectionContextMenuOpen()) return;
-    if (els.selectionContextMenu?.contains(event.target)) return;
-    hideSelectionContextMenu();
+    if (selectionPickMenuOpen() && !els.selectionPickMenu?.contains(event.target)) hideSelectionPickMenu();
+    if (selectionContextMenuOpen() && !els.selectionContextMenu?.contains(event.target)) hideSelectionContextMenu();
   });
   document.querySelectorAll(".tool-tab-btn").forEach((btn) => btn.addEventListener("click", () => {
     setToolTab(btn.dataset.toolTabTarget);
@@ -8550,19 +10460,150 @@ function bindEvents() {
     els[`${axis}Slider`].addEventListener("input", (ev) => apply(ev.target.value));
     els[`${axis}Value`].addEventListener("change", (ev) => apply(ev.target.value));
   });
-  els.mainView.addEventListener("pointerdown", (ev) => {
+  const viewCubeActionTarget = (target, event = null) => {
+    const nativeTarget = target?.closest?.("[data-view-corner], [data-view-preset]") || null;
+    if (nativeTarget) return nativeTarget;
+    const pointerTarget = event ? viewCubePointerTargetAt(event.clientX, event.clientY) : null;
+    return pointerTarget || null;
+  };
+  const runViewCubeTarget = (target, options = {}) => {
+    if (!target) return false;
+    if (target.dataset?.viewCorner) {
+      const face = target.closest("[data-view-preset]")?.dataset?.viewPreset;
+      return setProjectionCornerView(face, target.dataset.viewCorner, options);
+    }
+    if (target.dataset?.viewPreset) return setProjectionView(target.dataset.viewPreset, options);
+    return false;
+  };
+  const beginViewCubePointer = (ev) => {
+    if (ev.button !== 0) return;
+    ev.stopPropagation();
+    hideSelectionPickMenu();
     hideSelectionContextMenu();
+    state.viewCubeDrag = {
+      x: ev.clientX,
+      y: ev.clientY,
+      moved: false,
+      target: viewCubeActionTarget(ev.target, ev),
+      captureEl: ev.currentTarget
+    };
+    ev.currentTarget.classList.add("is-dragging");
+    ev.currentTarget.setPointerCapture?.(ev.pointerId);
+  };
+  const moveViewCubePointer = (ev) => {
+    if (!state.viewCubeDrag) return;
+    ev.preventDefault();
+    const dx = ev.clientX - state.viewCubeDrag.x;
+    const dy = ev.clientY - state.viewCubeDrag.y;
+    if (Math.abs(dx) + Math.abs(dy) > 2) state.viewCubeDrag.moved = true;
+    state.viewCubeDrag.x = ev.clientX;
+    state.viewCubeDrag.y = ev.clientY;
+    rotateViewFromCubeDrag(dx, dy);
+  };
+  const suppressNextViewCubeClick = () => {
+    state.viewCubeSuppressClick = true;
+    setTimeout(() => { state.viewCubeSuppressClick = false; }, 0);
+  };
+  const endViewCubeDrag = (ev, options = {}) => {
+    if (!state.viewCubeDrag) return;
+    const drag = state.viewCubeDrag;
+    if (ev?.pointerId != null && drag.captureEl?.hasPointerCapture?.(ev.pointerId)) {
+      drag.captureEl.releasePointerCapture(ev.pointerId);
+    }
+    drag.captureEl?.classList.remove("is-dragging");
+    state.viewCubeDrag = null;
+    if (options.cancel) return;
+    if (drag.moved) {
+      suppressNextViewCubeClick();
+      setStatus("VIEW ROTATED.");
+      return;
+    }
+    if (runViewCubeTarget(drag.target, { fit: true })) {
+      ev?.preventDefault?.();
+      suppressNextViewCubeClick();
+    }
+  };
+  const zoomMainViewFromWheel = (ev) => {
+    if (ev.target?.closest?.("button, input, select, textarea, .preview-trust-strip, .view-cube, .selection-pick-menu, .selection-context-menu")) return;
+    ev.preventDefault();
+    state.view.zoom = clamp(state.view.zoom * (ev.deltaY > 0 ? 0.9 : 1.1), VIEW_ZOOM_MIN, VIEW_ZOOM_MAX);
+    if (gameRendererPreviewMode()) renderPreviewMotion();
+    else renderAll();
+  };
+  els.viewCubeBody?.addEventListener("pointerdown", beginViewCubePointer);
+  els.viewCubeBody?.addEventListener("pointermove", moveViewCubePointer);
+  els.viewCubeBody?.addEventListener("pointermove", (event) => {
+    if (!state.viewCubeDrag) syncViewCubeHover(event);
+  });
+  els.viewCubeBody?.addEventListener("pointerup", endViewCubeDrag);
+  els.viewCubeBody?.addEventListener("pointercancel", (ev) => endViewCubeDrag(ev, { cancel: true }));
+  els.viewCubeBody?.addEventListener("pointerover", syncViewCubeHover);
+  els.viewCubeBody?.addEventListener("pointerout", (event) => {
+    if (els.viewCubeBody?.contains(event.relatedTarget)) return;
+    clearViewCubeCornerHover();
+  });
+  els.viewCube?.querySelectorAll("[data-view-preset]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      if (state.viewCubeSuppressClick) return;
+      runViewCubeTarget(viewCubeActionTarget(event.target, event) || button, { fit: true });
+    });
+  });
+  els.viewProjectionToggle?.addEventListener("click", (event) => {
+    event.stopPropagation();
+    setViewProjectionMode(!state.view.orthographic);
+  });
+  els.fullscreenViewBtn?.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0) return;
+    event.currentTarget.dataset.pointerActivated = "1";
+    toggleBuilderFullscreenFromUserGesture(event);
+  });
+  els.fullscreenViewBtn?.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (event.currentTarget.dataset.pointerActivated === "1") {
+      delete event.currentTarget.dataset.pointerActivated;
+      return;
+    }
+    toggleBuilderFullscreenFromUserGesture(event);
+  });
+  const bindViewCubeRotateButton = (button, rotate) => {
+    if (!button) return;
+    button.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      event.stopPropagation();
+      button.dataset.pointerActivated = "1";
+      rotate();
+    });
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      if (button.dataset.pointerActivated === "1") {
+        delete button.dataset.pointerActivated;
+        return;
+      }
+      rotate();
+    });
+  };
+  bindViewCubeRotateButton(els.viewCubeRotateLeft, () => rotateViewHorizontal(-1));
+  bindViewCubeRotateButton(els.viewCubeRotateRight, () => rotateViewHorizontal(1));
+  bindViewCubeRotateButton(els.viewCubeRotateUp, () => rotateViewVertical(-1));
+  bindViewCubeRotateButton(els.viewCubeRotateDown, () => rotateViewVertical(1));
+  els.mainView.addEventListener("pointerdown", (ev) => {
+    ev.stopPropagation();
+    if (selectionPickMenuOpen() || selectionContextMenuOpen()) {
+      hideSelectionPickMenu();
+      hideSelectionContextMenu();
+    }
     const point = getCanvasPoint(ev, els.mainView);
-    const faceGroupClick = ev.button === 0 && selectionFilterAllows("face") && ev.shiftKey;
-    state.drag = { x: ev.clientX, y: ev.clientY, moved: false, lockView: faceGroupClick };
-    els.mainView.setPointerCapture(ev.pointerId);
-    if (ev.button === 0) selectInMain(point, { multiSelect: ev.shiftKey });
+    if (ev.button === 0) {
+      selectInMain(point, { multiSelect: ev.shiftKey, clientX: ev.clientX, clientY: ev.clientY });
+    }
   });
   els.mainView.addEventListener("contextmenu", (ev) => {
     ev.preventDefault();
     state.drag = null;
     const point = getCanvasPoint(ev, els.mainView);
-    const selected = selectInMain(point, { multiSelect: ev.shiftKey });
+    const selected = selectInMain(point, { multiSelect: ev.shiftKey, allowPickMenu: false });
     if (!selected) {
       hideSelectionContextMenu();
       setStatus("NO CONTEXT ACTIONS FOR EMPTY SPACE.");
@@ -8572,25 +10613,10 @@ function bindEvents() {
   });
   els.mainView.addEventListener("pointermove", (ev) => {
     if (!state.drag) return;
-    const dx = ev.clientX - state.drag.x;
-    const dy = ev.clientY - state.drag.y;
-    if (Math.abs(dx) + Math.abs(dy) > 2) state.drag.moved = true;
-    if (state.drag.lockView) return;
-    state.view.ry += dx * 0.006;
-    state.view.rx = clamp(state.view.rx + dy * 0.006, -1.45, 1.45);
-    state.drag.x = ev.clientX;
-    state.drag.y = ev.clientY;
-    updateProjectionViewButtons();
-    if (gameRendererPreviewMode()) renderPreviewMotion();
-    else renderAll();
+    state.drag = null;
   });
   els.mainView.addEventListener("pointerup", () => { state.drag = null; });
-  els.mainView.addEventListener("wheel", (ev) => {
-    ev.preventDefault();
-    state.view.zoom = clamp(state.view.zoom * (ev.deltaY > 0 ? 0.92 : 1.08), 0.8, 8);
-    if (gameRendererPreviewMode()) renderPreviewMotion();
-    else renderAll();
-  }, { passive: false });
+  els.mainPreviewStack?.addEventListener("wheel", zoomMainViewFromWheel, { passive: false });
   document.querySelectorAll(".ortho-grid canvas").forEach((canvas) => {
     canvas.addEventListener("click", (ev) => {
       const point = getCanvasPoint(ev, canvas);
@@ -8598,9 +10624,9 @@ function bindEvents() {
       for (const type of orderedSelectionFilters()) {
         if (type === "edge") {
           const auditHit = els.showAuditEdges?.checked
-            ? nearestEdge(point, projected, renderAuditEdges(), 14)
+            ? nearestEdge(point, projected, renderAuditEdges(), SELECTION_EDGE_PICK_RADIUS)
             : null;
-          const edgeHit = auditHit || nearestEdge(point, projected, state.edges, 10);
+          const edgeHit = auditHit || nearestEdge(point, projected, state.edges, SELECTION_EDGE_PICK_RADIUS);
           if (edgeHit) {
             selectEdge(edgeHit, { audit: edgeHit === auditHit });
             return;
@@ -8616,6 +10642,10 @@ function bindEvents() {
     });
   });
   const startNewProfile = (sideInput = els.profileSideCount, rotationInput = els.profileRotationDeg, coneInput = els.profileConeMode) => {
+    if (!confirmDiscardCurrentModel("Create a new profile")) {
+      setStatus("NEW PROFILE CANCELLED.");
+      return;
+    }
     closeModelBrowser();
     resetPolygonProfile(readProfileSideCount(sideInput), readProfileRotationDeg(rotationInput), readProfileConeMode(coneInput));
   };
@@ -8651,6 +10681,12 @@ function bindEvents() {
       scheduleGamePreviewSync(0, true);
     });
   }
+  els.viewModeColumn?.querySelectorAll("[data-preview-mode]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      setPreviewRenderMode(button.dataset.previewMode);
+    });
+  });
   els.previewRenderMode.addEventListener("input", renderAll);
   els.toggleBlueprintBtn?.addEventListener("click", () => {
     setBlueprintsVisible(!state.showBlueprints, { persist: true });
@@ -8668,11 +10704,18 @@ function bindEvents() {
   els.assetLibraryModal?.addEventListener("click", (event) => {
     if (event.target === els.assetLibraryModal) closeAssetLibrary();
   });
+  els.selectedAssetCard?.addEventListener("click", openAssetLibrary);
+  els.selectedAssetCard?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    openAssetLibrary();
+  });
   els.openUvPropertiesBtn?.addEventListener("click", openUvProperties);
   els.closeUvPropertiesBtn?.addEventListener("click", closeUvProperties);
   els.uvPropertiesModal?.addEventListener("click", (event) => {
     if (event.target === els.uvPropertiesModal) closeUvProperties();
   });
+  document.addEventListener("pointerdown", closeUvPropertiesOnOutsidePointer);
   els.confirmWriteSummaryBtn?.addEventListener("click", () => closeWriteSummaryModal(true));
   els.cancelWriteSummaryBtn?.addEventListener("click", () => closeWriteSummaryModal(false));
   els.writeSummaryModal?.addEventListener("click", (event) => {
@@ -8684,6 +10727,26 @@ function bindEvents() {
     if (event.target === els.buildCompleteModal) closeBuildCompleteModal();
   });
   window.addEventListener("keydown", (event) => {
+    if ((event.code === "Space" || event.key === " " || event.key === "Spacebar")
+      && continueBuilderPreloadFromUserGesture(event)) {
+      return;
+    }
+    const shortcutKey = String(event.key || "").toLowerCase();
+    const commandKey = event.metaKey || event.ctrlKey;
+    const historyShortcutAllowed = commandKey
+      && !isEditingFormControl(event.target)
+      && !modalIsOpen(els.writeSummaryModal, els.buildCompleteModal, els.assetLibraryModal, els.modelBrowserModal, els.spinPreviewModal);
+    if (historyShortcutAllowed && shortcutKey === "z") {
+      event.preventDefault();
+      if (event.shiftKey) redoEditHistory();
+      else undoEditHistory();
+      return;
+    }
+    if (historyShortcutAllowed && shortcutKey === "y") {
+      event.preventDefault();
+      redoEditHistory();
+      return;
+    }
     if ((event.key === "ContextMenu" || (event.key === "F10" && event.shiftKey))
       && state.selected
       && !isEditingFormControl(event.target)
@@ -8703,6 +10766,16 @@ function bindEvents() {
     if (event.key !== "Escape") return;
     if (selectionContextMenuOpen()) {
       hideSelectionContextMenu();
+      return;
+    }
+    if (state.surfaceInsertPreview) {
+      cancelSurfaceInsertPreview({ redraw: true });
+      setStatus("SURFACE POLYGON CANCELLED.");
+      return;
+    }
+    if (state.faceExtrudePreview) {
+      cancelFaceExtrudePreview({ redraw: true });
+      setStatus("FACE EXTRUDE CANCELLED.");
       return;
     }
     if (!els.writeSummaryModal?.classList.contains("is-hidden")) {
@@ -8768,6 +10841,7 @@ function bindEvents() {
       setPaintTab("face");
       setStatus(`${bitmapShelfItemTitle(item)} SELECTED. SELECT A FACE TO APPLY IT.`);
     }
+    closeAssetLibrary();
   };
   els.bitmapAssetGrid?.addEventListener("click", handleBitmapGridClick);
   els.currentBitmapAssetGrid?.addEventListener("click", handleBitmapGridClick);
@@ -8872,15 +10946,12 @@ function bindEvents() {
     setStandardView(); fitView(); renderAll();
   });
   document.getElementById("fitViewBtn").addEventListener("click", () => { fitView(); renderAll(); });
-  document.querySelectorAll("[data-view-preset]").forEach((button) => {
-    button.addEventListener("click", () => setProjectionView(button.dataset.viewPreset));
-  });
-  els.syncGamePreviewBtn?.addEventListener("click", () => syncGamePreview(true));
   els.benchmarkRendererBtn?.addEventListener("click", runRendererBenchmark);
   window.addEventListener("message", (event) => {
     if (event.source !== els.gamePreviewFrame?.contentWindow) return;
     if (event.data?.type === "ultra-elite-render-preview-ready") {
       if (els.gamePreviewReadout) els.gamePreviewReadout.textContent = "GAME RENDERER READY.";
+      setBuilderPreloadText("Renderer connected; sending model snapshot...");
       syncGamePreview(true);
       return;
     }
@@ -8925,19 +10996,58 @@ function bindEvents() {
   for (const control of surfaceInsertControls()) {
     control.addEventListener("input", (event) => {
       syncSurfaceInsertControlPair(event.target);
+      if (state.surfaceInsertPreview) syncSurfaceInsertPreviewConfig();
       renderAll();
     });
     control.addEventListener("change", (event) => {
       syncSurfaceInsertControlPair(event.target);
+      if (state.surfaceInsertPreview) syncSurfaceInsertPreviewConfig();
       renderAll();
     });
   }
-  document.getElementById("surfaceInsertPreview")?.addEventListener("change", (event) => {
-    state.surfaceInsertPreview = !!event.target.checked;
+  els.addSurfacePolygonBtn?.addEventListener("click", () => prepareSurfaceInsertPreview());
+  els.closeSurfaceInsertMenuBtn?.addEventListener("click", () => {
+    cancelSurfaceInsertPreview({ redraw: true });
+    setStatus("SURFACE POLYGON CANCELLED.");
+  });
+  els.surfaceInsertLinkSize?.addEventListener("change", () => {
+    if (linkedSurfaceSizeEnabled()) setSurfaceInputValue("H", readSurfaceInput("W", 48));
+    if (state.surfaceInsertPreview) syncSurfaceInsertPreviewConfig();
     renderAll();
   });
-  document.getElementById("addSurfaceTriangleBtn")?.addEventListener("click", () => addSurfaceShapeToSelectedFace("triangle"));
-  document.getElementById("addSurfaceQuadBtn")?.addEventListener("click", () => addSurfaceShapeToSelectedFace("quad"));
+  els.confirmSurfaceInsertBtn?.addEventListener("click", confirmSurfaceInsertPreview);
+  for (const control of faceExtrudeControls()) {
+    control.addEventListener("input", (event) => {
+      syncFaceExtrudeControlPair(event.target);
+      if (state.faceExtrudePreview) syncFaceExtrudePreviewConfig();
+      renderAll();
+    });
+    control.addEventListener("change", (event) => {
+      syncFaceExtrudeControlPair(event.target);
+      if (state.faceExtrudePreview) syncFaceExtrudePreviewConfig();
+      renderAll();
+    });
+  }
+  els.addFaceExtrudeBtn?.addEventListener("click", () => prepareFaceExtrudePreview());
+  els.addFacePointExtrudeBtn?.addEventListener("click", () => prepareFaceExtrudePreview("point"));
+  els.extrudeEdgeLoopBtn?.addEventListener("click", () => prepareFaceExtrudePreview());
+  els.closeFaceExtrudeMenuBtn?.addEventListener("click", () => {
+    cancelFaceExtrudePreview({ redraw: true });
+    setStatus("FACE EXTRUDE CANCELLED.");
+  });
+  document.querySelectorAll("input[name='faceExtrudeMode']").forEach((input) => {
+    input.addEventListener("change", () => {
+      if (state.faceExtrudePreview) {
+        syncFaceExtrudePreviewConfig();
+        syncFaceExtrudeModeUi(state.faceExtrudeConfig?.mode);
+      }
+      renderAll();
+    });
+  });
+  els.faceExtrudeDeleteSource?.addEventListener("change", () => {
+    if (state.faceExtrudePreview) syncFaceExtrudePreviewConfig();
+  });
+  els.confirmFaceExtrudeBtn?.addEventListener("click", confirmFaceExtrudePreview);
   document.getElementById("addEdgeBtn").addEventListener("click", () => {
     if (state.pick.length < 2) return setStatus("PICK TWO VERTICES.");
     addEdgeMirrored(state.pick[0], state.pick[1], "edge");
@@ -8993,6 +11103,24 @@ function bindEvents() {
     els.shipValue, els.shipHp, els.speedMul, els.cargoTons, els.missileCount, els.laserClass,
     els.flagTrader, els.flagPirate, els.flagPolice, els.flagAlien, els.flagEscapePod, els.flagHidden, els.mirrorHalfSkins, els.skinAngle, els.skinAngleValue, els.faceColor
   ].forEach((el) => el.addEventListener("input", updateExport));
+  window.addEventListener("resize", () => {
+    scheduleBuilderViewportRefresh(140, {
+      invalidatePreload: state.builderPreload.visible,
+      message: "Viewport resized; confirming renderer preview..."
+    });
+  });
+  document.addEventListener("fullscreenchange", () => {
+    scheduleBuilderViewportRefresh(180, {
+      invalidatePreload: state.builderPreload.visible,
+      message: "Fullscreen changed; confirming renderer preview..."
+    });
+  });
+  document.addEventListener("webkitfullscreenchange", () => {
+    scheduleBuilderViewportRefresh(180, {
+      invalidatePreload: state.builderPreload.visible,
+      message: "Fullscreen changed; confirming renderer preview..."
+    });
+  });
 }
 
 function applyToolSurfaceMode() {
@@ -9007,13 +11135,14 @@ function applyToolSurfaceMode() {
   document.title = "Ultra Elite Model Builder";
 }
 
+showBuilderPreloadSplash("Loading model library...", { startup: true, openModelBrowserOnHide: true });
 applyToolSurfaceMode();
 bindEvents();
 setDefaultPreviewRenderMode();
 setBlueprintsVisible(state.showBlueprints);
 populateLibrarySelector();
+markBuilderPreloadStep("library", "Model library indexed; drawing builder...");
 renderAll();
-openModelBrowser();
 kickInitialGamePreviewSync();
 checkLocalToolServer().then((ok) => {
   if (ok) refreshAvailableSkinAssets().catch(() => {});

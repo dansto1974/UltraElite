@@ -3916,6 +3916,40 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
     "format": "ultra-elite-ship-builder/v1",
     "id": "boa",
     "name": "Boa",
+    "symmetry": "x-locked",
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "private",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "imageDecalMirrorX": {
+        "top": true,
+        "bottom": true,
+        "back": false
+      },
+      "valueCr": 250000,
+      "stats": {
+        "r": 109,
+        "hp": 120,
+        "speed": 1,
+        "cargo": 10,
+        "missiles": 1,
+        "laser": "none"
+      },
+      "lists": {
+        "trader": true,
+        "pirate": true,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": false
+      }
+    },
     "verts": [
       {
         "id": 1,
@@ -4221,6 +4255,42 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -107
           ]
         ]
+      },
+      {
+        "id": 1015,
+        "type": "engine",
+        "faceId": 1002,
+        "inset": 0.66,
+        "color": "#f7fff7",
+        "normal": [
+          -0.53,
+          0.44,
+          -0.72
+        ]
+      },
+      {
+        "id": 1016,
+        "type": "engine",
+        "faceId": 1000,
+        "inset": 0.66,
+        "color": "#f7fff7",
+        "normal": [
+          0.53,
+          0.46,
+          -0.72
+        ]
+      },
+      {
+        "id": 1017,
+        "type": "engine",
+        "faceId": 1001,
+        "inset": 0.72,
+        "color": "#f7fff7",
+        "normal": [
+          0,
+          -0.45,
+          -0.89
+        ]
       }
     ],
     "blueprint": {
@@ -4291,33 +4361,85 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -107
         ]
       ],
-      "edges": [
+      "faces": [
         [
-          0,
-          5
+          1,
+          5,
+          6,
+          2,
+          11,
+          10
         ],
         [
-          0,
-          7
-        ],
-        [
-          0,
-          9
-        ],
-        [
-          0,
-          4
-        ],
-        [
-          0,
-          6
-        ],
-        [
-          0,
+          3,
+          12,
+          11,
+          2,
+          7,
           8
         ],
         [
           4,
+          1,
+          10,
+          12,
+          3,
+          9
+        ],
+        [
+          5,
+          1,
+          4
+        ],
+        [
+          2,
+          6,
+          7
+        ],
+        [
+          9,
+          3,
+          8
+        ],
+        [
+          5,
+          4,
+          0
+        ],
+        [
+          0,
+          9,
+          8
+        ],
+        [
+          6,
+          0,
+          7
+        ],
+        [
+          4,
+          9,
+          0
+        ],
+        [
+          7,
+          0,
+          8
+        ],
+        [
+          5,
+          0,
+          6
+        ],
+        [
+          10,
+          11,
+          12
+        ]
+      ],
+      "edges": [
+        [
+          1,
           5
         ],
         [
@@ -4325,7 +4447,31 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           6
         ],
         [
-          6,
+          2,
+          6
+        ],
+        [
+          2,
+          11
+        ],
+        [
+          10,
+          11
+        ],
+        [
+          1,
+          10
+        ],
+        [
+          3,
+          12
+        ],
+        [
+          11,
+          12
+        ],
+        [
+          2,
           7
         ],
         [
@@ -4333,7 +4479,19 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8
         ],
         [
-          8,
+          3,
+          8
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          10,
+          12
+        ],
+        [
+          3,
           9
         ],
         [
@@ -4341,248 +4499,269 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9
         ],
         [
-          1,
-          4
-        ],
-        [
-          1,
+          4,
           5
         ],
         [
-          3,
-          9
-        ],
-        [
-          3,
-          8
-        ],
-        [
-          2,
-          6
-        ],
-        [
-          2,
+          6,
           7
         ],
         [
-          1,
-          10
+          8,
+          9
         ],
         [
-          2,
-          11
+          0,
+          4
         ],
         [
-          3,
-          12
+          0,
+          5
         ],
         [
-          10,
-          11
+          0,
+          9
         ],
         [
-          11,
-          12
+          0,
+          8
         ],
         [
-          12,
-          10
+          0,
+          6
+        ],
+        [
+          0,
+          7
         ]
+      ],
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
       ],
       "edgeFaces": [
         [
-          11,
+          0,
+          3
+        ],
+        [
+          0,
+          11
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          12
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          12
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          1,
+          10
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          12
+        ],
+        [
+          2,
+          5
+        ],
+        [
+          2,
+          9
+        ],
+        [
+          3,
           6
         ],
         [
-          10,
+          4,
           8
         ],
         [
-          9,
-          7
-        ],
-        [
-          9,
-          6
-        ],
-        [
-          11,
-          8
-        ],
-        [
-          10,
+          5,
           7
         ],
         [
           6,
-          3
+          9
         ],
         [
-          11,
-          0
-        ],
-        [
-          8,
-          4
-        ],
-        [
-          10,
-          1
+          6,
+          11
         ],
         [
           7,
-          5
+          9
         ],
         [
-          9,
-          2
+          7,
+          10
         ],
         [
-          3,
-          2
+          8,
+          11
         ],
         [
-          3,
-          0
-        ],
-        [
-          5,
-          2
-        ],
-        [
-          5,
-          1
-        ],
-        [
-          4,
-          0
-        ],
-        [
-          4,
-          1
-        ],
-        [
-          2,
-          0
-        ],
-        [
-          1,
-          0
-        ],
-        [
-          2,
-          1
-        ],
-        [
-          12,
-          0
-        ],
-        [
-          12,
-          1
-        ],
-        [
-          12,
-          2
+          8,
+          10
         ]
       ],
       "edgeVisibility": [
         31,
         31,
         31,
-        29,
-        29,
-        29,
         31,
         31,
         31,
         31,
         31,
         31,
-        24,
-        24,
-        24,
-        24,
-        24,
-        24,
-        22,
-        22,
-        22,
-        14,
-        14,
-        14
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31
       ],
       "normals": [
         [
-          43,
-          37,
-          -60
+          52.7,
+          45.92,
+          -71.52
         ],
         [
           0,
-          -45,
-          -89
+          -44.72,
+          -89.44
         ],
         [
-          -43,
-          37,
-          -60
+          -53.31,
+          43.85,
+          -72.35
         ],
         [
           0,
-          40,
+          100,
           0
         ],
         [
-          62,
-          -32,
-          -20
+          84.84,
+          -44.23,
+          -29.08
         ],
         [
-          -62,
-          -32,
-          -20
-        ],
-        [
-          0,
-          23,
-          6
-        ],
-        [
-          -23,
-          -15,
-          9
-        ],
-        [
-          23,
-          -15,
-          9
-        ],
-        [
-          -26,
-          13,
-          10
+          -84.84,
+          -44.23,
+          -29.08
         ],
         [
           0,
-          -31,
-          12
+          96.71,
+          25.45
         ],
         [
-          26,
-          13,
-          10
+          -79.54,
+          -52.19,
+          30.82
+        ],
+        [
+          79.54,
+          -52.19,
+          30.82
+        ],
+        [
+          -83.82,
+          43.8,
+          32.48
+        ],
+        [
+          0,
+          -93.54,
+          35.35
+        ],
+        [
+          83.82,
+          43.8,
+          32.48
         ],
         [
           0,
           0,
-          -107
+          -100
         ]
       ],
       "details": [
         {
           "type": "window",
+          "color": "#101915",
+          "lift": 0.5,
+          "normal": [
+            0,
+            0.97,
+            0.25
+          ],
           "points": [
             [
               0,
@@ -4600,13 +4779,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -31.1
             ]
           ],
-          "color": "#101915",
-          "normal": [
-            0,
-            0.97,
-            0.25
-          ],
-          "lift": 0.5,
           "detailRender": {
             "kind": "poly",
             "solid": true,
@@ -4618,6 +4790,14 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         },
         {
           "type": "engine",
+          "color": "#f7fff7",
+          "stroke": "#ffffff",
+          "lift": 0.5,
+          "normal": [
+            0,
+            0,
+            -1
+          ],
           "points": [
             [
               0,
@@ -4635,14 +4815,159 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
               -107
             ]
           ],
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
+        },
+        {
+          "type": "engine",
           "color": "#f7fff7",
-          "stroke": "#ffffff",
           "normal": [
-            0,
-            0,
-            -1
+            -0.53,
+            0.44,
+            -0.72
           ],
           "lift": 0.5,
+          "points": [
+            [
+              -33.64,
+              29.4,
+              -68.75
+            ],
+            [
+              -8.56,
+              29.4,
+              -87.23
+            ],
+            [
+              -8.56,
+              7.62,
+              -100.43
+            ],
+            [
+              -17.14,
+              -2.94,
+              -100.43
+            ],
+            [
+              -33.64,
+              -13.5,
+              -95.15
+            ],
+            [
+              -49.48,
+              3,
+              -74.03
+            ]
+          ],
+          "stroke": "#ffffff",
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
+        },
+        {
+          "type": "engine",
+          "color": "#f7fff7",
+          "normal": [
+            0.53,
+            0.46,
+            -0.72
+          ],
+          "lift": 0.5,
+          "points": [
+            [
+              8.56,
+              29.4,
+              -87.23
+            ],
+            [
+              33.64,
+              29.4,
+              -68.75
+            ],
+            [
+              49.48,
+              3,
+              -74.03
+            ],
+            [
+              33.64,
+              -13.5,
+              -95.15
+            ],
+            [
+              17.14,
+              -2.94,
+              -100.43
+            ],
+            [
+              8.56,
+              7.62,
+              -100.43
+            ]
+          ],
+          "stroke": "#ffffff",
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": true,
+            "glass": false,
+            "solidStroke": true
+          }
+        },
+        {
+          "type": "engine",
+          "color": "#f7fff7",
+          "normal": [
+            0,
+            -0.45,
+            -0.89
+          ],
+          "lift": 0.5,
+          "points": [
+            [
+              -27.36,
+              -27.24,
+              -97.88
+            ],
+            [
+              -9.36,
+              -15.72,
+              -103.64
+            ],
+            [
+              9.36,
+              -15.72,
+              -103.64
+            ],
+            [
+              27.36,
+              -27.24,
+              -97.88
+            ],
+            [
+              17.28,
+              -56.04,
+              -83.48
+            ],
+            [
+              -17.28,
+              -56.04,
+              -83.48
+            ]
+          ],
+          "stroke": "#ffffff",
           "detailRender": {
             "kind": "poly",
             "solid": true,
@@ -4685,38 +5010,38 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8
         ]
       },
-      "edgeKinds": [
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge"
-      ]
-    },
-    "gameMeta": {
-      "imageDecalMirrorX": {
-        "top": true,
-        "bottom": true,
-        "back": false
+      "gameMeta": {
+        "class": "fighter",
+        "npcRole": "private",
+        "aiProfile": "standard",
+        "decalRole": "private",
+        "baseColor": "#e9f2e4",
+        "description": "",
+        "missionLore": "",
+        "imageDecalMirrorX": {
+          "top": true,
+          "bottom": true,
+          "back": false
+        },
+        "valueCr": 250000,
+        "stats": {
+          "r": 109,
+          "hp": 120,
+          "speed": 1,
+          "cargo": 10,
+          "missiles": 1,
+          "laser": "none"
+        },
+        "lists": {
+          "trader": true,
+          "pirate": true,
+          "police": false,
+          "alien": false
+        },
+        "flags": {
+          "escapePod": true,
+          "hiddenUntilDiscovered": false
+        }
       }
     }
   },
@@ -5298,6 +5623,35 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
     "format": "ultra-elite-ship-builder/v1",
     "id": "canister",
     "name": "Canister",
+    "symmetry": "x-locked",
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "private",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "valueCr": 250000,
+      "stats": {
+        "r": 29,
+        "hp": 120,
+        "speed": 1,
+        "cargo": 10,
+        "missiles": 1,
+        "laser": "none"
+      },
+      "lists": {
+        "trader": true,
+        "pirate": true,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": false
+      }
+    },
     "verts": [
       {
         "id": 1,
@@ -5384,16 +5738,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 1000,
         "verts": [
+          3,
+          4,
           5,
           1,
-          2,
-          3,
-          4
+          2
         ],
         "mirrored": false,
-        "bitmapFaceKey": "end_panel",
-        "bitmapSide": "top",
-        "faceColor": "#4b4635"
+        "faceColor": "#4a4534",
+        "bitmapFaceKey": "end_panel"
       },
       {
         "id": 1001,
@@ -5460,9 +5813,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8
         ],
         "mirrored": false,
-        "bitmapFaceKey": "end_panel",
-        "bitmapSide": "top",
-        "faceColor": "#4b4635"
+        "faceColor": "#4a4534",
+        "bitmapFaceKey": "end_panel"
       }
     ],
     "edges": [],
@@ -5520,15 +5872,53 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -15
         ]
       ],
-      "edges": [
+      "faces": [
         [
+          2,
+          3,
+          4,
           0,
           1
         ],
         [
+          0,
+          5,
+          6,
+          1
+        ],
+        [
           1,
+          6,
+          7,
           2
         ],
+        [
+          3,
+          2,
+          7,
+          8
+        ],
+        [
+          9,
+          4,
+          3,
+          8
+        ],
+        [
+          5,
+          0,
+          4,
+          9
+        ],
+        [
+          6,
+          5,
+          9,
+          8,
+          7
+        ]
+      ],
+      "edges": [
         [
           2,
           3
@@ -5543,26 +5933,22 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           0,
-          5
+          1
         ],
         [
           1,
-          6
+          2
         ],
         [
-          2,
-          7
-        ],
-        [
-          3,
-          8
-        ],
-        [
-          4,
-          9
+          0,
+          5
         ],
         [
           5,
+          6
+        ],
+        [
+          1,
           6
         ],
         [
@@ -5570,19 +5956,60 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7
         ],
         [
+          2,
+          7
+        ],
+        [
           7,
           8
+        ],
+        [
+          3,
+          8
+        ],
+        [
+          4,
+          9
         ],
         [
           8,
           9
         ],
         [
-          9,
-          5
+          5,
+          9
         ]
       ],
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ],
       "edgeFaces": [
+        [
+          0,
+          3
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          0,
+          5
+        ],
         [
           0,
           1
@@ -5592,20 +6019,12 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2
         ],
         [
-          0,
-          3
-        ],
-        [
-          0,
-          4
-        ],
-        [
-          0,
+          1,
           5
         ],
         [
           1,
-          5
+          6
         ],
         [
           1,
@@ -5613,7 +6032,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           2,
+          6
+        ],
+        [
+          2,
           3
+        ],
+        [
+          3,
+          6
         ],
         [
           3,
@@ -5622,18 +6049,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         [
           4,
           5
-        ],
-        [
-          1,
-          6
-        ],
-        [
-          2,
-          6
-        ],
-        [
-          3,
-          6
         ],
         [
           4,
@@ -5663,60 +6078,43 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       ],
       "normals": [
         [
-          96,
+          100,
           0,
           0
         ],
         [
           0,
-          41,
-          30
+          80.64,
+          59.14
         ],
         [
           0,
-          -18,
-          48
+          -31.62,
+          94.87
         ],
         [
           0,
-          -51,
+          -100,
           0
         ],
         [
           0,
-          -18,
-          -48
+          -31.62,
+          -94.87
         ],
         [
           0,
-          41,
-          -30
+          80.64,
+          -59.14
         ],
         [
-          -96,
+          -100,
           0,
           0
         ]
       ],
+      "details": [],
       "imageProjection": {
-        "faceColors": [
-          "#4b4635",
-          "#706545",
-          "#736c5a",
-          "#827a67",
-          "#524931",
-          "#5d533f",
-          "#4b4635"
-        ],
-        "faceSides": [
-          "top",
-          null,
-          null,
-          null,
-          null,
-          null,
-          "top"
-        ],
         "faceTextures": [
           "end_panel",
           null,
@@ -5726,39 +6124,52 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           null,
           "end_panel"
         ],
+        "faceColors": [
+          "#4a4534",
+          "#706545",
+          "#736c5a",
+          "#827a67",
+          "#524931",
+          "#5d533f",
+          "#4a4534"
+        ],
         "faceRenderFlags": [
-          73,
+          9,
           8,
           8,
           8,
           8,
           8,
-          73
+          9
         ]
       },
-      "edgeKinds": [
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge"
-      ]
-    },
-    "gameMeta": {
-      "imageDecalMirrorX": {
-        "top": false,
-        "bottom": false,
-        "back": false
+      "gameMeta": {
+        "class": "fighter",
+        "npcRole": "private",
+        "aiProfile": "standard",
+        "decalRole": "private",
+        "baseColor": "#e9f2e4",
+        "description": "",
+        "missionLore": "",
+        "valueCr": 250000,
+        "stats": {
+          "r": 29,
+          "hp": 120,
+          "speed": 1,
+          "cargo": 10,
+          "missiles": 1,
+          "laser": "none"
+        },
+        "lists": {
+          "trader": true,
+          "pirate": true,
+          "police": false,
+          "alien": false
+        },
+        "flags": {
+          "escapePod": true,
+          "hiddenUntilDiscovered": false
+        }
       }
     }
   },

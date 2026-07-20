@@ -2,6 +2,35 @@
   "format": "ultra-elite-ship-builder/v1",
   "id": "canister",
   "name": "Canister",
+  "symmetry": "x-locked",
+  "gameMeta": {
+    "class": "fighter",
+    "npcRole": "private",
+    "aiProfile": "standard",
+    "decalRole": "private",
+    "baseColor": "#e9f2e4",
+    "description": "",
+    "missionLore": "",
+    "valueCr": 250000,
+    "stats": {
+      "r": 29,
+      "hp": 120,
+      "speed": 1,
+      "cargo": 10,
+      "missiles": 1,
+      "laser": "none"
+    },
+    "lists": {
+      "trader": true,
+      "pirate": true,
+      "police": false,
+      "alien": false
+    },
+    "flags": {
+      "escapePod": true,
+      "hiddenUntilDiscovered": false
+    }
+  },
   "verts": [
     {
       "id": 1,
@@ -88,16 +117,15 @@
     {
       "id": 1000,
       "verts": [
+        3,
+        4,
         5,
         1,
-        2,
-        3,
-        4
+        2
       ],
       "mirrored": false,
-      "bitmapFaceKey": "end_panel",
-      "bitmapSide": "top",
-      "faceColor": "#4b4635"
+      "faceColor": "#4a4534",
+      "bitmapFaceKey": "end_panel"
     },
     {
       "id": 1001,
@@ -164,9 +192,8 @@
         8
       ],
       "mirrored": false,
-      "bitmapFaceKey": "end_panel",
-      "bitmapSide": "top",
-      "faceColor": "#4b4635"
+      "faceColor": "#4a4534",
+      "bitmapFaceKey": "end_panel"
     }
   ],
   "edges": [],
@@ -224,15 +251,53 @@
         -15
       ]
     ],
-    "edges": [
+    "faces": [
       [
+        2,
+        3,
+        4,
         0,
         1
       ],
       [
+        0,
+        5,
+        6,
+        1
+      ],
+      [
         1,
+        6,
+        7,
         2
       ],
+      [
+        3,
+        2,
+        7,
+        8
+      ],
+      [
+        9,
+        4,
+        3,
+        8
+      ],
+      [
+        5,
+        0,
+        4,
+        9
+      ],
+      [
+        6,
+        5,
+        9,
+        8,
+        7
+      ]
+    ],
+    "edges": [
       [
         2,
         3
@@ -247,26 +312,22 @@
       ],
       [
         0,
-        5
+        1
       ],
       [
         1,
-        6
+        2
       ],
       [
-        2,
-        7
-      ],
-      [
-        3,
-        8
-      ],
-      [
-        4,
-        9
+        0,
+        5
       ],
       [
         5,
+        6
+      ],
+      [
+        1,
         6
       ],
       [
@@ -274,19 +335,60 @@
         7
       ],
       [
+        2,
+        7
+      ],
+      [
         7,
         8
+      ],
+      [
+        3,
+        8
+      ],
+      [
+        4,
+        9
       ],
       [
         8,
         9
       ],
       [
-        9,
-        5
+        5,
+        9
       ]
     ],
+    "edgeKinds": [
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge"
+    ],
     "edgeFaces": [
+      [
+        0,
+        3
+      ],
+      [
+        0,
+        4
+      ],
+      [
+        0,
+        5
+      ],
       [
         0,
         1
@@ -296,20 +398,12 @@
         2
       ],
       [
-        0,
-        3
-      ],
-      [
-        0,
-        4
-      ],
-      [
-        0,
+        1,
         5
       ],
       [
         1,
-        5
+        6
       ],
       [
         1,
@@ -317,7 +411,15 @@
       ],
       [
         2,
+        6
+      ],
+      [
+        2,
         3
+      ],
+      [
+        3,
+        6
       ],
       [
         3,
@@ -326,18 +428,6 @@
       [
         4,
         5
-      ],
-      [
-        1,
-        6
-      ],
-      [
-        2,
-        6
-      ],
-      [
-        3,
-        6
       ],
       [
         4,
@@ -367,60 +457,43 @@
     ],
     "normals": [
       [
-        96,
+        100,
         0,
         0
       ],
       [
         0,
-        41,
-        30
+        80.64,
+        59.14
       ],
       [
         0,
-        -18,
-        48
+        -31.62,
+        94.87
       ],
       [
         0,
-        -51,
+        -100,
         0
       ],
       [
         0,
-        -18,
-        -48
+        -31.62,
+        -94.87
       ],
       [
         0,
-        41,
-        -30
+        80.64,
+        -59.14
       ],
       [
-        -96,
+        -100,
         0,
         0
       ]
     ],
+    "details": [],
     "imageProjection": {
-      "faceColors": [
-        "#4b4635",
-        "#706545",
-        "#736c5a",
-        "#827a67",
-        "#524931",
-        "#5d533f",
-        "#4b4635"
-      ],
-      "faceSides": [
-        "top",
-        null,
-        null,
-        null,
-        null,
-        null,
-        "top"
-      ],
       "faceTextures": [
         "end_panel",
         null,
@@ -429,14 +502,53 @@
         null,
         null,
         "end_panel"
+      ],
+      "faceColors": [
+        "#4a4534",
+        "#706545",
+        "#736c5a",
+        "#827a67",
+        "#524931",
+        "#5d533f",
+        "#4a4534"
+      ],
+      "faceRenderFlags": [
+        9,
+        8,
+        8,
+        8,
+        8,
+        8,
+        9
       ]
-    }
-  },
-  "gameMeta": {
-    "imageDecalMirrorX": {
-      "top": false,
-      "bottom": false,
-      "back": false
+    },
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "standard",
+      "decalRole": "private",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "valueCr": 250000,
+      "stats": {
+        "r": 29,
+        "hp": 120,
+        "speed": 1,
+        "cargo": 10,
+        "missiles": 1,
+        "laser": "none"
+      },
+      "lists": {
+        "trader": true,
+        "pirate": true,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": false
+      }
     }
   }
 }

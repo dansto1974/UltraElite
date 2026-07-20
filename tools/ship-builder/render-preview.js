@@ -8,6 +8,7 @@ let latest = null;
 let lastRender = 0;
 let pending = null;
 let renderQueued = false;
+let resizeRenderTimer = 0;
 let spinFrame = 0;
 let spinLast = 0;
 let drag = null;
@@ -61,6 +62,7 @@ function render(payload = latest) {
     projectionProof: !!latest.projectionProof,
     lod: "0",
     targetScale: Number(latest.targetScale) || .56,
+    allowClosePreview: !!latest.allowClosePreview,
     yaw: Number(view.ry) || 0,
     pitch: Number(view.rx) || 0,
     roll: Number(view.roll) || 0,
@@ -100,6 +102,15 @@ function requestRender(payload = latest) {
     pending = null;
     render(next);
   });
+}
+
+function requestSettledResizeRender() {
+  requestRender();
+  clearTimeout(resizeRenderTimer);
+  resizeRenderTimer = setTimeout(() => {
+    resizeRenderTimer = 0;
+    requestRender();
+  }, 180);
 }
 
 function stopSpin() {
@@ -249,7 +260,7 @@ window.addEventListener("message", (event) => {
   acceptPreviewPayload(data.payload);
 });
 
-window.addEventListener("resize", () => requestRender());
+window.addEventListener("resize", requestSettledResizeRender);
 
 if (window.UltraEliteRenderBench) init();
 else window.addEventListener("ultraelite:renderbench-ready", init, { once: true });

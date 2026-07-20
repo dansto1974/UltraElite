@@ -7,6 +7,15 @@
   <link rel="stylesheet" href="ship-builder.css">
 </head>
 <body>
+  <div id="builderPreloadSplash" class="builder-preload-splash is-startup" role="status" aria-live="polite">
+    <div class="builder-preload-panel">
+      <p class="eyebrow">Ship Builder</p>
+      <h1>Preparing Builder</h1>
+      <div class="builder-preload-meter" aria-hidden="true"><span></span></div>
+      <p id="builderPreloadText">Loading model library...</p>
+      <button id="builderFullscreenBtn" class="builder-fullscreen-btn" type="button" aria-keyshortcuts="Space">Press Space To Continue</button>
+    </div>
+  </div>
   <main class="app">
     <section id="workspace" class="workspace export-hidden">
       <aside id="toolsPanel" class="panel tools" data-mode="vertex" data-tool-tab="edit">
@@ -73,20 +82,12 @@
             <button id="clearFaceGroupBtn" type="button">Clear Face Group</button>
             <button id="flipFaceBtn">Flip Face</button>
             <button id="deleteFaceBtn">Delete Face</button>
-          </div>
-          <div class="surface-insert-controls slider-stack">
-            <h3>Surface Insert</h3>
-            <label>X <input id="surfaceInsertX" type="range" min="-160" max="160" step="1" value="0"><input id="surfaceInsertXValue" type="number" step="1" value="0"></label>
-            <label>Y <input id="surfaceInsertY" type="range" min="-160" max="160" step="1" value="0"><input id="surfaceInsertYValue" type="number" step="1" value="0"></label>
-            <label>W <input id="surfaceInsertW" type="range" min="4" max="260" step="1" value="48"><input id="surfaceInsertWValue" type="number" min="4" step="1" value="48"></label>
-            <label>H <input id="surfaceInsertH" type="range" min="4" max="260" step="1" value="32"><input id="surfaceInsertHValue" type="number" min="4" step="1" value="32"></label>
-            <label>R <input id="surfaceInsertR" type="range" min="-180" max="180" step="1" value="0"><input id="surfaceInsertRValue" type="number" step="1" value="0"></label>
-            <label>L <input id="surfaceInsertLift" type="range" min="0" max="8" step="0.1" value="0.5"><input id="surfaceInsertLiftValue" type="number" min="0" step="0.1" value="0.5"></label>
-            <label class="toggle surface-insert-preview-toggle"><input id="surfaceInsertPreview" type="checkbox"> Preview</label>
-            <div class="button-grid compact-actions">
-              <button id="addSurfaceTriangleBtn" type="button">Add Triangle</button>
-              <button id="addSurfaceQuadBtn" type="button">Add Quad</button>
-            </div>
+            <button id="addWindowBtn">Add Window</button>
+            <button id="addEngineBtn">Add Engine</button>
+            <button id="addPanelBtn">Add Panel Line</button>
+            <button id="addSurfacePolygonBtn" type="button" aria-pressed="false">Add Polygon</button>
+            <button id="addFaceExtrudeBtn" type="button" aria-pressed="false">Extrude</button>
+            <button id="addFacePointExtrudeBtn" type="button" aria-pressed="false">Point Extrude</button>
           </div>
         </div>
 
@@ -102,6 +103,7 @@
             <button id="convertEdgeWindowBtn" type="button">Convert To Window</button>
             <button id="convertEdgeEngineBtn" type="button">Convert To Engine</button>
             <button id="convertEdgeDetailBtn" type="button">Convert To Surface Detail</button>
+            <button id="extrudeEdgeLoopBtn" type="button" aria-pressed="false">Extrude Face</button>
             <button id="deleteEdgeBtn">Delete Edge</button>
           </div>
         </div>
@@ -109,9 +111,6 @@
         <div class="mode-panel mode-panel-detail">
           <h2>Surface Detail Tools</h2>
           <div class="button-grid">
-            <button id="addWindowBtn">Add Window</button>
-            <button id="addEngineBtn">Add Engine</button>
-            <button id="addPanelBtn">Add Panel Line</button>
             <button id="addBeaconBtn">Add Beacon</button>
             <button id="convertDetailEdgeBtn" type="button">Convert To Edge</button>
             <button id="convertDetailStickBtn" type="button">Convert To Stick</button>
@@ -394,7 +393,7 @@
         </div>
         </section>
 
-        <section id="selectedAssetCard" class="selected-asset-card" aria-label="Current bitmap asset">
+        <section id="selectedAssetCard" class="selected-asset-card" role="button" tabindex="0" aria-label="Open asset library">
           <div class="selected-asset-thumb">
             <img id="selectedAssetThumb" alt="">
           </div>
@@ -407,50 +406,53 @@
         </section>
       </aside>
 
-      <section class="panel stage">
+      <section class="panel stage blueprints-hidden">
         <div class="view-head">
           <div class="tool-title">
             <p class="eyebrow">Ultra Elite Workshop</p>
             <h1>Ship Builder</h1>
           </div>
           <div class="view-actions">
-            <div class="preview-mode-toolbar" aria-label="Selection tools">
-              <button data-mode="vertex" class="mode-btn active" type="button" aria-label="Vertex selection filter" title="Vertex selection filter. Click for only vertices; Shift-click to toggle."><span class="selector-icon selector-icon-vertex" aria-hidden="true"></span><span class="selector-label">Vertex</span></button>
-              <button data-mode="face" class="mode-btn" type="button" aria-label="Face selection filter" title="Face selection filter. Click for only faces; Shift-click to toggle."><span class="selector-icon selector-icon-face" aria-hidden="true"></span><span class="selector-label">Face</span></button>
-              <button data-mode="edge" class="mode-btn" type="button" aria-label="Edge or stick selection filter" title="Edge or stick selection filter. Click for only edges; Shift-click to toggle."><span class="selector-icon selector-icon-edge" aria-hidden="true"></span><span class="selector-label">Edge</span></button>
-              <button data-mode="detail" class="mode-btn" type="button" aria-label="Detail selection filter" title="Detail selection filter. Click for only details; Shift-click to toggle."><span class="selector-icon selector-icon-detail" aria-hidden="true"></span><span class="selector-label">Detail</span></button>
-              <button data-mode="uv" class="mode-btn" type="button" aria-label="UV selection filter" title="UV selection filter. Click for only UV-bearing faces; Shift-click to toggle."><span class="selector-icon selector-icon-uv" aria-hidden="true"></span><span class="selector-label">UV</span></button>
-              <button data-mode="group" class="mode-btn" type="button" aria-label="Group selection filter" title="Group selection filter. Click for face texture groups; Shift-click to toggle."><span class="selector-icon selector-icon-group" aria-hidden="true"></span><span class="selector-label">Group</span></button>
-              <button id="orientUvToViewBtn" class="selection-action-btn" type="button" aria-label="Orient selected face to view" title="Orient selected face to view"><span class="toolbar-icon toolbar-icon-face-view" aria-hidden="true"></span><span class="selector-label">Face To View</span></button>
+            <div class="browser-action-toolbar icon-toolbar" data-title="File" aria-label="Browser tools">
+              <button id="fullscreenViewBtn" class="icon-btn" type="button" aria-label="Enter fullscreen" title="Enter fullscreen"><span class="toolbar-icon toolbar-icon-fullscreen" aria-hidden="true"></span><span class="selector-label">Fullscreen</span></button>
+              <button id="undoEditBtn" class="icon-btn" type="button" aria-label="Undo edit" title="Undo edit" disabled><span class="toolbar-icon toolbar-icon-undo" aria-hidden="true"></span><span class="selector-label">Undo</span></button>
+              <button id="redoEditBtn" class="icon-btn" type="button" aria-label="Redo edit" title="Redo edit" disabled><span class="toolbar-icon toolbar-icon-redo" aria-hidden="true"></span><span class="selector-label">Redo</span></button>
+              <button id="openObjectBrowserBtn" class="icon-btn" type="button" aria-label="Open object browser" title="Objects"><span class="toolbar-icon toolbar-icon-objects" aria-hidden="true"></span><span class="selector-label">Objects</span></button>
+              <button id="openBenchmarkBrowserBtn" class="icon-btn" type="button" aria-label="Open benchmark browser" title="Benchmarks"><span class="toolbar-icon toolbar-icon-benchmark-list" aria-hidden="true"></span><span class="selector-label">Benchmarks</span></button>
+            </div>
+            <div class="preview-action-toolbar icon-toolbar" data-title="Renderer" aria-label="Preview actions">
+              <button id="benchmarkRendererBtn" class="icon-btn" type="button" aria-label="Benchmark renderer" title="Benchmark renderer"><span class="toolbar-icon toolbar-icon-benchmark" aria-hidden="true"></span><span class="selector-label">Benchmark</span></button>
+              <button id="spinPreviewBtn" class="icon-btn" type="button" aria-label="Spin preview" title="Spin preview"><span class="toolbar-icon toolbar-icon-spin-preview" aria-hidden="true"></span><span class="selector-label">Spin Preview</span></button>
+            </div>
+            <div class="preview-mode-toolbar" data-title="Select" aria-label="Selection tools">
+              <button data-mode="vertex" class="mode-btn active" type="button" aria-label="Vertex selection filter" aria-pressed="true" title="Toggle vertices in the pick list"><span class="selector-icon selector-icon-vertex" aria-hidden="true"></span><span class="selector-label">Vertex</span></button>
+              <button data-mode="face" class="mode-btn active" type="button" aria-label="Face selection filter" aria-pressed="true" title="Toggle faces in the pick list"><span class="selector-icon selector-icon-face" aria-hidden="true"></span><span class="selector-label">Face</span></button>
+              <button data-mode="edge" class="mode-btn active" type="button" aria-label="Edge or stick selection filter" aria-pressed="true" title="Toggle edges and sticks in the pick list"><span class="selector-icon selector-icon-edge" aria-hidden="true"></span><span class="selector-label">Edge</span></button>
+              <button data-mode="detail" class="mode-btn active" type="button" aria-label="Detail selection filter" aria-pressed="true" title="Toggle details in the pick list"><span class="selector-icon selector-icon-detail" aria-hidden="true"></span><span class="selector-label">Detail</span></button>
+              <button data-mode="uv" class="mode-btn active" type="button" aria-label="UV selection filter" aria-pressed="true" title="Toggle UV-bearing faces in the pick list"><span class="selector-icon selector-icon-uv" aria-hidden="true"></span><span class="selector-label">UV</span></button>
+              <button data-mode="group" class="mode-btn active" type="button" aria-label="Group selection filter" aria-pressed="true" title="Toggle face texture groups in the pick list"><span class="selector-icon selector-icon-group" aria-hidden="true"></span><span class="selector-label">Group</span></button>
               <button id="clearSelectionBtn" type="button" aria-label="Clear selection" title="Clear selection">×</button>
             </div>
-            <label class="toggle"><input id="showFaceNormals" type="checkbox" checked> Normals</label>
-            <label class="toggle" title="P projected, F flat, S side projection, A auto projection"><input id="showFaceUvTypes" type="checkbox"> UV Type</label>
-            <label class="toggle"><input id="showBlankUv" type="checkbox"> Blank UV</label>
-            <div class="detail-view-filter" aria-label="Detail view filters">
-              <span>Details</span>
-              <label><input id="showWindowDetails" type="checkbox" checked> Windows</label>
-              <label><input id="showSurfaceDetails" type="checkbox" checked> Surface</label>
-              <label><input id="showEngineDetails" type="checkbox" checked> Engines</label>
-              <label><input id="showBeaconDetails" type="checkbox" checked> Beacons</label>
+            <div class="detail-view-filter icon-toolbar" data-title="Details" aria-label="Display and detail filters">
+              <label class="icon-toggle" title="Show window details"><input id="showWindowDetails" type="checkbox" checked><span class="toolbar-icon toolbar-icon-windows" aria-hidden="true"></span><span class="selector-label">Windows</span></label>
+              <label class="icon-toggle" title="Show surface details"><input id="showSurfaceDetails" type="checkbox" checked><span class="toolbar-icon toolbar-icon-surface" aria-hidden="true"></span><span class="selector-label">Surface</span></label>
+              <label class="icon-toggle" title="Show engine details"><input id="showEngineDetails" type="checkbox" checked><span class="toolbar-icon toolbar-icon-engine" aria-hidden="true"></span><span class="selector-label">Engines</span></label>
+              <label class="icon-toggle" title="Show beacon details"><input id="showBeaconDetails" type="checkbox" checked><span class="toolbar-icon toolbar-icon-beacon" aria-hidden="true"></span><span class="selector-label">Beacons</span></label>
+              <label class="icon-toggle" title="Show face normals"><input id="showFaceNormals" type="checkbox" checked><span class="toolbar-icon toolbar-icon-normals" aria-hidden="true"></span><span class="selector-label">Normals</span></label>
+              <label class="icon-toggle" title="Show UV type labels"><input id="showFaceUvTypes" type="checkbox" checked><span class="toolbar-icon toolbar-icon-uv-type" aria-hidden="true"></span><span class="selector-label">UV Type</span></label>
+              <label class="icon-toggle" title="Show blank UV warnings"><input id="showBlankUv" type="checkbox" checked><span class="toolbar-icon toolbar-icon-blank-uv" aria-hidden="true"></span><span class="selector-label">Blank UV</span></label>
+              <label class="icon-toggle" title="Show audit edges"><input id="showAuditEdges" type="checkbox" checked><span class="toolbar-icon toolbar-icon-audit-edges" aria-hidden="true"></span><span class="selector-label">Audit Edges</span></label>
+              <button id="toggleBlueprintBtn" class="icon-btn blueprint-toggle is-off" type="button" aria-label="Blueprints off" title="Toggle blueprints" aria-pressed="false"><span class="toolbar-icon toolbar-icon-blueprints" aria-hidden="true"></span><span class="selector-label">Blueprints</span></button>
             </div>
-            <label class="toggle audit-toggle"><input id="showAuditEdges" type="checkbox" checked> Audit Edges</label>
-            <div class="projection-view-toolbar" aria-label="Projection camera views">
-              <button type="button" data-view-preset="top" title="Top projection view">Top</button>
-              <button type="button" data-view-preset="bottom" title="Bottom projection view">Bottom</button>
-              <button type="button" data-view-preset="left" title="Left projection view">Left</button>
-              <button type="button" data-view-preset="right" title="Right projection view">Right</button>
-              <button type="button" data-view-preset="front" title="Front projection view">Front</button>
-              <button type="button" data-view-preset="back" title="Back projection view">Back</button>
+            <div id="viewModeColumn" class="view-mode-column icon-toolbar" data-title="Views" aria-label="Preview view type">
+              <button id="orientUvToViewBtn" class="icon-btn selection-action-btn" type="button" aria-label="Orient selected face to view" title="Orient selected face to view"><span class="toolbar-icon toolbar-icon-face-view" aria-hidden="true"></span><span class="selector-label">Face To View</span></button>
+              <button type="button" data-preview-mode="gameOverlay" aria-label="Game renderer with overlay" title="Game renderer with overlay"><span class="view-mode-icon view-mode-icon-game-overlay" aria-hidden="true"></span></button>
+              <button type="button" data-preview-mode="gameOnly" aria-label="Game renderer only" title="Game renderer only"><span class="view-mode-icon view-mode-icon-game-only" aria-hidden="true"></span></button>
+              <button type="button" data-preview-mode="wireFaces" aria-label="Builder wire and faces" title="Builder wire and faces"><span class="view-mode-icon view-mode-icon-wire-faces" aria-hidden="true"></span></button>
+              <button type="button" data-preview-mode="wire" aria-label="Builder wireframe" title="Builder wireframe"><span class="view-mode-icon view-mode-icon-wire" aria-hidden="true"></span></button>
+              <button type="button" data-preview-mode="wireBitmap" aria-label="Builder wire and bitmap" title="Builder wire and bitmap"><span class="view-mode-icon view-mode-icon-wire-bitmap" aria-hidden="true"></span></button>
+              <button type="button" data-preview-mode="bitmap" aria-label="Builder bitmap only" title="Builder bitmap only"><span class="view-mode-icon view-mode-icon-bitmap" aria-hidden="true"></span></button>
             </div>
-            <button id="resetViewBtn">Reset View</button>
-            <button id="fitViewBtn">Fit</button>
-            <button id="openObjectBrowserBtn" type="button">Objects</button>
-            <button id="openBenchmarkBrowserBtn" type="button">Benchmarks</button>
-            <button id="toggleBlueprintBtn" class="blueprint-toggle active" type="button" aria-pressed="true">Blueprints On</button>
-            <button id="syncGamePreviewBtn">Refresh Renderer</button>
-            <button id="benchmarkRendererBtn">Benchmark</button>
-            <button id="spinPreviewBtn">Spin Preview</button>
           </div>
         </div>
         <div id="mainPreviewStack" class="preview-stack is-game-renderer is-game-overlay">
@@ -477,7 +479,58 @@
           </div>
           <iframe id="gamePreviewFrame" title="Game renderer mirror" src="render-preview.html"></iframe>
           <canvas id="mainView" width="1120" height="680"></canvas>
+          <div id="viewCube" class="view-cube" aria-label="View cube controls">
+            <button id="viewCubeRotateLeft" class="view-cube-rotate view-cube-rotate-left" type="button" aria-label="Rotate view left" title="Rotate view left"></button>
+            <button id="viewCubeRotateUp" class="view-cube-rotate view-cube-rotate-up" type="button" aria-label="Rotate view up" title="Rotate view up"></button>
+            <div id="viewCubeBody" class="view-cube-body" role="group" aria-label="Drag to rotate view">
+              <button class="view-cube-face view-cube-face-front" type="button" data-view-preset="front" title="Front view"><span class="view-cube-face-label">Front</span><span class="view-cube-corner view-cube-corner-tl" data-view-corner="tl" title="Front top-left corner view" aria-hidden="true"></span><span class="view-cube-corner view-cube-corner-tr" data-view-corner="tr" title="Front top-right corner view" aria-hidden="true"></span><span class="view-cube-corner view-cube-corner-bl" data-view-corner="bl" title="Front bottom-left corner view" aria-hidden="true"></span><span class="view-cube-corner view-cube-corner-br" data-view-corner="br" title="Front bottom-right corner view" aria-hidden="true"></span></button>
+              <button class="view-cube-face view-cube-face-back" type="button" data-view-preset="back" title="Back view"><span class="view-cube-face-label">Back</span><span class="view-cube-corner view-cube-corner-tl" data-view-corner="tl" title="Back top-left corner view" aria-hidden="true"></span><span class="view-cube-corner view-cube-corner-tr" data-view-corner="tr" title="Back top-right corner view" aria-hidden="true"></span><span class="view-cube-corner view-cube-corner-bl" data-view-corner="bl" title="Back bottom-left corner view" aria-hidden="true"></span><span class="view-cube-corner view-cube-corner-br" data-view-corner="br" title="Back bottom-right corner view" aria-hidden="true"></span></button>
+              <button class="view-cube-face view-cube-face-right" type="button" data-view-preset="right" title="Right view"><span class="view-cube-face-label">Right</span><span class="view-cube-corner view-cube-corner-tl" data-view-corner="tl" title="Right top-left corner view" aria-hidden="true"></span><span class="view-cube-corner view-cube-corner-tr" data-view-corner="tr" title="Right top-right corner view" aria-hidden="true"></span><span class="view-cube-corner view-cube-corner-bl" data-view-corner="bl" title="Right bottom-left corner view" aria-hidden="true"></span><span class="view-cube-corner view-cube-corner-br" data-view-corner="br" title="Right bottom-right corner view" aria-hidden="true"></span></button>
+              <button class="view-cube-face view-cube-face-left" type="button" data-view-preset="left" title="Left view"><span class="view-cube-face-label">Left</span><span class="view-cube-corner view-cube-corner-tl" data-view-corner="tl" title="Left top-left corner view" aria-hidden="true"></span><span class="view-cube-corner view-cube-corner-tr" data-view-corner="tr" title="Left top-right corner view" aria-hidden="true"></span><span class="view-cube-corner view-cube-corner-bl" data-view-corner="bl" title="Left bottom-left corner view" aria-hidden="true"></span><span class="view-cube-corner view-cube-corner-br" data-view-corner="br" title="Left bottom-right corner view" aria-hidden="true"></span></button>
+              <button class="view-cube-face view-cube-face-top" type="button" data-view-preset="top" title="Top view"><span class="view-cube-face-label">Top</span><span class="view-cube-corner view-cube-corner-tl" data-view-corner="tl" title="Top top-left corner view" aria-hidden="true"></span><span class="view-cube-corner view-cube-corner-tr" data-view-corner="tr" title="Top top-right corner view" aria-hidden="true"></span><span class="view-cube-corner view-cube-corner-bl" data-view-corner="bl" title="Top bottom-left corner view" aria-hidden="true"></span><span class="view-cube-corner view-cube-corner-br" data-view-corner="br" title="Top bottom-right corner view" aria-hidden="true"></span></button>
+              <button class="view-cube-face view-cube-face-bottom" type="button" data-view-preset="bottom" title="Bottom view"><span class="view-cube-face-label">Bottom</span><span class="view-cube-corner view-cube-corner-tl" data-view-corner="tl" title="Bottom top-left corner view" aria-hidden="true"></span><span class="view-cube-corner view-cube-corner-tr" data-view-corner="tr" title="Bottom top-right corner view" aria-hidden="true"></span><span class="view-cube-corner view-cube-corner-bl" data-view-corner="bl" title="Bottom bottom-left corner view" aria-hidden="true"></span><span class="view-cube-corner view-cube-corner-br" data-view-corner="br" title="Bottom bottom-right corner view" aria-hidden="true"></span></button>
+            </div>
+            <button id="viewCubeRotateRight" class="view-cube-rotate view-cube-rotate-right" type="button" aria-label="Rotate view right" title="Rotate view right"></button>
+            <button id="viewCubeRotateDown" class="view-cube-rotate view-cube-rotate-down" type="button" aria-label="Rotate view down" title="Rotate view down"></button>
+            <button id="resetViewBtn" class="view-cube-tool view-cube-tool-reset" type="button" aria-label="Reset view" title="Reset view">↺</button>
+            <button id="fitViewBtn" class="view-cube-tool view-cube-tool-fit" type="button" aria-label="Fit view" title="Fit view">⛶</button>
+            <button id="viewProjectionToggle" class="view-projection-toggle" type="button" aria-label="Perspective view" aria-pressed="false" title="Toggle perspective or orthographic view"></button>
+          </div>
           <div id="topStatus" class="status top-status">READY.</div>
+          <div id="surfaceInsertMenu" class="surface-insert-menu is-hidden" role="dialog" aria-label="Add polygon">
+            <header>
+              <h3>Add Polygon</h3>
+              <button id="closeSurfaceInsertMenuBtn" class="surface-insert-close" type="button" aria-label="Close add polygon menu" title="Close">×</button>
+            </header>
+            <div class="surface-insert-controls slider-stack">
+              <label>X <input id="surfaceInsertX" type="range" min="-160" max="160" step="1" value="0"><input id="surfaceInsertXValue" type="number" step="1" value="0"></label>
+              <label>Y <input id="surfaceInsertY" type="range" min="-160" max="160" step="1" value="0"><input id="surfaceInsertYValue" type="number" step="1" value="0"></label>
+              <label>W <input id="surfaceInsertW" type="range" min="4" max="260" step="1" value="48"><input id="surfaceInsertWValue" type="number" min="4" step="1" value="48"></label>
+              <label>H <input id="surfaceInsertH" type="range" min="4" max="260" step="1" value="32"><input id="surfaceInsertHValue" type="number" min="4" step="1" value="32"></label>
+              <label>Sides <input id="surfaceInsertSides" type="range" min="3" max="16" step="1" value="4"><input id="surfaceInsertSidesValue" type="number" min="3" max="16" step="1" value="4"></label>
+              <label>R <input id="surfaceInsertR" type="range" min="-180" max="180" step="1" value="0"><input id="surfaceInsertRValue" type="number" step="1" value="0"></label>
+              <label>L <input id="surfaceInsertLift" type="range" min="0" max="8" step="0.1" value="0"><input id="surfaceInsertLiftValue" type="number" min="0" step="0.1" value="0"></label>
+              <label class="toggle surface-link-size"><input id="surfaceInsertLinkSize" type="checkbox"> Link W/H</label>
+            </div>
+            <button id="confirmSurfaceInsertBtn" class="primary is-hidden" type="button">OK</button>
+          </div>
+          <div id="faceExtrudeMenu" class="face-extrude-menu is-hidden" role="dialog" aria-label="Extrude face">
+            <header>
+              <h3>Extrude</h3>
+              <button id="closeFaceExtrudeMenuBtn" class="surface-insert-close" type="button" aria-label="Close extrude menu" title="Close">×</button>
+            </header>
+            <div class="face-extrude-controls slider-stack">
+              <div class="face-extrude-mode" role="group" aria-label="Extrude type">
+                <label><input name="faceExtrudeMode" type="radio" value="cap" checked> Cap</label>
+                <label><input name="faceExtrudeMode" type="radio" value="point"> Point</label>
+              </div>
+              <label>Dist <input id="faceExtrudeDistance" type="range" min="-180" max="180" step="1" value="24"><input id="faceExtrudeDistanceValue" type="number" step="1" value="24"></label>
+              <label class="face-extrude-taper-row">Taper <input id="faceExtrudeTaper" type="range" min="-75" max="75" step="1" value="0"><input id="faceExtrudeTaperValue" type="number" min="-75" max="75" step="1" value="0"></label>
+              <label class="toggle face-extrude-delete-source"><input id="faceExtrudeDeleteSource" type="checkbox" checked> Delete source face</label>
+            </div>
+            <button id="confirmFaceExtrudeBtn" class="primary is-hidden" type="button">OK</button>
+          </div>
+          <div id="selectionPickMenu" class="selection-pick-menu is-hidden" role="menu" aria-label="Objects under pointer"></div>
           <div id="selectionContextMenu" class="selection-context-menu is-hidden" role="menu" aria-label="Selection actions"></div>
         </div>
         <div class="ortho-grid">
