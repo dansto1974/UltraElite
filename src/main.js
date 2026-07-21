@@ -2044,7 +2044,7 @@
       cougar: { r: 70, hp: 252, speed: 1.429 },
       diamondback: { r: 139, hp: 300, speed: 2.2 },
       missile: { r: 40, hp: 2, speed: 1.571 },
-      escapePod: { r: 16, hp: 17, speed: .286 },
+      escapePod: { r: 16, hp: 17, speed: .62 },
       plate: { r: 10, hp: 16, speed: .571 },
       canister: { r: 20, hp: 17, speed: .536 },
       asteroid: { r: 80, hp: 60, speed: 1.071 },
@@ -2965,6 +2965,7 @@
       commsClock: 10,
       trafficClock: 6,
       extraVesselDelay: 0,
+      npcHyperspaceOutClock: 240,
       messageTimer: 0
     };
 
@@ -3365,7 +3366,7 @@
     // --- NPC comms chatter -------------------------------------------------------
     // Situation-driven one-liners from live ships, shown in a small fading log on the
     // flight view. Same panel is the natural home for player chat if multiplayer lands.
-    const HACK_DISABLE_CHATTER = true;
+    const HACK_DISABLE_CHATTER = false;
     const escapeHtml = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
     const escapeAttr = (s) => escapeHtml(s).replace(/"/g, "&quot;");
     const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -4115,6 +4116,14 @@
       return !!o && (o.thargoid || ALIEN_MODELS.includes(o.model));
     }
 
+    function alienNeverFlees(o) {
+      return isAlienShip(o);
+    }
+
+    function shipHyperspaceHidden(o) {
+      return !!o?._hyperspaceHidden;
+    }
+
     const ALIEN_BASE_ALPHABET = "ZXQKVRTHNGMLPDSWYFJCBAXUO".split("");
 
     function alienAlphabet() {
@@ -4362,7 +4371,7 @@
       }
 
       const hullFrac = o.maxHp ? o.hp / o.maxHp : 1;
-      const shouldFlee = !o.police && !o.thargoid && (
+      const shouldFlee = !o.police && !alienNeverFlees(o) && (
         o.role === "trader" ||
         profile.timid ||
         profile.hauler ||
@@ -4374,6 +4383,7 @@
         o.target = null;
         o.aiMode = "flee";
         o.fleeFrom = { ...game.camera.pos };
+        o.fleeAge = 0;
         o._fleeCommitted = true;
         if (!o._fleeHailed) {
           o._fleeHailed = true;
@@ -4706,6 +4716,8 @@
       let flybyBed = null;
       let transitionBed = null;
       let solarBed = null;
+      let audioUnlocked = false;
+      let audioErrorNotified = false;
       const pitchScale = .62;
       const filterScale = .68;
       const BUS_LEVELS = {
@@ -4721,7 +4733,20 @@
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         if (!AudioCtx) return null;
         if (!ctx) {
-          ctx = new AudioCtx();
+          try {
+            ctx = new AudioCtx({ latencyHint: "interactive" });
+          } catch (err) {
+            try {
+              ctx = new AudioCtx();
+            } catch (fallbackErr) {
+              if (!audioErrorNotified) {
+                audioErrorNotified = true;
+                console.warn("Audio unavailable", fallbackErr || err);
+                setMessage("Audio unavailable in this browser session.", true);
+              }
+              return null;
+            }
+          }
           master = ctx.createGain();
           limiter = ctx.createDynamicsCompressor();
           limiter.threshold.value = -17;
@@ -4742,6 +4767,29 @@
         }
         if (ctx.state === "suspended") ctx.resume().catch(() => {});
         return ctx;
+      }
+
+      function unlock() {
+        const c = ensure();
+        if (!c) return false;
+        if (c.state === "suspended") c.resume().catch(() => {});
+        if (!audioUnlocked) {
+          try {
+            const osc = c.createOscillator();
+            const amp = c.createGain();
+            const t = c.currentTime;
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(20, t);
+            amp.gain.setValueAtTime(.0001, t);
+            osc.connect(amp).connect(master);
+            osc.start(t);
+            osc.stop(t + .035);
+            audioUnlocked = true;
+          } catch (err) {
+            console.warn("Audio unlock failed", err);
+          }
+        }
+        return true;
       }
 
       function makeNoiseBuffer() {
@@ -5716,7 +5764,8 @@
           updateTransitionBed(dt);
           updateSolarRadiationBed(dt);
         },
-        resume: () => { ensure(); },
+        resume: () => { unlock(); },
+        unlock,
         setVolume: (value, persist = true) => {
           game.audioVolume = normalizeAudioVolume(value);
           if (persist) saveAudioVolumeSetting(game.audioVolume);
@@ -5728,7 +5777,10 @@
         },
         toggle: () => {
           game.soundEnabled = !game.soundEnabled;
-          if (game.soundEnabled) play("beep");
+          if (game.soundEnabled) {
+            unlock();
+            play("beep");
+          }
           else if (ctx) ctx.suspend().catch(() => {});
           setMessage(`Sound: ${game.soundEnabled ? "on" : "off"}.`);
         }
@@ -6213,6 +6265,7 @@
       const now = performance.now();
       for (const [a, b] of pairs) {
         if (a._remove || b._remove) continue;
+        if (shipHyperspaceHidden(a) || shipHyperspaceHidden(b)) continue;
         const maxD = objectCollisionRadius(a) + objectCollisionRadius(b);
         if (Math.abs(a.pos.x - b.pos.x) > maxD || Math.abs(a.pos.y - b.pos.y) > maxD || Math.abs(a.pos.z - b.pos.z) > maxD) continue;
         if (!resolveBodyBounce(a, b)) continue;
@@ -7152,6 +7205,7 @@
       for (let i = 0; i < count; i++) spawnShip(rng, false);
       game.trafficClock = 5 + rng() * 8;
       game.extraVesselDelay = arrival ? 0 : 30 + rng() * 24;
+      game.npcHyperspaceOutClock = nextNpcHyperspaceOutDelay(rng);
       const rockCount = Math.floor(rng() * 3);
       for (let i = 0; i < rockCount; i++) spawnAsteroid(rng, vec(0, 0, 0));
       game.stars = Array.from({ length: 264 }, () => {
@@ -7179,6 +7233,162 @@
     function stationSafeZoneActive() {
       const st = game.objects.find((o) => o.type === "station");
       return !!st && len(sub(st.pos, game.camera.pos)) < 5200;
+    }
+
+    function nextNpcHyperspaceOutDelay(rng = Math.random) {
+      return 240 + rng() * 140;
+    }
+
+    function npcCanHyperspaceOut(o, opts = {}) {
+      const forced = !!opts.forced;
+      if (!o || o.type !== "ship" || o._remove || o.police || isAlienShip(o)) return false;
+      if (!forced && o.hostile) return false;
+      if (!forced && o.role !== "trader") return false;
+      if (o.model === "escapePod" || o.role === "pod") return false;
+      if (o.missionId || o.missionTargetId || o.huntedBy || (!forced && o.target)) return false;
+      if (["stationLaunch", "stationDock", "hyperspaceOut"].includes(o.aiMode)) return false;
+      if (!forced && o.aiMode === "flee") return false;
+      if (forced) return true;
+      const d = len(sub(o.pos, game.camera.pos));
+      return d > 900 && d < 6200;
+    }
+
+    function pickNpcHyperspaceOutCandidate() {
+      const candidates = worldSnapshot().ships.filter(npcCanHyperspaceOut);
+      if (!candidates.length) return null;
+      candidates.sort((a, b) => {
+        const ar = cameraTransform(a.pos, game.camera);
+        const br = cameraTransform(b.pos, game.camera);
+        const aVisible = ar.z > 80 ? 0 : 1;
+        const bVisible = br.z > 80 ? 0 : 1;
+        return aVisible - bVisible || len(sub(a.pos, game.camera.pos)) - len(sub(b.pos, game.camera.pos));
+      });
+      return candidates[Math.min(candidates.length - 1, Math.floor(Math.random() * Math.min(3, candidates.length)))];
+    }
+
+    function startNpcHyperspaceOut(o, opts = {}) {
+      const station = primaryStation();
+      const awayFromCamera = norm(sub(o.pos, game.camera.pos));
+      const awayFromStation = station ? norm(sub(o.pos, station.pos)) : awayFromCamera;
+      const jitter = norm(vec(Math.random() - .5, (Math.random() - .5) * .45, Math.random() - .5));
+      const dir = norm(add(add(scale(awayFromCamera, .75), scale(awayFromStation, .55)), scale(jitter, .28)));
+      o.aiMode = "hyperspaceOut";
+      o.target = null;
+      o.hyperspaceOut = {
+        t: 0,
+        dur: 4.4 + Math.random() * .8,
+        dir,
+        vanished: false
+      };
+      o.engineBoost = Math.max(o.engineBoost || 0, .8);
+      if (opts.hail !== false) {
+        shipHail(o, "trader", "Jump vector filed. Safe travels, Commander.", opts.forced ? 1 : .28, 6500);
+      }
+    }
+
+    function spawnNpcHyperspaceOutEffect(o) {
+      const dir = o.hyperspaceOut?.dir || shipForward(o);
+      game.smokePuffs.push({
+        kind: "npcHyperspace",
+        pos: { ...o.pos },
+        drift: scale(dir, 520),
+        t: 0,
+        dur: 1.25,
+        radius: Math.max(18, (o.r || 50) * .42),
+        alpha: .95,
+        hue: 196
+      });
+      trimParticleStore(game.smokePuffs, 300);
+      eliteAudio.playAt("hyperspace", o.pos, { range: 3600, gain: .62 });
+      game.screenShake = Math.max(game.screenShake || 0, .32);
+    }
+
+    function spawnNpcHyperspaceInEffect(o) {
+      const dir = o.hyperspaceIn?.dir || shipForward(o);
+      game.smokePuffs.push({
+        kind: "npcHyperspaceIn",
+        pos: { ...o.pos },
+        drift: scale(dir, -620),
+        t: 0,
+        dur: 1.18,
+        radius: Math.max(20, (o.r || 50) * .46),
+        alpha: .98,
+        hue: 196
+      });
+      trimParticleStore(game.smokePuffs, 300);
+      eliteAudio.playAt("hyperspace", o.pos, { range: 3600, gain: .5 });
+      game.screenShake = Math.max(game.screenShake || 0, .18);
+    }
+
+    function startNpcHyperspaceIn(o, opts = {}) {
+      if (!o || o.type !== "ship") return o;
+      const dir = len(o.vel || vec()) > .01 ? norm(o.vel) : shipForward(o);
+      o.hyperspaceIn = {
+        t: 0,
+        dur: opts.dur || 1.42,
+        revealAt: opts.revealAt || .72,
+        dir,
+        aiMode: o.aiMode || "cruise",
+        vel: { ...(o.vel || scale(dir, 70)) },
+        speed: Number.isFinite(o.speed) ? o.speed : len(o.vel || vec()),
+        engineBoost: o.engineBoost || 0
+      };
+      o._hyperspaceHidden = true;
+      o.aiMode = "hyperspaceIn";
+      o.vel = vec();
+      o.speed = 0;
+      o.engineBoost = 0;
+      spawnNpcHyperspaceInEffect(o);
+      return o;
+    }
+
+    function updateNpcHyperspaceOutClock(dt) {
+      if (game.docked || game.transition || game.jumpCountdown || game.witchspace) return;
+      game.npcHyperspaceOutClock = (game.npcHyperspaceOutClock ?? nextNpcHyperspaceOutDelay()) - dt;
+      if (game.npcHyperspaceOutClock > 0) return;
+      const candidate = pickNpcHyperspaceOutCandidate();
+      if (candidate) {
+        startNpcHyperspaceOut(candidate);
+        game.npcHyperspaceOutClock = nextNpcHyperspaceOutDelay();
+      } else {
+        game.npcHyperspaceOutClock = 35 + Math.random() * 45;
+      }
+    }
+
+    function forceTargetHyperspaceOut() {
+      if (!game.developerMode) {
+        setMessage("Developer mode required for forced hyperspace-out.", true);
+        return false;
+      }
+      if (game.docked || game.transition || game.jumpCountdown) {
+        setMessage("Launch before forcing a target hyperspace-out.", true);
+        return false;
+      }
+      const o = game.targetObject;
+      if (!o || !isWorldObjectLive(o) || o.type !== "ship") {
+        setMessage("Lock a ship before forcing hyperspace-out.", true);
+        return false;
+      }
+      if (isAlienShip(o)) {
+        setMessage("Alien ships ignore local hyperspace traffic vectors.", true);
+        return false;
+      }
+      if (o.police) {
+        setMessage("Police traffic stays on patrol.", true);
+        return false;
+      }
+      if (o.missionId || o.missionTargetId) {
+        setMessage("Mission targets cannot be forced out of the scene.", true);
+        return false;
+      }
+      if (!npcCanHyperspaceOut(o, { forced: true })) {
+        setMessage(`${o.name || "Target"} cannot hyperspace out from this state.`, true);
+        return false;
+      }
+      startNpcHyperspaceOut(o, { forced: true });
+      game.npcHyperspaceOutClock = nextNpcHyperspaceOutDelay();
+      setMessage(`${o.name || "Target"} jump vector forced.`, true);
+      return true;
     }
 
     function spawnExtraVessels(rng = Math.random, liveShipCount = 0) {
@@ -7275,7 +7485,66 @@
         decalSeed: hash32(`${game.galaxy}:${game.current}:${model}:${role}`)
       };
       setNoseDirection(o, o.vel, o.roll);
+      if (!police) startNpcHyperspaceIn(o);
       game.objects.push(o);
+      return o;
+    }
+
+    function spawnDevViewArrival(rng = Math.random) {
+      if (!game.developerMode) {
+        setMessage("Developer mode required for view arrival spawn.", true);
+        return null;
+      }
+      if (game.docked || game.transition || game.jumpCountdown) {
+        setMessage("Launch before spawning a view arrival.", true);
+        return null;
+      }
+      const hostile = rng() < .48;
+      const types = hostile ? PIRATE_MODELS : TRADER_MODELS;
+      const model = types[Math.floor(rng() * types.length)];
+      const role = hostile ? "pirate" : "trader";
+      const stats = shipStats(model);
+      const depthRoll = rng();
+      const depth = depthRoll < .28 ? 520 + rng() * 620 : depthRoll < .72 ? 1150 + rng() * 1450 : 2700 + rng() * 2500;
+      const side = (rng() - .5) * Math.min(980, depth * .36);
+      const up = (rng() - .5) * Math.min(520, depth * .22);
+      const pos = cameraLocalToWorld(game.camera, vec(side, up, depth));
+      const driftLocal = vec((rng() - .5) * 96 - side * .025, (rng() - .5) * 48 - up * .02, -70 - rng() * 52);
+      const q = ensureCameraQuat(game.camera);
+      const vel = quatRotate(q, driftLocal);
+      const orbitRadius = 460 + rng() * 620;
+      const orbitCenter = cameraLocalToWorld(game.camera, vec(0, 0, depth + 220));
+      const o = {
+        type: "ship",
+        model,
+        name: `${hostile ? "PIRATE" : "TRADER"} ${shipName(model)}`,
+        pos,
+        vel,
+        rot: 0,
+        pitch: 0,
+        roll: rng() * TAU,
+        r: stats.r,
+        color: shipColor(model, false),
+        hp: Math.round(stats.hp * (hostile ? 1.08 : .9)),
+        maxHp: Math.round(stats.hp * (hostile ? 1.08 : .9)),
+        hostile,
+        police: false,
+        role,
+        bounty: hostile ? 75 + Math.floor(rng() * 100) : 0,
+        aiMode: hostile ? "attack" : "cruise",
+        orbitCenter,
+        orbitRadius,
+        orbitAngle: rng() * TAU,
+        orbitSpeed: (rng() > .5 ? 1 : -1) * (.18 + rng() * .28),
+        attackClock: rng() * 2,
+        wobble: rng() * TAU,
+        npcMissiles: npcMissileStock(model, role, false),
+        decalSeed: hash32(`${game.galaxy}:${game.current}:${model}:${role}:view-arrival:${Date.now()}`)
+      };
+      setNoseDirection(o, vel, o.roll);
+      startNpcHyperspaceIn(o, { dur: 1.32, revealAt: .68 });
+      game.objects.push(o);
+      setMessage(`View arrival spawned: ${o.name}.`, true);
       return o;
     }
 
@@ -7338,6 +7607,7 @@
         attackClock: rng() * 2,
         wobble: rng() * TAU,
         npcMissiles: 0,
+        departureHyperspaceOut: launch && rng() < .34,
         decalSeed: hash32(`${game.galaxy}:${game.current}:${model}:station-traffic:${Math.floor(rng() * 99999)}`)
       };
       setNoseDirection(o, dir, o.roll);
@@ -7408,6 +7678,7 @@
         return;
       }
       if (!game.docked || game.transition || game.jumpCountdown) return;
+      writeBrowserSave(true);
       const finishLaunch = (startSpeed = 40) => {
         game.docked = false;
         resetFlightScene(false);
@@ -7800,6 +8071,7 @@
       for (const o of game.objects) {
         const isRock = o.type === "asteroid" || o.type === "boulder" || o.type === "splinter";
         if (o.type !== "ship" && o.type !== "canister" && o.type !== "plate" && !isRock && !(o.type === "missile" && o.hostile)) continue;
+        if (shipHyperspaceHidden(o)) continue;
         if (freshDropLaserProtected(o, damageNow)) continue;
         const rel = cameraTransform(o.pos, game.camera);
         if (rel.z < 30) continue;
@@ -7929,6 +8201,7 @@
 
     function missileTargetable(o) {
       if (!isWorldObjectLive(o) || !finiteVec3(o.pos)) return false;
+      if (shipHyperspaceHidden(o)) return false;
       if (!Number.isFinite(o.hp) || o.hp <= 0) return false;
       return o.type === "ship";
     }
@@ -8293,7 +8566,7 @@
 
     function updateEngineTrails(o, dt) {
       if (DEV_DISABLE_ENGINE_EFFECTS) return;
-      if (!ultraFxEnabled() || o.type !== "ship" || !MODELS[o.model]?.details) return;
+      if (!ultraFxEnabled() || o.type !== "ship" || shipHyperspaceHidden(o) || !MODELS[o.model]?.details) return;
       const speed = o.speed ?? len(o.vel || vec());
       if (speed < 16) return;
       o.engineTrailClock = (o.engineTrailClock || 0) - dt;
@@ -8376,14 +8649,38 @@
       }));
     }
 
+    function spawnAlienSalvage(o) {
+      if (!isAlienShip(o) || Math.random() <= .5) return false;
+      const isThargon = o.model === "thargon" || o.thargon;
+      const stats = shipStats(isThargon ? "plate" : "canister");
+      game.objects.push(protectFreshDropFromLaser(isThargon
+        ? {
+          type: "plate", model: "plate", name: "ALIEN ALLOY PANEL", forcedGood: "Alloys",
+          pos: add(o.pos, vec(0, 0, 30)), vel: vec(0, 0, -12),
+          rot: .3, pitch: .2, roll: 0, r: stats.r, color: "#9be6c0", hp: stats.hp, hostile: false
+        }
+        : {
+          type: "canister", model: "canister", name: "ALIEN ITEMS CANISTER", forcedGood: "Alien Items",
+          pos: add(o.pos, vec(0, 0, 30)), vel: vec(0, 0, -12),
+          rot: 0, pitch: 0, r: stats.r, color: "#c46bff", hp: stats.hp, hostile: false
+        }));
+      return true;
+    }
+
     function spawnEscapePod(pos) {
       const stats = shipStats("escapePod");
+      const station = primaryStation();
+      const awayFromStation = station ? norm(sub(pos, station.pos)) : vec();
+      const randomKick = norm(vec(Math.random() - .5, Math.random() - .35, Math.random() - .5));
+      const dir = len(awayFromStation) > .01 ? norm(add(scale(awayFromStation, 1.3), scale(randomKick, .75))) : randomKick;
       const pod = {
         type: "ship", model: "escapePod", name: "ESCAPE POD",
-        pos: { ...pos }, vel: scale(norm(vec(Math.random() - .5, Math.random() - .5, Math.random() - .5)), 50),
+        pos: { ...pos }, vel: scale(dir, 135 + Math.random() * 45),
         rot: 0, pitch: 0, roll: 0, r: stats.r, color: "#e9f2e4", hp: stats.hp, maxHp: stats.hp,
-        hostile: false, role: "pod", bounty: 15, aiMode: "cruise", wobble: Math.random() * TAU
+        hostile: false, role: "pod", bounty: 15, aiMode: "escapePodDock", wobble: Math.random() * TAU,
+        trafficStation: station || null, podAge: 0, speed: 135
       };
+      setNoseDirection(pod, dir, pod.roll);
       protectFreshDropFromLaser(pod);
       game.objects.push(pod);
       return pod;
@@ -8424,7 +8721,9 @@
             }, 90 + i * 135 + Math.random() * 120);
           }
         }
-        if (Math.random() > .5) {
+        if (isAlienShip(o)) {
+          spawnAlienSalvage(o);
+        } else if (Math.random() > .5) {
           const isPlate = Math.random() < .35;
           const stats = shipStats(isPlate ? "plate" : "canister");
           game.objects.push(isPlate
@@ -8535,6 +8834,8 @@
     function targetList(shipsOnly = false) {
       const candidates = [];
       for (const o of game.objects) {
+        if (o._remove) continue;
+        if (shipHyperspaceHidden(o)) continue;
         if (o.hp !== undefined && o.hp <= 0) continue;
         if (shipsOnly && o.type !== "ship") continue;
         const entry = targetPriorityEntry(o, shipsOnly);
@@ -8577,26 +8878,27 @@
       const finish = () => {
         if (hadCapsule) {
           setMessage(`Escape capsule fired! Ship lost to ${reason}, but you're alive. Picked up and returned to Lave.`, true);
-        } else {
-          setMessage(`Ship destroyed by ${reason}. Rebuilt at Lave with a replacement Cobra.`, true);
+          game.galaxy = 0;
+          game.current = LAVE_INDEX;
+          game.target = DISO_INDEX;
+          game.docked = true;
+          setViewMode("fwd");
+          game.playerDestroyed = false;
+          game.credits = Math.max(10, Math.floor(game.credits * .7));
+          game.fuel = 7;
+          restoreShipSystems();
+          game.speed = 0;
+          // BBC Elite's ESCAPE routine clears FIST, so the capsule wipes the
+          // criminal record rather than merely reducing it.
+          game.legal = 0;
+          game.cargo = Object.fromEntries(GOODS.map((g) => [g[0], 0]));
+          failActiveMissions("Commander ship lost");
+          resetFlightScene(false);
+          renderPanel();
+          writeBrowserSave(true);
+          return;
         }
-        game.galaxy = 0;
-        game.current = LAVE_INDEX;
-        game.target = DISO_INDEX;
-        game.docked = true;
-        setViewMode("fwd");
-        game.playerDestroyed = false;
-        game.credits = Math.max(10, Math.floor(game.credits * (hadCapsule ? .7 : .35)));
-        game.fuel = 7;
-        restoreShipSystems();
-        game.speed = 0;
-        // BBC Elite's ESCAPE routine clears FIST, so the capsule wipes the
-        // criminal record rather than merely reducing it.
-        game.legal = 0;
-        game.cargo = Object.fromEntries(GOODS.map((g) => [g[0], 0]));
-        failActiveMissions("Commander ship lost");
-        resetFlightScene(false);
-        renderPanel();
+        restoreCommanderAfterGameOver(reason);
       };
       game.docked = false;
       game.speed = 0;
@@ -9341,6 +9643,32 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       };
     }
 
+    function freshCommanderSaveData(commander = game.commander) {
+      return {
+        format: SAVE_FORMAT,
+        galaxySeedVersion: 2,
+        commander: normalizeCommanderName(commander),
+        galaxy: 0,
+        current: LAVE_INDEX,
+        target: DISO_INDEX,
+        credits: 100,
+        fuel: 7,
+        kills: 0,
+        missionRankPoints: 0,
+        legal: 0,
+        playerShip: "cobra",
+        cargoCap: PLAYER_CARGO_CAPACITY.cobra || 20,
+        cargo: Object.fromEntries(GOODS.map((g) => [g[0], 0])),
+        equipment: Object.fromEntries(Object.keys(game.equipment).map((key) => [key, false])),
+        missiles: 1,
+        graphicsMode: "solid",
+        fxLevel: "ultra",
+        marketStock: {},
+        missions: { active: [], board: [], boardKey: "", dockSerial: 0, completed: 0 },
+        missionUnlocks: { ships: [], ownedShips: ["cobra"] }
+      };
+    }
+
     function canSaveCommander() {
       return !!game.docked && !game.transition && !game.jumpCountdown && !game.playerDestroyed;
     }
@@ -9388,14 +9716,23 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       shipDiagramState.model = playerShipModel();
     }
 
-    function saveGame() {
+    function writeBrowserSave(silent = false) {
       if (!canSaveCommander()) {
-        setMessage("Save unavailable in flight. Dock first.", true);
+        if (!silent) setMessage("Save unavailable in flight. Dock first.", true);
         return false;
       }
-      localStorage.setItem(SAVE_KEY, JSON.stringify(commanderSaveData()));
-      setMessage("Commander saved to browser storage.", true);
+      try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify(commanderSaveData()));
+      } catch {
+        if (!silent) setMessage("Browser save storage unavailable.");
+        return false;
+      }
+      if (!silent) setMessage("Commander saved to browser storage.", true);
       return true;
+    }
+
+    function saveGame() {
+      return writeBrowserSave(false);
     }
 
     function browserSaveExists() {
@@ -9431,6 +9768,26 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function loadGame() {
       loadBrowserSave(false);
+    }
+
+    function restoreCommanderAfterGameOver(reason) {
+      const commander = normalizeCommanderName(game.commander);
+      const hadBrowserSave = browserSaveExists();
+      if (hadBrowserSave && loadBrowserSave(true)) {
+        resetFlightScene(false);
+        setMessage(`Ship destroyed by ${reason}. Browser commander save restored.`, true);
+        renderPanel();
+        return;
+      }
+      applyCommanderSave(freshCommanderSaveData(commander));
+      resetFlightScene(false);
+      setMessage(
+        hadBrowserSave
+          ? `Ship destroyed by ${reason}. Browser save failed; new Lave commander record created.`
+          : `Ship destroyed by ${reason}. New Lave commander record created.`,
+        true
+      );
+      renderPanel();
     }
 
     function deleteBrowserSave() {
@@ -9642,8 +9999,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
             }
             else if (o.vel) o.pos = add(o.pos, scale(o.vel, dt));
             if ((o.type === "canister" || o.type === "plate") && game.equipment.fuelScoop && len(sub(o.pos, game.camera.pos)) < 38) scoopCargo(o);
-            if (!o._remove) handlePlayerCollision(o);
-            if (!o._remove) handlePlayerLargeCollision(o);
+            if (!o._remove && !shipHyperspaceHidden(o)) handlePlayerCollision(o);
+            if (!o._remove && !shipHyperspaceHidden(o)) handlePlayerLargeCollision(o);
             if (!o._remove) updateSolarFuelScoop(o, dt);
           }
         });
@@ -9665,6 +10022,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           game.world = null;
           buildWorldSnapshot();
           if (game.targetObject && !isWorldObjectLive(game.targetObject)) game.targetObject = nearestTarget(false);
+          updateNpcHyperspaceOutClock(dt);
           updateMissionSpawns(dt);
           spawnAmbientEncounter(dt, liveShipCount);
           if (Math.random() < dt * .012 && liveRockCount < 4) {
@@ -10014,7 +10372,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function pickPreyFor(o) {
       let best = null, bestD = Infinity;
       for (const x of worldSnapshot().ships) {
-        if (x.type !== "ship" || x === o || x.hostile || x.aiMode === "flee") continue;
+        if (x.type !== "ship" || x === o || x.hostile || x.aiMode === "flee" || shipHyperspaceHidden(x)) continue;
         const d = len(sub(x.pos, o.pos));
         if (d < 1400 && d < bestD) { best = x; bestD = d; }
       }
@@ -10024,7 +10382,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function pickHostileFor(o) {
       let best = null, bestD = Infinity;
       for (const x of worldSnapshot().ships) {
-        if (x.type !== "ship" || x === o || !x.hostile || x.role === "police") continue;
+        if (x.type !== "ship" || x === o || !x.hostile || x.role === "police" || shipHyperspaceHidden(x)) continue;
         const d = len(sub(x.pos, o.pos));
         if (d < 1800 && d < bestD) { best = x; bestD = d; }
       }
@@ -10314,8 +10672,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           steerVelocity(o, sub(target, o.pos), dt, 70, 96 * speedMul);
         }
         if (dot(sub(o.pos, center), outward) > 1500 || o.trafficAge > 16) {
-          o.aiMode = "cruise";
           o.trafficStation = null;
+          if (o.departureHyperspaceOut) {
+            startNpcHyperspaceOut(o, { forced: true, hail: false });
+            shipHail(o, "trafficJump", "Departure lane clear. Engaging hyperspace.", .55, 6500);
+            return;
+          }
+          o.aiMode = "cruise";
           o.orbitCenter = add(station.pos, scale(outward, stationClearanceRadius() + 980));
           o.orbitRadius = 720 + Math.random() * 760;
           o.orbitAngle = Math.random() * TAU;
@@ -10336,8 +10699,103 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
     }
 
+    function updateEscapePodDocking(o, dt) {
+      const station = o.trafficStation && isWorldObjectLive(o.trafficStation)
+        ? o.trafficStation
+        : primaryStation();
+      if (!station) {
+        if (o.vel) {
+          o.pos = add(o.pos, scale(o.vel, dt));
+          orientShipToVelocity(o, dt);
+        }
+        return;
+      }
+      o.trafficStation = station;
+      o.podAge = (o.podAge || 0) + dt;
+      const { center, outward, right, up } = stationSlotAxes(station);
+      if (!o.trafficSlotOffset) {
+        o.trafficSlotOffset = add(scale(right, (Math.random() - .5) * 30), scale(up, (Math.random() - .5) * 22));
+      }
+      const offset = o.trafficSlotOffset || vec();
+      const toPod = sub(o.pos, center);
+      const along = dot(toPod, outward);
+      const lateral = sub(toPod, scale(outward, along));
+      const lateralDist = len(lateral);
+      if ((along > 180 && lateralDist < 260) || o.podAge > 13) {
+        o.podDockFinal = true;
+        if (!o._podDockHailed && Math.random() < .68) {
+          o._podDockHailed = true;
+          commsMessage(`${station.name.toUpperCase()} CONTROL`, "Escape pod priority approach granted.", "station");
+        }
+      }
+      const approachTarget = add(center, add(offset, scale(outward, 1280)));
+      const finalTarget = add(center, add(scale(offset, .28), scale(outward, -82)));
+      const target = o.podDockFinal ? finalTarget : approachTarget;
+      const speedMul = shipStats(o.model).speed || 1;
+      steerVelocity(o, sub(target, o.pos), dt, o.podDockFinal ? 132 : 235, (o.podDockFinal ? 185 : 305) * speedMul);
+      const post = sub(o.pos, center);
+      const postAlong = dot(post, outward);
+      const postLateral = len(sub(post, scale(outward, postAlong)));
+      if ((o.podDockFinal && postAlong < -28 && postLateral < 105) || o.podAge > 28) {
+        o._remove = true;
+        if (game.targetObject === o) game.targetObject = primaryStation();
+        if (Math.random() < .55) commsMessage(`${station.name.toUpperCase()} CONTROL`, "Escape pod recovered.", "station");
+      }
+    }
+
     function updateShipAI(o, dt) {
       const avoidStation = stationAvoidance(o.pos, o.r || 60);
+      if (o.aiMode === "hyperspaceIn") {
+        const jump = o.hyperspaceIn || (o.hyperspaceIn = { t: 0, dur: 1.4, revealAt: .72, dir: shipForward(o), aiMode: "cruise", vel: vec(), speed: 0 });
+        jump.t += dt;
+        const p = clamp(jump.t / Math.max(.1, jump.dur), 0, 1);
+        if (shipHyperspaceHidden(o) && p >= (jump.revealAt ?? .72)) {
+          o._hyperspaceHidden = false;
+          o.vel = { ...(jump.vel || scale(jump.dir || shipForward(o), 70)) };
+          o.speed = Number.isFinite(jump.speed) && jump.speed > 0 ? jump.speed : len(o.vel);
+          o.engineBoost = Math.max(jump.engineBoost || 0, .85);
+          setNoseDirection(o, jump.dir || o.vel || shipForward(o), o.roll || 0);
+        }
+        if (!shipHyperspaceHidden(o) && o.vel) {
+          o.pos = add(o.pos, scale(o.vel, dt));
+          orientShipToVelocity(o, dt);
+        }
+        if (p >= 1) {
+          o.aiMode = jump.aiMode || (o.hostile ? "attack" : "cruise");
+          o.hyperspaceIn = null;
+          o._hyperspaceHidden = false;
+        }
+        return;
+      }
+      if (o.role === "pod" || o.model === "escapePod") {
+        updateEscapePodDocking(o, dt);
+        return;
+      }
+      if (alienNeverFlees(o) && o.aiMode === "flee") {
+        o.aiMode = "attack";
+        o.fleeFrom = null;
+        o.fleeAge = 0;
+        o._fleeCommitted = false;
+      }
+      if (o.aiMode === "hyperspaceOut") {
+        const jump = o.hyperspaceOut || (o.hyperspaceOut = { t: 0, dur: 4.6, dir: shipForward(o) });
+        jump.t += dt;
+        const p = clamp(jump.t / Math.max(.1, jump.dur), 0, 1);
+        const spool = smoothstep(0, .34, p);
+        const punch = smoothstep(.38, .86, p);
+        const dir = jump.dir || shipForward(o);
+        const speedMul = shipStats(o.model).speed || 1;
+        o.engineBoost = Math.max(o.engineBoost || 0, .65 + punch * 1.2);
+        steerVelocity(o, add(scale(dir, 900 + punch * 1800), avoidStation), dt, 90 + punch * 260, (118 + punch * 620) * speedMul);
+        o.roll = lerpAngle(o.roll || 0, Math.sin(jump.t * 4.2 + (o.wobble || 0)) * .18, dt * (2.2 + spool * 2.4));
+        if (!jump.vanished && p >= .88) {
+          jump.vanished = true;
+          spawnNpcHyperspaceOutEffect(o);
+          o._remove = true;
+          if (game.targetObject === o) game.targetObject = nearestTarget(false);
+        }
+        return;
+      }
       if (o.hostile && objectIntervalDue(o, "_senseClock", dt, .18, .16)) {
         const stale = o.target && (o.target.hp <= 0 || !isWorldObjectLive(o.target) || len(sub(o.target.pos, o.pos)) > 2200);
         if (o.target === undefined || stale) assignHostileTarget(o);
@@ -10345,15 +10803,22 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const targetPos = o.hostile ? hostileTargetPos(o) : game.camera.pos;
       const d = len(sub(targetPos, o.pos));
 
-      if (o.hostile && o.role !== "police" && !o.thargoid && o.maxHp && o.hp < o.maxHp * .32 && o.aiMode !== "flee" && !o._fleeCommitted) {
+      if (o.hostile && o.role !== "police" && !alienNeverFlees(o) && o.maxHp && o.hp < o.maxHp * .32 && o.aiMode !== "flee" && !o._fleeCommitted) {
         o._fleeCommitted = true;
         o.aiMode = "flee";
         o.fleeFrom = { ...targetPos };
+        o.fleeAge = 0;
         setMessage(`${o.name} breaks off and flees.`);
         shipHail(o, "flee", fleeLine(o), .6, 12000);
       }
 
       if (o.aiMode === "flee") {
+        o.fleeAge = (o.fleeAge || 0) + dt;
+        if (o.fleeAge >= 10 && npcCanHyperspaceOut(o, { forced: true })) {
+          startNpcHyperspaceOut(o, { forced: true, hail: false });
+          shipHail(o, "fleeJump", "Emergency jump engaged.", .72, 6500);
+          return;
+        }
         const from = o.fleeFrom || game.camera.pos;
         const away = norm(sub(o.pos, from));
         const jink = vec(Math.sin(performance.now() / 650 + (o.wobble || 0)) * 90, Math.cos(performance.now() / 800 + (o.wobble || 0)) * 60, 0);
@@ -10403,14 +10868,16 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           if (o.target) fireAtShip(o, o.target);
           else fireAtPlayer(o);
         }
-      } else if (o.huntedBy && isWorldObjectLive(o.huntedBy) && o.huntedBy.target === o) {
+      } else if (!alienNeverFlees(o) && o.huntedBy && isWorldObjectLive(o.huntedBy) && o.huntedBy.target === o) {
         o.aiMode = "flee";
         o.fleeFrom = { ...o.huntedBy.pos };
+        o.fleeAge = 0;
         setMessage(`${o.name} is under attack and flees.`);
         shipHail(o, "flee", fleeLine(o), .6, 12000);
-      } else if (d < 460 && Math.random() < dt * .5) {
+      } else if (!alienNeverFlees(o) && d < 460 && Math.random() < dt * .5) {
         o.aiMode = "flee";
         o.fleeFrom = { ...game.camera.pos };
+        o.fleeAge = 0;
         setMessage(`${o.name} panics and flees.`);
         shipHail(o, "flee", fleeLine(o), .6, 12000);
       } else if (o.aiMode === "formation") {
@@ -12481,6 +12948,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const candidates = [];
       for (const o of game.objects) {
         if (o.type !== "ship") continue;
+        if (shipHyperspaceHidden(o)) continue;
         if (!finiteVec3(o.pos)) continue;
         const rel = cameraTransform(o.pos, game.camera);
         if (rel.z < 40) continue;
@@ -12682,6 +13150,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function effectWorldPos(effect) {
+      if (effect?.kind === "npcHyperspaceIn") return effect.pos;
       return add(effect.pos, scale(effect.drift, effect.t));
     }
 
@@ -12706,6 +13175,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function makeRenderItem(o, camera, w, h) {
       if (!o || !finiteVec3(o.pos)) return null;
+      if (shipHyperspaceHidden(o)) return null;
       const p = cameraTransform(o.pos, camera);
       const d = len(sub(o.pos, camera.pos));
       const radius = renderObjectRadius(o);
@@ -15230,6 +15700,63 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const worldPos = add(p.pos, scale(p.drift, p.t));
       const rel = cameraTransform(worldPos, camera);
       const pr = project(rel, w, h);
+      if (p.kind === "npcHyperspace" || p.kind === "npcHyperspaceIn") {
+        const inbound = p.kind === "npcHyperspaceIn";
+        const originRel = cameraTransform(p.pos, camera);
+        const originPr = project(originRel, w, h);
+        if (!originPr) {
+          return;
+        }
+        const streakWorld = inbound ? add(p.pos, scale(p.drift, 1 - age)) : worldPos;
+        const streakPr = project(cameraTransform(streakWorld, camera), w, h) || originPr;
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        const flash = inbound
+          ? Math.pow(smoothstep(.62, .9, age) * (1 - smoothstep(.94, 1, age)), .72)
+          : Math.pow(1 - clamp(age / .52, 0, 1), 1.85);
+        const blip = inbound ? Math.pow(smoothstep(.72, 1, age), .82) : Math.pow(1 - age, 1.35);
+        const r = clamp((p.radius || 24) * originPr.s * (2.45 * flash + .18 * blip), 1.4, 86);
+        const streakAlpha = inbound
+          ? clamp(Math.sin(Math.PI * clamp(age / .9, 0, 1)) * (1 - smoothstep(.86, 1, age)) * (p.alpha || .9), 0, .9)
+          : clamp(Math.sin(Math.PI * clamp((age - .08) / .92, 0, 1)) * (p.alpha || .9), 0, .85);
+        if (streakAlpha > .02) {
+          const from = inbound ? streakPr : originPr;
+          const to = inbound ? originPr : streakPr;
+          const grad = ctx.createLinearGradient(from.x, from.y, to.x, to.y);
+          grad.addColorStop(0, inbound ? "rgba(80,170,255,0)" : `rgba(255,255,255,${streakAlpha * .82})`);
+          grad.addColorStop(.22, `rgba(150,232,255,${streakAlpha * .55})`);
+          grad.addColorStop(.72, `rgba(80,170,255,${streakAlpha * .22})`);
+          grad.addColorStop(1, inbound ? `rgba(255,255,255,${streakAlpha * .9})` : "rgba(80,170,255,0)");
+          ctx.globalCompositeOperation = "lighter";
+          ctx.shadowBlur = 18 * streakAlpha;
+          ctx.shadowColor = "rgba(120,220,255,.72)";
+          ctx.strokeStyle = grad;
+          ctx.lineWidth = clamp(2.2 * originPr.s * (1 + flash * 2.5), 1.2, 9);
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.moveTo(from.x, from.y);
+          ctx.lineTo(to.x, to.y);
+          ctx.stroke();
+        }
+        if (flash > .015 || blip > .02) {
+          const g = ctx.createRadialGradient(originPr.x, originPr.y, 0, originPr.x, originPr.y, r * 4.8);
+          g.addColorStop(0, `rgba(255,255,255,${clamp((p.alpha || .9) * (1.28 * flash + .42 * blip), 0, 1)})`);
+          g.addColorStop(.16, `rgba(222,250,255,${clamp((p.alpha || .9) * (.78 * flash + .22 * blip), 0, 1)})`);
+          g.addColorStop(.55, `rgba(92,190,255,${(p.alpha || .9) * (.28 * flash + .07 * blip)})`);
+          g.addColorStop(1, "rgba(84,180,255,0)");
+          ctx.globalCompositeOperation = "lighter";
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(originPr.x, originPr.y, r * 4.8, 0, TAU);
+          ctx.fill();
+          ctx.fillStyle = `rgba(255,255,255,${clamp(.95 * flash + .48 * blip, 0, 1)})`;
+          ctx.beginPath();
+          ctx.arc(originPr.x, originPr.y, clamp(r * .3, 1.1, 5.2), 0, TAU);
+          ctx.fill();
+        }
+        ctx.restore();
+        return;
+      }
       if (!pr) return;
       ctx.save();
       ctx.globalCompositeOperation = "screen";
@@ -18868,6 +19395,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
             <span class="value"><select class="btn mini" data-dev-world="station">${optionList(DEV_STATION_TYPES, game.devStationType)}</select></span>
           </div>
         </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
+          <button class="btn mini" data-cheat="targetHyperspaceOut" ${!game.targetObject || game.docked ? "disabled" : ""}>Target Hyperspace Out</button>
+          <button class="btn mini" data-cheat="viewArrival" ${game.docked ? "disabled" : ""}>Spawn View Arrival</button>
+        </div>
       </div>
       <div class="notice">
         Mission test rig
@@ -18998,6 +19529,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         else if (action === "cleanLegal") cheatClearLegalStatus();
         else if (action === "godMode") cheatToggleGodMode();
         else if (action === "armada") spawnArmada();
+        else if (action === "targetHyperspaceOut") forceTargetHyperspaceOut();
+        else if (action === "viewArrival") spawnDevViewArrival();
       }));
       panelBody.querySelectorAll("[data-cheat-equip]").forEach((b) => b.addEventListener("click", () => {
         cheatSetEquipment(b.dataset.cheatEquip, b.dataset.cheatEquipState === "add");
@@ -19473,7 +20006,11 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       installRenderBenchApi();
     } else {
       window.addEventListener("resize", resizeCanvases);
-      window.addEventListener("pointerdown", () => eliteAudio.resume(), { capture: true });
+      const unlockAudioFromGesture = () => eliteAudio.unlock();
+      window.addEventListener("pointerdown", unlockAudioFromGesture, { capture: true });
+      window.addEventListener("click", unlockAudioFromGesture, { capture: true });
+      window.addEventListener("touchstart", unlockAudioFromGesture, { capture: true, passive: true });
+      window.addEventListener("keydown", unlockAudioFromGesture, { capture: true });
       const splashEl = byId("splash");
       const gettingStartedEl = byId("gettingStarted");
       let shouldAskCommanderName = false;
