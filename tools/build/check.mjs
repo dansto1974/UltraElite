@@ -44,6 +44,8 @@ for (const file of Object.values(files)) {
   }
 }
 
+await import("./check-ship-builder-controls.mjs");
+
 const devHtml = read(files.devHtml);
 const normalizedDevHtml = devHtml.replace(/\?v=[^"]+/g, "");
 const template = read(files.template);

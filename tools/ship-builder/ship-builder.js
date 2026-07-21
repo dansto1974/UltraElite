@@ -112,7 +112,6 @@ const els = {
   redoEditBtn: document.getElementById("redoEditBtn"),
   gamePreviewFrame: document.getElementById("gamePreviewFrame"),
   gamePreviewReadout: document.getElementById("gamePreviewReadout"),
-  previewTrustBadge: document.getElementById("previewTrustBadge"),
   previewTrustReadout: document.getElementById("previewTrustReadout"),
   benchmarkRendererBtn: document.getElementById("benchmarkRendererBtn"),
   spinPreviewBtn: document.getElementById("spinPreviewBtn"),
@@ -260,7 +259,6 @@ const els = {
   buildCompleteMessage: document.getElementById("buildCompleteMessage"),
   closeBuildCompleteBtn: document.getElementById("closeBuildCompleteBtn"),
   testBuildDevHtmlBtn: document.getElementById("testBuildDevHtmlBtn"),
-  saveModelAssetBtn: document.getElementById("saveModelAssetBtn"),
   saveModelTopBtn: document.getElementById("saveModelTopBtn"),
   rebuildAssetsBtn: document.getElementById("rebuildAssetsBtn"),
   rebuildGameTopBtn: document.getElementById("rebuildGameTopBtn"),
@@ -2957,11 +2955,6 @@ function updatePreviewTrustUi() {
   els.mainPreviewStack?.classList.toggle("is-game-renderer", renderer);
   els.mainPreviewStack?.classList.toggle("is-game-overlay", overlay);
   els.mainPreviewStack?.classList.toggle("is-builder-diagnostic", !renderer);
-  if (els.previewTrustBadge) {
-    els.previewTrustBadge.classList.toggle("is-trusted", renderer);
-    els.previewTrustBadge.classList.toggle("is-diagnostic", !renderer);
-    els.previewTrustBadge.textContent = renderer ? "REAL RENDERER" : "BUILDER DIAGNOSTIC";
-  }
   if (!els.previewTrustReadout) return;
   if (!renderer) {
     els.previewTrustReadout.textContent = `${previewModeLabel(mode)} | fallback preview path`;
@@ -11543,7 +11536,6 @@ function bindEvents() {
   els.clearBitmapShelfBtn.addEventListener("click", clearBitmapShelf);
   els.refreshAssetShelfBtn?.addEventListener("click", loadAssetShelf);
   els.loadCurrentShipAssetsBtn?.addEventListener("click", loadCurrentShipAssets);
-  els.saveModelAssetBtn?.addEventListener("click", saveModelAsset);
   els.rebuildAssetsBtn?.addEventListener("click", rebuildGameFiles);
   els.uploadTopSkinBtn?.addEventListener("click", () => uploadSkinSide("top"));
   els.uploadBottomSkinBtn?.addEventListener("click", () => uploadSkinSide("bottom"));
