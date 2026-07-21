@@ -267,7 +267,7 @@ if (renderBenchHtml.includes('value="both"') || renderQaHtml.includes('value="bo
 if (!js.includes("if (wireDetails ? !renderIntent.wire : !renderIntent.solid) continue;")) {
   throw new Error("Solid/Ultra rendering must use precomputed detailRender mode intent, so line/polyline details do not draw over bitmap hulls.");
 }
-if (!js.includes("detail.lift ?? .5") || !builderJs.includes("lift: 0.5")) {
+if (!js.includes("detail.lift ?? .5") || (!builderJs.includes("lift: 0.5") && !builderJs.includes("DETAIL_TYPE_STATION_ENTRANCE ? 0 : 0.5"))) {
   throw new Error("Model detail lift defaults must stay at 0.5 so editor/game details sit close to bitmap hulls.");
 }
 
@@ -503,9 +503,10 @@ function expectedDetailRender(detail) {
   const beacon = type === "beacon";
   const engine = type === "engine";
   const windowDetail = type === "window";
+  const stationEntrance = type === "stationEntrance";
   return {
-    kind: beacon ? "beacon" : line ? "line" : "poly",
-    solid: !line,
+    kind: stationEntrance ? "stationEntrance" : beacon ? "beacon" : line ? "line" : "poly",
+    solid: !line && !stationEntrance,
     wire: !beacon,
     glow: engine,
     glass: windowDetail,
@@ -532,6 +533,7 @@ function expectedEdgeKindsForBlueprint(data, blueprint) {
     if (declaredKind && !validSourceEdgeKind(declaredKind)) {
       throw new Error(`${data.id || "model"} editable edge ${index} has invalid kind "${declaredKind}". Use "edge", "stick", or "stationEntrance" so authored intent stays explicit.`);
     }
+    if (declaredKind === "stationEntrance") continue;
     const [sourceA, sourceB] = sourceEdgeEnds(edge);
     const a = indexById.get(sourceA);
     const b = indexById.get(sourceB);

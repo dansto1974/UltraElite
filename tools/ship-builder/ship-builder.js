@@ -6,6 +6,7 @@ const UV_TILE_WARN_COUNT = 64;
 const UV_TILE_DANGER_COUNT = 160;
 const UV_TILE_RUNTIME_LIMIT = 441;
 const EDGE_KIND_STATION_ENTRANCE = "stationEntrance";
+const DETAIL_TYPE_STATION_ENTRANCE = "stationEntrance";
 const STANDARD_VIEW = Object.freeze({ rx: -0.35, ry: 0.72 });
 const PROJECTION_VIEW_PRESETS = Object.freeze({
   front: { rx: 0, ry: Math.PI, label: "FRONT" },
@@ -53,6 +54,12 @@ const VIEW_CUBE_CORNER_PRESETS = Object.freeze({
     br: { vector: { x: 1, y: -1, z: -1 }, adjacent: ["right", "back"], label: "BOTTOM BACK RIGHT CORNER" }
   }
 });
+const TOOL_WINDOW_TITLES = Object.freeze({
+  edit: "Controls",
+  paint: "Controls",
+  model: "File",
+  game: "Game Info"
+});
 const els = {
   shipId: document.getElementById("shipId"),
   shipName: document.getElementById("shipName"),
@@ -64,6 +71,12 @@ const els = {
   librarySelector: document.getElementById("librarySelector"),
   loadLibraryModelBtn: document.getElementById("loadLibraryModelBtn"),
   toolsPanel: document.getElementById("toolsPanel"),
+  toolWindowTitle: document.getElementById("toolWindowTitle"),
+  closeToolsWindowBtn: document.getElementById("closeToolsWindowBtn"),
+  fileActionsWindow: document.getElementById("fileActionsWindow"),
+  closeFileWindowBtn: document.getElementById("closeFileWindowBtn"),
+  gameInfoWindow: document.getElementById("gameInfoWindow"),
+  closeGameInfoWindowBtn: document.getElementById("closeGameInfoWindowBtn"),
   workspace: document.getElementById("workspace"),
   exportPanel: document.getElementById("exportPanel"),
   toggleExportBtn: document.getElementById("toggleExportBtn"),
@@ -110,12 +123,13 @@ const els = {
   fullscreenViewBtn: document.getElementById("fullscreenViewBtn"),
   undoEditBtn: document.getElementById("undoEditBtn"),
   redoEditBtn: document.getElementById("redoEditBtn"),
+  openFileWindowBtn: document.getElementById("openFileWindowBtn"),
+  openGameInfoWindowBtn: document.getElementById("openGameInfoWindowBtn"),
   gamePreviewFrame: document.getElementById("gamePreviewFrame"),
   gamePreviewReadout: document.getElementById("gamePreviewReadout"),
   previewTrustReadout: document.getElementById("previewTrustReadout"),
   benchmarkRendererBtn: document.getElementById("benchmarkRendererBtn"),
   spinPreviewBtn: document.getElementById("spinPreviewBtn"),
-  toggleBlueprintBtn: document.getElementById("toggleBlueprintBtn"),
   spinPreviewModal: document.getElementById("spinPreviewModal"),
   spinPreviewFrame: document.getElementById("spinPreviewFrame"),
   closeSpinPreviewBtn: document.getElementById("closeSpinPreviewBtn"),
@@ -219,13 +233,10 @@ const els = {
   loadCurrentShipAssetsBtn: document.getElementById("loadCurrentShipAssetsBtn"),
   selectedAssetCard: document.getElementById("selectedAssetCard"),
   selectedAssetThumb: document.getElementById("selectedAssetThumb"),
-  selectedAssetTitle: document.getElementById("selectedAssetTitle"),
-  selectedAssetMeta: document.getElementById("selectedAssetMeta"),
   openUvPropertiesBtn: document.getElementById("openUvPropertiesBtn"),
   uvPropertiesModal: document.getElementById("uvPropertiesModal"),
   uvPropertiesReadout: document.getElementById("uvPropertiesReadout"),
   closeUvPropertiesBtn: document.getElementById("closeUvPropertiesBtn"),
-  openObjectBrowserBtn: document.getElementById("openObjectBrowserBtn"),
   openBenchmarkBrowserBtn: document.getElementById("openBenchmarkBrowserBtn"),
   browseModelsBtn: document.getElementById("browseModelsBtn"),
   profileSideCount: document.getElementById("profileSideCount"),
@@ -246,7 +257,6 @@ const els = {
   modelBrowserNewProfileBtn: document.getElementById("modelBrowserNewProfileBtn"),
   modelBrowserBenchmarkBtn: document.getElementById("modelBrowserBenchmarkBtn"),
   closeModelBrowserBtn: document.getElementById("closeModelBrowserBtn"),
-  openAssetLibraryBtn: document.getElementById("openAssetLibraryBtn"),
   openAssetLibraryPaintBtn: document.getElementById("openAssetLibraryPaintBtn"),
   closeAssetLibraryBtn: document.getElementById("closeAssetLibraryBtn"),
   assetLibraryModal: document.getElementById("assetLibraryModal"),
@@ -273,7 +283,6 @@ const els = {
   downloadFaceTemplateBtn: document.getElementById("downloadFaceTemplateBtn")
 };
 
-const BLUEPRINT_VISIBLE_STORAGE_KEY = "ultraEliteShipBuilderBlueprintVisible";
 const SELECTABLE_TYPES = ["vertex", "face", "edge", "detail", "uv", "group"];
 const BUILDER_PRELOAD_MIN_MS = 850;
 const BUILDER_PRELOAD_TIMEOUT_MS = 2800;
@@ -287,19 +296,12 @@ const GAME_PREVIEW_PERSPECTIVE_SCALE = 0.84;
 const GAME_PREVIEW_PERSPECTIVE_SCALE_MAX = 24;
 const GAME_PREVIEW_WARMUP_RETRY_MAX = 12;
 const SELECTION_EDGE_PICK_RADIUS = 28;
+const MAIN_VIEW_DRAG_ROTATE_THRESHOLD = 4;
 const MIRROR_AFFECTED_COLOR = "#ff8a3d";
 const MIRROR_AFFECTED_FILL = "rgba(255,138,61,.13)";
 const EDIT_HISTORY_MAX = 120;
 const SAFARI_FULLSCREEN_KEY_GUARD = typeof navigator !== "undefined"
   && /^((?!chrome|android).)*safari/i.test(navigator.userAgent || "");
-
-function readBlueprintVisiblePreference() {
-  try {
-    return localStorage.getItem(BLUEPRINT_VISIBLE_STORAGE_KEY) !== "0";
-  } catch (error) {
-    return true;
-  }
-}
 
 const state = {
   mode: "vertex",
@@ -353,6 +355,7 @@ const state = {
   selectedFaceIds: new Set(),
   facePropertyClipboard: null,
   selectedEdgeIds: new Set(),
+  selectedDetailIds: new Set(),
   pick: [],
   surfaceInsertShape: "polygon",
   surfaceInsertPreview: false,
@@ -364,7 +367,6 @@ const state = {
   viewCubeSuppressClick: false,
   activeViewCubeCornerKey: "",
   viewTweenFrame: 0,
-  orthoScale: 1,
   openModelBrowserAfterPreload: false,
   builderPreload: {
     visible: true,
@@ -380,7 +382,6 @@ const state = {
     hideTimer: 0,
     timeoutTimer: 0
   },
-  showBlueprints: false,
   drag: null
 };
 
@@ -897,6 +898,111 @@ function selectedFacePropertyTargets() {
   if (grouped.length) return grouped;
   const face = selectedFace();
   return face ? [face] : [];
+}
+
+function uniqueVertexIds(ids) {
+  const seen = new Set();
+  return ids
+    .map(Number)
+    .filter((id) => Number.isFinite(id) && vertexById(id) && !seen.has(id) && seen.add(id));
+}
+
+function facesUsingVertex(vertexId) {
+  return state.faces.filter((face) => face.verts.includes(vertexId));
+}
+
+function setVertexGroup(vertexIds, statusText = "") {
+  const ids = uniqueVertexIds(vertexIds);
+  if (!ids.length) {
+    setStatus("NO VERTICES FOUND FOR GROUP.");
+    return false;
+  }
+  cancelSurfaceInsertPreview({ redraw: false });
+  state.mode = "vertex";
+  state.pick = ids;
+  state.selected = { type: "vertex", id: ids.at(-1) };
+  state.selectedFaceIds.clear();
+  state.selectedEdgeIds.clear();
+  state.selectedDetailIds.clear();
+  setToolTab("edit", { redraw: false });
+  setStatus(statusText || `VERTEX GROUP SELECTED (${ids.length} VERTICES).`);
+  syncControlsWindowForSelection({ render: false });
+  renderAll();
+  return true;
+}
+
+function setVertexGroupFromFace(face) {
+  if (!face) return false;
+  return setVertexGroup(face.verts, `FACE #${face.id} VERTICES SELECTED AS VERTEX GROUP (${face.verts.length}).`);
+}
+
+function selectAdjacentFacesForVertex(vertex) {
+  if (!vertex) return false;
+  const faces = facesUsingVertex(vertex.id);
+  if (!faces.length) {
+    setStatus(`NO FACES USE VERTEX #${vertex.id}.`);
+    return false;
+  }
+  cancelSurfaceInsertPreview({ redraw: false });
+  state.mode = "face";
+  state.pick = [];
+  state.selectedEdgeIds.clear();
+  state.selectedDetailIds.clear();
+  state.selectedFaceIds = new Set(faces.map((face) => face.id));
+  state.selected = { type: "face", id: faces.at(-1).id };
+  setToolTab("edit", { redraw: false });
+  setStatus(`ADJACENT FACES SELECTED FROM VERTEX #${vertex.id} (${faces.length}).`);
+  syncControlsWindowForSelection({ render: false });
+  renderAll();
+  return true;
+}
+
+function clearVertexGroup(statusText = "VERTEX GROUP CLEARED.") {
+  const hadGroup = state.pick.length > 0;
+  state.pick = [];
+  if (state.selected?.type === "vertex" || state.selected?.type === "vertexGroup") state.selected = null;
+  if (hadGroup) {
+    setStatus(statusText);
+    renderAll();
+  }
+}
+
+function createFaceFromVertexGroup() {
+  if (state.pick.length < 3) {
+    setStatus("PICK AT LEAST THREE VERTICES.");
+    return false;
+  }
+  addFaceMirrored(state.pick);
+  state.pick = [];
+  setStatus("FACE ADDED FROM VERTEX GROUP.");
+  renderAll();
+  return true;
+}
+
+function createLineFromVertexGroup(kind = "edge") {
+  if (state.pick.length < 2) {
+    setStatus("PICK TWO VERTICES.");
+    return false;
+  }
+  addEdgeMirrored(state.pick[0], state.pick[1], kind);
+  state.pick = [];
+  setStatus(`${kind === "stick" ? "STICK" : "EDGE"} ADDED FROM VERTEX GROUP.`);
+  renderAll();
+  return true;
+}
+
+function createPointPairFromAction() {
+  const v = addPointPair(60, 0, 0);
+  selectVertex(v.id);
+  setStatus("POINT PAIR ADDED.");
+  return true;
+}
+
+function createCenterPointFromAction() {
+  const v = addCenterPoint(0, 0);
+  selectVertex(v.id);
+  setStatus("CENTRE POINT ADDED.");
+  return true;
 }
 
 function uvPropertyTargets() {
@@ -1500,6 +1606,15 @@ function faceNormal(face) {
   return vec(0, 0, 1);
 }
 
+function normalFromPoints(points) {
+  if (!Array.isArray(points) || points.length < 3) return vec(0, 0, 1);
+  for (let i = 1; i < points.length - 1; i++) {
+    const candidate = cross(sub(points[i], points[0]), sub(points[i + 1], points[0]));
+    if (len(candidate) > EPS) return norm(candidate);
+  }
+  return vec(0, 0, 1);
+}
+
 function faceFacesBuilderCamera(face) {
   const n = rotatePoint(faceNormal(face));
   return n.z < -0.015;
@@ -1535,6 +1650,41 @@ function faceBasis(face) {
   let up = norm(cross(normal, right));
   if (len(up) < EPS) up = vec(0, 1, 0);
   return { center, normal, right, up };
+}
+
+function orderedFaceVertexIds(face) {
+  const ids = [...new Set(face?.verts || [])].filter((id) => vertexById(id));
+  if (ids.length < 3) return ids;
+  const basis = faceBasis({ ...face, verts: ids });
+  const ordered = ids
+    .map((id) => {
+      const vertex = vertexById(id);
+      const offset = sub(vec(vertex.x, vertex.y, vertex.z), basis.center);
+      return {
+        id,
+        angle: Math.atan2(dot(offset, basis.up), dot(offset, basis.right))
+      };
+    })
+    .sort((a, b) => a.angle - b.angle)
+    .map((item) => item.id);
+  const originalNormal = faceNormal({ ...face, verts: ids });
+  const orderedNormal = faceNormal({ ...face, verts: ordered });
+  return dot(originalNormal, orderedNormal) < 0 ? ordered.reverse() : ordered;
+}
+
+function faceWithOrderedVertices(face, orderedIds = orderedFaceVertexIds(face)) {
+  const copy = { ...face, verts: orderedIds };
+  const originalIndexById = new Map((face?.verts || []).map((id, index) => [id, index]));
+  const remapVertexArray = (value) => {
+    if (!Array.isArray(value) || value.length !== face.verts.length) return null;
+    const remapped = orderedIds.map((id) => value[originalIndexById.get(id)]).filter((item) => item != null);
+    return remapped.length === orderedIds.length ? remapped.map((item) => Array.isArray(item) ? [...item] : item) : null;
+  };
+  const bitmapUv = remapVertexArray(face.bitmapUv);
+  if (bitmapUv) copy.bitmapUv = bitmapUv;
+  const bitmapUvTemplate = remapVertexArray(face.bitmapUvTemplate);
+  if (bitmapUvTemplate) copy.bitmapUvTemplate = bitmapUvTemplate;
+  return copy;
 }
 
 function pairedSurfaceInput(name) {
@@ -1821,6 +1971,7 @@ function addSurfaceShapeToSelectedFace() {
   }
   state.pick = [];
   state.selectedFaceIds.clear();
+  state.selectedDetailIds.clear();
   state.mode = "edge";
   syncModeUi("edge");
   if (edges.length) {
@@ -1896,6 +2047,7 @@ function prepareFaceExtrudePreview(mode = "cap") {
   state.mode = "face";
   state.selected = { type: "face", id: face.id };
   state.selectedEdgeIds.clear();
+  state.selectedDetailIds.clear();
   setFaceExtrudeMode(mode);
   setFaceExtrudeInputValue("Taper", 0);
   if (els.faceExtrudeDeleteSource) els.faceExtrudeDeleteSource.checked = true;
@@ -1986,10 +2138,11 @@ function applyExtrudeSideFacePaint(sourceFace, sideFace, sidePoints) {
 
 function extrudeFaceGeometry(face, config, mirrored = false) {
   const sourceFaceId = face.id;
-  const oldIds = [...face.verts];
+  const oldIds = orderedFaceVertexIds(face);
   const oldVerts = oldIds.map(vertexById);
   if (oldVerts.length < 3 || oldVerts.length !== oldIds.length) return null;
-  const newPoints = extrudedFacePoints(face, config);
+  const extrudeFace = faceWithOrderedVertices(face, oldIds);
+  const newPoints = extrudedFacePoints(extrudeFace, config);
   if (newPoints.length !== oldIds.length) return null;
   const pointMode = cleanFaceExtrudeMode(config.mode) === "point";
   const newVerts = pointMode
@@ -2028,7 +2181,7 @@ function extrudeFaceGeometry(face, config, mirrored = false) {
       ];
     const sideFace = addFace(sideIds, mirrored);
     if (sideFace) {
-      applyExtrudeSideFacePaint(face, sideFace, sidePoints);
+      applyExtrudeSideFacePaint(extrudeFace, sideFace, sidePoints);
       sideFaces.push(sideFace);
     }
     addEdge(oldIds[i], pointMode ? newIds[0] : newIds[i], "edge", mirrored);
@@ -2067,6 +2220,7 @@ function confirmFaceExtrudePreview() {
     : { type: "vertex", id: primaryResult.newVerts[0].id };
   state.selectedFaceIds.clear();
   state.selectedEdgeIds.clear();
+  state.selectedDetailIds.clear();
   state.pick = [];
   setFaceExtrudePreview(false);
   const pointMode = cleanFaceExtrudeMode(config.mode) === "point";
@@ -2254,8 +2408,9 @@ function addDetail(type) {
       state.mode = "detail";
       syncModeUi("detail");
       state.selected = { type: "detail", id: details[0].id };
+      state.selectedDetailIds = new Set(details.map((detail) => detail.id));
     }
-    setStatus(`${count} PANEL LINE${count === 1 ? "" : "S"} ADDED. DETAIL INSET READY.`);
+    setStatus(`${count} PANEL LINE${count === 1 ? "" : "S"} ADDED AS SURFACE DETAIL GROUP. DETAIL INSET READY.`);
     renderAll();
     return;
   }
@@ -2323,12 +2478,20 @@ function inferFaceForEdgeVertices(vertexIds) {
 function detailColorForConvertedEdge(type) {
   if (type === "engine") return "#f7fff7";
   if (type === "window") return "#101915";
+  if (type === DETAIL_TYPE_STATION_ENTRANCE) return "#06131f";
   return "#ffd936";
 }
 
 function convertedEdgeDetailLabel(type) {
   if (type === "panel") return "SURFACE DETAIL";
+  if (type === DETAIL_TYPE_STATION_ENTRANCE) return "STATION ENTRANCE";
   return type.toUpperCase();
+}
+
+function detailTypeLabel(type) {
+  if (type === "panel") return "surface detail";
+  if (type === DETAIL_TYPE_STATION_ENTRANCE) return "station entrance";
+  return type || "detail";
 }
 
 function edgeKindLabel(kind) {
@@ -2369,11 +2532,83 @@ function detailEdgePairsForConversion(detail) {
   for (let i = 0; i < ids.length - 1; i++) {
     if (ids[i] !== ids[i + 1]) pairs.push([ids[i], ids[i + 1]]);
   }
-  const closedDetail = detail?.type === "window" || detail?.type === "engine";
+  const closedDetail = detail?.type === "window" || detail?.type === "engine" || detail?.type === DETAIL_TYPE_STATION_ENTRANCE;
   if (closedDetail && ids.length > 2 && ids[0] !== ids[ids.length - 1]) {
     pairs.push([ids[ids.length - 1], ids[0]]);
   }
   return pairs;
+}
+
+function detailIsSurfaceLine(detail) {
+  return !!detail && (detail.type === "panel" || detail.type === "line" || detail.type === "polyline");
+}
+
+function detailComponentVertexIds(detail) {
+  return [...new Set(detailConvertibleVertexIds(detail))];
+}
+
+function surfaceDetailComponentFrom(detail) {
+  if (!detailIsSurfaceLine(detail)) return detail ? [detail] : [];
+  const candidates = state.details.filter((item) =>
+    detailIsSurfaceLine(item) &&
+    item.faceId === detail.faceId &&
+    detailComponentVertexIds(item).length >= 2
+  );
+  const remaining = new Set(candidates.map((item) => item.id));
+  const component = [];
+  const stack = [detail];
+  while (stack.length) {
+    const item = stack.pop();
+    if (!item || !remaining.delete(item.id)) continue;
+    component.push(item);
+    const itemVertices = new Set(detailComponentVertexIds(item));
+    for (const candidate of candidates) {
+      if (!remaining.has(candidate.id)) continue;
+      if (detailComponentVertexIds(candidate).some((id) => itemVertices.has(id))) stack.push(candidate);
+    }
+  }
+  return component;
+}
+
+function selectedDetailSetDetails() {
+  if (state.selected?.type !== "detail") return [];
+  const selectedIds = state.selectedDetailIds?.size
+    ? state.selectedDetailIds
+    : new Set([state.selected.id]);
+  return state.details.filter((detail) => selectedIds.has(detail.id));
+}
+
+function selectConnectedSurfaceDetails(detail) {
+  if (!detailIsSurfaceLine(detail)) {
+    setStatus("SELECT A SURFACE DETAIL LINE FIRST.");
+    return false;
+  }
+  const component = surfaceDetailComponentFrom(detail);
+  if (component.length < 2) {
+    setStatus("NO CONNECTED SURFACE DETAIL LINES FOUND.");
+    return false;
+  }
+  cancelSurfaceInsertPreview({ redraw: false });
+  state.mode = "detail";
+  state.selected = { type: "detail", id: detail.id };
+  state.selectedDetailIds = new Set(component.map((item) => item.id));
+  state.pick = [];
+  state.selectedFaceIds.clear();
+  state.selectedEdgeIds.clear();
+  setToolTab("edit", { redraw: false });
+  syncControlsWindowForSelection({ render: false });
+  setStatus(`SURFACE DETAIL GROUP SELECTED (${component.length} LINES).`);
+  renderAll();
+  return true;
+}
+
+function clearSurfaceDetailGroup(statusText = "SURFACE DETAIL GROUP CLEARED.") {
+  const hadGroup = state.selectedDetailIds.size > 1;
+  state.selectedDetailIds.clear();
+  if (hadGroup) {
+    setStatus(statusText);
+    renderAll();
+  }
 }
 
 function selectedEdgeConversionComponent(edge) {
@@ -2387,6 +2622,10 @@ function selectedEdgeConversionComponent(edge) {
 }
 
 function convertSelectedEdgeKind(kind) {
+  if (kind === EDGE_KIND_STATION_ENTRANCE) {
+    convertSelectedEdgeToDetail(DETAIL_TYPE_STATION_ENTRANCE);
+    return;
+  }
   const selectedEdge = state.selected?.type === "edge"
     ? state.edges.find((edge) => edge.id === state.selected.id)
     : null;
@@ -2410,6 +2649,7 @@ function convertSelectedEdgeKind(kind) {
     if (targetIds.has(edge.id)) edge.kind = kind;
   });
   state.selectedEdgeIds = new Set([...targetIds]);
+  state.selectedDetailIds.clear();
   state.mode = "edge";
   syncModeUi("edge");
   setStatus(`${targetIds.size} EDGE${targetIds.size === 1 ? "" : "S"} CONVERTED TO ${edgeKindLabel(kind)}.`);
@@ -2426,23 +2666,25 @@ function makeConvertedEdgeDetail(type, edges, preferredEdge) {
     setStatus(`${convertedEdgeDetailLabel(type)} CONVERSION NEEDS A CLOSED EDGE LOOP.`);
     return null;
   }
-  if (vertexIds.length < (type === "panel" ? 2 : 3)) {
+  if (vertexIds.length < (type === "panel" ? 2 : type === DETAIL_TYPE_STATION_ENTRANCE ? 4 : 3)) {
     setStatus(`${convertedEdgeDetailLabel(type)} CONVERSION NEEDS MORE LOOP POINTS.`);
     return null;
   }
   const face = inferFaceForEdgeVertices(vertexIds);
-  if (!face) {
+  if (!face && type !== DETAIL_TYPE_STATION_ENTRANCE) {
     setStatus("SELECTED EDGE LOOP DOES NOT SHARE A SURFACE FACE.");
     return null;
   }
+  const points = vertexIds.map(vertexById).filter(Boolean).map((v) => vec(v.x, v.y, v.z));
+  const normal = face ? faceNormal(face) : normalFromPoints(points);
   return {
     id: newId(),
     type,
-    faceId: face.id,
+    ...(face ? { faceId: face.id } : {}),
     indices: vertexIds,
     color: detailColorForConvertedEdge(type),
-    normal: toArray(faceNormal(face)),
-    lift: 0.5,
+    normal: toArray(normal),
+    lift: type === DETAIL_TYPE_STATION_ENTRANCE ? 0 : 0.5,
     ...(type === "engine" ? { stroke: "#ffffff" } : {})
   };
 }
@@ -2500,23 +2742,29 @@ function convertSelectedDetailToEdges(kind = "edge") {
     setStatus("SELECT A SURFACE DETAIL FIRST.");
     return;
   }
-  const primaryPairs = detailEdgePairsForConversion(selectedDetail);
+  const primaryDetails = selectedDetailSetDetails();
+  const primaryPairs = primaryDetails.flatMap(detailEdgePairsForConversion);
   if (!primaryPairs.length) {
     setStatus("SELECTED DETAIL HAS NO SOURCE VERTEX LOOP TO CONVERT.");
     return;
   }
-  const detailsToRemove = new Set([selectedDetail.id]);
+  const detailsToRemove = new Set(primaryDetails.map((detail) => detail.id));
   const convertedEdges = [];
+  const convertedKeys = new Set();
   const addConvertedPairs = (pairs, mirrored = false) => {
     for (const [a, b] of pairs) {
+      const key = `${mirrored ? "m" : "p"}:${edgeKey(a, b)}`;
+      if (!key || convertedKeys.has(key)) continue;
+      convertedKeys.add(key);
       const edge = addEdge(a, b, kind, mirrored);
       if (edge) convertedEdges.push(edge);
     }
   };
   addConvertedPairs(primaryPairs, false);
   if (mirrorActionsEnabled()) {
-    const mirrorDetail = mirroredDetailOf(selectedDetail);
-    if (mirrorDetail && mirrorDetail.id !== selectedDetail.id) {
+    for (const detail of primaryDetails) {
+      const mirrorDetail = mirroredDetailOf(detail);
+      if (!mirrorDetail || detailsToRemove.has(mirrorDetail.id)) continue;
       const mirrorPairs = detailEdgePairsForConversion(mirrorDetail);
       if (mirrorPairs.length) {
         addConvertedPairs(mirrorPairs, true);
@@ -2534,7 +2782,8 @@ function convertSelectedDetailToEdges(kind = "edge") {
   syncModeUi("edge");
   state.selected = { type: "edge", id: convertedEdges[0].id };
   state.selectedEdgeIds = new Set(convertedEdges.map((edge) => edge.id));
-  setStatus(`${detailsToRemove.size > 1 ? "MIRRORED " : ""}${selectedDetail.type.toUpperCase()} DETAIL CONVERTED TO ${convertedEdges.length} ${edgeKindLabel(kind)} EDGE${convertedEdges.length === 1 ? "" : "S"}.`);
+  state.selectedDetailIds.clear();
+  setStatus(`${detailsToRemove.size > 1 ? `${detailsToRemove.size} ` : ""}${detailTypeLabel(selectedDetail.type).toUpperCase()} DETAIL${detailsToRemove.size === 1 ? "" : "S"} CONVERTED TO ${convertedEdges.length} ${edgeKindLabel(kind)} EDGE${convertedEdges.length === 1 ? "" : "S"}.`);
   renderAll();
 }
 
@@ -2734,26 +2983,6 @@ function setPreviewRenderMode(value) {
   }
   renderAll();
   setStatus(`${previewModeLabel(value).toUpperCase()} VIEW.`);
-}
-
-function setBlueprintsVisible(visible, options = {}) {
-  state.showBlueprints = !!visible;
-  const stage = els.mainPreviewStack?.closest(".stage");
-  stage?.classList.toggle("blueprints-hidden", !state.showBlueprints);
-  if (els.toggleBlueprintBtn) {
-    els.toggleBlueprintBtn.classList.toggle("active", state.showBlueprints);
-    els.toggleBlueprintBtn.classList.toggle("is-off", !state.showBlueprints);
-    els.toggleBlueprintBtn.setAttribute("aria-pressed", state.showBlueprints ? "true" : "false");
-    els.toggleBlueprintBtn.setAttribute("aria-label", state.showBlueprints ? "Blueprints on" : "Blueprints off");
-    els.toggleBlueprintBtn.title = state.showBlueprints ? "Hide blueprints" : "Show blueprints";
-  }
-  if (options.persist) {
-    try {
-      localStorage.setItem(BLUEPRINT_VISIBLE_STORAGE_KEY, state.showBlueprints ? "1" : "0");
-    } catch (error) {
-      // Non-fatal: the toggle still works for this session.
-    }
-  }
 }
 
 function previewProjectionPointToCanvas(point, canvas) {
@@ -3009,16 +3238,6 @@ function projectedDetailPointsForMain(detail, canvas = els.mainView) {
     return previewDetail.points.map((point) => previewProjectionPointToCanvas(point, canvas)).filter(Boolean);
   }
   return detailModelPoints(detail).map((p) => project3d(p, canvas)).filter(Boolean);
-}
-
-function orthoProject(v, canvas, viewName) {
-  const radius = modelRadius() || 120;
-  const scale = Math.min(canvas.width, canvas.height) / (radius * 2.45) * state.orthoScale;
-  let a, b;
-  if (viewName === "top") { a = v.x; b = v.z; }
-  else if (viewName === "front") { a = v.x; b = v.y; }
-  else { a = v.z; b = v.y; }
-  return { x: canvas.width / 2 + a * scale, y: canvas.height / 2 - b * scale, z: 0 };
 }
 
 function modelRadius() {
@@ -4217,8 +4436,10 @@ function updateSelectedBitmapReadout() {
       els.selectedAssetThumb.removeAttribute("src");
       els.selectedAssetThumb.classList.add("is-empty");
     }
-    if (els.selectedAssetTitle) els.selectedAssetTitle.textContent = "No asset selected";
-    if (els.selectedAssetMeta) els.selectedAssetMeta.textContent = "Open the library to choose a UV or decal.";
+    if (els.selectedAssetCard) {
+      els.selectedAssetCard.setAttribute("aria-label", "Open asset library");
+      els.selectedAssetCard.title = "Open asset library";
+    }
     return;
   }
   const face = selectedFace();
@@ -4232,8 +4453,10 @@ function updateSelectedBitmapReadout() {
     els.selectedAssetThumb.src = item.img?.currentSrc || item.img?.src || item.asset?.url || "";
     els.selectedAssetThumb.classList.remove("is-empty");
   }
-  if (els.selectedAssetTitle) els.selectedAssetTitle.textContent = title;
-  if (els.selectedAssetMeta) els.selectedAssetMeta.textContent = `${meta} | ${target}`;
+  if (els.selectedAssetCard) {
+    els.selectedAssetCard.setAttribute("aria-label", `Selected asset ${title}; open asset library`);
+    els.selectedAssetCard.title = `${title} | ${meta}`;
+  }
 }
 
 function bitmapShelfItemBelongsToCurrentModel(item) {
@@ -5017,6 +5240,7 @@ function removeSelectedFaceGroupUv() {
   }
   state.selectedFaceIds.clear();
   state.selected = null;
+  state.selectedDetailIds.clear();
   updateFaceUvAngleControls();
   updateFaceUvTransformControls();
   updateFaceDecalControls();
@@ -5155,7 +5379,7 @@ function applyShelfBitmap(side) {
   }
   const mirrored = importMirroredSkinEnabled();
   setSkinSideFromImage(side, item.img, "shelf", "", mirrored);
-  setStatus(`${item.name} APPLIED TO ${side.toUpperCase()}${mirrored ? " AS MIRRORED HALF UV" : ""}${hadPickList ? "; PICK LIST CLEARED" : ""}.`);
+  setStatus(`${item.name} APPLIED TO ${side.toUpperCase()}${mirrored ? " AS MIRRORED HALF UV" : ""}${hadPickList ? "; VERTEX GROUP CLEARED" : ""}.`);
 }
 
 function selectedShelfFaceTextureOptions(options = {}) {
@@ -5634,9 +5858,9 @@ function drawTemplateDetail(ctx, detail, project, translate = (p) => p) {
   }
   if (pts.length < 2) return;
   ctx.save();
-  ctx.strokeStyle = detail.type === "window" ? "rgba(255,255,255,.86)" : detail.type === "engine" ? "#ffffff" : "rgba(255,255,255,.7)";
+  ctx.strokeStyle = detail.type === DETAIL_TYPE_STATION_ENTRANCE ? "#66e8ff" : detail.type === "window" ? "rgba(255,255,255,.86)" : detail.type === "engine" ? "#ffffff" : "rgba(255,255,255,.7)";
   ctx.fillStyle = "rgba(255,255,255,.08)";
-  ctx.lineWidth = detail.type === "engine" ? 2 : 1;
+  ctx.lineWidth = detail.type === "engine" || detail.type === DETAIL_TYPE_STATION_ENTRANCE ? 2 : 1;
   if (detail.type === "panel" || detail.type === "line" || detail.type === "polyline") {
     traceTemplatePoly(ctx, pts, false);
     ctx.stroke();
@@ -6354,6 +6578,47 @@ function orderedVerticesForEdges(edges, preferredEdge = null) {
   return ordered;
 }
 
+function sameDetailVertexLoop(detail, vertexIds) {
+  if (detail?.type !== DETAIL_TYPE_STATION_ENTRANCE || !Array.isArray(detail.indices)) return false;
+  if (detail.indices.length !== vertexIds.length) return false;
+  const a = [...detail.indices].map(Number).sort((x, y) => x - y).join(",");
+  const b = [...vertexIds].map(Number).sort((x, y) => x - y).join(",");
+  return a === b;
+}
+
+function migrateStationEntranceEdgesToDetails(options = {}) {
+  const legacyEdges = state.edges.filter((edge) => edge.kind === EDGE_KIND_STATION_ENTRANCE);
+  if (!legacyEdges.length) return 0;
+  const remaining = new Set(legacyEdges.map((edge) => edge.id));
+  let added = 0;
+  for (const edge of legacyEdges) {
+    if (!remaining.has(edge.id)) continue;
+    const component = edgeComponentFrom(edge, legacyEdges);
+    component.forEach((item) => remaining.delete(item.id));
+    if (!edgeComponentIsClosed(component)) continue;
+    const vertexIds = orderedVerticesForEdges(component, edge);
+    if (vertexIds.length < 4) continue;
+    if (state.details.some((detail) => sameDetailVertexLoop(detail, vertexIds))) continue;
+    const face = inferFaceForEdgeVertices(vertexIds);
+    const points = vertexIds.map(vertexById).filter(Boolean).map((v) => vec(v.x, v.y, v.z));
+    const normal = face ? faceNormal(face) : normalFromPoints(points);
+    state.details.push({
+      id: newId(),
+      type: DETAIL_TYPE_STATION_ENTRANCE,
+      ...(face ? { faceId: face.id } : {}),
+      indices: vertexIds,
+      color: detailColorForConvertedEdge(DETAIL_TYPE_STATION_ENTRANCE),
+      normal: toArray(normal),
+      lift: 0
+    });
+    added++;
+  }
+  if (options.removeEdges !== false) {
+    state.edges = state.edges.filter((edge) => edge.kind !== EDGE_KIND_STATION_ENTRANCE);
+  }
+  return added;
+}
+
 function auditEdgeLabel(edge) {
   return `#${edge.id} ${edge.a}-${edge.b}`;
 }
@@ -6365,11 +6630,13 @@ function selectEdge(edge, options = {}) {
   state.selected = { type: "edge", id: edge.id };
   state.pick = [];
   state.selectedFaceIds.clear();
+  state.selectedDetailIds.clear();
   state.selectedEdgeIds = selectedEdgeIdSetFor(edge, options);
   const loopText = state.selectedEdgeIds.size > 1 ? ` LOOP (${state.selectedEdgeIds.size} LINES)` : "";
   const label = options.audit ? `AUDIT EDGE${loopText} ${auditEdgeLabel(edge)}` : `${edgeKindLabel(edge.kind)} #${edge.id}`;
   setStatus(`${label} SELECTED.`);
   setToolTab("edit", { redraw: false });
+  syncControlsWindowForSelection({ render: false });
   if (options.render !== false) renderAll();
 }
 
@@ -6437,9 +6704,12 @@ function mirrorAffectedSelectionTargets() {
   }
 
   if (state.selected?.type === "detail") {
-    const detail = detailById(state.selected.id);
-    const mirror = detail ? mirroredDetailOf(detail) : null;
-    if (mirror) targets.detailIds.add(mirror.id);
+    const sourceDetails = selectedDetailSetDetails();
+    const sourceDetailIds = new Set(sourceDetails.map((detail) => detail.id));
+    for (const detail of sourceDetails) {
+      const mirror = mirroredDetailOf(detail);
+      if (mirror && !sourceDetailIds.has(mirror.id)) targets.detailIds.add(mirror.id);
+    }
   }
 
   const sourceVertexIds = new Set(state.pick);
@@ -6713,13 +6983,22 @@ function drawSelectionPickHover(ctx, canvas, projected) {
     } else if (pts.length >= 2) {
       ctx.beginPath();
       pts.forEach((point, index) => index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y));
-      if (detail?.type === "window" || detail?.type === "engine") ctx.closePath();
+      if (detail?.type === "window" || detail?.type === "engine" || detail?.type === DETAIL_TYPE_STATION_ENTRANCE) ctx.closePath();
       if (detail?.type === "window" || detail?.type === "engine") ctx.fill();
       ctx.stroke();
     }
   } else if (candidate.type === "vertex") {
     const p = projected.get(candidate.id);
     if (p) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 9, 0, TAU);
+      ctx.fill();
+      ctx.stroke();
+    }
+  } else if (candidate.type === "vertexGroup") {
+    for (const id of candidate.vertexIds || state.pick) {
+      const p = projected.get(id);
+      if (!p) continue;
       ctx.beginPath();
       ctx.arc(p.x, p.y, 9, 0, TAU);
       ctx.fill();
@@ -6819,7 +7098,7 @@ function renderMain() {
   drawAuditEdgeOverlay(ctx, projected, { label: true, scale: 1.15 });
 
   for (const detail of state.details) {
-    const selected = state.selected?.type === "detail" && state.selected.id === detail.id;
+    const selected = state.selected?.type === "detail" && (state.selected.id === detail.id || state.selectedDetailIds.has(detail.id));
     const mirrorAffected = mirrorTargets.detailIds.has(detail.id);
     const surfaceVisible = detailSurfaceVisibleInMain(detail, { gameOverlay, hiddenFaces: drawFaces || gameOverlay });
     if (!detailVisibleInView(detail) && !selected && !mirrorAffected) continue;
@@ -6864,6 +7143,15 @@ function renderMain() {
         if (i === 0) ctx.moveTo(p.x, p.y);
         else ctx.lineTo(p.x, p.y);
       }
+      ctx.stroke();
+    } else if (detail.type === DETAIL_TYPE_STATION_ENTRANCE) {
+      ctx.strokeStyle = selected ? "#ffd936" : mirrorAffected ? MIRROR_AFFECTED_COLOR : "rgba(102,232,255,.82)";
+      ctx.fillStyle = selected ? "rgba(255,217,54,.12)" : "rgba(102,232,255,.08)";
+      ctx.lineWidth = selected ? 3 : mirrorAffected ? 2.6 : 1.8;
+      ctx.beginPath();
+      pts.forEach((point, index) => index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y));
+      ctx.closePath();
+      if (selected || mirrorAffected) ctx.fill();
       ctx.stroke();
     } else {
       drawFace(
@@ -6913,63 +7201,12 @@ function renderMain() {
   drawSelectionPickHover(ctx, canvas, projected);
 }
 
-function drawOrthoCanvas(canvas, viewName) {
-  const ctx = canvas.getContext("2d");
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const projected = new Map(state.verts.map((v) => [v.id, orthoProject(v, canvas, viewName)]));
-  ctx.strokeStyle = "rgba(255,255,255,.12)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(canvas.width / 2, 0);
-  ctx.lineTo(canvas.width / 2, canvas.height);
-  ctx.moveTo(0, canvas.height / 2);
-  ctx.lineTo(canvas.width, canvas.height / 2);
-  ctx.stroke();
-
-  state.faces.forEach((face) => {
-    const pts = face.verts.map((id) => projected.get(id)).filter(Boolean);
-    drawFace(ctx, pts, "rgba(85,255,78,.06)", "rgba(85,255,78,.28)", 1);
-  });
-  drawFaceNormals(ctx, (v) => orthoProject(v, canvas, viewName));
-  drawFaceUvTypeOverlay(ctx, projected, { scale: .82 });
-  state.edges.forEach((e) => {
-    const a = projected.get(e.a), b = projected.get(e.b);
-    if (!a || !b) return;
-    ctx.strokeStyle = e.kind === EDGE_KIND_STATION_ENTRANCE ? "rgba(102,232,255,.84)" : e.kind === "stick" ? "rgba(255,255,255,.78)" : "rgba(85,255,78,.68)";
-    ctx.lineWidth = e.kind === EDGE_KIND_STATION_ENTRANCE ? 2.2 : e.kind === "stick" ? 2 : 1;
-    ctx.beginPath();
-    ctx.moveTo(a.x, a.y);
-    ctx.lineTo(b.x, b.y);
-    ctx.stroke();
-  });
-  drawAuditEdgeOverlay(ctx, projected, { label: true, scale: .82 });
-  state.verts.forEach((v) => {
-    const p = projected.get(v.id);
-    const selected = state.selected?.type === "vertex" && state.selected.id === v.id;
-    const picked = state.pick.includes(v.id);
-    if (picked) {
-      ctx.strokeStyle = "#66e8ff";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, selected ? 7 : 5.5, 0, TAU);
-      ctx.stroke();
-    }
-    ctx.fillStyle = selected ? "#ffd936" : state.pick.includes(v.id) ? "#66e8ff" : "#55ff4e";
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, selected ? 5 : 3.5, 0, TAU);
-    ctx.fill();
-  });
-}
-
 function renderAll() {
   updateUi();
   updateProjectionViewButtons();
   updateSelectedBitmapReadout();
   updateFaceDecalControls();
   renderMain();
-  if (state.showBlueprints) {
-    document.querySelectorAll(".ortho-grid canvas").forEach((canvas) => drawOrthoCanvas(canvas, canvas.dataset.view));
-  }
   updateExport();
   scheduleGamePreviewSync();
   markBuilderPreloadStep("rendered", "Builder canvas ready; warming renderer...");
@@ -7535,13 +7772,15 @@ function updateUi() {
   const faceGroupText = state.selectedFaceIds.size
     ? ` | Face group ${[...state.selectedFaceIds].map((id) => `#${id}`).join(" ")}`
     : "";
-  els.pickList.textContent = `${state.pick.length ? state.pick.map((id) => `#${id}`).join("  ") : "Pick list empty"}${faceGroupText}`;
+  els.pickList.textContent = `${state.pick.length ? `Vertex group ${state.pick.map((id) => `#${id}`).join("  ")}` : "Vertex group empty"}${faceGroupText}`;
 
   if (!state.selected) els.selectionReadout.textContent = "Nothing selected";
   else if (state.selected.type === "vertex") {
     const v = vertexById(state.selected.id);
     const beaconText = v && hasBeaconAtVertex(v.id) ? "  beacon" : "";
     els.selectionReadout.textContent = v ? `Vertex #${v.id}  X ${round(v.x)}  Y ${round(v.y)}  Z ${round(v.z)}${v.mirrorId ? `  mirror #${v.mirrorId}` : "  centre"}${beaconText}` : "Missing vertex";
+  } else if (state.selected.type === "vertexGroup") {
+    els.selectionReadout.textContent = `Vertex Group ${state.pick.length} vertices  ${state.pick.map((id) => `#${id}`).join(" ")}`;
   } else if (["face", "uv", "group"].includes(state.selected.type)) {
     const face = selectedFace();
     const n = face ? faceNormal(face) : null;
@@ -7564,6 +7803,13 @@ function updateUi() {
     els.selectionReadout.textContent = selectedEdges.length > 1
       ? `EDGE LOOP ${selectedEdges.length} lines  ${edgeIds}`
       : `EDGE #${state.selected.id}`;
+  } else if (state.selected.type === "detail") {
+    const selectedDetails = selectedDetailSetDetails();
+    const detailIds = selectedDetails.map((detail) => `#${detail.id}`).join(" ");
+    const detail = detailById(state.selected.id);
+    els.selectionReadout.textContent = selectedDetails.length > 1
+      ? `SURFACE DETAIL GROUP ${selectedDetails.length} lines  ${detailIds}`
+      : detail ? `${detailTypeLabel(detail.type).toUpperCase()} #${detail.id}` : `DETAIL #${state.selected.id}`;
   } else {
     els.selectionReadout.textContent = `${state.selected.type.toUpperCase()} #${state.selected.id}`;
   }
@@ -7587,8 +7833,9 @@ function updateSliders() {
 
 function updateDetailControls() {
   const detail = state.selected?.type === "detail" ? detailById(state.selected.id) : null;
+  const detailTargets = selectedDetailSetDetails();
   els.detailInset.disabled = !detail || !detail.faceId;
-  els.detailColor.disabled = !detail;
+  els.detailColor.disabled = !detailTargets.length;
   if (detail) {
     els.detailInset.value = detail.inset ?? 0.45;
     els.detailColor.value = detail.color || "#101915";
@@ -7622,9 +7869,11 @@ function clearEditorSelection(options = {}) {
   state.selected = null;
   state.selectedFaceIds.clear();
   state.selectedEdgeIds.clear();
+  state.selectedDetailIds.clear();
   state.pick = [];
   hideSelectionPickMenu();
   hideSelectionContextMenu();
+  closeToolWindow({ redraw: false });
   if (options.redraw !== false) renderAll();
 }
 
@@ -7633,6 +7882,7 @@ function clearSelectionForSelectorChange() {
   state.selected = null;
   state.selectedFaceIds.clear();
   state.selectedEdgeIds.clear();
+  state.selectedDetailIds.clear();
   state.pick = [];
   state.drag = null;
   hideSelectionPickMenu();
@@ -7646,6 +7896,39 @@ function selectionFilterAllows(type) {
 
 function activeSelectionFilters() {
   return SELECTABLE_TYPES.filter(selectionFilterAllows);
+}
+
+function clearSelectionForDisabledFilter(type) {
+  let cleared = false;
+  if (type === "vertex" && (state.selected?.type === "vertex" || state.selected?.type === "vertexGroup" || state.pick.length)) {
+    state.pick = [];
+    if (state.selected?.type === "vertex" || state.selected?.type === "vertexGroup") state.selected = null;
+    cleared = true;
+  } else if (type === "face" && (state.selected?.type === "face" || state.selectedFaceIds.size)) {
+    if (state.selected?.type === "face") state.selected = null;
+    state.selectedFaceIds.clear();
+    cleared = true;
+  } else if (type === "edge" && (state.selected?.type === "edge" || state.selectedEdgeIds.size)) {
+    if (state.selected?.type === "edge") state.selected = null;
+    state.selectedEdgeIds.clear();
+    cleared = true;
+  } else if (type === "detail" && (state.selected?.type === "detail" || state.selectedDetailIds.size)) {
+    state.selected = null;
+    state.selectedDetailIds.clear();
+    cleared = true;
+  } else if (type === "uv" && state.selected?.type === "uv") {
+    state.selected = null;
+    state.selectedFaceIds.clear();
+    closeUvProperties({ redraw: false });
+    cleared = true;
+  } else if (type === "group" && state.selected?.type === "group") {
+    state.selected = null;
+    state.selectedFaceIds.clear();
+    closeUvProperties({ redraw: false });
+    cleared = true;
+  }
+  if (!state.selected && cleared) closeToolWindow({ redraw: false });
+  return cleared;
 }
 
 function orderedSelectionFilters() {
@@ -7794,6 +8077,7 @@ function vertexHitCandidates(point, projected, maxDist = 14) {
 }
 
 function pickCandidateKey(candidate) {
+  if (candidate.type === "vertexGroup") return "vertex-group:current";
   if (candidate.type === "edge" && candidate.edgeGroup && candidate.edgeIds?.length > 1) {
     return `${candidate.audit ? "audit-" : ""}edge-group:${[...candidate.edgeIds].sort((a, b) => a - b).join(",")}`;
   }
@@ -7814,6 +8098,35 @@ function edgeGroupPickCandidate(candidate) {
   };
 }
 
+function vertexGroupPickCandidate() {
+  if (!state.pick.length) return null;
+  return {
+    type: "vertexGroup",
+    id: "current",
+    vertexIds: [...state.pick],
+    distance: Infinity,
+    depth: Infinity,
+    order: SELECTABLE_TYPES.length + 1
+  };
+}
+
+function appendVertexGroupCandidate(candidates) {
+  const candidate = vertexGroupPickCandidate();
+  if (!candidate) return candidates;
+  if (candidates.some((item) => pickCandidateKey(item) === pickCandidateKey(candidate))) return candidates;
+  return [...candidates, { ...candidate, key: pickCandidateKey(candidate) }];
+}
+
+function selectionCandidatePriority(type) {
+  if (type === "vertex") return 0;
+  if (type === "detail") return 1;
+  if (type === "edge") return 2;
+  if (type === "face") return 3;
+  if (type === "uv") return 4;
+  if (type === "group") return 5;
+  return SELECTABLE_TYPES.length + 1;
+}
+
 function collectSelectionCandidates(point) {
   const projected = projectedMapForMain(els.mainView);
   const candidates = [];
@@ -7822,7 +8135,7 @@ function collectSelectionCandidates(point) {
     const key = pickCandidateKey(candidate);
     if (seen.has(key)) return;
     seen.add(key);
-    candidates.push({ ...candidate, key, order: SELECTABLE_TYPES.indexOf(candidate.type) });
+    candidates.push({ ...candidate, key, order: selectionCandidatePriority(candidate.type) });
   };
   for (const type of SELECTABLE_TYPES) {
     if (!selectionFilterAllows(type)) continue;
@@ -7840,20 +8153,43 @@ function collectSelectionCandidates(point) {
     else if (type === "uv") faceHitCandidates(point, projected, "uv").forEach(add);
     else if (type === "group") faceHitCandidates(point, projected, "group").forEach(add);
   }
-  candidates.sort((a, b) => a.depth - b.depth || a.distance - b.distance || a.order - b.order || a.id - b.id);
+  candidates.sort((a, b) => a.order - b.order || a.distance - b.distance || a.depth - b.depth || a.id - b.id);
   return candidates;
+}
+
+function syncControlsWindowForSelection(options = {}) {
+  if (state.selected) openToolWindow("edit", { focus: false, redraw: false });
+  else closeToolWindow({ redraw: false });
+  if (options.render !== false) renderSelectedObjectProperties();
 }
 
 function selectDetailTarget(detail, options = {}) {
   if (!detail) return false;
   cancelSurfaceInsertPreview({ redraw: false });
   state.mode = "detail";
-  state.selected = { type: "detail", id: detail.id };
   state.pick = [];
   state.selectedFaceIds.clear();
   state.selectedEdgeIds.clear();
+  if (options.multiSelect && detailIsSurfaceLine(detail)) {
+    const existingDetail = state.selected?.type === "detail" ? detailById(state.selected.id) : null;
+    if (detailIsSurfaceLine(existingDetail)) state.selectedDetailIds.add(existingDetail.id);
+    if (state.selectedDetailIds.has(detail.id)) {
+      state.selectedDetailIds.delete(detail.id);
+      const fallbackId = [...state.selectedDetailIds].at(-1);
+      state.selected = fallbackId == null ? null : { type: "detail", id: fallbackId };
+      setStatus(`SURFACE DETAIL #${detail.id} REMOVED FROM DETAIL GROUP (${state.selectedDetailIds.size} SELECTED).`);
+    } else {
+      state.selectedDetailIds.add(detail.id);
+      state.selected = { type: "detail", id: detail.id };
+      setStatus(`SURFACE DETAIL #${detail.id} ADDED TO DETAIL GROUP (${state.selectedDetailIds.size} SELECTED).`);
+    }
+  } else {
+    state.selected = { type: "detail", id: detail.id };
+    state.selectedDetailIds = new Set([detail.id]);
+    setStatus(`${detailTypeLabel(detail.type).toUpperCase()} #${detail.id} SELECTED.`);
+  }
   setToolTab("edit", { redraw: false });
-  setStatus(`${detail.type === "panel" ? "PANEL LINE" : "DETAIL"} #${detail.id} SELECTED.`);
+  syncControlsWindowForSelection({ render: false });
   if (options.render !== false) renderAll();
   return true;
 }
@@ -7864,6 +8200,7 @@ function selectFaceTarget(face, options = {}) {
   state.mode = "face";
   state.pick = [];
   state.selectedEdgeIds.clear();
+  state.selectedDetailIds.clear();
   if (options.multiSelect) {
     if (state.selectedFaceIds.has(face.id)) {
       state.selectedFaceIds.delete(face.id);
@@ -7881,7 +8218,8 @@ function selectFaceTarget(face, options = {}) {
     setStatus(`FACE #${face.id} SELECTED. SHIFT-CLICK TO BUILD A FACE GROUP.`);
   }
   setToolTab("edit", { redraw: false });
-  renderAll();
+  syncControlsWindowForSelection({ render: false });
+  if (options.render !== false) renderAll();
   return true;
 }
 
@@ -7892,6 +8230,7 @@ function selectUvTarget(face) {
   state.mode = group.length > 1 ? "group" : "uv";
   state.pick = [];
   state.selectedEdgeIds.clear();
+  state.selectedDetailIds.clear();
   if (group.length > 1) {
     state.selected = { type: "group", id: face.id };
     state.selectedFaceIds = new Set(group.map((item) => item.id));
@@ -7902,9 +8241,8 @@ function selectUvTarget(face) {
     const info = faceUvTypeInfo(face);
     setStatus(`UV TARGET SELECTED: FACE #${face.id} ${info.label.toUpperCase()}.`);
   }
-  setToolTab("paint", { redraw: false });
-  setPaintTab("face", { redraw: false });
-  openUvProperties();
+  setToolTab("edit", { redraw: false });
+  syncControlsWindowForSelection({ render: false });
   renderAll();
   return true;
 }
@@ -7917,10 +8255,10 @@ function selectGroupTarget(face) {
   state.selected = { type: "group", id: face.id };
   state.pick = [];
   state.selectedEdgeIds.clear();
+  state.selectedDetailIds.clear();
   state.selectedFaceIds = new Set(group.map((item) => item.id));
-  setToolTab("paint", { redraw: false });
-  setPaintTab("face", { redraw: false });
-  openUvProperties();
+  setToolTab("edit", { redraw: false });
+  syncControlsWindowForSelection({ render: false });
   setStatus(`FACE TEXTURE GROUP ${cleanBitmapKey(face.bitmapFaceKey)} SELECTED (${group.length} FACES).`);
   renderAll();
   return true;
@@ -7928,6 +8266,7 @@ function selectGroupTarget(face) {
 
 function selectionPickCandidateLabel(candidate) {
   if (candidate.type === "vertex") return `Vertex #${candidate.id}`;
+  if (candidate.type === "vertexGroup") return `Vertex Group (${(candidate.vertexIds || state.pick).length})`;
   if (candidate.type === "face") return `Face #${candidate.id}`;
   if (candidate.type === "edge") {
     const edge = candidate.edge || (candidate.audit ? renderAuditEdges() : state.edges).find((item) => item.id === candidate.id);
@@ -7950,6 +8289,7 @@ function selectionPickCandidateLabel(candidate) {
 }
 
 function selectionPickCandidateMeta(candidate) {
+  if (candidate.type === "vertexGroup") return "VERTEX GROUP | TRANSIENT";
   const depth = Number.isFinite(candidate.depth) ? `Z ${round(candidate.depth, 1)}` : "";
   const distance = Number.isFinite(candidate.distance) && candidate.distance > 0 ? `D ${round(candidate.distance, 1)}` : "";
   const count = candidate.groupCount > 1
@@ -7963,6 +8303,18 @@ function selectionPickCandidateMeta(candidate) {
 function selectSelectionCandidate(candidate, options = {}) {
   if (!candidate) return false;
   if (!options.keepPickMenu) hideSelectionPickMenu();
+  if (candidate.type === "vertexGroup") {
+    state.mode = "vertex";
+    state.selected = state.pick.length ? { type: "vertexGroup", id: "current" } : null;
+    state.selectedFaceIds.clear();
+    state.selectedEdgeIds.clear();
+    state.selectedDetailIds.clear();
+    setToolTab("edit", { redraw: false });
+    setStatus(`VERTEX GROUP SELECTED (${state.pick.length} VERTICES).`);
+    syncControlsWindowForSelection({ render: false });
+    renderAll();
+    return true;
+  }
   if (candidate.type === "vertex") {
     selectVertex(candidate.id, { multiSelect: options.multiSelect });
     return true;
@@ -7973,7 +8325,7 @@ function selectSelectionCandidate(candidate, options = {}) {
     selectEdge(edge, { audit: candidate.audit, edgeIds: candidate.edgeIds });
     return true;
   }
-  if (candidate.type === "detail") return selectDetailTarget(candidate.detail || detailById(candidate.id));
+  if (candidate.type === "detail") return selectDetailTarget(candidate.detail || detailById(candidate.id), { multiSelect: options.multiSelect });
   if (candidate.type === "face") return selectFaceTarget(candidate.face || faceById(candidate.id), { multiSelect: options.multiSelect });
   if (candidate.type === "uv") return selectUvTarget(candidate.face || faceById(candidate.id));
   if (candidate.type === "group") return selectGroupTarget(candidate.face || faceById(candidate.id));
@@ -7993,9 +8345,19 @@ function directMultiSelectCandidate(candidates, options = {}) {
   return candidates.find((candidate) => candidate.type === "face") || null;
 }
 
+function hasEditorSelection() {
+  return !!state.selected || !!state.pick.length || !!state.selectedFaceIds.size || !!state.selectedEdgeIds.size || !!state.selectedDetailIds.size;
+}
+
 function selectInMain(point, options = {}) {
-  const candidates = collectSelectionCandidates(point);
-  if (!candidates.length) return false;
+  let candidates = collectSelectionCandidates(point);
+  if (options.forcePickMenu) candidates = appendVertexGroupCandidate(candidates);
+  if (!candidates.length) {
+    const hadSelection = hasEditorSelection();
+    if (options.clearOnEmpty !== false) clearEditorSelection();
+    if (hadSelection && options.announceEmptyClear !== false) setStatus("SELECTION CLEARED.");
+    return false;
+  }
   const directCandidate = options.forcePickMenu ? null : directMultiSelectCandidate(candidates, options);
   if (directCandidate) return runSelectionAfterPick(selectSelectionCandidate(directCandidate, options), options);
   if (options.forcePickMenu && options.allowPickMenu !== false && (candidates.length > 1 || options.pickMenuForSingle)) {
@@ -8015,6 +8377,16 @@ function selectInMain(point, options = {}) {
   return runSelectionAfterPick(selectSelectionCandidate(candidates[0], options), options);
 }
 
+function orientFaceAtMainPoint(point) {
+  const candidate = collectSelectionCandidates(point).find((item) => item.type === "face");
+  const face = candidate?.face || faceById(candidate?.id);
+  if (!face) return false;
+  hideSelectionPickMenu();
+  hideSelectionContextMenu();
+  selectFaceTarget(face, { render: false });
+  return orientFaceToView(face, true, `FACE #${face.id} ORIENTED TO VIEW.`);
+}
+
 function selectVertex(id, options = {}) {
   const v = vertexById(id);
   if (!v) return;
@@ -8022,22 +8394,24 @@ function selectVertex(id, options = {}) {
   state.mode = "vertex";
   state.selectedFaceIds.clear();
   state.selectedEdgeIds.clear();
+  state.selectedDetailIds.clear();
   setToolTab("edit", { redraw: false });
   const existing = state.pick.indexOf(id);
   if (!options.multiSelect) {
     state.pick = [id];
     state.selected = { type: "vertex", id };
-    setStatus(`VERTEX #${id} SELECTED. SHIFT-CLICK TO BUILD A PICK LIST.`);
+    setStatus(`VERTEX #${id} SELECTED. SHIFT-CLICK TO BUILD A VERTEX GROUP.`);
   } else if (existing >= 0) {
     state.pick.splice(existing, 1);
     const fallbackId = state.pick.at(-1);
     state.selected = fallbackId == null ? null : { type: "vertex", id: fallbackId };
-    setStatus(`VERTEX #${id} REMOVED FROM PICK LIST.`);
+    setStatus(`VERTEX #${id} REMOVED FROM VERTEX GROUP.`);
   } else {
     state.pick.push(id);
     state.selected = { type: "vertex", id };
-    setStatus(`VERTEX #${id} ADDED TO PICK LIST.`);
+    setStatus(`VERTEX #${id} ADDED TO VERTEX GROUP.`);
   }
+  syncControlsWindowForSelection({ render: false });
   renderAll();
 }
 
@@ -8365,7 +8739,7 @@ function rotateViewFromCubeDrag(dx, dy) {
   cancelViewTween();
   state.activeViewCubeCornerKey = "";
   state.view.ry += dx * 0.006;
-  state.view.rx = clamp(state.view.rx + dy * 0.006, -1.45, 1.45);
+  state.view.rx = normalizeRadians(state.view.rx - dy * 0.006);
   updateProjectionViewButtons();
   if (gameRendererPreviewMode()) renderPreviewMotion();
   else renderAll();
@@ -8411,13 +8785,19 @@ function deleteSelected() {
     }
     state.edges = state.edges.filter((e) => !ids.has(e.id));
   } else if (type === "detail") {
-    const detail = detailById(id);
-    const mirror = detail && mirrorActionsEnabled() ? mirroredDetailOf(detail) : null;
-    const ids = new Set([id, mirror?.id].filter(Boolean));
+    const details = selectedDetailSetDetails();
+    const ids = new Set((details.length ? details : [detailById(id)].filter(Boolean)).map((detail) => detail.id));
+    if (mirrorActionsEnabled()) {
+      for (const detail of details) {
+        const mirror = mirroredDetailOf(detail);
+        if (mirror) ids.add(mirror.id);
+      }
+    }
     state.details = state.details.filter((d) => !ids.has(d.id));
   }
   state.selected = null;
   state.selectedEdgeIds.clear();
+  state.selectedDetailIds.clear();
   setStatus("SELECTION DELETED.");
   renderAll();
 }
@@ -8463,9 +8843,10 @@ function detailRenderIntent(detail) {
   const beacon = type === "beacon";
   const engine = type === "engine";
   const windowDetail = type === "window";
+  const stationEntrance = type === DETAIL_TYPE_STATION_ENTRANCE;
   return {
-    kind: beacon ? "beacon" : line ? "line" : "poly",
-    solid: !line,
+    kind: stationEntrance ? DETAIL_TYPE_STATION_ENTRANCE : beacon ? "beacon" : line ? "line" : "poly",
+    solid: !line && !stationEntrance,
     wire: !beacon,
     glow: engine,
     glass: windowDetail,
@@ -8485,6 +8866,7 @@ function detailViewCategory(detail) {
   if (type === "window") return "window";
   if (type === "engine") return "engine";
   if (type === "beacon") return "beacon";
+  if (type === DETAIL_TYPE_STATION_ENTRANCE) return "surface";
   return "surface";
 }
 
@@ -8592,6 +8974,7 @@ function derivedBlueprint(options = {}) {
     for (let i = 0; i < ids.length; i++) addDerivedEdge(ids[i], ids[(i + 1) % ids.length], faceIndex);
   });
   state.edges.forEach((e) => {
+    if (e.kind === EDGE_KIND_STATION_ENTRANCE) return;
     const a = indexById.get(e.a), b = indexById.get(e.b);
     if (a !== undefined && b !== undefined) addDerivedEdge(a, b, -1, e.kind);
   });
@@ -8631,7 +9014,9 @@ function derivedBlueprint(options = {}) {
         const mapped = d.indices
           .map((id) => indexById.get(Number(id)))
           .filter((i) => i !== undefined);
-        if (mapped.length >= 2) return withDetailRender({ ...detail, indices: mapped });
+        if (mapped.length >= (d.type === DETAIL_TYPE_STATION_ENTRANCE ? 4 : 2)) {
+          return withDetailRender({ ...detail, indices: mapped, ...(d.type === DETAIL_TYPE_STATION_ENTRANCE ? { lift: 0 } : {}) });
+        }
       }
       const points = detailModelPoints(d).map(toArray);
       if (points.length >= 2) return withDetailRender({ ...detail, points });
@@ -8644,8 +9029,14 @@ function derivedBlueprint(options = {}) {
       type: d.type === "panel" ? "line" : d.type,
       color: d.color,
       normal: toArray(normal),
-      lift: 0.5
+      lift: d.type === DETAIL_TYPE_STATION_ENTRANCE ? 0 : 0.5
     };
+    if (d.type === DETAIL_TYPE_STATION_ENTRANCE && Array.isArray(d.indices)) {
+      const mapped = d.indices
+        .map((id) => indexById.get(Number(id)))
+        .filter((i) => i !== undefined);
+      if (mapped.length >= 4) return withDetailRender({ ...base, indices: mapped });
+    }
     if (d.type === "panel") {
       return withDetailRender({ ...base, type: "polyline", points, width: 1.2 });
     }
@@ -8933,6 +9324,7 @@ function applyBuilderDataToEditor(data, options = {}) {
       segment: Array.isArray(d.segment) ? d.segment.map(Number) : undefined
     };
   });
+  migrateStationEntranceEdgesToDetails();
   inferMirrorVertexIds();
 
   const meta = data.gameMeta || {};
@@ -8967,6 +9359,7 @@ function applyBuilderDataToEditor(data, options = {}) {
   state.pick = [];
   state.selectedFaceIds.clear();
   state.selectedEdgeIds.clear();
+  state.selectedDetailIds.clear();
   hideSelectionPickMenu({ redraw: false });
   hideSelectionContextMenu();
   closeUvProperties({ redraw: false });
@@ -9672,6 +10065,7 @@ function loadLibraryModel(id) {
       segment: Array.isArray(d.segment) ? d.segment.map(Number) : undefined
     };
   });
+  migrateStationEntranceEdgesToDetails();
   inferMirrorVertexIds();
   const meta = source.gameMeta || {};
   state.sourceModelId = cleanBitmapKey(source.id || id);
@@ -9707,6 +10101,7 @@ function loadLibraryModel(id) {
   state.pick = [];
   state.selectedFaceIds.clear();
   state.selectedEdgeIds.clear();
+  state.selectedDetailIds.clear();
   loadSkinBitmaps(source.id || id, mirrorFlagsFromMeta(meta));
   markCurrentModelSavedSnapshot(source.id || id);
   fitView();
@@ -10056,28 +10451,95 @@ function setMode(mode, announce = true) {
 
 function toggleSelectionFilter(mode, options = {}) {
   if (!SELECTABLE_TYPES.includes(mode)) return;
+  const wasEnabled = selectionFilterAllows(mode);
   state.selectionFilters[mode] = !selectionFilterAllows(mode);
   if (!activeSelectionFilters().length) state.selectionFilters[mode] = true;
+  const clearedSelection = wasEnabled ? clearSelectionForDisabledFilter(mode) : false;
   hideSelectionPickMenu();
   hideSelectionContextMenu();
-  state.mode = mode;
+  state.mode = selectionFilterAllows(mode) ? mode : activeSelectionFilters()[0] || mode;
   if (!state.selected) {
-    setToolTab(mode === "uv" || mode === "group" ? "paint" : "edit", { redraw: false });
-    if (mode === "uv" || mode === "group") setPaintTab("face", { redraw: false });
+    setToolTab(state.mode === "uv" || state.mode === "group" ? "paint" : "edit", { redraw: false });
+    if (state.mode === "uv" || state.mode === "group") setPaintTab("face", { redraw: false });
   }
   syncModeUi(panelModeForSelection());
-  setStatus(`SELECT FILTERS: ${activeSelectionFilters().map((type) => type.toUpperCase()).join(", ")}.`);
+  const clearedText = clearedSelection ? ` ${mode.toUpperCase()} SELECTION CLEARED.` : "";
+  setStatus(`SELECT FILTERS: ${activeSelectionFilters().map((type) => type.toUpperCase()).join(", ")}.${clearedText}`);
   renderAll();
 }
 
 function setToolTab(tab, options = {}) {
+  if (tab === "paint") tab = "edit";
   els.toolsPanel.dataset.toolTab = tab;
+  if (els.toolWindowTitle) els.toolWindowTitle.textContent = TOOL_WINDOW_TITLES[tab] || "Controls";
   document.querySelectorAll(".tool-tab-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.toolTabTarget === tab);
   });
   document.querySelectorAll(".tool-tab-panel").forEach((panel) => {
     panel.classList.toggle("active", panel.dataset.toolTabPanel === tab);
   });
+  if (options.redraw !== false) renderAll();
+}
+
+function toolWindowOpen() {
+  return [els.toolsPanel, els.fileActionsWindow, els.gameInfoWindow].some((windowEl) => windowEl && !windowEl.classList.contains("is-hidden"));
+}
+
+function setStandaloneToolWindowVisible(windowEl, visible) {
+  if (!windowEl) return;
+  windowEl.classList.toggle("is-hidden", !visible);
+  windowEl.setAttribute("aria-hidden", visible ? "false" : "true");
+}
+
+function openToolWindow(tab = "edit", options = {}) {
+  if (!els.toolsPanel) return;
+  setToolTab(tab, { redraw: false });
+  closeFileWindow({ redraw: false });
+  closeGameInfoWindow({ redraw: false });
+  els.toolsPanel.classList.remove("is-hidden");
+  els.toolsPanel.setAttribute("aria-hidden", "false");
+  if (options.focus !== false) {
+    const activeTab = els.toolsPanel.querySelector(`.tool-tab-btn[data-tool-tab-target="${tab}"]`);
+    activeTab?.focus?.({ preventScroll: true });
+  }
+  if (options.redraw !== false) renderAll();
+}
+
+function closeToolWindow(options = {}) {
+  setStandaloneToolWindowVisible(els.toolsPanel, false);
+  if (options.redraw !== false) renderAll();
+}
+
+function openFileWindow(options = {}) {
+  closeToolWindow({ redraw: false });
+  closeGameInfoWindow({ redraw: false });
+  setStandaloneToolWindowVisible(els.fileActionsWindow, true);
+  if (options.focus !== false) els.closeFileWindowBtn?.focus?.({ preventScroll: true });
+  if (options.redraw !== false) renderAll();
+}
+
+function closeFileWindow(options = {}) {
+  setStandaloneToolWindowVisible(els.fileActionsWindow, false);
+  if (options.redraw !== false) renderAll();
+}
+
+function openGameInfoWindow(options = {}) {
+  closeToolWindow({ redraw: false });
+  closeFileWindow({ redraw: false });
+  setStandaloneToolWindowVisible(els.gameInfoWindow, true);
+  if (options.focus !== false) els.closeGameInfoWindowBtn?.focus?.({ preventScroll: true });
+  if (options.redraw !== false) renderAll();
+}
+
+function closeGameInfoWindow(options = {}) {
+  setStandaloneToolWindowVisible(els.gameInfoWindow, false);
+  if (options.redraw !== false) renderAll();
+}
+
+function closeAnyToolWindow(options = {}) {
+  closeToolWindow({ redraw: false });
+  closeFileWindow({ redraw: false });
+  closeGameInfoWindow({ redraw: false });
   if (options.redraw !== false) renderAll();
 }
 
@@ -10134,7 +10596,9 @@ function selectionContext() {
   const face = ["face", "uv", "group"].includes(type) ? selectedFace() : null;
   const edge = type === "edge" ? state.edges.find((item) => item.id === selected.id) || null : null;
   const detail = type === "detail" ? detailById(selected.id) : null;
+  const detailGroup = type === "detail" ? selectedDetailSetDetails() : [];
   const vertex = type === "vertex" ? vertexById(selected.id) : null;
+  const incidentFaces = vertex ? facesUsingVertex(vertex.id) : [];
   const uvTargets = face ? uniqueFaceList(selectedFacePropertyTargets()) : [];
   const groupTargets = type === "group" ? selectedGroupTargetsForRemoval() : [];
   const shelfItem = selectedBitmapShelfItem();
@@ -10145,7 +10609,10 @@ function selectionContext() {
     face,
     edge,
     detail,
+    detailGroup,
     edgeLoop: selectedEdgeSetEdges(),
+    vertexIds: type === "vertexGroup" ? [...state.pick] : [],
+    incidentFaces,
     uvTargets,
     groupTargets,
     shelfItem,
@@ -10166,7 +10633,9 @@ function selectionContextForCandidate(candidate) {
   const edge = type === "edge" ? candidate.edge || edgeSource.find((item) => item.id === candidate.id) || null : null;
   const edgeIds = edge ? selectedEdgeIdSetFor(edge, { audit: candidate.audit, edgeIds: candidate.edgeIds }) : new Set();
   const detail = type === "detail" ? candidate.detail || detailById(candidate.id) : null;
+  const detailGroup = detail ? [detail] : [];
   const vertex = type === "vertex" ? candidate.vertex || vertexById(candidate.id) : null;
+  const incidentFaces = vertex ? facesUsingVertex(vertex.id) : [];
   const selected = { type, id: candidate.id };
   const shelfItem = selectedBitmapShelfItem();
   return {
@@ -10176,7 +10645,10 @@ function selectionContextForCandidate(candidate) {
     face,
     edge,
     detail,
+    detailGroup,
     edgeLoop: edgeSource.filter((item) => edgeIds.has(item.id)),
+    vertexIds: candidate.type === "vertexGroup" ? [...(candidate.vertexIds || state.pick)] : [],
+    incidentFaces,
     uvTargets: face ? uniqueFaceList(type === "group" ? group : [face]) : [],
     groupTargets: type === "group" ? uniqueFaceList(group) : [],
     shelfItem,
@@ -10191,10 +10663,12 @@ function selectionContextForCandidate(candidate) {
 function selectionContextLabel(ctx = selectionContext()) {
   if (!ctx.selected) return "No Selection";
   if (ctx.type === "vertex" && ctx.vertex) return `Vertex #${ctx.vertex.id}`;
+  if (ctx.type === "vertexGroup") return `Vertex Group (${ctx.vertexIds.length || state.pick.length})`;
   if (ctx.type === "edge" && ctx.edge) {
     return ctx.edgeLoop.length > 1 ? `${edgeKindLabel(ctx.edge.kind)} Loop (${ctx.edgeLoop.length})` : `${edgeKindLabel(ctx.edge.kind)} #${ctx.edge.id}`;
   }
-  if (ctx.type === "detail" && ctx.detail) return `${ctx.detail.type === "panel" ? "Surface Detail" : ctx.detail.type} #${ctx.detail.id}`;
+  if (ctx.type === "detail" && ctx.detailGroup?.length > 1) return `Surface Detail Group (${ctx.detailGroup.length})`;
+  if (ctx.type === "detail" && ctx.detail) return `${detailTypeLabel(ctx.detail.type)} #${ctx.detail.id}`;
   if (ctx.type === "group" && ctx.face) return `Face Group (${ctx.uvTargets.length || ctx.groupTargets.length})`;
   if (ctx.type === "uv" && ctx.face) return `UV Face #${ctx.face.id}`;
   if (ctx.face) return `Face #${ctx.face.id}`;
@@ -10208,6 +10682,7 @@ function objectPropertyValueText(value) {
 function appendObjectPropertyRow(parent, labelText, valueText) {
   const row = document.createElement("div");
   row.className = "object-property-row";
+  row.dataset.controlRole = "property";
   const label = document.createElement("span");
   label.className = "object-property-label";
   label.textContent = labelText;
@@ -10221,6 +10696,7 @@ function appendObjectPropertyRow(parent, labelText, valueText) {
 function appendObjectNumberProperty(parent, labelText, key, value, options = {}) {
   const row = document.createElement("label");
   row.className = "object-property-row object-property-control";
+  row.dataset.controlRole = "property";
   const label = document.createElement("span");
   label.className = "object-property-label";
   label.textContent = labelText;
@@ -10239,6 +10715,7 @@ function appendObjectNumberProperty(parent, labelText, key, value, options = {})
 function appendObjectRangeProperty(parent, labelText, key, value, options = {}) {
   const row = document.createElement("label");
   row.className = "object-property-row object-property-control";
+  row.dataset.controlRole = "property";
   const label = document.createElement("span");
   label.className = "object-property-label";
   label.textContent = labelText;
@@ -10257,6 +10734,7 @@ function appendObjectRangeProperty(parent, labelText, key, value, options = {}) 
 function appendObjectColorProperty(parent, labelText, key, value, options = {}) {
   const row = document.createElement("label");
   row.className = "object-property-row object-property-control";
+  row.dataset.controlRole = "property";
   const label = document.createElement("span");
   label.className = "object-property-label";
   label.textContent = labelText;
@@ -10272,6 +10750,7 @@ function appendObjectColorProperty(parent, labelText, key, value, options = {}) 
 function appendObjectSelectProperty(parent, labelText, key, value, options) {
   const row = document.createElement("label");
   row.className = "object-property-row object-property-control";
+  row.dataset.controlRole = "property";
   const label = document.createElement("span");
   label.className = "object-property-label";
   label.textContent = labelText;
@@ -10289,6 +10768,13 @@ function appendObjectSelectProperty(parent, labelText, key, value, options) {
 }
 
 function appendObjectProperties(parent, ctx) {
+  if (ctx.type === "vertexGroup") {
+    appendObjectPropertyRow(parent, "Vertices", ctx.vertexIds.length);
+    appendObjectPropertyRow(parent, "Ids", ctx.vertexIds.map((id) => `#${id}`).join(" "));
+    appendObjectPropertyRow(parent, "Can Make Face", ctx.vertexIds.length >= 3 ? "yes" : "no");
+    appendObjectPropertyRow(parent, "Can Make Line", ctx.vertexIds.length >= 2 ? "yes" : "no");
+    return;
+  }
   if (ctx.type === "vertex" && ctx.vertex) {
     appendObjectNumberProperty(parent, "X", "vertex-x", round(ctx.vertex.x), { disabled: ctx.vertex.center });
     appendObjectNumberProperty(parent, "Y", "vertex-y", round(ctx.vertex.y));
@@ -10300,8 +10786,7 @@ function appendObjectProperties(parent, ctx) {
   if (ctx.type === "edge" && ctx.edge) {
     appendObjectSelectProperty(parent, "Kind", "edge-kind", ctx.edge.kind || "edge", [
       { value: "edge", label: "Edge" },
-      { value: "stick", label: "Stick" },
-      { value: EDGE_KIND_STATION_ENTRANCE, label: "Station Entrance" }
+      { value: "stick", label: "Stick" }
     ]);
     appendObjectPropertyRow(parent, "Vertices", `#${ctx.edge.a} -> #${ctx.edge.b}`);
     appendObjectPropertyRow(parent, "Lines", ctx.edgeLoop.length || 1);
@@ -10309,7 +10794,11 @@ function appendObjectProperties(parent, ctx) {
     return;
   }
   if (ctx.type === "detail" && ctx.detail) {
-    appendObjectPropertyRow(parent, "Type", ctx.detail.type === "panel" ? "surface detail" : ctx.detail.type);
+    if (ctx.detailGroup?.length > 1) {
+      appendObjectPropertyRow(parent, "Lines", ctx.detailGroup.length);
+      appendObjectPropertyRow(parent, "Ids", ctx.detailGroup.map((detail) => `#${detail.id}`).join(" "));
+    }
+    appendObjectPropertyRow(parent, "Type", detailTypeLabel(ctx.detail.type));
     appendObjectPropertyRow(parent, "Face", ctx.detail.faceId != null ? `#${ctx.detail.faceId}` : "none");
     appendObjectPropertyRow(parent, "Vertex", ctx.detail.vertexId != null ? `#${ctx.detail.vertexId}` : "none");
     appendObjectRangeProperty(parent, "Inset", "detail-inset", ctx.detail.inset ?? 0.45, { min: .15, max: .9, step: .01, disabled: !ctx.detail.faceId });
@@ -10328,6 +10817,12 @@ function appendObjectProperties(parent, ctx) {
 }
 
 function appendObjectQuickProperties(parent, ctx) {
+  if (ctx.type === "vertexGroup") {
+    appendObjectPropertyRow(parent, "Vertices", ctx.vertexIds.length);
+    appendObjectPropertyRow(parent, "Ids", ctx.vertexIds.map((id) => `#${id}`).join(" "));
+    appendObjectPropertyRow(parent, "Face", ctx.vertexIds.length >= 3 ? "available" : "needs 3");
+    return;
+  }
   if (ctx.type === "vertex" && ctx.vertex) {
     appendObjectPropertyRow(parent, "X", round(ctx.vertex.x));
     appendObjectPropertyRow(parent, "Y", round(ctx.vertex.y));
@@ -10344,7 +10839,8 @@ function appendObjectQuickProperties(parent, ctx) {
     return;
   }
   if (ctx.type === "detail" && ctx.detail) {
-    appendObjectPropertyRow(parent, "Type", ctx.detail.type === "panel" ? "surface detail" : ctx.detail.type);
+    if (ctx.detailGroup?.length > 1) appendObjectPropertyRow(parent, "Lines", ctx.detailGroup.length);
+    appendObjectPropertyRow(parent, "Type", detailTypeLabel(ctx.detail.type));
     appendObjectPropertyRow(parent, "Face", ctx.detail.faceId != null ? `#${ctx.detail.faceId}` : "none");
     appendObjectPropertyRow(parent, "Vertex", ctx.detail.vertexId != null ? `#${ctx.detail.vertexId}` : "none");
     appendObjectPropertyRow(parent, "Inset", ctx.detail.inset == null ? "none" : round(ctx.detail.inset, 2));
@@ -10361,13 +10857,14 @@ function appendObjectQuickProperties(parent, ctx) {
 function renderSelectedObjectProperties(ctx = selectionContext()) {
   const panel = els.objectPropertiesPanel;
   if (!panel) return;
+  els.toolsPanel?.setAttribute("data-has-selection", ctx.selected ? "true" : "false");
   panel.replaceChildren();
   panel.classList.toggle("is-empty", !ctx.selected);
 
   const header = document.createElement("div");
   header.className = "object-properties-head";
   const title = document.createElement("h2");
-  title.textContent = selectionContextLabel(ctx);
+  title.textContent = `Controls: ${selectionContextLabel(ctx)}`;
   header.appendChild(title);
   panel.appendChild(header);
 
@@ -10379,40 +10876,30 @@ function renderSelectedObjectProperties(ctx = selectionContext()) {
     return;
   }
 
-  const properties = document.createElement("div");
-  properties.className = "object-property-grid";
-  appendObjectProperties(properties, ctx);
-  panel.appendChild(properties);
+  const controls = document.createElement("div");
+  controls.className = "object-control-list";
+  appendObjectProperties(controls, ctx);
 
   const commands = visibleSelectionCommands(ctx)
     .filter((command) => !command.separator)
-    .filter((command) => ctx.face || command.id !== "properties");
-  if (!commands.length) return;
-  const actions = document.createElement("div");
-  actions.className = "object-property-actions";
+    .filter((command) => command.id !== "properties");
   for (const command of commands) {
     const button = document.createElement("button");
     button.type = "button";
+    button.className = "object-command-control";
     button.dataset.objectAction = command.id;
+    button.dataset.controlRole = "action";
     button.textContent = command.label;
     button.disabled = !selectionCommandEnabled(command, ctx);
-    actions.appendChild(button);
+    controls.appendChild(button);
   }
-  panel.appendChild(actions);
+  panel.appendChild(controls);
 }
 
 function showSelectedObjectProperties(ctx = selectionContext()) {
-  if (ctx.face) {
-    setToolTab("paint", { redraw: false });
-    setPaintTab("face", { redraw: false });
-    openUvProperties();
-    setStatus(`${selectionContextLabel(ctx).toUpperCase()} PROPERTIES OPEN.`);
-    renderAll();
-    return;
-  }
-  if (ctx.type === "vertex" || ctx.type === "edge" || ctx.type === "detail") {
-    setToolTab("edit");
-    setStatus(`${selectionContextLabel(ctx).toUpperCase()} PROPERTIES ARE IN THE EDIT PANEL.`);
+  if (ctx.type === "vertex" || ctx.type === "vertexGroup" || ctx.type === "face" || ctx.type === "uv" || ctx.type === "group" || ctx.type === "edge" || ctx.type === "detail") {
+    openToolWindow("edit", { focus: false });
+    setStatus(`${selectionContextLabel(ctx).toUpperCase()} CONTROLS OPEN.`);
   }
 }
 
@@ -10420,6 +10907,7 @@ function selectedContextTargetTypes(ctx) {
   if (!ctx?.type) return [];
   const types = [ctx.type];
   if (ctx.face && !types.includes("face-backed")) types.push("face-backed");
+  if (ctx.type === "detail" && ctx.detailGroup?.length > 1) types.push("detailGroup");
   return types;
 }
 
@@ -10427,7 +10915,7 @@ const SELECTION_COMMANDS = [
   {
     id: "properties",
     label: "Properties",
-    targetTypes: ["vertex", "face", "edge", "detail", "uv", "group"],
+    targetTypes: ["vertex", "vertexGroup", "face", "edge", "detail", "uv", "group"],
     enabled: (ctx) => !!ctx.selected,
     run: showSelectedObjectProperties
   },
@@ -10445,6 +10933,29 @@ const SELECTION_COMMANDS = [
     targetTypes: ["face", "uv"],
     enabled: (ctx) => !!ctx.face,
     run: () => orientFaceToView()
+  },
+  {
+    id: "face-select-vertices",
+    label: "Select Face Vertices",
+    targetTypes: ["face", "uv"],
+    enabled: (ctx) => !!ctx.face,
+    run: (ctx) => setVertexGroupFromFace(ctx.face)
+  },
+  {
+    id: "face-append-picks",
+    label: "Add Vertex Group To Face",
+    targetTypes: ["face", "vertexGroup"],
+    visible: () => state.pick.length > 0,
+    enabled: (ctx) => !!ctx.face && state.pick.length > 0,
+    run: () => appendPickedToSelectedFace()
+  },
+  {
+    id: "face-remove-picks",
+    label: "Remove Vertex Group From Face",
+    targetTypes: ["face", "vertexGroup"],
+    visible: () => state.pick.length > 0,
+    enabled: (ctx) => !!ctx.face && state.pick.length > 0,
+    run: () => removePickedFromSelectedFace()
   },
   {
     id: "face-add-window",
@@ -10531,7 +11042,7 @@ const SELECTION_COMMANDS = [
     label: "Convert To Station Entrance",
     targetTypes: ["edge"],
     enabled: (ctx) => !!ctx.edge,
-    run: () => convertSelectedEdgeKind(EDGE_KIND_STATION_ENTRANCE)
+    run: () => convertSelectedEdgeToDetail(DETAIL_TYPE_STATION_ENTRANCE)
   },
   {
     id: "edge-window",
@@ -10555,17 +11066,39 @@ const SELECTION_COMMANDS = [
     run: () => convertSelectedEdgeToDetail("panel")
   },
   {
+    id: "edge-extrude-loop",
+    label: "Extrude Face From Edge",
+    targetTypes: ["edge"],
+    enabled: (ctx) => !!ctx.edge,
+    run: () => prepareFaceExtrudePreview()
+  },
+  {
+    id: "detail-select-connected",
+    label: "Select Connected Surface Details",
+    targetTypes: ["detail"],
+    visible: (ctx) => !!ctx.detail && detailIsSurfaceLine(ctx.detail),
+    enabled: (ctx) => !!ctx.detail && surfaceDetailComponentFrom(ctx.detail).length > 1,
+    run: (ctx) => selectConnectedSurfaceDetails(ctx.detail)
+  },
+  {
+    id: "detail-group-clear",
+    label: "Clear Surface Detail Group",
+    targetTypes: ["detailGroup"],
+    enabled: (ctx) => ctx.detailGroup?.length > 1,
+    run: () => clearSurfaceDetailGroup()
+  },
+  {
     id: "detail-edge",
     label: "Convert To Edge",
     targetTypes: ["detail"],
-    enabled: (ctx) => !!ctx.detail && detailEdgePairsForConversion(ctx.detail).length > 0,
+    enabled: (ctx) => !!ctx.detail && (ctx.detailGroup?.length ? ctx.detailGroup : [ctx.detail]).some((detail) => detailEdgePairsForConversion(detail).length > 0),
     run: () => convertSelectedDetailToEdges("edge")
   },
   {
     id: "detail-stick",
     label: "Convert To Stick",
     targetTypes: ["detail"],
-    enabled: (ctx) => !!ctx.detail && detailEdgePairsForConversion(ctx.detail).length > 0,
+    enabled: (ctx) => !!ctx.detail && (ctx.detailGroup?.length ? ctx.detailGroup : [ctx.detail]).some((detail) => detailEdgePairsForConversion(detail).length > 0),
     run: () => convertSelectedDetailToEdges("stick")
   },
   { separator: true },
@@ -10613,6 +11146,35 @@ const SELECTION_COMMANDS = [
   },
   { separator: true },
   {
+    id: "vertex-group-create-face",
+    label: "Create Face From Vertices",
+    targetTypes: ["vertexGroup"],
+    enabled: (ctx) => ctx.vertexIds.length >= 3,
+    run: () => createFaceFromVertexGroup()
+  },
+  {
+    id: "vertex-group-create-edge",
+    label: "Create Edge From First Two",
+    targetTypes: ["vertexGroup"],
+    enabled: (ctx) => ctx.vertexIds.length >= 2,
+    run: () => createLineFromVertexGroup("edge")
+  },
+  {
+    id: "vertex-group-create-stick",
+    label: "Create Stick From First Two",
+    targetTypes: ["vertexGroup"],
+    enabled: (ctx) => ctx.vertexIds.length >= 2,
+    run: () => createLineFromVertexGroup("stick")
+  },
+  {
+    id: "vertex-group-clear",
+    label: "Clear Vertex Group",
+    targetTypes: ["vertexGroup"],
+    enabled: (ctx) => ctx.vertexIds.length > 0,
+    run: () => clearVertexGroup()
+  },
+  { separator: true },
+  {
     id: "vertex-add-beacon",
     label: "Add Beacon",
     targetTypes: ["vertex"],
@@ -10627,6 +11189,13 @@ const SELECTION_COMMANDS = [
     visible: (ctx) => ctx.hasVertexBeacon,
     enabled: (ctx) => !!ctx.vertex,
     run: () => removeBeaconAtSelectedVertex()
+  },
+  {
+    id: "vertex-select-adjacent-faces",
+    label: "Select Adjacent Faces",
+    targetTypes: ["vertex"],
+    enabled: (ctx) => !!ctx.vertex && ctx.incidentFaces.length > 0,
+    run: (ctx) => selectAdjacentFacesForVertex(ctx.vertex)
   },
   { separator: true },
   {
@@ -10674,7 +11243,6 @@ function renderSelectionPickMenu(candidates, options = {}) {
     button.type = "button";
     button.setAttribute("role", "menuitem");
     button.dataset.pickIndex = String(index);
-    if (options.afterPick === "context") button.classList.add("has-cascade");
     const label = document.createElement("span");
     label.className = "selection-pick-label";
     label.textContent = selectionPickCandidateLabel(candidate);
@@ -10682,14 +11250,20 @@ function renderSelectionPickMenu(candidates, options = {}) {
     meta.className = "selection-pick-meta";
     meta.textContent = selectionPickCandidateMeta(candidate);
     button.append(label, meta);
-    if (options.afterPick === "context") {
-      const arrow = document.createElement("span");
-      arrow.className = "selection-pick-arrow";
-      arrow.textContent = ">";
-      button.appendChild(arrow);
-    }
     menu.appendChild(button);
   });
+
+  const divider = document.createElement("div");
+  divider.className = "selection-context-menu-divider";
+  menu.appendChild(divider);
+  const clearButton = document.createElement("button");
+  clearButton.type = "button";
+  clearButton.setAttribute("role", "menuitem");
+  clearButton.dataset.pickAction = "clear-selection";
+  clearButton.className = "selection-pick-clear-btn";
+  clearButton.textContent = "Clear Selection";
+  clearButton.disabled = !state.selected && !state.pick.length && !state.selectedFaceIds.size && !state.selectedEdgeIds.size && !state.selectedDetailIds.size;
+  menu.appendChild(clearButton);
   return true;
 }
 
@@ -10787,13 +11361,9 @@ function openSelectionPickMenuAt(clientX, clientY, candidates, options = {}) {
 function setSelectionPickHover(index) {
   cancelSelectionPickHoverClear();
   const candidate = state.selectionPickCandidates[index] || null;
-  if (state.selectionPickHover?.key === candidate?.key) {
-    if (state.selectionPickOptions?.afterPick === "context") openSelectionPickCascade(index);
-    return;
-  }
+  if (state.selectionPickHover?.key === candidate?.key) return;
   state.selectionPickHover = candidate;
   renderMain();
-  if (state.selectionPickOptions?.afterPick === "context") openSelectionPickCascade(index);
 }
 
 function cancelSelectionPickHoverClear() {
@@ -10806,7 +11376,6 @@ function clearSelectionPickHover(options = {}) {
   cancelSelectionPickHoverClear();
   const hadHover = !!state.selectionPickHover;
   state.selectionPickHover = null;
-  if (state.selectionPickOptions?.afterPick === "context") hideSelectionContextMenu();
   if (hadHover && options.redraw !== false) renderMain();
 }
 
@@ -10824,10 +11393,23 @@ function runSelectionPick(index) {
   const options = state.selectionPickOptions || {};
   if (options.afterPick === "context") {
     setSelectionPickHover(index);
-    openSelectionPickCascade(index, { focusFirstAction: true });
+    promoteSelectionPickToProperties(index);
     return;
   }
   runSelectionAfterPick(selectSelectionCandidate(candidate, options), options);
+}
+
+function promoteSelectionPickToProperties(index = null) {
+  const candidate = Number.isInteger(index)
+    ? state.selectionPickCandidates[index] || null
+    : state.selectionPickHover || state.selectionPickCandidates[0] || null;
+  if (!candidate) return false;
+  const options = state.selectionPickOptions || {};
+  const selected = selectSelectionCandidate(candidate, { ...options, keepPickMenu: false });
+  if (!selected) return false;
+  hideSelectionContextMenu();
+  showSelectedObjectProperties(selectionContext());
+  return true;
 }
 
 function renderSelectionContextMenu(ctx = selectionContext(), options = {}) {
@@ -10949,20 +11531,24 @@ function handleObjectPropertyInput(event) {
     return;
   }
   if (key === "detail-inset") {
-    const detail = state.selected?.type === "detail" ? detailById(state.selected.id) : null;
-    if (!detail || !detail.faceId) return;
+    const details = selectedDetailSetDetails().filter((detail) => detail.faceId);
+    if (!details.length) return;
     const inset = Number(control.value);
     if (!Number.isFinite(inset)) return;
-    detail.inset = inset;
-    patchMirroredDetail(detail, { inset });
+    for (const detail of details) {
+      detail.inset = inset;
+      patchMirroredDetail(detail, { inset });
+    }
     refreshAfterObjectPropertyEdit();
     return;
   }
   if (key === "detail-color") {
-    const detail = state.selected?.type === "detail" ? detailById(state.selected.id) : null;
-    if (!detail) return;
-    detail.color = control.value;
-    patchMirroredDetail(detail, { color: control.value });
+    const details = selectedDetailSetDetails();
+    if (!details.length) return;
+    for (const detail of details) {
+      detail.color = control.value;
+      patchMirroredDetail(detail, { color: control.value });
+    }
     refreshAfterObjectPropertyEdit();
   }
 }
@@ -11024,16 +11610,23 @@ function bindEvents() {
   document.addEventListener("pointerup", endContinuousEditHistory, true);
   document.addEventListener("pointercancel", endContinuousEditHistory, true);
   els.selectionPickMenu?.addEventListener("click", (event) => {
+    const actionButton = event.target.closest("[data-pick-action]");
+    if (actionButton?.dataset.pickAction === "clear-selection" && !actionButton.disabled) {
+      clearEditorSelection();
+      setStatus("SELECTION CLEARED.");
+      return;
+    }
     const button = event.target.closest("[data-pick-index]");
     if (!button) return;
     runSelectionPick(Number(button.dataset.pickIndex));
   });
   els.selectionPickMenu?.addEventListener("pointerover", (event) => {
-    const button = event.target.closest("[data-pick-index]");
-    if (!button) {
-      if (state.selectionPickOptions?.afterPick === "context") scheduleSelectionPickHoverClear();
+    if (event.target.closest("[data-pick-action]")) {
+      clearSelectionPickHover({ redraw: false });
       return;
     }
+    const button = event.target.closest("[data-pick-index]");
+    if (!button) return;
     setSelectionPickHover(Number(button.dataset.pickIndex));
   });
   els.selectionPickMenu?.addEventListener("focusin", (event) => {
@@ -11047,12 +11640,14 @@ function bindEvents() {
     const button = event.target.closest("[data-pick-index]");
     if (!button) return;
     event.preventDefault();
-    openSelectionPickCascade(Number(button.dataset.pickIndex), { focusFirstAction: true });
+    promoteSelectionPickToProperties(Number(button.dataset.pickIndex));
   });
   els.selectionPickMenu?.addEventListener("pointerleave", (event) => {
-    if (state.selectionPickOptions?.afterPick === "context" && els.selectionContextMenu?.contains(event.relatedTarget)) return;
-    if (state.selectionPickOptions?.afterPick === "context") scheduleSelectionPickHoverClear();
-    else clearSelectionPickHover();
+    if (state.selectionPickOptions?.afterPick === "context" && state.selectionPickHover) {
+      promoteSelectionPickToProperties();
+      return;
+    }
+    clearSelectionPickHover();
   });
   els.selectionContextMenu?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-command-id]");
@@ -11086,7 +11681,7 @@ function bindEvents() {
     if (selectionContextMenuOpen() && !inContextMenu && !inPickMenu) hideSelectionContextMenu();
   });
   document.querySelectorAll(".tool-tab-btn").forEach((btn) => btn.addEventListener("click", () => {
-    setToolTab(btn.dataset.toolTabTarget);
+    openToolWindow(btn.dataset.toolTabTarget);
   }));
   document.querySelectorAll(".paint-subtab-btn").forEach((btn) => btn.addEventListener("click", () => {
     setPaintTab(btn.dataset.paintTabTarget);
@@ -11237,6 +11832,52 @@ function bindEvents() {
   bindViewCubeRotateButton(els.viewCubeRotateRight, () => rotateViewHorizontal(1));
   bindViewCubeRotateButton(els.viewCubeRotateUp, () => rotateViewVertical(-1));
   bindViewCubeRotateButton(els.viewCubeRotateDown, () => rotateViewVertical(1));
+  const beginMainViewDrag = (ev) => {
+    state.drag = {
+      type: "main-rotate",
+      pointerId: ev.pointerId,
+      x: ev.clientX,
+      y: ev.clientY,
+      startX: ev.clientX,
+      startY: ev.clientY,
+      rotating: false,
+      captureEl: ev.currentTarget
+    };
+    ev.currentTarget.setPointerCapture?.(ev.pointerId);
+  };
+  const moveMainViewDrag = (ev) => {
+    const drag = state.drag;
+    if (!drag || drag.type !== "main-rotate" || drag.pointerId !== ev.pointerId) return;
+    const totalDx = ev.clientX - drag.startX;
+    const totalDy = ev.clientY - drag.startY;
+    if (!drag.rotating && Math.hypot(totalDx, totalDy) < MAIN_VIEW_DRAG_ROTATE_THRESHOLD) return;
+    ev.preventDefault();
+    hideSelectionPickMenu();
+    hideSelectionContextMenu();
+    drag.rotating = true;
+    const dx = ev.clientX - drag.x;
+    const dy = ev.clientY - drag.y;
+    drag.x = ev.clientX;
+    drag.y = ev.clientY;
+    rotateViewFromCubeDrag(dx, dy);
+  };
+  const endMainViewDrag = (ev, options = {}) => {
+    const drag = state.drag;
+    if (!drag || drag.type !== "main-rotate" || (ev?.pointerId != null && drag.pointerId !== ev.pointerId)) return;
+    if (ev?.pointerId != null && drag.captureEl?.hasPointerCapture?.(ev.pointerId)) {
+      drag.captureEl.releasePointerCapture(ev.pointerId);
+    }
+    state.drag = null;
+    if (!options.cancel && drag.rotating) {
+      ev?.preventDefault?.();
+      setStatus("VIEW ROTATED.");
+    }
+  };
+  els.openFileWindowBtn?.addEventListener("click", openFileWindow);
+  els.openGameInfoWindowBtn?.addEventListener("click", openGameInfoWindow);
+  els.closeToolsWindowBtn?.addEventListener("click", () => closeToolWindow());
+  els.closeFileWindowBtn?.addEventListener("click", () => closeFileWindow());
+  els.closeGameInfoWindowBtn?.addEventListener("click", () => closeGameInfoWindow());
   els.mainView.addEventListener("pointerdown", (ev) => {
     ev.stopPropagation();
     if (selectionPickMenuOpen() || selectionContextMenuOpen()) {
@@ -11245,20 +11886,25 @@ function bindEvents() {
     }
     const point = getCanvasPoint(ev, els.mainView);
     if (ev.button === 0) {
-      if (ev.metaKey) {
+      const wantsPickMenu = ev.metaKey || ev.ctrlKey;
+      if (wantsPickMenu) {
         ev.preventDefault();
       }
       selectInMain(point, {
+        afterPick: wantsPickMenu ? "context" : undefined,
+        cascade: wantsPickMenu ? "context" : undefined,
         multiSelect: ev.shiftKey,
-        forcePickMenu: ev.metaKey,
+        forcePickMenu: wantsPickMenu,
+        pickMenuForSingle: wantsPickMenu,
         clientX: ev.clientX,
         clientY: ev.clientY
       });
+      if (!wantsPickMenu) beginMainViewDrag(ev);
     }
   });
   els.mainView.addEventListener("contextmenu", (ev) => {
     ev.preventDefault();
-    state.drag = null;
+    endMainViewDrag(ev, { cancel: true });
     const point = getCanvasPoint(ev, els.mainView);
     const picked = selectInMain(point, {
       afterPick: "context",
@@ -11275,36 +11921,17 @@ function bindEvents() {
       setStatus("NO CONTEXT ACTIONS FOR EMPTY SPACE.");
     }
   });
-  els.mainView.addEventListener("pointermove", (ev) => {
-    if (!state.drag) return;
-    state.drag = null;
+  els.mainView.addEventListener("dblclick", (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    endMainViewDrag(ev, { cancel: true });
+    const point = getCanvasPoint(ev, els.mainView);
+    if (!orientFaceAtMainPoint(point)) setStatus("DOUBLE-CLICK A FACE TO ORIENT VIEW.");
   });
-  els.mainView.addEventListener("pointerup", () => { state.drag = null; });
+  els.mainView.addEventListener("pointermove", moveMainViewDrag);
+  els.mainView.addEventListener("pointerup", endMainViewDrag);
+  els.mainView.addEventListener("pointercancel", (ev) => endMainViewDrag(ev, { cancel: true }));
   els.mainPreviewStack?.addEventListener("wheel", zoomMainViewFromWheel, { passive: false });
-  document.querySelectorAll(".ortho-grid canvas").forEach((canvas) => {
-    canvas.addEventListener("click", (ev) => {
-      const point = getCanvasPoint(ev, canvas);
-      const projected = new Map(state.verts.map((v) => [v.id, orthoProject(v, canvas, canvas.dataset.view)]));
-      for (const type of orderedSelectionFilters()) {
-        if (type === "edge") {
-          const auditHit = els.showAuditEdges?.checked
-            ? nearestEdge(point, projected, renderAuditEdges(), SELECTION_EDGE_PICK_RADIUS)
-            : null;
-          const edgeHit = auditHit || nearestEdge(point, projected, state.edges, SELECTION_EDGE_PICK_RADIUS);
-          if (edgeHit) {
-            selectEdge(edgeHit, { audit: edgeHit === auditHit });
-            return;
-          }
-        } else if (type === "vertex") {
-          const id = nearestVertex(point, projected, 12);
-          if (id) {
-            selectVertex(id, { multiSelect: ev.shiftKey });
-            return;
-          }
-        }
-      }
-    });
-  });
   const startNewProfile = (sideInput = els.profileSideCount, rotationInput = els.profileRotationDeg, coneInput = els.profileConeMode) => {
     if (!confirmDiscardCurrentModel("Create a new profile")) {
       setStatus("NEW PROFILE CANCELLED.");
@@ -11314,7 +11941,6 @@ function bindEvents() {
     resetPolygonProfile(readProfileSideCount(sideInput), readProfileRotationDeg(rotationInput), readProfileConeMode(coneInput));
   };
   document.getElementById("newProfileBtn")?.addEventListener("click", () => startNewProfile());
-  els.openObjectBrowserBtn?.addEventListener("click", openObjectBrowser);
   els.openBenchmarkBrowserBtn?.addEventListener("click", openBenchmarkBrowser);
   els.browseModelsBtn?.addEventListener("click", openObjectBrowser);
   els.modelBrowserNewProfileBtn?.addEventListener("click", () => startNewProfile(els.modelBrowserProfileSides, els.modelBrowserProfileRotation, els.modelBrowserProfileCone));
@@ -11352,17 +11978,11 @@ function bindEvents() {
     });
   });
   els.previewRenderMode.addEventListener("input", renderAll);
-  els.toggleBlueprintBtn?.addEventListener("click", () => {
-    setBlueprintsVisible(!state.showBlueprints, { persist: true });
-    renderAll();
-    setStatus(state.showBlueprints ? "BLUEPRINT VIEW SHOWN." : "BLUEPRINT VIEW HIDDEN.");
-  });
   els.spinPreviewBtn?.addEventListener("click", openSpinPreviewWindow);
   els.closeSpinPreviewBtn?.addEventListener("click", closeSpinPreviewWindow);
   els.spinPreviewModal?.addEventListener("click", (event) => {
     if (event.target === els.spinPreviewModal) closeSpinPreviewWindow();
   });
-  els.openAssetLibraryBtn?.addEventListener("click", openAssetLibrary);
   els.openAssetLibraryPaintBtn?.addEventListener("click", openAssetLibrary);
   els.closeAssetLibraryBtn?.addEventListener("click", closeAssetLibrary);
   els.assetLibraryModal?.addEventListener("click", (event) => {
@@ -11467,7 +12087,11 @@ function bindEvents() {
       closeModelBrowser();
       return;
     }
-    if (!els.spinPreviewModal?.classList.contains("is-hidden")) closeSpinPreviewWindow();
+    if (!els.spinPreviewModal?.classList.contains("is-hidden")) {
+      closeSpinPreviewWindow();
+      return;
+    }
+    if (toolWindowOpen()) closeAnyToolWindow();
   });
   els.importBitmapShelf.addEventListener("change", (ev) => {
     importBitmapShelfFiles(ev.target.files);
@@ -11627,16 +12251,8 @@ function bindEvents() {
       handleGamePreviewResult(event.data);
     }
   });
-  document.getElementById("addPointBtn").addEventListener("click", () => {
-    const v = addPointPair(60, 0, 0);
-    selectVertex(v.id);
-    setStatus("POINT PAIR ADDED.");
-  });
-  document.getElementById("addCenterPointBtn").addEventListener("click", () => {
-    const v = addCenterPoint(0, 0);
-    selectVertex(v.id);
-    setStatus("CENTRE POINT ADDED.");
-  });
+  document.getElementById("addPointBtn").addEventListener("click", createPointPairFromAction);
+  document.getElementById("addCenterPointBtn").addEventListener("click", createCenterPointFromAction);
   document.getElementById("deleteSelectionBtn").addEventListener("click", deleteSelected);
   document.getElementById("addVertexBeaconBtn").addEventListener("click", () => addBeaconDetail({ stayInVertexMode: true }));
   document.getElementById("removeVertexBeaconBtn").addEventListener("click", removeBeaconAtSelectedVertex);
@@ -11733,7 +12349,7 @@ function bindEvents() {
   document.getElementById("splitEdgeBtn").addEventListener("click", splitSelectedLine);
   document.getElementById("convertEdgeNormalBtn")?.addEventListener("click", () => convertSelectedEdgeKind("edge"));
   document.getElementById("convertEdgeStickBtn")?.addEventListener("click", () => convertSelectedEdgeKind("stick"));
-  document.getElementById("convertEdgeEntranceBtn")?.addEventListener("click", () => convertSelectedEdgeKind(EDGE_KIND_STATION_ENTRANCE));
+  document.getElementById("convertEdgeEntranceBtn")?.addEventListener("click", () => convertSelectedEdgeToDetail(DETAIL_TYPE_STATION_ENTRANCE));
   document.getElementById("convertEdgeWindowBtn")?.addEventListener("click", () => convertSelectedEdgeToDetail("window"));
   document.getElementById("convertEdgeEngineBtn")?.addEventListener("click", () => convertSelectedEdgeToDetail("engine"));
   document.getElementById("convertEdgeDetailBtn")?.addEventListener("click", () => convertSelectedEdgeToDetail("panel"));
@@ -11747,19 +12363,23 @@ function bindEvents() {
     if (state.selected?.type === "detail") deleteSelected();
   });
   els.detailInset.addEventListener("input", () => {
-    const detail = state.selected?.type === "detail" ? detailById(state.selected.id) : null;
-    if (!detail || !detail.faceId) return;
+    const details = selectedDetailSetDetails().filter((detail) => detail.faceId);
+    if (!details.length) return;
     const inset = Number(els.detailInset.value);
-    detail.inset = inset;
-    patchMirroredDetail(detail, { inset });
+    for (const detail of details) {
+      detail.inset = inset;
+      patchMirroredDetail(detail, { inset });
+    }
     renderAll();
   });
   els.detailColor.addEventListener("input", () => {
-    const detail = state.selected?.type === "detail" ? detailById(state.selected.id) : null;
-    if (!detail) return;
+    const details = selectedDetailSetDetails();
+    if (!details.length) return;
     const color = els.detailColor.value;
-    detail.color = color;
-    patchMirroredDetail(detail, { color });
+    for (const detail of details) {
+      detail.color = color;
+      patchMirroredDetail(detail, { color });
+    }
     renderAll();
   });
   document.getElementById("downloadBtn")?.addEventListener("click", downloadShip);
@@ -11804,11 +12424,33 @@ function applyToolSurfaceMode() {
   document.title = "Ultra Elite Model Builder";
 }
 
+function installShipBuilderTestHooks() {
+  const params = new URLSearchParams(location.search);
+  if (!params.has("testHooks")) return;
+  window.__shipBuilderTest = Object.freeze({
+    state,
+    clearEditorSelection,
+    resetPolygonProfile,
+    selectFaceTarget,
+    selectDetailTarget,
+    selectVertex,
+    toggleSelectionFilter,
+    selectInMain,
+    rotateViewFromCubeDrag,
+    addDetail,
+    selectConnectedSurfaceDetails,
+    selectedDetailSetDetails,
+    controlsOpen: () => !!els.toolsPanel && !els.toolsPanel.classList.contains("is-hidden"),
+    controlsTitle: () => els.objectPropertiesPanel?.querySelector("h2")?.textContent || "",
+    selectedText: () => els.selectionReadout?.textContent || ""
+  });
+}
+
 showBuilderPreloadSplash("Loading model library...", { startup: true, openModelBrowserOnHide: true });
 applyToolSurfaceMode();
 bindEvents();
+installShipBuilderTestHooks();
 setDefaultPreviewRenderMode();
-setBlueprintsVisible(state.showBlueprints);
 populateLibrarySelector();
 markBuilderPreloadStep("library", "Model library indexed; drawing builder...");
 renderAll();

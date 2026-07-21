@@ -7,6 +7,12 @@
   <link rel="stylesheet" href="ship-builder.css">
 </head>
 <body>
+  <div class="desktop-only-message" role="status" aria-live="polite">
+    <div class="desktop-only-box">
+      <strong>Desktop Required</strong>
+      The Ship Builder needs a desktop-sized browser with a keyboard and pointer. Please open it on a laptop or desktop machine.
+    </div>
+  </div>
   <div id="builderPreloadSplash" class="builder-preload-splash is-startup" role="status" aria-live="polite">
     <div class="builder-preload-panel">
       <p class="eyebrow">Ship Builder</p>
@@ -18,19 +24,24 @@
   </div>
   <main class="app">
     <section id="workspace" class="workspace export-hidden">
-      <aside id="toolsPanel" class="panel tools" data-mode="vertex" data-tool-tab="edit">
-        <nav class="tool-tabs" aria-label="Ship builder tool sections">
-          <button class="tool-tab-btn active" data-tool-tab-target="edit" type="button">Edit</button>
-          <button class="tool-tab-btn" data-tool-tab-target="paint" type="button">Paint</button>
-          <button class="tool-tab-btn" data-tool-tab-target="model" type="button">Model</button>
-          <button class="tool-tab-btn" data-tool-tab-target="game" type="button">Game Info</button>
+      <aside id="toolsPanel" class="panel tools is-hidden" data-mode="vertex" data-tool-tab="edit" role="dialog" aria-label="Ship builder controls" aria-hidden="true">
+        <header class="tool-window-head">
+          <div>
+            <p class="eyebrow">Selection Tools</p>
+            <h2 id="toolWindowTitle">Controls</h2>
+          </div>
+          <button id="closeToolsWindowBtn" class="icon-btn tool-window-close" type="button" aria-label="Close controls window" title="Close">×</button>
+        </header>
+        <nav class="tool-tabs selection-tool-tabs control-parking" aria-label="Ship builder tool sections" hidden>
+          <button class="tool-tab-btn active" data-tool-tab-target="edit" type="button">Actions</button>
+          <button class="tool-tab-btn" data-tool-tab-target="paint" type="button">Properties</button>
         </nav>
 
         <section class="tool-tab-panel active" data-tool-tab-panel="edit">
         <h2>Selection</h2>
         <div id="selectionReadout" class="readout">Nothing selected</div>
         <section id="objectPropertiesPanel" class="object-properties-panel" aria-label="Selected object properties"></section>
-        <section class="action-window">
+        <section class="action-window control-parking" hidden>
           <div class="mode-help mode-help-vertex">
             <h2>Vertex Actions</h2>
             <p>Click vertices to select/toggle them. Use sliders to move the active yellow vertex. Picked vertices are cyan.</p>
@@ -51,9 +62,7 @@
 
         <div id="pickList" class="pick-list is-hidden"></div>
 
-        <label class="toggle mirror-toggle"><input id="mirrorNewGeometry" type="checkbox" checked> Mirror actions</label>
-
-        <div class="mode-panel mode-panel-vertex">
+        <div class="mode-panel mode-panel-vertex control-parking" hidden>
           <h2>Point Controls</h2>
           <div class="axis-grid">
             <button data-axis="x" class="axis-btn active">X</button>
@@ -68,54 +77,54 @@
           <div class="button-grid">
             <button id="addPointBtn">Add Point Pair</button>
             <button id="addCenterPointBtn">Add Centre Point</button>
-            <button id="deleteSelectionBtn">Delete Vertex</button>
-            <button id="addVertexBeaconBtn">Add Beacon</button>
-            <button id="removeVertexBeaconBtn">Remove Beacon</button>
+            <button id="deleteSelectionBtn" class="legacy-action-duplicate">Delete Vertex</button>
+            <button id="addVertexBeaconBtn" class="legacy-action-duplicate">Add Beacon</button>
+            <button id="removeVertexBeaconBtn" class="legacy-action-duplicate">Remove Beacon</button>
           </div>
         </div>
 
-        <div class="mode-panel mode-panel-face">
+        <div class="mode-panel mode-panel-face control-parking" hidden>
           <h2>Face Tools</h2>
           <div class="button-grid">
             <button id="addFaceBtn">Add Face From Picks</button>
             <button id="appendFacePointBtn">Add Picks To Face</button>
             <button id="removeFacePointBtn">Remove Picks From Face</button>
             <button id="clearFaceGroupBtn" type="button">Clear Face Group</button>
-            <button id="flipFaceBtn">Flip Face</button>
-            <button id="deleteFaceBtn">Delete Face</button>
-            <button id="addWindowBtn">Add Window</button>
-            <button id="addEngineBtn">Add Engine</button>
-            <button id="addPanelBtn">Add Panel Line</button>
-            <button id="addSurfacePolygonBtn" type="button" aria-pressed="false">Add Polygon</button>
-            <button id="addFaceExtrudeBtn" type="button" aria-pressed="false">Extrude</button>
-            <button id="addFacePointExtrudeBtn" type="button" aria-pressed="false">Point Extrude</button>
+            <button id="flipFaceBtn" class="legacy-action-duplicate">Flip Face</button>
+            <button id="deleteFaceBtn" class="legacy-action-duplicate">Delete Face</button>
+            <button id="addWindowBtn" class="legacy-action-duplicate">Add Window</button>
+            <button id="addEngineBtn" class="legacy-action-duplicate">Add Engine</button>
+            <button id="addPanelBtn" class="legacy-action-duplicate">Add Panel Line</button>
+            <button id="addSurfacePolygonBtn" class="legacy-action-duplicate" type="button" aria-pressed="false">Add Polygon</button>
+            <button id="addFaceExtrudeBtn" class="legacy-action-duplicate" type="button" aria-pressed="false">Extrude</button>
+            <button id="addFacePointExtrudeBtn" class="legacy-action-duplicate" type="button" aria-pressed="false">Point Extrude</button>
           </div>
         </div>
 
-        <div class="mode-panel mode-panel-edge">
+        <div class="mode-panel mode-panel-edge control-parking" hidden>
           <h2>Edge / Stick / Entrance Tools</h2>
           <div class="button-grid">
             <button id="addEdgeBtn">Add Edge From Picks</button>
             <button id="addStickBtn">Add Stick From Picks</button>
-            <button id="splitEdgeBtn">Split + Triangulate</button>
-            <button id="convertEdgeNormalBtn" type="button">Convert To Edge</button>
-            <button id="convertEdgeStickBtn" type="button">Convert To Stick</button>
-            <button id="convertEdgeEntranceBtn" type="button">Convert To Station Entrance</button>
-            <button id="convertEdgeWindowBtn" type="button">Convert To Window</button>
-            <button id="convertEdgeEngineBtn" type="button">Convert To Engine</button>
-            <button id="convertEdgeDetailBtn" type="button">Convert To Surface Detail</button>
+            <button id="splitEdgeBtn" class="legacy-action-duplicate">Split + Triangulate</button>
+            <button id="convertEdgeNormalBtn" class="legacy-action-duplicate" type="button">Convert To Edge</button>
+            <button id="convertEdgeStickBtn" class="legacy-action-duplicate" type="button">Convert To Stick</button>
+            <button id="convertEdgeEntranceBtn" class="legacy-action-duplicate" type="button">Convert To Station Entrance</button>
+            <button id="convertEdgeWindowBtn" class="legacy-action-duplicate" type="button">Convert To Window</button>
+            <button id="convertEdgeEngineBtn" class="legacy-action-duplicate" type="button">Convert To Engine</button>
+            <button id="convertEdgeDetailBtn" class="legacy-action-duplicate" type="button">Convert To Surface Detail</button>
             <button id="extrudeEdgeLoopBtn" type="button" aria-pressed="false">Extrude Face</button>
-            <button id="deleteEdgeBtn">Delete Edge</button>
+            <button id="deleteEdgeBtn" class="legacy-action-duplicate">Delete Edge</button>
           </div>
         </div>
 
-        <div class="mode-panel mode-panel-detail">
+        <div class="mode-panel mode-panel-detail control-parking" hidden>
           <h2>Surface Detail Tools</h2>
           <div class="button-grid">
-            <button id="addBeaconBtn">Add Beacon</button>
-            <button id="convertDetailEdgeBtn" type="button">Convert To Edge</button>
-            <button id="convertDetailStickBtn" type="button">Convert To Stick</button>
-            <button id="deleteDetailBtn">Delete Detail</button>
+            <button id="addBeaconBtn" class="legacy-action-duplicate">Add Beacon</button>
+            <button id="convertDetailEdgeBtn" class="legacy-action-duplicate" type="button">Convert To Edge</button>
+            <button id="convertDetailStickBtn" class="legacy-action-duplicate" type="button">Convert To Stick</button>
+            <button id="deleteDetailBtn" class="legacy-action-duplicate">Delete Detail</button>
           </div>
           <div class="detail-controls">
             <label>Detail Inset <input id="detailInset" type="range" min="0.15" max="0.9" step="0.01"></label>
@@ -271,12 +280,21 @@
           </section>
         </section>
 
-        <section class="tool-tab-panel" data-tool-tab-panel="model">
+      </aside>
+
+      <aside id="fileActionsWindow" class="panel tools standalone-tool-window file-actions-window is-hidden" role="dialog" aria-label="File actions" aria-hidden="true">
+        <header class="tool-window-head">
+          <div>
+            <p class="eyebrow">Model</p>
+            <h2>File Actions</h2>
+          </div>
+          <button id="closeFileWindowBtn" class="icon-btn tool-window-close" type="button" aria-label="Close file actions window" title="Close">×</button>
+        </header>
+        <section class="standalone-tool-panel">
         <h2>Model Save</h2>
         <section class="model-project-tools">
           <h2>Workspace</h2>
           <div class="button-grid compact-actions">
-            <button id="browseModelsBtn" type="button">Browse Models</button>
             <label class="inline-number-control">Profile Sides <input id="profileSideCount" type="number" min="3" max="16" step="1" value="4"></label>
             <label class="inline-number-control">Rotation <input id="profileRotationDeg" type="number" min="-180" max="180" step="1" value="45"></label>
             <label class="inline-number-control"><input id="profileConeMode" type="checkbox"> Cone</label>
@@ -303,8 +321,17 @@
           </div>
         </section>
         </section>
+      </aside>
 
-        <section class="tool-tab-panel" data-tool-tab-panel="game">
+      <aside id="gameInfoWindow" class="panel tools standalone-tool-window game-info-window is-hidden" role="dialog" aria-label="Game info" aria-hidden="true">
+        <header class="tool-window-head">
+          <div>
+            <p class="eyebrow">Metadata</p>
+            <h2>Game Info</h2>
+          </div>
+          <button id="closeGameInfoWindowBtn" class="icon-btn tool-window-close" type="button" aria-label="Close game info window" title="Close">×</button>
+        </header>
+        <section class="standalone-tool-panel">
         <h2>Game Info</h2>
         <label>Ship Id <input id="shipId" value="custom_wedge" spellcheck="false"></label>
         <label>Display Name <input id="shipName" value="Custom Wedge" spellcheck="false"></label>
@@ -393,45 +420,40 @@
           <label class="toggle"><input id="flagHidden" type="checkbox"> Hidden until discovered</label>
         </div>
         </section>
-
-        <section id="selectedAssetCard" class="selected-asset-card" role="button" tabindex="0" aria-label="Open asset library">
-          <div class="selected-asset-thumb">
-            <img id="selectedAssetThumb" alt="">
-          </div>
-          <div class="selected-asset-copy">
-            <h2>Current Asset</h2>
-            <div id="selectedAssetTitle" class="selected-asset-title">No asset selected</div>
-            <div id="selectedAssetMeta" class="selected-asset-meta">Open the library to choose a UV or decal.</div>
-          </div>
-          <button id="openAssetLibraryBtn" type="button">Library</button>
-        </section>
       </aside>
 
-      <section class="panel stage blueprints-hidden">
+      <section class="panel stage">
         <div class="view-head">
           <div class="tool-title">
             <p class="eyebrow">Ultra Elite Workshop</p>
             <h1>Ship Builder</h1>
           </div>
           <div class="view-actions">
-            <div class="browser-action-toolbar icon-toolbar" data-title="File" aria-label="Browser tools">
-              <button id="fullscreenViewBtn" class="icon-btn" type="button" aria-label="Enter fullscreen" title="Enter fullscreen"><span class="toolbar-icon toolbar-icon-fullscreen" aria-hidden="true"></span><span class="selector-label">Fullscreen</span></button>
+            <div class="browser-action-toolbar icon-toolbar" data-title="Edit" aria-label="Edit tools">
               <button id="undoEditBtn" class="icon-btn" type="button" aria-label="Undo edit" title="Undo edit" disabled><span class="toolbar-icon toolbar-icon-undo" aria-hidden="true"></span><span class="selector-label">Undo</span></button>
               <button id="redoEditBtn" class="icon-btn" type="button" aria-label="Redo edit" title="Redo edit" disabled><span class="toolbar-icon toolbar-icon-redo" aria-hidden="true"></span><span class="selector-label">Redo</span></button>
-              <button id="openObjectBrowserBtn" class="icon-btn" type="button" aria-label="Open object browser" title="Objects"><span class="toolbar-icon toolbar-icon-objects" aria-hidden="true"></span><span class="selector-label">Objects</span></button>
+            </div>
+            <div class="asset-action-toolbar" data-title="Asset" aria-label="Asset tools">
+              <section id="selectedAssetCard" class="selected-asset-card toolbar-asset-card" role="button" tabindex="0" aria-label="Open asset library" title="Open asset library">
+                <div class="selected-asset-thumb">
+                  <img id="selectedAssetThumb" alt="">
+                </div>
+              </section>
+              <button id="browseModelsBtn" class="icon-btn" type="button" aria-label="Browse models" title="Browse models"><span class="toolbar-icon toolbar-icon-objects" aria-hidden="true"></span><span class="selector-label">Browse</span></button>
               <button id="openBenchmarkBrowserBtn" class="icon-btn" type="button" aria-label="Open benchmark browser" title="Benchmarks"><span class="toolbar-icon toolbar-icon-benchmark-list" aria-hidden="true"></span><span class="selector-label">Benchmarks</span></button>
             </div>
-            <div class="preview-action-toolbar icon-toolbar" data-title="Renderer" aria-label="Preview actions">
-              <button id="benchmarkRendererBtn" class="icon-btn" type="button" aria-label="Benchmark renderer" title="Benchmark renderer"><span class="toolbar-icon toolbar-icon-benchmark" aria-hidden="true"></span><span class="selector-label">Benchmark</span></button>
-              <button id="spinPreviewBtn" class="icon-btn" type="button" aria-label="Spin preview" title="Spin preview"><span class="toolbar-icon toolbar-icon-spin-preview" aria-hidden="true"></span><span class="selector-label">Spin Preview</span></button>
+            <div class="file-action-toolbar icon-toolbar" data-title="File" aria-label="File tools">
+              <button id="openFileWindowBtn" class="icon-btn" type="button" aria-label="Open file window" title="File"><span class="toolbar-icon toolbar-icon-file" aria-hidden="true"></span><span class="selector-label">File</span></button>
+              <button id="openGameInfoWindowBtn" class="icon-btn" type="button" aria-label="Open game info window" title="Game Info"><span class="toolbar-icon toolbar-icon-game-info" aria-hidden="true"></span><span class="selector-label">Game Info</span></button>
             </div>
             <div class="preview-mode-toolbar" data-title="Select" aria-label="Selection tools">
-              <button data-mode="vertex" class="mode-btn active" type="button" aria-label="Vertex selection filter" aria-pressed="true" title="Toggle vertices in the pick list"><span class="selector-icon selector-icon-vertex" aria-hidden="true"></span><span class="selector-label">Vertex</span></button>
-              <button data-mode="face" class="mode-btn active" type="button" aria-label="Face selection filter" aria-pressed="true" title="Toggle faces in the pick list"><span class="selector-icon selector-icon-face" aria-hidden="true"></span><span class="selector-label">Face</span></button>
-              <button data-mode="edge" class="mode-btn active" type="button" aria-label="Edge or stick selection filter" aria-pressed="true" title="Toggle edges and sticks in the pick list"><span class="selector-icon selector-icon-edge" aria-hidden="true"></span><span class="selector-label">Edge</span></button>
-              <button data-mode="detail" class="mode-btn active" type="button" aria-label="Detail selection filter" aria-pressed="true" title="Toggle details in the pick list"><span class="selector-icon selector-icon-detail" aria-hidden="true"></span><span class="selector-label">Detail</span></button>
-              <button data-mode="uv" class="mode-btn active" type="button" aria-label="UV selection filter" aria-pressed="true" title="Toggle UV-bearing faces in the pick list"><span class="selector-icon selector-icon-uv" aria-hidden="true"></span><span class="selector-label">UV</span></button>
-              <button data-mode="group" class="mode-btn active" type="button" aria-label="Group selection filter" aria-pressed="true" title="Toggle face texture groups in the pick list"><span class="selector-icon selector-icon-group" aria-hidden="true"></span><span class="selector-label">Group</span></button>
+              <button data-mode="vertex" class="mode-btn active" type="button" aria-label="Vertex selection filter" aria-pressed="true" title="Toggle vertices in the vertex group"><span class="selector-icon selector-icon-vertex" aria-hidden="true"></span><span class="selector-label">Vertex</span></button>
+              <button data-mode="face" class="mode-btn active" type="button" aria-label="Face selection filter" aria-pressed="true" title="Toggle faces in the face group"><span class="selector-icon selector-icon-face" aria-hidden="true"></span><span class="selector-label">Face</span></button>
+              <button data-mode="edge" class="mode-btn active" type="button" aria-label="Edge or stick selection filter" aria-pressed="true" title="Toggle edges and sticks for selection"><span class="selector-icon selector-icon-edge" aria-hidden="true"></span><span class="selector-label">Edge</span></button>
+              <button data-mode="detail" class="mode-btn active" type="button" aria-label="Detail selection filter" aria-pressed="true" title="Toggle details for selection"><span class="selector-icon selector-icon-detail" aria-hidden="true"></span><span class="selector-label">Detail</span></button>
+              <button data-mode="uv" class="mode-btn active" type="button" aria-label="UV selection filter" aria-pressed="true" title="Toggle UV-bearing faces for selection"><span class="selector-icon selector-icon-uv" aria-hidden="true"></span><span class="selector-label">UV</span></button>
+              <button data-mode="group" class="mode-btn active" type="button" aria-label="Group selection filter" aria-pressed="true" title="Toggle face texture groups for selection"><span class="selector-icon selector-icon-group" aria-hidden="true"></span><span class="selector-label">Group</span></button>
+              <label class="icon-toggle mirror-toggle" title="Mirror actions"><input id="mirrorNewGeometry" type="checkbox" checked><span class="toolbar-icon toolbar-icon-mirror" aria-hidden="true"></span><span class="selector-label">Mirror</span></label>
               <button id="clearSelectionBtn" type="button" aria-label="Clear selection" title="Clear selection">×</button>
             </div>
             <div class="detail-view-filter icon-toolbar" data-title="Details" aria-label="Display and detail filters">
@@ -443,15 +465,18 @@
               <label class="icon-toggle" title="Show UV type labels"><input id="showFaceUvTypes" type="checkbox" checked><span class="toolbar-icon toolbar-icon-uv-type" aria-hidden="true"></span><span class="selector-label">UV Type</span></label>
               <label class="icon-toggle" title="Show blank UV warnings"><input id="showBlankUv" type="checkbox" checked><span class="toolbar-icon toolbar-icon-blank-uv" aria-hidden="true"></span><span class="selector-label">Blank UV</span></label>
               <label class="icon-toggle" title="Show audit edges"><input id="showAuditEdges" type="checkbox" checked><span class="toolbar-icon toolbar-icon-audit-edges" aria-hidden="true"></span><span class="selector-label">Audit Edges</span></label>
-              <button id="toggleBlueprintBtn" class="icon-btn blueprint-toggle is-off" type="button" aria-label="Blueprints off" title="Toggle blueprints" aria-pressed="false"><span class="toolbar-icon toolbar-icon-blueprints" aria-hidden="true"></span><span class="selector-label">Blueprints</span></button>
             </div>
             <div id="viewModeColumn" class="view-mode-column icon-toolbar" data-title="Views" aria-label="Preview view type">
-              <button id="orientUvToViewBtn" class="icon-btn selection-action-btn" type="button" aria-label="Orient selected face to view" title="Orient selected face to view"><span class="toolbar-icon toolbar-icon-face-view" aria-hidden="true"></span><span class="selector-label">Face To View</span></button>
               <button type="button" data-preview-mode="gameOverlay" aria-label="Game renderer with overlay" title="Game renderer with overlay"><span class="view-mode-icon view-mode-icon-game-overlay" aria-hidden="true"></span></button>
               <button type="button" data-preview-mode="wireFaces" aria-label="Builder wire and faces" title="Builder wire and faces"><span class="view-mode-icon view-mode-icon-wire-faces" aria-hidden="true"></span></button>
               <button type="button" data-preview-mode="wire" aria-label="Builder wireframe" title="Builder wireframe"><span class="view-mode-icon view-mode-icon-wire" aria-hidden="true"></span></button>
               <button type="button" data-preview-mode="wireBitmap" aria-label="Builder wire and bitmap" title="Builder wire and bitmap"><span class="view-mode-icon view-mode-icon-wire-bitmap" aria-hidden="true"></span></button>
               <button type="button" data-preview-mode="bitmap" aria-label="Builder bitmap only" title="Builder bitmap only"><span class="view-mode-icon view-mode-icon-bitmap" aria-hidden="true"></span></button>
+              <span class="toolbar-separator" aria-hidden="true"></span>
+              <button id="orientUvToViewBtn" class="icon-btn selection-action-btn" type="button" aria-label="Orient selected face to view" title="Orient selected face to view"><span class="toolbar-icon toolbar-icon-face-view" aria-hidden="true"></span><span class="selector-label">Face To View</span></button>
+              <button id="fullscreenViewBtn" class="icon-btn" type="button" aria-label="Enter fullscreen" title="Enter fullscreen"><span class="toolbar-icon toolbar-icon-fullscreen" aria-hidden="true"></span><span class="selector-label">Fullscreen</span></button>
+              <button id="benchmarkRendererBtn" class="icon-btn" type="button" aria-label="Benchmark renderer" title="Benchmark renderer"><span class="toolbar-icon toolbar-icon-benchmark" aria-hidden="true"></span><span class="selector-label">Benchmark</span></button>
+              <button id="spinPreviewBtn" class="icon-btn" type="button" aria-label="Spin preview" title="Spin preview"><span class="toolbar-icon toolbar-icon-spin-preview" aria-hidden="true"></span><span class="selector-label">Spin Preview</span></button>
             </div>
           </div>
         </div>
@@ -531,20 +556,6 @@
           </div>
           <div id="selectionPickMenu" class="selection-pick-menu is-hidden" role="menu" aria-label="Objects under pointer"></div>
           <div id="selectionContextMenu" class="selection-context-menu is-hidden" role="menu" aria-label="Selection actions"></div>
-        </div>
-        <div class="ortho-grid">
-          <article>
-            <h3>Top X/Z</h3>
-            <canvas data-view="top" width="360" height="240"></canvas>
-          </article>
-          <article>
-            <h3>Front X/Y</h3>
-            <canvas data-view="front" width="360" height="240"></canvas>
-          </article>
-          <article>
-            <h3>Side Z/Y</h3>
-            <canvas data-view="side" width="360" height="240"></canvas>
-          </article>
         </div>
       </section>
 

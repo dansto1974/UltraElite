@@ -10155,36 +10155,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapMirrorX": true
       }
     ],
-    "edges": [
-      {
-        "id": 5024,
-        "a": 13,
-        "b": 14,
-        "kind": "stationEntrance",
-        "mirrored": false
-      },
-      {
-        "id": 5025,
-        "a": 14,
-        "b": 15,
-        "kind": "stationEntrance",
-        "mirrored": false
-      },
-      {
-        "id": 5026,
-        "a": 15,
-        "b": 16,
-        "kind": "stationEntrance",
-        "mirrored": false
-      },
-      {
-        "id": 5027,
-        "a": 16,
-        "b": 13,
-        "kind": "stationEntrance",
-        "mirrored": false
-      }
-    ],
+    "edges": [],
     "details": [
       {
         "id": 1,
@@ -10209,6 +10180,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "type": "beacon",
         "vertexId": 16,
         "color": "#ffb642"
+      },
+      {
+        "id": 5,
+        "type": "stationEntrance",
+        "indices": [
+          13,
+          14,
+          15,
+          16
+        ],
+        "color": "#06131f",
+        "normal": [
+          0,
+          0,
+          1
+        ],
+        "lift": 0
       }
     ],
     "blueprint": {
@@ -10468,29 +10456,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         [
           9,
           10
-        ],
-        [
-          12,
-          13
-        ],
-        [
-          13,
-          14
-        ],
-        [
-          14,
-          15
-        ],
-        [
-          12,
-          15
         ]
       ],
       "edgeKinds": [
-        "edge",
-        "edge",
-        "edge",
-        "edge",
         "edge",
         "edge",
         "edge",
@@ -10612,29 +10580,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         [
           12,
           13
-        ],
-        [
-          -1,
-          -1
-        ],
-        [
-          -1,
-          -1
-        ],
-        [
-          -1,
-          -1
-        ],
-        [
-          -1,
-          -1
         ]
       ],
       "edgeVisibility": [
-        31,
-        31,
-        31,
-        31,
         31,
         31,
         31,
@@ -10804,6 +10752,30 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             1
           ]
+        },
+        {
+          "type": "stationEntrance",
+          "indices": [
+            12,
+            13,
+            14,
+            15
+          ],
+          "color": "#06131f",
+          "normal": [
+            0,
+            0,
+            1
+          ],
+          "lift": 0,
+          "detailRender": {
+            "kind": "stationEntrance",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         }
       ],
       "imageProjection": {
@@ -14319,36 +14291,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "bitmapBaseH": 620
       }
     ],
-    "edges": [
-      {
-        "id": 5030,
-        "a": 21,
-        "b": 22,
-        "kind": "stationEntrance",
-        "mirrored": false
-      },
-      {
-        "id": 5031,
-        "a": 22,
-        "b": 24,
-        "kind": "stationEntrance",
-        "mirrored": false
-      },
-      {
-        "id": 5032,
-        "a": 24,
-        "b": 23,
-        "kind": "stationEntrance",
-        "mirrored": false
-      },
-      {
-        "id": 5033,
-        "a": 23,
-        "b": 21,
-        "kind": "stationEntrance",
-        "mirrored": false
-      }
-    ],
+    "edges": [],
     "details": [
       {
         "id": 1,
@@ -14373,6 +14316,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "type": "beacon",
         "vertexId": 24,
         "color": "#ffb642"
+      },
+      {
+        "id": 5,
+        "type": "stationEntrance",
+        "indices": [
+          21,
+          22,
+          24,
+          23
+        ],
+        "color": "#06131f",
+        "normal": [
+          0,
+          0,
+          1
+        ],
+        "lift": 0
       }
     ],
     "blueprint": {
@@ -14704,29 +14664,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         [
           18,
           19
-        ],
-        [
-          20,
-          21
-        ],
-        [
-          21,
-          23
-        ],
-        [
-          22,
-          23
-        ],
-        [
-          20,
-          22
         ]
       ],
       "edgeKinds": [
-        "edge",
-        "edge",
-        "edge",
-        "edge",
         "edge",
         "edge",
         "edge",
@@ -14878,29 +14818,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         [
           10,
           11
-        ],
-        [
-          -1,
-          -1
-        ],
-        [
-          -1,
-          -1
-        ],
-        [
-          -1,
-          -1
-        ],
-        [
-          -1,
-          -1
         ]
       ],
       "edgeVisibility": [
-        31,
-        31,
-        31,
-        31,
         31,
         31,
         31,
@@ -15066,6 +14986,30 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             0,
             1
           ]
+        },
+        {
+          "type": "stationEntrance",
+          "indices": [
+            20,
+            21,
+            23,
+            22
+          ],
+          "color": "#06131f",
+          "normal": [
+            0,
+            0,
+            1
+          ],
+          "lift": 0,
+          "detailRender": {
+            "kind": "stationEntrance",
+            "solid": false,
+            "wire": true,
+            "glow": false,
+            "glass": false,
+            "solidStroke": false
+          }
         }
       ],
       "imageProjection": {

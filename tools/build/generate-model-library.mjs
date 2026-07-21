@@ -338,9 +338,10 @@ function detailRenderIntent(detail) {
   const beacon = type === "beacon";
   const engine = type === "engine";
   const window = type === "window";
+  const stationEntrance = type === "stationEntrance";
   return {
-    kind: beacon ? "beacon" : line ? "line" : "poly",
-    solid: !line,
+    kind: stationEntrance ? "stationEntrance" : beacon ? "beacon" : line ? "line" : "poly",
+    solid: !line && !stationEntrance,
     wire: !beacon,
     glow: engine,
     glass: window,
@@ -392,14 +393,127 @@ function sourceEdgeKindsForBlueprint(data, blueprint) {
   });
 }
 
+function orderedVerticesForEdgeLoop(edges) {
+  if (!edges.length) return [];
+  const byVertex = new Map();
+  const add = (vertexId, edgeIndex) => {
+    if (!byVertex.has(vertexId)) byVertex.set(vertexId, []);
+    byVertex.get(vertexId).push(edgeIndex);
+  };
+  edges.forEach((edge, edgeIndex) => {
+    add(edge.a, edgeIndex);
+    add(edge.b, edgeIndex);
+  });
+  const endpoints = [...byVertex.entries()].filter(([, items]) => items.length === 1).map(([id]) => id);
+  const start = endpoints[0] ?? edges[0].a;
+  const ordered = [start];
+  const used = new Set();
+  let current = start;
+  while (used.size < edges.length) {
+    const nextIndex = (byVertex.get(current) || []).find((edgeIndex) => !used.has(edgeIndex));
+    if (nextIndex == null) break;
+    used.add(nextIndex);
+    const edge = edges[nextIndex];
+    const nextVertex = edge.a === current ? edge.b : edge.a;
+    if (nextVertex === start && used.size === edges.length) break;
+    ordered.push(nextVertex);
+    current = nextVertex;
+  }
+  return ordered;
+}
+
+function stationEntranceDetailsFromEdges(data, indexById) {
+  const edges = (data.edges || [])
+    .map((edge) => explicitEdgeIds(edge))
+    .filter((edge) => edge.kind === "stationEntrance")
+    .map((edge) => ({ a: indexById.get(Number(edge.a)), b: indexById.get(Number(edge.b)) }))
+    .filter((edge) => Number.isInteger(edge.a) && Number.isInteger(edge.b) && edge.a !== edge.b);
+  if (!edges.length) return [];
+  const remaining = new Set(edges.map((_, index) => index));
+  const byVertex = new Map();
+  edges.forEach((edge, index) => {
+    if (!byVertex.has(edge.a)) byVertex.set(edge.a, []);
+    if (!byVertex.has(edge.b)) byVertex.set(edge.b, []);
+    byVertex.get(edge.a).push(index);
+    byVertex.get(edge.b).push(index);
+  });
+  const details = [];
+  while (remaining.size) {
+    const startIndex = [...remaining][0];
+    const stack = [startIndex];
+    const component = [];
+    while (stack.length) {
+      const index = stack.pop();
+      if (!remaining.delete(index)) continue;
+      const edge = edges[index];
+      component.push(edge);
+      for (const vertexId of [edge.a, edge.b]) {
+        for (const next of byVertex.get(vertexId) || []) {
+          if (remaining.has(next)) stack.push(next);
+        }
+      }
+    }
+    const degree = new Map();
+    component.forEach((edge) => {
+      degree.set(edge.a, (degree.get(edge.a) || 0) + 1);
+      degree.set(edge.b, (degree.get(edge.b) || 0) + 1);
+    });
+    if (component.length < 4 || [...degree.values()].some((count) => count !== 2)) continue;
+    const indices = orderedVerticesForEdgeLoop(component);
+    if (indices.length < 4) continue;
+    details.push(withDetailRender({
+      type: "stationEntrance",
+      indices,
+      color: "#06131f",
+      normal: [0, 0, 1],
+      lift: 0
+    }));
+  }
+  return details;
+}
+
+function stripStationEntranceEdgesFromEmbeddedBlueprint(data, blueprint) {
+  if (!Array.isArray(blueprint?.edges)) return;
+  const indexById = new Map((data.verts || []).map((vertex, index) => [Number(vertex?.id ?? index), index]));
+  const entranceKeys = new Set();
+  for (const edge of data.edges || []) {
+    const explicit = explicitEdgeIds(edge);
+    if (explicit.kind !== "stationEntrance") continue;
+    const a = indexById.get(Number(explicit.a));
+    const b = indexById.get(Number(explicit.b));
+    if (a === undefined || b === undefined || a === b) continue;
+    entranceKeys.add(a < b ? `${a},${b}` : `${b},${a}`);
+  }
+  if (!entranceKeys.size) return;
+  const keep = blueprint.edges.map((edge, index) => {
+    if (!Array.isArray(edge) || edge.length < 2) return true;
+    const [a, b] = edge.map(Number);
+    const key = a < b ? `${a},${b}` : `${b},${a}`;
+    return !entranceKeys.has(key);
+  });
+  blueprint.edges = blueprint.edges.filter((_, index) => keep[index]);
+  for (const field of ["edgeKinds", "edgeFaces", "edgeVisibility"]) {
+    if (Array.isArray(blueprint[field])) blueprint[field] = blueprint[field].filter((_, index) => keep[index]);
+  }
+}
+
 function deriveBlueprint(data) {
   if (data.blueprint && typeof data.blueprint === "object") {
     const blueprint = JSON.parse(JSON.stringify(data.blueprint));
+    stripStationEntranceEdgesFromEmbeddedBlueprint(data, blueprint);
     const imageProjection = sourceImageProjection(data);
     if (imageProjection) blueprint.imageProjection = { ...(blueprint.imageProjection || {}), ...imageProjection };
     const edgeKinds = sourceEdgeKindsForBlueprint(data, blueprint);
     if (edgeKinds) blueprint.edgeKinds = edgeKinds;
     normalizeBlueprintDetails(data, blueprint);
+    const indexById = new Map((data.verts || []).map((vertex, index) => [Number(vertex?.id ?? index), index]));
+    const stationEntranceDetails = stationEntranceDetailsFromEdges(data, indexById);
+    if (stationEntranceDetails.length) {
+      blueprint.details = [
+        ...(blueprint.details || []).filter((detail) => detail?.type !== "stationEntrance"),
+        ...stationEntranceDetails
+      ];
+    }
     return blueprint;
   }
   const { sourceFaces, indexById, verts, faceById, faceNormal, detailModelPoints } = buildStateHelpers(data);
@@ -425,6 +539,7 @@ function deriveBlueprint(data) {
   });
   for (const edge of data.edges || []) {
     const explicit = explicitEdgeIds(edge);
+    if (explicit.kind === "stationEntrance") continue;
     const a = indexById.get(explicit.a);
     const b = indexById.get(explicit.b);
     addDerivedEdge(a, b, -1, explicit.kind);
@@ -480,6 +595,7 @@ function deriveBlueprint(data) {
       ...(detail.type === "engine" ? { stroke: detail.stroke || "#ffffff", lift: detail.lift || 1.5 } : {})
     });
   }).filter(Boolean);
+  const stationEntranceDetails = stationEntranceDetailsFromEdges(data, indexById);
   const imageProjection = sourceImageProjection(data) || {};
   return {
     verts,
@@ -488,7 +604,7 @@ function deriveBlueprint(data) {
     edgeFaces,
     edgeVisibility: edges.map(() => 31),
     normals,
-    details,
+    details: [...details, ...stationEntranceDetails],
     ...(imageProjection.primaryAxis || imageProjection.faceSides || imageProjection.faceTextures || imageProjection.faceTextureUv || imageProjection.faceColors || imageProjection.faceAngles || imageProjection.faceMirrorX || imageProjection.faceDecals ? { imageProjection } : {}),
     gameMeta: data.gameMeta || {}
   };

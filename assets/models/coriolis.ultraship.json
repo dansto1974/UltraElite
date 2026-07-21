@@ -861,36 +861,7 @@
       "bitmapMirrorX": true
     }
   ],
-  "edges": [
-    {
-      "id": 5024,
-      "a": 13,
-      "b": 14,
-      "kind": "stationEntrance",
-      "mirrored": false
-    },
-    {
-      "id": 5025,
-      "a": 14,
-      "b": 15,
-      "kind": "stationEntrance",
-      "mirrored": false
-    },
-    {
-      "id": 5026,
-      "a": 15,
-      "b": 16,
-      "kind": "stationEntrance",
-      "mirrored": false
-    },
-    {
-      "id": 5027,
-      "a": 16,
-      "b": 13,
-      "kind": "stationEntrance",
-      "mirrored": false
-    }
-  ],
+  "edges": [],
   "details": [
     {
       "id": 1,
@@ -915,6 +886,23 @@
       "type": "beacon",
       "vertexId": 16,
       "color": "#ffb642"
+    },
+    {
+      "id": 5,
+      "type": "stationEntrance",
+      "indices": [
+        13,
+        14,
+        15,
+        16
+      ],
+      "color": "#06131f",
+      "normal": [
+        0,
+        0,
+        1
+      ],
+      "lift": 0
     }
   ],
   "blueprint": {
@@ -1174,29 +1162,9 @@
       [
         9,
         10
-      ],
-      [
-        12,
-        13
-      ],
-      [
-        13,
-        14
-      ],
-      [
-        14,
-        15
-      ],
-      [
-        12,
-        15
       ]
     ],
     "edgeKinds": [
-      "edge",
-      "edge",
-      "edge",
-      "edge",
       "edge",
       "edge",
       "edge",
@@ -1318,29 +1286,9 @@
       [
         12,
         13
-      ],
-      [
-        -1,
-        -1
-      ],
-      [
-        -1,
-        -1
-      ],
-      [
-        -1,
-        -1
-      ],
-      [
-        -1,
-        -1
       ]
     ],
     "edgeVisibility": [
-      31,
-      31,
-      31,
-      31,
       31,
       31,
       31,
@@ -1486,6 +1434,30 @@
           "kind": "beacon",
           "solid": true,
           "wire": false,
+          "glow": false,
+          "glass": false,
+          "solidStroke": false
+        }
+      },
+      {
+        "type": "stationEntrance",
+        "indices": [
+          12,
+          13,
+          14,
+          15
+        ],
+        "color": "#06131f",
+        "normal": [
+          0,
+          0,
+          1
+        ],
+        "lift": 0,
+        "detailRender": {
+          "kind": "stationEntrance",
+          "solid": false,
+          "wire": true,
           "glow": false,
           "glass": false,
           "solidStroke": false

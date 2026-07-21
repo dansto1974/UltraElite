@@ -11,6 +11,7 @@
     "index:obsidian:check": "node tools/obsidian/index-knowledge.mjs --check",
     "audit:render-intent": "node tools/build/audit-render-intent.mjs",
     "audit:render-intent:strict": "node tools/build/audit-render-intent.mjs --strict",
+    "ship-builder:controls": "node tools/build/list-ship-builder-controls.mjs",
     "models": "node tools/build/generate-model-library.mjs",
     "skins": "node tools/build/generate-bitmap-skins.mjs",
     "skins:force": "node tools/build/generate-bitmap-skins.mjs --force",

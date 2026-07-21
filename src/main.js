@@ -741,9 +741,10 @@
       const beacon = type === "beacon";
       const engine = type === "engine";
       const window = type === "window";
+      const stationEntrance = type === "stationEntrance";
       return {
-        kind: beacon ? "beacon" : line ? "line" : "poly",
-        solid: !line,
+        kind: stationEntrance ? "stationEntrance" : beacon ? "beacon" : line ? "line" : "poly",
+        solid: !line && !stationEntrance,
         wire: !beacon,
         glow: engine,
         glass: window,
@@ -6977,27 +6978,61 @@
       return o?.model === "dodoStation" ? MODELS.dodoStation : STATION_MODEL;
     }
 
-    function stationSlotVertexIndices(model) {
-      // Dodo slot edges are 20-21-23-22; raw vertex order is 20-21-22-23,
-      // which draws a crossed hourglass and corrupts slot-frame maths.
-      if (model === MODELS.dodoStation || model?.id === "dodoStation") return [20, 21, 23, 22];
-      const n = model.verts.length;
-      return [n - 4, n - 3, n - 2, n - 1];
+    function validStationEntranceLoop(model, indices) {
+      if (!model?.verts?.length || !Array.isArray(indices) || indices.length < 4) return null;
+      const loop = indices.map(Number).filter((index) =>
+        Number.isInteger(index) && index >= 0 && index < model.verts.length);
+      const unique = new Set(loop);
+      return loop.length >= 4 && unique.size >= 4 ? loop.slice(0, 4) : null;
+    }
+
+    function stationEntranceVertexLoops(model) {
+      const loops = [];
+      for (const detail of model?.details || []) {
+        if (detail?.type !== "stationEntrance") continue;
+        const loop = validStationEntranceLoop(model, detail.indices);
+        if (loop) loops.push(loop);
+      }
+      if (loops.length) return loops;
+
+      // Compatibility for older station assets: entrance intent used to live as
+      // a special edge kind, and Coriolis/Dodo also used last-four-verts maths.
+      if (Array.isArray(model?.edges) && Array.isArray(model?.edgeKinds)) {
+        const entranceEdges = model.edges
+          .map((edge, edgeIndex) => ({ edge, edgeIndex }))
+          .filter((entry) => model.edgeKinds[entry.edgeIndex] === "stationEntrance");
+        const vertices = [...new Set(entranceEdges.flatMap((entry) => entry.edge || []))];
+        const loop = validStationEntranceLoop(model, vertices);
+        if (loop) return [loop];
+      }
+      if (model === MODELS.dodoStation || model?.id === "dodoStation") return [[20, 21, 23, 22]];
+      if (model === MODELS.coriolis || model?.id === "coriolis") return [[12, 13, 14, 15]];
+      return [];
+    }
+
+    function stationSlotVertexIndices(model, sourceIndex = null) {
+      const loops = stationEntranceVertexLoops(model);
+      if (Number.isInteger(sourceIndex)) {
+        const matching = loops.find((loop) => loop.includes(sourceIndex));
+        if (matching) return matching;
+      }
+      return loops[0] || [];
     }
 
     function stationSlotEdgeIndices(model) {
       if (!model?.edges?.length) return null;
-      const slot = new Set(stationSlotVertexIndices(model));
+      const slots = stationEntranceVertexLoops(model).map((loop) => new Set(loop));
+      if (!slots.length) return null;
       const indices = [];
       model.edges.forEach((edge, edgeIndex) => {
-        if (slot.has(edge[0]) && slot.has(edge[1])) indices.push(edgeIndex);
+        if (slots.some((slot) => slot.has(edge[0]) && slot.has(edge[1]))) indices.push(edgeIndex);
       });
       return indices.length ? new Set(indices) : null;
     }
 
-    function stationSlotNormalForModel(model) {
+    function stationSlotNormalForModel(model, sourceIndex = null) {
       if (!model?.verts?.length) return null;
-      const slot = stationSlotVertexIndices(model).map((i) => {
+      const slot = stationSlotVertexIndices(model, sourceIndex).map((i) => {
         const v = model.verts[i];
         return Array.isArray(v) ? vec(v[0], v[1], v[2]) : null;
       });
@@ -7017,15 +7052,15 @@
         || model === MODELS.coriolis
         || model === MODELS.dodoStation;
       if (!stationLike) return null;
-      if (!stationSlotVertexIndices(model).includes(sourceIndex)) return null;
-      return stationSlotNormalForModel(model);
+      if (!stationSlotVertexIndices(model, sourceIndex).includes(sourceIndex)) return null;
+      return stationSlotNormalForModel(model, sourceIndex);
     }
 
     function stationSlotBeaconPlacement(model, sourceIndex, source, entity) {
       if (!model?.verts?.length || !source || !Number.isInteger(sourceIndex)) return null;
       const normal = stationSlotBeaconNormal(model, sourceIndex, entity);
       if (!normal) return null;
-      const slotIndices = stationSlotVertexIndices(model);
+      const slotIndices = stationSlotVertexIndices(model, sourceIndex);
       const sequenceIndex = slotIndices.indexOf(sourceIndex);
       const slotVerts = slotIndices.map((i) => {
         const v = model.verts[i];
@@ -10778,6 +10813,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const engineVisual = renderIntent.glow
           ? engineDetailVisual(o.engineGlow ?? 1, detail.stroke || "#ffffff")
           : null;
+        const stationEntrance = renderIntent.kind === "stationEntrance";
         const glassVisual = !wireDetails && renderIntent.glass && normal
           ? windowGlintForSurface(normal, surfaceCenter, camera)
           : null;
@@ -10786,8 +10822,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           kind: "poly",
           projected,
           avgZ: verts.reduce((sum, p) => sum + p.z, 0) / verts.length,
-          fillStyle: wireDetails ? "#000" : (renderIntent.glow ? engineVisual.fill : (detail.color || "#101915")),
-          strokeStyle: wireDetails ? (detail.stroke || wireColor) : (renderIntent.solidStroke ? engineVisual.stroke : null),
+          fillStyle: stationEntrance && wireDetails ? null : wireDetails ? "#000" : (renderIntent.glow ? engineVisual.fill : (detail.color || "#101915")),
+          strokeStyle: stationEntrance ? (detail.stroke || "#ffd33d") : wireDetails ? (detail.stroke || wireColor) : (renderIntent.solidStroke ? engineVisual.stroke : null),
           lineWidth: detail.width || 1.2,
           fillInset: wireDetails ? (options.wireFillInset ?? 1.1) : 0,
           glow: !wireDetails && renderIntent.glow,
@@ -17459,10 +17495,12 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       });
       const result = routed.result;
       if (result && stationPreview) {
-        const slotVerts = stationSlotVertexIndices(result.model || model).map((i) => result.camVerts[i]);
-        const slotPoints = slotVerts.map((p) => p ? result.project(p) : null);
-        if (slotPoints.every(Boolean) && faceFacing(slotVerts).facing > .02) {
-          drawDockPortal(targetCtx, slotPoints, { rot: renderBenchEntity.rot || 0, mode: game.graphicsMode });
+        for (const entrance of stationEntranceVertexLoops(result.model || model)) {
+          const slotVerts = entrance.map((i) => result.camVerts[i]);
+          const slotPoints = slotVerts.map((p) => p ? result.project(p) : null);
+          if (slotPoints.every(Boolean) && faceFacing(slotVerts).facing > .02) {
+            drawDockPortal(targetCtx, slotPoints, { rot: renderBenchEntity.rot || 0, mode: game.graphicsMode });
+          }
         }
         drawRenderedModelBeacons(targetCtx, result, renderBenchEntity, w, h, { mode: game.graphicsMode });
       }
@@ -17527,13 +17565,15 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         skipEdgeIndices: stationSlotEdgeIndices(stationModelFor(o))
       });
       if (!rendered) return;
-      const slotVerts = stationSlotVertexIndices(rendered.model).map((i) => rendered.camVerts[i]);
-      const [slotA, slotB, slotC, slotD] = slotVerts.map((p) => project(p, w, h));
       // The portal is painted on top of the hull (no depth buffer), so gate it on the
       // slot face actually pointing at the camera — otherwise it shows through the
       // station from the back and sides.
-      if (slotA && slotB && slotC && slotD && faceFacing(slotVerts).facing > .02) {
-        drawDockPortal(ctx, [slotA, slotB, slotC, slotD], { ...o, mode: game.graphicsMode });
+      for (const entrance of stationEntranceVertexLoops(rendered.model)) {
+        const slotVerts = entrance.map((i) => rendered.camVerts[i]);
+        const slotPoints = slotVerts.map((p) => project(p, w, h));
+        if (slotPoints.every(Boolean) && faceFacing(slotVerts).facing > .02) {
+          drawDockPortal(ctx, slotPoints, { ...o, mode: game.graphicsMode });
+        }
       }
       drawRenderedModelBeacons(ctx, rendered, stationEntity, w, h, { mode: game.graphicsMode });
     }
