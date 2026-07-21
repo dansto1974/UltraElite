@@ -133,6 +133,7 @@ const els = {
   spinPreviewBtn: document.getElementById("spinPreviewBtn"),
   spinPreviewModal: document.getElementById("spinPreviewModal"),
   spinPreviewFrame: document.getElementById("spinPreviewFrame"),
+  spinPreviewOldSchool: document.getElementById("spinPreviewOldSchool"),
   closeSpinPreviewBtn: document.getElementById("closeSpinPreviewBtn"),
   xSlider: document.getElementById("xSlider"),
   ySlider: document.getElementById("ySlider"),
@@ -350,6 +351,7 @@ const state = {
   modelBrowserBenchSourceModels: {},
   modelBrowserStaleModelIds: new Set(),
   modelBrowserView: "objects",
+  spinPreviewOldSchool: false,
   selected: null,
   selectionFilters: { vertex: true, face: true, edge: true, detail: true, uv: true, group: true },
   selectionPickCandidates: [],
@@ -5878,6 +5880,36 @@ function templateSideForFace(face) {
   return validBitmapFaceSide(face?.bitmapSide) || autoTemplateSideForFace(face);
 }
 
+function templateSideViewAxis(side) {
+  const primaryAxis = templatePrimaryAxis();
+  if (primaryAxis === "x" && side !== "back") return { axis: "x", sign: side === "bottom" ? -1 : 1 };
+  if (side === "back") return { axis: "z", sign: -1 };
+  return { axis: "y", sign: side === "bottom" ? -1 : 1 };
+}
+
+function templateSideNormalVisible(normal, side) {
+  if (!normal || len(normal) <= EPS) return true;
+  const { axis, sign } = templateSideViewAxis(side);
+  return (normal[axis] || 0) * sign > -0.015;
+}
+
+function templateSideFaceVisible(face, side) {
+  return templateSideNormalVisible(faceNormal(face), side);
+}
+
+function templateSideEdgeVisible(edge, side) {
+  if (edge.kind === EDGE_KIND_HIDDEN) return false;
+  const faces = state.faces.filter((face) => face.verts?.includes(edge.a) && face.verts?.includes(edge.b));
+  if (!faces.length) return true;
+  return faces.some((face) => templateSideFaceVisible(face, side));
+}
+
+function templateSideDetailVisible(detail, side) {
+  const faces = detailOwnerFaces(detail);
+  if (faces.length) return faces.some((face) => templateSideFaceVisible(face, side));
+  return templateSideNormalVisible(detailNormal(detail), side);
+}
+
 function drawTemplateCenterline(ctx, x, top = 0, bottom = ctx.canvas.height, options = {}) {
   if (x < -1 || x > ctx.canvas.width + 1) return;
   const active = !!options.active;
@@ -5982,7 +6014,7 @@ function createTemplateCanvas(side, half = mirrorHalfSkinsEnabled()) {
   ctx.save();
   ctx.strokeStyle = "rgba(255,255,255,.46)";
   ctx.lineWidth = 1;
-  for (const face of state.faces) {
+  for (const face of state.faces.filter((item) => templateSideFaceVisible(item, side))) {
     const pts = face.verts.map(vertexById).filter(Boolean).map(project);
     traceTemplatePoly(ctx, pts, true);
     ctx.stroke();
@@ -5991,6 +6023,7 @@ function createTemplateCanvas(side, half = mirrorHalfSkinsEnabled()) {
 
   ctx.save();
   for (const edge of state.edges) {
+    if (!templateSideEdgeVisible(edge, side)) continue;
     const a = vertexById(edge.a), b = vertexById(edge.b);
     if (!a || !b) continue;
     const pa = project(a), pb = project(b);
@@ -6003,7 +6036,9 @@ function createTemplateCanvas(side, half = mirrorHalfSkinsEnabled()) {
   }
   ctx.restore();
 
-  for (const detail of state.details) drawTemplateDetail(ctx, detail, project);
+  for (const detail of state.details) {
+    if (templateSideDetailVisible(detail, side)) drawTemplateDetail(ctx, detail, project);
+  }
   drawTemplateLabel(ctx, `${templateShipId()} ${side}${half ? " half" : ""}`);
   return canvas;
 }
@@ -7285,7 +7320,6 @@ function renderMain() {
     }
     if (pts.length < 2) continue;
     if (gameOverlay && !selectionFilterAllows("detail") && !selected && !mirrorAffected) continue;
-    if (previewMode === "wire" && !selected && !mirrorAffected) continue;
     if (mirrorAffected && !selected) {
       ctx.save();
       ctx.setLineDash([7, 5]);
@@ -7595,11 +7629,12 @@ function resetGamePreviewSyncState() {
 }
 
 function spinPreviewPayload() {
+  const oldSchool = !!state.spinPreviewOldSchool;
   return {
-    ...gamePreviewPayload({ force: true, mode: "solid", fxLevel: "ultra" }),
+    ...gamePreviewPayload({ force: true, mode: oldSchool ? "wire" : "solid", fxLevel: oldSchool ? "classic" : "ultra" }),
     view: { rx: state.view.rx, ry: state.view.ry, roll: 0 },
-    mode: "solid",
-    fxLevel: "ultra",
+    mode: oldSchool ? "wire" : "solid",
+    fxLevel: oldSchool ? "classic" : "ultra",
     projection: false,
     autoRotate: true,
     targetScale: .62
@@ -7635,6 +7670,19 @@ function postSpinPreviewPayload(targetWindow, payload = spinPreviewPayload()) {
   return true;
 }
 
+function syncSpinPreviewOldSchoolUi() {
+  if (els.spinPreviewOldSchool) els.spinPreviewOldSchool.checked = !!state.spinPreviewOldSchool;
+}
+
+function setSpinPreviewOldSchool(enabled, options = {}) {
+  state.spinPreviewOldSchool = !!enabled;
+  syncSpinPreviewOldSchoolUi();
+  if (!options.silent && !els.spinPreviewModal?.classList.contains("is-hidden")) {
+    const updated = postSpinPreviewPayload(els.spinPreviewFrame?.contentWindow);
+    setStatus(updated ? `SPIN PREVIEW ${state.spinPreviewOldSchool ? "OLD SCHOOL" : "ULTRA"} MODE.` : "SPIN PREVIEW MODE UPDATED.");
+  }
+}
+
 function closeSpinPreviewWindow() {
   els.spinPreviewModal?.classList.add("is-hidden");
   const frame = els.spinPreviewFrame;
@@ -7649,6 +7697,7 @@ function closeSpinPreviewWindow() {
 }
 
 function openSpinPreviewWindow() {
+  syncSpinPreviewOldSchoolUi();
   const payload = spinPreviewPayload();
   storeSpinPreviewPayload(payload);
   const frame = els.spinPreviewFrame;
@@ -12501,6 +12550,7 @@ function bindEvents() {
   });
   els.previewRenderMode.addEventListener("input", renderAll);
   els.spinPreviewBtn?.addEventListener("click", openSpinPreviewWindow);
+  els.spinPreviewOldSchool?.addEventListener("input", () => setSpinPreviewOldSchool(els.spinPreviewOldSchool.checked));
   els.closeSpinPreviewBtn?.addEventListener("click", closeSpinPreviewWindow);
   els.spinPreviewModal?.addEventListener("click", (event) => {
     if (event.target === els.spinPreviewModal) closeSpinPreviewWindow();

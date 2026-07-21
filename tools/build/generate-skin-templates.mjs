@@ -10,6 +10,7 @@ const modelDir = path.join(root, "assets/models");
 const sourcePath = path.join(root, "src/main.js");
 const outDir = path.join(root, "assets/templates");
 const maxTemplateSize = 600;
+const hiddenEdgeKind = "hidden";
 
 function extractBalancedObject(source, marker) {
   const markerIndex = source.indexOf(marker);
@@ -218,8 +219,89 @@ function drawText(bitmap, text, x, y, color = [255, 255, 255, 180], scale = 2) {
   }
 }
 
+function sub(a, b) {
+  return [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+}
+
+function cross(a, b) {
+  return [
+    a[1] * b[2] - a[2] * b[1],
+    a[2] * b[0] - a[0] * b[2],
+    a[0] * b[1] - a[1] * b[0]
+  ];
+}
+
+function norm(v) {
+  const length = Math.hypot(v[0], v[1], v[2]);
+  return length ? [v[0] / length, v[1] / length, v[2] / length] : [0, 0, 0];
+}
+
+function faceNormal(face, verts) {
+  const points = face.map((index) => verts[index]).filter(Boolean);
+  if (points.length < 3) return [0, 0, 0];
+  return norm(cross(sub(points[1], points[0]), sub(points[2], points[0])));
+}
+
+function templatePrimaryAxis(modelId) {
+  return modelId === "thargoid" || modelId === "thargon" ? "x" : "y";
+}
+
+function templateSideViewAxis(modelId, side) {
+  const primaryAxis = templatePrimaryAxis(modelId);
+  if (primaryAxis === "x" && side !== "back") return { axisIndex: 0, sign: side === "bottom" ? -1 : 1 };
+  if (side === "back") return { axisIndex: 2, sign: -1 };
+  return { axisIndex: 1, sign: side === "bottom" ? -1 : 1 };
+}
+
+function normalVisibleFromTemplateSide(normal, modelId, side) {
+  if (!normal || Math.hypot(normal[0], normal[1], normal[2]) <= 1e-6) return true;
+  const { axisIndex, sign } = templateSideViewAxis(modelId, side);
+  return (normal[axisIndex] || 0) * sign > -0.015;
+}
+
+function faceVisibleFromTemplateSide(face, verts, modelId, side) {
+  return normalVisibleFromTemplateSide(faceNormal(face, verts), modelId, side);
+}
+
+function edgeKind(model, edge, edgeIndex) {
+  if (!Array.isArray(edge) && edge?.kind) return edge.kind;
+  return model.edgeKinds?.[edgeIndex] || "edge";
+}
+
+function edgeOwnerFaces(model, aIndex, bIndex) {
+  return (model.faces || []).filter((face) => face.includes(aIndex) && face.includes(bIndex));
+}
+
+function edgeVisibleFromTemplateSide(model, edge, edgeIndex, verts, modelId, side) {
+  if (edgeKind(model, edge, edgeIndex) === hiddenEdgeKind) return false;
+  const aIndex = Array.isArray(edge) ? edge[0] : edge.a;
+  const bIndex = Array.isArray(edge) ? edge[1] : edge.b;
+  const faces = edgeOwnerFaces(model, aIndex, bIndex);
+  if (!faces.length) return true;
+  return faces.some((face) => faceVisibleFromTemplateSide(face, verts, modelId, side));
+}
+
+function detailOwnerFaces(model, detail) {
+  if (!detail?.indices?.length) return [];
+  const ids = new Set(detail.indices);
+  return (model.faces || []).filter((face) => [...ids].every((index) => face.includes(index)));
+}
+
+function detailNormal(detail, verts) {
+  if (Array.isArray(detail?.normal) && detail.normal.length >= 3) return norm(detail.normal);
+  const points = detailPoints(detail, verts);
+  if (points.length < 3) return [0, 0, 0];
+  return norm(cross(sub(points[1], points[0]), sub(points[2], points[0])));
+}
+
+function detailVisibleFromTemplateSide(model, detail, verts, modelId, side) {
+  const faces = detailOwnerFaces(model, detail);
+  if (faces.length) return faces.some((face) => faceVisibleFromTemplateSide(face, verts, modelId, side));
+  return normalVisibleFromTemplateSide(detailNormal(detail, verts), modelId, side);
+}
+
 function projectionFor(modelId, side, verts) {
-  const primaryAxis = modelId === "thargoid" || modelId === "thargon" ? "x" : "y";
+  const primaryAxis = templatePrimaryAxis(modelId);
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, minZ = Infinity, maxZ = -Infinity;
   for (const p of verts) {
     minX = Math.min(minX, p[0]); maxX = Math.max(maxX, p[0]);
@@ -258,6 +340,8 @@ function projectionFor(modelId, side, verts) {
 }
 
 function detailPoints(detail, verts) {
+  if (Number.isInteger(detail.index) && verts[detail.index]) return [verts[detail.index]];
+  if (Array.isArray(detail.point)) return [[detail.point.x ?? detail.point[0], detail.point.y ?? detail.point[1], detail.point.z ?? detail.point[2]]];
   if (detail.points?.length) return detail.points.map((p) => [p.x ?? p[0], p.y ?? p[1], p.z ?? p[2]]);
   if (detail.indices?.length) return detail.indices.map((i) => verts[i]).filter(Boolean);
   return [];
@@ -271,7 +355,7 @@ function drawTemplate(modelId, model, side) {
   const point = (index) => verts[index] ? project(verts[index]) : null;
   drawDashedLine(bitmap, project.centerlineX ?? project.width / 2, 0, project.centerlineX ?? project.width / 2, project.height, [255, 255, 255, 120], 1);
 
-  for (const face of model.faces || []) {
+  for (const face of (model.faces || []).filter((item) => faceVisibleFromTemplateSide(item, verts, modelId, side))) {
     for (let i = 0; i < face.length; i++) {
       const a = point(face[i]), b = point(face[(i + 1) % face.length]);
       if (!a || !b) continue;
@@ -279,7 +363,8 @@ function drawTemplate(modelId, model, side) {
     }
   }
 
-  for (const edge of model.edges || []) {
+  for (const [edgeIndex, edge] of (model.edges || []).entries()) {
+    if (!edgeVisibleFromTemplateSide(model, edge, edgeIndex, verts, modelId, side)) continue;
     const aIndex = Array.isArray(edge) ? edge[0] : edge.a;
     const bIndex = Array.isArray(edge) ? edge[1] : edge.b;
     const a = point(aIndex), b = point(bIndex);
@@ -288,6 +373,7 @@ function drawTemplate(modelId, model, side) {
   }
 
   for (const detail of model.details || []) {
+    if (!detailVisibleFromTemplateSide(model, detail, verts, modelId, side)) continue;
     const pts = detailPoints(detail, verts).map((p) => project(p));
     if (pts.length < 2) continue;
     const color = detail.type === "window" ? [255, 255, 255, 190] : [255, 255, 255, 150];

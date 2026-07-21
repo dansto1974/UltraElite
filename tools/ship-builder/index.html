@@ -564,7 +564,10 @@
         <div class="spin-preview-window">
           <header>
             <h3>Spin Preview</h3>
-            <button id="closeSpinPreviewBtn" type="button" title="Close spin preview" aria-label="Close spin preview">×</button>
+            <div class="spin-preview-actions">
+              <label class="spin-preview-toggle"><input id="spinPreviewOldSchool" type="checkbox"> Old School</label>
+              <button id="closeSpinPreviewBtn" type="button" title="Close spin preview" aria-label="Close spin preview">×</button>
+            </div>
           </header>
           <iframe id="spinPreviewFrame" title="Spin preview renderer"></iframe>
         </div>

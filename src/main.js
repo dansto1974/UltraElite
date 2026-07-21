@@ -18564,6 +18564,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function renderShipBlueprint(modelName) {
       const model = MODELS[modelName];
       if (!model?.verts?.length) return "";
+      const detailBlueprintPoints = (detail) => {
+        if (Number.isFinite(detail?.index) && model.verts[detail.index]) return [model.verts[detail.index]];
+        if (Array.isArray(detail?.indices)) return detail.indices.map((index) => model.verts[index]).filter(Boolean);
+        if (Array.isArray(detail?.points)) return detail.points.filter((point) => Array.isArray(point) && point.length >= 3);
+        if (Array.isArray(detail?.point) && detail.point.length >= 3) return [detail.point];
+        return [];
+      };
       const views = [
         ["TOP", 0, 2, "X/Z", 1],
         ["FRONT", 0, 1, "X/Y", 2],
@@ -18594,10 +18601,26 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           const p2 = project(model.verts[b]);
           return `<line x1="${p1.x.toFixed(1)}" y1="${p1.y.toFixed(1)}" x2="${p2.x.toFixed(1)}" y2="${p2.y.toFixed(1)}"></line>`;
         }).join("");
+        const details = (model.details || []).map((detail) => {
+          if (Array.isArray(detail.normal) && (detail.normal[viewAxis] || 0) < -0.015) return "";
+          const pts = detailBlueprintPoints(detail).map(project);
+          const type = detail.type || "detail";
+          if (type === "beacon") {
+            const p = pts[0];
+            if (!p) return "";
+            return `<g class="bp-detail bp-detail-beacon"><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.5"></circle><line x1="${(p.x - 5).toFixed(1)}" y1="${p.y.toFixed(1)}" x2="${(p.x + 5).toFixed(1)}" y2="${p.y.toFixed(1)}"></line><line x1="${p.x.toFixed(1)}" y1="${(p.y - 5).toFixed(1)}" x2="${p.x.toFixed(1)}" y2="${(p.y + 5).toFixed(1)}"></line></g>`;
+          }
+          if (pts.length < 2) return "";
+          const attr = pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+          const className = type === "window" ? "bp-detail-window" : type === "engine" ? "bp-detail-engine" : type === "stationEntrance" ? "bp-detail-entrance" : "bp-detail-surface";
+          if (type === "line" || type === "polyline" || type === "panel" || pts.length === 2) return `<polyline class="bp-detail ${className}" points="${attr}"></polyline>`;
+          return `<polygon class="bp-detail ${className}" points="${attr}"></polygon>`;
+        }).join("");
         return `<g class="bp-view">
           <text x="${vi * viewW + 10}" y="16" class="bp-title">${label}</text>
           <text x="${vi * viewW + viewW - 10}" y="16" text-anchor="end" class="bp-axis">${axes}</text>
           <g class="bp-lines">${edges}</g>
+          <g class="bp-details">${details}</g>
         </g>`;
       }).join("");
       const panelW = 112;
@@ -18623,6 +18646,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return `<svg class="blueprint-diagram" viewBox="0 0 ${totalW} ${viewH}" aria-label="${shipName(modelName)} blueprint">
         <style>
           .bp-lines line{stroke:rgba(235,248,255,.92);stroke-width:1.05;vector-effect:non-scaling-stroke}
+          .bp-detail{fill:none;stroke:rgba(255,255,255,.7);stroke-width:.9;vector-effect:non-scaling-stroke}
+          .bp-detail-window{fill:rgba(160,236,255,.12);stroke:rgba(204,246,255,.94)}
+          .bp-detail-engine{fill:rgba(255,255,255,.16);stroke:#ffffff;stroke-width:1.15}
+          .bp-detail-entrance{fill:rgba(102,232,255,.08);stroke:#66e8ff;stroke-width:1.05}
+          .bp-detail-surface{stroke:rgba(255,217,54,.82);stroke-dasharray:2 2}
+          .bp-detail-beacon circle{fill:rgba(255,182,66,.28);stroke:#ffb642}
+          .bp-detail-beacon line{stroke:#ffb642;stroke-width:.8;vector-effect:non-scaling-stroke}
           .bp-view:nth-of-type(2){opacity:.94}
           .bp-title{fill:#ffffff;font:8px monospace;letter-spacing:.45px}
           .bp-axis,.bp-small{fill:rgba(220,244,255,.72);font:5.6px monospace}
@@ -19225,6 +19255,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         decal: null,
         texture: rockPreview ? getRockTexture(hash32(`preview:${modelName}:rock`)) : undefined,
         edgeColor: rockPreview ? "rgba(178,168,142,.58)" : undefined,
+        lightMode: "camera",
         metalAlphaMul: rockPreview ? .82 : undefined,
         edgeWidth: 1.4
       });

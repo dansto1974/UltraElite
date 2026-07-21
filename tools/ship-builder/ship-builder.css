@@ -3262,6 +3262,30 @@ canvas {
   margin: 0;
 }
 
+.spin-preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.spin-preview-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--cyan);
+  font-size: .58rem;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.spin-preview-toggle input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--cyan);
+}
+
 .spin-preview-window header button {
   width: 19px;
   height: 19px;
