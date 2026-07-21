@@ -88,6 +88,7 @@ const els = {
   faceCount: document.getElementById("faceCount"),
   edgeCount: document.getElementById("edgeCount"),
   selectionReadout: document.getElementById("selectionReadout"),
+  objectPropertiesPanel: document.getElementById("objectPropertiesPanel"),
   pickList: document.getElementById("pickList"),
   status: document.getElementById("status"),
   topStatus: document.getElementById("topStatus"),
@@ -349,6 +350,7 @@ const state = {
   selectionFilters: { vertex: true, face: true, edge: true, detail: true, uv: true, group: true },
   selectionPickCandidates: [],
   selectionPickHover: null,
+  selectionPickHoverClearTimer: null,
   selectionPickOptions: {},
   selectedFaceIds: new Set(),
   facePropertyClipboard: null,
@@ -7576,6 +7578,7 @@ function updateUi() {
   updateDetailControls();
   updateFaceBitmapSideControl();
   updateFaceUvAngleControls();
+  renderSelectedObjectProperties();
 }
 
 function updateSliders() {
@@ -7966,7 +7969,7 @@ function selectionPickCandidateMeta(candidate) {
 
 function selectSelectionCandidate(candidate, options = {}) {
   if (!candidate) return false;
-  hideSelectionPickMenu();
+  if (!options.keepPickMenu) hideSelectionPickMenu();
   if (candidate.type === "vertex") {
     selectVertex(candidate.id, { multiSelect: options.multiSelect });
     return true;
@@ -7984,6 +7987,13 @@ function selectSelectionCandidate(candidate, options = {}) {
   return false;
 }
 
+function runSelectionAfterPick(selected, options = {}) {
+  if (selected && options.afterPick === "properties") {
+    showSelectedObjectProperties();
+  }
+  return selected;
+}
+
 function directMultiSelectCandidate(candidates, options = {}) {
   if (!options.multiSelect || !selectionFilterAllows("face")) return null;
   if (state.mode !== "face" && state.selected?.type !== "face") return null;
@@ -7993,14 +8003,23 @@ function directMultiSelectCandidate(candidates, options = {}) {
 function selectInMain(point, options = {}) {
   const candidates = collectSelectionCandidates(point);
   if (!candidates.length) return false;
-  const directCandidate = directMultiSelectCandidate(candidates, options);
-  if (directCandidate) return selectSelectionCandidate(directCandidate, options);
-  if (options.forcePickMenu && options.allowPickMenu !== false && candidates.length > 1) {
-    openSelectionPickMenuAt(options.clientX, options.clientY, candidates, { multiSelect: options.multiSelect });
-    setStatus(`${candidates.length} SELECTABLE OBJECTS UNDER POINTER.`);
+  const directCandidate = options.forcePickMenu ? null : directMultiSelectCandidate(candidates, options);
+  if (directCandidate) return runSelectionAfterPick(selectSelectionCandidate(directCandidate, options), options);
+  if (options.forcePickMenu && options.allowPickMenu !== false && (candidates.length > 1 || options.pickMenuForSingle)) {
+    openSelectionPickMenuAt(options.clientX, options.clientY, candidates, {
+      afterPick: options.afterPick,
+      cascade: options.cascade,
+      multiSelect: options.multiSelect
+    });
+    const pickCount = candidates.length === 1 ? "1 SELECTABLE OBJECT" : `${candidates.length} SELECTABLE OBJECTS`;
+    setStatus(options.afterPick === "properties"
+      ? `${pickCount} UNDER POINTER. CHOOSE ONE FOR PROPERTIES.`
+      : options.afterPick === "context"
+        ? `${pickCount} UNDER POINTER. CHOOSE ONE FOR ACTIONS.`
+        : `${pickCount} UNDER POINTER.`);
     return "menu";
   }
-  return selectSelectionCandidate(candidates[0], options);
+  return runSelectionAfterPick(selectSelectionCandidate(candidates[0], options), options);
 }
 
 function selectVertex(id, options = {}) {
@@ -10145,6 +10164,37 @@ function selectionContext() {
   };
 }
 
+function selectionContextForCandidate(candidate) {
+  if (!candidate) return selectionContext();
+  const face = ["face", "uv", "group"].includes(candidate.type) ? candidate.face || faceById(candidate.id) : null;
+  const group = face ? sharedFaceTextureGroup(face) : [];
+  const type = candidate.type === "uv" && group.length > 1 ? "group" : candidate.type;
+  const edgeSource = candidate.audit ? renderAuditEdges() : state.edges;
+  const edge = type === "edge" ? candidate.edge || edgeSource.find((item) => item.id === candidate.id) || null : null;
+  const edgeIds = edge ? selectedEdgeIdSetFor(edge, { audit: candidate.audit, edgeIds: candidate.edgeIds }) : new Set();
+  const detail = type === "detail" ? candidate.detail || detailById(candidate.id) : null;
+  const vertex = type === "vertex" ? candidate.vertex || vertexById(candidate.id) : null;
+  const selected = { type, id: candidate.id };
+  const shelfItem = selectedBitmapShelfItem();
+  return {
+    selected,
+    type,
+    vertex,
+    face,
+    edge,
+    detail,
+    edgeLoop: edgeSource.filter((item) => edgeIds.has(item.id)),
+    uvTargets: face ? uniqueFaceList(type === "group" ? group : [face]) : [],
+    groupTargets: type === "group" ? uniqueFaceList(group) : [],
+    shelfItem,
+    hasShelfImage: !!shelfItem?.img?.naturalWidth,
+    shelfIsDecal: shelfItemIsDecal(shelfItem),
+    canPasteFaceProperties: !!state.facePropertyClipboard,
+    hasVertexBeacon: !!(vertex && hasBeaconAtVertex(vertex.id)),
+    mirror: mirrorActionsEnabled()
+  };
+}
+
 function selectionContextLabel(ctx = selectionContext()) {
   if (!ctx.selected) return "No Selection";
   if (ctx.type === "vertex" && ctx.vertex) return `Vertex #${ctx.vertex.id}`;
@@ -10156,6 +10206,206 @@ function selectionContextLabel(ctx = selectionContext()) {
   if (ctx.type === "uv" && ctx.face) return `UV Face #${ctx.face.id}`;
   if (ctx.face) return `Face #${ctx.face.id}`;
   return `${ctx.type.toUpperCase()} #${ctx.selected.id}`;
+}
+
+function objectPropertyValueText(value) {
+  return value == null || value === "" ? "none" : String(value);
+}
+
+function appendObjectPropertyRow(parent, labelText, valueText) {
+  const row = document.createElement("div");
+  row.className = "object-property-row";
+  const label = document.createElement("span");
+  label.className = "object-property-label";
+  label.textContent = labelText;
+  const value = document.createElement("span");
+  value.className = "object-property-value";
+  value.textContent = objectPropertyValueText(valueText);
+  row.append(label, value);
+  parent.appendChild(row);
+}
+
+function appendObjectNumberProperty(parent, labelText, key, value, options = {}) {
+  const row = document.createElement("label");
+  row.className = "object-property-row object-property-control";
+  const label = document.createElement("span");
+  label.className = "object-property-label";
+  label.textContent = labelText;
+  const input = document.createElement("input");
+  input.type = "number";
+  input.step = options.step ?? "1";
+  if (options.min != null) input.min = String(options.min);
+  if (options.max != null) input.max = String(options.max);
+  input.value = String(value ?? 0);
+  input.disabled = !!options.disabled;
+  input.dataset.objectProperty = key;
+  row.append(label, input);
+  parent.appendChild(row);
+}
+
+function appendObjectRangeProperty(parent, labelText, key, value, options = {}) {
+  const row = document.createElement("label");
+  row.className = "object-property-row object-property-control";
+  const label = document.createElement("span");
+  label.className = "object-property-label";
+  label.textContent = labelText;
+  const input = document.createElement("input");
+  input.type = "range";
+  input.min = String(options.min ?? 0);
+  input.max = String(options.max ?? 1);
+  input.step = String(options.step ?? .01);
+  input.value = String(value ?? 0);
+  input.disabled = !!options.disabled;
+  input.dataset.objectProperty = key;
+  row.append(label, input);
+  parent.appendChild(row);
+}
+
+function appendObjectColorProperty(parent, labelText, key, value, options = {}) {
+  const row = document.createElement("label");
+  row.className = "object-property-row object-property-control";
+  const label = document.createElement("span");
+  label.className = "object-property-label";
+  label.textContent = labelText;
+  const input = document.createElement("input");
+  input.type = "color";
+  input.value = optionalHexColor(value) || "#101915";
+  input.disabled = !!options.disabled;
+  input.dataset.objectProperty = key;
+  row.append(label, input);
+  parent.appendChild(row);
+}
+
+function appendObjectSelectProperty(parent, labelText, key, value, options) {
+  const row = document.createElement("label");
+  row.className = "object-property-row object-property-control";
+  const label = document.createElement("span");
+  label.className = "object-property-label";
+  label.textContent = labelText;
+  const select = document.createElement("select");
+  select.dataset.objectProperty = key;
+  for (const option of options) {
+    const item = document.createElement("option");
+    item.value = option.value;
+    item.textContent = option.label;
+    select.appendChild(item);
+  }
+  select.value = value || options[0]?.value || "";
+  row.append(label, select);
+  parent.appendChild(row);
+}
+
+function appendObjectProperties(parent, ctx) {
+  if (ctx.type === "vertex" && ctx.vertex) {
+    appendObjectNumberProperty(parent, "X", "vertex-x", round(ctx.vertex.x), { disabled: ctx.vertex.center });
+    appendObjectNumberProperty(parent, "Y", "vertex-y", round(ctx.vertex.y));
+    appendObjectNumberProperty(parent, "Z", "vertex-z", round(ctx.vertex.z));
+    appendObjectPropertyRow(parent, "Mirror", ctx.vertex.mirrorId ? `#${ctx.vertex.mirrorId}` : ctx.vertex.center ? "centre" : "none");
+    appendObjectPropertyRow(parent, "Beacon", ctx.hasVertexBeacon ? "yes" : "no");
+    return;
+  }
+  if (ctx.type === "edge" && ctx.edge) {
+    appendObjectSelectProperty(parent, "Kind", "edge-kind", ctx.edge.kind || "edge", [
+      { value: "edge", label: "Edge" },
+      { value: "stick", label: "Stick" },
+      { value: EDGE_KIND_STATION_ENTRANCE, label: "Station Entrance" }
+    ]);
+    appendObjectPropertyRow(parent, "Vertices", `#${ctx.edge.a} -> #${ctx.edge.b}`);
+    appendObjectPropertyRow(parent, "Lines", ctx.edgeLoop.length || 1);
+    appendObjectPropertyRow(parent, "Mirrored", ctx.edge.mirrored ? "yes" : "no");
+    return;
+  }
+  if (ctx.type === "detail" && ctx.detail) {
+    appendObjectPropertyRow(parent, "Type", ctx.detail.type === "panel" ? "surface detail" : ctx.detail.type);
+    appendObjectPropertyRow(parent, "Face", ctx.detail.faceId != null ? `#${ctx.detail.faceId}` : "none");
+    appendObjectPropertyRow(parent, "Vertex", ctx.detail.vertexId != null ? `#${ctx.detail.vertexId}` : "none");
+    appendObjectRangeProperty(parent, "Inset", "detail-inset", ctx.detail.inset ?? 0.45, { min: .15, max: .9, step: .01, disabled: !ctx.detail.faceId });
+    appendObjectColorProperty(parent, "Colour", "detail-color", ctx.detail.color || "#101915");
+    return;
+  }
+  if (ctx.face) {
+    const n = faceNormal(ctx.face);
+    appendObjectPropertyRow(parent, "Face", `#${ctx.face.id}`);
+    appendObjectPropertyRow(parent, "Vertices", ctx.face.verts.map((id) => `#${id}`).join(" "));
+    appendObjectPropertyRow(parent, "Normal", `X ${round(n.x, 2)} Y ${round(n.y, 2)} Z ${round(n.z, 2)}`);
+    appendObjectPropertyRow(parent, "UV", faceUvTypeInfo(ctx.face).short);
+    appendObjectPropertyRow(parent, "Targets", ctx.uvTargets.length || 1);
+    appendObjectPropertyRow(parent, "Tiles", uvTileSummaryText(ctx.uvTargets.length ? ctx.uvTargets : [ctx.face]) || "none");
+  }
+}
+
+function appendObjectQuickProperties(parent, ctx) {
+  if (ctx.type === "vertex" && ctx.vertex) {
+    appendObjectPropertyRow(parent, "X", round(ctx.vertex.x));
+    appendObjectPropertyRow(parent, "Y", round(ctx.vertex.y));
+    appendObjectPropertyRow(parent, "Z", round(ctx.vertex.z));
+    appendObjectPropertyRow(parent, "Mirror", ctx.vertex.mirrorId ? `#${ctx.vertex.mirrorId}` : ctx.vertex.center ? "centre" : "none");
+    appendObjectPropertyRow(parent, "Beacon", ctx.hasVertexBeacon ? "yes" : "no");
+    return;
+  }
+  if (ctx.type === "edge" && ctx.edge) {
+    appendObjectPropertyRow(parent, "Kind", edgeKindLabel(ctx.edge.kind));
+    appendObjectPropertyRow(parent, "Vertices", `#${ctx.edge.a} -> #${ctx.edge.b}`);
+    appendObjectPropertyRow(parent, "Lines", ctx.edgeLoop.length || 1);
+    appendObjectPropertyRow(parent, "Mirrored", ctx.edge.mirrored ? "yes" : "no");
+    return;
+  }
+  if (ctx.type === "detail" && ctx.detail) {
+    appendObjectPropertyRow(parent, "Type", ctx.detail.type === "panel" ? "surface detail" : ctx.detail.type);
+    appendObjectPropertyRow(parent, "Face", ctx.detail.faceId != null ? `#${ctx.detail.faceId}` : "none");
+    appendObjectPropertyRow(parent, "Vertex", ctx.detail.vertexId != null ? `#${ctx.detail.vertexId}` : "none");
+    appendObjectPropertyRow(parent, "Inset", ctx.detail.inset == null ? "none" : round(ctx.detail.inset, 2));
+    return;
+  }
+  if (ctx.face) {
+    appendObjectPropertyRow(parent, "Face", `#${ctx.face.id}`);
+    appendObjectPropertyRow(parent, "Vertices", ctx.face.verts.map((id) => `#${id}`).join(" "));
+    appendObjectPropertyRow(parent, "UV", faceUvTypeInfo(ctx.face).short);
+    appendObjectPropertyRow(parent, "Targets", ctx.uvTargets.length || 1);
+  }
+}
+
+function renderSelectedObjectProperties(ctx = selectionContext()) {
+  const panel = els.objectPropertiesPanel;
+  if (!panel) return;
+  panel.replaceChildren();
+  panel.classList.toggle("is-empty", !ctx.selected);
+
+  const header = document.createElement("div");
+  header.className = "object-properties-head";
+  const title = document.createElement("h2");
+  title.textContent = selectionContextLabel(ctx);
+  header.appendChild(title);
+  panel.appendChild(header);
+
+  if (!ctx.selected) {
+    const empty = document.createElement("div");
+    empty.className = "object-properties-empty";
+    empty.textContent = "No selection";
+    panel.appendChild(empty);
+    return;
+  }
+
+  const properties = document.createElement("div");
+  properties.className = "object-property-grid";
+  appendObjectProperties(properties, ctx);
+  panel.appendChild(properties);
+
+  const commands = visibleSelectionCommands(ctx)
+    .filter((command) => !command.separator)
+    .filter((command) => ctx.face || command.id !== "properties");
+  if (!commands.length) return;
+  const actions = document.createElement("div");
+  actions.className = "object-property-actions";
+  for (const command of commands) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.objectAction = command.id;
+    button.textContent = command.label;
+    button.disabled = !selectionCommandEnabled(command, ctx);
+    actions.appendChild(button);
+  }
+  panel.appendChild(actions);
 }
 
 function showSelectedObjectProperties(ctx = selectionContext()) {
@@ -10414,7 +10664,7 @@ function visibleSelectionCommands(ctx = selectionContext()) {
   return SELECTION_COMMANDS.filter((command) => command.separator || selectionCommandVisible(command, ctx));
 }
 
-function renderSelectionPickMenu(candidates) {
+function renderSelectionPickMenu(candidates, options = {}) {
   const menu = els.selectionPickMenu;
   if (!menu || !candidates.length) return false;
   state.selectionPickCandidates = candidates;
@@ -10423,7 +10673,7 @@ function renderSelectionPickMenu(candidates) {
 
   const title = document.createElement("div");
   title.className = "selection-menu-title";
-  title.textContent = "Select Object";
+  title.textContent = options.afterPick === "properties" ? "Object Properties" : "Select Object";
   menu.appendChild(title);
 
   candidates.forEach((candidate, index) => {
@@ -10431,6 +10681,7 @@ function renderSelectionPickMenu(candidates) {
     button.type = "button";
     button.setAttribute("role", "menuitem");
     button.dataset.pickIndex = String(index);
+    if (options.afterPick === "context") button.classList.add("has-cascade");
     const label = document.createElement("span");
     label.className = "selection-pick-label";
     label.textContent = selectionPickCandidateLabel(candidate);
@@ -10438,6 +10689,12 @@ function renderSelectionPickMenu(candidates) {
     meta.className = "selection-pick-meta";
     meta.textContent = selectionPickCandidateMeta(candidate);
     button.append(label, meta);
+    if (options.afterPick === "context") {
+      const arrow = document.createElement("span");
+      arrow.className = "selection-pick-arrow";
+      arrow.textContent = ">";
+      button.appendChild(arrow);
+    }
     menu.appendChild(button);
   });
   return true;
@@ -10446,6 +10703,7 @@ function renderSelectionPickMenu(candidates) {
 function hideSelectionPickMenu(options = {}) {
   const menu = els.selectionPickMenu;
   if (!menu) return;
+  cancelSelectionPickHoverClear();
   const hadHover = !!state.selectionPickHover;
   menu.classList.add("is-hidden");
   menu.replaceChildren();
@@ -10474,9 +10732,52 @@ function positionFloatingSelectionMenu(menu, clientX, clientY) {
   return true;
 }
 
+function positionSelectionContextCascade(index) {
+  const stack = els.mainPreviewStack;
+  const pickMenu = els.selectionPickMenu;
+  const menu = els.selectionContextMenu;
+  const button = pickMenu?.querySelector(`[data-pick-index="${index}"]`);
+  if (!stack || !pickMenu || !menu || !button) return false;
+  const stackRect = stack.getBoundingClientRect();
+  const pickRect = pickMenu.getBoundingClientRect();
+  const buttonRect = button.getBoundingClientRect();
+  const overlap = 1;
+  const maxX = Math.max(8, stackRect.width - menu.offsetWidth - 8);
+  const maxY = Math.max(8, stackRect.height - menu.offsetHeight - 8);
+  const rightX = pickRect.right - stackRect.left - overlap;
+  const leftX = pickRect.left - stackRect.left - menu.offsetWidth + overlap;
+  const left = rightX <= maxX ? rightX : leftX;
+  const top = buttonRect.top - stackRect.top - 5;
+  menu.style.left = `${clamp(left, 8, maxX)}px`;
+  menu.style.top = `${clamp(top, 8, maxY)}px`;
+  return true;
+}
+
+function openSelectionPickCascade(index, options = {}) {
+  const candidate = state.selectionPickCandidates[index] || null;
+  const menu = els.selectionContextMenu;
+  if (!candidate || !menu) {
+    hideSelectionContextMenu();
+    return false;
+  }
+  const ctx = selectionContextForCandidate(candidate);
+  if (!renderSelectionContextMenu(ctx, { quickProperties: true, pickIndex: index })) {
+    hideSelectionContextMenu();
+    return false;
+  }
+  menu.classList.add("is-cascade");
+  menu.classList.remove("is-hidden");
+  positionSelectionContextCascade(index);
+  if (options.focusFirstAction) {
+    const first = menu.querySelector("button:not(:disabled)");
+    first?.focus?.({ preventScroll: true });
+  }
+  return true;
+}
+
 function openSelectionPickMenuAt(clientX, clientY, candidates, options = {}) {
   const menu = els.selectionPickMenu;
-  if (!menu || !renderSelectionPickMenu(candidates)) {
+  if (!menu || !renderSelectionPickMenu(candidates, options)) {
     hideSelectionPickMenu();
     return false;
   }
@@ -10486,35 +10787,77 @@ function openSelectionPickMenuAt(clientX, clientY, candidates, options = {}) {
   positionFloatingSelectionMenu(menu, clientX, clientY);
   const first = menu.querySelector("button");
   first?.focus?.({ preventScroll: true });
-  setSelectionPickHover(0);
+  if (options.afterPick !== "context") setSelectionPickHover(0);
   return true;
 }
 
 function setSelectionPickHover(index) {
+  cancelSelectionPickHoverClear();
   const candidate = state.selectionPickCandidates[index] || null;
-  if (state.selectionPickHover?.key === candidate?.key) return;
+  if (state.selectionPickHover?.key === candidate?.key) {
+    if (state.selectionPickOptions?.afterPick === "context") openSelectionPickCascade(index);
+    return;
+  }
   state.selectionPickHover = candidate;
   renderMain();
+  if (state.selectionPickOptions?.afterPick === "context") openSelectionPickCascade(index);
+}
+
+function cancelSelectionPickHoverClear() {
+  if (!state.selectionPickHoverClearTimer) return;
+  window.clearTimeout(state.selectionPickHoverClearTimer);
+  state.selectionPickHoverClearTimer = null;
+}
+
+function clearSelectionPickHover(options = {}) {
+  cancelSelectionPickHoverClear();
+  const hadHover = !!state.selectionPickHover;
+  state.selectionPickHover = null;
+  if (state.selectionPickOptions?.afterPick === "context") hideSelectionContextMenu();
+  if (hadHover && options.redraw !== false) renderMain();
+}
+
+function scheduleSelectionPickHoverClear(delay = 160) {
+  cancelSelectionPickHoverClear();
+  state.selectionPickHoverClearTimer = window.setTimeout(() => {
+    state.selectionPickHoverClearTimer = null;
+    clearSelectionPickHover();
+  }, delay);
 }
 
 function runSelectionPick(index) {
   const candidate = state.selectionPickCandidates[index] || null;
   if (!candidate) return;
-  selectSelectionCandidate(candidate, state.selectionPickOptions || {});
+  const options = state.selectionPickOptions || {};
+  if (options.afterPick === "context") {
+    setSelectionPickHover(index);
+    openSelectionPickCascade(index, { focusFirstAction: true });
+    return;
+  }
+  runSelectionAfterPick(selectSelectionCandidate(candidate, options), options);
 }
 
-function renderSelectionContextMenu(ctx = selectionContext()) {
+function renderSelectionContextMenu(ctx = selectionContext(), options = {}) {
   const menu = els.selectionContextMenu;
   if (!menu || !ctx.selected) return false;
   menu.replaceChildren();
+  if (options.pickIndex == null) delete menu.dataset.pickIndex;
+  else menu.dataset.pickIndex = String(options.pickIndex);
 
   const title = document.createElement("div");
   title.className = "selection-menu-title";
   title.textContent = selectionContextLabel(ctx);
   menu.appendChild(title);
 
+  if (options.quickProperties) {
+    const properties = document.createElement("div");
+    properties.className = "selection-context-properties";
+    appendObjectQuickProperties(properties, ctx);
+    menu.appendChild(properties);
+  }
+
   let rendered = 0;
-  let pendingDivider = false;
+  let pendingDivider = !!options.quickProperties;
   for (const command of visibleSelectionCommands(ctx)) {
     if (command.separator) {
       if (rendered) pendingDivider = true;
@@ -10535,13 +10878,15 @@ function renderSelectionContextMenu(ctx = selectionContext()) {
     menu.appendChild(button);
     rendered += 1;
   }
-  return rendered > 0;
+  return rendered > 0 || !!options.quickProperties;
 }
 
 function hideSelectionContextMenu() {
   const menu = els.selectionContextMenu;
   if (!menu) return;
   menu.classList.add("is-hidden");
+  menu.classList.remove("is-cascade");
+  delete menu.dataset.pickIndex;
   menu.replaceChildren();
 }
 
@@ -10556,6 +10901,7 @@ function openSelectionContextMenuAt(clientX, clientY, ctx = selectionContext()) 
     return false;
   }
   hideSelectionPickMenu();
+  menu.classList.remove("is-cascade");
   menu.classList.remove("is-hidden");
   positionFloatingSelectionMenu(menu, clientX, clientY);
   const first = menu.querySelector("button:not(:disabled)");
@@ -10564,11 +10910,85 @@ function openSelectionContextMenuAt(clientX, clientY, ctx = selectionContext()) 
 }
 
 function runSelectionContextCommand(commandId) {
+  const cascadeIndexText = els.selectionContextMenu?.dataset.pickIndex;
+  const cascadeIndex = cascadeIndexText == null || cascadeIndexText === "" ? NaN : Number(cascadeIndexText);
+  if (Number.isInteger(cascadeIndex)) {
+    const candidate = state.selectionPickCandidates[cascadeIndex] || null;
+    if (candidate) selectSelectionCandidate(candidate, { ...(state.selectionPickOptions || {}) });
+  }
   const command = SELECTION_COMMANDS.find((item) => item.id === commandId);
   const ctx = selectionContext();
-  if (!command || !selectionCommandVisible(command, ctx) || !selectionCommandEnabled(command, ctx)) return;
+  if (!command || !selectionCommandVisible(command, ctx) || !selectionCommandEnabled(command, ctx)) {
+    hideSelectionPickMenu();
+    hideSelectionContextMenu();
+    return;
+  }
+  hideSelectionPickMenu();
   hideSelectionContextMenu();
   command.run(ctx);
+}
+
+function refreshAfterObjectPropertyEdit() {
+  updateSliders();
+  updateDetailControls();
+  renderMain();
+  updateExport();
+  scheduleGamePreviewSync();
+}
+
+function handleObjectPropertyInput(event) {
+  const control = event.target?.closest?.("[data-object-property]");
+  if (!control) return;
+  const key = control.dataset.objectProperty;
+  if (key?.startsWith("vertex-")) {
+    const vertex = state.selected?.type === "vertex" ? vertexById(state.selected.id) : null;
+    if (!vertex) return;
+    const axis = key.slice("vertex-".length);
+    const value = Number(control.value);
+    if (!Number.isFinite(value)) return;
+    setVertex(
+      vertex,
+      axis === "x" ? value : vertex.x,
+      axis === "y" ? value : vertex.y,
+      axis === "z" ? value : vertex.z
+    );
+    refreshAfterObjectPropertyEdit();
+    return;
+  }
+  if (key === "detail-inset") {
+    const detail = state.selected?.type === "detail" ? detailById(state.selected.id) : null;
+    if (!detail || !detail.faceId) return;
+    const inset = Number(control.value);
+    if (!Number.isFinite(inset)) return;
+    detail.inset = inset;
+    patchMirroredDetail(detail, { inset });
+    refreshAfterObjectPropertyEdit();
+    return;
+  }
+  if (key === "detail-color") {
+    const detail = state.selected?.type === "detail" ? detailById(state.selected.id) : null;
+    if (!detail) return;
+    detail.color = control.value;
+    patchMirroredDetail(detail, { color: control.value });
+    refreshAfterObjectPropertyEdit();
+  }
+}
+
+function handleObjectPropertyChange(event) {
+  const control = event.target?.closest?.("[data-object-property]");
+  if (!control) return;
+  if (control.dataset.objectProperty === "edge-kind") {
+    convertSelectedEdgeKind(control.value);
+  } else {
+    handleObjectPropertyInput(event);
+    renderSelectedObjectProperties();
+  }
+}
+
+function handleObjectPropertyAction(event) {
+  const button = event.target?.closest?.("[data-object-action]");
+  if (!button || button.disabled) return;
+  runSelectionContextCommand(button.dataset.objectAction);
 }
 
 function isEditingFormControl(target) {
@@ -10617,26 +11037,60 @@ function bindEvents() {
   });
   els.selectionPickMenu?.addEventListener("pointerover", (event) => {
     const button = event.target.closest("[data-pick-index]");
-    if (!button) return;
+    if (!button) {
+      if (state.selectionPickOptions?.afterPick === "context") scheduleSelectionPickHoverClear();
+      return;
+    }
     setSelectionPickHover(Number(button.dataset.pickIndex));
   });
   els.selectionPickMenu?.addEventListener("focusin", (event) => {
     const button = event.target.closest("[data-pick-index]");
     if (!button) return;
+    if (state.selectionPickOptions?.afterPick === "context") return;
     setSelectionPickHover(Number(button.dataset.pickIndex));
   });
-  els.selectionPickMenu?.addEventListener("pointerleave", () => {
-    state.selectionPickHover = null;
-    renderMain();
+  els.selectionPickMenu?.addEventListener("keydown", (event) => {
+    if (event.key !== "ArrowRight" || state.selectionPickOptions?.afterPick !== "context") return;
+    const button = event.target.closest("[data-pick-index]");
+    if (!button) return;
+    event.preventDefault();
+    openSelectionPickCascade(Number(button.dataset.pickIndex), { focusFirstAction: true });
+  });
+  els.selectionPickMenu?.addEventListener("pointerleave", (event) => {
+    if (state.selectionPickOptions?.afterPick === "context" && els.selectionContextMenu?.contains(event.relatedTarget)) return;
+    if (state.selectionPickOptions?.afterPick === "context") scheduleSelectionPickHoverClear();
+    else clearSelectionPickHover();
   });
   els.selectionContextMenu?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-command-id]");
     if (!button || button.disabled) return;
     runSelectionContextCommand(button.dataset.commandId);
   });
+  els.selectionContextMenu?.addEventListener("keydown", (event) => {
+    if (event.key !== "ArrowLeft" || !els.selectionContextMenu?.classList.contains("is-cascade")) return;
+    event.preventDefault();
+    const index = Number(els.selectionContextMenu.dataset.pickIndex);
+    const button = els.selectionPickMenu?.querySelector(`[data-pick-index="${index}"]`);
+    hideSelectionContextMenu();
+    button?.focus?.({ preventScroll: true });
+  });
+  els.selectionContextMenu?.addEventListener("pointerenter", () => {
+    if (!els.selectionContextMenu?.classList.contains("is-cascade")) return;
+    cancelSelectionPickHoverClear();
+  });
+  els.selectionContextMenu?.addEventListener("pointerleave", (event) => {
+    if (!els.selectionContextMenu?.classList.contains("is-cascade")) return;
+    if (els.selectionPickMenu?.contains(event.relatedTarget)) return;
+    scheduleSelectionPickHoverClear();
+  });
+  els.objectPropertiesPanel?.addEventListener("input", handleObjectPropertyInput);
+  els.objectPropertiesPanel?.addEventListener("change", handleObjectPropertyChange);
+  els.objectPropertiesPanel?.addEventListener("click", handleObjectPropertyAction);
   document.addEventListener("pointerdown", (event) => {
-    if (selectionPickMenuOpen() && !els.selectionPickMenu?.contains(event.target)) hideSelectionPickMenu();
-    if (selectionContextMenuOpen() && !els.selectionContextMenu?.contains(event.target)) hideSelectionContextMenu();
+    const inPickMenu = !!els.selectionPickMenu?.contains(event.target);
+    const inContextMenu = !!els.selectionContextMenu?.contains(event.target);
+    if (selectionPickMenuOpen() && !inPickMenu && !inContextMenu) hideSelectionPickMenu();
+    if (selectionContextMenuOpen() && !inContextMenu && !inPickMenu) hideSelectionContextMenu();
   });
   document.querySelectorAll(".tool-tab-btn").forEach((btn) => btn.addEventListener("click", () => {
     setToolTab(btn.dataset.toolTabTarget);
@@ -10813,13 +11267,20 @@ function bindEvents() {
     ev.preventDefault();
     state.drag = null;
     const point = getCanvasPoint(ev, els.mainView);
-    const selected = selectInMain(point, { multiSelect: ev.shiftKey, allowPickMenu: false });
-    if (!selected) {
+    const picked = selectInMain(point, {
+      afterPick: "context",
+      cascade: "context",
+      forcePickMenu: true,
+      pickMenuForSingle: true,
+      multiSelect: ev.shiftKey,
+      clientX: ev.clientX,
+      clientY: ev.clientY
+    });
+    if (!picked) {
+      hideSelectionPickMenu();
       hideSelectionContextMenu();
       setStatus("NO CONTEXT ACTIONS FOR EMPTY SPACE.");
-      return;
     }
-    openSelectionContextMenuAt(ev.clientX, ev.clientY);
   });
   els.mainView.addEventListener("pointermove", (ev) => {
     if (!state.drag) return;
@@ -10974,6 +11435,11 @@ function bindEvents() {
       return;
     }
     if (event.key !== "Escape") return;
+    if (selectionPickMenuOpen() && selectionContextMenuOpen()) {
+      hideSelectionContextMenu();
+      hideSelectionPickMenu();
+      return;
+    }
     if (selectionContextMenuOpen()) {
       hideSelectionContextMenu();
       return;

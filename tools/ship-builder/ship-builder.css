@@ -554,6 +554,15 @@ h3 {
   box-shadow: 0 18px 36px rgba(0, 0, 0, .55);
 }
 
+.selection-context-menu {
+  z-index: 13;
+}
+
+.selection-context-menu.is-cascade {
+  min-width: 220px;
+  max-width: min(300px, calc(100% - 16px));
+}
+
 .selection-menu-title {
   padding: .25rem .36rem .32rem;
   color: var(--muted);
@@ -585,6 +594,11 @@ h3 {
   padding-bottom: .22rem;
 }
 
+.selection-pick-menu button.has-cascade {
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: .45rem;
+}
+
 .selection-pick-label {
   line-height: 1.05;
 }
@@ -593,6 +607,15 @@ h3 {
   color: var(--muted);
   font-size: .54rem;
   line-height: 1.05;
+}
+
+.selection-pick-arrow {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  align-self: center;
+  color: var(--muted);
+  font-size: .72rem;
+  line-height: 1;
 }
 
 .selection-context-menu button:hover,
@@ -605,7 +628,9 @@ h3 {
 }
 
 .selection-pick-menu button:hover .selection-pick-meta,
-.selection-pick-menu button:focus-visible .selection-pick-meta {
+.selection-pick-menu button:focus-visible .selection-pick-meta,
+.selection-pick-menu button:hover .selection-pick-arrow,
+.selection-pick-menu button:focus-visible .selection-pick-arrow {
   color: rgba(2, 4, 2, .72);
 }
 
@@ -622,6 +647,20 @@ h3 {
   background: rgba(81, 255, 74, .14);
 }
 
+.selection-context-properties {
+  display: grid;
+  gap: 2px;
+  padding: 3px 2px;
+}
+
+.selection-context-properties .object-property-row {
+  min-height: 1.25rem;
+  padding: 0 .34rem;
+  border-color: rgba(81, 255, 74, .1);
+  background: rgba(81, 255, 74, .04);
+  font-size: .58rem;
+}
+
 .compact-readout {
   min-height: 0;
   margin-top: 6px;
@@ -636,6 +675,86 @@ h3 {
   border-radius: 7px;
   background: rgba(0, 0, 0, .34);
   padding: .45rem;
+}
+
+.object-properties-panel {
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
+  padding: .45rem;
+  border: 1px solid rgba(102, 232, 255, .24);
+  border-radius: 7px;
+  background: rgba(0, 0, 0, .28);
+}
+
+.object-properties-panel.is-empty {
+  border-color: rgba(81, 255, 74, .16);
+}
+
+.object-properties-head h2 {
+  margin: 0;
+  color: var(--yellow);
+  font-size: .72rem;
+}
+
+.object-properties-empty {
+  color: var(--muted);
+  font-size: .62rem;
+  text-transform: uppercase;
+}
+
+.object-property-grid {
+  display: grid;
+  gap: 4px;
+}
+
+.object-property-row {
+  display: grid;
+  grid-template-columns: minmax(4.2rem, .72fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  min-height: 22px;
+  color: var(--text);
+  font-size: .62rem;
+  text-transform: uppercase;
+}
+
+.object-property-label {
+  color: var(--muted);
+}
+
+.object-property-value {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--cyan);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.object-property-control input,
+.object-property-control select {
+  width: 100%;
+  min-width: 0;
+  height: 22px;
+  padding: .14rem .25rem;
+  font-size: .62rem;
+}
+
+.object-property-control input[type="color"] {
+  padding: 1px;
+}
+
+.object-property-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.object-property-actions button {
+  min-width: 0;
+  padding: .28rem .32rem;
+  font-size: .56rem;
+  line-height: 1.05;
 }
 
 .mode-help,
