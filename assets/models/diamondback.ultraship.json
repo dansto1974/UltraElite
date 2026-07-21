@@ -280,7 +280,7 @@
       "type": "window",
       "faceId": 6,
       "inset": 0.38,
-      "color": "#101915",
+      "color": "#000000",
       "normal": [
         0.44,
         0.87,
@@ -292,7 +292,7 @@
       "type": "window",
       "faceId": 7,
       "inset": 0.38,
-      "color": "#101915",
+      "color": "#000000",
       "normal": [
         -0.44,
         0.87,
@@ -304,7 +304,7 @@
       "type": "window",
       "faceId": 9,
       "inset": 0.19,
-      "color": "#101915",
+      "color": "#000000",
       "normal": [
         -0.09,
         -0.99,
@@ -316,7 +316,7 @@
       "type": "window",
       "faceId": 8,
       "inset": 0.19,
-      "color": "#101915",
+      "color": "#000000",
       "normal": [
         0.09,
         -0.99,
@@ -873,6 +873,8 @@
       {
         "type": "window",
         "color": "#101915",
+        "glintDark": "#292500",
+        "glintBright": "#ffffc7",
         "normal": [
           0.44,
           0.87,
@@ -908,6 +910,8 @@
       {
         "type": "window",
         "color": "#101915",
+        "glintDark": "#292500",
+        "glintBright": "#ffffc7",
         "normal": [
           -0.44,
           0.87,

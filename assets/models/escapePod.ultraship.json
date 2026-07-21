@@ -2,6 +2,35 @@
   "format": "ultra-elite-ship-builder/v1",
   "id": "escapePod",
   "name": "Escape Pod",
+  "symmetry": "x-locked",
+  "gameMeta": {
+    "class": "fighter",
+    "npcRole": "private",
+    "aiProfile": "bountyHunter",
+    "decalRole": "none",
+    "baseColor": "#e9f2e4",
+    "description": "",
+    "missionLore": "",
+    "valueCr": 2500000,
+    "stats": {
+      "r": 37,
+      "hp": 300,
+      "speed": 2.2,
+      "cargo": 14,
+      "missiles": 6,
+      "laser": "military"
+    },
+    "lists": {
+      "trader": false,
+      "pirate": false,
+      "police": false,
+      "alien": false
+    },
+    "flags": {
+      "escapePod": true,
+      "hiddenUntilDiscovered": true
+    }
+  },
   "verts": [
     {
       "id": 1,
@@ -45,9 +74,9 @@
         2
       ],
       "mirrored": false,
-      "bitmapFaceKey": "pod_panel",
+      "faceColor": "#7b7568",
       "bitmapSide": "top",
-      "faceColor": "#7b7568"
+      "bitmapFaceKey": "pod_panel"
     },
     {
       "id": 1001,
@@ -57,9 +86,9 @@
         1
       ],
       "mirrored": false,
-      "bitmapFaceKey": "pod_panel",
+      "faceColor": "#7b7568",
       "bitmapSide": "top",
-      "faceColor": "#7b7568"
+      "bitmapFaceKey": "pod_panel"
     },
     {
       "id": 1002,
@@ -69,9 +98,9 @@
         2
       ],
       "mirrored": false,
-      "bitmapFaceKey": "pod_panel",
+      "faceColor": "#7b7568",
       "bitmapSide": "top",
-      "faceColor": "#7b7568"
+      "bitmapFaceKey": "pod_panel"
     },
     {
       "id": 1003,
@@ -81,40 +110,47 @@
         2
       ],
       "mirrored": false,
-      "bitmapFaceKey": "pod_panel",
+      "faceColor": "#7b7568",
       "bitmapSide": "top",
-      "faceColor": "#7b7568"
+      "bitmapFaceKey": "pod_panel"
     }
   ],
   "edges": [],
   "details": [
     {
-      "id": 1004,
-      "type": "engine",
-      "color": "#ffd33d",
+      "id": 1005,
+      "type": "window",
+      "faceId": 1001,
+      "inset": 0.55,
+      "color": "#000000",
       "normal": [
+        0.34,
+        0.9,
+        0.26
+      ]
+    },
+    {
+      "id": 1006,
+      "type": "window",
+      "faceId": 1002,
+      "inset": 0.55,
+      "color": "#000000",
+      "normal": [
+        0.34,
+        -0.9,
+        0.26
+      ]
+    },
+    {
+      "id": 1007,
+      "type": "engine",
+      "faceId": 1000,
+      "inset": 0.37,
+      "color": "#f7fff7",
+      "normal": [
+        0.39,
         0,
-        0,
-        -1
-      ],
-      "stroke": "#fff2a8",
-      "lift": 0.5,
-      "points": [
-        [
-          -7,
-          -5,
-          -12
-        ],
-        [
-          -7,
-          5,
-          -12
-        ],
-        [
-          0,
-          0,
-          -8
-        ]
+        -0.92
       ]
     }
   ],
@@ -141,10 +177,78 @@
         0
       ]
     ],
+    "faces": [
+      [
+        2,
+        3,
+        1
+      ],
+      [
+        3,
+        2,
+        0
+      ],
+      [
+        3,
+        0,
+        1
+      ],
+      [
+        0,
+        2,
+        1
+      ]
+    ],
     "edges": [
+      [
+        2,
+        3
+      ],
+      [
+        1,
+        3
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        0,
+        3
+      ],
       [
         0,
         1
+      ]
+    ],
+    "edgeKinds": [
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge",
+      "edge"
+    ],
+    "edgeFaces": [
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        0,
+        3
+      ],
+      [
+        1,
+        3
       ],
       [
         1,
@@ -153,44 +257,6 @@
       [
         2,
         3
-      ],
-      [
-        3,
-        0
-      ],
-      [
-        0,
-        2
-      ],
-      [
-        3,
-        1
-      ]
-    ],
-    "edgeFaces": [
-      [
-        3,
-        2
-      ],
-      [
-        3,
-        0
-      ],
-      [
-        1,
-        0
-      ],
-      [
-        2,
-        1
-      ],
-      [
-        3,
-        1
-      ],
-      [
-        2,
-        0
       ]
     ],
     "edgeVisibility": [
@@ -203,63 +269,139 @@
     ],
     "normals": [
       [
-        52,
+        39.39,
         0,
-        -122
+        -91.91
       ],
       [
-        39,
-        103,
-        30
+        33.87,
+        90.33,
+        26.34
       ],
       [
-        39,
-        -103,
-        30
+        33.87,
+        -90.33,
+        26.34
       ],
       [
-        -112,
+        -100,
         0,
         0
       ]
     ],
     "details": [
       {
-        "type": "engine",
+        "type": "window",
+        "color": "#101915",
+        "glintDark": "#02080a",
+        "glintBright": "#fffff8",
+        "normal": [
+          0.34,
+          0.9,
+          0.26
+        ],
+        "lift": 0.5,
         "points": [
           [
-            -7,
-            -5,
-            -12
+            12.6,
+            2.1,
+            3.6
           ],
           [
-            -7,
-            5,
-            -12
+            -2.8,
+            9.8,
+            -3
           ],
           [
-            0,
-            0,
-            -8
+            -2.8,
+            2.1,
+            23.4
           ]
         ],
-        "color": "#ffd33d",
-        "stroke": "#fff2a8",
+        "detailRender": {
+          "kind": "poly",
+          "solid": true,
+          "wire": true,
+          "glow": false,
+          "glass": true,
+          "solidStroke": false
+        }
+      },
+      {
+        "type": "window",
+        "color": "#101915",
+        "glintDark": "#02080a",
+        "glintBright": "#fffff8",
         "normal": [
-          0,
-          0,
-          -1
+          0.34,
+          -0.9,
+          0.26
         ],
-        "lift": 0.5
+        "lift": 0.5,
+        "points": [
+          [
+            12.6,
+            -2.1,
+            3.6
+          ],
+          [
+            -2.8,
+            -2.1,
+            23.4
+          ],
+          [
+            -2.8,
+            -9.8,
+            -3
+          ]
+        ],
+        "detailRender": {
+          "kind": "poly",
+          "solid": true,
+          "wire": true,
+          "glow": false,
+          "glass": true,
+          "solidStroke": false
+        }
+      },
+      {
+        "type": "engine",
+        "color": "#f7fff7",
+        "normal": [
+          0.39,
+          0,
+          -0.92
+        ],
+        "lift": 0.5,
+        "points": [
+          [
+            -1.12,
+            5.18,
+            -9.48
+          ],
+          [
+            9.24,
+            0,
+            -5.04
+          ],
+          [
+            -1.12,
+            -5.18,
+            -9.48
+          ]
+        ],
+        "stroke": "#ffffff",
+        "detailRender": {
+          "kind": "poly",
+          "solid": true,
+          "wire": true,
+          "glow": true,
+          "glass": false,
+          "solidStroke": true
+        }
       }
     ],
     "imageProjection": {
-      "faceColors": [
-        "#7b7568",
-        "#7b7568",
-        "#7b7568",
-        "#7b7568"
-      ],
       "faceSides": [
         "top",
         "top",
@@ -271,14 +413,47 @@
         "pod_panel",
         "pod_panel",
         "pod_panel"
+      ],
+      "faceColors": [
+        "#7b7568",
+        "#7b7568",
+        "#7b7568",
+        "#7b7568"
+      ],
+      "faceRenderFlags": [
+        73,
+        73,
+        73,
+        73
       ]
-    }
-  },
-  "gameMeta": {
-    "imageDecalMirrorX": {
-      "top": false,
-      "bottom": false,
-      "back": false
+    },
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "bountyHunter",
+      "decalRole": "none",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "valueCr": 2500000,
+      "stats": {
+        "r": 37,
+        "hp": 300,
+        "speed": 2.2,
+        "cargo": 14,
+        "missiles": 6,
+        "laser": "military"
+      },
+      "lists": {
+        "trader": false,
+        "pirate": false,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": true
+      }
     }
   }
 }

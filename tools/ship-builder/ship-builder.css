@@ -833,6 +833,13 @@ h3 {
   padding: 1px;
 }
 
+.object-property-checkbox input[type="checkbox"] {
+  justify-self: start;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--cyan);
+}
+
 .object-property-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1536,6 +1543,23 @@ h3 {
   border: 1px solid currentColor;
   transform: rotate(-24deg);
   opacity: .62;
+}
+
+.toolbar-icon-hidden-lines::before {
+  left: .14rem;
+  top: .47rem;
+  width: .74rem;
+  border-top: 2px dashed currentColor;
+  transform: rotate(-31deg);
+}
+
+.toolbar-icon-hidden-lines::after {
+  left: .19rem;
+  top: .3rem;
+  width: .58rem;
+  border-top: 1px solid currentColor;
+  transform: rotate(-31deg);
+  opacity: .45;
 }
 
 .toolbar-icon-objects::before {

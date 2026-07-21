@@ -383,7 +383,7 @@ function sourceEdgeKindsForBlueprint(data, blueprint) {
     const b = indexById.get(Number(explicit.b));
     if (a === undefined || b === undefined || a === b) continue;
     const key = a < b ? `${a},${b}` : `${b},${a}`;
-    kindByKey.set(key, explicit.kind === "stick" ? "stick" : "edge");
+    kindByKey.set(key, explicit.kind === "hidden" ? "hidden" : explicit.kind === "stick" ? "stick" : "edge");
   }
   return blueprint.edges.map((edge) => {
     if (!Array.isArray(edge) || edge.length < 2) return "edge";
@@ -532,7 +532,8 @@ function deriveBlueprint(data) {
     if (!edgeMap.has(key)) edgeMap.set(key, { edge: a < b ? [a, b] : [b, a], faces: [], kind });
     const entry = edgeMap.get(key);
     if (faceIndex >= 0) entry.faces.push(faceIndex);
-    if (kind === "stick") entry.kind = "stick";
+    if (kind === "hidden") entry.kind = "hidden";
+    else if (kind === "stick" && entry.kind !== "hidden") entry.kind = "stick";
   };
   faces.forEach((ids, faceIndex) => {
     for (let i = 0; i < ids.length; i++) addDerivedEdge(ids[i], ids[(i + 1) % ids.length], faceIndex);
@@ -546,7 +547,7 @@ function deriveBlueprint(data) {
   }
   const edgeEntries = [...edgeMap.values()];
   const edges = edgeEntries.map((entry) => entry.edge);
-  const edgeKinds = edgeEntries.map((entry) => entry.kind === "stick" ? "stick" : "edge");
+  const edgeKinds = edgeEntries.map((entry) => entry.kind === "hidden" ? "hidden" : entry.kind === "stick" ? "stick" : "edge");
   const edgeFaces = edgeEntries.map((entry) => {
     const unique = [...new Set(entry.faces)];
     if (!unique.length) return [-1, -1];
@@ -579,6 +580,9 @@ function deriveBlueprint(data) {
       type: detail.type === "panel" ? "line" : detail.type,
       color: detail.color,
       normal: toArray(normal, 3),
+      ...(detail.type === "window" && detail.baseTransparent === true ? { baseTransparent: true } : {}),
+      ...(detail.type === "window" && cleanHexColor(detail.glintDark) ? { glintDark: cleanHexColor(detail.glintDark) } : {}),
+      ...(detail.type === "window" && cleanHexColor(detail.glintBright) ? { glintBright: cleanHexColor(detail.glintBright) } : {}),
       ...(detail.stroke ? { stroke: detail.stroke } : {}),
       ...(detail.width ? { width: detail.width } : {}),
       ...(detail.lift ? { lift: detail.lift } : {}),

@@ -1,10 +1,13 @@
 import fs from "node:fs";
 import path from "node:path";
+import vm from "node:vm";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "../..");
 const modelDir = path.join(root, "assets/models");
+const generatedRuntimePath = path.join(root, "src/generated/model-library.js");
+const builderLibraryPath = path.join(root, "tools/ship-builder/game-model-library.js");
 const strict = process.argv.includes("--strict");
 
 function readJson(filePath) {
@@ -15,9 +18,39 @@ function readJson(filePath) {
   }
 }
 
+function runGenerated(filePath, globalName) {
+  if (!fs.existsSync(filePath)) return {};
+  const ctx = { globalThis: {} };
+  vm.runInNewContext(fs.readFileSync(filePath, "utf8"), ctx, { filename: filePath });
+  return ctx.globalThis[globalName] || {};
+}
+
+function runWindowGenerated(filePath, windowName) {
+  if (!fs.existsSync(filePath)) return {};
+  const ctx = { window: {} };
+  vm.runInNewContext(fs.readFileSync(filePath, "utf8"), ctx, { filename: filePath });
+  return ctx.window[windowName] || {};
+}
+
 function vertexIds(face) {
   if (Array.isArray(face)) return face;
   return Array.isArray(face?.verts) ? face.verts : [];
+}
+
+function vertexId(vertex, index) {
+  if (Array.isArray(vertex)) return index;
+  const id = Number(vertex?.id);
+  return Number.isFinite(id) ? id : index;
+}
+
+function vertexPoint(vertex) {
+  const point = Array.isArray(vertex)
+    ? vertex
+    : [vertex?.x, vertex?.y, vertex?.z];
+  const x = Number(point[0]);
+  const y = Number(point[1]);
+  const z = Number(point[2]);
+  return Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(z) ? [x, y, z] : null;
 }
 
 function edgeEnds(edge) {
@@ -33,7 +66,7 @@ function edgeKey(a, b) {
 }
 
 function isIntentionalOrphanEdge(kind) {
-  return kind === "stick" || kind === "stationEntrance";
+  return kind === "stick" || kind === "hidden" || kind === "stationEntrance";
 }
 
 function cleanAngle(value) {
@@ -67,6 +100,110 @@ function isProjectorCandidate(face) {
   return !Array.isArray(face.bitmapUv) || !face.bitmapUv.length;
 }
 
+function sub(a, b) {
+  return [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+}
+
+function cross(a, b) {
+  return [
+    a[1] * b[2] - a[2] * b[1],
+    a[2] * b[0] - a[0] * b[2],
+    a[0] * b[1] - a[1] * b[0]
+  ];
+}
+
+function dot(a, b) {
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
+function length(v) {
+  return Math.hypot(v[0], v[1], v[2]);
+}
+
+function normalize(v) {
+  const len = length(v);
+  return len > 1e-9 ? [v[0] / len, v[1] / len, v[2] / len] : null;
+}
+
+function facePlaneNormal(points) {
+  let normal = [0, 0, 0];
+  for (let i = 0; i < points.length; i++) {
+    const current = points[i];
+    const next = points[(i + 1) % points.length];
+    normal[0] += (current[1] - next[1]) * (current[2] + next[2]);
+    normal[1] += (current[2] - next[2]) * (current[0] + next[0]);
+    normal[2] += (current[0] - next[0]) * (current[1] + next[1]);
+  }
+  const newell = normalize(normal);
+  if (newell) return newell;
+  const origin = points[0];
+  for (let i = 1; i < points.length - 1; i++) {
+    const candidate = normalize(cross(sub(points[i], origin), sub(points[i + 1], origin)));
+    if (candidate) return candidate;
+  }
+  return null;
+}
+
+function modelScale(points) {
+  if (!points.length) return 0;
+  const min = [...points[0]];
+  const max = [...points[0]];
+  for (const point of points) {
+    for (let axis = 0; axis < 3; axis++) {
+      min[axis] = Math.min(min[axis], point[axis]);
+      max[axis] = Math.max(max[axis], point[axis]);
+    }
+  }
+  return length(sub(max, min));
+}
+
+function planarityIssue(face, vertexById, allPoints) {
+  const ids = vertexIds(face);
+  if (ids.length <= 3) return null;
+  const points = ids.map((id) => vertexById.get(Number(id))).filter(Boolean);
+  if (points.length !== ids.length) return null;
+  const normal = facePlaneNormal(points);
+  if (!normal) return null;
+  const center = points.reduce((sum, point) => [
+    sum[0] + point[0],
+    sum[1] + point[1],
+    sum[2] + point[2]
+  ], [0, 0, 0]).map((value) => value / points.length);
+  const distances = points.map((point) => Math.abs(dot(sub(point, center), normal)));
+  const maxDistance = Math.max(...distances);
+  const scale = modelScale(allPoints);
+  const tolerance = Math.max(0.25, scale * 0.001);
+  if (maxDistance <= tolerance) return null;
+  const index = distances.indexOf(maxDistance);
+  return {
+    maxDistance,
+    tolerance,
+    vertexId: ids[index],
+    vertices: ids.length
+  };
+}
+
+function auditFacePlanarity({ reports, faces, verts, file, label, category, itemPrefix = "face" }) {
+  const allPoints = verts.map(vertexPoint).filter(Boolean);
+  const vertexById = new Map();
+  verts.forEach((vertex, index) => {
+    const point = vertexPoint(vertex);
+    if (point) vertexById.set(vertexId(vertex, index), point);
+  });
+  faces.forEach((face, index) => {
+    const issue = planarityIssue(face, vertexById, allPoints);
+    if (!issue) return;
+    reports.push({
+      category,
+      severity: "warn",
+      file,
+      label,
+      item: `${itemPrefix}[${index}]${face?.id != null ? ` id ${face.id}` : ""}`,
+      message: `${issue.vertices}-vertex face is non-planar; vertex ${issue.vertexId} is ${issue.maxDistance.toFixed(2)} units from the face plane (tolerance ${issue.tolerance.toFixed(2)})`
+    });
+  });
+}
+
 function modelLabel(data, filePath) {
   return data.id || path.basename(filePath, ".ultraship.json");
 }
@@ -76,10 +213,20 @@ function auditModel(filePath) {
   const label = modelLabel(data, filePath);
   const file = path.relative(root, filePath);
   const faces = Array.isArray(data.faces) ? data.faces : [];
+  const verts = Array.isArray(data.verts) ? data.verts : [];
   const details = Array.isArray(data.details) ? data.details : [];
   const edges = Array.isArray(data.edges) ? data.edges : [];
   const faceEdgeKeys = new Set();
   const reports = [];
+
+  auditFacePlanarity({
+    reports,
+    faces,
+    verts,
+    file,
+    label,
+    category: "non-planar-source-face"
+  });
 
   faces.forEach((face) => {
     const ids = vertexIds(face);
@@ -110,10 +257,10 @@ function auditModel(filePath) {
         file,
         label,
         item: `edge[${index}]${explicit.id != null ? ` id ${explicit.id}` : ""} ${explicit.a}-${explicit.b}`,
-        message: "authored edge is not part of any source face and is not an explicit stick or station entrance"
+        message: "authored edge is not part of any source face and is not an explicit stick, hidden edge, or station entrance"
       });
     }
-    if (!["edge", "stick", "stationEntrance"].includes(explicit.kind)) {
+    if (!["edge", "stick", "hidden", "stationEntrance"].includes(explicit.kind)) {
       reports.push({
         category: "unknown-edge-kind",
         severity: "error",
@@ -177,6 +324,25 @@ function auditModel(filePath) {
   return reports;
 }
 
+function auditBlueprintSet(models, filePath, category) {
+  const file = path.relative(root, filePath);
+  const reports = [];
+  for (const [id, blueprint] of Object.entries(models || {})) {
+    const faces = Array.isArray(blueprint?.faces) ? blueprint.faces : [];
+    const verts = Array.isArray(blueprint?.verts) ? blueprint.verts : [];
+    auditFacePlanarity({
+      reports,
+      faces,
+      verts,
+      file,
+      label: blueprint?.name || id,
+      category,
+      itemPrefix: `${id} face`
+    });
+  }
+  return reports;
+}
+
 function groupByCategory(reports) {
   const groups = new Map();
   for (const report of reports) {
@@ -230,7 +396,21 @@ const modelFiles = fs.readdirSync(modelDir)
   .sort((a, b) => a.localeCompare(b))
   .map((file) => path.join(modelDir, file));
 
-const reports = modelFiles.flatMap(auditModel);
+const reports = [
+  ...modelFiles.flatMap(auditModel),
+  ...auditBlueprintSet(
+    runGenerated(generatedRuntimePath, "ULTRA_ELITE_MODEL_BLUEPRINTS"),
+    generatedRuntimePath,
+    "non-planar-benchmark-face"
+  ),
+  ...auditBlueprintSet(
+    Object.fromEntries(Object.entries(runWindowGenerated(builderLibraryPath, "ULTRA_ELITE_MODEL_LIBRARY"))
+      .map(([id, model]) => [id, model?.blueprint])
+      .filter(([, blueprint]) => blueprint)),
+    builderLibraryPath,
+    "non-planar-builder-face"
+  )
+];
 printReports(reports);
 
 const hasErrors = reports.some((report) => report.severity === "error");

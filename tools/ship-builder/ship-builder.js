@@ -5,6 +5,7 @@ const EPS = 0.0001;
 const UV_TILE_WARN_COUNT = 64;
 const UV_TILE_DANGER_COUNT = 160;
 const UV_TILE_RUNTIME_LIMIT = 441;
+const EDGE_KIND_HIDDEN = "hidden";
 const EDGE_KIND_STATION_ENTRANCE = "stationEntrance";
 const DETAIL_TYPE_STATION_ENTRANCE = "stationEntrance";
 const STANDARD_VIEW = Object.freeze({ rx: -0.35, ry: 0.72 });
@@ -149,6 +150,7 @@ const els = {
   showEngineDetails: document.getElementById("showEngineDetails"),
   showBeaconDetails: document.getElementById("showBeaconDetails"),
   showAuditEdges: document.getElementById("showAuditEdges"),
+  showHiddenEdges: document.getElementById("showHiddenEdges"),
   mirrorNewGeometry: document.getElementById("mirrorNewGeometry"),
   previewRenderMode: document.getElementById("previewRenderMode"),
   skinReadout: document.getElementById("skinReadout"),
@@ -299,6 +301,8 @@ const SELECTION_EDGE_PICK_RADIUS = 28;
 const MAIN_VIEW_DRAG_ROTATE_THRESHOLD = 4;
 const MIRROR_AFFECTED_COLOR = "#ff8a3d";
 const MIRROR_AFFECTED_FILL = "rgba(255,138,61,.13)";
+const DEFAULT_WINDOW_GLINT_DARK = "#02080a";
+const DEFAULT_WINDOW_GLINT_BRIGHT = "#fffff8";
 const EDIT_HISTORY_MAX = 120;
 const SAFARI_FULLSCREEN_KEY_GUARD = typeof navigator !== "undefined"
   && /^((?!chrome|android).)*safari/i.test(navigator.userAgent || "");
@@ -357,6 +361,7 @@ const state = {
   selectedEdgeIds: new Set(),
   selectedDetailIds: new Set(),
   pick: [],
+  faceSplitPick: null,
   surfaceInsertShape: "polygon",
   surfaceInsertPreview: false,
   surfaceInsertConfig: null,
@@ -918,6 +923,7 @@ function setVertexGroup(vertexIds, statusText = "") {
     return false;
   }
   cancelSurfaceInsertPreview({ redraw: false });
+  cancelFaceSplitPickMode();
   state.mode = "vertex";
   state.pick = ids;
   state.selected = { type: "vertex", id: ids.at(-1) };
@@ -944,6 +950,7 @@ function selectAdjacentFacesForVertex(vertex) {
     return false;
   }
   cancelSurfaceInsertPreview({ redraw: false });
+  cancelFaceSplitPickMode();
   state.mode = "face";
   state.pick = [];
   state.selectedEdgeIds.clear();
@@ -959,6 +966,7 @@ function selectAdjacentFacesForVertex(vertex) {
 
 function clearVertexGroup(statusText = "VERTEX GROUP CLEARED.") {
   const hadGroup = state.pick.length > 0;
+  cancelFaceSplitPickMode();
   state.pick = [];
   if (state.selected?.type === "vertex" || state.selected?.type === "vertexGroup") state.selected = null;
   if (hadGroup) {
@@ -1613,6 +1621,61 @@ function normalFromPoints(points) {
     if (len(candidate) > EPS) return norm(candidate);
   }
   return vec(0, 0, 1);
+}
+
+function facePlaneNormalFromPoints(points) {
+  if (!Array.isArray(points) || points.length < 3) return vec(0, 0, 1);
+  let nx = 0;
+  let ny = 0;
+  let nz = 0;
+  for (let i = 0; i < points.length; i++) {
+    const a = points[i];
+    const b = points[(i + 1) % points.length];
+    nx += (a.y - b.y) * (a.z + b.z);
+    ny += (a.z - b.z) * (a.x + b.x);
+    nz += (a.x - b.x) * (a.y + b.y);
+  }
+  const normal = vec(nx, ny, nz);
+  return len(normal) > EPS ? norm(normal) : normalFromPoints(points);
+}
+
+function pointsBoundsScale(points) {
+  if (!Array.isArray(points) || !points.length) return 0;
+  const min = vec(points[0].x, points[0].y, points[0].z);
+  const max = vec(points[0].x, points[0].y, points[0].z);
+  for (const point of points) {
+    min.x = Math.min(min.x, point.x);
+    min.y = Math.min(min.y, point.y);
+    min.z = Math.min(min.z, point.z);
+    max.x = Math.max(max.x, point.x);
+    max.y = Math.max(max.y, point.y);
+    max.z = Math.max(max.z, point.z);
+  }
+  return len(sub(max, min));
+}
+
+function facePlanarityIssueFromPoints(points, ids, scale = 0) {
+  if (!Array.isArray(points) || points.length <= 3 || points.length !== ids.length) return null;
+  const normal = facePlaneNormalFromPoints(points);
+  if (len(normal) <= EPS) return null;
+  const center = mul(points.reduce((sum, point) => add(sum, point), vec()), 1 / points.length);
+  const distances = points.map((point) => Math.abs(dot(sub(point, center), normal)));
+  const maxDistance = Math.max(...distances);
+  const tolerance = Math.max(0.25, scale * 0.001);
+  if (maxDistance <= tolerance) return null;
+  const index = distances.indexOf(maxDistance);
+  return {
+    maxDistance,
+    tolerance,
+    vertexId: ids[index],
+    vertices: ids.length
+  };
+}
+
+function stateFacePlanarityIssue(face) {
+  const ids = (face?.verts || []).map(Number);
+  const points = ids.map(vertexById).filter(Boolean).map((vertex) => vec(vertex.x, vertex.y, vertex.z));
+  return facePlanarityIssueFromPoints(points, ids, modelOverallSize());
 }
 
 function faceFacesBuilderCamera(face) {
@@ -2419,7 +2482,7 @@ function addDetail(type) {
     type,
     faceId: face.id,
     inset: type === "engine" ? 0.48 : 0.38,
-    color: type === "engine" ? "#f7fff7" : type === "window" ? "#101915" : "#ffd936",
+    color: type === "engine" ? "#f7fff7" : type === "window" ? "#000000" : "#ffd936",
     normal: toArray(normal)
   };
   state.details.push(d);
@@ -2477,7 +2540,7 @@ function inferFaceForEdgeVertices(vertexIds) {
 
 function detailColorForConvertedEdge(type) {
   if (type === "engine") return "#f7fff7";
-  if (type === "window") return "#101915";
+  if (type === "window") return "#000000";
   if (type === DETAIL_TYPE_STATION_ENTRANCE) return "#06131f";
   return "#ffd936";
 }
@@ -2495,6 +2558,7 @@ function detailTypeLabel(type) {
 }
 
 function edgeKindLabel(kind) {
+  if (kind === EDGE_KIND_HIDDEN) return "HIDDEN EDGE";
   if (kind === "stick") return "STICK";
   if (kind === EDGE_KIND_STATION_ENTRANCE) return "STATION ENTRANCE";
   return "EDGE";
@@ -2502,6 +2566,7 @@ function edgeKindLabel(kind) {
 
 function edgeStrokeStyle(edge, selected = false) {
   if (selected) return "#ffd936";
+  if (edge?.kind === EDGE_KIND_HIDDEN) return "rgba(255,217,54,.42)";
   if (edge?.kind === EDGE_KIND_STATION_ENTRANCE) return "#66e8ff";
   if (edge?.kind === "stick") return "#d9d9d9";
   return "rgba(85,255,78,.72)";
@@ -2509,6 +2574,7 @@ function edgeStrokeStyle(edge, selected = false) {
 
 function edgeLineWidth(edge, selected = false) {
   if (selected) return 3;
+  if (edge?.kind === EDGE_KIND_HIDDEN) return 1.4;
   if (edge?.kind === EDGE_KIND_STATION_ENTRANCE) return 2.4;
   if (edge?.kind === "stick") return 2.2;
   return 1.2;
@@ -2871,8 +2937,23 @@ function rotatePoint(v) {
   return vec(x1, y1, z2);
 }
 
+function inverseRotatePoint(v) {
+  const { rx, ry } = state.view;
+  const cy = Math.cos(ry), sy = Math.sin(ry);
+  const cx = Math.cos(rx), sx = Math.sin(rx);
+  const y = v.y * cx + v.z * sx;
+  const z1 = -v.y * sx + v.z * cx;
+  const x = v.x * cy + z1 * sy;
+  const z = -v.x * sy + z1 * cy;
+  return vec(x, y, z);
+}
+
 function rotateViewPoint(v) {
   return rotatePoint(sub(v, modelCenter()));
+}
+
+function modelPointFromViewPoint(v, center = modelCenter()) {
+  return add(inverseRotatePoint(v), center);
 }
 
 function normalizeRadians(value) {
@@ -3200,8 +3281,13 @@ function updatePreviewTrustUi() {
     ? `${summary.missingUv} UV gap${summary.missingUv === 1 ? "" : "s"}`
     : `${summary.faceTextureRefs} face UV${summary.faceTextureRefs === 1 ? "" : "s"}`;
   const overlayText = overlay ? "overlay on | renderer solid" : "overlay off | solid";
-  const auditCount = renderAuditEdges().length;
-  const auditText = auditCount ? ` | ${auditCount} audit edge${auditCount === 1 ? "" : "s"}` : "";
+  const auditEdgeCount = renderAuditEdges().length;
+  const auditFaceCount = renderAuditFaces().length;
+  const auditParts = [
+    auditEdgeCount ? `${auditEdgeCount} audit edge${auditEdgeCount === 1 ? "" : "s"}` : "",
+    auditFaceCount ? `${auditFaceCount} warped face${auditFaceCount === 1 ? "" : "s"}` : ""
+  ].filter(Boolean);
+  const auditText = auditParts.length ? ` | ${auditParts.join(" | ")}` : "";
   const hiddenDetailCount = state.details.length - filteredDetailsForView().length;
   const detailFilterText = hiddenDetailCount ? ` | ${hiddenDetailCount} detail${hiddenDetailCount === 1 ? "" : "s"} hidden` : "";
   els.previewTrustReadout.textContent = `${summary.visibleFaces}/${summary.faces} visible faces | ${summary.projectedPoints} points | ${uvText} | ${overlayText}${auditText}${detailFilterText}`;
@@ -6466,6 +6552,7 @@ function drawFaceMirrorSeam(ctx, face, pts) {
 function derivedFaceEdges() {
   const seen = new Set();
   const edges = [];
+  const hidden = hiddenEdgeKeySet();
   for (const face of state.faces) {
     const ids = face.verts || [];
     for (let i = 0; i < ids.length; i++) {
@@ -6473,12 +6560,20 @@ function derivedFaceEdges() {
       const b = ids[(i + 1) % ids.length];
       if (!Number.isFinite(a) || !Number.isFinite(b) || a === b) continue;
       const key = a < b ? `${a},${b}` : `${b},${a}`;
+      if (hidden.has(key)) continue;
       if (seen.has(key)) continue;
       seen.add(key);
       edges.push({ a, b });
     }
   }
   return edges;
+}
+
+function hiddenEdgeKeySet() {
+  return new Set(state.edges
+    .filter((edge) => edge.kind === EDGE_KIND_HIDDEN)
+    .map((edge) => edgeKey(edge.a, edge.b))
+    .filter(Boolean));
 }
 
 function edgeKey(a, b) {
@@ -6503,10 +6598,21 @@ function faceEdgeKeySet() {
 function renderAuditEdges() {
   const faceEdges = faceEdgeKeySet();
   return state.edges.filter((edge) =>
+    edge.kind !== EDGE_KIND_HIDDEN &&
     edge.kind !== "stick" &&
     edge.kind !== EDGE_KIND_STATION_ENTRANCE &&
     !faceEdges.has(edgeKey(edge.a, edge.b))
   );
+}
+
+function renderAuditFaces() {
+  return state.faces
+    .map((face) => ({ face, issue: stateFacePlanarityIssue(face) }))
+    .filter((item) => item.issue);
+}
+
+function hiddenEdgesVisible() {
+  return els.showHiddenEdges?.checked === true;
 }
 
 function edgeComponentFrom(edge, edges = state.edges) {
@@ -6626,6 +6732,7 @@ function auditEdgeLabel(edge) {
 function selectEdge(edge, options = {}) {
   if (!edge) return;
   cancelSurfaceInsertPreview({ redraw: false });
+  cancelFaceSplitPickMode();
   state.mode = "edge";
   state.selected = { type: "edge", id: edge.id };
   state.pick = [];
@@ -6652,6 +6759,7 @@ function averageProjectedDepth(points) {
 function edgeHitCandidates(point, projected, edges = state.edges, maxLineDist = 12, options = {}) {
   const candidates = [];
   for (const edge of edges) {
+    if (edge.kind === EDGE_KIND_HIDDEN && !options.includeHidden && !hiddenEdgesVisible()) continue;
     const a = projected.get(edge.a), b = projected.get(edge.b);
     if (!a || !b) continue;
     const dist = distToSegment(point, a, b);
@@ -6830,6 +6938,54 @@ function drawAuditEdgeOverlay(ctx, projected, { label = true, scale = 1 } = {}) 
   }
   ctx.restore();
   return auditEdges.length;
+}
+
+function drawAuditFaceOverlay(ctx, projected, { label = true, scale = 1 } = {}) {
+  if (!els.showAuditEdges?.checked) return 0;
+  const auditFaces = renderAuditFaces();
+  if (!auditFaces.length) return 0;
+  ctx.save();
+  ctx.lineJoin = "round";
+  ctx.font = `${Math.max(10, Math.round(11 * scale))}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
+  ctx.textBaseline = "middle";
+  for (const { face, issue } of auditFaces) {
+    const pts = projectedFacePoints(face, projected);
+    if (pts.length < 3) continue;
+    const selected = state.selected?.type === "face" && (state.selected.id === face.id || state.selectedFaceIds.has(face.id));
+    drawFace(
+      ctx,
+      pts,
+      selected ? "rgba(255,217,54,.18)" : "rgba(255,20,20,.18)",
+      selected ? "#ffd936" : "rgba(255,20,20,.98)",
+      selected ? 3 : 2.6
+    );
+    ctx.save();
+    ctx.setLineDash([6 * scale, 4 * scale]);
+    ctx.strokeStyle = "rgba(255,255,255,.84)";
+    ctx.lineWidth = Math.max(1, 1.2 * scale);
+    ctx.beginPath();
+    pts.forEach((point, index) => index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y));
+    ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
+    if (label) {
+      const cx = pts.reduce((sum, point) => sum + point.x, 0) / pts.length;
+      const cy = pts.reduce((sum, point) => sum + point.y, 0) / pts.length;
+      const text = `WARP #${face.id} ${issue.maxDistance.toFixed(1)}`;
+      const padX = 4 * scale;
+      const w = ctx.measureText(text).width + padX * 2;
+      const h = 14 * scale;
+      ctx.fillStyle = "rgba(30,0,0,.86)";
+      ctx.fillRect(cx - w / 2, cy - h / 2, w, h);
+      ctx.strokeStyle = "rgba(255,255,255,.84)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(cx - w / 2, cy - h / 2, w, h);
+      ctx.fillStyle = "#ff3030";
+      ctx.fillText(text, cx - w / 2 + padX, cy + .5);
+    }
+  }
+  ctx.restore();
+  return auditFaces.length;
 }
 
 function surfaceInsertPreviewProjectedPoints(face, canvas, projected) {
@@ -7033,14 +7189,14 @@ function renderMain() {
         const textured = drawFaceBitmapSkin(ctx, face, pts);
         drawFaceBitmapDecals(ctx, face, pts);
         if (!textured) drawFaceTextureGuide(ctx, pts, previewMode === "bitmap" ? .22 : .16);
-        if (drawWire) drawFace(ctx, pts, "rgba(0,0,0,0)", "rgba(85,255,78,.32)", 1);
+        if (drawWire) drawFace(ctx, pts, "rgba(0,0,0,0)", "rgba(0,0,0,0)", 0);
       } else {
         drawFace(
           ctx,
           pts,
           shadedFaceColor(n, optionalHexColor(face.faceColor) || els.baseColor.value),
-          drawWire ? "rgba(85,255,78,.32)" : "rgba(0,0,0,0)",
-          drawWire ? 1 : 0
+          "rgba(0,0,0,0)",
+          0
         );
       }
     }
@@ -7051,22 +7207,21 @@ function renderMain() {
   drawFaceUvTypeOverlay(ctx, projected, { scale: 1.05 });
 
   if (drawWire) {
-    if (!drawFaces) {
-      ctx.strokeStyle = "rgba(85,255,78,.58)";
-      ctx.lineWidth = 1.1;
-      ctx.beginPath();
-      for (const e of derivedFaceEdges()) {
-        const a = projected.get(e.a), b = projected.get(e.b);
-        if (!a || !b) continue;
-        ctx.moveTo(a.x, a.y);
-        ctx.lineTo(b.x, b.y);
-      }
-      ctx.stroke();
-    }
-    for (const e of state.edges) {
+    ctx.strokeStyle = drawFaces ? "rgba(85,255,78,.32)" : "rgba(85,255,78,.58)";
+    ctx.lineWidth = drawFaces ? 1 : 1.1;
+    ctx.beginPath();
+    for (const e of derivedFaceEdges()) {
       const a = projected.get(e.a), b = projected.get(e.b);
       if (!a || !b) continue;
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+    }
+    ctx.stroke();
+    for (const e of state.edges) {
       const selected = state.selected?.type === "edge" && (state.selected.id === e.id || state.selectedEdgeIds.has(e.id));
+      if (e.kind === EDGE_KIND_HIDDEN && !selected && !hiddenEdgesVisible()) continue;
+      const a = projected.get(e.a), b = projected.get(e.b);
+      if (!a || !b) continue;
       ctx.strokeStyle = edgeStrokeStyle(e, selected);
       ctx.lineWidth = edgeLineWidth(e, selected);
       ctx.beginPath();
@@ -7095,6 +7250,7 @@ function renderMain() {
 
   drawSurfaceInsertPreview(ctx, canvas, projected);
   drawFaceExtrudePreview(ctx, canvas, projected);
+  drawAuditFaceOverlay(ctx, projected, { label: true, scale: 1.15 });
   drawAuditEdgeOverlay(ctx, projected, { label: true, scale: 1.15 });
 
   for (const detail of state.details) {
@@ -7154,10 +7310,11 @@ function renderMain() {
       if (selected || mirrorAffected) ctx.fill();
       ctx.stroke();
     } else {
+      const windowTransparent = detail.type === "window" && detail.baseTransparent === true;
       drawFace(
         ctx,
         pts,
-        mirrorAffected && !selected ? MIRROR_AFFECTED_FILL : detail.type === "engine" ? "rgba(247,255,247,.92)" : "rgba(5,16,18,.92)",
+        windowTransparent ? "rgba(0,0,0,0)" : mirrorAffected && !selected ? MIRROR_AFFECTED_FILL : detail.type === "engine" ? "rgba(247,255,247,.92)" : (optionalHexColor(detail.color) || "rgba(5,16,18,.92)"),
         selected ? "#ffd936" : mirrorAffected ? MIRROR_AFFECTED_COLOR : "rgba(255,255,255,.38)",
         selected ? 2 : mirrorAffected ? 2.4 : 1
       );
@@ -7838,7 +7995,7 @@ function updateDetailControls() {
   els.detailColor.disabled = !detailTargets.length;
   if (detail) {
     els.detailInset.value = detail.inset ?? 0.45;
-    els.detailColor.value = detail.color || "#101915";
+    els.detailColor.value = detail.color || (detail.type === "window" ? "#000000" : "#101915");
   }
 }
 
@@ -7866,6 +8023,7 @@ function setSelectedFaceBitmapSide(value) {
 
 function clearEditorSelection(options = {}) {
   cancelSurfaceInsertPreview({ redraw: false });
+  cancelFaceSplitPickMode();
   state.selected = null;
   state.selectedFaceIds.clear();
   state.selectedEdgeIds.clear();
@@ -7879,6 +8037,7 @@ function clearEditorSelection(options = {}) {
 
 function clearSelectionForSelectorChange() {
   cancelSurfaceInsertPreview({ redraw: false });
+  cancelFaceSplitPickMode();
   state.selected = null;
   state.selectedFaceIds.clear();
   state.selectedEdgeIds.clear();
@@ -7900,6 +8059,12 @@ function activeSelectionFilters() {
 
 function clearSelectionForDisabledFilter(type) {
   let cleared = false;
+  if (state.faceSplitPick && (type === "vertex" || type === "face")) {
+    cancelFaceSplitPickMode();
+    state.pick = [];
+    if (type === "face" && state.selected?.type === "face") state.selected = null;
+    cleared = true;
+  }
   if (type === "vertex" && (state.selected?.type === "vertex" || state.selected?.type === "vertexGroup" || state.pick.length)) {
     state.pick = [];
     if (state.selected?.type === "vertex" || state.selected?.type === "vertexGroup") state.selected = null;
@@ -8166,6 +8331,7 @@ function syncControlsWindowForSelection(options = {}) {
 function selectDetailTarget(detail, options = {}) {
   if (!detail) return false;
   cancelSurfaceInsertPreview({ redraw: false });
+  cancelFaceSplitPickMode();
   state.mode = "detail";
   state.pick = [];
   state.selectedFaceIds.clear();
@@ -8197,6 +8363,7 @@ function selectDetailTarget(detail, options = {}) {
 function selectFaceTarget(face, options = {}) {
   if (!face) return false;
   cancelSurfaceInsertPreview({ redraw: false });
+  if (!options.keepFaceSplitPick) cancelFaceSplitPickMode();
   state.mode = "face";
   state.pick = [];
   state.selectedEdgeIds.clear();
@@ -8226,6 +8393,7 @@ function selectFaceTarget(face, options = {}) {
 function selectUvTarget(face) {
   if (!face || !faceHasUvSelectionTarget(face)) return false;
   cancelSurfaceInsertPreview({ redraw: false });
+  cancelFaceSplitPickMode();
   const group = sharedFaceTextureGroup(face);
   state.mode = group.length > 1 ? "group" : "uv";
   state.pick = [];
@@ -8251,6 +8419,7 @@ function selectGroupTarget(face) {
   const group = sharedFaceTextureGroup(face);
   if (group.length < 2) return false;
   cancelSurfaceInsertPreview({ redraw: false });
+  cancelFaceSplitPickMode();
   state.mode = "group";
   state.selected = { type: "group", id: face.id };
   state.pick = [];
@@ -8358,6 +8527,13 @@ function selectInMain(point, options = {}) {
     if (hadSelection && options.announceEmptyClear !== false) setStatus("SELECTION CLEARED.");
     return false;
   }
+  if (state.faceSplitPick && !options.forcePickMenu) {
+    const splitCandidate = faceSplitVertexCandidate(candidates);
+    if (splitCandidate) return selectFaceSplitVertex(splitCandidate.id);
+    const face = activeFaceSplitFace();
+    if (face) setStatus(`FACE #${face.id} SPLIT: CLICK A VERTEX ON THE SELECTED FACE, OR CLICK EMPTY SPACE TO CANCEL.`);
+    return false;
+  }
   const directCandidate = options.forcePickMenu ? null : directMultiSelectCandidate(candidates, options);
   if (directCandidate) return runSelectionAfterPick(selectSelectionCandidate(directCandidate, options), options);
   if (options.forcePickMenu && options.allowPickMenu !== false && (candidates.length > 1 || options.pickMenuForSingle)) {
@@ -8390,7 +8566,9 @@ function orientFaceAtMainPoint(point) {
 function selectVertex(id, options = {}) {
   const v = vertexById(id);
   if (!v) return;
+  if (state.faceSplitPick && !options.ignoreFaceSplitPick) return selectFaceSplitVertex(id);
   cancelSurfaceInsertPreview({ redraw: false });
+  cancelFaceSplitPickMode();
   state.mode = "vertex";
   state.selectedFaceIds.clear();
   state.selectedEdgeIds.clear();
@@ -8837,6 +9015,193 @@ function flipSelectedFace() {
   renderAll();
 }
 
+function alignFaceVerticesToViewDepth(face = selectedFace()) {
+  if (!face) return setStatus("SELECT A FACE FIRST.");
+  const ids = [...new Set(face.verts)].filter((id) => vertexById(id));
+  if (ids.length < 3) return setStatus("FACE NEEDS AT LEAST THREE VERTICES.");
+  const center = modelCenter();
+  const beforeIssue = stateFacePlanarityIssue(face);
+  const alignIds = (vertexIds) => {
+    const vertices = vertexIds.map(vertexById).filter(Boolean);
+    if (vertices.length < 3) return 0;
+    const viewPoints = vertices.map((vertex) => rotatePoint(sub(vertex, center)));
+    const targetZ = viewPoints.reduce((sum, point) => sum + point.z, 0) / viewPoints.length;
+    let maxMove = 0;
+    vertices.forEach((vertex, index) => {
+      const viewPoint = { ...viewPoints[index], z: targetZ };
+      const next = modelPointFromViewPoint(viewPoint, center);
+      const previous = vec(vertex.x, vertex.y, vertex.z);
+      vertex.x = vertex.center ? 0 : Math.abs(next.x) < EPS ? 0 : round(next.x);
+      vertex.y = round(next.y);
+      vertex.z = round(next.z);
+      maxMove = Math.max(maxMove, len(sub(vec(vertex.x, vertex.y, vertex.z), previous)));
+    });
+    return maxMove;
+  };
+  let maxMove = alignIds(ids);
+  const mirror = mirrorActionsEnabled() ? mirroredFaceOf(face) : null;
+  if (mirror) maxMove = Math.max(maxMove, alignIds([...new Set(mirror.verts)]));
+  syncModeUi("face");
+  syncControlsWindowForSelection({ render: false });
+  const afterIssue = stateFacePlanarityIssue(face);
+  const beforeText = beforeIssue ? ` FROM ${beforeIssue.maxDistance.toFixed(2)}` : "";
+  const afterText = afterIssue ? ` TO ${afterIssue.maxDistance.toFixed(2)}` : " TO PLANAR";
+  setStatus(`FACE #${face.id} VERTICES ALIGNED TO VIEW DEPTH${beforeText}${afterText}. MAX MOVE ${round(maxMove, 2)}.`);
+  renderAll();
+  return true;
+}
+
+function faceCopyWithVerts(face, verts, mirrored = !!face?.mirrored) {
+  const copy = { ...face, id: newId(), verts: [...verts], mirrored };
+  for (const key of ["bitmapUv", "bitmapUvTemplate"]) {
+    if (Array.isArray(copy[key]) && copy[key].length !== copy.verts.length) delete copy[key];
+  }
+  if (copy.bitmapUvTransform && (!copy.bitmapUvTemplate || copy.bitmapUvTemplate.length !== copy.verts.length)) delete copy.bitmapUvTransform;
+  if (copy.bitmapBaseW && !copy.bitmapUv) delete copy.bitmapBaseW;
+  if (copy.bitmapBaseH && !copy.bitmapUv) delete copy.bitmapBaseH;
+  return copy;
+}
+
+function splitFaceVertexLoops(face, a, b) {
+  const ids = face?.verts || [];
+  const ia = ids.indexOf(a);
+  const ib = ids.indexOf(b);
+  if (ia < 0 || ib < 0 || ia === ib) return null;
+  const loop = (start, end) => {
+    const out = [ids[start]];
+    for (let i = (start + 1) % ids.length; i !== end; i = (i + 1) % ids.length) out.push(ids[i]);
+    out.push(ids[end]);
+    return out;
+  };
+  const first = loop(ia, ib);
+  const second = loop(ib, ia);
+  return first.length >= 3 && second.length >= 3 ? [first, second] : null;
+}
+
+function cancelFaceSplitPickMode() {
+  if (!state.faceSplitPick) return false;
+  state.faceSplitPick = null;
+  return true;
+}
+
+function activeFaceSplitFace() {
+  const face = state.faceSplitPick ? faceById(state.faceSplitPick.faceId) : null;
+  if (!face) cancelFaceSplitPickMode();
+  return face;
+}
+
+function startFaceSplitPickMode(face, seedVertexIds = []) {
+  if (!face) return false;
+  cancelSurfaceInsertPreview({ redraw: false });
+  const picked = [...new Set(seedVertexIds.filter((id) => face.verts.includes(id)))].slice(0, 2);
+  state.faceSplitPick = { faceId: face.id, vertexIds: picked };
+  state.mode = "face";
+  state.selected = { type: "face", id: face.id };
+  state.selectedFaceIds.clear();
+  state.selectedEdgeIds.clear();
+  state.selectedDetailIds.clear();
+  state.pick = [...picked];
+  setToolTab("edit", { redraw: false });
+  syncControlsWindowForSelection({ render: false });
+  setStatus(`FACE #${face.id} SPLIT: PICK ${2 - picked.length} MORE NON-ADJACENT VERTEX${picked.length === 1 ? "" : "ES"}.`);
+  renderAll();
+  return true;
+}
+
+function selectFaceSplitVertex(id) {
+  const face = activeFaceSplitFace();
+  if (!face) return false;
+  if (!face.verts.includes(id)) {
+    setStatus(`FACE #${face.id} SPLIT: PICK VERTICES ON THE SELECTED FACE.`);
+    return false;
+  }
+  const picked = [...new Set(state.faceSplitPick.vertexIds.filter((vertexId) => face.verts.includes(vertexId)))];
+  const existing = picked.indexOf(id);
+  if (existing >= 0) {
+    picked.splice(existing, 1);
+    state.faceSplitPick.vertexIds = picked;
+    state.pick = [...picked];
+    setStatus(`FACE #${face.id} SPLIT: VERTEX #${id} REMOVED; PICK ${2 - picked.length} MORE.`);
+    renderAll();
+    return true;
+  }
+  if (picked.length === 1 && faceEdgeIndex(face, picked[0], id) >= 0) {
+    setStatus(`FACE #${face.id} SPLIT: PICK A NON-ADJACENT VERTEX.`);
+    return true;
+  }
+  picked.push(id);
+  state.faceSplitPick.vertexIds = picked;
+  state.pick = [...picked];
+  if (picked.length < 2) {
+    setStatus(`FACE #${face.id} SPLIT: PICK 1 MORE NON-ADJACENT VERTEX.`);
+    renderAll();
+    return true;
+  }
+  return splitSelectedFaceAlongPickedVertices({ face, vertexIds: picked });
+}
+
+function faceSplitVertexCandidate(candidates) {
+  const face = activeFaceSplitFace();
+  if (!face) return null;
+  return candidates.find((candidate) => candidate.type === "vertex" && face.verts.includes(candidate.id)) || null;
+}
+
+function splitSelectedFaceAlongPickedVertices(options = {}) {
+  cancelSurfaceInsertPreview({ redraw: false });
+  const face = options.face
+    || (options.faceId != null ? faceById(options.faceId) : null)
+    || activeFaceSplitFace()
+    || (state.selected?.type === "face" ? faceById(state.selected.id) : null);
+  if (!face) return setStatus("SELECT A FACE FIRST.");
+  const sourcePicked = options.vertexIds
+    || (state.faceSplitPick?.faceId === face.id ? state.faceSplitPick.vertexIds : null)
+    || state.pick;
+  const picked = sourcePicked.filter((id) => face.verts.includes(id));
+  const unique = [...new Set(picked)];
+  if (unique.length !== 2) {
+    startFaceSplitPickMode(face, unique);
+    return false;
+  }
+  const [a, b] = unique;
+  if (faceEdgeIndex(face, a, b) >= 0) return setStatus("PICK NON-ADJACENT FACE VERTICES FOR A SPLIT.");
+  const loops = splitFaceVertexLoops(face, a, b);
+  if (!loops) return setStatus("FACE SPLIT FAILED.");
+  const mirror = mirrorActionsEnabled() ? mirroredFaceOf(face) : null;
+  const splitFaces = loops.map((verts) => faceCopyWithVerts(face, verts));
+  state.faces = state.faces.filter((item) => item.id !== face.id);
+  state.faces.push(...splitFaces);
+  state.details = state.details.filter((detail) => detail.faceId !== face.id);
+  const hiddenEdge = addEdge(a, b, EDGE_KIND_HIDDEN, !!face.mirrored);
+  state.selected = hiddenEdge ? { type: "edge", id: hiddenEdge.id } : { type: "face", id: splitFaces[0].id };
+  state.selectedFaceIds = new Set(splitFaces.map((item) => item.id));
+  state.selectedEdgeIds = hiddenEdge ? new Set([hiddenEdge.id]) : new Set();
+  state.selectedDetailIds.clear();
+  state.pick = [];
+  state.faceSplitPick = null;
+
+  if (mirrorActionsEnabled()) {
+    if (mirror) {
+      const ma = inferredMirrorVertexId(a);
+      const mb = inferredMirrorVertexId(b);
+      const mirrorLoops = ma != null && mb != null ? splitFaceVertexLoops(mirror, ma, mb) : null;
+      if (mirrorLoops) {
+        const mirrorFaces = mirrorLoops.map((verts) => faceCopyWithVerts(mirror, verts, true));
+        state.faces = state.faces.filter((item) => item.id !== mirror.id);
+        state.faces.push(...mirrorFaces);
+        state.details = state.details.filter((detail) => detail.faceId !== mirror.id);
+        const mirrorHidden = addEdge(ma, mb, EDGE_KIND_HIDDEN, true);
+        mirrorFaces.forEach((item) => state.selectedFaceIds.add(item.id));
+        if (mirrorHidden) state.selectedEdgeIds.add(mirrorHidden.id);
+      }
+    }
+  }
+
+  syncModeUi("face");
+  syncControlsWindowForSelection({ render: false });
+  setStatus(`FACE #${face.id} SPLIT ALONG #${a}-#${b}; DIAGONAL MARKED HIDDEN.`);
+  renderAll();
+}
+
 function detailRenderIntent(detail) {
   const type = detail?.type === "panel" ? "line" : detail?.type;
   const line = type === "line" || type === "polyline";
@@ -8968,7 +9333,8 @@ function derivedBlueprint(options = {}) {
     if (!edgeMap.has(key)) edgeMap.set(key, { edge: a < b ? [a, b] : [b, a], faces: [], kind });
     const entry = edgeMap.get(key);
     if (faceIndex >= 0) entry.faces.push(faceIndex);
-    if (kind === "stick") entry.kind = "stick";
+    if (kind === EDGE_KIND_HIDDEN) entry.kind = EDGE_KIND_HIDDEN;
+    else if (kind === "stick" && entry.kind !== EDGE_KIND_HIDDEN) entry.kind = "stick";
   };
   faces.forEach((ids, faceIndex) => {
     for (let i = 0; i < ids.length; i++) addDerivedEdge(ids[i], ids[(i + 1) % ids.length], faceIndex);
@@ -8980,7 +9346,7 @@ function derivedBlueprint(options = {}) {
   });
   const edgeEntries = [...edgeMap.values()];
   const edges = edgeEntries.map((e) => e.edge);
-  const edgeKinds = edgeEntries.map((e) => e.kind === "stick" ? "stick" : "edge");
+  const edgeKinds = edgeEntries.map((e) => e.kind === EDGE_KIND_HIDDEN ? EDGE_KIND_HIDDEN : e.kind === "stick" ? "stick" : "edge");
   const edgeFaces = edgeEntries.map((e) => {
     const unique = [...new Set(e.faces)];
     if (!unique.length) return [-1, -1];
@@ -9003,6 +9369,9 @@ function derivedBlueprint(options = {}) {
       const detail = {
         type: d.type === "panel" ? "line" : d.type,
         color: d.color,
+        ...(d.type === "window" && d.baseTransparent === true ? { baseTransparent: true } : {}),
+        ...(d.type === "window" && optionalHexColor(d.glintDark) ? { glintDark: optionalHexColor(d.glintDark) } : {}),
+        ...(d.type === "window" && optionalHexColor(d.glintBright) ? { glintBright: optionalHexColor(d.glintBright) } : {}),
         ...(d.stroke ? { stroke: d.stroke } : {}),
         ...(d.width ? { width: d.width } : {}),
         ...(d.lift ? { lift: d.lift } : {}),
@@ -9028,6 +9397,9 @@ function derivedBlueprint(options = {}) {
     const base = {
       type: d.type === "panel" ? "line" : d.type,
       color: d.color,
+      ...(d.type === "window" && d.baseTransparent === true ? { baseTransparent: true } : {}),
+      ...(d.type === "window" && optionalHexColor(d.glintDark) ? { glintDark: optionalHexColor(d.glintDark) } : {}),
+      ...(d.type === "window" && optionalHexColor(d.glintBright) ? { glintBright: optionalHexColor(d.glintBright) } : {}),
       normal: toArray(normal),
       lift: d.type === DETAIL_TYPE_STATION_ENTRANCE ? 0 : 0.5
     };
@@ -9515,6 +9887,8 @@ function libraryDescription(source, id) {
 function modelAuditWarnings(model) {
   const warnings = [];
   const faceEdges = new Set();
+  const sourceVerts = (Array.isArray(model?.verts) ? model.verts : []).map(sourceVertex);
+  const sourceVertexById = new Map(sourceVerts.map((vertex) => [vertex.id, vertex]));
   const faces = Array.isArray(model?.faces) ? model.faces : [];
   const edges = Array.isArray(model?.edges) ? model.edges : [];
   for (const face of faces) {
@@ -9524,6 +9898,29 @@ function modelAuditWarnings(model) {
       if (key) faceEdges.add(key);
     }
   }
+  const sourceScale = pointsBoundsScale(sourceVerts.map((vertex) => vec(vertex.x, vertex.y, vertex.z)));
+  faces.forEach((face, index) => {
+    const source = sourceFace(face, index);
+    const points = source.verts.map((id) => sourceVertexById.get(id)).filter(Boolean).map((vertex) => vec(vertex.x, vertex.y, vertex.z));
+    const issue = facePlanarityIssueFromPoints(points, source.verts, sourceScale);
+    if (issue) {
+      warnings.push(`face ${source.id}: non-planar ${issue.vertices}-vertex face; vertex ${issue.vertexId} is ${issue.maxDistance.toFixed(2)} from plane`);
+    }
+  });
+  const blueprint = model?.blueprint;
+  if (Array.isArray(blueprint?.verts) && Array.isArray(blueprint?.faces)) {
+    const blueprintVerts = blueprint.verts.map((vertex, index) => sourceVertex(vertex, index));
+    const blueprintVertexById = new Map(blueprintVerts.map((vertex) => [vertex.id, vertex]));
+    const blueprintScale = pointsBoundsScale(blueprintVerts.map((vertex) => vec(vertex.x, vertex.y, vertex.z)));
+    blueprint.faces.forEach((face, index) => {
+      const ids = (Array.isArray(face) ? face : face?.verts || []).map(Number);
+      const points = ids.map((id) => blueprintVertexById.get(id)).filter(Boolean).map((vertex) => vec(vertex.x, vertex.y, vertex.z));
+      const issue = facePlanarityIssueFromPoints(points, ids, blueprintScale);
+      if (issue) {
+        warnings.push(`blueprint face ${index}: non-planar ${issue.vertices}-vertex face; vertex ${issue.vertexId} is ${issue.maxDistance.toFixed(2)} from plane`);
+      }
+    });
+  }
   edges.forEach((edge, index) => {
     const source = sourceEdge(edge, index);
     const key = edgeKey(source.a, source.b);
@@ -9532,8 +9929,8 @@ function modelAuditWarnings(model) {
       warnings.push(`${label}: invalid endpoints`);
       return;
     }
-    if (!["edge", "stick", EDGE_KIND_STATION_ENTRANCE].includes(source.kind)) warnings.push(`${label}: unknown kind ${source.kind}`);
-    if (source.kind !== "stick" && source.kind !== EDGE_KIND_STATION_ENTRANCE && !faceEdges.has(key)) warnings.push(`${label}: orphan non-stick edge`);
+    if (!["edge", "stick", EDGE_KIND_HIDDEN, EDGE_KIND_STATION_ENTRANCE].includes(source.kind)) warnings.push(`${label}: unknown kind ${source.kind}`);
+    if (source.kind !== "stick" && source.kind !== EDGE_KIND_HIDDEN && source.kind !== EDGE_KIND_STATION_ENTRANCE && !faceEdges.has(key)) warnings.push(`${label}: orphan non-stick edge`);
   });
   (model?.details || []).forEach((detail, index) => {
     const type = String(detail?.type || "detail");
@@ -9721,7 +10118,7 @@ function thumbnailModelData(model) {
     .filter((face) => face.verts.length >= 3 && face.verts.every((id) => vertexBySourceId.has(id)));
   const edges = (model.edges || [])
     .map(sourceEdge)
-    .filter((edge) => vertexBySourceId.has(edge.a) && vertexBySourceId.has(edge.b));
+    .filter((edge) => edge.kind !== EDGE_KIND_HIDDEN && vertexBySourceId.has(edge.a) && vertexBySourceId.has(edge.b));
   return { verts, vertexBySourceId, faces, edges };
 }
 
@@ -9860,7 +10257,7 @@ function updateModelBrowser() {
       appendModelBrowserMetric(metrics, `UV ${intel.texturedFaces}`, "Faces with explicit face texture keys or baked per-face UVs.");
       if (intel.wrappedFaces) appendModelBrowserMetric(metrics, `WRAP ${intel.wrappedFaces}`, "Faces using repeat or mirror wrapping; these can create multiple renderer tile pieces.", "is-warn");
       if (intel.faceDecals) appendModelBrowserMetric(metrics, `DECAL ${intel.faceDecals}`, "Face-local decal layer count.");
-      if (entry.warnings.length) appendModelBrowserMetric(metrics, `WARN ${entry.warnings.length}`, "Audit warnings for orphan non-stick edges, invalid edge kinds, or stroke hazards.", "is-warn");
+      if (entry.warnings.length) appendModelBrowserMetric(metrics, `WARN ${entry.warnings.length}`, "Audit warnings for non-planar faces, orphan non-stick edges, invalid edge kinds, or stroke hazards.", "is-warn");
     } else if (bench) {
       appendModelBrowserMetric(metrics, `RUNS ${bench.runs || 1}`, "Number of complete benchmark passes averaged for this result.");
       if (bench.settleRuns) appendModelBrowserMetric(metrics, `SETTLE ${bench.settleRuns}`, "Warm-cache settle passes run before measurement and discarded from the averaged result.");
@@ -10747,6 +11144,22 @@ function appendObjectColorProperty(parent, labelText, key, value, options = {}) 
   parent.appendChild(row);
 }
 
+function appendObjectCheckboxProperty(parent, labelText, key, checked, options = {}) {
+  const row = document.createElement("label");
+  row.className = "object-property-row object-property-control object-property-checkbox";
+  row.dataset.controlRole = "property";
+  const label = document.createElement("span");
+  label.className = "object-property-label";
+  label.textContent = labelText;
+  const input = document.createElement("input");
+  input.type = "checkbox";
+  input.checked = !!checked;
+  input.disabled = !!options.disabled;
+  input.dataset.objectProperty = key;
+  row.append(label, input);
+  parent.appendChild(row);
+}
+
 function appendObjectSelectProperty(parent, labelText, key, value, options) {
   const row = document.createElement("label");
   row.className = "object-property-row object-property-control";
@@ -10765,6 +11178,15 @@ function appendObjectSelectProperty(parent, labelText, key, value, options) {
   select.value = value || options[0]?.value || "";
   row.append(label, select);
   parent.appendChild(row);
+}
+
+function windowBaseMode(detail) {
+  if (detail?.baseTransparent === true) return "transparent";
+  return optionalHexColor(detail?.color) ? "solid" : "default";
+}
+
+function windowGlintIsDefault(detail) {
+  return !optionalHexColor(detail?.glintDark) && !optionalHexColor(detail?.glintBright);
 }
 
 function appendObjectProperties(parent, ctx) {
@@ -10786,7 +11208,8 @@ function appendObjectProperties(parent, ctx) {
   if (ctx.type === "edge" && ctx.edge) {
     appendObjectSelectProperty(parent, "Kind", "edge-kind", ctx.edge.kind || "edge", [
       { value: "edge", label: "Edge" },
-      { value: "stick", label: "Stick" }
+      { value: "stick", label: "Stick" },
+      { value: EDGE_KIND_HIDDEN, label: "Hidden Edge" }
     ]);
     appendObjectPropertyRow(parent, "Vertices", `#${ctx.edge.a} -> #${ctx.edge.b}`);
     appendObjectPropertyRow(parent, "Lines", ctx.edgeLoop.length || 1);
@@ -10802,13 +11225,30 @@ function appendObjectProperties(parent, ctx) {
     appendObjectPropertyRow(parent, "Face", ctx.detail.faceId != null ? `#${ctx.detail.faceId}` : "none");
     appendObjectPropertyRow(parent, "Vertex", ctx.detail.vertexId != null ? `#${ctx.detail.vertexId}` : "none");
     appendObjectRangeProperty(parent, "Inset", "detail-inset", ctx.detail.inset ?? 0.45, { min: .15, max: .9, step: .01, disabled: !ctx.detail.faceId });
-    appendObjectColorProperty(parent, "Colour", "detail-color", ctx.detail.color || "#101915");
+    if (ctx.detail.type === "window") {
+      const baseMode = windowBaseMode(ctx.detail);
+      appendObjectSelectProperty(parent, "Base", "detail-base-mode", baseMode, [
+        { value: "default", label: "Default" },
+        { value: "solid", label: "Solid Colour" },
+        { value: "transparent", label: "Transparent" }
+      ]);
+      appendObjectColorProperty(parent, "Colour", "detail-color", ctx.detail.color || "#000000", { disabled: baseMode !== "solid" });
+      const defaultGlint = windowGlintIsDefault(ctx.detail);
+      appendObjectCheckboxProperty(parent, "Default Glint", "detail-glint-default", defaultGlint);
+      appendObjectColorProperty(parent, "Glint Dark", "detail-glint-dark", ctx.detail.glintDark || DEFAULT_WINDOW_GLINT_DARK, { disabled: defaultGlint });
+      appendObjectColorProperty(parent, "Glint Bright", "detail-glint-bright", ctx.detail.glintBright || DEFAULT_WINDOW_GLINT_BRIGHT, { disabled: defaultGlint });
+    } else {
+      appendObjectColorProperty(parent, "Colour", "detail-color", ctx.detail.color || "#101915");
+    }
     return;
   }
   if (ctx.face) {
     const n = faceNormal(ctx.face);
     appendObjectPropertyRow(parent, "Face", `#${ctx.face.id}`);
     appendObjectPropertyRow(parent, "Vertices", ctx.face.verts.map((id) => `#${id}`).join(" "));
+    if (state.faceSplitPick?.faceId === ctx.face.id) {
+      appendObjectPropertyRow(parent, "Split Pick", state.faceSplitPick.vertexIds.map((id) => `#${id}`).join(" ") || "none");
+    }
     appendObjectPropertyRow(parent, "Normal", `X ${round(n.x, 2)} Y ${round(n.y, 2)} Z ${round(n.z, 2)}`);
     appendObjectPropertyRow(parent, "UV", faceUvTypeInfo(ctx.face).short);
     appendObjectPropertyRow(parent, "Targets", ctx.uvTargets.length || 1);
@@ -10935,6 +11375,13 @@ const SELECTION_COMMANDS = [
     run: () => orientFaceToView()
   },
   {
+    id: "face-align-vertices-view",
+    label: "Align Vertices To View",
+    targetTypes: ["face"],
+    enabled: (ctx) => !!ctx.face && ctx.face.verts.length >= 3,
+    run: (ctx) => alignFaceVerticesToViewDepth(ctx.face)
+  },
+  {
     id: "face-select-vertices",
     label: "Select Face Vertices",
     targetTypes: ["face", "uv"],
@@ -10945,7 +11392,7 @@ const SELECTION_COMMANDS = [
     id: "face-append-picks",
     label: "Add Vertex Group To Face",
     targetTypes: ["face", "vertexGroup"],
-    visible: () => state.pick.length > 0,
+    visible: () => state.pick.length > 0 && !state.faceSplitPick,
     enabled: (ctx) => !!ctx.face && state.pick.length > 0,
     run: () => appendPickedToSelectedFace()
   },
@@ -10953,9 +11400,16 @@ const SELECTION_COMMANDS = [
     id: "face-remove-picks",
     label: "Remove Vertex Group From Face",
     targetTypes: ["face", "vertexGroup"],
-    visible: () => state.pick.length > 0,
+    visible: () => state.pick.length > 0 && !state.faceSplitPick,
     enabled: (ctx) => !!ctx.face && state.pick.length > 0,
     run: () => removePickedFromSelectedFace()
+  },
+  {
+    id: "face-split-picked",
+    label: "Split Face Along Vertices",
+    targetTypes: ["face"],
+    enabled: (ctx) => !!ctx.face,
+    run: (ctx) => splitSelectedFaceAlongPickedVertices({ face: ctx.face })
   },
   {
     id: "face-add-window",
@@ -11036,6 +11490,13 @@ const SELECTION_COMMANDS = [
     targetTypes: ["edge"],
     enabled: (ctx) => !!ctx.edge,
     run: () => convertSelectedEdgeKind("stick")
+  },
+  {
+    id: "edge-hidden",
+    label: "Convert To Hidden Edge",
+    targetTypes: ["edge"],
+    enabled: (ctx) => !!ctx.edge,
+    run: () => convertSelectedEdgeKind(EDGE_KIND_HIDDEN)
   },
   {
     id: "edge-entrance",
@@ -11550,6 +12011,66 @@ function handleObjectPropertyInput(event) {
       patchMirroredDetail(detail, { color: control.value });
     }
     refreshAfterObjectPropertyEdit();
+    return;
+  }
+  if (key === "detail-base-mode") {
+    const details = selectedDetailSetDetails().filter((detail) => detail.type === "window");
+    if (!details.length) return;
+    const mode = control.value === "solid" || control.value === "transparent" ? control.value : "default";
+    for (const detail of details) {
+      const mirror = mirroredDetailOf(detail);
+      if (mode === "transparent") {
+        detail.baseTransparent = true;
+        patchMirroredDetail(detail, { baseTransparent: true });
+      } else {
+        delete detail.baseTransparent;
+        if (mirror) delete mirror.baseTransparent;
+      }
+      if (mode === "default") {
+        delete detail.color;
+        if (mirror) delete mirror.color;
+      } else if (mode === "solid" && !optionalHexColor(detail.color)) {
+        detail.color = "#000000";
+        patchMirroredDetail(detail, { color: "#000000" });
+      }
+    }
+    renderSelectedObjectProperties();
+    refreshAfterObjectPropertyEdit();
+    return;
+  }
+  if (key === "detail-glint-default") {
+    const details = selectedDetailSetDetails().filter((detail) => detail.type === "window");
+    if (!details.length) return;
+    const defaultGlint = control.checked === true;
+    for (const detail of details) {
+      const mirror = mirroredDetailOf(detail);
+      if (defaultGlint) {
+        delete detail.glintDark;
+        delete detail.glintBright;
+        if (mirror) {
+          delete mirror.glintDark;
+          delete mirror.glintBright;
+        }
+      } else {
+        detail.glintDark = optionalHexColor(detail.glintDark) || DEFAULT_WINDOW_GLINT_DARK;
+        detail.glintBright = optionalHexColor(detail.glintBright) || DEFAULT_WINDOW_GLINT_BRIGHT;
+        patchMirroredDetail(detail, { glintDark: detail.glintDark, glintBright: detail.glintBright });
+      }
+    }
+    renderSelectedObjectProperties();
+    refreshAfterObjectPropertyEdit();
+    return;
+  }
+  if (key === "detail-glint-dark" || key === "detail-glint-bright") {
+    const details = selectedDetailSetDetails().filter((detail) => detail.type === "window");
+    if (!details.length) return;
+    const prop = key === "detail-glint-dark" ? "glintDark" : "glintBright";
+    const color = optionalHexColor(control.value) || (prop === "glintDark" ? DEFAULT_WINDOW_GLINT_DARK : DEFAULT_WINDOW_GLINT_BRIGHT);
+    for (const detail of details) {
+      detail[prop] = color;
+      patchMirroredDetail(detail, { [prop]: color });
+    }
+    refreshAfterObjectPropertyEdit();
   }
 }
 
@@ -11964,6 +12485,7 @@ function bindEvents() {
   els.showFaceUvTypes?.addEventListener("input", renderAll);
   els.showBlankUv?.addEventListener("input", renderAll);
   els.showAuditEdges?.addEventListener("input", renderAll);
+  els.showHiddenEdges?.addEventListener("input", renderAll);
   for (const input of [els.showWindowDetails, els.showSurfaceDetails, els.showEngineDetails, els.showBeaconDetails]) {
     input?.addEventListener("input", () => {
       resetGamePreviewSyncState();

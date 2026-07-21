@@ -503,7 +503,8 @@
         0,
         0.89,
         0.45
-      ]
+      ],
+      "baseTransparent": true
     }
   ],
   "blueprint": {
@@ -1164,6 +1165,7 @@
       {
         "type": "window",
         "color": "#101915",
+        "baseTransparent": true,
         "normal": [
           0,
           0.89,

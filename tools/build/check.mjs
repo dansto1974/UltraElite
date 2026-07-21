@@ -163,6 +163,15 @@ if (!js.includes("faceAngleForDraw = 0")) {
 if (!js.includes("function drawWindowGlassTint") || !js.includes("drawWindowGlassTint(targetCtx, item, tracePoly)")) {
   throw new Error("Window glints must use a transparent glass tint so authored UV/window art remains visible underneath.");
 }
+if (!js.includes("glintDark: renderIntent.glass ? optionalHexColor(detail.glintDark) : null")
+  || !js.includes("windowGlintSprite(hue, item.glintBright)")) {
+  throw new Error("Window glint colours must stay authorable per window detail without changing semantic detailRender intent.");
+}
+if (!js.includes("baseTransparent: transparentGlassBase")
+  || !js.includes("if (item.glass && !item.skipBaseFace)")
+  || !js.includes("item.fillStyle && !item.baseTransparent")) {
+  throw new Error("Window base colour must be an explicit solid/transparent material choice before glass tint and glint draw.");
+}
 if (!js.includes("const effectPoly = insetProjectedPolygon(projected")) {
   throw new Error("Window glass/glint overlays must be inset from polygon edges to avoid pale antialias outlines.");
 }
@@ -485,11 +494,13 @@ function sourceEdgeEnds(edge) {
 }
 
 function sourceEdgeKind(edge) {
-  return !Array.isArray(edge) && edge?.kind === "stick" ? "stick" : "edge";
+  if (Array.isArray(edge)) return "edge";
+  if (edge?.kind === "hidden") return "hidden";
+  return edge?.kind === "stick" ? "stick" : "edge";
 }
 
 function validSourceEdgeKind(kind) {
-  return kind === "edge" || kind === "stick" || kind === "stationEntrance";
+  return kind === "edge" || kind === "stick" || kind === "hidden" || kind === "stationEntrance";
 }
 
 function explicitEdgeKind(edge) {
@@ -531,7 +542,7 @@ function expectedEdgeKindsForBlueprint(data, blueprint) {
   for (const [index, edge] of (data.edges || []).entries()) {
     const declaredKind = explicitEdgeKind(edge);
     if (declaredKind && !validSourceEdgeKind(declaredKind)) {
-      throw new Error(`${data.id || "model"} editable edge ${index} has invalid kind "${declaredKind}". Use "edge", "stick", or "stationEntrance" so authored intent stays explicit.`);
+      throw new Error(`${data.id || "model"} editable edge ${index} has invalid kind "${declaredKind}". Use "edge", "stick", "hidden", or "stationEntrance" so authored intent stays explicit.`);
     }
     if (declaredKind === "stationEntrance") continue;
     const [sourceA, sourceB] = sourceEdgeEnds(edge);
@@ -559,7 +570,7 @@ function assertGeneratedEdgeKinds(label, data, blueprint) {
     throw new Error(`${label} edgeKinds length ${blueprint.edgeKinds.length} does not match edges length ${expected.length}.`);
   }
   for (const [index, kind] of blueprint.edgeKinds.entries()) {
-    if (kind !== "edge" && kind !== "stick") {
+    if (kind !== "edge" && kind !== "stick" && kind !== "hidden") {
       throw new Error(`${label} edgeKinds[${index}] has invalid kind "${kind}".`);
     }
     if (kind !== expected[index]) {

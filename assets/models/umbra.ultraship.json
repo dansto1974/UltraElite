@@ -548,7 +548,7 @@
       "type": "window",
       "faceId": 1000,
       "inset": 0.44,
-      "color": "#101915",
+      "color": "#000000",
       "normal": [
         0.4,
         0.89,
@@ -560,7 +560,7 @@
       "type": "window",
       "faceId": 1001,
       "inset": 0.44,
-      "color": "#101915",
+      "color": "#000000",
       "normal": [
         -0.4,
         0.89,

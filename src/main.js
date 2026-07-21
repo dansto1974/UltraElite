@@ -10491,6 +10491,16 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
     }
 
+    function optionalHexColor(value) {
+      const text = String(value || "").trim();
+      return /^#[0-9a-f]{6}$/i.test(text) ? text.toLowerCase() : null;
+    }
+
+    function rgbaFromHex(hex, alpha) {
+      const c = hexToRgb(hex);
+      return `rgba(${c.r},${c.g},${c.b},${alpha})`;
+    }
+
     function rgbToHex(r, g, b) {
       const toHex = (v) => clamp(Math.round(v), 0, 255).toString(16).padStart(2, "0");
       return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
@@ -10681,6 +10691,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function wireEdgeVisible(model, edgeIndex, faceVisible, camVerts = null, edgeCullNormalsCam = null, points = null) {
+      if (model?.edgeKinds?.[edgeIndex] === "hidden") return false;
       const edgeNormal = edgeCullNormalsCam && edgeCullNormalsCam[edgeIndex];
       if (edgeNormal) return true;
       if (!faceVisible || !model.edgeFaces) return true;
@@ -10818,11 +10829,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           ? windowGlintForSurface(normal, surfaceCenter, camera)
           : null;
         const wireColor = options.wireColor || "#e9f2e4";
+        const glassBaseColor = renderIntent.glass ? optionalHexColor(detail.color) : null;
+        const transparentGlassBase = !wireDetails && renderIntent.glass && detail.baseTransparent === true;
         details.push({
           kind: "poly",
           projected,
           avgZ: verts.reduce((sum, p) => sum + p.z, 0) / verts.length,
-          fillStyle: stationEntrance && wireDetails ? null : wireDetails ? "#000" : (renderIntent.glow ? engineVisual.fill : (detail.color || "#101915")),
+          fillStyle: stationEntrance && wireDetails ? null : wireDetails ? "#000" : transparentGlassBase ? null : renderIntent.glass ? glassBaseColor : (renderIntent.glow ? engineVisual.fill : (detail.color || "#101915")),
           strokeStyle: stationEntrance ? (detail.stroke || "#ffd33d") : wireDetails ? (detail.stroke || wireColor) : (renderIntent.solidStroke ? engineVisual.stroke : null),
           lineWidth: detail.width || 1.2,
           fillInset: wireDetails ? (options.wireFillInset ?? 1.1) : 0,
@@ -10830,7 +10843,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           glowAlpha: wireDetails ? 0 : (engineVisual?.glowAlpha ?? 1),
           glass: !wireDetails && renderIntent.glass,
           glintAngle: glassVisual?.angle ?? 0,
-          glintAlpha: glassVisual?.alpha ?? .58
+          glintAlpha: glassVisual?.alpha ?? .58,
+          glintDark: renderIntent.glass ? optionalHexColor(detail.glintDark) : null,
+          glintBright: renderIntent.glass ? optionalHexColor(detail.glintBright) : null,
+          baseTransparent: transparentGlassBase
         });
       }
       return details;
@@ -12172,31 +12188,37 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     const windowGlintCache = new Map();
-    function windowGlintSprite(hue = 46) {
-      const key = Math.round(hue / 12) * 12;
+    function windowGlintSprite(hue = 46, brightColor = null) {
+      const explicitBright = optionalHexColor(brightColor);
+      const hueKey = Math.round(hue / 12) * 12;
+      const key = explicitBright || `sun:${hueKey}`;
       let sprite = windowGlintCache.get(key);
       if (sprite) return sprite;
       const size = 128;
       const c = document.createElement("canvas");
       c.width = c.height = size;
       const tc = c.getContext("2d");
+      const bright = explicitBright ? rgbaFromHex(explicitBright, .42) : "rgba(255,255,248,.42)";
+      const brightRim = explicitBright ? rgbaFromHex(explicitBright, .22) : "rgba(255,255,255,.22)";
+      const soft = explicitBright ? rgbaFromHex(explicitBright, .16) : `hsla(${hueKey}, 42%, 76%, .16)`;
+      const softRim = explicitBright ? rgbaFromHex(explicitBright, .08) : `hsla(${hueKey}, 35%, 72%, .08)`;
       const glint = tc.createLinearGradient(0, 0, size, 0);
       glint.addColorStop(0, "rgba(255,255,255,0)");
       glint.addColorStop(.44, "rgba(255,255,255,0)");
-      glint.addColorStop(.5, "rgba(255,255,248,.42)");
-      glint.addColorStop(.58, `hsla(${key}, 42%, 76%, .16)`);
+      glint.addColorStop(.5, bright);
+      glint.addColorStop(.58, soft);
       glint.addColorStop(1, "rgba(255,255,255,0)");
       tc.fillStyle = glint;
       tc.fillRect(0, 0, size, size);
       const rim = tc.createRadialGradient(size * .2, size * .15, 0, size * .5, size * .5, size * .82);
-      rim.addColorStop(0, "rgba(255,255,255,.22)");
-      rim.addColorStop(.38, `hsla(${key}, 35%, 72%, .08)`);
+      rim.addColorStop(0, brightRim);
+      rim.addColorStop(.38, softRim);
       rim.addColorStop(1, "rgba(255,255,255,0)");
       tc.fillStyle = rim;
       tc.fillRect(0, 0, size, size);
       sprite = c;
       windowGlintCache.set(key, sprite);
-      if (windowGlintCache.size > 18) windowGlintCache.delete(windowGlintCache.keys().next().value);
+      if (windowGlintCache.size > 36) windowGlintCache.delete(windowGlintCache.keys().next().value);
       return sprite;
     }
 
@@ -12213,11 +12235,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       tracePoly(effectPoly);
       targetCtx.closePath();
       targetCtx.clip();
+      const dark = optionalHexColor(item.glintDark);
+      const bright = optionalHexColor(item.glintBright);
       const glass = targetCtx.createLinearGradient(b.minX, b.minY, b.maxX, b.maxY);
-      glass.addColorStop(0, "rgba(2,8,10,.20)");
-      glass.addColorStop(.45, "rgba(48,82,86,.075)");
-      glass.addColorStop(.72, "rgba(255,255,238,.045)");
-      glass.addColorStop(1, "rgba(0,0,0,.11)");
+      glass.addColorStop(0, dark ? rgbaFromHex(dark, .2) : "rgba(2,8,10,.20)");
+      glass.addColorStop(.45, dark ? rgbaFromHex(dark, .075) : "rgba(48,82,86,.075)");
+      glass.addColorStop(.72, bright ? rgbaFromHex(bright, .045) : "rgba(255,255,238,.045)");
+      glass.addColorStop(1, dark ? rgbaFromHex(dark, .11) : "rgba(0,0,0,.11)");
       targetCtx.fillStyle = glass;
       targetCtx.fillRect(b.minX, b.minY, bw, bh);
       targetCtx.restore();
@@ -12242,7 +12266,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       targetCtx.globalAlpha = clamp(item.glintAlpha ?? .58, .12, .95);
       targetCtx.translate((b.minX + b.maxX) / 2, (b.minY + b.maxY) / 2);
       targetCtx.rotate(item.glintAngle || 0);
-      targetCtx.drawImage(windowGlintSprite(hue), -span / 2, -span / 2, span, span);
+      targetCtx.drawImage(windowGlintSprite(hue, item.glintBright), -span / 2, -span / 2, span, span);
       targetCtx.restore();
     }
 
@@ -12327,8 +12351,12 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         }
         targetCtx.closePath();
         const canDrawFaceTexture = item.metal && item.uv;
-        if (item.fillStyle || item.skipBaseFace) {
-          if (item.fillStyle && item.glass && !item.skipBaseFace) {
+        if (item.fillStyle || item.skipBaseFace || item.glass) {
+          if (item.glass && !item.skipBaseFace) {
+            if (item.fillStyle && !item.baseTransparent) {
+              targetCtx.fillStyle = item.fillStyle;
+              targetCtx.fill();
+            }
             drawWindowGlassTint(targetCtx, item, tracePoly);
             drawWindowGlint(targetCtx, item, tracePoly);
           } else if (item.fillStyle && !item.skipBaseFace) {

@@ -386,7 +386,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5029,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0,
           1,
@@ -1351,17 +1351,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#605b4e"
       },
       {
-        "id": 1007,
-        "verts": [
-          11,
-          7,
-          12,
-          13
-        ],
-        "mirrored": false,
-        "faceColor": "#555349"
-      },
-      {
         "id": 1008,
         "verts": [
           13,
@@ -1382,17 +1371,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#606057"
       },
       {
-        "id": 1010,
-        "verts": [
-          15,
-          13,
-          14,
-          10
-        ],
-        "mirrored": false,
-        "faceColor": "#555349"
-      },
-      {
         "id": 1011,
         "verts": [
           15,
@@ -1401,14 +1379,69 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "faceColor": "#625e51"
+      },
+      {
+        "id": 1016,
+        "verts": [
+          7,
+          12,
+          13
+        ],
+        "mirrored": false,
+        "faceColor": "#555349"
+      },
+      {
+        "id": 1017,
+        "verts": [
+          13,
+          11,
+          7
+        ],
+        "mirrored": false,
+        "faceColor": "#555349"
+      },
+      {
+        "id": 1019,
+        "verts": [
+          10,
+          15,
+          13
+        ],
+        "mirrored": true,
+        "faceColor": "#555349"
+      },
+      {
+        "id": 1020,
+        "verts": [
+          13,
+          14,
+          10
+        ],
+        "mirrored": true,
+        "faceColor": "#555349"
       }
     ],
-    "edges": [],
+    "edges": [
+      {
+        "id": 1018,
+        "a": 7,
+        "b": 13,
+        "kind": "hidden",
+        "mirrored": false
+      },
+      {
+        "id": 1021,
+        "a": 10,
+        "b": 13,
+        "kind": "hidden",
+        "mirrored": true
+      }
+    ],
     "details": [
       {
         "id": 1012,
         "type": "window",
-        "color": "#101915",
+        "color": "#1a231f",
         "normal": [
           0,
           0.98,
@@ -1629,6 +1662,90 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -23
         ]
       ],
+      "faces": [
+        [
+          1,
+          0,
+          4,
+          3,
+          2
+        ],
+        [
+          10,
+          5,
+          0,
+          1,
+          6
+        ],
+        [
+          11,
+          6,
+          1,
+          2,
+          7
+        ],
+        [
+          3,
+          8,
+          12,
+          7,
+          2
+        ],
+        [
+          4,
+          9,
+          13,
+          8,
+          3
+        ],
+        [
+          5,
+          14,
+          9,
+          4,
+          0
+        ],
+        [
+          14,
+          5,
+          10
+        ],
+        [
+          12,
+          11,
+          7
+        ],
+        [
+          13,
+          12,
+          8
+        ],
+        [
+          14,
+          10,
+          12
+        ],
+        [
+          6,
+          11,
+          12
+        ],
+        [
+          12,
+          10,
+          6
+        ],
+        [
+          9,
+          14,
+          12
+        ],
+        [
+          12,
+          13,
+          9
+        ]
+      ],
       "edges": [
         [
           0,
@@ -1719,17 +1836,54 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           12
         ],
         [
+          12,
+          13
+        ],
+        [
           10,
           12
         ],
         [
           12,
-          13
+          14
         ],
         [
-          12,
-          14
+          6,
+          12
+        ],
+        [
+          9,
+          12
         ]
+      ],
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "hidden",
+        "hidden"
       ],
       "edgeFaces": [
         [
@@ -1766,11 +1920,11 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           1,
-          7
+          11
         ],
         [
           2,
-          7
+          10
         ],
         [
           2,
@@ -1778,7 +1932,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           2,
-          8
+          7
         ],
         [
           3,
@@ -1786,11 +1940,11 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           3,
-          9
+          8
         ],
         [
           3,
-          8
+          7
         ],
         [
           4,
@@ -1798,11 +1952,11 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           4,
-          10
+          13
         ],
         [
           4,
-          9
+          8
         ],
         [
           5,
@@ -1810,30 +1964,40 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           5,
-          10
+          12
         ],
         [
           6,
-          11
+          9
         ],
         [
           7,
-          8
+          10
         ],
         [
-          7,
+          8,
+          13
+        ],
+        [
+          9,
           11
         ],
         [
           9,
-          10
+          12
         ],
         [
           10,
           11
+        ],
+        [
+          12,
+          13
         ]
       ],
       "edgeVisibility": [
+        31,
+        31,
         31,
         31,
         31,
@@ -1897,11 +2061,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -18.88
         ],
         [
-          -78.9,
-          58.16,
-          19.8
-        ],
-        [
           -82.19,
           -50.81,
           25.77
@@ -1912,20 +2071,36 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           25.77
         ],
         [
-          76.13,
-          60.48,
-          23.39
-        ],
-        [
           0,
           98.22,
           18.79
+        ],
+        [
+          -72.43,
+          65.27,
+          22.22
+        ],
+        [
+          -77.92,
+          58.21,
+          23.23
+        ],
+        [
+          77.92,
+          58.21,
+          23.23
+        ],
+        [
+          72.43,
+          65.27,
+          22.22
         ]
       ],
       "details": [
         {
           "type": "window",
-          "color": "#101915",
+          "color": "#1a231f",
+          "glintDark": "#4d3b00",
           "lift": 0.5,
           "normal": [
             0,
@@ -2098,34 +2273,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         }
       ],
       "imageProjection": {
-        "faceTextures": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "faceMirrorX": [
-          false,
-          false,
-          false,
-          false,
-          false,
-          false,
-          false,
-          false,
-          false,
-          false,
-          false,
-          false
-        ],
         "faceColors": [
           "#464331",
           "#423f32",
@@ -2134,13 +2281,17 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#534c30",
           "#3b3627",
           "#605b4e",
-          "#555349",
           "#606057",
           "#606057",
+          "#625e51",
           "#555349",
-          "#625e51"
+          "#555349",
+          "#555349",
+          "#555349"
         ],
         "faceRenderFlags": [
+          8,
+          8,
           8,
           8,
           8,
@@ -2187,34 +2338,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "escapePod": true,
           "hiddenUntilDiscovered": false
         }
-      },
-      "edgeKinds": [
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge"
-      ]
+      }
     }
   },
   "asp": {
@@ -2436,28 +2560,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#4a4a50"
       },
       {
-        "id": 1005,
-        "verts": [
-          13,
-          6,
-          7,
-          12
-        ],
-        "mirrored": false,
-        "faceColor": "#535359"
-      },
-      {
-        "id": 1006,
-        "verts": [
-          11,
-          4,
-          3,
-          13
-        ],
-        "mirrored": false,
-        "faceColor": "#535359"
-      },
-      {
         "id": 1007,
         "verts": [
           4,
@@ -2507,6 +2609,46 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "faceColor": "#333435"
+      },
+      {
+        "id": 5034,
+        "verts": [
+          12,
+          13,
+          6
+        ],
+        "mirrored": false,
+        "faceColor": "#535359"
+      },
+      {
+        "id": 5035,
+        "verts": [
+          6,
+          7,
+          12
+        ],
+        "mirrored": false,
+        "faceColor": "#535359"
+      },
+      {
+        "id": 5037,
+        "verts": [
+          11,
+          4,
+          3
+        ],
+        "mirrored": true,
+        "faceColor": "#535359"
+      },
+      {
+        "id": 5038,
+        "verts": [
+          3,
+          13,
+          11
+        ],
+        "mirrored": true,
+        "faceColor": "#535359"
       }
     ],
     "edges": [
@@ -2516,6 +2658,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "b": 18,
         "kind": "stick",
         "mirrored": false
+      },
+      {
+        "id": 5036,
+        "a": 12,
+        "b": 6,
+        "kind": "hidden",
+        "mirrored": false
+      },
+      {
+        "id": 5039,
+        "a": 11,
+        "b": 3,
+        "kind": "hidden",
+        "mirrored": true
       }
     ],
     "details": [
@@ -2524,7 +2680,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "type": "window",
         "faceId": 1004,
         "inset": 0.38,
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0,
           0.91,
@@ -2656,18 +2812,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9
         ],
         [
-          12,
-          5,
-          6,
-          11
-        ],
-        [
-          10,
-          3,
-          2,
-          12
-        ],
-        [
           3,
           8,
           4
@@ -2692,6 +2836,26 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           12,
           2,
           1
+        ],
+        [
+          11,
+          12,
+          5
+        ],
+        [
+          5,
+          6,
+          11
+        ],
+        [
+          10,
+          3,
+          2
+        ],
+        [
+          2,
+          12,
+          10
         ]
       ],
       "edges": [
@@ -2764,28 +2928,36 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           11
         ],
         [
-          5,
-          12
-        ],
-        [
-          6,
-          11
-        ],
-        [
-          3,
-          10
-        ],
-        [
-          2,
-          12
-        ],
-        [
           3,
           8
         ],
         [
           6,
           9
+        ],
+        [
+          3,
+          10
+        ],
+        [
+          6,
+          11
+        ],
+        [
+          5,
+          12
+        ],
+        [
+          2,
+          12
+        ],
+        [
+          5,
+          11
+        ],
+        [
+          2,
+          10
         ],
         [
           13,
@@ -2816,12 +2988,14 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "edge",
         "edge",
         "edge",
+        "hidden",
+        "hidden",
         "stick"
       ],
       "edgeFaces": [
         [
           0,
-          7
+          5
         ],
         [
           0,
@@ -2829,7 +3003,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           0,
-          8
+          6
         ],
         [
           0,
@@ -2841,11 +3015,11 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           1,
-          6
+          12
         ],
         [
           1,
-          7
+          5
         ],
         [
           1,
@@ -2853,27 +3027,27 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           1,
-          11
+          9
         ],
         [
           2,
-          8
-        ],
-        [
-          2,
-          5
-        ],
-        [
-          2,
-          11
-        ],
-        [
-          3,
           6
         ],
         [
+          2,
+          11
+        ],
+        [
+          2,
+          9
+        ],
+        [
           3,
-          5
+          13
+        ],
+        [
+          3,
+          10
         ],
         [
           3,
@@ -2881,35 +3055,43 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           4,
-          9
+          7
         ],
         [
           4,
-          10
+          8
         ],
         [
           5,
-          11
-        ],
-        [
-          5,
-          10
+          7
         ],
         [
           6,
-          9
-        ],
-        [
-          6,
-          11
+          8
         ],
         [
           7,
-          9
+          12
         ],
         [
           8,
+          11
+        ],
+        [
+          9,
           10
+        ],
+        [
+          9,
+          13
+        ],
+        [
+          10,
+          11
+        ],
+        [
+          12,
+          13
         ],
         [
           -1,
@@ -2917,6 +3099,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ]
       ],
       "edgeVisibility": [
+        31,
+        31,
         31,
         31,
         31,
@@ -2969,16 +3153,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           42.29
         ],
         [
-          -20.46,
-          97.74,
-          -5.3
-        ],
-        [
-          40.22,
-          89.92,
-          -17.24
-        ],
-        [
           66.03,
           -66.31,
           35.26
@@ -3002,6 +3176,26 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0,
           0,
           -100
+        ],
+        [
+          -20.13,
+          96.2,
+          -18.45
+        ],
+        [
+          -40.22,
+          89.92,
+          -17.24
+        ],
+        [
+          40.22,
+          89.92,
+          -17.24
+        ],
+        [
+          20.13,
+          96.2,
+          -18.45
         ]
       ],
       "details": [
@@ -3094,15 +3288,19 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#64676c",
           "#515158",
           "#4a4a50",
-          "#535359",
-          "#535359",
           "#65676c",
           "#66686d",
           "#595960",
           "#5a5961",
-          "#333435"
+          "#333435",
+          "#535359",
+          "#535359",
+          "#535359",
+          "#535359"
         ],
         "faceRenderFlags": [
+          8,
+          8,
           8,
           8,
           8,
@@ -4058,45 +4256,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
     ],
     "faces": [
       {
-        "id": 1000,
-        "verts": [
-          2,
-          6,
-          7,
-          3,
-          12,
-          11
-        ],
-        "mirrored": false,
-        "faceColor": "#484639"
-      },
-      {
-        "id": 1001,
-        "verts": [
-          4,
-          13,
-          12,
-          3,
-          8,
-          9
-        ],
-        "mirrored": false,
-        "faceColor": "#595744"
-      },
-      {
-        "id": 1002,
-        "verts": [
-          5,
-          2,
-          11,
-          13,
-          4,
-          10
-        ],
-        "mirrored": false,
-        "faceColor": "#585749"
-      },
-      {
         "id": 1003,
         "verts": [
           6,
@@ -4195,14 +4354,102 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "faceColor": "#5b594a"
+      },
+      {
+        "id": 1018,
+        "verts": [
+          2,
+          11,
+          13,
+          4
+        ],
+        "mirrored": false,
+        "faceColor": "#585749"
+      },
+      {
+        "id": 1019,
+        "verts": [
+          4,
+          10,
+          5,
+          2
+        ],
+        "mirrored": false,
+        "faceColor": "#585749"
+      },
+      {
+        "id": 1021,
+        "verts": [
+          2,
+          6,
+          7,
+          3
+        ],
+        "mirrored": true,
+        "faceColor": "#484639"
+      },
+      {
+        "id": 1022,
+        "verts": [
+          3,
+          12,
+          11,
+          2
+        ],
+        "mirrored": true,
+        "faceColor": "#484639"
+      },
+      {
+        "id": 1026,
+        "verts": [
+          3,
+          8,
+          9,
+          4
+        ],
+        "mirrored": false,
+        "faceColor": "#595744"
+      },
+      {
+        "id": 1027,
+        "verts": [
+          4,
+          13,
+          12,
+          3
+        ],
+        "mirrored": false,
+        "faceColor": "#595744"
       }
     ],
-    "edges": [],
+    "edges": [
+      {
+        "id": 1020,
+        "a": 2,
+        "b": 4,
+        "kind": "hidden",
+        "mirrored": false
+      },
+      {
+        "id": 1023,
+        "a": 2,
+        "b": 3,
+        "kind": "hidden",
+        "mirrored": true
+      },
+      {
+        "id": 1028,
+        "a": 3,
+        "b": 4,
+        "kind": "hidden",
+        "mirrored": false
+      }
+    ],
     "details": [
       {
         "id": 1013,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0,
           0.97,
@@ -4257,34 +4504,34 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ]
       },
       {
-        "id": 1015,
+        "id": 1024,
         "type": "engine",
-        "faceId": 1002,
-        "inset": 0.66,
+        "faceId": 1018,
+        "inset": 0.48,
         "color": "#f7fff7",
         "normal": [
-          -0.53,
+          -0.52,
           0.44,
-          -0.72
+          -0.73
         ]
       },
       {
-        "id": 1016,
+        "id": 1025,
         "type": "engine",
-        "faceId": 1000,
-        "inset": 0.66,
+        "faceId": 1022,
+        "inset": 0.48,
         "color": "#f7fff7",
         "normal": [
-          0.53,
-          0.46,
-          -0.72
+          0.52,
+          0.44,
+          -0.73
         ]
       },
       {
-        "id": 1017,
+        "id": 1029,
         "type": "engine",
-        "faceId": 1001,
-        "inset": 0.72,
+        "faceId": 1027,
+        "inset": 0.48,
         "color": "#f7fff7",
         "normal": [
           0,
@@ -4363,30 +4610,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       ],
       "faces": [
         [
-          1,
-          5,
-          6,
-          2,
-          11,
-          10
-        ],
-        [
-          3,
-          12,
-          11,
-          2,
-          7,
-          8
-        ],
-        [
-          4,
-          1,
-          10,
-          12,
-          3,
-          9
-        ],
-        [
           5,
           1,
           4
@@ -4435,6 +4658,42 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           10,
           11,
           12
+        ],
+        [
+          1,
+          10,
+          12,
+          3
+        ],
+        [
+          3,
+          9,
+          4,
+          1
+        ],
+        [
+          1,
+          5,
+          6,
+          2
+        ],
+        [
+          2,
+          11,
+          10,
+          1
+        ],
+        [
+          2,
+          7,
+          8,
+          3
+        ],
+        [
+          3,
+          12,
+          11,
+          2
         ]
       ],
       "edges": [
@@ -4443,68 +4702,32 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5
         ],
         [
-          5,
-          6
-        ],
-        [
-          2,
-          6
-        ],
-        [
-          2,
-          11
-        ],
-        [
-          10,
-          11
-        ],
-        [
-          1,
-          10
-        ],
-        [
-          3,
-          12
-        ],
-        [
-          11,
-          12
-        ],
-        [
-          2,
-          7
-        ],
-        [
-          7,
-          8
-        ],
-        [
-          3,
-          8
-        ],
-        [
           1,
           4
-        ],
-        [
-          10,
-          12
-        ],
-        [
-          3,
-          9
-        ],
-        [
-          4,
-          9
         ],
         [
           4,
           5
         ],
         [
+          2,
+          6
+        ],
+        [
           6,
           7
+        ],
+        [
+          2,
+          7
+        ],
+        [
+          3,
+          9
+        ],
+        [
+          3,
+          8
         ],
         [
           8,
@@ -4533,6 +4756,54 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         [
           0,
           7
+        ],
+        [
+          4,
+          9
+        ],
+        [
+          7,
+          8
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          10,
+          11
+        ],
+        [
+          11,
+          12
+        ],
+        [
+          10,
+          12
+        ],
+        [
+          1,
+          10
+        ],
+        [
+          3,
+          12
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          11
+        ],
+        [
+          2,
+          3
         ]
       ],
       "edgeKinds": [
@@ -4559,12 +4830,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "edge",
         "edge",
         "edge",
-        "edge"
+        "hidden",
+        "hidden",
+        "edge",
+        "hidden"
       ],
       "edgeFaces": [
         [
           0,
-          3
+          12
         ],
         [
           0,
@@ -4572,62 +4846,50 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           0,
-          4
-        ],
-        [
-          0,
-          1
-        ],
-        [
-          0,
-          12
-        ],
-        [
-          0,
-          2
-        ],
-        [
-          1,
-          2
-        ],
-        [
-          1,
-          12
-        ],
-        [
-          1,
-          4
-        ],
-        [
-          1,
-          10
-        ],
-        [
-          1,
-          5
-        ],
-        [
-          2,
           3
         ],
         [
-          2,
+          1,
           12
         ],
         [
-          2,
+          1,
           5
         ],
         [
+          1,
+          14
+        ],
+        [
           2,
-          9
+          11
+        ],
+        [
+          2,
+          14
+        ],
+        [
+          2,
+          4
         ],
         [
           3,
           6
         ],
         [
+          3,
+          8
+        ],
+        [
           4,
+          6
+        ],
+        [
+          4,
+          7
+        ],
+        [
+          5,
           8
         ],
         [
@@ -4636,27 +4898,51 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           6,
-          9
-        ],
-        [
-          6,
           11
         ],
         [
           7,
-          9
-        ],
-        [
-          7,
-          10
+          14
         ],
         [
           8,
+          12
+        ],
+        [
+          9,
+          13
+        ],
+        [
+          9,
+          15
+        ],
+        [
+          9,
+          10
+        ],
+        [
+          10,
+          13
+        ],
+        [
+          10,
+          15
+        ],
+        [
+          10,
           11
         ],
         [
-          8,
-          10
+          12,
+          13
+        ],
+        [
+          13,
+          15
+        ],
+        [
+          14,
+          15
         ]
       ],
       "edgeVisibility": [
@@ -4683,24 +4969,12 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         31,
         31,
         31,
+        31,
+        31,
+        31,
         31
       ],
       "normals": [
-        [
-          52.7,
-          45.92,
-          -71.52
-        ],
-        [
-          0,
-          -44.72,
-          -89.44
-        ],
-        [
-          -53.31,
-          43.85,
-          -72.35
-        ],
         [
           0,
           100,
@@ -4750,6 +5024,36 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0,
           0,
           -100
+        ],
+        [
+          -53.78,
+          43.7,
+          -72.1
+        ],
+        [
+          -50.79,
+          45.15,
+          -73.36
+        ],
+        [
+          52.7,
+          45.92,
+          -71.52
+        ],
+        [
+          50.57,
+          41.09,
+          -75.86
+        ],
+        [
+          0,
+          -44.72,
+          -89.44
+        ],
+        [
+          0,
+          -44.72,
+          -89.44
         ]
       ],
       "details": [
@@ -4828,41 +5132,31 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "type": "engine",
           "color": "#f7fff7",
           "normal": [
-            -0.53,
+            -0.52,
             0.44,
-            -0.72
+            -0.73
           ],
           "lift": 0.5,
           "points": [
             [
-              -33.64,
-              29.4,
-              -68.75
+              -6.63,
+              20.89,
+              -93.76
             ],
             [
-              -8.56,
-              29.4,
-              -87.23
+              -6.63,
+              5.05,
+              -103.36
             ],
             [
-              -8.56,
-              7.62,
-              -100.43
+              -12.87,
+              -2.63,
+              -103.36
             ],
             [
-              -17.14,
-              -2.94,
-              -100.43
-            ],
-            [
-              -33.64,
-              -13.5,
-              -95.15
-            ],
-            [
-              -49.48,
-              3,
-              -74.03
+              -24.87,
+              -10.31,
+              -99.52
             ]
           ],
           "stroke": "#ffffff",
@@ -4879,41 +5173,31 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "type": "engine",
           "color": "#f7fff7",
           "normal": [
-            0.53,
-            0.46,
-            -0.72
+            0.52,
+            0.44,
+            -0.73
           ],
           "lift": 0.5,
           "points": [
             [
-              8.56,
-              29.4,
-              -87.23
+              24.87,
+              -10.31,
+              -99.52
             ],
             [
-              33.64,
-              29.4,
-              -68.75
+              12.87,
+              -2.63,
+              -103.36
             ],
             [
-              49.48,
-              3,
-              -74.03
+              6.63,
+              5.05,
+              -103.36
             ],
             [
-              33.64,
-              -13.5,
-              -95.15
-            ],
-            [
-              17.14,
-              -2.94,
-              -100.43
-            ],
-            [
-              8.56,
-              7.62,
-              -100.43
+              6.63,
+              20.89,
+              -93.76
             ]
           ],
           "stroke": "#ffffff",
@@ -4937,34 +5221,24 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "lift": 0.5,
           "points": [
             [
-              -27.36,
-              -27.24,
-              -97.88
+              -18.24,
+              -20.84,
+              -101.08
             ],
             [
-              -9.36,
-              -15.72,
-              -103.64
+              -6.24,
+              -13.16,
+              -104.92
             ],
             [
-              9.36,
-              -15.72,
-              -103.64
+              6.24,
+              -13.16,
+              -104.92
             ],
             [
-              27.36,
-              -27.24,
-              -97.88
-            ],
-            [
-              17.28,
-              -56.04,
-              -83.48
-            ],
-            [
-              -17.28,
-              -56.04,
-              -83.48
+              18.24,
+              -20.84,
+              -101.08
             ]
           ],
           "stroke": "#ffffff",
@@ -4980,9 +5254,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       ],
       "imageProjection": {
         "faceColors": [
-          "#484639",
-          "#595744",
-          "#585749",
           "#64635b",
           "#83773c",
           "#84773c",
@@ -4992,9 +5263,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#858376",
           "#716d61",
           "#858377",
-          "#5b594a"
+          "#5b594a",
+          "#585749",
+          "#585749",
+          "#484639",
+          "#484639",
+          "#595744",
+          "#595744"
         ],
         "faceRenderFlags": [
+          8,
+          8,
+          8,
           8,
           8,
           8,
@@ -6678,7 +6958,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0,
           0.89,
           0.45
-        ]
+        ],
+        "baseTransparent": true
       }
     ],
     "blueprint": {
@@ -7339,6 +7620,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         {
           "type": "window",
           "color": "#101915",
+          "baseTransparent": true,
           "normal": [
             0,
             0.89,
@@ -7585,17 +7867,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#5b666a"
       },
       {
-        "id": 1002,
-        "verts": [
-          1,
-          9,
-          5,
-          3
-        ],
-        "mirrored": false,
-        "faceColor": "#636e77"
-      },
-      {
         "id": 1003,
         "verts": [
           1,
@@ -7604,17 +7875,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "faceColor": "#596468"
-      },
-      {
-        "id": 1004,
-        "verts": [
-          4,
-          6,
-          9,
-          2
-        ],
-        "mirrored": false,
-        "faceColor": "#636e77"
       },
       {
         "id": 1005,
@@ -7666,6 +7926,46 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         "mirrored": false,
         "faceColor": "#3c4447"
+      },
+      {
+        "id": 5022,
+        "verts": [
+          9,
+          5,
+          3
+        ],
+        "mirrored": false,
+        "faceColor": "#636e77"
+      },
+      {
+        "id": 5023,
+        "verts": [
+          3,
+          1,
+          9
+        ],
+        "mirrored": false,
+        "faceColor": "#636e77"
+      },
+      {
+        "id": 5025,
+        "verts": [
+          9,
+          2,
+          4
+        ],
+        "mirrored": true,
+        "faceColor": "#636e77"
+      },
+      {
+        "id": 5026,
+        "verts": [
+          4,
+          6,
+          9
+        ],
+        "mirrored": true,
+        "faceColor": "#636e77"
       }
     ],
     "edges": [
@@ -7675,13 +7975,27 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "b": 10,
         "kind": "stick",
         "mirrored": false
+      },
+      {
+        "id": 5024,
+        "a": 9,
+        "b": 3,
+        "kind": "hidden",
+        "mirrored": false
+      },
+      {
+        "id": 5027,
+        "a": 9,
+        "b": 4,
+        "kind": "hidden",
+        "mirrored": true
       }
     ],
     "details": [
       {
         "id": 5018,
         "type": "window",
-        "color": "#101915",
+        "color": "#0c0e0d",
         "normal": [
           0,
           0.97,
@@ -7854,20 +8168,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           0,
-          8,
-          4,
-          2
-        ],
-        [
-          0,
           2,
           6
-        ],
-        [
-          3,
-          5,
-          8,
-          1
         ],
         [
           7,
@@ -7894,6 +8196,26 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           5,
           3,
           7
+        ],
+        [
+          8,
+          4,
+          2
+        ],
+        [
+          2,
+          0,
+          8
+        ],
+        [
+          8,
+          1,
+          3
+        ],
+        [
+          3,
+          5,
+          8
         ]
       ],
       "edges": [
@@ -7922,14 +8244,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7
         ],
         [
-          4,
-          8
-        ],
-        [
-          2,
-          4
-        ],
-        [
           0,
           2
         ],
@@ -7939,23 +8253,23 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           3,
-          5
-        ],
-        [
-          5,
-          8
+          7
         ],
         [
           1,
           3
         ],
         [
-          3,
-          7
+          4,
+          5
         ],
         [
           4,
-          5
+          8
+        ],
+        [
+          5,
+          8
         ],
         [
           5,
@@ -7964,6 +8278,22 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         [
           4,
           6
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          5
+        ],
+        [
+          2,
+          8
+        ],
+        [
+          3,
+          8
         ],
         [
           9,
@@ -7988,16 +8318,18 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "edge",
         "edge",
         "edge",
+        "hidden",
+        "hidden",
         "stick"
       ],
       "edgeFaces": [
         [
           0,
-          4
+          10
         ],
         [
           0,
-          2
+          9
         ],
         [
           0,
@@ -8005,59 +8337,67 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           1,
-          5
-        ],
-        [
-          1,
           3
         ],
         [
           1,
-          7
+          2
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          2,
+          9
         ],
         [
           2,
           6
-        ],
-        [
-          2,
-          8
-        ],
-        [
-          2,
-          3
         ],
         [
           3,
-          8
+          7
         ],
         [
-          4,
-          9
-        ],
-        [
-          4,
-          6
+          3,
+          10
         ],
         [
           4,
           5
         ],
         [
-          5,
-          9
+          4,
+          8
         ],
         [
-          6,
+          4,
+          11
+        ],
+        [
+          5,
           7
         ],
         [
-          7,
-          9
+          5,
+          6
+        ],
+        [
+          6,
+          8
         ],
         [
           7,
-          8
+          11
+        ],
+        [
+          8,
+          9
+        ],
+        [
+          10,
+          11
         ],
         [
           -1,
@@ -8065,6 +8405,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ]
       ],
       "edgeVisibility": [
+        31,
+        31,
         31,
         31,
         31,
@@ -8096,19 +8438,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           12.4
         ],
         [
-          -17.05,
-          97.05,
-          17.05
-        ],
-        [
           -20.1,
           -95.85,
           20.2
-        ],
-        [
-          14.85,
-          97.77,
-          14.85
         ],
         [
           20.1,
@@ -8134,12 +8466,32 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           68.98,
           63.23,
           -35.26
+        ],
+        [
+          -14.85,
+          97.77,
+          14.85
+        ],
+        [
+          -14.14,
+          97.34,
+          18.05
+        ],
+        [
+          14.14,
+          97.34,
+          18.05
+        ],
+        [
+          14.85,
+          97.77,
+          14.85
         ]
       ],
       "details": [
         {
           "type": "window",
-          "color": "#101915",
+          "color": "#0c0e0d",
           "lift": 0.5,
           "normal": [
             0,
@@ -8273,16 +8625,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColors": [
           "#55616a",
           "#5b666a",
-          "#636e77",
           "#596468",
-          "#636e77",
           "#596468",
           "#545f66",
           "#515d5b",
           "#3c4447",
-          "#3c4447"
+          "#3c4447",
+          "#636e77",
+          "#636e77",
+          "#636e77",
+          "#636e77"
         ],
         "faceRenderFlags": [
+          8,
+          8,
           8,
           8,
           8,
@@ -8619,7 +8975,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5024,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0,
           0.96,
@@ -8652,7 +9008,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5025,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0,
           -1,
@@ -8668,7 +9024,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5026,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0,
           -1,
@@ -11446,7 +11802,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5025,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           -0.33,
           0.94,
@@ -11462,7 +11818,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5026,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0.33,
           0.94,
@@ -12293,7 +12649,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "type": "window",
         "faceId": 6,
         "inset": 0.38,
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0.44,
           0.87,
@@ -12305,7 +12661,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "type": "window",
         "faceId": 7,
         "inset": 0.38,
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           -0.44,
           0.87,
@@ -12317,7 +12673,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "type": "window",
         "faceId": 9,
         "inset": 0.19,
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           -0.09,
           -0.99,
@@ -12329,7 +12685,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "type": "window",
         "faceId": 8,
         "inset": 0.19,
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0.09,
           -0.99,
@@ -12886,6 +13242,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         {
           "type": "window",
           "color": "#101915",
+          "glintDark": "#292500",
+          "glintBright": "#ffffc7",
           "normal": [
             0.44,
             0.87,
@@ -12921,6 +13279,8 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         {
           "type": "window",
           "color": "#101915",
+          "glintDark": "#292500",
+          "glintBright": "#ffffc7",
           "normal": [
             -0.44,
             0.87,
@@ -15426,6 +15786,35 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
     "format": "ultra-elite-ship-builder/v1",
     "id": "escapePod",
     "name": "Escape Pod",
+    "symmetry": "x-locked",
+    "gameMeta": {
+      "class": "fighter",
+      "npcRole": "private",
+      "aiProfile": "bountyHunter",
+      "decalRole": "none",
+      "baseColor": "#e9f2e4",
+      "description": "",
+      "missionLore": "",
+      "valueCr": 2500000,
+      "stats": {
+        "r": 37,
+        "hp": 300,
+        "speed": 2.2,
+        "cargo": 14,
+        "missiles": 6,
+        "laser": "military"
+      },
+      "lists": {
+        "trader": false,
+        "pirate": false,
+        "police": false,
+        "alien": false
+      },
+      "flags": {
+        "escapePod": true,
+        "hiddenUntilDiscovered": true
+      }
+    },
     "verts": [
       {
         "id": 1,
@@ -15469,9 +15858,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2
         ],
         "mirrored": false,
-        "bitmapFaceKey": "pod_panel",
+        "faceColor": "#7b7568",
         "bitmapSide": "top",
-        "faceColor": "#7b7568"
+        "bitmapFaceKey": "pod_panel"
       },
       {
         "id": 1001,
@@ -15481,9 +15870,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           1
         ],
         "mirrored": false,
-        "bitmapFaceKey": "pod_panel",
+        "faceColor": "#7b7568",
         "bitmapSide": "top",
-        "faceColor": "#7b7568"
+        "bitmapFaceKey": "pod_panel"
       },
       {
         "id": 1002,
@@ -15493,9 +15882,9 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2
         ],
         "mirrored": false,
-        "bitmapFaceKey": "pod_panel",
+        "faceColor": "#7b7568",
         "bitmapSide": "top",
-        "faceColor": "#7b7568"
+        "bitmapFaceKey": "pod_panel"
       },
       {
         "id": 1003,
@@ -15505,40 +15894,47 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           2
         ],
         "mirrored": false,
-        "bitmapFaceKey": "pod_panel",
+        "faceColor": "#7b7568",
         "bitmapSide": "top",
-        "faceColor": "#7b7568"
+        "bitmapFaceKey": "pod_panel"
       }
     ],
     "edges": [],
     "details": [
       {
-        "id": 1004,
-        "type": "engine",
-        "color": "#ffd33d",
+        "id": 1005,
+        "type": "window",
+        "faceId": 1001,
+        "inset": 0.55,
+        "color": "#000000",
         "normal": [
+          0.34,
+          0.9,
+          0.26
+        ]
+      },
+      {
+        "id": 1006,
+        "type": "window",
+        "faceId": 1002,
+        "inset": 0.55,
+        "color": "#000000",
+        "normal": [
+          0.34,
+          -0.9,
+          0.26
+        ]
+      },
+      {
+        "id": 1007,
+        "type": "engine",
+        "faceId": 1000,
+        "inset": 0.37,
+        "color": "#f7fff7",
+        "normal": [
+          0.39,
           0,
-          0,
-          -1
-        ],
-        "stroke": "#fff2a8",
-        "lift": 0.5,
-        "points": [
-          [
-            -7,
-            -5,
-            -12
-          ],
-          [
-            -7,
-            5,
-            -12
-          ],
-          [
-            0,
-            0,
-            -8
-          ]
+          -0.92
         ]
       }
     ],
@@ -15565,10 +15961,78 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0
         ]
       ],
+      "faces": [
+        [
+          2,
+          3,
+          1
+        ],
+        [
+          3,
+          2,
+          0
+        ],
+        [
+          3,
+          0,
+          1
+        ],
+        [
+          0,
+          2,
+          1
+        ]
+      ],
       "edges": [
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ],
         [
           0,
           1
+        ]
+      ],
+      "edgeKinds": [
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge",
+        "edge"
+      ],
+      "edgeFaces": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          3
         ],
         [
           1,
@@ -15577,44 +16041,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         [
           2,
           3
-        ],
-        [
-          3,
-          0
-        ],
-        [
-          0,
-          2
-        ],
-        [
-          3,
-          1
-        ]
-      ],
-      "edgeFaces": [
-        [
-          3,
-          2
-        ],
-        [
-          3,
-          0
-        ],
-        [
-          1,
-          0
-        ],
-        [
-          2,
-          1
-        ],
-        [
-          3,
-          1
-        ],
-        [
-          2,
-          0
         ]
       ],
       "edgeVisibility": [
@@ -15627,54 +16053,128 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       ],
       "normals": [
         [
-          52,
+          39.39,
           0,
-          -122
+          -91.91
         ],
         [
-          39,
-          103,
-          30
+          33.87,
+          90.33,
+          26.34
         ],
         [
-          39,
-          -103,
-          30
+          33.87,
+          -90.33,
+          26.34
         ],
         [
-          -112,
+          -100,
           0,
           0
         ]
       ],
       "details": [
         {
-          "type": "engine",
-          "points": [
-            [
-              -7,
-              -5,
-              -12
-            ],
-            [
-              -7,
-              5,
-              -12
-            ],
-            [
-              0,
-              0,
-              -8
-            ]
-          ],
-          "color": "#ffd33d",
-          "stroke": "#fff2a8",
+          "type": "window",
+          "color": "#101915",
+          "glintDark": "#02080a",
+          "glintBright": "#fffff8",
           "normal": [
-            0,
-            0,
-            -1
+            0.34,
+            0.9,
+            0.26
           ],
           "lift": 0.5,
+          "points": [
+            [
+              12.6,
+              2.1,
+              3.6
+            ],
+            [
+              -2.8,
+              9.8,
+              -3
+            ],
+            [
+              -2.8,
+              2.1,
+              23.4
+            ]
+          ],
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
+        },
+        {
+          "type": "window",
+          "color": "#101915",
+          "glintDark": "#02080a",
+          "glintBright": "#fffff8",
+          "normal": [
+            0.34,
+            -0.9,
+            0.26
+          ],
+          "lift": 0.5,
+          "points": [
+            [
+              12.6,
+              -2.1,
+              3.6
+            ],
+            [
+              -2.8,
+              -2.1,
+              23.4
+            ],
+            [
+              -2.8,
+              -9.8,
+              -3
+            ]
+          ],
+          "detailRender": {
+            "kind": "poly",
+            "solid": true,
+            "wire": true,
+            "glow": false,
+            "glass": true,
+            "solidStroke": false
+          }
+        },
+        {
+          "type": "engine",
+          "color": "#f7fff7",
+          "normal": [
+            0.39,
+            0,
+            -0.92
+          ],
+          "lift": 0.5,
+          "points": [
+            [
+              -1.12,
+              5.18,
+              -9.48
+            ],
+            [
+              9.24,
+              0,
+              -5.04
+            ],
+            [
+              -1.12,
+              -5.18,
+              -9.48
+            ]
+          ],
+          "stroke": "#ffffff",
           "detailRender": {
             "kind": "poly",
             "solid": true,
@@ -15686,12 +16186,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         }
       ],
       "imageProjection": {
-        "faceColors": [
-          "#7b7568",
-          "#7b7568",
-          "#7b7568",
-          "#7b7568"
-        ],
         "faceSides": [
           "top",
           "top",
@@ -15704,6 +16198,12 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "pod_panel",
           "pod_panel"
         ],
+        "faceColors": [
+          "#7b7568",
+          "#7b7568",
+          "#7b7568",
+          "#7b7568"
+        ],
         "faceRenderFlags": [
           73,
           73,
@@ -15711,20 +16211,33 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           73
         ]
       },
-      "edgeKinds": [
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge",
-        "edge"
-      ]
-    },
-    "gameMeta": {
-      "imageDecalMirrorX": {
-        "top": false,
-        "bottom": false,
-        "back": false
+      "gameMeta": {
+        "class": "fighter",
+        "npcRole": "private",
+        "aiProfile": "bountyHunter",
+        "decalRole": "none",
+        "baseColor": "#e9f2e4",
+        "description": "",
+        "missionLore": "",
+        "valueCr": 2500000,
+        "stats": {
+          "r": 37,
+          "hp": 300,
+          "speed": 2.2,
+          "cargo": 14,
+          "missiles": 6,
+          "laser": "military"
+        },
+        "lists": {
+          "trader": false,
+          "pirate": false,
+          "police": false,
+          "alien": false
+        },
+        "flags": {
+          "escapePod": true,
+          "hiddenUntilDiscovered": true
+        }
       }
     }
   },
@@ -16043,7 +16556,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5027,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0,
           1,
@@ -16059,7 +16572,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5028,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0,
           1,
@@ -16075,7 +16588,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5029,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0,
           -1,
@@ -16976,7 +17489,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5017,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0,
           0.99,
@@ -18837,7 +19350,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5023,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0.12,
           0.97,
@@ -18853,7 +19366,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5024,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           -0.12,
           0.97,
@@ -19713,7 +20226,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5026,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0,
           1,
@@ -19730,7 +20243,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5027,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0,
           -1,
@@ -19746,7 +20259,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5028,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0,
           -1,
@@ -21539,7 +22052,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5019,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0,
           0.99,
@@ -25486,9 +25999,28 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#726f64"
       },
       {
-        "id": 1008,
+        "id": 1012,
         "verts": [
+          7,
+          6,
+          8,
+          11
+        ],
+        "mirrored": false
+      },
+      {
+        "id": 5024,
+        "verts": [
+          4,
           5,
+          6
+        ],
+        "mirrored": false,
+        "faceColor": "#5e5d54"
+      },
+      {
+        "id": 5025,
+        "verts": [
           6,
           7,
           4
@@ -25497,31 +26029,28 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#5e5d54"
       },
       {
-        "id": 1009,
+        "id": 5027,
         "verts": [
-          6,
-          5,
           3,
-          8
+          8,
+          6
         ],
-        "mirrored": false,
+        "mirrored": true,
         "faceColor": "#5e5d54"
       },
       {
-        "id": 1010,
+        "id": 5028,
         "verts": [
-          8,
-          3,
-          10,
-          11
+          6,
+          5,
+          3
         ],
-        "mirrored": false,
-        "faceColor": "#80774c"
+        "mirrored": true,
+        "faceColor": "#5e5d54"
       },
       {
-        "id": 1011,
+        "id": 5030,
         "verts": [
-          4,
           7,
           11,
           10
@@ -25530,23 +26059,71 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "faceColor": "#80764d"
       },
       {
-        "id": 1012,
+        "id": 5031,
         "verts": [
-          7,
-          6,
-          8,
-          11
+          10,
+          4,
+          7
         ],
         "mirrored": false,
-        "faceColor": "#4f4d3e"
+        "faceColor": "#80764d"
+      },
+      {
+        "id": 5033,
+        "verts": [
+          8,
+          3,
+          10
+        ],
+        "mirrored": true,
+        "faceColor": "#80774c"
+      },
+      {
+        "id": 5034,
+        "verts": [
+          10,
+          11,
+          8
+        ],
+        "mirrored": true,
+        "faceColor": "#80774c"
       }
     ],
-    "edges": [],
+    "edges": [
+      {
+        "id": 5026,
+        "a": 4,
+        "b": 6,
+        "kind": "hidden",
+        "mirrored": false
+      },
+      {
+        "id": 5029,
+        "a": 3,
+        "b": 6,
+        "kind": "hidden",
+        "mirrored": true
+      },
+      {
+        "id": 5032,
+        "a": 7,
+        "b": 10,
+        "kind": "hidden",
+        "mirrored": false
+      },
+      {
+        "id": 5035,
+        "a": 8,
+        "b": 10,
+        "kind": "hidden",
+        "mirrored": true
+      }
+    ],
     "details": [
       {
         "id": 5016,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0.55,
           0.81,
@@ -25574,7 +26151,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5017,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           -0.55,
           0.81,
@@ -25696,25 +26273,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             -112
           ]
         ]
-      },
-      {
-        "id": 5023,
-        "type": "panel",
-        "faceId": 1008,
-        "indices": [
-          3,
-          6,
-          4,
-          11,
-          3
-        ],
-        "color": "#ffd936",
-        "normal": [
-          -0.43,
-          0.86,
-          -0.26
-        ],
-        "lift": 0.5
       }
     ],
     "blueprint": {
@@ -25817,34 +26375,50 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9
         ],
         [
+          6,
+          5,
+          7,
+          10
+        ],
+        [
+          3,
           4,
+          5
+        ],
+        [
           5,
           6,
           3
         ],
         [
+          2,
+          7,
+          5
+        ],
+        [
           5,
           4,
-          2,
-          7
+          2
         ],
         [
-          7,
-          2,
-          9,
-          10
-        ],
-        [
-          3,
           6,
           10,
           9
         ],
         [
-          6,
-          5,
+          9,
+          3,
+          6
+        ],
+        [
           7,
-          10
+          2,
+          9
+        ],
+        [
+          9,
+          10,
+          7
         ]
       ],
       "edges": [
@@ -25905,12 +26479,28 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           9
         ],
         [
+          5,
+          6
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          7,
+          10
+        ],
+        [
+          6,
+          10
+        ],
+        [
           4,
           5
         ],
         [
-          5,
-          6
+          3,
+          5
         ],
         [
           3,
@@ -25921,20 +26511,20 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           7
         ],
         [
-          5,
-          7
+          2,
+          5
         ],
         [
           9,
           10
         ],
         [
-          7,
-          10
+          6,
+          9
         ],
         [
-          6,
-          10
+          7,
+          9
         ]
       ],
       "edgeKinds": [
@@ -25957,9 +26547,13 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "edge",
         "edge",
         "edge",
+        "hidden",
         "edge",
         "edge",
-        "edge"
+        "hidden",
+        "edge",
+        "hidden",
+        "hidden"
       ],
       "edgeFaces": [
         [
@@ -26000,15 +26594,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           4,
-          8
-        ],
-        [
-          5,
           9
         ],
         [
+          5,
+          12
+        ],
+        [
           6,
-          11
+          14
         ],
         [
           6,
@@ -26016,42 +26610,62 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         ],
         [
           7,
+          15
+        ],
+        [
+          8,
           10
-        ],
-        [
-          8,
-          9
-        ],
-        [
-          8,
-          12
         ],
         [
           8,
           11
         ],
         [
+          8,
+          16
+        ],
+        [
+          8,
+          13
+        ],
+        [
+          9,
+          12
+        ],
+        [
           9,
           10
         ],
         [
-          9,
-          12
+          10,
+          14
         ],
         [
-          10,
-          11
-        ],
-        [
-          10,
-          12
+          11,
+          15
         ],
         [
           11,
           12
+        ],
+        [
+          13,
+          16
+        ],
+        [
+          13,
+          14
+        ],
+        [
+          15,
+          16
         ]
       ],
       "edgeVisibility": [
+        31,
+        31,
+        31,
+        31,
         31,
         31,
         31,
@@ -26117,9 +26731,24 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           0
         ],
         [
-          -43.19,
-          86.39,
-          -25.92
+          0,
+          0,
+          -100
+        ],
+        [
+          -46.61,
+          84.74,
+          -25.42
+        ],
+        [
+          -43.64,
+          87.29,
+          -21.82
+        ],
+        [
+          43.64,
+          87.29,
+          -21.82
         ],
         [
           46.61,
@@ -26127,19 +26756,24 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           -25.42
         ],
         [
+          -43.19,
+          -86.39,
+          -25.92
+        ],
+        [
+          -46.57,
+          -85.38,
+          -23.28
+        ],
+        [
           46.57,
           -85.38,
           -23.28
         ],
         [
-          -43.64,
-          -87.29,
-          -21.82
-        ],
-        [
-          0,
-          0,
-          -100
+          43.19,
+          -86.39,
+          -25.92
         ]
       ],
       "details": [
@@ -26345,52 +26979,6 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
             "glass": false,
             "solidStroke": true
           }
-        },
-        {
-          "type": "polyline",
-          "color": "#ffd936",
-          "normal": [
-            -0.43,
-            0.86,
-            -0.26
-          ],
-          "lift": 0.5,
-          "points": [
-            [
-              96,
-              0,
-              -16
-            ],
-            [
-              0,
-              24,
-              -112
-            ],
-            [
-              -96,
-              0,
-              -16
-            ],
-            [
-              0,
-              -24,
-              -112
-            ],
-            [
-              96,
-              0,
-              -16
-            ]
-          ],
-          "width": 1.2,
-          "detailRender": {
-            "kind": "line",
-            "solid": false,
-            "wire": true,
-            "glow": false,
-            "glass": false,
-            "solidStroke": false
-          }
         }
       ],
       "imageProjection": {
@@ -26403,11 +26991,15 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           "#75756e",
           "#726f64",
           "#726f64",
+          null,
           "#5e5d54",
           "#5e5d54",
-          "#80774c",
+          "#5e5d54",
+          "#5e5d54",
           "#80764d",
-          "#4f4d3e"
+          "#80764d",
+          "#80774c",
+          "#80774c"
         ],
         "faceRenderFlags": [
           8,
@@ -26415,6 +27007,10 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           8,
           8,
           8,
+          8,
+          8,
+          8,
+          0,
           8,
           8,
           8,
@@ -26818,7 +27414,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           14,
           16
         ],
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0.38,
           0.38,
@@ -26835,7 +27431,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
           17,
           19
         ],
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           -0.4,
           0.37,
@@ -27677,7 +28273,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5015,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0,
           0.97,
@@ -28788,7 +29384,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5029,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           1,
           0,
@@ -29872,7 +30468,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 1008,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           1,
           0,
@@ -30815,7 +31411,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5047,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           -0.24,
           0.97,
@@ -30847,7 +31443,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5049,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0.24,
           0.97,
@@ -30863,7 +31459,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5050,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0.24,
           0.97,
@@ -30895,7 +31491,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5052,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0,
           0,
@@ -32502,7 +33098,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "type": "window",
         "faceId": 1000,
         "inset": 0.44,
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0.4,
           0.89,
@@ -32514,7 +33110,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "type": "window",
         "faceId": 1001,
         "inset": 0.44,
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           -0.4,
           0.89,
@@ -33972,7 +34568,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5020,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           -0.53,
           0.8,
@@ -34000,7 +34596,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
       {
         "id": 5021,
         "type": "window",
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0.53,
           0.8,
@@ -34811,7 +35407,7 @@ window.ULTRA_ELITE_MODEL_LIBRARY = {
         "type": "window",
         "faceId": 1000,
         "inset": 0.78,
-        "color": "#101915",
+        "color": "#000000",
         "normal": [
           0,
           0.78,
