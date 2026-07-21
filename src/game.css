@@ -754,6 +754,11 @@
       font-weight: 400;
     }
 
+    #splash .splash-beta-testers {
+      margin-top: 5px;
+      color: var(--amber);
+    }
+
     #splash .splash-legal a,
     .about-copy a {
       color: var(--amber);

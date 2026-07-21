@@ -2868,6 +2868,7 @@
       docked: true,
       dockedAt: null,
       credits: 100,
+      poopyBonusClaimed: false,
       fuel: 7,
       kills: 0,
       missionRankPoints: 0,
@@ -3259,9 +3260,14 @@
       const input = byId("commanderNameInput");
       const current = normalizeCommanderName(game.commander);
       game.commander = normalizeCommanderName(useCurrent ? current : (input?.value || current));
+      const poopyBonus = game.commander === "POOPY" && !game.poopyBonusClaimed;
+      if (poopyBonus) {
+        game.poopyBonusClaimed = true;
+        game.credits += 1000;
+      }
       setCommanderNameDialog(false);
       requestGameFullscreen(pointerGesture);
-      setMessage(`Commander registered: ${game.commander}.`, true);
+      setMessage(poopyBonus ? "Commander POOPY registered. 1000 CR bonus awarded." : `Commander registered: ${game.commander}.`, true);
       renderPanel();
       updateReadouts();
       return true;
@@ -4718,6 +4724,7 @@
       let solarBed = null;
       let audioUnlocked = false;
       let audioErrorNotified = false;
+      let audioUnlockWarningAt = 0;
       const pitchScale = .62;
       const filterScale = .68;
       const BUS_LEVELS = {
@@ -4765,31 +4772,91 @@
           }
           noiseBuffer = makeNoiseBuffer();
         }
-        if (ctx.state === "suspended") ctx.resume().catch(() => {});
+        if (ctx.state === "suspended") resumeContext(false);
         return ctx;
       }
 
-      function unlock() {
+      function notifyAudioUnlockIssue(message) {
+        const now = performance.now();
+        if (now - audioUnlockWarningAt < 2600) return;
+        audioUnlockWarningAt = now;
+        console.warn(message, status());
+        setMessage(message, true);
+      }
+
+      function resumeContext(notify = false) {
+        if (!ctx) return Promise.resolve(false);
+        if (ctx.state === "running") {
+          audioUnlocked = true;
+          return Promise.resolve(true);
+        }
+        if (ctx.state === "closed" || !ctx.resume) {
+          if (notify) notifyAudioUnlockIssue("Audio context is not available.");
+          return Promise.resolve(false);
+        }
+        try {
+          const resumed = ctx.resume();
+          if (!resumed?.then) {
+            const running = ctx.state === "running";
+            audioUnlocked = audioUnlocked || running;
+            return Promise.resolve(running);
+          }
+          return resumed.then(() => {
+            const running = ctx.state === "running";
+            audioUnlocked = audioUnlocked || running;
+            if (!running && notify) notifyAudioUnlockIssue("Chrome has not unlocked audio yet. Click or press a key in the game window.");
+            return running;
+          }).catch((err) => {
+            console.warn("Audio resume failed", err);
+            if (notify) notifyAudioUnlockIssue("Audio unlock was blocked by the browser.");
+            return false;
+          });
+        } catch (err) {
+          console.warn("Audio resume failed", err);
+          if (notify) notifyAudioUnlockIssue("Audio unlock was blocked by the browser.");
+          return Promise.resolve(false);
+        }
+      }
+
+      function playUnlockTick(c, audible = true) {
+        if (!c || !master) return;
+        try {
+          const osc = c.createOscillator();
+          const amp = c.createGain();
+          const t = c.currentTime;
+          const level = audible ? .018 : .0001;
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(audible ? 660 : 24, t);
+          amp.gain.setValueAtTime(.0001, t);
+          amp.gain.exponentialRampToValueAtTime(Math.max(.0001, level), t + .004);
+          amp.gain.exponentialRampToValueAtTime(.0001, t + .045);
+          osc.connect(amp).connect(master);
+          osc.start(t);
+          osc.stop(t + .055);
+        } catch (err) {
+          console.warn("Audio unlock tick failed", err);
+        }
+      }
+
+      function unlock(opts = {}) {
+        const audible = opts.audible !== false;
         const c = ensure();
         if (!c) return false;
-        if (c.state === "suspended") c.resume().catch(() => {});
-        if (!audioUnlocked) {
-          try {
-            const osc = c.createOscillator();
-            const amp = c.createGain();
-            const t = c.currentTime;
-            osc.type = "sine";
-            osc.frequency.setValueAtTime(20, t);
-            amp.gain.setValueAtTime(.0001, t);
-            osc.connect(amp).connect(master);
-            osc.start(t);
-            osc.stop(t + .035);
-            audioUnlocked = true;
-          } catch (err) {
-            console.warn("Audio unlock failed", err);
-          }
-        }
+        if (!audioUnlocked || c.state !== "running" || audible) playUnlockTick(c, audible);
+        resumeContext(true);
+        audioUnlocked = audioUnlocked || c.state === "running";
         return true;
+      }
+
+      function status() {
+        return {
+          supported: !!(window.AudioContext || window.webkitAudioContext),
+          enabled: !!game.soundEnabled,
+          unlocked: !!audioUnlocked,
+          state: ctx?.state || "not-created",
+          volume: Math.round(normalizeAudioVolume(game.audioVolume) * 100),
+          outputGain: Math.round(masterTargetVolume() * 100) / 100
+        };
       }
 
       function makeNoiseBuffer() {
@@ -5656,6 +5723,7 @@
 
       function play(name, opts = {}) {
         if (!game.soundEnabled) return;
+        if (!audioUnlocked) unlock({ audible: false });
         if (ultraFxEnabled() && playUltra(name, opts)) return;
         switch (name) {
           case "boop":
@@ -5764,8 +5832,9 @@
           updateTransitionBed(dt);
           updateSolarRadiationBed(dt);
         },
-        resume: () => { unlock(); },
+        resume: () => { unlock({ audible: false }); },
         unlock,
+        status,
         setVolume: (value, persist = true) => {
           game.audioVolume = normalizeAudioVolume(value);
           if (persist) saveAudioVolumeSetting(game.audioVolume);
@@ -9561,7 +9630,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     const SAVE_FORMAT = "ultra-elite-commander";
     const SAVE_FILE_MAGIC = "UEC2";
     const SAVE_FILE_SECRET = "ultra-elite-save-file-v2";
-    const SAVE_FIELDS = ["commander", "galaxy", "current", "target", "credits", "fuel", "kills", "missionRankPoints", "legal", "playerShip", "cargoCap", "missiles", "graphicsMode", "fxLevel", "marketStock", "missions", "missionUnlocks"];
+    const SAVE_FIELDS = ["commander", "galaxy", "current", "target", "credits", "poopyBonusClaimed", "fuel", "kills", "missionRankPoints", "legal", "playerShip", "cargoCap", "missiles", "graphicsMode", "fxLevel", "marketStock", "missions", "missionUnlocks"];
 
     function bytesToBase64(bytes) {
       let bin = "";
@@ -9631,7 +9700,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         format: SAVE_FORMAT,
         galaxySeedVersion: 2,
         commander: game.commander, galaxy: game.galaxy, current: game.current, target: game.target,
-        credits: game.credits, fuel: game.fuel, kills: game.kills, missionRankPoints: game.missionRankPoints || 0, legal: game.legal, playerShip: playerShipModel(), cargoCap: game.cargoCap,
+        credits: game.credits, poopyBonusClaimed: !!game.poopyBonusClaimed, fuel: game.fuel, kills: game.kills, missionRankPoints: game.missionRankPoints || 0, legal: game.legal, playerShip: playerShipModel(), cargoCap: game.cargoCap,
         cargo: game.cargo, equipment: game.equipment, missiles: game.missiles, graphicsMode: game.graphicsMode, fxLevel: game.fxLevel,
         marketStock: game.marketStock || {},
         missions: {
@@ -9652,6 +9721,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         current: LAVE_INDEX,
         target: DISO_INDEX,
         credits: 100,
+        poopyBonusClaimed: false,
         fuel: 7,
         kills: 0,
         missionRankPoints: 0,
@@ -9684,6 +9754,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         if (key in data) game[key] = data[key];
       }
       game.commander = normalizeCommanderName(game.commander);
+      game.poopyBonusClaimed = !!data.poopyBonusClaimed;
       game.galaxy = clamp(Math.trunc(Number(game.galaxy) || 0), 0, galaxies.length - 1);
       const maxSystem = galaxies[game.galaxy].length - 1;
       game.current = clamp(Math.trunc(Number(game.current) || LAVE_INDEX), 0, maxSystem);
@@ -18990,7 +19061,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         <button class="btn" data-download-save ${saveDisabled}>Download Commander</button>
         <label class="btn" for="commanderFileInput">Upload Commander</label>
         <input id="commanderFileInput" type="file" accept=".uelite,application/json,.json,.txt" data-upload-save style="display:none">
-      </div>`;
+      </div>
+      ${renderAudioDiagnosticPanel()}`;
     }
 
     function shipRoleLabel(model) {
@@ -19469,6 +19541,26 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return `<div class="stat-line"><span class="label">${label}</span><span class="value">${value}</span></div>`;
     }
 
+    function commanderAudioDiagnosticsEnabled() {
+      return normalizeCommanderName(game.commander) === "POOPY";
+    }
+
+    function renderAudioDiagnosticPanel() {
+      if (!commanderAudioDiagnosticsEnabled()) return "";
+      const status = eliteAudio.status();
+      return `<div class="notice save-actions">
+        <strong class="about-heading">Audio Check</strong>
+        <div class="grid2">
+          ${stat("Supported", status.supported ? "Yes" : "No")}
+          ${stat("Enabled", status.enabled ? "Yes" : "No")}
+          ${stat("Context", escapeHtml(status.state))}
+          ${stat("Volume", `${status.volume}%`)}
+        </div>
+        <button class="btn" data-audio-test>Play Audio Test</button>
+        <button class="btn" data-audio-refresh>Refresh Audio Status</button>
+      </div>`;
+    }
+
     function graphicsModeLabel(mode) {
       if (mode === "wire") return "Old School Wire";
       return "Ultra Shaded";
@@ -19488,6 +19580,20 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       setMessage(mode === "classic" ? "Standard old-school mode engaged. It is 1984." : "Ultra Elite mode engaged: full effects.", true);
       renderPanel();
       updateReadouts();
+    }
+
+    function runAudioDiagnosticTest() {
+      if (!commanderAudioDiagnosticsEnabled()) return;
+      if (!game.soundEnabled) game.soundEnabled = true;
+      eliteAudio.unlock({ audible: true });
+      eliteAudio.play("beep");
+      setMessage("Audio test played. Check the Audio Check status line.", true);
+      updateVolumeHud();
+      setTimeout(() => {
+        renderPanel();
+        const status = eliteAudio.status();
+        setMessage(`Audio status: ${status.state}, volume ${status.volume}%.`, true);
+      }, 180);
     }
 
     function attachPanelEvents() {
@@ -19572,6 +19678,14 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       });
       const renameCommander = panelBody.querySelector("[data-rename-commander]");
       if (renameCommander) renameCommander.addEventListener("click", () => askCommanderName(false));
+      const audioTest = panelBody.querySelector("[data-audio-test]");
+      if (audioTest) audioTest.addEventListener("click", runAudioDiagnosticTest);
+      const audioRefresh = panelBody.querySelector("[data-audio-refresh]");
+      if (audioRefresh) audioRefresh.addEventListener("click", () => {
+        renderPanel();
+        const status = eliteAudio.status();
+        setMessage(`Audio status: ${status.state}, volume ${status.volume}%.`, true);
+      });
       const downloadSave = panelBody.querySelector("[data-download-save]");
       if (downloadSave) downloadSave.addEventListener("click", downloadCommanderFile);
       const uploadSave = panelBody.querySelector("[data-upload-save]");
@@ -20006,8 +20120,11 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       installRenderBenchApi();
     } else {
       window.addEventListener("resize", resizeCanvases);
-      const unlockAudioFromGesture = () => eliteAudio.unlock();
+      window.__ultraEliteAudioStatus = () => eliteAudio.status();
+      const unlockAudioFromGesture = () => eliteAudio.unlock({ audible: true });
       window.addEventListener("pointerdown", unlockAudioFromGesture, { capture: true });
+      window.addEventListener("pointerup", unlockAudioFromGesture, { capture: true });
+      window.addEventListener("mousedown", unlockAudioFromGesture, { capture: true });
       window.addEventListener("click", unlockAudioFromGesture, { capture: true });
       window.addEventListener("touchstart", unlockAudioFromGesture, { capture: true, passive: true });
       window.addEventListener("keydown", unlockAudioFromGesture, { capture: true });
