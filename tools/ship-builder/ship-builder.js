@@ -288,6 +288,8 @@ const GAME_PREVIEW_PERSPECTIVE_SCALE = 0.84;
 const GAME_PREVIEW_PERSPECTIVE_SCALE_MAX = 24;
 const GAME_PREVIEW_WARMUP_RETRY_MAX = 12;
 const SELECTION_EDGE_PICK_RADIUS = 28;
+const MIRROR_AFFECTED_COLOR = "#ff8a3d";
+const MIRROR_AFFECTED_FILL = "rgba(255,138,61,.13)";
 const EDIT_HISTORY_MAX = 120;
 const SAFARI_FULLSCREEN_KEY_GUARD = typeof navigator !== "undefined"
   && /^((?!chrome|android).)*safari/i.test(navigator.userAgent || "");
@@ -2679,11 +2681,11 @@ function project3d(v, canvas) {
 }
 
 function gameRendererPreviewMode(value = els.previewRenderMode?.value || "gameOverlay") {
-  return value === "gameOnly" || value === "gameOverlay";
+  return normalizePreviewRenderMode(value) === "gameOverlay";
 }
 
 function gameRendererOverlayMode(value = els.previewRenderMode?.value || "gameOverlay") {
-  return value === "gameOverlay";
+  return normalizePreviewRenderMode(value) === "gameOverlay";
 }
 
 function gamePreviewRendererMode(value = els.previewRenderMode?.value || "gameOverlay") {
@@ -2696,7 +2698,7 @@ function gamePreviewFxLevel(value = els.previewRenderMode?.value || "gameOverlay
 }
 
 function previewModeLabel(value = els.previewRenderMode?.value || "gameOverlay") {
-  if (value === "gameOnly") return "Game Renderer Only";
+  value = normalizePreviewRenderMode(value);
   if (value === "gameOverlay") return "Game Renderer + Overlay";
   if (value === "wireFaces") return "Builder Wire + Faces";
   if (value === "wire") return "Builder Wireframe";
@@ -2705,12 +2707,18 @@ function previewModeLabel(value = els.previewRenderMode?.value || "gameOverlay")
   return value;
 }
 
+function normalizePreviewRenderMode(value) {
+  if (value === "gameOnly") return "gameOverlay";
+  return value || DEFAULT_PREVIEW_RENDER_MODE;
+}
+
 function setDefaultPreviewRenderMode() {
   if (!els.previewRenderMode) return;
   els.previewRenderMode.value = DEFAULT_PREVIEW_RENDER_MODE;
 }
 
 function syncPreviewModeButtons(mode = els.previewRenderMode?.value || DEFAULT_PREVIEW_RENDER_MODE) {
+  mode = normalizePreviewRenderMode(mode);
   els.viewModeColumn?.querySelectorAll("[data-preview-mode]").forEach((button) => {
     const active = button.dataset.previewMode === mode;
     button.classList.toggle("active", active);
@@ -2720,6 +2728,7 @@ function syncPreviewModeButtons(mode = els.previewRenderMode?.value || DEFAULT_P
 
 function setPreviewRenderMode(value) {
   if (!els.previewRenderMode || !value) return;
+  value = normalizePreviewRenderMode(value);
   if (els.previewRenderMode.value !== value) {
     els.previewRenderMode.value = value;
   }
@@ -2938,12 +2947,12 @@ function gamePreviewProjectionSummary(info = state.gamePreviewInfo) {
 }
 
 function updatePreviewTrustUi() {
-  const mode = els.previewRenderMode?.value || "gameOverlay";
+  const mode = normalizePreviewRenderMode(els.previewRenderMode?.value || "gameOverlay");
+  if (els.previewRenderMode && els.previewRenderMode.value !== mode) els.previewRenderMode.value = mode;
   syncPreviewModeButtons(mode);
   const renderer = gameRendererPreviewMode(mode);
   const overlay = gameRendererOverlayMode(mode);
   els.mainPreviewStack?.classList.toggle("is-game-renderer", renderer);
-  els.mainPreviewStack?.classList.toggle("is-game-only", mode === "gameOnly");
   els.mainPreviewStack?.classList.toggle("is-game-overlay", overlay);
   els.mainPreviewStack?.classList.toggle("is-builder-diagnostic", !renderer);
   if (els.previewTrustBadge) {
@@ -6359,6 +6368,8 @@ function selectEdge(edge, options = {}) {
   cancelSurfaceInsertPreview({ redraw: false });
   state.mode = "edge";
   state.selected = { type: "edge", id: edge.id };
+  state.pick = [];
+  state.selectedFaceIds.clear();
   state.selectedEdgeIds = selectedEdgeIdSetFor(edge, options);
   const loopText = state.selectedEdgeIds.size > 1 ? ` LOOP (${state.selectedEdgeIds.size} LINES)` : "";
   const label = options.audit ? `AUDIT EDGE${loopText} ${auditEdgeLabel(edge)}` : `${edgeKindLabel(edge.kind)} #${edge.id}`;
@@ -6401,6 +6412,111 @@ function edgeHitCandidates(point, projected, edges = state.edges, maxLineDist = 
 
 function nearestEdge(point, projected, edges = state.edges, maxLineDist = 12) {
   return edgeHitCandidates(point, projected, edges, maxLineDist)[0]?.edge || null;
+}
+
+function mirrorAffectedSelectionTargets() {
+  const targets = {
+    faceIds: new Set(),
+    edgeIds: new Set(),
+    detailIds: new Set(),
+    vertexIds: new Set()
+  };
+  if (!mirrorActionsEnabled()) return targets;
+
+  if (["face", "uv", "group"].includes(state.selected?.type)) {
+    const sourceFaces = uniqueFaceList(selectedFacePropertyTargets());
+    const sourceFaceIds = new Set(sourceFaces.map((face) => face.id));
+    for (const face of sourceFaces) {
+      const mirror = mirroredFaceOf(face);
+      if (mirror && !sourceFaceIds.has(mirror.id)) targets.faceIds.add(mirror.id);
+    }
+  }
+
+  if (state.selected?.type === "edge") {
+    const sourceEdges = selectedEdgeSetEdges();
+    const sourceEdgeIds = new Set(sourceEdges.map((edge) => edge.id));
+    for (const edge of sourceEdges) {
+      const mirror = mirroredEdgeOf(edge);
+      if (mirror && !sourceEdgeIds.has(mirror.id)) targets.edgeIds.add(mirror.id);
+    }
+  }
+
+  if (state.selected?.type === "detail") {
+    const detail = detailById(state.selected.id);
+    const mirror = detail ? mirroredDetailOf(detail) : null;
+    if (mirror) targets.detailIds.add(mirror.id);
+  }
+
+  const sourceVertexIds = new Set(state.pick);
+  if (state.selected?.type === "vertex") sourceVertexIds.add(state.selected.id);
+  for (const id of sourceVertexIds) {
+    const mirrorId = inferredMirrorVertexId(id);
+    if (mirrorId && mirrorId !== id && !sourceVertexIds.has(mirrorId)) targets.vertexIds.add(mirrorId);
+  }
+
+  return targets;
+}
+
+function drawMirrorAffectedFaceHighlights(ctx, projected, faceIds, { gameOverlay = false } = {}) {
+  if (!faceIds?.size) return;
+  const faces = [...faceIds]
+    .map(faceById)
+    .filter(Boolean)
+    .sort((a, b) => faceSortDepthForMain(b) - faceSortDepthForMain(a));
+  if (!faces.length) return;
+  ctx.save();
+  ctx.setLineDash([7, 5]);
+  ctx.lineJoin = "round";
+  ctx.shadowColor = "rgba(0,0,0,.78)";
+  ctx.shadowBlur = 5;
+  for (const face of faces) {
+    const pts = projectedFacePoints(face, projected);
+    if (pts.length >= 3) drawFace(ctx, pts, MIRROR_AFFECTED_FILL, MIRROR_AFFECTED_COLOR, 2.4);
+  }
+  ctx.restore();
+}
+
+function drawMirrorAffectedEdgeHighlights(ctx, projected, edgeIds) {
+  if (!edgeIds?.size) return;
+  ctx.save();
+  ctx.setLineDash([7, 5]);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.shadowColor = "rgba(0,0,0,.78)";
+  ctx.shadowBlur = 5;
+  ctx.strokeStyle = MIRROR_AFFECTED_COLOR;
+  ctx.lineWidth = 3.2;
+  for (const edge of state.edges) {
+    if (!edgeIds.has(edge.id)) continue;
+    const a = projected.get(edge.a);
+    const b = projected.get(edge.b);
+    if (!a || !b) continue;
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawSelectedFaceHighlights(ctx, projected) {
+  const selected = selectedFace();
+  const selectedId = selected?.id ?? null;
+  const groupedFaces = [...state.selectedFaceIds]
+    .filter((id) => id !== selectedId)
+    .map(faceById)
+    .filter(Boolean)
+    .sort((a, b) => faceSortDepthForMain(b) - faceSortDepthForMain(a));
+  for (const face of groupedFaces) {
+    const pts = projectedFacePoints(face, projected);
+    if (pts.length >= 3) drawFace(ctx, pts, "rgba(102,232,255,.15)", "#66e8ff", 2);
+  }
+  if (!selected) return;
+  const pts = projectedFacePoints(selected, projected);
+  if (pts.length < 3) return;
+  drawSelectedFaceUvGapOverlay(ctx, selected, pts);
+  drawFace(ctx, pts, "rgba(255,217,54,.16)", "#ffd936", 2.2);
+  drawFaceMirrorSeam(ctx, selected, pts);
 }
 
 function drawAuditEdgeOverlay(ctx, projected, { label = true, scale = 1 } = {}) {
@@ -6621,15 +6737,14 @@ function drawSelectionPickHover(ctx, canvas, projected) {
 function renderMain() {
   const canvas = els.mainView;
   const ctx = canvas.getContext("2d");
-  const previewMode = els.previewRenderMode?.value || "gameOverlay";
+  const previewMode = normalizePreviewRenderMode(els.previewRenderMode?.value || "gameOverlay");
   const gameOverlay = gameRendererOverlayMode(previewMode);
-  const gameOnly = previewMode === "gameOnly";
   updatePreviewTrustUi();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  if (gameOnly) return;
   if (!gameOverlay) drawStars(ctx, canvas);
   if (gameOverlay && !state.gamePreviewProjection?.points?.length) return;
   const projected = projectedMapForMain(canvas);
+  const mirrorTargets = mirrorAffectedSelectionTargets();
   const drawFaces = previewMode !== "wire" && !gameOverlay;
   const drawWire = previewMode !== "bitmap" && !gameOverlay;
   const drawBitmapGuide = previewMode === "wireBitmap" || previewMode === "bitmap";
@@ -6639,33 +6754,20 @@ function renderMain() {
     for (const face of sortedFaces) {
       const pts = face.verts.map((id) => projected.get(id)).filter(Boolean);
       const n = faceNormal(face);
-      const selected = selectedFace()?.id === face.id;
-      const grouped = state.selectedFaceIds.has(face.id);
       if (drawBitmapGuide) {
         drawFace(ctx, pts, builderBitmapFill(n, face), "rgba(0,0,0,0)", 0);
         const textured = drawFaceBitmapSkin(ctx, face, pts);
         drawFaceBitmapDecals(ctx, face, pts);
-        if (selected) drawSelectedFaceUvGapOverlay(ctx, face, pts);
         if (!textured) drawFaceTextureGuide(ctx, pts, previewMode === "bitmap" ? .22 : .16);
-        if (selected || grouped || drawWire) {
-          drawFace(
-            ctx,
-            pts,
-            selected ? "rgba(255,217,54,.18)" : grouped ? "rgba(102,232,255,.14)" : "rgba(0,0,0,0)",
-            selected ? "#ffd936" : grouped ? "#66e8ff" : "rgba(85,255,78,.32)",
-            selected || grouped ? 2 : 1
-          );
-          if (selected) drawFaceMirrorSeam(ctx, face, pts);
-        }
+        if (drawWire) drawFace(ctx, pts, "rgba(0,0,0,0)", "rgba(85,255,78,.32)", 1);
       } else {
         drawFace(
           ctx,
           pts,
-          selected ? "rgba(255,217,54,.24)" : grouped ? "rgba(102,232,255,.16)" : shadedFaceColor(n, optionalHexColor(face.faceColor) || els.baseColor.value),
-          selected ? "#ffd936" : grouped ? "#66e8ff" : drawWire ? "rgba(85,255,78,.32)" : "rgba(0,0,0,0)",
-          selected || grouped ? 2 : drawWire ? 1 : 0
+          shadedFaceColor(n, optionalHexColor(face.faceColor) || els.baseColor.value),
+          drawWire ? "rgba(85,255,78,.32)" : "rgba(0,0,0,0)",
+          drawWire ? 1 : 0
         );
-        if (selected) drawFaceMirrorSeam(ctx, face, pts);
       }
     }
   }
@@ -6713,29 +6815,9 @@ function renderMain() {
       ctx.stroke();
     }
   }
-
-  if (gameOverlay && state.selectedFaceIds.size) {
-    const groupedFaces = [...state.selectedFaceIds]
-      .map(faceById)
-      .filter(Boolean)
-      .sort((a, b) => faceSortDepthForMain(b) - faceSortDepthForMain(a));
-    for (const face of groupedFaces) {
-      const previewFace = previewFaceForBuilderFace(face);
-      if (previewFace && !previewFace.visible) continue;
-      const pts = face.verts.map((id) => projected.get(id)).filter(Boolean);
-      if (pts.length >= 3) drawFace(ctx, pts, "rgba(102,232,255,.15)", "#66e8ff", 2);
-    }
-  }
-
-  if (gameOverlay && selectedFace()) {
-    const face = selectedFace();
-    const pts = face?.verts.map((id) => projected.get(id)).filter(Boolean) || [];
-    if (face && pts.length >= 3) {
-      drawSelectedFaceUvGapOverlay(ctx, face, pts);
-      drawFace(ctx, pts, "rgba(255,217,54,.13)", "#ffd936", 2);
-      drawFaceMirrorSeam(ctx, face, pts);
-    }
-  }
+  drawSelectedFaceHighlights(ctx, projected);
+  drawMirrorAffectedFaceHighlights(ctx, projected, mirrorTargets.faceIds, { gameOverlay });
+  drawMirrorAffectedEdgeHighlights(ctx, projected, mirrorTargets.edgeIds);
 
   drawSurfaceInsertPreview(ctx, canvas, projected);
   drawFaceExtrudePreview(ctx, canvas, projected);
@@ -6743,19 +6825,23 @@ function renderMain() {
 
   for (const detail of state.details) {
     const selected = state.selected?.type === "detail" && state.selected.id === detail.id;
-    if (!detailVisibleInView(detail) && !selected) continue;
+    const mirrorAffected = mirrorTargets.detailIds.has(detail.id);
+    const surfaceVisible = detailSurfaceVisibleInMain(detail, { gameOverlay, hiddenFaces: drawFaces || gameOverlay });
+    if (!detailVisibleInView(detail) && !selected && !mirrorAffected) continue;
+    if (!surfaceVisible && !selected && !mirrorAffected) continue;
     const pts = projectedDetailPointsForMain(detail, canvas);
     if (detail.type === "beacon") {
       const p = pts[0] || null;
       if (!p) continue;
-      if (gameOverlay && !selectionFilterAllows("detail") && !selected) continue;
+      if (gameOverlay && !selectionFilterAllows("detail") && !selected && !mirrorAffected) continue;
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
-      ctx.fillStyle = selected ? "rgba(255,217,54,.95)" : `${detail.color || "#ffb642"}cc`;
-      ctx.strokeStyle = selected ? "#ffd936" : "rgba(255,255,255,.72)";
-      ctx.lineWidth = selected ? 2.4 : 1.2;
+      if (mirrorAffected && !selected) ctx.setLineDash([5, 4]);
+      ctx.fillStyle = selected ? "rgba(255,217,54,.95)" : mirrorAffected ? MIRROR_AFFECTED_FILL : `${detail.color || "#ffb642"}cc`;
+      ctx.strokeStyle = selected ? "#ffd936" : mirrorAffected ? MIRROR_AFFECTED_COLOR : "rgba(255,255,255,.72)";
+      ctx.lineWidth = selected ? 2.4 : mirrorAffected ? 2.1 : 1.2;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, selected ? 8 : 5.5, 0, TAU);
+      ctx.arc(p.x, p.y, selected ? 8 : mirrorAffected ? 7.2 : 5.5, 0, TAU);
       ctx.fill();
       ctx.stroke();
       ctx.beginPath();
@@ -6768,11 +6854,15 @@ function renderMain() {
       continue;
     }
     if (pts.length < 2) continue;
-    if (gameOverlay && !selectionFilterAllows("detail") && !selected) continue;
-    if (previewMode === "wire" && !selected) continue;
+    if (gameOverlay && !selectionFilterAllows("detail") && !selected && !mirrorAffected) continue;
+    if (previewMode === "wire" && !selected && !mirrorAffected) continue;
+    if (mirrorAffected && !selected) {
+      ctx.save();
+      ctx.setLineDash([7, 5]);
+    }
     if (detail.type === "panel") {
-      ctx.strokeStyle = selected ? "#ffd936" : "rgba(255,217,54,.8)";
-      ctx.lineWidth = selected ? 3 : 1.4;
+      ctx.strokeStyle = selected ? "#ffd936" : mirrorAffected ? MIRROR_AFFECTED_COLOR : "rgba(255,217,54,.8)";
+      ctx.lineWidth = selected ? 3 : mirrorAffected ? 2.6 : 1.4;
       ctx.beginPath();
       for (let i = 0; i < pts.length; i++) {
         const p = pts[i];
@@ -6781,16 +6871,25 @@ function renderMain() {
       }
       ctx.stroke();
     } else {
-      drawFace(ctx, pts, detail.type === "engine" ? "rgba(247,255,247,.92)" : "rgba(5,16,18,.92)", selected ? "#ffd936" : "rgba(255,255,255,.38)", selected ? 2 : 1);
+      drawFace(
+        ctx,
+        pts,
+        mirrorAffected && !selected ? MIRROR_AFFECTED_FILL : detail.type === "engine" ? "rgba(247,255,247,.92)" : "rgba(5,16,18,.92)",
+        selected ? "#ffd936" : mirrorAffected ? MIRROR_AFFECTED_COLOR : "rgba(255,255,255,.38)",
+        selected ? 2 : mirrorAffected ? 2.4 : 1
+      );
     }
+    if (mirrorAffected && !selected) ctx.restore();
   }
 
   for (const v of state.verts) {
     const p = projected.get(v.id);
+    if (!p) continue;
     const picked = state.pick.includes(v.id);
     const selected = state.selected?.type === "vertex" && state.selected.id === v.id;
+    const mirrorAffected = mirrorTargets.vertexIds.has(v.id);
     const showIdleVertex = !gameOverlay && selectionFilterAllows("vertex") && previewMode !== "bitmap" && previewMode !== "wireBitmap";
-    if (!picked && !selected && !showIdleVertex) continue;
+    if (!picked && !selected && !mirrorAffected && !showIdleVertex) continue;
     if (picked) {
       ctx.strokeStyle = "#66e8ff";
       ctx.lineWidth = 2.5;
@@ -6798,7 +6897,17 @@ function renderMain() {
       ctx.arc(p.x, p.y, selected ? 8.5 : 7, 0, TAU);
       ctx.stroke();
     }
-    ctx.fillStyle = selected ? "#ffd936" : picked ? "#66e8ff" : v.center ? "rgba(255,255,255,.62)" : "rgba(85,255,78,.62)";
+    if (mirrorAffected) {
+      ctx.save();
+      ctx.setLineDash([5, 4]);
+      ctx.strokeStyle = MIRROR_AFFECTED_COLOR;
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, selected ? 10 : 8, 0, TAU);
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.fillStyle = selected ? "#ffd936" : picked ? "#66e8ff" : mirrorAffected ? MIRROR_AFFECTED_COLOR : v.center ? "rgba(255,255,255,.62)" : "rgba(85,255,78,.62)";
     ctx.strokeStyle = "rgba(0,0,0,.8)";
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -7744,6 +7853,9 @@ function selectDetailTarget(detail, options = {}) {
   cancelSurfaceInsertPreview({ redraw: false });
   state.mode = "detail";
   state.selected = { type: "detail", id: detail.id };
+  state.pick = [];
+  state.selectedFaceIds.clear();
+  state.selectedEdgeIds.clear();
   setToolTab("edit", { redraw: false });
   setStatus(`${detail.type === "panel" ? "PANEL LINE" : "DETAIL"} #${detail.id} SELECTED.`);
   if (options.render !== false) renderAll();
@@ -7754,16 +7866,21 @@ function selectFaceTarget(face, options = {}) {
   if (!face) return false;
   cancelSurfaceInsertPreview({ redraw: false });
   state.mode = "face";
-  state.selected = { type: "face", id: face.id };
+  state.pick = [];
+  state.selectedEdgeIds.clear();
   if (options.multiSelect) {
     if (state.selectedFaceIds.has(face.id)) {
       state.selectedFaceIds.delete(face.id);
+      const fallbackId = [...state.selectedFaceIds].at(-1);
+      state.selected = fallbackId == null ? null : { type: "face", id: fallbackId };
       setStatus(`FACE #${face.id} REMOVED FROM FACE GROUP (${state.selectedFaceIds.size} SELECTED).`);
     } else {
       state.selectedFaceIds.add(face.id);
+      state.selected = { type: "face", id: face.id };
       setStatus(`FACE #${face.id} ADDED TO FACE GROUP (${state.selectedFaceIds.size} SELECTED).`);
     }
   } else {
+    state.selected = { type: "face", id: face.id };
     state.selectedFaceIds.clear();
     setStatus(`FACE #${face.id} SELECTED. SHIFT-CLICK TO BUILD A FACE GROUP.`);
   }
@@ -7777,6 +7894,8 @@ function selectUvTarget(face) {
   cancelSurfaceInsertPreview({ redraw: false });
   const group = sharedFaceTextureGroup(face);
   state.mode = group.length > 1 ? "group" : "uv";
+  state.pick = [];
+  state.selectedEdgeIds.clear();
   if (group.length > 1) {
     state.selected = { type: "group", id: face.id };
     state.selectedFaceIds = new Set(group.map((item) => item.id));
@@ -7800,6 +7919,8 @@ function selectGroupTarget(face) {
   cancelSurfaceInsertPreview({ redraw: false });
   state.mode = "group";
   state.selected = { type: "group", id: face.id };
+  state.pick = [];
+  state.selectedEdgeIds.clear();
   state.selectedFaceIds = new Set(group.map((item) => item.id));
   setToolTab("paint", { redraw: false });
   setPaintTab("face", { redraw: false });
@@ -7847,7 +7968,7 @@ function selectSelectionCandidate(candidate, options = {}) {
   if (!candidate) return false;
   hideSelectionPickMenu();
   if (candidate.type === "vertex") {
-    selectVertex(candidate.id);
+    selectVertex(candidate.id, { multiSelect: options.multiSelect });
     return true;
   }
   if (candidate.type === "edge") {
@@ -7863,10 +7984,18 @@ function selectSelectionCandidate(candidate, options = {}) {
   return false;
 }
 
+function directMultiSelectCandidate(candidates, options = {}) {
+  if (!options.multiSelect || !selectionFilterAllows("face")) return null;
+  if (state.mode !== "face" && state.selected?.type !== "face") return null;
+  return candidates.find((candidate) => candidate.type === "face") || null;
+}
+
 function selectInMain(point, options = {}) {
   const candidates = collectSelectionCandidates(point);
   if (!candidates.length) return false;
-  if (options.allowPickMenu !== false && candidates.length > 1) {
+  const directCandidate = directMultiSelectCandidate(candidates, options);
+  if (directCandidate) return selectSelectionCandidate(directCandidate, options);
+  if (options.forcePickMenu && options.allowPickMenu !== false && candidates.length > 1) {
     openSelectionPickMenuAt(options.clientX, options.clientY, candidates, { multiSelect: options.multiSelect });
     setStatus(`${candidates.length} SELECTABLE OBJECTS UNDER POINTER.`);
     return "menu";
@@ -7874,19 +8003,27 @@ function selectInMain(point, options = {}) {
   return selectSelectionCandidate(candidates[0], options);
 }
 
-function selectVertex(id) {
+function selectVertex(id, options = {}) {
   const v = vertexById(id);
   if (!v) return;
   cancelSurfaceInsertPreview({ redraw: false });
   state.mode = "vertex";
-  state.selected = { type: "vertex", id };
+  state.selectedFaceIds.clear();
+  state.selectedEdgeIds.clear();
   setToolTab("edit", { redraw: false });
   const existing = state.pick.indexOf(id);
-  if (existing >= 0) {
+  if (!options.multiSelect) {
+    state.pick = [id];
+    state.selected = { type: "vertex", id };
+    setStatus(`VERTEX #${id} SELECTED. SHIFT-CLICK TO BUILD A PICK LIST.`);
+  } else if (existing >= 0) {
     state.pick.splice(existing, 1);
+    const fallbackId = state.pick.at(-1);
+    state.selected = fallbackId == null ? null : { type: "vertex", id: fallbackId };
     setStatus(`VERTEX #${id} REMOVED FROM PICK LIST.`);
   } else {
     state.pick.push(id);
+    state.selected = { type: "vertex", id };
     setStatus(`VERTEX #${id} ADDED TO PICK LIST.`);
   }
   renderAll();
@@ -8345,6 +8482,61 @@ function detailVisibleInView(detail) {
   if (category === "engine") return els.showEngineDetails?.checked !== false;
   if (category === "beacon") return els.showBeaconDetails?.checked !== false;
   return els.showSurfaceDetails?.checked !== false;
+}
+
+function detailVertexIds(detail) {
+  const ids = [];
+  if (Number.isFinite(Number(detail?.vertexId))) ids.push(Number(detail.vertexId));
+  if (Array.isArray(detail?.indices)) ids.push(...detail.indices.map(Number));
+  if (Array.isArray(detail?.segment)) ids.push(...detail.segment.map(Number));
+  return [...new Set(ids.filter((id) => Number.isFinite(id) && vertexById(id)))];
+}
+
+function detailOwnerFaces(detail) {
+  const explicitFace = faceById(detail?.faceId);
+  if (explicitFace) return [explicitFace];
+  const ids = detailVertexIds(detail);
+  if (!ids.length) return [];
+  return state.faces.filter((face) => ids.every((id) => face.verts.includes(id)));
+}
+
+function normalFromDetailPoints(detail) {
+  const points = detailModelPoints(detail);
+  if (points.length < 3) return null;
+  for (let i = 1; i < points.length - 1; i++) {
+    const candidate = cross(sub(points[i], points[0]), sub(points[i + 1], points[0]));
+    if (len(candidate) > EPS) return norm(candidate);
+  }
+  return null;
+}
+
+function detailNormal(detail) {
+  if (Array.isArray(detail?.normal) && detail.normal.length >= 3) {
+    const normal = vec(Number(detail.normal[0]) || 0, Number(detail.normal[1]) || 0, Number(detail.normal[2]) || 0);
+    if (len(normal) > EPS) return norm(normal);
+  }
+  return normalFromDetailPoints(detail);
+}
+
+function detailFacesBuilderCamera(detail) {
+  const normal = detailNormal(detail);
+  if (!normal) return true;
+  return rotatePoint(normal).z < -0.015;
+}
+
+function detailSurfaceVisibleInMain(detail, options = {}) {
+  if (!options.hiddenFaces) return true;
+  const faces = detailOwnerFaces(detail);
+  if (!faces.length) return detailFacesBuilderCamera(detail);
+  const faceVisible = (face) => {
+    if (!face) return false;
+    if (options.gameOverlay) {
+      const previewFace = previewFaceForBuilderFace(face);
+      return previewFace ? !!previewFace.visible : faceFacesBuilderCamera(face);
+    }
+    return faceFacesBuilderCamera(face);
+  };
+  return faces.some(faceVisible);
 }
 
 function filteredDetailsForView() {
@@ -8845,7 +9037,17 @@ function currentModelUnsavedBenchmarkWarning() {
   return "";
 }
 
+function currentBuilderHasDiscardableModelData() {
+  return !!(
+    state.verts.length ||
+    state.faces.length ||
+    state.edges.length ||
+    state.details.length
+  );
+}
+
 function confirmDiscardCurrentModel(actionLabel = "Replace the current builder model") {
+  if (!currentBuilderHasDiscardableModelData()) return true;
   const warning = currentModelUnsavedBenchmarkWarning();
   if (!warning) return true;
   return window.confirm(`${warning}\n\n${actionLabel} will discard the current builder model data. Continue?`);
@@ -10596,7 +10798,15 @@ function bindEvents() {
     }
     const point = getCanvasPoint(ev, els.mainView);
     if (ev.button === 0) {
-      selectInMain(point, { multiSelect: ev.shiftKey, clientX: ev.clientX, clientY: ev.clientY });
+      if (ev.metaKey) {
+        ev.preventDefault();
+      }
+      selectInMain(point, {
+        multiSelect: ev.shiftKey,
+        forcePickMenu: ev.metaKey,
+        clientX: ev.clientX,
+        clientY: ev.clientY
+      });
     }
   });
   els.mainView.addEventListener("contextmenu", (ev) => {
@@ -10634,7 +10844,7 @@ function bindEvents() {
         } else if (type === "vertex") {
           const id = nearestVertex(point, projected, 12);
           if (id) {
-            selectVertex(id);
+            selectVertex(id, { multiSelect: ev.shiftKey });
             return;
           }
         }
@@ -11098,6 +11308,7 @@ function bindEvents() {
   document.getElementById("copyBtn")?.addEventListener("click", copyExport);
   document.getElementById("importBtn").addEventListener("click", importBuilderJson);
   els.exportKind.addEventListener("change", updateExport);
+  els.mirrorNewGeometry?.addEventListener("input", renderAll);
   [
     els.shipId, els.shipName, els.shipDescription, els.shipMissionLore, els.shipClass, els.npcRole, els.aiProfile, els.decalRole, els.baseColor,
     els.shipValue, els.shipHp, els.speedMul, els.cargoTons, els.missileCount, els.laserClass,

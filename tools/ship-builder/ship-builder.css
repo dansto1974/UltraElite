@@ -2430,10 +2430,6 @@ canvas {
   background: transparent;
 }
 
-.preview-stack.is-game-only canvas {
-  opacity: 0;
-}
-
 .preview-stack.is-builder-diagnostic {
   border-color: rgba(255, 217, 54, .36);
 }
@@ -2503,7 +2499,6 @@ canvas {
 }
 
 .view-mode-icon-game-overlay::before,
-.view-mode-icon-game-only::before,
 .view-mode-icon-bitmap::before {
   inset: 2px;
   border: 1px solid currentColor;
@@ -2517,13 +2512,6 @@ canvas {
   top: 6px;
   border-top: 1px solid currentColor;
   box-shadow: 0 -4px 0 rgba(102, 232, 255, .32), 0 4px 0 rgba(102, 232, 255, .32);
-}
-
-.view-mode-icon-game-only::after {
-  inset: 5px;
-  border: 1px solid currentColor;
-  border-radius: 50%;
-  opacity: .95;
 }
 
 .view-mode-icon-wire::before,
