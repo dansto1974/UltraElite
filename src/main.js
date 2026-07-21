@@ -10802,7 +10802,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           : detail.points.map(([x, y, z]) => add(worldDirToCam(orient(vec(x * scaleFactor, y * scaleFactor, z * scaleFactor)), camera), o.cam || vec()));
         if (vertsOnSurface.length < (isLineDetail ? 2 : 3)) continue;
         const surfaceCenter = scale(vertsOnSurface.reduce((sum, p) => add(sum, p), vec()), 1 / vertsOnSurface.length);
-        const cullEpsilon = detail.cullEpsilon ?? (wireDetails ? .015 : -.08);
+        const cullEpsilon = detail.cullEpsilon ?? .015;
         if (normal && detail.cull !== false && -dot(normal, norm(surfaceCenter)) <= cullEpsilon) continue;
         const lift = normal ? (detail.lift ?? .5) * scaleFactor : 0;
         const verts = normal && lift
@@ -10990,6 +10990,29 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         }
       }
       return false;
+    }
+
+    function screenSampleOccludedByCloserHull(sample, occluders) {
+      if (!sample || !occluders?.length) return false;
+      for (const blocker of occluders) {
+        if (!blocker.projected?.length || blocker.avgZ >= sample.z - .35) continue;
+        const bounds = blocker.bounds || polygonBounds(blocker.projected);
+        if (sample.x < bounds.minX || sample.x > bounds.maxX || sample.y < bounds.minY || sample.y > bounds.maxY) continue;
+        if (pointInPolygon(sample.x, sample.y, blocker.projected)) return true;
+      }
+      return false;
+    }
+
+    function enginePlasmaOccludedByCloserHull(pr, tailPr, rel, tailRel, occluders) {
+      if (!occluders?.length || !pr || !rel) return false;
+      const samples = [{ x: pr.x, y: pr.y, z: rel.z }];
+      if (tailPr && tailRel) {
+        samples.push(
+          { x: (pr.x + tailPr.x) * .5, y: (pr.y + tailPr.y) * .5, z: (rel.z + tailRel.z) * .5 },
+          { x: tailPr.x, y: tailPr.y, z: tailRel.z }
+        );
+      }
+      return samples.some((sample) => screenSampleOccludedByCloserHull(sample, occluders));
     }
 
     function projectedHull(points) {
@@ -12697,6 +12720,39 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       };
     }
 
+    function collectWorldEffectOccluders(items, camera, w, h) {
+      if (!items?.some((item) => item.effect?.kind === "enginePlasma")) return [];
+      const occluders = [];
+      const projectFn = (p) => project(p, w, h);
+      for (const item of items) {
+        const o = item.o;
+        if (!o || item.effect) continue;
+        const modelName = o.model || (o.type === "station" ? "coriolis" : null);
+        const model = modelName ? MODELS[modelName] : null;
+        if (!model?.faces?.length) continue;
+        const scaleFactor = o.scaleFactor ?? o.scale ?? 1;
+        const yaw = o.rot ?? o.yaw ?? 0;
+        const pitch = o.pitch ?? 0;
+        const roll = o.roll ?? yaw * .7;
+        const centerCam = item.p || cameraTransform(o.pos || vec(), camera);
+        const orient = (v) => o.quat ? quatRotate(o.quat, v) : rotateShipPoint(v, yaw, pitch, roll);
+        const { camVerts, points } = modelMeshForRender(model, camera, w, h, { scaleFactor, centerCam, orient, project: projectFn });
+        const faces = collectSolidFaces(model, camVerts, points, "#000", 1, true, null, {
+          project: projectFn,
+          wireMask: true
+        });
+        for (const face of faces) {
+          if (!face.projected?.length) continue;
+          occluders.push({
+            projected: face.projected,
+            avgZ: face.avgZ,
+            bounds: polygonBounds(face.projected)
+          });
+        }
+      }
+      return occluders;
+    }
+
     function buildRenderItems(camera, w, h) {
       const items = [];
       for (const o of worldSnapshot().objects) {
@@ -12706,10 +12762,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return items;
     }
 
-    function drawWorldItems(items, w, h, camera, drawEntity) {
+    function drawWorldItems(items, w, h, camera, drawEntity, opts = {}) {
       items.sort((a, b) => b.d - a.d);
       for (const item of items) {
-        if (item.effect) drawSmokePuff(item.effect, w, h, camera);
+        if (item.effect) drawSmokePuff(item.effect, w, h, camera, opts.effectOccluders || []);
         else drawEntity(item);
       }
     }
@@ -12770,7 +12826,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const playerItem = makeRenderItem(shipObj, game.camera, w, h);
         if (playerItem) visible.push(playerItem);
       }
-      drawWorldItems(visible, w, h, game.camera, (item) => drawObject(item.o, item.p, w, h));
+      drawWorldItems(visible, w, h, game.camera, (item) => drawObject(item.o, item.p, w, h), {
+        effectOccluders: collectWorldEffectOccluders(visible, game.camera, w, h)
+      });
       if (!DEV_DISABLE_LASER_EFFECTS) drawExternalPlayerShot(w, h, flightCam);
       drawExplosions(w, h);
       if (!DEV_DISABLE_LASER_EFFECTS) drawEnemyShots(w, h);
@@ -13963,9 +14021,11 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function drawHangarShipWithWorldEffects(w, h, scene, view, opts = {}) {
       const shipObj = hangarSceneShip(scene, opts);
       const puffs = updateHangarShipEffects(scene, shipObj, opts.trail ?? 1, opts);
-      const items = [{ kind: "ship", d: len(sub(shipObj.pos, view.pos)) }];
+      const items = [{ kind: "ship", o: shipObj, p: cameraTransform(shipObj.pos, view), d: len(sub(shipObj.pos, view.pos)) }];
       addWorldEffectItems(items, puffs, view);
-      drawWorldItems(items, w, h, view, () => drawHangarShip(w, h, scene, view, opts));
+      drawWorldItems(items, w, h, view, () => drawHangarShip(w, h, scene, view, opts), {
+        effectOccluders: collectWorldEffectOccluders(items, view, w, h)
+      });
     }
 
     function drawHangarSparkles(w, h, seed, strength = 1) {
@@ -15164,7 +15224,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
     }
 
-    function drawSmokePuff(p, w, h, camera = game.camera) {
+    function drawSmokePuff(p, w, h, camera = game.camera, effectOccluders = []) {
       if (!ultraFxEnabled()) return;
       const age = clamp(p.t / p.dur, 0, 1);
       const worldPos = add(p.pos, scale(p.drift, p.t));
@@ -15241,6 +15301,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           return;
         }
         if (isEngine) {
+          if (enginePlasmaOccludedByCloserHull(pr, tailPr, rel, tailRel, effectOccluders)) {
+            ctx.restore();
+            return;
+          }
           drawEnginePlasmaVisual(pr, tailPr, p, age);
           ctx.restore();
           return;
