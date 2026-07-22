@@ -11175,6 +11175,7 @@
 
     const GAME_VERSION = "1.0.21-beta";
     const UPDATE_LOG = [
+      ["1.0.21-beta", "Docking computer polish: final approach now aims through the station slot more cleanly and keeps a brisker capture speed."],
       ["1.0.21-beta", "Internal asset-authoring systems and model maintenance update.", true],
       ["1.0.20-beta", "Ship and station surface polish: optimized several model assets, refreshed Diamondback skin textures, and tightened station panel mapping for cleaner Ultra-mode rendering."],
       ["1.0.19-beta", "Mission and dockyard polish: active contracts now report ship requirements more clearly, mission completion debriefs wait until landing is complete, and transition cameras lock the cockpit view cleanly."],
@@ -22457,7 +22458,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       </div>
       <div class="help-heading">Flight Notes</div>
       <div class="help-note">Dock manually by flying slowly through an aligned station slot. On the local chart, click a system to plot a final destination; the next reachable jump is selected automatically. Use chart filters to hide mission lines, plotted-course overlays or suggested routes, and +/- or home to adjust local chart zoom.</div>
-      <div class="help-note">Station Traffic Control sequences launches and approaches. Hold when instructed, give way to escape pods, police launches, damaged ships and naval priority traffic, and expect enforcement warnings if you approach after attacking local authority. Docking computers refuse Fugitive clearance; manual docking settles fines on touchdown.</div>
+      <div class="help-note">Station Traffic Control sequences launches and approaches. Hold when instructed, give way to escape pods, police launches, damaged ships and naval priority traffic, and expect enforcement warnings if you approach after attacking local authority. Docking computers hold for traffic, fly a through-slot final approach when clear, and refuse Fugitive clearance; manual docking settles fines on touchdown.</div>
       <div class="help-note">The Market sells standard tank fuel and Fuel Cells cargo. With a Cargo Refueler fitted, each Fuel Cells ton can be consumed whole from Status to top the tank by up to ${fmt(CARGO_FUEL_LY_PER_TON)} LY, capped at full tanks. A fitted Market Comparator adds plotted-destination prices to the Market table.</div>
       <div class="help-note">Loaned-ship contracts are immediate dispatch: they lock out other mission work until the loaner is returned or awarded. Mission comms stay available in the comms review until that mission completes, fails or is abandoned.</div>
       <div class="help-note">Ship previews can be clicked and dragged.</div>

@@ -308,6 +308,7 @@ The game is currently designed for desktop. Mobile displays show a desktop-only 
 ### 1.0.21-beta
 
 - Ship Builder overhaul: added a fullscreen-ready workshop with undo/redo, view-cube controls, better selection tools, surface/extrude workflows, and refreshed Boa and Canister asset rendering.
+- Docking computer polish: final approach now aims through the station slot more smoothly and keeps a brisker capture speed instead of crawling or twitching near touchdown.
 
 ### 1.0.20-beta
 
