@@ -37,6 +37,16 @@
       category: "group-combat",
       hooks: ["spawnMissionEncounter", "recordMissionEncounterKill", "assignHostileTarget", "missionLegalDisposition"]
     },
+    escort: {
+      label: "Escort",
+      category: "protective-combat",
+      hooks: ["spawnMissionEncounter", "recordMissionEncounterKill", "markMissionEncounterAllyDestroyed", "assignHostileTarget", "missionLegalDisposition"]
+    },
+    wingSupport: {
+      label: "Wing Support",
+      category: "group-combat",
+      hooks: ["spawnMissionEncounter", "recordMissionEncounterKill", "assignHostileTarget", "missionLegalDisposition"]
+    },
     navalBattle: {
       label: "Naval Battle",
       category: "group-combat",
@@ -69,6 +79,11 @@
       role: "missionAlly",
       intent: ["support", "drawFire", "fightMissionEnemies"],
       hooks: ["spawnMissionEncounter", "pickMissionEncounterTarget", "updateShipAI"]
+    },
+    protectedEscort: {
+      role: "protectedEscort",
+      intent: ["survive", "fleeAttackers", "missionFailureIfDestroyed"],
+      hooks: ["spawnMissionEncounter", "markMissionEncounterAllyDestroyed", "updateShipAI"]
     }
   };
 

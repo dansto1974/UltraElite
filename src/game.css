@@ -476,9 +476,92 @@
       text-shadow: 0 0 8px rgba(246, 255, 143, .55);
     }
 
+    .comms-line.comms-wingmen,
+    .comms-line.comms-wingmen .comms-from {
+      color: #8fe8ff;
+      text-shadow: 0 0 8px rgba(143, 232, 255, .52);
+    }
+
     .comms-line.alien-comms {
       color: #77fff0;
       text-shadow: 0 0 8px rgba(90, 255, 235, .45);
+    }
+
+    .wingmen-hud {
+      position: absolute;
+      top: 84px;
+      left: 12px;
+      z-index: 7;
+      width: min(238px, 24%);
+      display: grid;
+      gap: 5px;
+      font-family: var(--ui-font);
+      font-size: 9px;
+      line-height: 1.25;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+
+    .wingmen-hud[hidden] {
+      display: none;
+    }
+
+    .wingmen-panel {
+      padding: 6px 7px;
+      border: 1px solid rgba(143, 232, 255, .42);
+      background: rgba(0, 8, 4, .48);
+      box-shadow: 0 0 12px rgba(70, 223, 255, .1), inset 0 0 14px rgba(143, 232, 255, .05);
+      color: #8fe8ff;
+      text-shadow: 0 0 7px rgba(143, 232, 255, .4);
+    }
+
+    .wingmen-panel.protected {
+      border-color: rgba(246, 255, 143, .44);
+      color: #f6ff8f;
+      text-shadow: 0 0 7px rgba(246, 255, 143, .42);
+    }
+
+    .wingmen-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .wingmen-name,
+    .wingmen-status {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .wingmen-status {
+      color: rgba(145, 167, 141, .94);
+      flex: 0 0 auto;
+    }
+
+    .wingmen-hull {
+      height: 4px;
+      margin-top: 4px;
+      border: 1px solid rgba(101, 255, 71, .3);
+      background: rgba(0, 0, 0, .55);
+    }
+
+    .wingmen-hull-fill {
+      height: 100%;
+      width: 100%;
+      background: #65ff47;
+      box-shadow: 0 0 8px rgba(101, 255, 71, .34);
+    }
+
+    .wingmen-panel.damaged .wingmen-hull-fill {
+      background: #ffd33d;
+      box-shadow: 0 0 8px rgba(255, 211, 61, .38);
+    }
+
+    .wingmen-panel.critical .wingmen-hull-fill {
+      background: #ff6a55;
+      box-shadow: 0 0 8px rgba(255, 106, 85, .4);
     }
 
     .comms-toggle {
@@ -624,6 +707,11 @@
     .comms-review-line.comms-mission .comms-review-text,
     .comms-review-line.comms-mission .comms-from {
       color: #f6ff8f;
+    }
+
+    .comms-review-line.comms-wingmen .comms-review-text,
+    .comms-review-line.comms-wingmen .comms-from {
+      color: #8fe8ff;
     }
 
     .comms-review-line.comms-police .comms-review-text,
@@ -1947,6 +2035,31 @@
       white-space: normal;
       overflow-wrap: anywhere;
       text-align: left;
+    }
+
+    .mission-status-block {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 3px;
+      margin-top: 8px;
+      padding: 7px 8px;
+      border: 1px solid rgba(70, 223, 255, .28);
+      background: rgba(70, 223, 255, .045);
+    }
+
+    .mission-status-block .stat-line {
+      border-color: rgba(70, 223, 255, .2);
+    }
+
+    .mission-status-block .label {
+      color: #46dfff;
+    }
+
+    .wingmen-command-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
     }
 
     .dockyard-card {

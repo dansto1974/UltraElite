@@ -410,6 +410,8 @@
       const perf = game.performance || (game.performance = { frameMs: 16.7, lod: 0 });
       const ms = clamp(rawDt * 1000, 1, 220);
       perf.frameMs = perf.frameMs ? lerp(perf.frameMs, ms, .1) : ms;
+      perf.fps = 1000 / Math.max(1, perf.frameMs || 16.7);
+      perf.rawFrameMs = ms;
       if (DEV_FORCE_FULL_RENDER) {
         perf.lod = 0;
         perf.lodPressure = 0;
@@ -450,6 +452,9 @@
       const nextLod = perf.lod || 0;
       perf.dprCap = PERFORMANCE_DPR_CAP[nextLod] || .8;
       perf.qualityLabel = PERFORMANCE_LOD_LABELS[nextLod] || "MIN";
+      perf.sceneLoad = load;
+      perf.thresholdMul = performanceThresholdMul();
+      perf.particleScale = performanceParticleScale();
       if (perf._appliedLod !== nextLod) {
         perf._appliedLod = nextLod;
         resizeCanvases();
@@ -3094,6 +3099,7 @@
       brightnessSlider: byId("brightnessSlider"),
       brightnessValue: byId("brightnessValue"),
       commsToggle: byId("commsToggle"),
+      wingmenHud: byId("wingmenHud"),
       modeSwitchBtn: byId("modeSwitchBtn"),
       launchBtn: byId("launchBtn"),
       jumpBtn: byId("jumpBtn"),
@@ -3653,6 +3659,8 @@
       recovery: ["Sirius Recovery Bureau", "Tionisla Data Factors", "Corporate Salvage Board", "Insurance Underwriters"],
       naval: ["GalCop Naval Intelligence", "Sector Naval Command", "Federal Liaison Office", "Joint Xeno Desk"],
       traderDefence: ["Free Traders' Exchange", "Trade Lane Authority", "Pilot's Protective Guild", "Local Convoy Office"],
+      escort: ["Free Traders' Exchange", "Convoy Surety Office", "Lloyd's Interstellar", "Pilot's Protective Guild"],
+      wingSupport: ["Pilot's Protective Guild", "Station Security", "Local Defence Office", "Trade Lane Authority"],
       navalBattle: ["GalCop Naval Intelligence", "Sector Naval Command", "Federal Liaison Office", "Joint Xeno Desk"]
     };
     const MISSION_TARGET_NAMES = [
@@ -3668,6 +3676,8 @@
       { id: "sanctionedRecovery", label: "Recovery", type: "recovery", opts: { heat: 3, legalClass: "sanctioned", targetModel: "krait", recoveryName: "stolen prototype computer", rewardCredits: 790, rankPoints: 2 } },
       { id: "thargoidNaval", label: "Thargoid Naval", type: "naval", opts: { heat: 4, legalClass: "military", targetModel: "thargoid", recoveryName: "alien alloy panel", loanShip: "naga", loan: { id: "navalEcm", name: "Long-range Naval ECM", keepChance: 0 }, rewardCredits: 1250, rankPoints: 5, noRandomSpecialRewards: true } },
       { id: "traderDefence", label: "Trader Defence", type: "traderDefence", opts: { heat: 3, legalClass: "sanctioned", encounterRequired: 3, rewardCredits: 980, rankPoints: 3 } },
+      { id: "escortTrader", label: "Escort Trader", type: "escort", opts: { heat: 2, legalClass: "sanctioned", encounterRequired: 3, rewardCredits: 920, rankPoints: 3 } },
+      { id: "wingSupport", label: "Wing Support", type: "wingSupport", opts: { heat: 3, legalClass: "sanctioned", encounterRequired: 4, rewardCredits: 1120, rankPoints: 3 } },
       { id: "navalBattle", label: "Naval Battle", type: "navalBattle", opts: { heat: 4, legalClass: "military", encounterRequired: 3, navalReputationRequired: 0, rewardCredits: 1650, rankPoints: 5, navalReputation: 4 } },
       { id: "loanLaser", label: "Loan Laser", type: "naval", opts: { heat: 4, legalClass: "military", targetModel: "asp", loanShip: "naga", loan: { id: "navalOverchargeLaser", name: "Overcharged Naval Laser", keepChance: 0 }, rewardCredits: 1100, rankPoints: 4, noRandomSpecialRewards: true } },
       { id: "keepLaser", label: "Keep Laser", type: "naval", opts: { heat: 4, legalClass: "military", targetModel: "ferdelance", loanShip: "umbra", loan: { id: "navalOverchargeLaser", name: "Overcharged Naval Laser", keepChance: 1 }, rewardEquipment: "militaryLaser", rewardCredits: 1450, rankPoints: 5, noRandomSpecialRewards: true } },
@@ -3790,7 +3800,7 @@
         ? [[1, 7], [1, 10], [1, 14]]
         : type === "naval" || type === "navalBattle"
         ? [[18, 64], [8, 42], [4, 28]]
-        : type === "suppression" || type === "traderDefence"
+        : type === "suppression" || type === "traderDefence" || type === "escort" || type === "wingSupport"
           ? [[3, 18], [1, 12], [18, 34]]
         : type === "courier"
           ? [[4, 14], [14, 30], [1, 8]]
@@ -3812,6 +3822,8 @@
         recovery: 430,
         naval: 620,
         traderDefence: 380,
+        escort: 360,
+        wingSupport: 420,
         navalBattle: 760
       }[type] || 120;
       return Math.round((base + dist * (type === "courier" ? 18 : type === "naval" || type === "navalBattle" ? 48 : 32) + heat * 120 + rng() * base) / 5) * 5;
@@ -3824,7 +3836,7 @@
       };
       if (dist > 18 || heat >= 3) addReq("fuelScoop", "Fuel Scoop");
       if (type === "recovery" || type === "naval" || type === "navalBattle") addReq("fuelScoop", "Fuel Scoop");
-      if ((type === "bounty" || type === "recovery" || type === "suppression" || type === "traderDefence") && heat >= 2) addReq("upgradedLaser", "Beam, mining or military laser");
+      if ((type === "bounty" || type === "recovery" || type === "suppression" || type === "traderDefence" || type === "escort" || type === "wingSupport") && heat >= 2) addReq("upgradedLaser", "Beam, mining or military laser");
       if ((type === "naval" || type === "navalBattle") && mission?.loan?.id !== "navalOverchargeLaser") addReq("upgradedLaser", "Beam, mining or military laser");
       if (type === "naval" || type === "navalBattle" || heat >= 4 || (type === "suppression" && heat >= 3)) addReq("extraEnergy", "Extra Energy Unit");
       if (heat >= 3 && type === "cargo") addReq("ecm", "E.C.M. System");
@@ -3868,7 +3880,7 @@
 
     function missionLegalClass(type, rng) {
       if (type === "naval" || type === "navalBattle") return "military";
-      if (type === "suppression" || type === "traderDefence") return "sanctioned";
+      if (type === "suppression" || type === "traderDefence" || type === "escort" || type === "wingSupport") return "sanctioned";
       const sys = currentSystem();
       const anarchyBias = clamp((3 - sys.government) / 4, 0, .45);
       if (type === "bounty" && rng() < .14 + anarchyBias) return "private";
@@ -3887,7 +3899,7 @@
       const suppressionRequired = type === "suppression"
         ? clamp(Math.trunc(Number.isFinite(opts.suppressionKills) ? opts.suppressionKills : 3 + Math.floor(rng() * 8) + Math.floor(heat / 2)), 2, 10)
         : 0;
-      const encounterRequired = type === "traderDefence" || type === "navalBattle"
+      const encounterRequired = type === "traderDefence" || type === "escort" || type === "wingSupport" || type === "navalBattle"
         ? clamp(Math.trunc(Number.isFinite(opts.encounterRequired) ? opts.encounterRequired : (type === "navalBattle" ? 2 : 3) + Math.floor(rng() * 3) + Math.floor(heat / 3)), 2, type === "navalBattle" ? 5 : 7)
         : 0;
       const rewardCredits = Number.isFinite(opts.rewardCredits) ? opts.rewardCredits : missionRewardBase(type, dist, rng, heat, opts) + suppressionRequired * 85 + encounterRequired * (type === "navalBattle" ? 160 : 105);
@@ -3905,8 +3917,8 @@
         heat,
         reward: {
           credits: rewardCredits,
-          rankPoints: Number.isFinite(opts.rankPoints) ? opts.rankPoints : starter ? 1 : type === "naval" || type === "navalBattle" ? 4 + Math.floor(dist / 14) : type === "suppression" || type === "traderDefence" ? Math.max(2, Math.ceil((suppressionRequired || encounterRequired) / 3)) : type === "bounty" || type === "recovery" ? 2 : 1,
-          legalClearance: opts.legalClearance !== undefined ? opts.legalClearance : legalClass === "private" ? 0 : type === "naval" || type === "navalBattle" ? "clean" : type === "suppression" || type === "traderDefence" ? 3 : type === "bounty" ? 4 : type === "cargo" ? 2 : 1
+          rankPoints: Number.isFinite(opts.rankPoints) ? opts.rankPoints : starter ? 1 : type === "naval" || type === "navalBattle" ? 4 + Math.floor(dist / 14) : type === "suppression" || type === "traderDefence" || type === "escort" || type === "wingSupport" ? Math.max(2, Math.ceil((suppressionRequired || encounterRequired) / 3)) : type === "bounty" || type === "recovery" ? 2 : 1,
+          legalClearance: opts.legalClearance !== undefined ? opts.legalClearance : legalClass === "private" ? 0 : type === "naval" || type === "navalBattle" ? "clean" : type === "suppression" || type === "traderDefence" || type === "escort" || type === "wingSupport" ? 3 : type === "bounty" ? 4 : type === "cargo" ? 2 : 1
         },
         status: "board"
       };
@@ -3947,6 +3959,33 @@
         };
         mission.title = `Trader defence at ${to.name}`;
         mission.description = `${issuer} is rallying a local trader band at ${to.name}. Join their defence wing and destroy ${encounterRequired} pirate raider${encounterRequired === 1 ? "" : "s"} before docking for payment.`;
+      } else if (type === "escort") {
+        mission.encounter = {
+          id: `${id}-encounter`,
+          kind: "escortTrader",
+          required: encounterRequired,
+          destroyed: 0,
+          spawned: false,
+          spawnDelay: Number.isFinite(opts.spawnDelay) ? opts.spawnDelay : 2 + rng() * 4,
+          allies: Number.isFinite(opts.allies) ? opts.allies : 1,
+          enemies: Number.isFinite(opts.enemies) ? opts.enemies : encounterRequired + (rng() < .35 ? 1 : 0),
+          protectAllies: true
+        };
+        mission.title = `Escort trader at ${to.name}`;
+        mission.description = `${issuer} has a trader crossing hostile traffic near ${to.name}. Keep the escorted ship alive and destroy ${encounterRequired} pirate attacker${encounterRequired === 1 ? "" : "s"} before docking for payment.`;
+      } else if (type === "wingSupport") {
+        mission.encounter = {
+          id: `${id}-encounter`,
+          kind: "wingSupport",
+          required: encounterRequired,
+          destroyed: 0,
+          spawned: false,
+          spawnDelay: Number.isFinite(opts.spawnDelay) ? opts.spawnDelay : 2 + rng() * 4,
+          allies: Number.isFinite(opts.allies) ? opts.allies : 1 + Math.floor(rng() * 2),
+          enemies: Number.isFinite(opts.enemies) ? opts.enemies : encounterRequired + (rng() < .45 ? 1 : 0)
+        };
+        mission.title = `Wing support at ${to.name}`;
+        mission.description = `${issuer} is assembling a small pilot wing against pirate contacts near ${to.name}. Join the wing, let friendly support take pressure off you, and destroy ${encounterRequired} hostile raider${encounterRequired === 1 ? "" : "s"}.`;
       } else if (type === "navalBattle") {
         const repRequired = Number.isFinite(opts.navalReputationRequired) ? opts.navalReputationRequired : NAVAL_BATTLE_REP_UNLOCK;
         mission.encounter = {
@@ -4024,7 +4063,10 @@
         if (roll < .24 - anarchyBias * .08) type = "courier";
         else if (roll < .52 + corporateBias * .16) type = "cargo";
         else if (roll < .76 + anarchyBias * .12) type = "bounty";
-        else if (roll < .86 + anarchyBias * .18) type = rng() < .38 ? "traderDefence" : "suppression";
+        else if (roll < .86 + anarchyBias * .18) {
+          const combatRoll = rng();
+          type = combatRoll < .24 ? "traderDefence" : combatRoll < .46 ? "escort" : combatRoll < .62 ? "wingSupport" : "suppression";
+        }
         else if (roll < .975 + anarchyBias * .12 + corporateBias * .06) type = "recovery";
         else type = "naval";
         if (rng() < navalBias * .22) type = navalReputationScore() >= NAVAL_BATTLE_REP_UNLOCK && rng() < .35 ? "navalBattle" : "naval";
@@ -4279,8 +4321,8 @@
         const required = Number(mission.encounter.required) || 1;
         const destroyed = Number(mission.encounter.destroyed) || 0;
         if (destroyed < required) {
-          const subject = mission.encounter.kind === "navalBattle" ? "alien contact" : "raider";
-          blockers.push(`Destroy or rout ${required - destroyed} more ${subject}${required - destroyed === 1 ? "" : "s"}`);
+          const subject = missionEncounterSubject(mission.encounter.kind, required - destroyed);
+          blockers.push(`Destroy or rout ${required - destroyed} more ${subject}`);
         }
       }
       if (mission.target && !mission.target.destroyed) {
@@ -4524,10 +4566,16 @@
       if (!encounter) return "";
       const required = Number(encounter.required) || 1;
       const destroyed = Number(encounter.destroyed) || 0;
-      const subject = encounter.kind === "navalBattle" ? "alien contacts" : "raiders";
+      const subject = missionEncounterSubject(encounter.kind, required);
       return destroyed >= required
         ? `${MISSION_TYPES[mission.type] || "Mission"} complete (${destroyed}/${required} ${subject}). Dock for payment.`
         : `${MISSION_TYPES[mission.type] || "Mission"} progress ${destroyed}/${required} ${subject}.`;
+    }
+
+    function missionEncounterSubject(kind, count = 2) {
+      if (kind === "navalBattle") return `alien contact${count === 1 ? "" : "s"}`;
+      if (kind === "escortTrader") return `pirate attacker${count === 1 ? "" : "s"}`;
+      return `raider${count === 1 ? "" : "s"}`;
     }
 
     function recordMissionEncounterKill(o) {
@@ -4542,10 +4590,34 @@
       return mission;
     }
 
+    function markMissionEncounterAllyDestroyed(o) {
+      if (!o || o.missionEncounterSide !== "ally" || !o.missionId || !o.missionEncounterId) return null;
+      const mission = activeMissionById(o.missionId);
+      const encounter = mission?.encounter;
+      if (!missionProgressUnlocked(mission)) return null;
+      if (!encounter || encounter.id !== o.missionEncounterId || !sameSystemRef(mission.destination)) return null;
+      if (!encounter.protectAllies && !o.missionProtectedAlly) return null;
+      encounter.escortLost = true;
+      mission.status = "failed";
+      mission.failedReason = `${o.name || "Escort"} destroyed`;
+      clearImmediateDispatchCourse(mission);
+      clearMissionCommsHistory(mission);
+      commsMessage(mission.issuer || "MISSION OFFICE", `${mission.title} failed: ${o.name || "the protected ship"} was destroyed.`, "mission", { durationMs: 15500, protected: true });
+      setMessage(`Mission failed: ${o.name || "escort ship"} destroyed.`, true);
+      if (game.panelOpen && game.panel === "missions") renderPanel();
+      return mission;
+    }
+
     function missionEncounterModel(kind, side, rng) {
       if (kind === "navalBattle") {
         if (side === "ally") return missionChoice(rng, ["viper", "asp", "ferdelance"].filter((model) => MODELS[model]));
         return rng() < .74 ? "thargoid" : "thargon";
+      }
+      if (kind === "escortTrader" && side === "ally") {
+        return missionChoice(rng, ["python", "boa", "cobra", "transporter", "worm"].filter((model) => MODELS[model]));
+      }
+      if (kind === "wingSupport" && side === "ally") {
+        return missionChoice(rng, ["viper", "cobra", "asp", "ferdelance"].filter((model) => MODELS[model]));
       }
       return side === "ally"
         ? missionChoice(rng, ["cobra", "cobra1", "python", "boa", "adder", "gecko"].filter((model) => MODELS[model]))
@@ -4553,6 +4625,23 @@
     }
 
     function missionEncounterArrivalPlan(kind, side, index, count, rng) {
+      if (kind === "escortTrader" && side === "ally") return { hyperspaceIn: false, delay: 0 };
+      if (kind === "escortTrader" && side === "enemy") {
+        return index === 0 || rng() < .45
+          ? { hyperspaceIn: false, delay: 0 }
+          : { hyperspaceIn: true, delay: 1.4 + index * (2.4 + rng() * 1.3) + rng() * 2.8 };
+      }
+      if (kind === "wingSupport" && side === "ally") {
+        return index === 0
+          ? { hyperspaceIn: false, delay: 0 }
+          : { hyperspaceIn: true, delay: 1.2 + index * (1.9 + rng() * 1.3) + rng() * 2.4 };
+      }
+      if (kind === "wingSupport" && side === "enemy") {
+        const present = Math.max(1, Math.ceil(count * .5));
+        return index < present
+          ? { hyperspaceIn: false, delay: 0 }
+          : { hyperspaceIn: true, delay: 1.5 + (index - present) * (2.8 + rng() * 1.5) + rng() * 3.0 };
+      }
       if (kind === "navalBattle" && side === "enemy") return { hyperspaceIn: false, delay: 0 };
       if (kind === "navalBattle" && side === "ally") {
         return index === 0
@@ -4588,14 +4677,17 @@
       const drift = norm(add(sub(center, pos), vec((rng() - .5) * 120, (rng() - .5) * 80, (rng() - .5) * 120)));
       const alien = ALIEN_MODELS.includes(model);
       const navalAlly = kind === "navalBattle" && side === "ally";
-      const role = side === "ally" ? (navalAlly ? "naval" : "trader") : (alien ? "alien" : "pirate");
+      const protectedAlly = kind === "escortTrader" && side === "ally" && index === 0;
+      const wingAlly = kind === "wingSupport" && side === "ally";
+      const role = side === "ally" ? (navalAlly ? "naval" : wingAlly ? "wingmen" : "trader") : (alien ? "alien" : "pirate");
       const hostile = side === "enemy";
       const hpScale = side === "ally" ? (navalAlly ? 1.08 : .95) : alien ? 1.08 : 1.05;
+      const allyPrefix = navalAlly ? "NAVAL" : wingAlly ? "WINGMEN" : "TRADER";
       const o = {
         type: "ship",
         model,
         name: side === "ally"
-          ? `${navalAlly ? "NAVAL" : "TRADER"} ${shipName(model)}`
+          ? `${allyPrefix} ${shipName(model)}`
           : `${alien ? "ALIEN" : "PIRATE"} ${shipName(model)}`,
         pos,
         vel: scale(drift, 55 + rng() * 38),
@@ -4615,8 +4707,9 @@
         missionId: mission.id,
         missionEncounterId: encounter.id,
         missionEncounterSide: side,
-        missionAlly: side === "ally",
-        aiMode: "attack",
+        missionAlly: side === "ally" && !protectedAlly,
+        missionProtectedAlly: protectedAlly,
+        aiMode: side === "ally" && !protectedAlly ? "attack" : protectedAlly ? "cruise" : "attack",
         target: undefined,
         orbitCenter: center,
         orbitRadius: spread,
@@ -4646,20 +4739,34 @@
       for (let i = 0; i < (Number(encounter.allies) || 1); i++) allies.push(spawnMissionEncounterShip(mission, "ally", i, center, rng));
       for (let i = 0; i < (Number(encounter.enemies) || Number(encounter.required) || 1); i++) enemies.push(spawnMissionEncounterShip(mission, "enemy", i, center, rng));
       for (let i = 0; i < allies.length; i++) allies[i].target = enemies[i % Math.max(1, enemies.length)] || null;
-      for (let i = 0; i < enemies.length; i++) enemies[i].target = allies.length && rng() < .76 ? allies[i % allies.length] : null;
+      const protectedAlly = allies.find((ally) => ally.missionProtectedAlly);
+      for (let i = 0; i < enemies.length; i++) enemies[i].target = protectedAlly || (allies.length && rng() < .76 ? allies[i % allies.length] : null);
       encounter.spawned = true;
       encounter.spawnSystem = { galaxy: game.galaxy, system: game.current };
       const message = encounter.kind === "navalBattle"
         ? "Alien contacts already in-system. Naval wing is joining in staggered jumps."
-        : "Raider group already in-system. Trader defenders and pirate reinforcements are joining unevenly.";
+        : encounter.kind === "escortTrader"
+          ? "Escort contact is in-system. Pirate attackers are moving to intercept."
+          : encounter.kind === "wingSupport"
+            ? "Hostile group already in-system. Friendly wing support is joining unevenly."
+            : "Raider group already in-system. Trader defenders and pirate reinforcements are joining unevenly.";
       missionCommsMessage(mission, message);
+      if (allies.some((ally) => ally.missionAlly)) {
+        wingmenCommsMessage(mission, encounter.kind === "navalBattle"
+          ? "Support wing entering engagement envelope."
+          : encounter.kind === "wingSupport"
+            ? "Wingmen linked. We will share hostile pressure."
+            : "Trader defence channel open. We will cover the convoy.");
+      } else if (protectedAlly) {
+        wingmenCommsMessage(mission, "Escort beacon online. Keep us alive through the attack run.");
+      }
       setMessage(`Mission encounter detected: ${mission.title}.`, true);
       if (game.panelOpen && game.panel === "missions") renderPanel();
       return [...allies, ...enemies];
     }
 
-    function updateMissionSpawns(dt) {
-      if (game.docked || game.transition || game.jumpCountdown) return;
+    function updateMissionSpawns(dt, opts = {}) {
+      if (game.docked || (!opts.duringTransition && game.transition) || game.jumpCountdown) return;
       for (const mission of missionState().active) {
         if (mission.status !== "active") continue;
         if (!missionProgressUnlocked(mission)) continue;
@@ -4743,12 +4850,14 @@
     let commsSeq = 0;
     const COMMS_KIND_RULES = {
       mission: { duration: 15500, protected: true },
+      wingmen: { duration: 12500, protected: true },
       station: { duration: 9500, protected: true },
       warning: { duration: 11500, protected: true }
     };
     const COMMS_HISTORY_FILTERS = [
-      { id: "important", label: "IMPORTANT", match: (m) => ["mission", "warning", "police", "hostile", "alien"].includes(m.kind) || m.alien },
+      { id: "important", label: "IMPORTANT", match: (m) => ["mission", "wingmen", "warning", "police", "hostile", "alien"].includes(m.kind) || m.alien },
       { id: "mission", label: "MISSION", match: (m) => m.kind === "mission" },
+      { id: "wingmen", label: "WINGMEN", match: (m) => m.kind === "wingmen" },
       { id: "security", label: "SECURITY", match: (m) => ["warning", "police", "hostile", "alien"].includes(m.kind) || m.alien },
       { id: "all", label: "ALL COMMS", match: () => true }
     ];
@@ -4758,6 +4867,7 @@
       const name = String(from || "").toUpperCase();
       if (alien) return "alien";
       if (name.includes("CONTROL") || name.includes("TRAFFIC")) return "station";
+      if (name.includes("WING") || name.includes("NAVAL")) return "wingmen";
       if (name.includes("POLICE") || name.includes("VIPER") || name.includes("PATROL")) return "police";
       if (name.includes("PIRATE")) return "hostile";
       if (name.includes("TRADER") || name.includes("ARMADA")) return "trader";
@@ -4941,6 +5051,24 @@
       return commsMessage(from, text, "mission", { durationMs: opts.durationMs ?? 15500, protected: true, missionId: mission?.id || "" });
     }
 
+    function wingmenCallsign(mission) {
+      if (mission?.encounter?.kind === "navalBattle") return "NAVAL WING";
+      if (mission?.encounter?.kind === "traderDefence") return "TRADER WING";
+      return "WINGMEN";
+    }
+
+    function wingmanCommsMessage(text, opts = {}) {
+      return commsMessage(opts.from || "WINGMEN", text, "wingmen", {
+        durationMs: opts.durationMs ?? 12500,
+        protected: true,
+        missionId: opts.missionId || ""
+      });
+    }
+
+    function wingmenCommsMessage(mission, text, opts = {}) {
+      return wingmanCommsMessage(text, { ...opts, from: wingmenCallsign(mission), missionId: mission?.id || "" });
+    }
+
     function clearMissionCommsHistory(missionOrId) {
       const missionId = typeof missionOrId === "string" ? missionOrId : missionOrId?.id;
       if (!missionId || !Array.isArray(game.commsHistory)) return;
@@ -4974,17 +5102,26 @@
         const required = Number(mission.encounter.required) || 1;
         const destroyed = Number(mission.encounter.destroyed) || 0;
         const left = Math.max(0, required - destroyed);
-        return mission.encounter.kind === "navalBattle"
-          ? pick([
-            `Naval tactical: ${left} alien contact${left === 1 ? "" : "s"} remain on contract scope.`,
-            `Military channel holds your engagement warrant. Alien count ${destroyed}/${required}.`,
-            `Wing telemetry requests continued support. ${left} hostile contact${left === 1 ? "" : "s"} unresolved.`
-          ])
-          : pick([
-            `Convoy channel: ${left} raider${left === 1 ? "" : "s"} still threatening the traders.`,
-            `Trader band beacon shows ${destroyed}/${required} raiders cleared.`,
-            `Contract traffic asks you to keep the convoy covered. ${left} raider${left === 1 ? "" : "s"} remain.`
-          ]);
+        if (mission.encounter.kind === "navalBattle") return pick([
+          `Naval tactical: ${missionEncounterSubject(mission.encounter.kind, left)} remain on contract scope.`,
+          `Military channel holds your engagement warrant. Alien count ${destroyed}/${required}.`,
+          `Wing telemetry requests continued support. ${left} hostile contact${left === 1 ? "" : "s"} unresolved.`
+        ]);
+        if (mission.encounter.kind === "escortTrader") return pick([
+          `Escort channel: protected trader alive, ${missionEncounterSubject(mission.encounter.kind, left)} still closing.`,
+          `Convoy surety beacon shows ${destroyed}/${required} pirate attackers cleared.`,
+          `Contract traffic asks you to keep the escort covered. ${missionEncounterSubject(mission.encounter.kind, left)} remain.`
+        ]);
+        if (mission.encounter.kind === "wingSupport") return pick([
+          `Wingmen channel: ${missionEncounterSubject(mission.encounter.kind, left)} still in your combat scope.`,
+          `Friendly wing telemetry shows ${destroyed}/${required} raiders cleared.`,
+          `Wing support is holding formation. ${missionEncounterSubject(mission.encounter.kind, left)} remain.`
+        ]);
+        return pick([
+          `Convoy channel: ${left} raider${left === 1 ? "" : "s"} still threatening the traders.`,
+          `Trader band beacon shows ${destroyed}/${required} raiders cleared.`,
+          `Contract traffic asks you to keep the convoy covered. ${left} raider${left === 1 ? "" : "s"} remain.`
+        ]);
       }
       if (mission.suppression) {
         const required = Number(mission.suppression.required) || 1;
@@ -5145,7 +5282,15 @@
       return text + pick(["", "", "", "!", "…"]);
     }
 
-    const hail = (o, text) => commsMessage(o.name || "UNKNOWN", text, isAlienShip(o) ? "alien" : o.police ? "police" : o.hostile ? "hostile" : "trader");
+    function isWingmenRole(o) {
+      return !!(o?.missionAlly || o?.missionProtectedAlly || o?.role === "wingmen" || o?.role === "wingman" || o?.role === "naval");
+    }
+
+    function isCommanderWingmanShip(o) {
+      return !!(o?.commanderWingman && o.type === "ship" && !o._remove);
+    }
+
+    const hail = (o, text) => commsMessage(o.name || "UNKNOWN", text, isAlienShip(o) ? "alien" : isWingmenRole(o) ? "wingmen" : o.police ? "police" : o.hostile ? "hostile" : "trader");
     const stationCommsName = () => `${currentSystem().name.toUpperCase()} CONTROL`;
 
     function shipHail(o, mood, text, chance = 1, cooldown = 9000) {
@@ -6855,11 +7000,14 @@
       function playAt(name, pos, opts = {}) {
         const spatial = spatialAudioFromWorld(pos, opts.range || 1600);
         if (spatial.gain <= .01) return;
+        const spatialFloor = clamp(opts.spatialFloor ?? .28, 0, 1);
+        const spatialPower = Math.max(.1, Number(opts.spatialPower) || 1);
+        const distanceGain = Math.pow(spatial.gain, spatialPower);
         play(name, {
           ...opts,
           spatial: true,
           pan: spatial.pan,
-          gain: (opts.gain ?? 1) * (.28 + spatial.gain * .72)
+          gain: (opts.gain ?? 1) * (spatialFloor + distanceGain * (1 - spatialFloor))
         });
       }
 
@@ -6922,6 +7070,7 @@
       game.aftShield = 100;
       game.shields = 100;
       game.cabinTemp = 0;
+      game.laserHeat = 0;
       game.playerDamageMarks = [];
       game._lastHullDamageMarkAt = 0;
     }
@@ -7146,12 +7295,12 @@
       const state = typeof game.autoDock === "object" ? game.autoDock : null;
       const stage = state?.stage || "marshal";
       if (stage === "marshal" || stage === "goAround") return false;
-      const { center, outward } = stationAutoDockFrame(st);
+      const { center, outward } = cachedAutoDockFrame(st, state);
       const rel = sub(game.camera.pos, center);
       const depth = dot(rel, outward);
       const lateral = len(sub(rel, scale(outward, depth)));
-      const lateralLimit = stage === "final" ? 180 : stage === "align" ? 240 : 380;
-      return depth > -170 && depth < 980 && lateral < lateralLimit && game.speed < 140;
+      const lateralLimit = stage === "final" ? 240 : stage === "align" ? 360 : stage === "turnIn" ? 620 : 760;
+      return depth > -260 && depth < 1560 && lateral < lateralLimit && game.speed < 155;
     }
 
     function bodyVelocity(o) {
@@ -7300,7 +7449,11 @@
 
     function handlePlayerLargeCollision(o) {
       if (!largeCollisionBody(o) || game.docked || game.transition) return;
-      if (o.type === "station" && (inStationDockingCorridor(o) || inAutoDockStationCorridor(o))) return;
+      if (o.type === "station") {
+        const autoDocking = game.autoDock && typeof game.autoDock === "object";
+        const stage = autoDocking ? game.autoDock.stage || "marshal" : "";
+        if ((autoDocking && stage !== "marshal" && stage !== "goAround") || inStationDockingCorridor(o) || inAutoDockStationCorridor(o)) return;
+      }
       const bodyR = largeCollisionRadius(o);
       const playerR = playerCollisionRadius();
       const delta = sub(game.camera.pos, o.pos);
@@ -7394,19 +7547,25 @@
       }
     }
 
-    function rechargeShipSystems(dt) {
+    function rechargeShipSystems(dt, rateMul = 1) {
       ensureShipSystems();
       const energyRate = game.equipment.extraEnergy ? 5.2 : 3.1;
       const shieldRate = game.equipment.extraEnergy ? 7.2 : 4.6;
-      game.energy = clamp(game.energy + dt * energyRate, 0, 100);
+      game.energy = clamp(game.energy + dt * energyRate * rateMul, 0, 100);
       for (let i = 0; i < 2; i++) {
         const target = game.foreShield <= game.aftShield ? "foreShield" : "aftShield";
         if (game[target] >= 100 || game.energy <= 4) break;
-        const transfer = Math.min(dt * shieldRate * .5, 100 - game[target], Math.max(0, game.energy - 4));
+        const transfer = Math.min(dt * shieldRate * .5 * rateMul, 100 - game[target], Math.max(0, game.energy - 4));
         game[target] += transfer;
         game.energy -= transfer * .72;
       }
       ensureShipSystems();
+    }
+
+    function updatePassiveCommanderSystems(dt) {
+      updateCabinTemperature(dt);
+      rechargeShipSystems(dt);
+      game.laserHeat = clamp(game.laserHeat - dt * 18, 0, 100);
     }
 
     function playerAltitude() {
@@ -7472,6 +7631,80 @@
     function startTransition(kind, dur, onComplete, extra = {}) {
       game.transition = { kind, t: 0, dur, onComplete, ...extra };
       forceTransitionViewMode();
+    }
+
+    function cloneCameraState(camera = game.camera) {
+      ensureCameraState(camera);
+      return {
+        ...camera,
+        pos: { ...camera.pos },
+        q: camera.q ? { ...camera.q } : quat()
+      };
+    }
+
+    function captureJumpSceneState() {
+      return {
+        galaxy: game.galaxy,
+        current: game.current,
+        target: game.target,
+        finalTarget: game.finalTarget,
+        equipment: { ...game.equipment },
+        docked: game.docked,
+        dockedAt: game.dockedAt,
+        dockScene: game.dockScene,
+        camera: cloneCameraState(game.camera),
+        objects: game.objects,
+        stars: game.stars,
+        targetObject: game.targetObject,
+        missileLockObject: game.missileLockObject,
+        stationTrafficControl: game.stationTrafficControl,
+        extraVesselDelay: game.extraVesselDelay,
+        npcHyperspaceOutClock: game.npcHyperspaceOutClock,
+        autoDock: game.autoDock,
+        witchspace: game.witchspace,
+        speed: game.speed
+      };
+    }
+
+    function applyJumpSceneState(state) {
+      if (!state) return;
+      game.galaxy = state.galaxy;
+      game.current = state.current;
+      game.target = state.target;
+      game.finalTarget = state.finalTarget;
+      game.equipment = { ...state.equipment };
+      game.docked = state.docked;
+      game.dockedAt = state.dockedAt;
+      game.dockScene = state.dockScene;
+      game.camera = cloneCameraState(state.camera);
+      game.objects = state.objects || [];
+      game.stars = state.stars || [];
+      game.targetObject = state.targetObject || null;
+      game.missileLockObject = state.missileLockObject || null;
+      game.stationTrafficControl = state.stationTrafficControl;
+      game.extraVesselDelay = state.extraVesselDelay;
+      game.npcHyperspaceOutClock = state.npcHyperspaceOutClock;
+      game.autoDock = state.autoDock;
+      game.witchspace = !!state.witchspace;
+      game.speed = state.speed || 0;
+      game.world = null;
+    }
+
+    function seedArrivalMissionSpawns() {
+      game.world = null;
+      buildWorldSnapshot();
+      updateMissionSpawns(999, { duringTransition: true });
+      game.world = null;
+    }
+
+    function prepareJumpArrivalScene(tr, buildScene) {
+      if (!tr || tr.preparedArrivalScene) return tr?.preparedArrivalScene || null;
+      const visibleScene = captureJumpSceneState();
+      buildScene();
+      seedArrivalMissionSpawns();
+      tr.preparedArrivalScene = captureJumpSceneState();
+      applyJumpSceneState(visibleScene);
+      return tr.preparedArrivalScene;
     }
 
     function jumpTransitionProgress(tr) {
@@ -8271,7 +8504,7 @@
       // hyperspace; it appears only once the player reaches the planet's station
       // zone. Ultra Elite keeps it targetable, but arrivals should still begin
       // outside the safe zone so the planet lane has room for normal encounters.
-      return arrival ? vec(0, 0, 6600 + rng() * 1800) : vec(0, 0, 900);
+      return arrival ? vec(0, 0, 6600 + rng() * 5000) : vec(0, 0, 900);
     }
 
     function resetFlightScene(arrival = false) {
@@ -8413,7 +8646,7 @@
         hue: 196
       });
       trimParticleStore(game.smokePuffs, 300);
-      eliteAudio.playAt("hyperspace", o.pos, { range: 3600, gain: .62 });
+      eliteAudio.playAt("hyperspace", o.pos, { range: 3600, gain: .62, spatialFloor: .04, spatialPower: 1.55 });
       game.screenShake = Math.max(game.screenShake || 0, .32);
     }
 
@@ -8430,7 +8663,7 @@
         hue: 196
       });
       trimParticleStore(game.smokePuffs, 300);
-      eliteAudio.playAt("hyperspace", o.pos, { range: 3600, gain: .5 });
+      eliteAudio.playAt("hyperspace", o.pos, { range: 3600, gain: .5, spatialFloor: .04, spatialPower: 1.55 });
       game.screenShake = Math.max(game.screenShake || 0, .18);
     }
 
@@ -8667,6 +8900,66 @@
       return o;
     }
 
+    function spawnDevRandomWingman(rng = Math.random) {
+      if (!game.developerMode) {
+        setMessage("Developer mode required for wingman launch.", true);
+        return null;
+      }
+      if (game.docked || game.transition || game.jumpCountdown) {
+        setMessage("Launch before adding a wingman.", true);
+        return null;
+      }
+      const models = ["viper", "cobra", "cobra1", "asp", "ferdelance", "gecko", "adder"].filter((model) => MODELS[model]);
+      const model = models[Math.floor(rng() * models.length)] || "cobra";
+      const stats = shipStats(model);
+      const depth = 520 + rng() * 920;
+      const side = (rng() < .5 ? -1 : 1) * (180 + rng() * 360);
+      const up = 70 + rng() * 220;
+      const pos = cameraLocalToWorld(game.camera, vec(side, up, depth));
+      const q = ensureCameraQuat(game.camera);
+      const vel = quatRotate(q, vec(-side * .08, -up * .03, -96 - rng() * 42));
+      const wingIndex = worldSnapshot().ships.filter((ship) => ship.commanderWingman && !ship._remove).length + 1;
+      const name = `WINGMAN ${shipName(model)} ${wingIndex}`;
+      const o = {
+        type: "ship",
+        model,
+        name,
+        pos,
+        vel,
+        rot: 0,
+        pitch: 0,
+        roll: rng() * TAU,
+        r: stats.r,
+        color: shipColor(model, false),
+        hp: Math.round(stats.hp * 1.05),
+        maxHp: Math.round(stats.hp * 1.05),
+        hostile: false,
+        police: false,
+        role: "wingmen",
+        bounty: 0,
+        commanderWingman: true,
+        wingmanId: `dev-wingman-${game.galaxy}-${game.current}-${Date.now().toString(36)}-${wingIndex}`,
+        wingOrder: "regroup",
+        aiMode: "regroup",
+        target: null,
+        orbitCenter: cameraLocalToWorld(game.camera, vec(0, 0, depth + 280)),
+        orbitRadius: 420 + rng() * 520,
+        orbitAngle: rng() * TAU,
+        orbitSpeed: (rng() > .5 ? 1 : -1) * (.18 + rng() * .2),
+        attackClock: rng() * .8,
+        wobble: rng() * TAU,
+        npcMissiles: npcMissileStock(model, "wingmen", false),
+        decalSeed: hash32(`dev-wingman:${game.galaxy}:${game.current}:${model}:${wingIndex}:${Date.now()}`)
+      };
+      setNoseDirection(o, vel, o.roll);
+      startNpcHyperspaceIn(o, { dur: 1.18 + rng() * .22, revealAt: .58 + rng() * .1 });
+      game.objects.push(o);
+      wingmanCommsMessage(`${o.name} launched. Forming on your wing.`);
+      setMessage(`Dev wingman launched: ${o.name}.`, true);
+      renderWingmenHud();
+      return o;
+    }
+
     function stationTrafficModels() {
       return ["shuttle", "transporter", "worm", "adder", "gecko", "cobra1", "python"];
     }
@@ -8680,6 +8973,39 @@
 
     function stationAutoDockFrame(st) {
       return stationSlotAxes(st);
+    }
+
+    function cloneNavFrame(frame) {
+      if (!frame) return null;
+      return {
+        center: { ...frame.center },
+        outward: norm(frame.outward),
+        right: norm(frame.right),
+        up: norm(frame.up)
+      };
+    }
+
+    function cachedAutoDockFrame(st, state) {
+      if (!st || !state || typeof state !== "object") return stationAutoDockFrame(st);
+      if (!state.approachFrame) state.approachFrame = cloneNavFrame(stationAutoDockFrame(st));
+      return state.approachFrame || stationAutoDockFrame(st);
+    }
+
+    function stationTrafficHoldPoint(st, opts = {}) {
+      const { center, outward, right, up } = stationSlotAxes(st);
+      const sideSign = opts.sideSign === -1 ? -1 : 1;
+      const along = Math.max(opts.along || 0, 1880);
+      const lateral = opts.lateral ?? 920;
+      const upOffset = opts.upOffset ?? 340;
+      let hold = add(center, add(scale(outward, along), add(scale(right, sideSign * lateral), scale(up, upOffset))));
+      const minDist = stationClearanceRadius() + (opts.shipR || 70) + (opts.extraClearance ?? 1380);
+      const fromStation = sub(hold, st.pos);
+      const dist = len(fromStation);
+      if (dist < minDist) {
+        const safeDir = dist > .01 ? scale(fromStation, 1 / dist) : norm(add(outward, scale(right, sideSign)));
+        hold = add(st.pos, scale(safeDir, minDist));
+      }
+      return hold;
     }
 
     function stationTrafficControlState() {
@@ -8709,6 +9035,18 @@
       const along = dot(rel, outward);
       const lateral = len(sub(rel, scale(outward, along)));
       return { along, lateral };
+    }
+
+    function playerStationDockingIntent(st, metrics = stationTrafficCorridorMetrics(st, game.camera.pos)) {
+      if (!st || game.docked || game.transition || game.jumpCountdown || game.playerDestroyed) return false;
+      if (game.autoDock && typeof game.autoDock === "object") return true;
+      const { outward } = stationSlotAxes(st);
+      const inward = scale(outward, -1);
+      const facingIn = dot(forwardVector(game.camera), inward);
+      const inFrontOfSlot = metrics.along > 80 && metrics.along < 2450;
+      const inDirectLane = metrics.lateral < 720;
+      const controlledSpeed = game.speed > 6 && game.speed < 145;
+      return inFrontOfSlot && inDirectLane && controlledSpeed && facingIn > .58;
     }
 
     function stationTrafficLaneOccupant(st, exclude = null) {
@@ -8747,10 +9085,10 @@
       const autoDocking = game.autoDock && typeof game.autoDock === "object";
       if (autoDocking) {
         const stage = game.autoDock.stage || "marshal";
-        if (stage === "approach" || stage === "align" || stage === "final" || stage === "hold") return true;
+        if (stage === "turnIn" || stage === "approach" || stage === "align" || stage === "final" || stage === "hold") return true;
         return stage === "marshal" && inApproachLane;
       }
-      return inApproachLane && game.speed < 92;
+      return inApproachLane && playerStationDockingIntent(st, metrics);
     }
 
     function stationTrafficPriority(st) {
@@ -8820,7 +9158,13 @@
       const sideSign = dot(sub(o.pos, center), right) >= 0 ? 1 : -1;
       o.trafficControlStatus = "holding";
       o.trafficAge = 0;
-      o.trafficHoldPoint = add(center, add(scale(outward, Math.max(1180, m.along + 420)), add(scale(right, sideSign * 760), scale(up, 260))));
+      o.trafficHoldPoint = stationTrafficHoldPoint(st, {
+        sideSign,
+        along: Math.max(1900, m.along + 720),
+        lateral: 960,
+        upOffset: 360,
+        shipR: o.r || 70
+      });
       releaseStationTrafficControl(o.trafficControlId);
       if (!o._trafficYieldHailed || performance.now() - o._trafficYieldHailed > 9000) {
         o._trafficYieldHailed = performance.now();
@@ -8863,6 +9207,10 @@
       const metrics = stationTrafficCorridorMetrics(st, game.camera.pos);
       if (metrics.along < -260 || metrics.along > 2400 || metrics.lateral > 980) return;
       const control = stationTrafficControlState();
+      if (!playerStationDockingIntent(st, metrics)) {
+        control.lastPlayerActiveId = "";
+        return;
+      }
       const now = performance.now();
       const activeId = active?.trafficControlId || active?.id || "";
       if (active && (control.lastPlayerActiveId !== activeId || now - (control.playerLineAt || 0) > 15000)) {
@@ -8940,7 +9288,13 @@
       const approach = 1300 + rng() * 760;
       const holding = !launch && opts.status === "holding";
       const holdSide = rng() < .5 ? -1 : 1;
-      const holdPoint = add(center, add(scale(outward, approach + 220), add(scale(right, holdSide * (520 + rng() * 260)), scale(up, 180 + rng() * 180))));
+      const holdPoint = stationTrafficHoldPoint(st, {
+        sideSign: holdSide,
+        along: approach + 640,
+        lateral: 920 + rng() * 260,
+        upOffset: 320 + rng() * 160,
+        shipR: stats.r
+      });
       const pos = holding
         ? add(holdPoint, add(scale(right, (rng() - .5) * 180), scale(up, (rng() - .5) * 90)))
         : launch
@@ -9229,6 +9583,11 @@
         setMessage("Launch before engaging hyperspace.");
         return;
       }
+      if (game.autoDock) {
+        eliteAudio.play("boop");
+        setMessage("Disengage docking computer before engaging hyperspace.", true);
+        return;
+      }
       const from = currentSystem();
       const to = targetSystem();
       const d = distance(from, to);
@@ -9262,7 +9621,21 @@
       startJumpCountdown("hyperspace", 5, "HYPERSPACE", () => {
         eliteAudio.play("hyperspace");
         const finalTrajectoryQ = quatNorm(ensureCameraQuat(game.camera));
-        const arrive = () => {
+        let arrivalPrepared = false;
+        let arrivalApplied = false;
+        let preparedArrivalScene = null;
+        const buildArrivalScene = () => {
+          game.current = game.target;
+          updateNextDestinationForFinalTarget();
+          game.witchspace = false;
+          resetFlightScene(true);
+        };
+        const prepareArrival = (tr) => {
+          if (arrivalPrepared) return;
+          preparedArrivalScene = prepareJumpArrivalScene(tr, buildArrivalScene);
+          arrivalPrepared = true;
+        };
+        const arrive = ({ announce = true } = {}) => {
           if (toWitch) {
             game.witchspace = true;
             game.objects = [];
@@ -9282,29 +9655,36 @@
             }
             game.docked = false;
             game.speed = 50;
-            setMessage("Witch-space malfunction. Thargoids detected.", true);
+            if (announce) setMessage("Witch-space malfunction. Thargoids detected.", true);
           } else {
-            game.current = game.target;
-            updateNextDestinationForFinalTarget();
-            game.witchspace = false;
-            resetFlightScene(true);
-            setMessage(`Hyperspace complete. Arrived at ${currentSystem().name}.`, true);
+            if (!arrivalApplied) {
+              if (preparedArrivalScene) applyJumpSceneState(preparedArrivalScene);
+              else {
+                buildArrivalScene();
+                seedArrivalMissionSpawns();
+              }
+              arrivalPrepared = true;
+              arrivalApplied = true;
+            }
+            if (announce) setMessage(`Hyperspace complete. Arrived at ${currentSystem().name}.`, true);
           }
         };
         const finish = () => {
           if (!ultraFxEnabled() || toWitch) arrive();
+          else arrive();
           game.screenShake = Math.max(game.screenShake || 0, ultraFxEnabled() ? 1.2 : .5);
           flash();
           renderPanel();
         };
         const extra = ultraFxEnabled() ? {
           departureEnd: .26,
+          prepareAt: .38,
           arrivalAt: .74,
           fromQ: finalTrajectoryQ,
           trajectoryQ: finalTrajectoryQ,
           departureClearance: jumpDepartureClearanceDistance(finalTrajectoryQ, game.camera),
           departureStars: captureJumpDepartureStarfield(game.camera),
-          ...(toWitch ? {} : { onArrive: arrive })
+          ...(toWitch ? {} : { onPrepareArrive: prepareArrival, onArrive: () => arrive({ announce: false }) })
         } : {};
         startTransition("hyperspace", ultraFxEnabled() ? 3.8 : 1.1, finish, extra);
       }, countdownTrajectory);
@@ -9312,6 +9692,11 @@
 
     function galacticJump() {
       if (game.transition || game.jumpCountdown) return;
+      if (game.autoDock) {
+        eliteAudio.play("boop");
+        setMessage("Disengage docking computer before engaging galactic hyperspace.", true);
+        return;
+      }
       if (!game.equipment.galacticHyperdrive) {
         eliteAudio.play("boop");
         setMessage("No Galactic Hyperdrive fitted.");
@@ -9329,7 +9714,10 @@
       startJumpCountdown("galactic", 10, "GALACTIC JUMP", () => {
         eliteAudio.play("hyperspace");
         const finalTrajectoryQ = quatNorm(ensureCameraQuat(game.camera));
-        const arrive = () => {
+        let arrivalPrepared = false;
+        let arrivalApplied = false;
+        let preparedArrivalScene = null;
+        const buildArrivalScene = () => {
           game.galaxy = (game.galaxy + 1) % 8;
           game.current = 0;
           game.target = 1;
@@ -9339,8 +9727,23 @@
           game.witchspace = false;
           resetFlightScene(true);
         };
+        const prepareArrival = (tr) => {
+          if (arrivalPrepared) return;
+          preparedArrivalScene = prepareJumpArrivalScene(tr, buildArrivalScene);
+          arrivalPrepared = true;
+        };
+        const arrive = () => {
+          if (arrivalApplied) return;
+          if (preparedArrivalScene) applyJumpSceneState(preparedArrivalScene);
+          else {
+            buildArrivalScene();
+            seedArrivalMissionSpawns();
+          }
+          arrivalPrepared = true;
+          arrivalApplied = true;
+        };
         const finish = () => {
-          if (!ultraFxEnabled()) arrive();
+          arrive();
           game.screenShake = Math.max(game.screenShake || 0, ultraFxEnabled() ? 1.6 : .6);
           flash();
           setMessage(`Galactic hyperspace complete. Galaxy ${game.galaxy + 1}.`, true);
@@ -9348,11 +9751,13 @@
         };
         const extra = ultraFxEnabled() ? {
           departureEnd: .22,
+          prepareAt: .42,
           arrivalAt: .76,
           fromQ: finalTrajectoryQ,
           trajectoryQ: finalTrajectoryQ,
           departureClearance: jumpDepartureClearanceDistance(finalTrajectoryQ, game.camera),
           departureStars: captureJumpDepartureStarfield(game.camera),
+          onPrepareArrive: prepareArrival,
           onArrive: arrive
         } : {};
         startTransition("galactic", ultraFxEnabled() ? 7.2 : 2.8, finish, extra);
@@ -10134,6 +10539,14 @@
               spawnSmokePuffs(add(o.pos, offset), clamp(mag * .38, .9, 3.2), 4 + Math.floor(mag));
             }, 90 + i * 135 + Math.random() * 120);
           }
+        }
+        const failedEscortMission = markMissionEncounterAllyDestroyed(o);
+        if (failedEscortMission) {
+          if (byPlayer) {
+            game.kills++;
+            game.legal += 8;
+          }
+          return;
         }
         if (isAlienShip(o)) {
           spawnAlienSalvage(o);
@@ -11431,9 +11844,16 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
             tr._jumpDecelShake = true;
             game.screenShake = Math.max(game.screenShake || 0, bigJump ? 2.7 : 2.05);
           }
+          if (tr.onPrepareArrive && !tr._arrivalPrepared && jp >= (tr.prepareAt ?? (bigJump ? .42 : .38))) {
+            tr._arrivalPrepared = true;
+            const prepareStart = performance.now();
+            tr.onPrepareArrive(tr);
+            tr.arrivalPrepareMs = performance.now() - prepareStart;
+            if (tr.arrivalPrepareMs > 120 && tr.t > tr.dur - .45) tr.dur = tr.t + .45;
+          }
           if (tr.onArrive && !tr._arrived && jp >= (tr.arrivalAt ?? .74)) {
             tr._arrived = true;
-            tr.onArrive();
+            tr.onArrive(tr);
             game.camera.q = arrivalStationFacingQuat(game.camera);
             tr.arrivalQ = ensureCameraQuat(game.camera);
           }
@@ -11601,9 +12021,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           }
         });
         timeSimPhase("systems", () => {
-          updateCabinTemperature(dt);
-          rechargeShipSystems(dt);
-          game.laserHeat = clamp(game.laserHeat - dt * 18, 0, 100);
+          updatePassiveCommanderSystems(dt);
           game.legal = Math.max(0, game.legal - dt * 0.025);
         });
       }
@@ -11683,7 +12101,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
 
       const state = typeof game.autoDock === "object" ? game.autoDock : (game.autoDock = { stage: "marshal" });
-      const slot = stationAutoDockFrame(st);
+      const liveSlot = stationAutoDockFrame(st);
+      const slot = cachedAutoDockFrame(st, state);
       const inward = scale(slot.outward, -1);
       const right = slot.right || norm(cross(slot.up, slot.outward));
       if (!state.laneRight || !state.laneUp) {
@@ -11693,12 +12112,21 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const laneRight = norm(state.laneRight);
       const laneUp = norm(state.laneUp);
       const frontness = dot(sub(game.camera.pos, slot.center), slot.outward);
-      const marshal = add(slot.center, add(scale(slot.outward, 1380), add(scale(laneRight, 520), scale(laneUp, 210))));
+      const entry = add(slot.center, scale(slot.outward, 1180));
       const goSide = state.goSide || (state.goSide = Math.random() < .5 ? -1 : 1);
+      const holdSide = state.holdSide || (state.holdSide = goSide);
+      const makeTrafficHold = () => stationTrafficHoldPoint(st, {
+        sideSign: holdSide,
+        along: 2120,
+        lateral: 1020,
+        upOffset: 390,
+        shipR: playerCollisionRadius(),
+        extraClearance: 1520
+      });
+      let trafficHold = state.trafficHoldPoint || makeTrafficHold();
       const goAround = add(slot.center, add(scale(slot.outward, 1720), add(scale(laneRight, goSide * 760), scale(laneUp, 320))));
       const approach = add(slot.center, scale(slot.outward, 760));
       const final = add(slot.center, scale(slot.outward, 118));
-      const finalAim = add(slot.center, scale(inward, 150));
       const relToAxis = sub(game.camera.pos, slot.center);
       const lateral = len(sub(relToAxis, scale(slot.outward, dot(relToAxis, slot.outward))));
       const dockingDenial = stationDockingDenial(st);
@@ -11714,39 +12142,58 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const stationControlHold = !!trafficOccupant;
       if (stationControlHold && state.stage !== "hold") {
         state.stage = "hold";
+        state.trafficHoldPoint = makeTrafficHold();
+        trafficHold = state.trafficHoldPoint;
         state.offTrackTime = 0;
         state.announced = "";
         stationTrafficPlayerInstruction(st, trafficOccupant);
         commsMessage(stationTrafficName(st), `${game.commander}, docking computer holding. Proceed after ${trafficOccupant.name || "station traffic"}.`, "station", { protected: true });
       } else if (!stationControlHold && state.stage === "hold") {
         state.stage = "marshal";
+        state.trafficHoldPoint = null;
         state.offTrackTime = 0;
         state.announced = "";
       }
-      const stageTarget = state.stage === "marshal"
-        ? (stationControlHold || frontness < 420 ? marshal : approach)
-        : state.stage === "hold"
-          ? marshal
-        : state.stage === "goAround"
+      const targetForStage = (stage) => stage === "marshal"
+        ? entry
+        : stage === "turnIn"
+          ? entry
+        : stage === "hold"
+          ? trafficHold
+        : stage === "goAround"
           ? goAround
-          : state.stage === "approach"
-          ? approach
-          : state.stage === "align"
-            ? final
-            : slot.center;
-      const toTarget = sub(stageTarget, game.camera.pos);
-      const d = len(toTarget);
-      const slotDist = len(sub(game.camera.pos, slot.center));
+          : stage === "approach"
+            ? approach
+            : stage === "align"
+              ? final
+              : slot.center;
+      let stageTarget = targetForStage(state.stage);
+      let toTarget = sub(stageTarget, game.camera.pos);
+      let d = len(toTarget);
       const avoidance = dockingComputerAvoidance();
-      const trafficClose = Number.isFinite(avoidance.nearest) && avoidance.nearest < (state.stage === "final" ? 34 : 72);
+      let trafficClose = Number.isFinite(avoidance.nearest) && avoidance.nearest < (state.stage === "final" ? 34 : 72);
       const forward = forwardVector(game.camera);
       const alignment = dot(forward, inward);
 
-      if (state.stage === "marshal" && !stationControlHold && (frontness > 720 || (d < 300 && frontness > 360))) state.stage = "approach";
+      const entryAligned = frontness > 1080 && frontness < 1280 && lateral < 90;
+      const entryCaptured = d < 110 && lateral < 95;
+      if (state.stage === "marshal" && !stationControlHold && (entryCaptured || entryAligned)) {
+        state.stage = "turnIn";
+        game.speed = Math.min(game.speed, 36);
+      }
+      if (state.stage === "turnIn" && !stationControlHold) {
+        const outsideEntry = frontness < 1000 || frontness > 1400 || lateral > 170;
+        if (outsideEntry) {
+          state.stage = "marshal";
+          state.announced = "";
+        } else if (game.speed < 34 && alignment > .94) {
+          state.stage = "approach";
+        }
+      }
       if (state.stage === "approach" && !stationControlHold && frontness < 840 && lateral < 360) state.stage = "align";
       if (state.stage === "align" && !stationControlHold && frontness < 240 && lateral < 190 && alignment > .82) state.stage = "final";
 
-      const offTrajectory = state.stage !== "marshal" && state.stage !== "hold" && state.stage !== "goAround" && state.stage !== "final" && (
+      const offTrajectory = state.stage !== "marshal" && state.stage !== "turnIn" && state.stage !== "hold" && state.stage !== "goAround" && state.stage !== "final" && (
         (state.stage === "approach" && (lateral > 820 || frontness < -220)) ||
         (state.stage === "align" && (lateral > 560 || frontness < -240 || (trafficClose && lateral > 170)))
       );
@@ -11764,11 +12211,18 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         state.offTrackTime = 0;
         state.announced = "";
       }
+      stageTarget = targetForStage(state.stage);
+      toTarget = sub(stageTarget, game.camera.pos);
+      d = len(toTarget);
+      trafficClose = Number.isFinite(avoidance.nearest) && avoidance.nearest < (state.stage === "final" ? 34 : 72);
+      const slotDist = len(sub(game.camera.pos, slot.center));
       const freshStage = state.stage !== state.announced;
       if (freshStage) {
         state.announced = state.stage;
         const line = state.stage === "marshal"
           ? "Docking computer: acquiring front approach lane."
+          : state.stage === "turnIn"
+            ? "Docking computer: turning into approach corridor."
           : state.stage === "hold"
             ? "Docking computer: holding for station traffic."
           : state.stage === "goAround"
@@ -11781,41 +12235,64 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         setMessage(line, true);
       }
 
-      const desiredDir = state.stage === "final"
-        ? norm(add(scale(inward, 1.7), scale(norm(sub(finalAim, game.camera.pos)), 2.6)))
-        : state.stage === "align"
-          ? norm(add(scale(inward, 2.4), scale(norm(sub(final, game.camera.pos)), 1.8)))
+      const holdSettled = state.stage === "hold" && d < 260;
+      if (holdSettled) {
+        game.camera.pos = add(game.camera.pos, scale(toTarget, clamp(dt * .9, 0, .055)));
+      }
+      const corridorStage = state.stage === "approach" || state.stage === "align" || state.stage === "final";
+      const desiredDir = corridorStage || state.stage === "turnIn"
+        ? inward
           : state.stage === "hold"
-            ? norm(add(scale(norm(sub(slot.center, game.camera.pos)), 2.4), scale(norm(toTarget), .55)))
+            ? holdSettled
+              ? norm(sub(slot.center, game.camera.pos))
+              : norm(toTarget)
           : norm(toTarget);
       const avoidWeight = state.stage === "final"
-        ? (trafficClose ? .24 : .08)
-        : state.stage === "align" ? .44 : state.stage === "hold" ? .72 : state.stage === "goAround" ? .72 : .66;
-      const steeredDir = avoidance.dir ? norm(add(desiredDir, scale(avoidance.dir, avoidWeight))) : desiredDir;
-      const desiredQ = quatLookRotation(steeredDir, slot.up);
-      const turnRate = state.stage === "final" ? 5.6 : state.stage === "align" ? 3.35 : state.stage === "hold" ? 1.55 : state.stage === "goAround" ? 2.45 : 2.05;
+        ? (trafficClose ? .16 : 0)
+        : state.stage === "align" ? (trafficClose ? .22 : 0) : state.stage === "approach" ? (trafficClose ? .24 : 0) : state.stage === "turnIn" ? .18 : state.stage === "hold" ? .72 : state.stage === "goAround" ? .72 : .66;
+      const steeredDir = avoidance.dir && avoidWeight > 0 ? norm(add(desiredDir, scale(avoidance.dir, avoidWeight))) : desiredDir;
+      const upHint = state.stage === "align" || state.stage === "final" ? liveSlot.up : laneUp;
+      const desiredQ = quatLookRotation(steeredDir, upHint);
+      const turnRate = state.stage === "final" ? 5.6 : state.stage === "align" ? 3.35 : state.stage === "turnIn" ? 2.85 : state.stage === "hold" ? 1.55 : state.stage === "goAround" ? 2.45 : 2.05;
       game.camera.q = quatSlerp(ensureCameraQuat(game.camera), desiredQ, 1 - Math.exp(-turnRate * dt));
       game.rollRate = 0;
       game.pitchRate = 0;
       game.yawRate = 0;
 
-      if (state.stage !== "marshal" && state.stage !== "goAround" && frontness > -150 && frontness < 980 && lateral > .1) {
+      if (state.stage !== "marshal" && state.stage !== "turnIn" && state.stage !== "goAround" && frontness > -150 && frontness < 980 && lateral > 24) {
         const axisPoint = add(slot.center, scale(slot.outward, frontness));
         const lateralVec = sub(game.camera.pos, axisPoint);
-        const correctionRate = state.stage === "final" ? 2.9 : state.stage === "align" ? 1.65 : .8;
-        game.camera.pos = sub(game.camera.pos, scale(lateralVec, clamp(correctionRate * dt, 0, .16)));
+        const correctionRate = state.stage === "final" ? 1.15 : state.stage === "align" ? .82 : .52;
+        game.camera.pos = sub(game.camera.pos, scale(lateralVec, clamp(correctionRate * dt, 0, .055)));
       }
 
       const targetSpeed = state.stage === "marshal" ? (d > 500 ? 118 : 72)
-        : state.stage === "hold" ? (d > 340 ? 58 : 10)
+        : state.stage === "turnIn" ? (alignment > .82 ? 32 : 10)
+        : state.stage === "hold" ? (d > 620 ? 72 : d > 340 ? 38 : d > 240 ? 12 : 0)
         : state.stage === "goAround" ? (d > 520 ? 108 : 76)
-          : state.stage === "approach" ? (d > 260 ? 70 : 42)
-          : state.stage === "align" ? 24
-            : 19;
+          : state.stage === "approach" ? (d > 260 ? 92 : 64)
+          : state.stage === "align" ? 48
+            : 36;
       const headingAlign = clamp(dot(forwardVector(game.camera), steeredDir), 0, 1);
       const steeringSpeedMul = lerp(.38, 1, headingAlign * headingAlign);
       const avoidSlow = avoidance.nearest < 115 ? .42 : avoidance.nearest < 240 ? .66 : avoidance.nearest < 380 ? .84 : 1;
-      game.speed = lerp(game.speed, targetSpeed * avoidSlow * steeringSpeedMul, dt * (state.stage === "final" ? 1.8 : 1.25));
+      const lateralSpeedMul = state.stage === "approach"
+        ? lerp(.56, 1, clamp(1 - lateral / 780, 0, 1))
+        : state.stage === "align"
+          ? lerp(.42, 1, clamp(1 - lateral / 430, 0, 1))
+          : state.stage === "final"
+            ? lerp(.32, 1, clamp(1 - lateral / 210, 0, 1))
+            : 1;
+      const desiredSpeed = targetSpeed * avoidSlow * steeringSpeedMul * lateralSpeedMul;
+      if (state.stage === "hold" || state.stage === "turnIn") {
+        const brakeRate = d < 380 ? 290 : 175;
+        game.speed = game.speed > desiredSpeed
+          ? Math.max(desiredSpeed, game.speed - brakeRate * dt)
+          : lerp(game.speed, desiredSpeed, dt * 1.15);
+        if ((state.stage === "hold" && d < 240) || game.speed < 1.2) game.speed = 0;
+      } else {
+        game.speed = lerp(game.speed, desiredSpeed, dt * (state.stage === "final" ? 1.8 : 1.25));
+      }
 
       state.hud = {
         stage: state.stage,
@@ -11908,6 +12385,14 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       o.roll = roll;
     }
 
+    function steerShipNoseToward(o, dir, dt, turnRate = 2.2, rollTarget = 0) {
+      if (len(dir) < .001) return;
+      const { yaw, pitch } = yawPitchForDirection(norm(dir));
+      o.rot = lerpAngle(o.rot || 0, yaw, dt * turnRate);
+      o.pitch = lerpAngle(o.pitch || 0, pitch, dt * turnRate * .88);
+      o.roll = lerpAngle(o.roll || 0, rollTarget, dt * 2.1);
+    }
+
     function steerVelocity(o, desired, dt, accel = 95, maxSpeed = 120) {
       // Elite's ships are nose-led: tactics set pitch/roll/acceleration, and the ship
       // moves along its current nose vector. The previous browser model changed velocity
@@ -11988,17 +12473,25 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function shipUsesCombatAi(o) {
-      return !!(o?.hostile || (o?.missionAlly && o.target));
+      return !!(o?.hostile || ((isWingmenRole(o) || isCommanderWingmanShip(o)) && o.target));
     }
 
     function pickMissionEncounterTarget(o) {
       if (!o?.missionId || !o.missionEncounterId || !o.missionEncounterSide) return null;
       const opposite = o.missionEncounterSide === "ally" ? "enemy" : "ally";
+      const mission = activeMissionById(o.missionId);
+      const order = mission?.encounter?.wingOrder;
+      if (o.missionEncounterSide === "ally" && order === "regroup") return null;
+      if (o.missionEncounterSide === "ally" && order === "attackTarget") {
+        const target = selectedMissionEnemy(mission);
+        if (target) return target;
+      }
       let best = null, bestD = Infinity;
       for (const x of worldSnapshot().ships) {
         if (x.type !== "ship" || x === o || x._remove || shipHyperspaceHidden(x)) continue;
         if (x.missionId !== o.missionId || x.missionEncounterId !== o.missionEncounterId || x.missionEncounterSide !== opposite) continue;
-        const d = len(sub(x.pos, o.pos));
+        const reference = o.missionEncounterSide === "ally" && order === "cover" ? game.camera.pos : o.pos;
+        const d = len(sub(x.pos, reference));
         if (d < bestD) { best = x; bestD = d; }
       }
       return best;
@@ -12232,6 +12725,106 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       o.pos = add(station.pos, scale(away, minDist));
     }
 
+    function npcCollisionPanicLine(o, threat) {
+      if (isAlienShip(o)) return alienChatterLine(o, "threat");
+      const target = threat?.target;
+      if (target?.isPlayer) return pick([
+        "Collision alarm! Breaking vector!",
+        "Hard over! Nearly wore you as paint!",
+        "Traffic conflict! Punching clear!",
+        "Too close, Commander. Breaking away!",
+        "Proximity warning! Full lateral burn!"
+      ]);
+      return pick([
+        "Collision alarm! Breaking vector!",
+        "Traffic conflict! Punching clear!",
+        "Hard over. Avoiding contact.",
+        "Proximity warning! Full lateral burn!",
+        "Breaking lane, traffic ahead!"
+      ]);
+    }
+
+    function npcImminentCollisionThreat(o) {
+      if (!o || o.type !== "ship" || shipHyperspaceHidden(o) || game.docked || game.transition) return null;
+      const ownR = objectCollisionRadius(o);
+      const ownVel = bodyVelocity(o);
+      const candidates = [{
+        isPlayer: true,
+        name: game.commander || "Commander",
+        pos: game.camera.pos,
+        vel: scale(forwardVector(game.camera), game.speed || 0),
+        r: playerCollisionRadius()
+      }];
+      for (const x of worldSnapshot().collisionBodies) {
+        if (!x || x === o || x.type !== "ship" || x._remove || shipHyperspaceHidden(x)) continue;
+        candidates.push({ object: x, name: x.name || shipName(x.model), pos: x.pos, vel: bodyVelocity(x), r: objectCollisionRadius(x) });
+      }
+      let best = null;
+      for (const target of candidates) {
+        const rel = sub(target.pos, o.pos);
+        const dist = len(rel);
+        if (dist <= .001) continue;
+        const n = scale(rel, 1 / dist);
+        const safe = ownR + target.r + (target.isPlayer ? 128 : 96);
+        const relVel = sub(target.vel || vec(), ownVel);
+        const closing = -dot(relVel, n);
+        if (closing < 34 && dist > safe * 1.08) continue;
+        const timeToContact = dist <= safe ? 0 : (dist - safe) / Math.max(1, closing);
+        const window = target.isPlayer ? 2.25 : 1.65;
+        const panicRange = safe + clamp(closing * window, target.isPlayer ? 210 : 150, target.isPlayer ? 620 : 460);
+        if (dist > panicRange) continue;
+        if (timeToContact > window && dist > safe * 1.12) continue;
+        const noseCommit = dot(shipForward(o), n);
+        if (noseCommit < -.15 && timeToContact > .35 && dist > safe * 1.2) continue;
+        const score = timeToContact + dist / 3600 - (target.isPlayer ? .35 : 0);
+        if (!best || score < best.score) best = { target, dist, safe, closing, timeToContact, dirToTarget: n, score };
+      }
+      return best;
+    }
+
+    function applyNpcCollisionBreakaway(o, dt, avoidStation = vec()) {
+      const now = performance.now();
+      const freshThreat = npcImminentCollisionThreat(o);
+      if (freshThreat) {
+        if (!o._collisionBreakUntil || now > o._collisionBreakUntil) {
+          if (o._collisionIgnoreUntil && now < o._collisionIgnoreUntil) return false;
+          const urgency = freshThreat.dist <= freshThreat.safe
+            ? 1
+            : clamp(1 - freshThreat.timeToContact / (freshThreat.target.isPlayer ? 2.25 : 1.65), 0, 1);
+          const reactChance = freshThreat.target.isPlayer
+            ? lerp(.58, .91, urgency)
+            : lerp(.38, .74, urgency);
+          if (Math.random() > reactChance) {
+            o._collisionIgnoreUntil = now + 260 + Math.random() * 620;
+            return false;
+          }
+        }
+        const away = norm(sub(o.pos, freshThreat.target.pos));
+        const forward = shipForward(o);
+        const right = shipRight(o);
+        const up = norm(cross(right, forward));
+        const sideSign = dot(right, away) >= 0 ? 1 : -1;
+        const liftSign = ((hash32(`${o.name || o.model || "ship"}:collision`) & 1) ? 1 : -1);
+        const breakDir = norm(add(scale(away, 1.55), add(scale(right, sideSign * 1.25), scale(up, liftSign * .48))));
+        o._collisionBreakDir = len(breakDir) > .01 ? breakDir : away;
+        o._collisionBreakUntil = now + (freshThreat.target.isPlayer ? 980 : 720);
+        o._collisionBreakThreat = freshThreat;
+        o.engineBoost = Math.max(o.engineBoost || 0, 1.2);
+        shipHail(o, "collisionPanic", npcCollisionPanicLine(o, freshThreat), freshThreat.target.isPlayer ? .86 : .42, 6500);
+      }
+      if (!o._collisionBreakUntil || now > o._collisionBreakUntil || !o._collisionBreakDir) return false;
+      const breakDir = o._collisionBreakDir;
+      const threat = o._collisionBreakThreat;
+      const speedMul = shipStats(o.model).speed || 1;
+      const close = threat && threat.dist < threat.safe * 1.18;
+      if (close) o.pos = add(o.pos, scale(breakDir, dt * 52));
+      const desired = add(scale(breakDir, 1180), avoidStation);
+      const maxSpeed = (close ? 132 : 185) * speedMul;
+      steerVelocity(o, desired, dt, close ? 310 : 245, maxSpeed);
+      o.engineBoost = Math.max(o.engineBoost || 0, close ? 1.35 : 1.05);
+      return true;
+    }
+
     function updateStationTraffic(dt) {
       const station = primaryStation();
       if (!station || len(sub(station.pos, game.camera.pos)) > 5200) return;
@@ -12299,15 +12892,43 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const { center, outward, right, up } = stationSlotAxes(station);
       const offset = o.trafficSlotOffset || vec();
       const speedMul = shipStats(o.model).speed || 1;
+      const avoidStation = stationAvoidance(o.pos, o.r || 60);
+      if (applyNpcCollisionBreakaway(o, dt, avoidStation)) return;
       if (o.trafficControlStatus === "holding") {
-        const hold = o.trafficHoldPoint || add(center, add(scale(outward, 1580), add(scale(right, 680), scale(up, 260))));
+        const sideSign = dot(sub(o.pos, center), right) >= 0 ? 1 : -1;
+        const fallbackHold = stationTrafficHoldPoint(station, { sideSign, shipR: o.r || 70 });
+        let hold = o.trafficHoldPoint || fallbackHold;
+        const fromStation = sub(hold, station.pos);
+        const minHoldDist = stationClearanceRadius() + (o.r || 60) + 1320;
+        if (len(fromStation) < minHoldDist) {
+          hold = stationTrafficHoldPoint(station, { sideSign, shipR: o.r || 70 });
+          o.trafficHoldPoint = hold;
+        }
         const wobble = o.wobble || 0;
         const freighterHold = ["python", "boa", "anaconda", "transporter"].includes(o.model);
+        const toHold = sub(hold, o.pos);
+        const holdDist = len(toHold);
+        const stationFace = norm(sub(center, o.pos));
+        if (holdDist < (freighterHold ? 145 : 118)) {
+          const correction = clamp(dt * (freighterHold ? .75 : 1.05), 0, freighterHold ? .06 : .09);
+          o.pos = add(o.pos, scale(toHold, correction));
+          o.speed = Math.max(0, (o.speed ?? len(o.vel || vec())) - (freighterHold ? 70 : 120) * dt);
+          if (o.speed < 1.5) o.speed = 0;
+          o.vel = vec();
+          o.engineBoost = Math.min(o.engineBoost || 0, freighterHold ? .04 : .07);
+          steerShipNoseToward(o, stationFace, dt, freighterHold ? 1.1 : 1.55, 0);
+          if (o.trafficAge > 46) {
+            o._remove = true;
+            if (o === game.targetObject) game.targetObject = primaryStation();
+          }
+          return;
+        }
         const loiter = freighterHold
-          ? add(hold, add(scale(right, Math.sin(performance.now() / 4200 + wobble) * 16), scale(up, Math.cos(performance.now() / 5100 + wobble) * 10)))
-          : add(hold, add(scale(right, Math.sin(performance.now() / 1300 + wobble) * 82), scale(up, Math.cos(performance.now() / 1700 + wobble) * 42)));
-        const desired = sub(loiter, o.pos);
-        steerVelocity(o, desired, dt, freighterHold ? 28 : 62, (freighterHold ? 22 : 68) * speedMul);
+          ? add(hold, add(scale(right, Math.sin(performance.now() / 5200 + wobble) * 8), scale(up, Math.cos(performance.now() / 6100 + wobble) * 5)))
+          : add(hold, add(scale(right, Math.sin(performance.now() / 2600 + wobble) * 22), scale(up, Math.cos(performance.now() / 3100 + wobble) * 12)));
+        const desired = add(sub(loiter, o.pos), avoidStation);
+        const maxHoldSpeed = clamp(holdDist * .16, freighterHold ? 8 : 10, freighterHold ? 24 : 36) * speedMul;
+        steerVelocity(o, desired, dt, freighterHold ? 44 : 78, maxHoldSpeed);
         if (freighterHold) o.engineBoost = Math.min(o.engineBoost || 0, .08);
         if (o.trafficAge > 46) {
           o._remove = true;
@@ -12459,9 +13080,21 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         }
         return;
       }
-      if ((o.hostile || o.missionAlly) && objectIntervalDue(o, "_senseClock", dt, .18, .16)) {
+      if (applyNpcCollisionBreakaway(o, dt, avoidStation)) return;
+      const commanderWingman = isCommanderWingmanShip(o);
+      if ((o.hostile || o.missionAlly || commanderWingman) && objectIntervalDue(o, "_senseClock", dt, .18, .16)) {
         const stale = o.target && (o.target.hp <= 0 || !isWorldObjectLive(o.target) || len(sub(o.target.pos, o.pos)) > 2200);
         if (o.target === undefined || stale) assignHostileTarget(o);
+      }
+      if (o.aiMode === "regroup" && (o.missionAlly || commanderWingman)) {
+        const seed = hash32(o.name || o.model || "wingmen");
+        const slot = seed % 5 - 2;
+        const depth = -360 - Math.abs(slot) * 85;
+        const follow = cameraLocalToWorld(game.camera, vec(slot * 135, 72 + Math.abs(slot) * 22, depth));
+        const speedMul = shipStats(o.model).speed || 1;
+        o.target = null;
+        steerVelocity(o, add(sub(follow, o.pos), avoidStation), dt, 118, 136 * speedMul);
+        return;
       }
       const combatActive = shipUsesCombatAi(o);
       const targetPos = combatActive ? hostileTargetPos(o) : game.camera.pos;
@@ -12700,13 +13333,15 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function modelFaceLightDirection(center, options = {}) {
+      if (options.lightDirCam) return norm(options.lightDirCam);
       if (options.lightMode === "front") return vec(0, 0, -1);
       if (options.lightMode === "camera") return norm(scale(center, -1));
+      if (options.lightMode === "hangar") return norm(vec(0, 1, -.28));
       return starLightDirection(center);
     }
 
-    function windowGlintForSurface(normal, center, camera = game.camera) {
-      const light = starLightDirectionForCamera(center, camera);
+    function windowGlintForSurface(normal, center, camera = game.camera, options = {}) {
+      const light = options.lightDirCam ? norm(options.lightDirCam) : starLightDirectionForCamera(center, camera);
       const view = norm(scale(center, -1));
       const incidence = Math.max(0, dot(normal, light));
       const reflected = norm(sub(scale(normal, 2 * dot(normal, light)), light));
@@ -12957,7 +13592,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           : null;
         const stationEntrance = renderIntent.kind === "stationEntrance";
         const glassVisual = !wireDetails && renderIntent.glass && normal
-          ? windowGlintForSurface(normal, surfaceCenter, camera)
+          ? windowGlintForSurface(normal, surfaceCenter, camera, options)
           : null;
         const wireColor = options.wireColor || "#e9f2e4";
         const glassBaseColor = renderIntent.glass ? optionalHexColor(detail.color) : null;
@@ -14557,7 +15192,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           textures: opts.textures,
           imageDecals: opts.imageDecals || null,
           metalAlphaMul: opts.metalAlphaMul,
-          lightMode: opts.lightMode || null
+          lightMode: opts.lightMode || null,
+          lightDirCam: opts.lightDirCam || null
         }));
       }
       if (mode === "solid") return;
@@ -14906,6 +15542,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function recordRenderError(scope, err) {
       const message = `${scope}: ${err?.message || err || "unknown render error"}`;
+      game.renderErrorCount = (game.renderErrorCount || 0) + 1;
+      game.lastRenderErrorAt = new Date().toISOString();
       if (game._lastRenderError !== message) {
         game._lastRenderError = message;
         setMessage(`Render fallback: ${message}`, true);
@@ -15153,6 +15791,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const stage = state.hud.stage || "AUTO";
       const stageText = {
         marshal: "ACQUIRING APPROACH LANE",
+        turnIn: "TURNING INTO APPROACH CORRIDOR",
         hold: "HOLDING FOR STATION TRAFFIC",
         goAround: "GO-AROUND VECTOR",
         approach: "LINING UP WITH SLOT AXIS",
@@ -15493,8 +16132,17 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
             ctx.fillRect(button.x, button.y, button.w, button.h);
             ctx.strokeRect(button.x, button.y, button.w, button.h);
             ctx.fillStyle = `rgba(101,255,71,${finalAlpha * (button.primary ? .92 : .72)})`;
-            ctx.font = `${Math.max(10, w * .0095)}px ${UI_CANVAS_FONT}`;
-            ctx.fillText(button.label, button.x + button.w / 2, button.y + button.h * .62);
+            const label = button.w < 220 && button.choice === "restart" ? "START AGAIN"
+              : button.w < 205 && button.choice === "load" ? "LOAD SAVE"
+                : button.label;
+            let fontSize = Math.max(10, w * .0095);
+            const maxTextW = button.w - Math.max(18, button.w * .14);
+            ctx.font = `${fontSize}px ${UI_CANVAS_FONT}`;
+            while (fontSize > 8 && ctx.measureText(label).width > maxTextW) {
+              fontSize -= .5;
+              ctx.font = `${fontSize}px ${UI_CANVAS_FONT}`;
+            }
+            ctx.fillText(label, button.x + button.w / 2, button.y + button.h * .62, maxTextW);
           }
           ctx.fillStyle = `rgba(101,255,71,${finalAlpha * promptAlpha})`;
           ctx.font = `${Math.max(10, w * .009)}px ${UI_CANVAS_FONT}`;
@@ -15919,6 +16567,11 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       };
     }
 
+    function hangarOverheadLightDirCam(view) {
+      const overhead = worldDirToCam(vec(0, 1, 0), view);
+      return norm(add(scale(overhead, .94), vec(0, 0, -.26)));
+    }
+
     function drawHangarModel(modelName, pos, view, w, h, opts = {}) {
       const model = MODELS[modelName];
       if (!model) return;
@@ -15935,7 +16588,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         alpha: opts.alpha ?? 1,
         engineGlow: 0
       }, {
-        edgeWidth: Math.max(.6, scale * .55)
+        edgeWidth: Math.max(.6, scale * .55),
+        lightMode: "hangar",
+        lightDirCam: hangarOverheadLightDirCam(view),
+        metalAlphaMul: .76
       });
     }
 
@@ -16160,7 +16816,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       drawModelEntity(ctx, { camera: view, w, h, mode: game.graphicsMode }, shipObj, {
         alpha: opts.alpha ?? 1,
         decal: null,
-        edgeWidth: Math.max(.8, shipObj.scaleFactor * 1.15)
+        edgeWidth: Math.max(.8, shipObj.scaleFactor * 1.15),
+        lightMode: "hangar",
+        lightDirCam: hangarOverheadLightDirCam(view),
+        metalAlphaMul: .82
       });
     }
 
@@ -16692,30 +17351,86 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       ctx.restore();
     }
 
+    function drawJumpFieldMask(w, h, alpha, palette = [196, 210, 178], opts = {}) {
+      alpha = clamp(alpha, 0, 1);
+      if (alpha <= .01) return;
+      const cx = w / 2, cy = h / 2;
+      const radius = Math.hypot(w, h) * (opts.radius || .78);
+      ctx.save();
+      ctx.globalCompositeOperation = "source-over";
+      ctx.fillStyle = `rgba(0,6,24,${alpha * .98})`;
+      ctx.fillRect(-w * .08, -h * .08, w * 1.16, h * 1.16);
+      const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+      halo.addColorStop(0, `rgba(255,255,255,${alpha * .92})`);
+      halo.addColorStop(.12, `hsla(${palette[0]},100%,92%,${alpha * .68})`);
+      halo.addColorStop(.34, `hsla(${palette[1] || palette[0]},100%,54%,${alpha * .34})`);
+      halo.addColorStop(.68, `rgba(0,42,92,${alpha * .2})`);
+      halo.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = halo;
+      ctx.fillRect(-w * .08, -h * .08, w * 1.16, h * 1.16);
+      const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(w, h) * (opts.core || .18));
+      core.addColorStop(0, `rgba(255,255,255,${alpha * .82})`);
+      core.addColorStop(.42, `rgba(235,252,255,${alpha * .36})`);
+      core.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = core;
+      ctx.fillRect(-w * .08, -h * .08, w * 1.16, h * 1.16);
+      ctx.restore();
+    }
+
+    function drawBrightJumpTunnel(w, h, p, palette = [196, 210, 178], opts = {}) {
+      const intensity = clamp(opts.intensity ?? 1, 0, 1.4);
+      if (p <= 0 || intensity <= .01) return;
+      const cx = w / 2, cy = h / 2;
+      const count = opts.count || 18;
+      const spin = p * TAU * (opts.spin || .56);
+      const maxR = Math.hypot(w, h) * (opts.radius || .72);
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.lineCap = "round";
+      for (let i = 0; i < count; i++) {
+        const z = (i / count + p * (opts.depth || 1.35)) % 1;
+        const r = lerp(18, maxR, Math.pow(z, 1.72));
+        const hue = palette[i % palette.length];
+        const alpha = clamp((.09 + intensity * .24) * (1 - z * .48), .02, .42);
+        ctx.strokeStyle = `hsla(${hue},100%,68%,${alpha})`;
+        ctx.lineWidth = (1.2 + z * 8) * (opts.width || 1);
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, r, r * (opts.flatten || .62), spin * (1 - z * .55), 0, TAU);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
     function drawUltraHyperspaceTunnel(w, h, tr) {
       const p = clamp(tr.t / tr.dur, 0, 1);
       const cx = w / 2, cy = h / 2;
       const palette = [196, 210, 178, 146];
       const tunnel = clamp((p - .22) / .54, 0, 1);
       const arrival = clamp((p - .72) / .28, 0, 1);
+      const departureEnd = tr.departureEnd ?? .26;
+      const arrivalAt = tr.arrivalAt ?? .74;
       ctx.save();
       applyUltraWormholeShake(w, h, p, 1);
-      if (p < (tr.departureEnd ?? .26)) {
+      if (p < departureEnd) {
         ctx.restore();
         return;
       }
-      if (tr._arrived && p >= (tr.arrivalAt ?? .74)) {
-        const ap = clamp((p - (tr.arrivalAt ?? .74)) / Math.max(.08, 1 - (tr.arrivalAt ?? .74)), 0, 1);
+      const midWhiteout = smoothstep(departureEnd, departureEnd + .1, p);
+      if (tr._arrived && p >= arrivalAt) {
+        const ap = clamp((p - arrivalAt) / Math.max(.08, 1 - arrivalAt), 0, 1);
+        drawJumpFieldMask(w, h, 1 - easeInOut(ap), palette, { radius: .86, core: .2 });
         drawUltraArrivalCrackle(w, h, clamp(ap * 1.35, 0, 1), [196, 210, 178], { seed: 0xdec1, bolts: 14, width: .75 });
         ctx.restore();
         return;
       }
+      drawJumpFieldMask(w, h, midWhiteout, palette, { radius: .86, core: .2 });
       const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.hypot(w, h) * .7);
-      bg.addColorStop(0, `rgba(12,32,42,${.2 + tunnel * .28})`);
-      bg.addColorStop(.5, `rgba(0,12,28,${.54 + tunnel * .24})`);
-      bg.addColorStop(1, `rgba(0,0,0,${.84 + arrival * .1})`);
+      bg.addColorStop(0, `rgba(255,255,255,0)`);
+      bg.addColorStop(.52, `rgba(38,130,172,${(.1 + tunnel * .12) * midWhiteout})`);
+      bg.addColorStop(1, `rgba(6,20,58,${(.2 + arrival * .08) * midWhiteout})`);
       ctx.fillStyle = bg;
       ctx.fillRect(-w * .08, -h * .08, w * 1.16, h * 1.16);
+      drawBrightJumpTunnel(w, h, tunnel, palette, { intensity: midWhiteout * (1 - arrival * .28), spin: .52, width: .82, flatten: .6 });
       if (tunnel > 0) drawUltraCloudTunnel(w, h, tunnel, palette, { seed: 0x4511e7, intensity: clamp(tunnel * 1.5, 0, 1) * (1 - arrival * .38), spin: .52, arcs: 0, puffs: 96, width: .82, flatten: .6 });
       drawUltraAperture(w, h, clamp((p - .12) / .74, 0, 1), palette, { pulses: 2 });
       drawUltraArrivalCrackle(w, h, arrival, [196, 210, 178], { seed: 0xdec1, bolts: 18, width: .9 });
@@ -16728,20 +17443,30 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const palette = [204, 224, 270, 188, 318];
       const tunnel = clamp((p - .18) / .62, 0, 1);
       const arrival = clamp((p - .76) / .24, 0, 1);
+      const departureEnd = tr.departureEnd ?? .22;
+      const arrivalAt = tr.arrivalAt ?? .76;
       ctx.save();
       applyUltraWormholeShake(w, h, p, 1.22);
-      if (p < (tr.departureEnd ?? .22)) {
+      if (p < departureEnd) {
         ctx.restore();
         return;
       }
-      if (tr._arrived && p >= (tr.arrivalAt ?? .76)) {
-        const ap = clamp((p - (tr.arrivalAt ?? .76)) / Math.max(.08, 1 - (tr.arrivalAt ?? .76)), 0, 1);
+      const midWhiteout = smoothstep(departureEnd, departureEnd + .12, p);
+      if (tr._arrived && p >= arrivalAt) {
+        const ap = clamp((p - arrivalAt) / Math.max(.08, 1 - arrivalAt), 0, 1);
+        drawJumpFieldMask(w, h, 1 - easeInOut(ap), palette, { radius: .92, core: .22 });
         drawUltraArrivalCrackle(w, h, clamp(ap * 1.4, 0, 1), [196, 230, 286, 52], { seed: 0x6a1ac7, bolts: 24, width: 1 });
         ctx.restore();
         return;
       }
-      ctx.fillStyle = `rgba(0,0,0,${.72 + arrival * .16})`;
+      drawJumpFieldMask(w, h, midWhiteout, palette, { radius: .92, core: .22 });
+      const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.hypot(w, h) * .76);
+      bg.addColorStop(0, `rgba(255,255,255,0)`);
+      bg.addColorStop(.48, `rgba(70,110,190,${(.12 + tunnel * .14) * midWhiteout})`);
+      bg.addColorStop(1, `rgba(12,12,68,${(.24 + arrival * .08) * midWhiteout})`);
+      ctx.fillStyle = bg;
       ctx.fillRect(-w * .08, -h * .08, w * 1.16, h * 1.16);
+      drawBrightJumpTunnel(w, h, tunnel, palette, { intensity: midWhiteout * (1 - arrival * .22), spin: .74, width: 1.06, flatten: .56, radius: .78, depth: 1.18 });
       if (tunnel > 0) drawUltraCloudTunnel(w, h, tunnel, palette, { seed: 0x6a0a7, intensity: clamp(tunnel * 1.4, 0, 1) * (1 - arrival * .32), spin: .74, arcs: 0, puffs: 132, width: 1.08, flatten: .56, radius: .78, depth: 1.18, sweep: 1.25 });
       ctx.globalCompositeOperation = "lighter";
       for (let i = 0; i < 12; i++) {
@@ -19131,6 +19856,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         textures: opts.textures ?? quality.textures,
         metalAlphaMul: opts.metalAlphaMul ?? (quality.textures ? 1 : 0),
         lightMode: opts.lightMode || null,
+        lightDirCam: opts.lightDirCam || null,
         edgeColor: opts.edgeColor || hullColor,
         edgeWidth: opts.edgeWidth ?? clamp(680 / Math.max(80, centerCam.z), .7, 2),
         detailEdges: quality.detailEdges !== false,
@@ -19161,10 +19887,12 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           drawSolidItems(targetCtx, collectSolidDetails(model, renderShip, camVerts, points, w, h, scaleFactor, camera, {
             mode,
             skipProtrudingEdges: true,
-            skipBeacons: opts.skipBeacons
+            skipBeacons: opts.skipBeacons,
+            lightDirCam: opts.lightDirCam || null,
+            lightMode: opts.lightMode || null
           }));
         } else if ((renderShip.engineGlow ?? 0) > .02) {
-          drawSolidItems(targetCtx, collectSolidDetails(model, renderShip, camVerts, points, w, h, scaleFactor, camera, { enginesOnly: true, mode }));
+          drawSolidItems(targetCtx, collectSolidDetails(model, renderShip, camVerts, points, w, h, scaleFactor, camera, { enginesOnly: true, mode, lightDirCam: opts.lightDirCam || null, lightMode: opts.lightMode || null }));
         }
         if (quality.damage && targetCtx === ctx) drawPlayerHullDamageMarks(renderShip, centerCam, w, h, camera, projectFn);
         if (quality.effects && renderShip.police && ultraFxEnabled()) drawPoliceStrobes(targetCtx, points);
@@ -19997,6 +20725,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (o.type === "missile") return { color: "#ff4848", size: 4, shape: "triangle" };
       if (o.type === "asteroid" || o.type === "boulder" || o.type === "splinter") return { color: "#9aa39a", size: 3, shape: "diamond" };
       if (o.type === "canister" || o.type === "plate") return { color: "#cfe9c8", size: 3, shape: "square" };
+      if (o.missionProtectedAlly) return { color: "#f6ff8f", size: 4, shape: "diamond" };
+      if (isWingmenRole(o) || isCommanderWingmanShip(o)) return { color: "#8fe8ff", size: 4, shape: "circle" };
       if (o.hostile) return { color: "#ff4848", size: 4, shape: "square" };
       if (o.police) return { color: "#46dfff", size: 4, shape: "square" };
       return { color: "#65ff47", size: 3, shape: "square" };
@@ -20145,7 +20875,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const dirLen = Math.max(1, Math.hypot(p.x, p.y, p.z));
         const x = cx + clamp(p.x / dirLen, -1, 1) * radius * .86;
         const y = cy - clamp(p.y / dirLen, -1, 1) * radius * .86;
-        const style = { ...scannerStyleFor(o), color: fore ? "#ffd33d" : "#65ff47" };
+        const baseStyle = scannerStyleFor(o);
+        const preserveColor = isWingmenRole(o) || isCommanderWingmanShip(o) || o.hostile || o.police;
+        const style = { ...baseStyle, color: preserveColor ? baseStyle.color : fore ? "#ffd33d" : "#65ff47" };
         drawForeAftRadarMarker(x, y, style, .72);
       }
     }
@@ -20272,7 +21004,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       bits.push(atDestination ? `In ${mission.destination.name}` : `Destination ${mission.destination.name} (${fmt(mission.distanceLy)} LY)`);
       if (mission.cargo?.held) bits.push(`${mission.cargo.tons}t sealed cargo aboard`);
       if (mission.suppression) bits.push(`${Number(mission.suppression.destroyed) || 0}/${Number(mission.suppression.required) || 1} pirates destroyed`);
-      if (mission.encounter) bits.push(`${Number(mission.encounter.destroyed) || 0}/${Number(mission.encounter.required) || 1} ${mission.encounter.kind === "navalBattle" ? "alien contacts" : "raiders"} destroyed`);
+      if (mission.encounter) bits.push(`${Number(mission.encounter.destroyed) || 0}/${Number(mission.encounter.required) || 1} ${missionEncounterSubject(mission.encounter.kind, Number(mission.encounter.required) || 1)} destroyed`);
       if (mission.target) bits.push(mission.target.destroyed ? "target destroyed" : mission.target.spawned ? "target active" : "target not found");
       if (mission.recovery?.required) bits.push(mission.recovery.held ? `${mission.recovery.name} recovered` : `${mission.recovery.name} required`);
       if (mission.loan) bits.push(`${mission.loan.name} on loan`);
@@ -20283,6 +21015,242 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (blockers.length) bits.push(`Next: ${blockers[0]}`);
       else if (atDestination) bits.push("ready to hand in");
       return bits.join(" · ");
+    }
+
+    function missionObjectiveText(mission) {
+      if (!mission) return "Mission record unavailable";
+      if (mission.status !== "active") return `Mission ${String(mission.status || "inactive").toUpperCase()}`;
+      if (!missionProgressUnlocked(mission)) {
+        const dispatch = activeImmediateDispatchMission();
+        return `Locked: complete ${dispatch?.title || "the immediate dispatch assignment"} first`;
+      }
+      if (!sameSystemRef(mission.destination)) return `Travel to ${mission.destination?.name || "the destination system"}`;
+      if (mission.type === "courier") return game.docked ? `Hand in at ${mission.destination.name}` : `Dock at ${mission.destination.name}`;
+      if (mission.cargo && !mission.cargo.held) return `Recover sealed ${mission.cargo.name || "mission cargo"}`;
+      if (mission.suppression) {
+        const required = Number(mission.suppression.required) || 1;
+        const destroyed = Number(mission.suppression.destroyed) || 0;
+        if (destroyed < required) return `Destroy ${required - destroyed} more pirate vessel${required - destroyed === 1 ? "" : "s"}`;
+      }
+      if (mission.encounter) {
+        const required = Number(mission.encounter.required) || 1;
+        const destroyed = Number(mission.encounter.destroyed) || 0;
+        if (destroyed < required) {
+          const subject = missionEncounterSubject(mission.encounter.kind, required - destroyed);
+          return `Destroy or rout ${required - destroyed} more ${subject}`;
+        }
+      }
+      if (mission.target && !mission.target.destroyed) {
+        return mission.target.spawned ? `Destroy ${mission.target.name || "the mission target"}` : `Locate ${mission.target.name || "the mission target"} in-system`;
+      }
+      if (mission.recovery?.required && !mission.recovery.held) return `Recover ${mission.recovery.name}`;
+      return game.docked ? `Ready to complete at ${mission.destination?.name || "destination"}` : `Dock at ${mission.destination?.name || "destination"} to complete`;
+    }
+
+    function missionCompletionStatusText(mission) {
+      if (!mission || mission.status !== "active") return mission ? String(mission.status || "inactive").toUpperCase() : "Unavailable";
+      const blockers = missionCompletionBlockers(mission);
+      if (blockers.length) return blockers.join(" · ");
+      return sameSystemRef(mission.destination) ? "None - ready for station hand-in" : "Dock at destination";
+    }
+
+    function missionRouteStatusText(mission) {
+      const dest = missionDestinationSystem(mission);
+      const destination = mission?.destination?.name || "Unknown";
+      if (!mission?.destination) return "No destination data";
+      if (mission.destination.galaxy !== game.galaxy) return `${destination} in galaxy ${mission.destination.galaxy + 1}`;
+      const plotted = game.finalTarget === mission.destination.system;
+      if (!plotted) return `${destination} not plotted`;
+      const next = targetSystem();
+      if (game.current === mission.destination.system) return `${destination} reached`;
+      const direct = game.target === mission.destination.system;
+      const nextLabel = direct ? destination : next?.name || destination;
+      const leg = dest && next ? fmt(distance(currentSystem(), next)) : "?";
+      return `Plotted via ${nextLabel} (${leg} LY next hop)`;
+    }
+
+    function missionAuthorityStatusText(mission) {
+      const text = missionLegalText(mission);
+      const clearance = mission?.reward?.legalClearance;
+      const settlement = clearance === "clean"
+        ? "clears record on completion"
+        : clearance
+          ? `reduces legal by ${clearance}`
+          : "no legal settlement";
+      return `${text}; ${settlement}`;
+    }
+
+    function missionDispatchStatusText(mission) {
+      const activeDispatch = activeImmediateDispatchMission();
+      if (activeDispatch && activeDispatch.id !== mission.id) return `Blocked by ${activeDispatch.title}`;
+      if (!mission?.loanShip?.model && !mission?.loan) return "Standard contract";
+      const parts = [];
+      if (mission.loanShip?.model) {
+        const outcome = mission.loanShip.model === mission.reward?.ship ? "keep on completion" : mission.loanShip.keep ? "awarded" : "return on completion";
+        parts.push(`${shipName(mission.loanShip.model)} mission ship: ${outcome}`);
+      }
+      if (mission.loan?.name) parts.push(`${mission.loan.name} loaned equipment`);
+      if (missionHasLoanerShip(mission)) parts.push("immediate dispatch lock active");
+      return parts.join(" · ");
+    }
+
+    function renderActiveMissionStatus(mission) {
+      return `<div class="mission-status-block">
+        ${stat("Objective", escapeHtml(missionObjectiveText(mission)))}
+        ${stat("Completion Blockers", escapeHtml(missionCompletionStatusText(mission)))}
+        ${stat("Route", escapeHtml(missionRouteStatusText(mission)))}
+        ${stat("Authority", escapeHtml(missionAuthorityStatusText(mission)))}
+        ${stat("Dispatch", escapeHtml(missionDispatchStatusText(mission)))}
+      </div>`;
+    }
+
+    function liveMissionWingmen(mission) {
+      if (!mission?.id) return [];
+      const isWingmanShip = (ship) =>
+        !!ship
+        && ship.type === "ship"
+        && !ship._remove
+        && ship.missionId === mission.id
+        && isWingmenRole(ship);
+      const ships = new Set();
+      if (mission.encounter?.id) {
+        for (const ship of liveMissionEncounterShips(mission, "ally")) {
+          if (isWingmanShip(ship)) ships.add(ship);
+        }
+      }
+      for (const ship of worldSnapshot().ships) {
+        if (isWingmanShip(ship) && (!mission.encounter?.id || ship.missionEncounterSide === "ally")) ships.add(ship);
+      }
+      return [...ships];
+    }
+
+    function liveCommanderWingmen() {
+      return worldSnapshot().ships.filter((ship) => isCommanderWingmanShip(ship));
+    }
+
+    function liveCommandableWingmen(mission) {
+      return liveMissionWingmen(mission).filter((ship) => ship.missionAlly && !ship.missionProtectedAlly);
+    }
+
+    function missionSupportsWingmenCommands(mission) {
+      if (!mission?.encounter || mission.status !== "active") return false;
+      return ["traderDefence", "wingSupport", "navalBattle"].includes(mission.encounter.kind) || liveCommandableWingmen(mission).length > 0;
+    }
+
+    function renderWingmenCommandControls(mission) {
+      if (!missionSupportsWingmenCommands(mission)) return "";
+      const live = liveCommandableWingmen(mission);
+      const disabled = !sameSystemRef(mission.destination) || !live.length ? "disabled" : "";
+      return `<div class="wingmen-command-row" aria-label="Wingmen commands">
+        <button class="btn mini" data-wingmen-command="cover" data-wingmen-mission="${escapeAttr(mission.id)}" ${disabled}>Cover Me</button>
+        <button class="btn mini" data-wingmen-command="attackTarget" data-wingmen-mission="${escapeAttr(mission.id)}" ${disabled}>Attack Target</button>
+        <button class="btn mini" data-wingmen-command="regroup" data-wingmen-mission="${escapeAttr(mission.id)}" ${disabled}>Regroup</button>
+      </div>`;
+    }
+
+    function selectedMissionEnemy(mission) {
+      const target = game.targetObject;
+      if (!target || target.type !== "ship" || target._remove || shipHyperspaceHidden(target)) return null;
+      if (target.missionId !== mission?.id || target.missionEncounterId !== mission?.encounter?.id) return null;
+      return target.missionEncounterSide === "enemy" ? target : null;
+    }
+
+    function setWingmenCommand(missionId, command) {
+      const mission = activeMissionById(missionId);
+      if (!missionSupportsWingmenCommands(mission)) {
+        setMessage("No wingmen command channel available.", true);
+        return;
+      }
+      const ships = liveCommandableWingmen(mission);
+      if (!ships.length) {
+        setMessage("No active wingmen in range.", true);
+        return;
+      }
+      mission.encounter.wingOrder = command;
+      mission.encounter.wingOrderAt = performance.now();
+      const target = command === "attackTarget" ? selectedMissionEnemy(mission) : null;
+      for (const ship of ships) {
+        if (command === "regroup") {
+          ship.aiMode = "regroup";
+          ship.target = null;
+        } else {
+          ship.aiMode = "attack";
+          if (target) ship.target = target;
+          else ship.target = undefined;
+        }
+      }
+      if (command === "attackTarget") {
+        if (target) wingmenCommsMessage(mission, `Concentrating fire on ${target.name || "your target"}.`);
+        else wingmenCommsMessage(mission, "No clean target lock. We will engage nearest mission hostile.");
+        setMessage(target ? `Wingmen attacking ${target.name}.` : "Wingmen attacking nearest mission hostile.", true);
+      } else if (command === "regroup") {
+        wingmenCommsMessage(mission, "Regrouping on your vector.");
+        setMessage("Wingmen regrouping.", true);
+      } else {
+        wingmenCommsMessage(mission, "Covering you, Commander.");
+        setMessage("Wingmen covering you.", true);
+      }
+      renderWingmenHud();
+      if (game.panelOpen && game.panel === "missions") renderPanel();
+    }
+
+    function wingmenHullState(ship) {
+      const pct = ship?.maxHp ? clamp((ship.hp || 0) / ship.maxHp, 0, 1) : 1;
+      if (pct < .28) return "critical";
+      if (pct < .62) return "damaged";
+      return "ok";
+    }
+
+    function wingmenStatusText(ship, mission) {
+      if (shipHyperspaceHidden(ship)) return "INBOUND";
+      if (ship.missionProtectedAlly) return "ESCORT";
+      if (ship.aiMode === "regroup") return "REGROUP";
+      if (ship.target && isWorldObjectLive(ship.target)) return "ATTACK";
+      if ((mission?.encounter?.wingOrder || ship.wingOrder) === "cover") return "COVER";
+      if (ship.aiMode === "hyperspaceIn") return "INBOUND";
+      if (ship.aiMode === "flee") return "EVADING";
+      return "SUPPORT";
+    }
+
+    function renderWingmenHud() {
+      const el = hudEls.wingmenHud;
+      if (!el) return;
+      const rows = [];
+      for (const mission of missionState().active) {
+        if (mission.status !== "active" || !sameSystemRef(mission.destination)) continue;
+        for (const ship of liveMissionWingmen(mission)) rows.push({ mission, ship });
+      }
+      for (const ship of liveCommanderWingmen()) rows.push({ mission: null, ship });
+      const seen = new Set();
+      const ships = rows.filter(({ ship }) => {
+        if (!ship || seen.has(ship)) return false;
+        seen.add(ship);
+        return true;
+      }).slice(0, 4);
+      if (!ships.length || game.docked) {
+        setDomHidden(el, true);
+        if (el.dataset.renderKey !== "closed") {
+          el.dataset.renderKey = "closed";
+          el.innerHTML = "";
+        }
+        return;
+      }
+      const key = ships.map(({ mission, ship }) => `${mission?.id || ship.wingmanId || "wingman"}:${ship.name}:${Math.round(ship.hp || 0)}:${ship.aiMode}:${ship.target?.name || ""}`).join("|");
+      if (el.dataset.renderKey === key) {
+        setDomHidden(el, false);
+        return;
+      }
+      el.dataset.renderKey = key;
+      el.innerHTML = ships.map(({ mission, ship }) => {
+        const pct = ship?.maxHp ? clamp((ship.hp || 0) / ship.maxHp, 0, 1) : 1;
+        const state = wingmenHullState(ship);
+        const protectedClass = ship.missionProtectedAlly ? " protected" : "";
+        return `<div class="wingmen-panel ${state}${protectedClass}">
+          <div class="wingmen-row"><span class="wingmen-name">${escapeHtml(ship.name || "WINGMEN")}</span><span class="wingmen-status">${escapeHtml(wingmenStatusText(ship, mission))}</span></div>
+          <div class="wingmen-hull" aria-label="Hull ${Math.round(pct * 100)} percent"><div class="wingmen-hull-fill" style="width:${Math.round(pct * 100)}%"></div></div>
+        </div>`;
+      }).join("");
+      setDomHidden(el, false);
     }
 
     function activeMissionsForSystem(system) {
@@ -20562,7 +21530,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function renderMissionCard(mission, active = false) {
       const type = MISSION_TYPES[mission.type] || mission.type;
       const heat = mission.heat ? "●".repeat(Math.min(4, mission.heat)) : "none";
-      const cargo = mission.cargo ? `${mission.cargo.tons}t ${mission.cargo.name}` : mission.suppression ? `destroy ${mission.suppression.required} pirates` : mission.encounter ? `destroy ${mission.encounter.required} ${mission.encounter.kind === "navalBattle" ? "alien contacts" : "raiders"}` : mission.recovery ? `recover ${mission.recovery.name}` : "none";
+      const cargo = mission.cargo ? `${mission.cargo.tons}t ${mission.cargo.name}` : mission.suppression ? `destroy ${mission.suppression.required} pirates` : mission.encounter ? `destroy ${mission.encounter.required} ${missionEncounterSubject(mission.encounter.kind, Number(mission.encounter.required) || 1)}` : mission.recovery ? `recover ${mission.recovery.name}` : "none";
       const devBypass = devBypassesMissionRequirements();
       const missing = missingMissionRequirements(mission);
       const activeDispatch = activeImmediateDispatchMission();
@@ -20600,9 +21568,11 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           ${stat("Contract Cargo", escapeHtml(cargo))}
           ${stat("Requirements", escapeHtml(requirements))}
           ${stat("Reward", escapeHtml(missionRewardText(mission)))}
-          ${stat("Legal", escapeHtml(missionLegalText(mission)))}
-          ${active ? stat("Progress", escapeHtml(missionProgressText(mission))) : stat("Status", game.docked ? "Available" : "Dock to accept")}
+          ${active ? "" : stat("Legal", escapeHtml(missionLegalText(mission)))}
+          ${active ? "" : stat("Status", game.docked ? "Available" : "Dock to accept")}
         </div>
+        ${active ? renderActiveMissionStatus(mission) : ""}
+        ${active ? renderWingmenCommandControls(mission) : ""}
         <div style="margin-top:8px">
           ${active
             ? `<button class="btn mini primary" data-mission-plot="${mission.id}">Plot Course</button> <button class="btn mini danger" data-mission-abandon="${mission.id}">Abandon</button>`
@@ -21436,6 +22406,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
           <button class="btn mini" data-cheat="targetHyperspaceOut" ${!game.targetObject || game.docked ? "disabled" : ""}>Target Hyperspace Out</button>
           <button class="btn mini" data-cheat="viewArrival" ${game.docked ? "disabled" : ""}>Spawn View Arrival</button>
+          <button class="btn mini" data-cheat="randomWingman" ${game.docked ? "disabled" : ""}>Launch Random Wingman</button>
         </div>
       </div>
       <div class="notice">
@@ -21542,6 +22513,25 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
     }
 
+    function canvasDiagnosticInfo(canvas) {
+      if (!canvas) return "missing";
+      const rect = canvas.getBoundingClientRect?.();
+      const cssW = rect && Number.isFinite(rect.width) ? Math.round(rect.width) : "unknown";
+      const cssH = rect && Number.isFinite(rect.height) ? Math.round(rect.height) : "unknown";
+      const backingW = Number.isFinite(canvas.width) ? canvas.width : "unknown";
+      const backingH = Number.isFinite(canvas.height) ? canvas.height : "unknown";
+      const scaleX = rect?.width ? Math.round((canvas.width / rect.width) * 100) / 100 : "unknown";
+      const scaleY = rect?.height ? Math.round((canvas.height / rect.height) * 100) / 100 : "unknown";
+      return `css=${cssW}x${cssH} backing=${backingW}x${backingH} scale=${scaleX}x${scaleY}`;
+    }
+
+    function roundedDiagnosticMap(obj, digits = 2) {
+      return Object.fromEntries(Object.entries(obj || {}).map(([key, value]) => [
+        key,
+        Number.isFinite(value) ? Math.round(value * 10 ** digits) / 10 ** digits : value
+      ]));
+    }
+
     function gameDiagnosticReport() {
       const diag = eliteAudio.diagnostics();
       const storageVolume = (() => {
@@ -21588,6 +22578,20 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const screenInfo = window.screen ? `${screen.width}x${screen.height} avail=${screen.availWidth}x${screen.availHeight} depth=${screen.colorDepth}` : "unknown";
       const webgl = webglDiagnosticInfo();
       const recentLogs = diagnosticEvents.slice(-24).map((entry) => `[${entry.at} +${entry.t}ms] ${entry.kind}: ${entry.message}`);
+      const world = game.world || buildWorldSnapshot();
+      const renderFps = Number.isFinite(perf.fps) ? Math.round(perf.fps) : Number.isFinite(perf.frameMs) ? Math.round(1000 / Math.max(1, perf.frameMs)) : "unknown";
+      const renderFrameMs = Number.isFinite(perf.frameMs) ? Math.round(perf.frameMs * 10) / 10 : "unknown";
+      const rawFrameMs = Number.isFinite(perf.rawFrameMs) ? Math.round(perf.rawFrameMs * 10) / 10 : "unknown";
+      const simPhases = roundedDiagnosticMap(perf.simPhases || {}, 2);
+      const liveShips = world?.ships?.length ?? (game.objects || []).filter((o) => o?.type === "ship" && !o._remove).length;
+      const liveTrails = (game.objects || []).reduce((sum, o) => sum + (Array.isArray(o?.engineTrails) ? o.engineTrails.length : 0), 0);
+      const renderScene = game.transition?.kind
+        ? `transition:${game.transition.kind}`
+        : game.jumpCountdown?.kind
+          ? `jump:${game.jumpCountdown.kind}`
+          : game.docked
+            ? "docked-hangar"
+            : `flight-${game.viewMode || "fwd"}`;
       const lines = [
         "Ultra Elite Diagnostics",
         `generated: ${new Date().toISOString()}`,
@@ -21661,8 +22665,42 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         `browserSave: ${saveState}`,
         `missions: ${reportMissions.filter((m) => m.status === "active").length} active / ${reportMissions.length} total`,
         `objects: ${JSON.stringify(objectCounts)}`,
-        `fps: ${Number.isFinite(perf.fps) ? Math.round(perf.fps) : "unknown"}`,
-        `frameMs: ${Number.isFinite(perf.frameMs) ? Math.round(perf.frameMs * 10) / 10 : "unknown"}`,
+        "",
+        "[Rendering]",
+        `scene: ${renderScene}`,
+        `fpsAvg: ${renderFps}`,
+        `frameMsAvg: ${renderFrameMs}`,
+        `frameMsLast: ${rawFrameMs}`,
+        `graphicsMode: ${game.graphicsMode}`,
+        `fxLevel: ${game.fxLevel}`,
+        `ultraFx: ${ultraFxEnabled() ? "yes" : "no"}`,
+        `presentation: ${graphicsModeLabel(game.graphicsMode)}`,
+        `qualityLabel: ${perf.qualityLabel || "unknown"}`,
+        `lod: ${Number.isFinite(perf.lod) ? perf.lod : "unknown"}`,
+        `lodPressure: ${Number.isFinite(perf.lodPressure) ? Math.round(perf.lodPressure * 100) / 100 : "unknown"}`,
+        `lodRecovery: ${Number.isFinite(perf.lodRecovery) ? Math.round(perf.lodRecovery * 100) / 100 : "unknown"}`,
+        `sceneLoad: ${Number.isFinite(perf.sceneLoad) ? Math.round(perf.sceneLoad * 100) / 100 : "unknown"}`,
+        `thresholdMul: ${Number.isFinite(perf.thresholdMul) ? Math.round(perf.thresholdMul * 100) / 100 : "unknown"}`,
+        `particleScale: ${Number.isFinite(perf.particleScale) ? Math.round(perf.particleScale * 100) / 100 : "unknown"}`,
+        `dpr: ${window.devicePixelRatio || 1}`,
+        `dprCap: ${Number.isFinite(perf.dprCap) ? perf.dprCap : "unknown"}`,
+        `appliedLod: ${Number.isFinite(perf._appliedLod) ? perf._appliedLod : "unknown"}`,
+        `spaceCanvas: ${canvasDiagnosticInfo(space)}`,
+        `scannerCanvas: ${canvasDiagnosticInfo(scanner)}`,
+        `foreAftRadarCanvas: ${canvasDiagnosticInfo(foreAftRadar)}`,
+        `worldFrame: ${game.worldFrame || 0}`,
+        `visibleModels: ${Number.isFinite(perf.visibleModels) ? perf.visibleModels : "unknown"}`,
+        `liveShips: ${liveShips}`,
+        `liveEffects: explosions=${game.explosions?.length || 0} smoke=${game.smokePuffs?.length || 0} enemyShots=${game.enemyShots?.length || 0} trails=${liveTrails}`,
+        `starCount: ${game.stars?.length || 0}`,
+        `simPhasesMs: ${Object.keys(simPhases).length ? JSON.stringify(simPhases) : "unknown"}`,
+        `renderErrors: ${game.renderErrorCount || 0}`,
+        `lastRenderError: ${game._lastRenderError || "none"}`,
+        `lastRenderErrorAt: ${game.lastRenderErrorAt || "none"}`,
+        `renderBench: ${ULTRA_ELITE_RENDER_BENCH ? "yes" : "no"}`,
+        `devForceFullRender: ${DEV_FORCE_FULL_RENDER ? "yes" : "no"}`,
+        `engineEffectsDisabled: ${DEV_DISABLE_ENGINE_EFFECTS ? "yes" : "no"}`,
+        `laserEffectsDisabled: ${DEV_DISABLE_LASER_EFFECTS ? "yes" : "no"}`,
         "",
         "[Missions]",
         ...(missionLines.length ? missionLines : ["none"]),
@@ -21840,6 +22878,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         else if (action === "armada") spawnArmada();
         else if (action === "targetHyperspaceOut") forceTargetHyperspaceOut();
         else if (action === "viewArrival") spawnDevViewArrival();
+        else if (action === "randomWingman") spawnDevRandomWingman();
       }));
       panelBody.querySelectorAll("[data-cheat-equip]").forEach((b) => b.addEventListener("click", () => {
         cheatSetEquipment(b.dataset.cheatEquip, b.dataset.cheatEquipState === "add");
@@ -21866,6 +22905,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       panelBody.querySelectorAll("[data-mission-accept]").forEach((b) => b.addEventListener("click", () => acceptMission(b.dataset.missionAccept)));
       panelBody.querySelectorAll("[data-mission-plot]").forEach((b) => b.addEventListener("click", () => plotMissionCourse(b.dataset.missionPlot)));
       panelBody.querySelectorAll("[data-mission-abandon]").forEach((b) => b.addEventListener("click", () => abandonMission(b.dataset.missionAbandon)));
+      panelBody.querySelectorAll("[data-wingmen-command]").forEach((b) => b.addEventListener("click", () => setWingmenCommand(b.dataset.wingmenMission, b.dataset.wingmenCommand)));
       panelBody.querySelectorAll("[data-chart-mission]").forEach((b) => b.addEventListener("click", () => openMissionFromChart(b.dataset.chartMission)));
       const missile = panelBody.querySelector("[data-missile]");
       if (missile) missile.addEventListener("click", () => {
@@ -22202,6 +23242,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       setDomText(hudEls.roLockDist, Number.isFinite(lockDist)
         ? `LOCK ${game.targetObject.name} ${Math.round(lockDist)}m`
         : "LOCK --");
+      renderWingmenHud();
       setLevelMeter(hudEls.barForeShield, game.foreShield, { lowWarn: 42, lowCritical: 18 });
       setLevelMeter(hudEls.barAftShield, game.aftShield, { lowWarn: 42, lowCritical: 18 });
       setLevelMeter(hudEls.barFuel, game.fuel / fuelTankCapacityLy() * 100, { lowWarn: 28, lowCritical: 12 });
@@ -22240,10 +23281,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const bootBusy = !game.bootReady;
       const jumpBusy = bootBusy || !!game.transition || !!game.jumpCountdown;
       const canLaunch = game.docked && !jumpBusy;
-      const canJump = !game.docked && !jumpBusy;
+      const canJump = !game.docked && !jumpBusy && !game.autoDock;
       const hasAutoDock = !game.docked && !jumpBusy && game.equipment.dockingComputer;
       const canAutoDock = hasAutoDock && (game.autoDock || stationSafeZoneActive());
-      const canGalJump = game.equipment.galacticHyperdrive && !jumpBusy;
+      const canGalJump = game.equipment.galacticHyperdrive && !jumpBusy && !game.autoDock;
       setDomDisabled(hudEls.launchBtn, !canLaunch);
       setDomDisabled(hudEls.jumpBtn, !canJump);
       setDomDisabled(hudEls.autoDockBtn, !canAutoDock);
