@@ -4,7 +4,7 @@ A browser-based, non-commercial fan tribute to the original 1984 space trading g
 
 - Play: [www.ultraelite.co.uk](https://www.ultraelite.co.uk)
 - Source: [github.com/dansto1974/UltraElite](https://github.com/dansto1974/UltraElite)
-- Current version: `1.0.21-beta`
+- Current version: `1.0.22-beta`
 - Release file: `index.html`
 - Local dev entry: `dev.html`
 
@@ -305,10 +305,14 @@ The game is currently designed for desktop. Mobile displays show a desktop-only 
 
 ## Change Log
 
-### 1.0.21-beta
+### 1.0.22-beta
 
 - Ship Builder overhaul: added a fullscreen-ready workshop with undo/redo, view-cube controls, better selection tools, surface/extrude workflows, and refreshed Boa and Canister asset rendering.
 - Docking computer polish: final approach now aims through the station slot more smoothly and keeps a brisker capture speed instead of crawling or twitching near touchdown.
+
+### 1.0.21-beta
+
+- Internal asset-authoring systems and model maintenance update.
 
 ### 1.0.20-beta
 

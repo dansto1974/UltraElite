@@ -11173,9 +11173,9 @@
       renderPanel();
     }
 
-    const GAME_VERSION = "1.0.21-beta";
+    const GAME_VERSION = "1.0.22-beta";
     const UPDATE_LOG = [
-      ["1.0.21-beta", "Docking computer polish: final approach now aims through the station slot more cleanly and keeps a brisker capture speed."],
+      ["1.0.22-beta", "Docking computer polish: final approach now aims through the station slot more cleanly and keeps a brisker capture speed."],
       ["1.0.21-beta", "Internal asset-authoring systems and model maintenance update.", true],
       ["1.0.20-beta", "Ship and station surface polish: optimized several model assets, refreshed Diamondback skin textures, and tightened station panel mapping for cleaner Ultra-mode rendering."],
       ["1.0.19-beta", "Mission and dockyard polish: active contracts now report ship requirements more clearly, mission completion debriefs wait until landing is complete, and transition cameras lock the cockpit view cleanly."],
