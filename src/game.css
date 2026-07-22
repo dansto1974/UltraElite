@@ -1063,7 +1063,8 @@
       animation: splashPromptPulse 1.4s infinite;
     }
 
-    #missionCompleteDismiss {
+    #missionCompleteDismiss,
+    #localAuthorityDismiss {
       width: 100%;
     }
 

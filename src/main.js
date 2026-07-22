@@ -3029,6 +3029,10 @@
       commsReviewOffset: 0,
       commsClock: 10,
       trafficClock: 6,
+      stationTrafficControl: { queue: [], serial: 0, activeId: "", playerLineAt: 0, lastPlayerActiveId: "" },
+      stationDockingDeniedUntil: 0,
+      stationDockingDeniedReason: "",
+      stationDockingDeniedLineAt: 0,
       extraVesselDelay: 0,
       npcHyperspaceOutClock: 240,
       messageTimer: 0
@@ -3358,6 +3362,8 @@
     let commanderNameDialogForce = false;
     let missionCompleteDialogOpen = false;
     const missionCompleteQueue = [];
+    let localAuthorityDialogOpen = false;
+    const localAuthorityQueue = [];
 
     function setCommanderNameDialog(open, force = false) {
       const dialog = byId("commanderNameDialog");
@@ -3430,6 +3436,7 @@
 
     function showNextMissionCompleteDialog() {
       if (missionCompleteDialogOpen) return;
+      if (localAuthorityDialogOpen || localAuthorityQueue.length) return;
       const next = missionCompleteQueue.shift();
       const dialog = byId("missionCompleteDialog");
       if (!dialog || !next) {
@@ -3464,6 +3471,101 @@
       missionCompleteDialogOpen = false;
       if (dialog) setDomHidden(dialog, true);
       setTimeout(showNextMissionCompleteDialog, 80);
+      return true;
+    }
+
+    function localAuthorityFineFor(legal) {
+      const score = Math.max(0, Math.round(Number(legal) || 0));
+      if (score <= 0) return 0;
+      if (score < 16) return Math.round(100 + (score - 1) * 40);
+      return Math.round(1000 + clamp((score - 16) / 44, 0, 1) * 4000);
+    }
+
+    function localAuthorityFineBody(status, assessed, paid, shortfall) {
+      const sys = currentSystem();
+      const tech = (Number(sys.tech) || 0) + 1;
+      const tone = governmentCommsTone();
+      if (tone === "anarchy") {
+        return shortfall
+          ? `Dockside adjudication has made your ${status} problem go away. The cashier took your remaining ${fmt(paid)} CR against a ${fmt(assessed)} CR "facilitation charge". Try not to ask for a receipt.`
+          : `Dockside adjudication has made your ${status} problem go away for ${fmt(assessed)} CR. The receipt is technically optional, which is to say unavailable.`;
+      }
+      if (tech >= 10 || tone === "corporate" || tone === "democracy") {
+        return shortfall
+          ? `Pursuant to local docking statutes, your ${status} record has been discharged. The authority assessed ${fmt(assessed)} CR, recovered your remaining ${fmt(paid)} CR, and closed the enforcement entry.`
+          : `Pursuant to local docking statutes, your ${status} record has been discharged. The authority has collected ${fmt(assessed)} CR and restored your legal standing.`;
+      }
+      if (tone === "dictatorship" || tone === "communist" || tone === "feudal") {
+        return shortfall
+          ? `Station authority has imposed summary settlement for ${status} offences. Your remaining ${fmt(paid)} CR has been seized against a ${fmt(assessed)} CR fine, and your record is cleared.`
+          : `Station authority has imposed and collected a ${fmt(assessed)} CR fine for ${status} offences. Your legal record is now clear.`;
+      }
+      return shortfall
+        ? `Local authority assessed ${fmt(assessed)} CR in fines, seized your remaining ${fmt(paid)} CR, and cleared your legal record.`
+        : `Local authority has collected ${fmt(assessed)} CR in fines and cleared your legal record.`;
+    }
+
+    function settleLocalAuthorityFine(st) {
+      const legal = Math.max(0, Math.round(Number(game.legal) || 0));
+      if (legal <= 0) return null;
+      const assessed = localAuthorityFineFor(legal);
+      const paid = Math.min(Math.max(0, game.credits), assessed);
+      const status = legalStatus();
+      game.credits = Math.max(0, game.credits - paid);
+      game.legal = 0;
+      game.stationDockingDeniedUntil = 0;
+      game.stationDockingDeniedReason = "";
+      game.stationDockingDeniedLineAt = 0;
+      return {
+        title: `${status} record settled`,
+        station: st?.name || currentSystem().name,
+        status,
+        assessed,
+        paid,
+        shortfall: Math.max(0, assessed - paid),
+        body: localAuthorityFineBody(status, assessed, paid, Math.max(0, assessed - paid))
+      };
+    }
+
+    function showNextLocalAuthorityDialog() {
+      if (localAuthorityDialogOpen) return;
+      if (missionCompleteDialogOpen) return;
+      const next = localAuthorityQueue.shift();
+      const dialog = byId("localAuthorityDialog");
+      if (!dialog || !next) {
+        localAuthorityDialogOpen = false;
+        if (dialog) setDomHidden(dialog, true);
+        return;
+      }
+      next.queueRemaining = localAuthorityQueue.length;
+      setDomText(byId("localAuthorityName"), next.title);
+      setDomText(byId("localAuthorityBody"), next.body);
+      setDomText(byId("localAuthorityStation"), next.station);
+      setDomText(byId("localAuthorityStatus"), next.status);
+      setDomText(byId("localAuthorityFine"), `${fmt(next.paid)} / ${fmt(next.assessed)} CR${next.shortfall ? " - account cleared" : ""}`);
+      setDomText(byId("localAuthorityPrompt"), next.queueRemaining
+        ? `Press Space for next authority notice (${next.queueRemaining} waiting)`
+        : "Press Space to acknowledge");
+      localAuthorityDialogOpen = true;
+      setDomHidden(dialog, false);
+      setTimeout(() => byId("localAuthorityDismiss")?.focus({ preventScroll: true }), 0);
+    }
+
+    function queueLocalAuthorityFineDialog(fine) {
+      if (!fine) return;
+      localAuthorityQueue.push(fine);
+      showNextLocalAuthorityDialog();
+    }
+
+    function dismissLocalAuthorityDialog() {
+      const dialog = byId("localAuthorityDialog");
+      if (!localAuthorityDialogOpen) return false;
+      localAuthorityDialogOpen = false;
+      if (dialog) setDomHidden(dialog, true);
+      setTimeout(() => {
+        showNextLocalAuthorityDialog();
+        if (!localAuthorityDialogOpen) showNextMissionCompleteDialog();
+      }, 80);
       return true;
     }
 
@@ -8214,7 +8316,7 @@
       }
       const count = arrival ? 1 + Math.floor(rng() * 3) : 1 + Math.floor(rng() * 2);
       for (let i = 0; i < count; i++) spawnShip(rng, false);
-      game.trafficClock = 5 + rng() * 8;
+      resetStationTrafficControl(rng);
       game.extraVesselDelay = arrival ? 0 : 30 + rng() * 24;
       game.npcHyperspaceOutClock = nextNpcHyperspaceOutDelay(rng);
       const rockCount = Math.floor(rng() * 3);
@@ -8579,25 +8681,272 @@
       return stationSlotAxes(st);
     }
 
-    function spawnStationTraffic(kind = "launch", rng = Math.random) {
+    function stationTrafficControlState() {
+      if (!game.stationTrafficControl || typeof game.stationTrafficControl !== "object") {
+        game.stationTrafficControl = { queue: [], serial: 0, activeId: "", playerLineAt: 0, lastPlayerActiveId: "" };
+      }
+      if (!Array.isArray(game.stationTrafficControl.queue)) game.stationTrafficControl.queue = [];
+      if (!Number.isFinite(game.stationTrafficControl.serial)) game.stationTrafficControl.serial = 0;
+      return game.stationTrafficControl;
+    }
+
+    function resetStationTrafficControl(rng = Math.random) {
+      game.stationTrafficControl = { queue: [], serial: 0, activeId: "", playerLineAt: 0, lastPlayerActiveId: "" };
+      game.trafficClock = 5 + rng() * 8;
+      game.stationDockingDeniedUntil = 0;
+      game.stationDockingDeniedReason = "";
+      game.stationDockingDeniedLineAt = 0;
+    }
+
+    function stationTrafficName(st) {
+      return `${(st?.name || currentSystem().name + " STATION").toUpperCase()} STC`;
+    }
+
+    function stationTrafficCorridorMetrics(st, pos) {
+      const { center, outward } = stationSlotAxes(st);
+      const rel = sub(pos, center);
+      const along = dot(rel, outward);
+      const lateral = len(sub(rel, scale(outward, along)));
+      return { along, lateral };
+    }
+
+    function stationTrafficLaneOccupant(st, exclude = null) {
+      if (!st || st.type !== "station") return null;
+      return worldSnapshot().ships.find((o) => {
+        if (!o || o === exclude || o._remove) return false;
+        if (o.trafficStation && o.trafficStation !== st) return false;
+        if (o.trafficControlStatus !== "cleared" && !o.podDockFinal) return false;
+        if (o.aiMode !== "stationLaunch" && o.aiMode !== "stationDock" && o.role !== "pod" && o.model !== "escapePod") return false;
+        const m = stationTrafficCorridorMetrics(st, o.pos);
+        return m.along > -170 && m.along < 1580 && m.lateral < 260;
+      }) || null;
+    }
+
+    function activeNavalPriorityMission() {
+      return missionState().active.find((mission) =>
+        mission.status === "active" &&
+        (mission.type === "naval" || mission.type === "navalBattle") &&
+        missionProgressUnlocked(mission)
+      ) || null;
+    }
+
+    function playerNeedsEmergencyDockingPriority(st) {
+      if (!st || game.docked || game.transition || game.jumpCountdown || game.playerDestroyed) return false;
+      const metrics = stationTrafficCorridorMetrics(st, game.camera.pos);
+      if (metrics.along < -220 || metrics.along > 2450 || metrics.lateral > 920) return false;
+      const shields = Math.min(game.foreShield ?? 100, game.aftShield ?? 100);
+      const energy = Number.isFinite(game.energy) ? game.energy : 100;
+      return energy < 30 || shields < 16 || (game.playerDamageMarks?.length || 0) >= 7;
+    }
+
+    function playerHasStationApproachReservation(st) {
+      if (!st || game.docked || game.transition || game.jumpCountdown || game.playerDestroyed) return false;
+      const metrics = stationTrafficCorridorMetrics(st, game.camera.pos);
+      const inApproachLane = metrics.along > -220 && metrics.along < 2450 && metrics.lateral < 980;
+      const autoDocking = game.autoDock && typeof game.autoDock === "object";
+      if (autoDocking) {
+        const stage = game.autoDock.stage || "marshal";
+        if (stage === "approach" || stage === "align" || stage === "final" || stage === "hold") return true;
+        return stage === "marshal" && inApproachLane;
+      }
+      return inApproachLane && game.speed < 92;
+    }
+
+    function stationTrafficPriority(st) {
+      if (!st || game.docked || game.transition || game.jumpCountdown) return null;
+      const pod = worldSnapshot().ships.find((o) => {
+        if (!o || o._remove || (o.role !== "pod" && o.model !== "escapePod")) return false;
+        const m = stationTrafficCorridorMetrics(st, o.pos);
+        return m.along > -240 && m.along < 2600 && m.lateral < 1100;
+      });
+      if (pod) return { kind: "escapePod", label: "escape pod recovery", object: pod };
+      const police = worldSnapshot().ships.find((o) => {
+        if (!o || o._remove || !o.police) return false;
+        const m = stationTrafficCorridorMetrics(st, o.pos);
+        return (Number.isFinite(o.stationPriorityUntil) && performance.now() < o.stationPriorityUntil)
+          || (m.along > -320 && m.along < 2200 && m.lateral < 1150);
+      });
+      if (police) return { kind: "police", label: `${police.name || "police response"} priority launch`, object: police };
+      const casualty = worldSnapshot().ships.find((o) => {
+        if (!o || o._remove || o.aiMode !== "stationDock" || o.trafficControlStatus === "cleared") return false;
+        if (!o.maxHp || o.hp > o.maxHp * .35) return false;
+        const m = stationTrafficCorridorMetrics(st, o.pos);
+        return m.along > -240 && m.along < 2600 && m.lateral < 1100;
+      });
+      if (casualty) return { kind: "damagedTraffic", label: `${casualty.name || "damaged ship"} emergency approach`, object: casualty };
+      if (playerNeedsEmergencyDockingPriority(st)) return { kind: "playerEmergency", label: `${game.commander} emergency approach`, object: null };
+      const naval = activeNavalPriorityMission();
+      if (naval) {
+        const m = stationTrafficCorridorMetrics(st, game.camera.pos);
+        if (m.along > -240 && m.along < 2450 && m.lateral < 1000) return { kind: "naval", label: `${game.commander} naval priority`, object: null, mission: naval };
+      }
+      return null;
+    }
+
+    function setStationDockingDenied(reason = "Station enforcement action active", durationMs = 90000) {
+      const until = performance.now() + durationMs;
+      game.stationDockingDeniedUntil = Math.max(Number(game.stationDockingDeniedUntil) || 0, until);
+      game.stationDockingDeniedReason = reason;
+    }
+
+    function stationDockingDenial(st) {
+      if (!st || st.type !== "station" || game.docked || game.transition || game.jumpCountdown) return null;
+      const now = performance.now();
+      const localPolicePursuit = worldSnapshot().ships.some((o) => {
+        if (!o || o._remove || !o.police || !o.hostile) return false;
+        return len(sub(o.pos, st.pos)) < 6200 || len(sub(o.pos, game.camera.pos)) < 2600;
+      });
+      const activeStationDenial = Number.isFinite(game.stationDockingDeniedUntil) && now < game.stationDockingDeniedUntil;
+      if (game.legal >= 16 && (activeStationDenial || localPolicePursuit || len(sub(game.camera.pos, st.pos)) < 3600)) {
+        return { reason: "fugitive transponder and active local enforcement" };
+      }
+      return null;
+    }
+
+    function announceStationDockingDenied(st, denial) {
+      if (!st || !denial) return;
+      const now = performance.now();
+      if (now - (game.stationDockingDeniedLineAt || 0) < 6500) return;
+      game.stationDockingDeniedLineAt = now;
+      commsMessage(stationTrafficName(st), `${game.commander}, docking denied: ${denial.reason}. Clear the slot immediately.`, "police", { protected: true });
+    }
+
+    function redirectStationTrafficToHold(o, st, reason = "Priority traffic") {
+      if (!o || o._remove || !st || o.aiMode !== "stationDock") return false;
+      const { center, outward, right, up } = stationSlotAxes(st);
+      const m = stationTrafficCorridorMetrics(st, o.pos);
+      if (m.along < -120) return false;
+      const sideSign = dot(sub(o.pos, center), right) >= 0 ? 1 : -1;
+      o.trafficControlStatus = "holding";
+      o.trafficAge = 0;
+      o.trafficHoldPoint = add(center, add(scale(outward, Math.max(1180, m.along + 420)), add(scale(right, sideSign * 760), scale(up, 260))));
+      releaseStationTrafficControl(o.trafficControlId);
+      if (!o._trafficYieldHailed || performance.now() - o._trafficYieldHailed > 9000) {
+        o._trafficYieldHailed = performance.now();
+        shipHail(o, "trafficYield", `${reason}. Breaking approach and holding.`, .78, 7000);
+      }
+      return true;
+    }
+
+    function applyStationTrafficPriority(st, priority) {
+      if (!st || !priority) return;
+      const control = stationTrafficControlState();
+      const now = performance.now();
+      if (priority.object?.aiMode === "stationDock" && priority.object.trafficControlStatus === "holding") {
+        priority.object.trafficControlStatus = "cleared";
+        priority.object.trafficAge = 0;
+        control.activeId = priority.object.trafficControlId || control.activeId || "";
+        control.activeKind = "dock";
+        control.activeName = priority.object.name || priority.label;
+        control.queue = control.queue.filter((item) => item.ship !== priority.object && item.id !== priority.object.trafficControlId);
+        commsMessage(stationTrafficName(st), `${priority.object.name || "Damaged traffic"}, emergency approach approved.`, "station", { protected: true });
+      }
+      for (const o of worldSnapshot().ships) {
+        if (!o || o._remove || o === priority.object) continue;
+        if (o.aiMode !== "stationDock" && o.aiMode !== "stationLaunch") continue;
+        if (o.aiMode === "stationDock") redirectStationTrafficToHold(o, st, priority.label);
+        else if (!o._trafficPriorityWarnAt || now - o._trafficPriorityWarnAt > 9000) {
+          o._trafficPriorityWarnAt = now;
+          shipHail(o, "trafficYield", `${priority.label}. Keeping departure lane wide.`, .55, 6500);
+        }
+      }
+      if (!control.priorityKind || control.priorityKind !== priority.kind || now - (control.priorityLineAt || 0) > 10000) {
+        control.priorityKind = priority.kind;
+        control.priorityLineAt = now;
+        commsMessage(stationTrafficName(st), `${priority.label} has priority. All other traffic hold clear.`, "station", { protected: true });
+      }
+    }
+
+    function stationTrafficPlayerInstruction(st, active = stationTrafficLaneOccupant(st)) {
+      if (!st || game.docked || game.transition || game.jumpCountdown) return;
+      const metrics = stationTrafficCorridorMetrics(st, game.camera.pos);
+      if (metrics.along < -260 || metrics.along > 2400 || metrics.lateral > 980) return;
+      const control = stationTrafficControlState();
+      const now = performance.now();
+      const activeId = active?.trafficControlId || active?.id || "";
+      if (active && (control.lastPlayerActiveId !== activeId || now - (control.playerLineAt || 0) > 15000)) {
+        control.lastPlayerActiveId = activeId;
+        control.playerLineAt = now;
+        commsMessage(stationTrafficName(st), `${game.commander}, hold outside the slot. Proceed after ${active.name || "station traffic"}.`, "station", { protected: true });
+      } else if (!active && control.lastPlayerActiveId && now - (control.playerLineAt || 0) > 2500) {
+        control.lastPlayerActiveId = "";
+        control.playerLineAt = now;
+        commsMessage(stationTrafficName(st), `${game.commander}, slot is clear. Proceed when aligned.`, "station", { protected: true });
+      }
+    }
+
+    function enqueueStationTrafficRequest(kind = "launch", rng = Math.random) {
+      const control = stationTrafficControlState();
+      if (control.queue.length >= 3) return null;
+      const model = pick(stationTrafficModels());
+      const id = `stc-${++control.serial}`;
+      const item = { id, kind, model, label: `TRADER ${shipName(model)}`, createdAt: performance.now() };
+      if (kind === "dock") {
+        item.ship = spawnStationTraffic("dock", rng, { id, model, status: "holding" });
+        if (!item.ship) return null;
+      }
+      control.queue.push(item);
+      return item;
+    }
+
+    function grantStationTrafficRequest(st, item, rng = Math.random) {
+      if (!st || !item) return null;
+      const control = stationTrafficControlState();
+      let ship = item.ship && isWorldObjectLive(item.ship) ? item.ship : null;
+      if (item.kind === "launch") ship = spawnStationTraffic("launch", rng, { id: item.id, model: item.model, status: "cleared" });
+      else if (ship) {
+        ship.trafficControlStatus = "cleared";
+        ship.aiMode = "stationDock";
+        ship.trafficAge = 0;
+      } else {
+        ship = spawnStationTraffic("dock", rng, { id: item.id, model: item.model, status: "cleared" });
+      }
+      if (!ship) return null;
+      control.activeId = item.id;
+      control.activeKind = item.kind;
+      control.activeName = ship.name;
+      const next = control.queue[0]?.label;
+      const line = item.kind === "launch"
+        ? `${ship.name}, cleared for departure. ${next ? `${next}, hold position.` : "All other traffic hold."}`
+        : `${ship.name}, proceed inbound. ${next ? `${next}, remain in the stack.` : "Departure lane holding."}`;
+      commsMessage(stationTrafficName(st), line, "station", { protected: true });
+      stationTrafficPlayerInstruction(st, ship);
+      return ship;
+    }
+
+    function releaseStationTrafficControl(id) {
+      const control = stationTrafficControlState();
+      if (id && control.activeId === id) {
+        control.activeId = "";
+        control.activeKind = "";
+        control.activeName = "";
+      }
+    }
+
+    function spawnStationTraffic(kind = "launch", rng = Math.random, opts = {}) {
       const st = game.objects.find((o) => o.type === "station");
       if (!st) return null;
       const shipCount = game.objects.filter((o) => o.type === "ship").length;
       if (shipCount >= 9) return null;
       const { center, outward, up, right } = stationSlotAxes(st);
       const types = stationTrafficModels();
-      const model = types[Math.floor(rng() * types.length)];
+      const model = opts.model || types[Math.floor(rng() * types.length)];
       const stats = shipStats(model);
       const role = "trader";
       const name = `TRADER ${shipName(model)}`;
       const slotOffset = add(scale(right, (rng() - .5) * 42), scale(up, (rng() - .5) * 28));
       const launch = kind === "launch";
       const approach = 1300 + rng() * 760;
-      const pos = launch
+      const holding = !launch && opts.status === "holding";
+      const holdSide = rng() < .5 ? -1 : 1;
+      const holdPoint = add(center, add(scale(outward, approach + 220), add(scale(right, holdSide * (520 + rng() * 260)), scale(up, 180 + rng() * 180))));
+      const pos = holding
+        ? add(holdPoint, add(scale(right, (rng() - .5) * 180), scale(up, (rng() - .5) * 90)))
+        : launch
         ? add(center, add(slotOffset, scale(outward, 34)))
         : add(center, add(slotOffset, scale(outward, approach)));
-      const dir = launch ? outward : scale(outward, -1);
-      const speed = launch ? 42 : 88;
+      const dir = launch ? outward : holding ? norm(sub(holdPoint, pos)) : scale(outward, -1);
+      const speed = launch ? 42 : holding ? 24 : 88;
       const o = {
         type: "ship",
         model,
@@ -8620,6 +8969,9 @@
         trafficStation: st,
         trafficAge: 0,
         trafficSlotOffset: slotOffset,
+        trafficControlId: opts.id || "",
+        trafficControlStatus: opts.status || "cleared",
+        trafficHoldPoint: holdPoint,
         attackClock: rng() * 2,
         wobble: rng() * TAU,
         npcMissiles: 0,
@@ -8759,6 +9111,26 @@
       const st = dockableTarget();
       if (!st) return;
       const status = manualDockingStatus(st, auto);
+      const dockingDenial = stationDockingDenial(st);
+      if (dockingDenial) announceStationDockingDenied(st, dockingDenial);
+      if (dockingDenial && auto && game.autoDock) {
+        eliteAudio.play("boop");
+        game.autoDock = false;
+        setMessage("Docking computer refused: docking authority denied.", true);
+        return;
+      }
+      const trafficPriority = st.type === "station" ? stationTrafficPriority(st) : null;
+      const trafficOccupant = st.type === "station" ? (stationTrafficLaneOccupant(st) || trafficPriority?.object || null) : null;
+      if (trafficOccupant) {
+        eliteAudio.play("boop");
+        commsMessage(stationTrafficName(st), `${game.commander}, hold. Proceed after ${trafficOccupant.name || "station traffic"}.`, "station", { protected: true });
+        setMessage("Docking hold: station traffic has the slot.", true);
+        if (game.autoDock && typeof game.autoDock === "object") {
+          game.autoDock.stage = "goAround";
+          game.autoDock.announced = "";
+        }
+        return;
+      }
       if (auto || status.ok) {
         eliteAudio.play("beep");
         game.speed = 0;
@@ -8774,9 +9146,9 @@
           game.dockedAt = st.name;
           restoreShipSystems();
           game.fuel = clamp(game.fuel + 0.2, 0, 7);
-          game.legal = Math.max(0, game.legal - 2);
           game.dockScene = makeDockScene(st.name, hullRepaired, repairLine, preRepairMarks, { shipModel: landingShipModel, lockShipModel: true });
           const missionDockResult = completeDockedMissions({ detailed: true, queueDialogs: false });
+          const authorityFine = settleLocalAuthorityFine(st);
           const missionDockLine = missionDockResult.message;
           const missionPendingLine = !missionDockLine && missionDockResult.pending?.length
             ? `Mission pending: ${missionDockResult.pending[0]}.`
@@ -8789,8 +9161,10 @@
               if (hullRepaired) commsMessage(`${st.name.toUpperCase()} SERVICE`, repairLine, "station");
             }
             const welcome = hullRepaired ? `Welcome to ${st.name}. Free hull repair complete.` : `Welcome to ${st.name}.`;
-            setMessage(missionDockLine ? `${welcome} ${missionDockLine}` : missionPendingLine ? `${welcome} ${missionPendingLine}` : welcome, true);
+            const authorityLine = authorityFine ? ` Local authority collected ${fmt(authorityFine.paid)} CR and cleared your record.` : "";
+            setMessage(missionDockLine ? `${welcome} ${missionDockLine}${authorityLine}` : missionPendingLine ? `${welcome} ${missionPendingLine}${authorityLine}` : `${welcome}${authorityLine}`, true);
             renderPanel();
+            queueLocalAuthorityFineDialog(authorityFine);
             queueMissionCompleteDialogs(missionDockResult.completed);
           };
           if (ultraFxEnabled()) startTransition("dockHangar", 10.2, completeDock, { scene: game.dockScene });
@@ -8827,9 +9201,17 @@
         setMessage("Docking computer waiting for station safe zone.");
         return;
       }
+      const st = dockableTarget();
+      const dockingDenial = st ? stationDockingDenial(st) : null;
+      if (!game.autoDock && dockingDenial) {
+        eliteAudio.play("boop");
+        announceStationDockingDenied(st, dockingDenial);
+        setMessage("Docking computer refused: docking authority denied.", true);
+        return;
+      }
       game.autoDock = game.autoDock ? false : { stage: "marshal", announced: "" };
       setMessage(game.autoDock ? "Docking computer engaged." : "Docking computer disengaged.");
-      commsMessage("TRAFFIC CONTROL", stationControllerLine(game.autoDock ? "autoOn" : "autoOff"), "station");
+      commsMessage(st ? stationTrafficName(st) : "STATION STC", stationControllerLine(game.autoDock ? "autoOn" : "autoOff"), "station");
     }
 
     function prepareForwardJumpView() {
@@ -9012,6 +9394,7 @@
         hostile: true, police: true, role: "police", bounty: 0,
         aiMode: "attack", orbitCenter: vec(), orbitRadius: 300, orbitAngle: Math.random() * TAU,
         orbitSpeed: .2, attackClock: 1, wobble: Math.random() * TAU,
+        stationPriorityUntil: performance.now() + 12000,
         npcMissiles: npcMissileStock("viper", "police", true),
         decalSeed: hash32(`${game.galaxy}:${game.current}:viper:police`)
       };
@@ -9029,6 +9412,7 @@
 
     function provokeStationPolice(reason = "Weapons fire near the station") {
       game.legal = Math.min(60, game.legal + 2);
+      setStationDockingDenied(reason, 120000);
       const policeNearby = worldSnapshot().ships.filter((o) => o.police).length;
       if (policeNearby < 2 && Math.random() < .55) spawnPoliceResponse();
       setMessage(`${reason}! Police scrambled.`, true);
@@ -9775,6 +10159,7 @@
           game.legal += o.police ? 24 : 5;
         } else if (o.police || !o.hostile) game.legal += o.police ? 24 : 8;
         else game.legal = Math.max(0, game.legal - 1);
+        if (o.police) setStationDockingDenied("police casualty recorded by local authority", 180000);
         const suppressionUpdates = recordPirateSuppressionKill(o);
         const encounterUpdate = recordMissionEncounterKill(o);
         const missionBits = [];
@@ -9916,7 +10301,7 @@
       const deathPos = { ...game.camera.pos };
       const deathQuat = ensureCameraQuat(game.camera);
       const deathModel = playerShipModel();
-      const finish = () => {
+      const finish = (choice = "load") => {
         if (hadCapsule) {
           setMessage(`Escape capsule fired! Ship lost to ${reason}, but you're alive. Picked up and returned to Lave.`, true);
           game.galaxy = 0;
@@ -9940,7 +10325,7 @@
           writeBrowserSave(true);
           return;
         }
-        restoreCommanderAfterGameOver(reason);
+        restoreCommanderAfterGameOver(reason, choice);
       };
       game.docked = false;
       game.speed = 0;
@@ -9955,16 +10340,42 @@
         hadCapsule,
         deathPos,
         deathQuat,
-        deathModel
+        deathModel,
+        hasBrowserSave: !hadCapsule && browserSaveExists()
       });
     }
 
     function finishGameOver() {
       const tr = game.transition;
       if (!tr || tr.kind !== "death" || !tr.waitingForRestart) return false;
+      if (!tr.gameOverChoice) return false;
       game.transition = null;
-      tr.onComplete();
+      tr.onComplete(tr.gameOverChoice);
       syncViewPresentation();
+      return true;
+    }
+
+    function chooseGameOverOption(choice = "restart") {
+      const tr = game.transition;
+      if (!tr || tr.kind !== "death" || !tr.waitingForRestart || tr.hadCapsule) return false;
+      if (choice === "load" && !browserSaveExists()) return false;
+      tr.gameOverChoice = choice === "load" ? "load" : "restart";
+      finishGameOver();
+      return true;
+    }
+
+    function handleGameOverPointer(event) {
+      const tr = game.transition;
+      if (!tr || tr.kind !== "death" || !tr.waitingForRestart || tr.hadCapsule) return false;
+      const rect = space.getBoundingClientRect();
+      const x = (event.clientX - rect.left) * (space.width / Math.max(1, rect.width));
+      const y = (event.clientY - rect.top) * (space.height / Math.max(1, rect.height));
+      const hit = (tr.gameOverButtons || []).find((button) =>
+        x >= button.x && x <= button.x + button.w && y >= button.y && y <= button.y + button.h
+      );
+      if (!hit) return false;
+      chooseGameOverOption(hit.choice);
+      event.preventDefault();
       return true;
     }
 
@@ -10855,10 +11266,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       loadBrowserSave(false);
     }
 
-    function restoreCommanderAfterGameOver(reason) {
+    function restoreCommanderAfterGameOver(reason, choice = "load") {
       const commander = normalizeCommanderName(game.commander);
       const hadBrowserSave = browserSaveExists();
-      if (hadBrowserSave && loadBrowserSave(true)) {
+      if (choice === "load" && hadBrowserSave && loadBrowserSave(true)) {
         resetFlightScene(false);
         setMessage(`Ship destroyed by ${reason}. Browser commander save restored.`, true);
         renderPanel();
@@ -10867,7 +11278,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       applyCommanderSave(freshCommanderSaveData(commander));
       resetFlightScene(false);
       setMessage(
-        hadBrowserSave
+        choice === "load" && hadBrowserSave
           ? `Ship destroyed by ${reason}. Browser save failed; new Lave commander record created.`
           : `Ship destroyed by ${reason}. New Lave commander record created.`,
         true
@@ -11220,8 +11631,32 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const finalAim = add(slot.center, scale(inward, 150));
       const relToAxis = sub(game.camera.pos, slot.center);
       const lateral = len(sub(relToAxis, scale(slot.outward, dot(relToAxis, slot.outward))));
+      const dockingDenial = stationDockingDenial(st);
+      if (dockingDenial) {
+        announceStationDockingDenied(st, dockingDenial);
+        game.autoDock = false;
+        eliteAudio.play("boop");
+        setMessage("Docking computer disengaged: docking authority denied.", true);
+        return;
+      }
+      const trafficPriority = stationTrafficPriority(st);
+      const trafficOccupant = stationTrafficLaneOccupant(st) || trafficPriority?.object || null;
+      const stationControlHold = !!trafficOccupant;
+      if (stationControlHold && state.stage !== "hold") {
+        state.stage = "hold";
+        state.offTrackTime = 0;
+        state.announced = "";
+        stationTrafficPlayerInstruction(st, trafficOccupant);
+        commsMessage(stationTrafficName(st), `${game.commander}, docking computer holding. Proceed after ${trafficOccupant.name || "station traffic"}.`, "station", { protected: true });
+      } else if (!stationControlHold && state.stage === "hold") {
+        state.stage = "marshal";
+        state.offTrackTime = 0;
+        state.announced = "";
+      }
       const stageTarget = state.stage === "marshal"
-        ? (frontness < 420 ? marshal : approach)
+        ? (stationControlHold || frontness < 420 ? marshal : approach)
+        : state.stage === "hold"
+          ? marshal
         : state.stage === "goAround"
           ? goAround
           : state.stage === "approach"
@@ -11237,11 +11672,11 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const forward = forwardVector(game.camera);
       const alignment = dot(forward, inward);
 
-      if (state.stage === "marshal" && (frontness > 720 || (d < 300 && frontness > 360))) state.stage = "approach";
-      if (state.stage === "approach" && frontness < 840 && lateral < 360) state.stage = "align";
-      if (state.stage === "align" && frontness < 240 && lateral < 190 && alignment > .82) state.stage = "final";
+      if (state.stage === "marshal" && !stationControlHold && (frontness > 720 || (d < 300 && frontness > 360))) state.stage = "approach";
+      if (state.stage === "approach" && !stationControlHold && frontness < 840 && lateral < 360) state.stage = "align";
+      if (state.stage === "align" && !stationControlHold && frontness < 240 && lateral < 190 && alignment > .82) state.stage = "final";
 
-      const offTrajectory = state.stage !== "marshal" && state.stage !== "goAround" && state.stage !== "final" && (
+      const offTrajectory = state.stage !== "marshal" && state.stage !== "hold" && state.stage !== "goAround" && state.stage !== "final" && (
         (state.stage === "approach" && (lateral > 820 || frontness < -220)) ||
         (state.stage === "align" && (lateral > 560 || frontness < -240 || (trafficClose && lateral > 170)))
       );
@@ -11252,7 +11687,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         state.goAroundCount = (state.goAroundCount || 0) + 1;
         state.goSide *= -1;
         state.announced = "";
-        commsMessage("TRAFFIC CONTROL", "Approach unstable. Go around and re-enter the lane.", "station");
+        commsMessage(stationTrafficName(st), "Approach unstable. Go around and re-enter the lane.", "station");
       }
       if (state.stage === "goAround" && d < 190 && frontness > 980) {
         state.stage = "marshal";
@@ -11264,6 +11699,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         state.announced = state.stage;
         const line = state.stage === "marshal"
           ? "Docking computer: acquiring front approach lane."
+          : state.stage === "hold"
+            ? "Docking computer: holding for station traffic."
           : state.stage === "goAround"
             ? "Docking computer: go-around. Reacquiring approach."
           : state.stage === "approach"
@@ -11278,13 +11715,15 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ? norm(add(scale(inward, 1.7), scale(norm(sub(finalAim, game.camera.pos)), 2.6)))
         : state.stage === "align"
           ? norm(add(scale(inward, 2.4), scale(norm(sub(final, game.camera.pos)), 1.8)))
+          : state.stage === "hold"
+            ? norm(add(scale(norm(sub(slot.center, game.camera.pos)), 2.4), scale(norm(toTarget), .55)))
           : norm(toTarget);
       const avoidWeight = state.stage === "final"
         ? (trafficClose ? .24 : .08)
-        : state.stage === "align" ? .44 : state.stage === "goAround" ? .72 : .66;
+        : state.stage === "align" ? .44 : state.stage === "hold" ? .72 : state.stage === "goAround" ? .72 : .66;
       const steeredDir = avoidance.dir ? norm(add(desiredDir, scale(avoidance.dir, avoidWeight))) : desiredDir;
       const desiredQ = quatLookRotation(steeredDir, slot.up);
-      const turnRate = state.stage === "final" ? 5.6 : state.stage === "align" ? 3.35 : state.stage === "goAround" ? 2.45 : 2.05;
+      const turnRate = state.stage === "final" ? 5.6 : state.stage === "align" ? 3.35 : state.stage === "hold" ? 1.55 : state.stage === "goAround" ? 2.45 : 2.05;
       game.camera.q = quatSlerp(ensureCameraQuat(game.camera), desiredQ, 1 - Math.exp(-turnRate * dt));
       game.rollRate = 0;
       game.pitchRate = 0;
@@ -11298,6 +11737,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
 
       const targetSpeed = state.stage === "marshal" ? (d > 500 ? 118 : 72)
+        : state.stage === "hold" ? (d > 340 ? 58 : 10)
         : state.stage === "goAround" ? (d > 520 ? 108 : 76)
           : state.stage === "approach" ? (d > 260 ? 70 : 42)
           : state.stage === "align" ? 24
@@ -11725,13 +12165,33 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function updateStationTraffic(dt) {
       const station = primaryStation();
       if (!station || len(sub(station.pos, game.camera.pos)) > 5200) return;
+      const control = stationTrafficControlState();
+      const priority = stationTrafficPriority(station);
+      if (priority) applyStationTrafficPriority(station, priority);
+      const playerReserved = playerHasStationApproachReservation(station);
+
+      const active = control.activeId
+        ? worldSnapshot().ships.find((o) => !o._remove && o.trafficControlId === control.activeId && o.trafficControlStatus === "cleared")
+        : null;
+      if (control.activeId && !active) releaseStationTrafficControl(control.activeId);
+
       game.trafficClock -= dt;
-      if (game.trafficClock > 0) return;
-      game.trafficClock = 8 + Math.random() * 15;
-      const activeTraffic = worldSnapshot().ships.filter((o) => o.aiMode === "stationLaunch" || o.aiMode === "stationDock").length;
-      if (activeTraffic >= 2) return;
-      const kind = Math.random() < .54 ? "launch" : "dock";
-      spawnStationTraffic(kind, Math.random);
+      if (game.trafficClock <= 0) {
+        game.trafficClock = 7 + Math.random() * 13;
+        const controlledTraffic = worldSnapshot().ships.filter((o) =>
+          (o.aiMode === "stationLaunch" || o.aiMode === "stationDock") && o.trafficControlId).length;
+        if (!priority && !playerReserved && controlledTraffic + control.queue.length < 4) {
+          const kind = Math.random() < .54 ? "launch" : "dock";
+          enqueueStationTrafficRequest(kind, Math.random);
+        }
+      }
+
+      if (!priority && !control.activeId && control.queue.length) {
+        let nextIndex = 0;
+        if (playerReserved) nextIndex = control.queue.findIndex((item) => item.kind === "dock");
+        if (nextIndex >= 0) grantStationTrafficRequest(station, control.queue.splice(nextIndex, 1)[0], Math.random);
+      }
+      stationTrafficPlayerInstruction(station, priority?.object || stationTrafficLaneOccupant(station));
     }
 
     function stationLaunchLaneBlocker(o, center, outward, right, up) {
@@ -11769,6 +12229,22 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const { center, outward, right, up } = stationSlotAxes(station);
       const offset = o.trafficSlotOffset || vec();
       const speedMul = shipStats(o.model).speed || 1;
+      if (o.trafficControlStatus === "holding") {
+        const hold = o.trafficHoldPoint || add(center, add(scale(outward, 1580), add(scale(right, 680), scale(up, 260))));
+        const wobble = o.wobble || 0;
+        const freighterHold = ["python", "boa", "anaconda", "transporter"].includes(o.model);
+        const loiter = freighterHold
+          ? add(hold, add(scale(right, Math.sin(performance.now() / 4200 + wobble) * 16), scale(up, Math.cos(performance.now() / 5100 + wobble) * 10)))
+          : add(hold, add(scale(right, Math.sin(performance.now() / 1300 + wobble) * 82), scale(up, Math.cos(performance.now() / 1700 + wobble) * 42)));
+        const desired = sub(loiter, o.pos);
+        steerVelocity(o, desired, dt, freighterHold ? 28 : 62, (freighterHold ? 22 : 68) * speedMul);
+        if (freighterHold) o.engineBoost = Math.min(o.engineBoost || 0, .08);
+        if (o.trafficAge > 46) {
+          o._remove = true;
+          if (o === game.targetObject) game.targetObject = primaryStation();
+        }
+        return;
+      }
       if (o.aiMode === "stationLaunch") {
         const target = add(center, add(offset, scale(outward, 1800)));
         const panicDir = stationLaunchLaneBlocker(o, center, outward, right, up);
@@ -11783,6 +12259,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           steerVelocity(o, sub(target, o.pos), dt, 70, 96 * speedMul);
         }
         if (dot(sub(o.pos, center), outward) > 1500 || o.trafficAge > 16) {
+          releaseStationTrafficControl(o.trafficControlId);
           o.trafficStation = null;
           if (o.departureHyperspaceOut) {
             startNpcHyperspaceOut(o, { forced: true, hail: false });
@@ -11805,6 +12282,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const target = add(center, add(gateOffset, scale(outward, -80)));
       steerVelocity(o, sub(target, o.pos), dt, 78, 90 * speedMul);
       if ((along < -35 && len(lateral) < 120) || o.trafficAge > 18) {
+        releaseStationTrafficControl(o.trafficControlId);
         o._remove = true;
           if (o === game.targetObject) game.targetObject = primaryStation();
       }
@@ -14605,6 +15083,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const stage = state.hud.stage || "AUTO";
       const stageText = {
         marshal: "ACQUIRING APPROACH LANE",
+        hold: "HOLDING FOR STATION TRAFFIC",
         goAround: "GO-AROUND VECTOR",
         approach: "LINING UP WITH SLOT AXIS",
         align: "MATCHING SLOT ROTATION",
@@ -14920,10 +15399,40 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ctx.font = `${Math.max(12, w * .012)}px ${UI_CANVAS_FONT}`;
         ctx.fillStyle = `rgba(101,255,71,${finalAlpha * .72})`;
         const promptAlpha = tr.waitingForRestart ? .42 + Math.sin(performance.now() / 240) * .28 : .42;
-        ctx.fillStyle = `rgba(101,255,71,${finalAlpha * promptAlpha})`;
-        ctx.fillText("PRESS ANY KEY TO RESTART", cx, h * .55);
+        const hasSave = !!tr.hasBrowserSave;
         ctx.fillStyle = `rgba(101,255,71,${finalAlpha * .48})`;
-        ctx.fillText(tr.hadCapsule ? "RECOVERY BEACON ACQUIRED" : "COMMANDER RECORD REBUILT", cx, h * .61);
+        ctx.fillText(tr.hadCapsule ? "RECOVERY BEACON ACQUIRED" : hasSave ? "COMMANDER SAVE AVAILABLE" : "NO BROWSER SAVE FOUND", cx, h * .55);
+        if (!tr.hadCapsule && tr.waitingForRestart) {
+          const bw = Math.min(260, w * .24);
+          const bh = Math.max(34, h * .045);
+          const gap = Math.max(14, w * .018);
+          const total = hasSave ? bw * 2 + gap : bw;
+          const y = h * .61;
+          const startX = cx - total / 2;
+          const buttons = hasSave
+            ? [
+                { choice: "load", label: "LOAD BROWSER SAVE", x: startX, y, w: bw, h: bh, primary: true },
+                { choice: "restart", label: "GIVE UP / START AGAIN", x: startX + bw + gap, y, w: bw, h: bh }
+              ]
+            : [{ choice: "restart", label: "GIVE UP / START AGAIN", x: startX, y, w: bw, h: bh, primary: true }];
+          tr.gameOverButtons = buttons;
+          for (const button of buttons) {
+            ctx.fillStyle = button.primary ? `rgba(101,255,71,${finalAlpha * (.1 + promptAlpha * .08)})` : `rgba(0,0,0,${finalAlpha * .28})`;
+            ctx.strokeStyle = button.primary ? `rgba(101,255,71,${finalAlpha * .7})` : `rgba(101,255,71,${finalAlpha * .42})`;
+            ctx.lineWidth = Math.max(1, w * .001);
+            ctx.fillRect(button.x, button.y, button.w, button.h);
+            ctx.strokeRect(button.x, button.y, button.w, button.h);
+            ctx.fillStyle = `rgba(101,255,71,${finalAlpha * (button.primary ? .92 : .72)})`;
+            ctx.font = `${Math.max(10, w * .0095)}px ${UI_CANVAS_FONT}`;
+            ctx.fillText(button.label, button.x + button.w / 2, button.y + button.h * .62);
+          }
+          ctx.fillStyle = `rgba(101,255,71,${finalAlpha * promptAlpha})`;
+          ctx.font = `${Math.max(10, w * .009)}px ${UI_CANVAS_FONT}`;
+          ctx.fillText(hasSave ? "ENTER LOADS SAVE · ESC STARTS AGAIN" : "ENTER TO START AGAIN", cx, y + bh + h * .045);
+        } else {
+          ctx.fillStyle = `rgba(101,255,71,${finalAlpha * promptAlpha})`;
+          ctx.fillText("PRESS ANY KEY TO CONTINUE", cx, h * .61);
+        }
       }
       ctx.restore();
     }
@@ -19595,7 +20104,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function renderPanel() {
-      if (game.panel === "cheats" && !game.developerMode) game.panel = "status";
+      if (game.panel === "cheats" && !game.developerMode) {
+        if (devShortcutAllowed()) game.developerMode = true;
+        else game.panel = "status";
+      }
       const activeModels = previewModelList();
       if (!activeModels.includes(shipDiagramState.model)) shipDiagramState.model = activeModels[0] || "cobra";
       updatePanelDrawer();
@@ -20899,6 +21411,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       </div>
       <div class="help-heading">Flight Notes</div>
       <div class="help-note">Dock manually by flying slowly through an aligned station slot. On the local chart, click a system to plot a final destination; the next reachable jump is selected automatically. Use chart filters to hide mission lines, plotted-course overlays or suggested routes, and +/- or home to adjust local chart zoom.</div>
+      <div class="help-note">Station Traffic Control sequences launches and approaches. Hold when instructed, give way to escape pods, police launches, damaged ships and naval priority traffic, and expect enforcement warnings if you approach after attacking local authority. Docking computers refuse Fugitive clearance; manual docking settles fines on touchdown.</div>
       <div class="help-note">The Market sells standard tank fuel and Fuel Cells cargo. With a Cargo Refueler fitted, each Fuel Cells ton can be consumed whole from Status to top the tank by up to ${fmt(CARGO_FUEL_LY_PER_TON)} LY, capped at full tanks. A fitted Market Comparator adds plotted-destination prices to the Market table.</div>
       <div class="help-note">Loaned-ship contracts are immediate dispatch: they lock out other mission work until the loaner is returned or awarded. Mission comms stay available in the comms review until that mission completes, fails or is abandoned.</div>
       <div class="help-note">Ship previews can be clicked and dragged.</div>
@@ -20988,7 +21501,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         .filter(([, qty]) => Number(qty) > 0)
         .map(([name, qty]) => `${name}:${qty}`)
         .join(", ") || "empty";
-      const missionLines = (game.missions || []).map((mission, index) => {
+      const reportMissionState = missionState();
+      const reportMissions = Array.isArray(reportMissionState.active) ? reportMissionState.active : [];
+      const missionLines = reportMissions.map((mission, index) => {
         const type = MISSION_TYPES[mission.type] || mission.type || "mission";
         const destination = mission.destination?.name || "unknown";
         const progress = compact(missionProgressText(mission));
@@ -21071,7 +21586,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         `jumpCountdown: ${game.jumpCountdown ? `${game.jumpCountdown.kind} ${fmt(game.jumpCountdown.t || 0)}/${fmt(game.jumpCountdown.dur || 0)}` : "none"}`,
         `targetObject: ${target ? `${target.name || target.model || target.type} type=${target.type || "unknown"} model=${target.model || "none"} hostile=${target.hostile ? "yes" : "no"} police=${target.police ? "yes" : "no"} hp=${Number.isFinite(target.hp) ? Math.round(target.hp) : "unknown"}` : "none"}`,
         `browserSave: ${saveState}`,
-        `missions: ${(game.missions || []).filter((m) => m.status === "active").length} active / ${(game.missions || []).length} total`,
+        `missions: ${reportMissions.filter((m) => m.status === "active").length} active / ${reportMissions.length} total`,
         `objects: ${JSON.stringify(objectCounts)}`,
         `fps: ${Number.isFinite(perf.fps) ? Math.round(perf.fps) : "unknown"}`,
         `frameMs: ${Number.isFinite(perf.frameMs) ? Math.round(perf.frameMs * 10) / 10 : "unknown"}`,
@@ -21671,10 +22186,11 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       updateVolumeHud();
       updateBrightnessHud();
       updatePerformanceTickerHud();
-      if (lastDeveloperModeRendered !== game.developerMode) {
-        lastDeveloperModeRendered = game.developerMode;
+      const developerToolsVisible = !!game.developerMode || devShortcutAllowed();
+      if (lastDeveloperModeRendered !== developerToolsVisible) {
+        lastDeveloperModeRendered = developerToolsVisible;
         devOnlyEls.forEach((el) => {
-          setDomHidden(el, !game.developerMode);
+          setDomHidden(el, !developerToolsVisible);
         });
       }
       updatePanelDrawer();
@@ -21788,6 +22304,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const commanderNameSubmit = byId("commanderNameSubmit");
       const commanderNameCancel = byId("commanderNameCancel");
       const missionCompleteDismiss = byId("missionCompleteDismiss");
+      const localAuthorityDismiss = byId("localAuthorityDismiss");
       if (commanderNameInput) {
         commanderNameInput.addEventListener("input", () => {
           commanderNameInput.value = commanderNameInput.value
@@ -21810,6 +22327,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (commanderNameSubmit) commanderNameSubmit.addEventListener("click", () => submitCommanderNameDialog(false, true));
       if (commanderNameCancel) commanderNameCancel.addEventListener("click", () => submitCommanderNameDialog(true, true));
       if (missionCompleteDismiss) missionCompleteDismiss.addEventListener("click", dismissMissionCompleteDialog);
+      if (localAuthorityDismiss) localAuthorityDismiss.addEventListener("click", dismissLocalAuthorityDialog);
 
       window.addEventListener("keydown", (e) => {
         // The first keypress only dismisses the splash, it never triggers a game action.
@@ -21830,8 +22348,19 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           }
           return;
         }
+        if (localAuthorityDialogOpen) {
+          if (e.code === "Space") {
+            dismissLocalAuthorityDialog();
+            e.preventDefault();
+          }
+          return;
+        }
         eliteAudio.resume();
-        if (finishGameOver()) {
+        if (game.transition?.kind === "death" && game.transition.waitingForRestart) {
+          const hasSave = !!game.transition.hasBrowserSave && browserSaveExists();
+          const loadKey = hasSave && ["Enter", "NumpadEnter", "Space", "KeyL"].includes(e.code);
+          const restartKey = ["Escape", "KeyN", "KeyR"].includes(e.code) || (!hasSave && ["Enter", "NumpadEnter", "Space"].includes(e.code));
+          if (loadKey || restartKey) chooseGameOverOption(loadKey ? "load" : "restart");
           e.preventDefault();
           return;
         }
@@ -21907,7 +22436,12 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       });
 
       document.querySelectorAll(".tabs .btn").forEach((b) => b.addEventListener("click", () => {
-        if (b.dataset.panel === "cheats" && !game.developerMode) return;
+        if (b.dataset.panel === "cheats" && !game.developerMode) {
+          if (!devShortcutAllowed()) return;
+          game.developerMode = true;
+          lastDeveloperModeRendered = null;
+          setMessage("Developer mode: enabled.");
+        }
         game.panel = b.dataset.panel;
         game.panelOpen = true;
         renderPanel();
@@ -21942,6 +22476,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         updateBrightnessHud();
       }
       attachExternalViewControls(space);
+      space.addEventListener("pointerdown", (event) => {
+        if (handleGameOverPointer(event)) event.stopPropagation();
+      });
 
       resizeCanvases();
       (async function boot() {
