@@ -12127,6 +12127,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const goAround = add(slot.center, add(scale(slot.outward, 1720), add(scale(laneRight, goSide * 760), scale(laneUp, 320))));
       const approach = add(slot.center, scale(slot.outward, 760));
       const final = add(slot.center, scale(slot.outward, 118));
+      const finalAim = add(slot.center, scale(inward, 165));
       const relToAxis = sub(game.camera.pos, slot.center);
       const lateral = len(sub(relToAxis, scale(slot.outward, dot(relToAxis, slot.outward))));
       const dockingDenial = stationDockingDenial(st);
@@ -12240,13 +12241,17 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         game.camera.pos = add(game.camera.pos, scale(toTarget, clamp(dt * .9, 0, .055)));
       }
       const corridorStage = state.stage === "approach" || state.stage === "align" || state.stage === "final";
-      const desiredDir = corridorStage || state.stage === "turnIn"
-        ? inward
-          : state.stage === "hold"
+      const desiredDir = state.stage === "final"
+        ? norm(add(scale(inward, 1.55), scale(norm(sub(finalAim, game.camera.pos)), 2.35)))
+        : state.stage === "align"
+          ? norm(add(scale(inward, 2.15), scale(norm(sub(final, game.camera.pos)), 1.45)))
+          : corridorStage || state.stage === "turnIn"
+            ? inward
+            : state.stage === "hold"
             ? holdSettled
               ? norm(sub(slot.center, game.camera.pos))
               : norm(toTarget)
-          : norm(toTarget);
+            : norm(toTarget);
       const avoidWeight = state.stage === "final"
         ? (trafficClose ? .16 : 0)
         : state.stage === "align" ? (trafficClose ? .22 : 0) : state.stage === "approach" ? (trafficClose ? .24 : 0) : state.stage === "turnIn" ? .18 : state.stage === "hold" ? .72 : state.stage === "goAround" ? .72 : .66;
@@ -12266,13 +12271,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         game.camera.pos = sub(game.camera.pos, scale(lateralVec, clamp(correctionRate * dt, 0, .055)));
       }
 
-      const targetSpeed = state.stage === "marshal" ? (d > 500 ? 118 : 72)
-        : state.stage === "turnIn" ? (alignment > .82 ? 32 : 10)
-        : state.stage === "hold" ? (d > 620 ? 72 : d > 340 ? 38 : d > 240 ? 12 : 0)
-        : state.stage === "goAround" ? (d > 520 ? 108 : 76)
-          : state.stage === "approach" ? (d > 260 ? 92 : 64)
-          : state.stage === "align" ? 48
-            : 36;
+      let targetSpeed = slotDist > 230 ? 46 : 34;
+      if (state.stage === "marshal") targetSpeed = d > 500 ? 118 : 72;
+      else if (state.stage === "turnIn") targetSpeed = alignment > .82 ? 32 : 10;
+      else if (state.stage === "hold") targetSpeed = d > 620 ? 72 : d > 340 ? 38 : d > 240 ? 12 : 0;
+      else if (state.stage === "goAround") targetSpeed = d > 520 ? 108 : 76;
+      else if (state.stage === "approach") targetSpeed = d > 260 ? 92 : 64;
+      else if (state.stage === "align") targetSpeed = 52;
       const headingAlign = clamp(dot(forwardVector(game.camera), steeredDir), 0, 1);
       const steeringSpeedMul = lerp(.38, 1, headingAlign * headingAlign);
       const avoidSlow = avoidance.nearest < 115 ? .42 : avoidance.nearest < 240 ? .66 : avoidance.nearest < 380 ? .84 : 1;
