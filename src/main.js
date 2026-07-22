@@ -7295,12 +7295,14 @@
       const state = typeof game.autoDock === "object" ? game.autoDock : null;
       const stage = state?.stage || "marshal";
       if (stage === "marshal" || stage === "goAround") return false;
-      const { center, outward } = cachedAutoDockFrame(st, state);
+      const liveFinal = stage === "align" || stage === "final";
+      const { center, outward } = liveFinal ? stationAutoDockFrame(st) : cachedAutoDockFrame(st, state);
       const rel = sub(game.camera.pos, center);
       const depth = dot(rel, outward);
       const lateral = len(sub(rel, scale(outward, depth)));
-      const lateralLimit = stage === "final" ? 240 : stage === "align" ? 360 : stage === "turnIn" ? 620 : 760;
-      return depth > -260 && depth < 1560 && lateral < lateralLimit && game.speed < 155;
+      const slotFacing = Math.abs(Math.sin(st.rot || 0)) < (stage === "final" ? .54 : .68);
+      const lateralLimit = stage === "final" ? 185 : stage === "align" ? 280 : stage === "turnIn" ? 620 : 760;
+      return (!liveFinal || slotFacing) && depth > -260 && depth < 1560 && lateral < lateralLimit && game.speed < 155;
     }
 
     function bodyVelocity(o) {
@@ -7450,9 +7452,7 @@
     function handlePlayerLargeCollision(o) {
       if (!largeCollisionBody(o) || game.docked || game.transition) return;
       if (o.type === "station") {
-        const autoDocking = game.autoDock && typeof game.autoDock === "object";
-        const stage = autoDocking ? game.autoDock.stage || "marshal" : "";
-        if ((autoDocking && stage !== "marshal" && stage !== "goAround") || inStationDockingCorridor(o) || inAutoDockStationCorridor(o)) return;
+        if (inStationDockingCorridor(o) || inAutoDockStationCorridor(o)) return;
       }
       const bodyR = largeCollisionRadius(o);
       const playerR = playerCollisionRadius();
@@ -11173,8 +11173,9 @@
       renderPanel();
     }
 
-    const GAME_VERSION = "1.0.22-beta";
+    const GAME_VERSION = "1.0.23-beta";
     const UPDATE_LOG = [
+      ["1.0.23-beta", "Auto-dock safety polish: station approaches now hold for STC final clearance, track the live slot only on the last aligned run-in, and no longer phase through the station outside the docking corridor."],
       ["1.0.22-beta", "Docking computer polish: final approach now aims through the station slot more cleanly and keeps a brisker capture speed."],
       ["1.0.21-beta", "Internal asset-authoring systems and model maintenance update.", true],
       ["1.0.20-beta", "Ship and station surface polish: optimized several model assets, refreshed Diamondback skin textures, and tightened station panel mapping for cleaner Ultra-mode rendering."],
@@ -12127,10 +12128,19 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       let trafficHold = state.trafficHoldPoint || makeTrafficHold();
       const goAround = add(slot.center, add(scale(slot.outward, 1720), add(scale(laneRight, goSide * 760), scale(laneUp, 320))));
       const approach = add(slot.center, scale(slot.outward, 760));
-      const final = add(slot.center, scale(slot.outward, 118));
-      const finalAim = add(slot.center, scale(inward, 165));
       const relToAxis = sub(game.camera.pos, slot.center);
       const lateral = len(sub(relToAxis, scale(slot.outward, dot(relToAxis, slot.outward))));
+      const frameForStage = (stage) => {
+        const blend = stage === "final" ? .78 : stage === "align" ? .34 : 0;
+        if (blend <= 0) return { center: slot.center, outward: slot.outward, inward, up: slot.up };
+        const outward = norm(add(scale(slot.outward, 1 - blend), scale(liveSlot.outward, blend)));
+        return {
+          center: add(scale(slot.center, 1 - blend), scale(liveSlot.center, blend)),
+          outward,
+          inward: scale(outward, -1),
+          up: norm(add(scale(slot.up, 1 - blend), scale(liveSlot.up, blend)))
+        };
+      };
       const dockingDenial = stationDockingDenial(st);
       if (dockingDenial) {
         announceStationDockingDenied(st, dockingDenial);
@@ -12156,19 +12166,14 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         state.offTrackTime = 0;
         state.announced = "";
       }
-      const targetForStage = (stage) => stage === "marshal"
-        ? entry
-        : stage === "turnIn"
-          ? entry
-        : stage === "hold"
-          ? trafficHold
-        : stage === "goAround"
-          ? goAround
-          : stage === "approach"
-            ? approach
-            : stage === "align"
-              ? final
-              : slot.center;
+      const targetForStage = (stage) => {
+        if (stage === "marshal" || stage === "turnIn") return entry;
+        if (stage === "hold") return trafficHold;
+        if (stage === "goAround") return goAround;
+        if (stage === "approach") return approach;
+        const frame = frameForStage(stage === "align" ? "align" : "final");
+        return stage === "align" ? add(frame.center, scale(frame.outward, 128)) : frame.center;
+      };
       let stageTarget = targetForStage(state.stage);
       let toTarget = sub(stageTarget, game.camera.pos);
       let d = len(toTarget);
@@ -12176,6 +12181,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       let trafficClose = Number.isFinite(avoidance.nearest) && avoidance.nearest < (state.stage === "final" ? 34 : 72);
       const forward = forwardVector(game.camera);
       const alignment = dot(forward, inward);
+      const liveInward = scale(liveSlot.outward, -1);
+      const liveRel = sub(game.camera.pos, liveSlot.center);
+      const liveFrontness = dot(liveRel, liveSlot.outward);
+      const liveLateral = len(sub(liveRel, scale(liveSlot.outward, liveFrontness)));
+      const liveAlignment = dot(forward, liveInward);
+      const liveSlotPhase = Math.abs(Math.sin(st.rot || 0));
+      const liveSlotReady = liveSlotPhase < .34 && liveFrontness > 95 && liveFrontness < 380 && liveLateral < 245 && liveAlignment > .72;
 
       const entryAligned = frontness > 1080 && frontness < 1280 && lateral < 90;
       const entryCaptured = d < 110 && lateral < 95;
@@ -12193,7 +12205,21 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         }
       }
       if (state.stage === "approach" && !stationControlHold && frontness < 840 && lateral < 360) state.stage = "align";
-      if (state.stage === "align" && !stationControlHold && frontness < 240 && lateral < 190 && alignment > .82) state.stage = "final";
+      if (state.stage === "align" && !stationControlHold && frontness < 260 && lateral < 210 && alignment > .78 && liveSlotReady) {
+        state.stage = "final";
+        if (!state.finalClearedAt || performance.now() - state.finalClearedAt > 12000) {
+          state.finalClearedAt = performance.now();
+          commsMessage(stationTrafficName(st), `${game.commander}, docking computer final approach cleared. Hold the lane.`, "station", { protected: true });
+        }
+      }
+      if (state.stage === "final" && (liveSlotPhase > .62 || liveLateral > 340 || liveFrontness < -140)) {
+        state.stage = "align";
+        state.announced = "";
+        if (!state.finalHoldLineAt || performance.now() - state.finalHoldLineAt > 9000) {
+          state.finalHoldLineAt = performance.now();
+          commsMessage(stationTrafficName(st), `${game.commander}, final approach not stable. Hold alignment and wait for the slot.`, "station", { protected: true });
+        }
+      }
 
       const offTrajectory = state.stage !== "marshal" && state.stage !== "turnIn" && state.stage !== "hold" && state.stage !== "goAround" && state.stage !== "final" && (
         (state.stage === "approach" && (lateral > 820 || frontness < -220)) ||
@@ -12217,7 +12243,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       toTarget = sub(stageTarget, game.camera.pos);
       d = len(toTarget);
       trafficClose = Number.isFinite(avoidance.nearest) && avoidance.nearest < (state.stage === "final" ? 34 : 72);
-      const slotDist = len(sub(game.camera.pos, slot.center));
+      const activeFrame = frameForStage(state.stage);
+      const activeRel = sub(game.camera.pos, activeFrame.center);
+      const activeFrontness = dot(activeRel, activeFrame.outward);
+      const activeLateral = len(sub(activeRel, scale(activeFrame.outward, activeFrontness)));
+      const activeFinal = add(activeFrame.center, scale(activeFrame.outward, 118));
+      const activeFinalAim = add(activeFrame.center, scale(activeFrame.inward, 165));
+      const slotDist = len(activeRel);
       const freshStage = state.stage !== state.announced;
       if (freshStage) {
         state.announced = state.stage;
@@ -12243,9 +12275,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
       const corridorStage = state.stage === "approach" || state.stage === "align" || state.stage === "final";
       const desiredDir = state.stage === "final"
-        ? norm(add(scale(inward, 1.55), scale(norm(sub(finalAim, game.camera.pos)), 2.35)))
+        ? norm(add(scale(activeFrame.inward, 1.45), scale(norm(sub(activeFinalAim, game.camera.pos)), 2.45)))
         : state.stage === "align"
-          ? norm(add(scale(inward, 2.15), scale(norm(sub(final, game.camera.pos)), 1.45)))
+          ? norm(add(scale(activeFrame.inward, 2.2), scale(norm(sub(activeFinal, game.camera.pos)), 1.25)))
           : corridorStage || state.stage === "turnIn"
             ? inward
             : state.stage === "hold"
@@ -12257,7 +12289,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ? (trafficClose ? .16 : 0)
         : state.stage === "align" ? (trafficClose ? .22 : 0) : state.stage === "approach" ? (trafficClose ? .24 : 0) : state.stage === "turnIn" ? .18 : state.stage === "hold" ? .72 : state.stage === "goAround" ? .72 : .66;
       const steeredDir = avoidance.dir && avoidWeight > 0 ? norm(add(desiredDir, scale(avoidance.dir, avoidWeight))) : desiredDir;
-      const upHint = state.stage === "align" || state.stage === "final" ? liveSlot.up : laneUp;
+      const upHint = state.stage === "align" || state.stage === "final" ? activeFrame.up : laneUp;
       const desiredQ = quatLookRotation(steeredDir, upHint);
       const turnRate = state.stage === "final" ? 5.6 : state.stage === "align" ? 3.35 : state.stage === "turnIn" ? 2.85 : state.stage === "hold" ? 1.55 : state.stage === "goAround" ? 2.45 : 2.05;
       game.camera.q = quatSlerp(ensureCameraQuat(game.camera), desiredQ, 1 - Math.exp(-turnRate * dt));
@@ -12265,11 +12297,11 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       game.pitchRate = 0;
       game.yawRate = 0;
 
-      if (state.stage !== "marshal" && state.stage !== "turnIn" && state.stage !== "goAround" && frontness > -150 && frontness < 980 && lateral > 24) {
-        const axisPoint = add(slot.center, scale(slot.outward, frontness));
+      if (state.stage !== "marshal" && state.stage !== "turnIn" && state.stage !== "goAround" && activeFrontness > -150 && activeFrontness < 980 && activeLateral > 20) {
+        const axisPoint = add(activeFrame.center, scale(activeFrame.outward, activeFrontness));
         const lateralVec = sub(game.camera.pos, axisPoint);
-        const correctionRate = state.stage === "final" ? 1.15 : state.stage === "align" ? .82 : .52;
-        game.camera.pos = sub(game.camera.pos, scale(lateralVec, clamp(correctionRate * dt, 0, .055)));
+        const correctionRate = state.stage === "final" ? .9 : state.stage === "align" ? .68 : .52;
+        game.camera.pos = sub(game.camera.pos, scale(lateralVec, clamp(correctionRate * dt, 0, state.stage === "final" ? .042 : .052)));
       }
 
       let targetSpeed = slotDist > 230 ? 46 : 34;
@@ -12278,16 +12310,16 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       else if (state.stage === "hold") targetSpeed = d > 620 ? 72 : d > 340 ? 38 : d > 240 ? 12 : 0;
       else if (state.stage === "goAround") targetSpeed = d > 520 ? 108 : 76;
       else if (state.stage === "approach") targetSpeed = d > 260 ? 92 : 64;
-      else if (state.stage === "align") targetSpeed = 52;
+      else if (state.stage === "align") targetSpeed = liveSlotReady ? 52 : 30;
       const headingAlign = clamp(dot(forwardVector(game.camera), steeredDir), 0, 1);
       const steeringSpeedMul = lerp(.38, 1, headingAlign * headingAlign);
       const avoidSlow = avoidance.nearest < 115 ? .42 : avoidance.nearest < 240 ? .66 : avoidance.nearest < 380 ? .84 : 1;
       const lateralSpeedMul = state.stage === "approach"
-        ? lerp(.56, 1, clamp(1 - lateral / 780, 0, 1))
+        ? lerp(.56, 1, clamp(1 - activeLateral / 780, 0, 1))
         : state.stage === "align"
-          ? lerp(.42, 1, clamp(1 - lateral / 430, 0, 1))
+          ? lerp(.42, 1, clamp(1 - activeLateral / 430, 0, 1))
           : state.stage === "final"
-            ? lerp(.32, 1, clamp(1 - lateral / 210, 0, 1))
+            ? lerp(.32, 1, clamp(1 - activeLateral / 210, 0, 1))
             : 1;
       const desiredSpeed = targetSpeed * avoidSlow * steeringSpeedMul * lateralSpeedMul;
       if (state.stage === "hold" || state.stage === "turnIn") {
@@ -12304,11 +12336,11 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         stage: state.stage,
         range: d,
         slotRange: slotDist,
-        lateral,
-        alignment: clamp(alignment, 0, 1),
+        lateral: activeLateral,
+        alignment: clamp(state.stage === "align" || state.stage === "final" ? liveAlignment : alignment, 0, 1),
         avoidance: Number.isFinite(avoidance.nearest) ? avoidance.nearest : null
       };
-      if (state.stage === "final" && slotDist < 82 && lateral < 105 && alignment > .88) dock(true);
+      if (state.stage === "final" && manualDockingStatus(st, true).ok) dock(true);
     }
 
     function controlHoldTime(axis, input, dt) {
@@ -22458,7 +22490,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       </div>
       <div class="help-heading">Flight Notes</div>
       <div class="help-note">Dock manually by flying slowly through an aligned station slot. On the local chart, click a system to plot a final destination; the next reachable jump is selected automatically. Use chart filters to hide mission lines, plotted-course overlays or suggested routes, and +/- or home to adjust local chart zoom.</div>
-      <div class="help-note">Station Traffic Control sequences launches and approaches. Hold when instructed, give way to escape pods, police launches, damaged ships and naval priority traffic, and expect enforcement warnings if you approach after attacking local authority. Docking computers hold for traffic, fly a through-slot final approach when clear, and refuse Fugitive clearance; manual docking settles fines on touchdown.</div>
+      <div class="help-note">Station Traffic Control sequences launches and approaches. Hold when instructed, give way to escape pods, police launches, damaged ships and naval priority traffic, and expect enforcement warnings if you approach after attacking local authority. Docking computers hold for traffic, wait for final STC clearance, fly a through-slot final approach only when the live slot is aligned, and refuse Fugitive clearance; manual docking settles fines on touchdown.</div>
       <div class="help-note">The Market sells standard tank fuel and Fuel Cells cargo. With a Cargo Refueler fitted, each Fuel Cells ton can be consumed whole from Status to top the tank by up to ${fmt(CARGO_FUEL_LY_PER_TON)} LY, capped at full tanks. A fitted Market Comparator adds plotted-destination prices to the Market table.</div>
       <div class="help-note">Loaned-ship contracts are immediate dispatch: they lock out other mission work until the loaner is returned or awarded. Mission comms stay available in the comms review until that mission completes, fails or is abandoned.</div>
       <div class="help-note">Ship previews can be clicked and dragged.</div>
