@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const configPath = path.join(projectRoot, ".ultra-elite-publish.env");
 const indexPath = path.join(projectRoot, "index.html");
+const visitBeaconPath = path.join(projectRoot, "ultra-elite-visit.svg");
 
 function parseEnv(text) {
   const values = {};
@@ -47,34 +48,45 @@ async function main() {
   const user = requireValue(config, "ULTRA_ELITE_FTP_USER");
   const password = requireValue(config, "ULTRA_ELITE_FTP_PASSWORD");
   const remotePath = config.ULTRA_ELITE_FTP_PATH || "htdocs/index.html";
-  const targetUrl = `ftp://${host}/${remotePath.replace(/^\/+/, "")}`;
+  const normalizedRemotePath = remotePath.replace(/^\/+/, "");
+  const remoteDir = path.posix.dirname(normalizedRemotePath);
+  const visitBeaconRemotePath = remoteDir === "."
+    ? "ultra-elite-visit.svg"
+    : `${remoteDir}/ultra-elite-visit.svg`;
 
   if (checkOnly) {
-    console.log(`Publish config OK: ${host}/${remotePath.replace(/^\/+/, "")}`);
+    console.log(`Publish config OK: ${host}/${normalizedRemotePath}`);
+    console.log(`Visit beacon target OK: ${host}/${visitBeaconRemotePath}`);
     return;
   }
 
-  console.log(`Publishing index.html to ${host}/${remotePath.replace(/^\/+/, "")}`);
-  const curl = spawn("curl", [
-    "--fail",
-    "--show-error",
-    "--ftp-create-dirs",
-    "--upload-file",
-    indexPath,
-    "--user",
-    `${user}:${password}`,
-    targetUrl
-  ], {
-    stdio: ["ignore", "inherit", "inherit"]
-  });
-
-  await new Promise((resolve, reject) => {
-    curl.on("error", reject);
-    curl.on("exit", (code, signal) => {
-      if (code === 0) resolve();
-      else reject(new Error(`curl exited with ${signal || code}`));
+  async function uploadFile(localPath, remoteFilePath, label) {
+    const targetUrl = `ftp://${host}/${remoteFilePath}`;
+    console.log(`Publishing ${label} to ${host}/${remoteFilePath}`);
+    const curl = spawn("curl", [
+      "--fail",
+      "--show-error",
+      "--ftp-create-dirs",
+      "--upload-file",
+      localPath,
+      "--user",
+      `${user}:${password}`,
+      targetUrl
+    ], {
+      stdio: ["ignore", "inherit", "inherit"]
     });
-  });
+
+    await new Promise((resolve, reject) => {
+      curl.on("error", reject);
+      curl.on("exit", (code, signal) => {
+        if (code === 0) resolve();
+        else reject(new Error(`curl exited with ${signal || code}`));
+      });
+    });
+  }
+
+  await uploadFile(indexPath, normalizedRemotePath, "index.html");
+  await uploadFile(visitBeaconPath, visitBeaconRemotePath, "ultra-elite-visit.svg");
   console.log("Publish complete.");
 }
 

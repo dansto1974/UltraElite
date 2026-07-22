@@ -3408,6 +3408,7 @@
         : poopyBonus || poopyComparatorGift || poopyCargoRefuelGift
           ? `Commander POOPY registered.${poopyBonus ? " 1000 CR bonus awarded." : ""}${poopyComparatorGift ? " Market Comparator fitted." : ""}${poopyCargoRefuelGift ? " Cargo Refueler fitted." : ""}`
           : `Commander registered: ${game.commander}.`, true);
+      logCommanderVisit("commander_registered", { source: useCurrent ? "default" : "dialog" });
       renderPanel();
       updateReadouts();
       return true;
@@ -9061,6 +9062,7 @@
         spawnPlayerEnginePlume(2.1);
         commsMessage(stationCommsName(), stationControllerLine("launch"), "station");
         setMessage("Launch complete.", true);
+        logCommanderVisit("launch", { from: station?.name || currentSystem().name });
         renderPanel();
         return { station, slot, fromPos, toPos };
       };
@@ -9092,6 +9094,7 @@
         spawnPlayerEnginePlume(1.6);
         commsMessage(stationCommsName(), stationControllerLine("launch"), "station");
         setMessage("Launch complete.", true);
+        logCommanderVisit("launch", { from: station?.name || currentSystem().name });
         renderPanel();
       }, { fromPos, toPos, fromSpeed: 0, toSpeed: 40 });
       renderPanel();
@@ -9163,6 +9166,7 @@
             const welcome = hullRepaired ? `Welcome to ${st.name}. Free hull repair complete.` : `Welcome to ${st.name}.`;
             const authorityLine = authorityFine ? ` Local authority collected ${fmt(authorityFine.paid)} CR and cleared your record.` : "";
             setMessage(missionDockLine ? `${welcome} ${missionDockLine}${authorityLine}` : missionPendingLine ? `${welcome} ${missionPendingLine}${authorityLine}` : `${welcome}${authorityLine}`, true);
+            logCommanderVisit("dock", { at: st.name, auto: auto ? "1" : "0" });
             renderPanel();
             queueLocalAuthorityFineDialog(authorityFine);
             queueMissionCompleteDialogs(missionDockResult.completed);
@@ -11046,10 +11050,76 @@ Project Links
 
 Source code and change history: https://github.com/dansto1974/UltraElite`;
     const SAVE_KEY = "ultraEliteSave";
+    const VISIT_ID_KEY = "ultraEliteVisitId";
+    const SERVER_VISIT_BEACON_PATH = "ultra-elite-visit.svg";
     const SAVE_FORMAT = "ultra-elite-commander";
     const SAVE_FILE_MAGIC = "UEC2";
     const SAVE_FILE_SECRET = "ultra-elite-save-file-v2";
     const SAVE_FIELDS = ["commander", "galaxy", "current", "target", "finalTarget", "credits", "poopyBonusClaimed", "fuel", "kills", "missionRankPoints", "navalReputation", "legal", "playerShip", "cargoCap", "missiles", "graphicsMode", "fxLevel", "marketStock", "missions", "missionUnlocks"];
+
+    function serverVisitLoggingEnabled() {
+      const host = (location.hostname || "").toLowerCase();
+      return (location.protocol === "http:" || location.protocol === "https:")
+        && host !== "localhost"
+        && host !== "127.0.0.1"
+        && host !== "::1";
+    }
+
+    function commanderVisitId() {
+      try {
+        const existing = localStorage.getItem(VISIT_ID_KEY);
+        if (existing) return existing;
+        const id = globalThis.crypto?.randomUUID
+          ? globalThis.crypto.randomUUID()
+          : `ue-${Date.now().toString(36)}-${Math.floor(Math.random() * 0xFFFFFF).toString(36)}`;
+        localStorage.setItem(VISIT_ID_KEY, id);
+        return id;
+      } catch {
+        if (!game.sessionVisitId) game.sessionVisitId = `ue-session-${Date.now().toString(36)}-${Math.floor(Math.random() * 0xFFFFFF).toString(36)}`;
+        return game.sessionVisitId;
+      }
+    }
+
+    function beaconValue(value, fallback = "unknown") {
+      const text = String(value ?? fallback).replace(/\s+/g, " ").trim();
+      return text ? text.slice(0, 80) : fallback;
+    }
+
+    function logCommanderVisit(eventName, extra = {}) {
+      if (!serverVisitLoggingEnabled()) return false;
+      try {
+        const params = new URLSearchParams({
+          e: beaconValue(eventName, "event"),
+          id: commanderVisitId(),
+          cmdr: normalizeCommanderName(game.commander),
+          v: GAME_VERSION,
+          g: String((game.galaxy || 0) + 1),
+          sys: beaconValue(currentSystem().name),
+          target: beaconValue(targetSystem().name),
+          ship: beaconValue(playerShipModel()),
+          legal: String(Math.round(Number(game.legal) || 0)),
+          kills: String(Math.round(Number(game.kills) || 0)),
+          credits: String(Math.round(Number(game.credits) || 0)),
+          mode: beaconValue(game.fxLevel || "ultra"),
+          dev: game.developerMode ? "1" : "0",
+          t: Date.now().toString(36)
+        });
+        Object.entries(extra || {}).forEach(([key, value]) => {
+          if (/^[a-z][a-z0-9_]{0,18}$/i.test(key)) params.set(key, beaconValue(value));
+        });
+        const img = new Image(1, 1);
+        img.decoding = "async";
+        img.referrerPolicy = "strict-origin-when-cross-origin";
+        img.src = new URL(`${SERVER_VISIT_BEACON_PATH}?${params}`, location.href).href;
+        game.visitBeacons = Array.isArray(game.visitBeacons) ? game.visitBeacons : [];
+        game.visitBeacons.push(img);
+        if (game.visitBeacons.length > 6) game.visitBeacons.shift();
+        return true;
+      } catch (error) {
+        recordDiagnosticEvent("visitBeacon", diagnosticValue(error));
+        return false;
+      }
+    }
 
     function bytesToBase64(bytes) {
       let bin = "";
@@ -21525,6 +21595,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         "",
         "[Browser]",
         `page: ${location.protocol}//${location.host}${location.pathname}`,
+        `serverVisitLogging: ${serverVisitLoggingEnabled() ? "enabled" : "disabled"}`,
+        `serverVisitId: ${commanderVisitId()}`,
+        `serverVisitBeacon: ${SERVER_VISIT_BEACON_PATH}`,
         `userAgent: ${navigator.userAgent || "unknown"}`,
         `appVersion: ${navigator.appVersion || "unknown"}`,
         `appName: ${navigator.appName || "unknown"}`,
@@ -22499,6 +22572,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         else if (hadBrowserSave) setMessage("Browser save could not be loaded.");
         renderPanel();
         markBootReady();
+        logCommanderVisit("open", { save: loadedBrowserSave ? "loaded" : hadBrowserSave ? "failed" : "new" });
         requestAnimationFrame(loop);
       })();
     }

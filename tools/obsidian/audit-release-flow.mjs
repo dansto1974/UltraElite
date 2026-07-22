@@ -51,8 +51,14 @@ const publishScript = fs.readFileSync(publishScriptPath, "utf8");
 if (!/indexPath\s*=\s*path\.join\(projectRoot,\s*"index\.html"\)/.test(publishScript)) {
   fail("tools/publish-site.mjs: publish source is not project index.html");
 }
-if (!/"--upload-file",\s*indexPath/.test(publishScript)) {
-  fail("tools/publish-site.mjs: curl upload does not use indexPath");
+if (!/visitBeaconPath\s*=\s*path\.join\(projectRoot,\s*"ultra-elite-visit\.svg"\)/.test(publishScript)) {
+  fail("tools/publish-site.mjs: visit beacon source is not project ultra-elite-visit.svg");
+}
+if (!/"--upload-file",\s*localPath/.test(publishScript) || !/uploadFile\(indexPath,\s*normalizedRemotePath,\s*"index\.html"\)/.test(publishScript)) {
+  fail("tools/publish-site.mjs: upload helper does not publish indexPath");
+}
+if (!/uploadFile\(visitBeaconPath,\s*visitBeaconRemotePath,\s*"ultra-elite-visit\.svg"\)/.test(publishScript)) {
+  fail("tools/publish-site.mjs: upload helper does not publish visit beacon");
 }
 if (!/remotePath\s*=\s*config\.ULTRA_ELITE_FTP_PATH\s*\|\|\s*"htdocs\/index\.html"/.test(publishScript)) {
   fail("tools/publish-site.mjs: default remote path is not htdocs/index.html");
