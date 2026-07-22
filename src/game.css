@@ -1178,6 +1178,36 @@
       color: var(--amber);
     }
 
+    .market-table {
+      margin-top: 6px;
+      font-size: 10.5px;
+      line-height: 1.16;
+    }
+
+    .market-table th,
+    .market-table td {
+      padding: 3px 3px;
+    }
+
+    .market-table th:first-child,
+    .market-table td:first-child {
+      width: 34%;
+      padding-left: 2px;
+    }
+
+    .market-table th:nth-last-child(-n+2),
+    .market-table td:nth-last-child(-n+2) {
+      width: 42px;
+      padding-left: 2px;
+      padding-right: 2px;
+    }
+
+    .market-table .btn.mini {
+      min-height: 19px;
+      padding: 1px 4px;
+      font-size: 9.5px;
+    }
+
     .market-diff-good {
       color: var(--green);
     }
@@ -1188,6 +1218,32 @@
 
     .market-diff-flat {
       color: var(--muted);
+    }
+
+    .diagnostics-panel {
+      display: grid;
+      gap: 8px;
+    }
+
+    .diagnostics-report {
+      width: 100%;
+      min-height: 170px;
+      box-sizing: border-box;
+      padding: 7px 8px;
+      border: 1px solid rgba(101, 255, 71, .32);
+      border-radius: 4px;
+      background: rgba(0, 0, 0, .42);
+      color: rgba(221, 255, 216, .92);
+      font: 10px/1.32 var(--ui-font);
+      text-transform: none;
+      resize: vertical;
+      white-space: pre;
+      overflow: auto;
+    }
+
+    .diagnostics-report:focus {
+      outline: 1px solid rgba(246, 255, 143, .58);
+      box-shadow: 0 0 10px rgba(246, 255, 143, .12);
     }
 
     .mini {

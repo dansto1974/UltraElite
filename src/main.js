@@ -60,6 +60,51 @@
     const lerp = (a, b, t) => a + (b - a) * t;
     const fmt = (n, d = 1) => Number(n).toFixed(d);
     const byId = (id) => document.getElementById(id);
+    const DIAGNOSTIC_LOG_LIMIT = 80;
+    const diagnosticEvents = [];
+
+    function diagnosticValue(value) {
+      if (value instanceof Error) return `${value.name}: ${value.message}${value.stack ? `\n${value.stack}` : ""}`;
+      if (value == null || typeof value === "string" || typeof value === "number" || typeof value === "boolean") return String(value);
+      try {
+        return JSON.stringify(value);
+      } catch {
+        return Object.prototype.toString.call(value);
+      }
+    }
+
+    function recordDiagnosticEvent(kind, args = []) {
+      const entry = {
+        at: new Date().toISOString(),
+        t: Math.round((performance.now ? performance.now() : 0) * 10) / 10,
+        kind,
+        message: Array.from(args).map(diagnosticValue).join(" ").slice(0, 2200)
+      };
+      diagnosticEvents.push(entry);
+      if (diagnosticEvents.length > DIAGNOSTIC_LOG_LIMIT) diagnosticEvents.splice(0, diagnosticEvents.length - DIAGNOSTIC_LOG_LIMIT);
+    }
+
+    (function installDiagnosticsCapture() {
+      for (const method of ["log", "info", "warn", "error"]) {
+        const original = console[method]?.bind(console);
+        if (!original) continue;
+        console[method] = (...args) => {
+          recordDiagnosticEvent(`console.${method}`, args);
+          original(...args);
+        };
+      }
+      window.addEventListener("error", (event) => {
+        recordDiagnosticEvent("window.error", [
+          event.message || "Script error",
+          `${event.filename || "unknown"}:${event.lineno || 0}:${event.colno || 0}`,
+          event.error || ""
+        ]);
+      });
+      window.addEventListener("unhandledrejection", (event) => {
+        recordDiagnosticEvent("unhandledrejection", [event.reason || "unknown rejection"]);
+      });
+      recordDiagnosticEvent("boot", [`mode=${ULTRA_ELITE_DEV_SHELL ? "dev" : ULTRA_ELITE_RENDER_BENCH ? "render-bench" : "game"}`]);
+    })();
 
     function hash32(str) {
       let h = 2166136261 >>> 0;
@@ -5726,6 +5771,32 @@
         };
       }
 
+      function diagnostics() {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const destination = ctx?.destination || null;
+        return {
+          ...status(),
+          constructor: AudioCtx?.name || "none",
+          created: !!ctx,
+          sampleRate: ctx?.sampleRate || null,
+          currentTime: ctx ? Math.round(ctx.currentTime * 1000) / 1000 : null,
+          baseLatency: Number.isFinite(ctx?.baseLatency) ? Math.round(ctx.baseLatency * 1000) / 1000 : null,
+          outputLatency: Number.isFinite(ctx?.outputLatency) ? Math.round(ctx.outputLatency * 1000) / 1000 : null,
+          destinationChannels: destination?.channelCount || null,
+          destinationMaxChannels: destination?.maxChannelCount || null,
+          destinationMode: destination?.channelCountMode || "",
+          sinkId: ctx?.sinkId || "",
+          masterCreated: !!master,
+          limiterCreated: !!limiter,
+          busCount: buses ? Object.keys(buses).length : 0,
+          noiseBuffer: !!noiseBuffer,
+          engineBed: !!engineBed,
+          flybyBed: !!flybyBed,
+          transitionBed: !!transitionBed,
+          solarBed: !!solarBed
+        };
+      }
+
       function makeNoiseBuffer() {
         const length = Math.max(1, Math.floor(ctx.sampleRate * 1.2));
         const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
@@ -6702,6 +6773,7 @@
         resume: () => { unlock({ audible: false }); },
         unlock,
         status,
+        diagnostics,
         setVolume: (value, persist = true) => {
           game.audioVolume = normalizeAudioVolume(value);
           if (persist) saveAudioVolumeSetting(game.audioVolume);
@@ -19580,7 +19652,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ${sealedNote}
         ${comparatorNote}
         <button class="btn primary" data-fuel ${fuelDisabled || disabled}>${fuelLabel}</button>
-        <table><thead><tr><th>Goods</th><th>Local</th>${comparatorHead}<th>Avail</th><th>Cargo</th><th></th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+        <table class="market-table"><thead><tr><th>Goods</th><th>Local</th>${comparatorHead}<th>Avail</th><th>Cargo</th><th></th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
     }
 
     function missionRewardText(mission) {
@@ -20794,7 +20866,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       <div class="notice">
         Equipment
         <div class="equipment-cheats">${equipmentRows}</div>
-      </div>`;
+      </div>
+      ${renderAudioDiagnosticPanel("dev")}`;
     }
 
     function renderHelp() {
@@ -20863,22 +20936,200 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function commanderAudioDiagnosticsEnabled() {
-      return normalizeCommanderName(game.commander) === "POOPY";
+      return normalizeCommanderName(game.commander) === "POOPY" || !!game.developerMode;
     }
 
-    function renderAudioDiagnosticPanel() {
+    function webglDiagnosticInfo() {
+      try {
+        const canvas = document.createElement("canvas");
+        const gl = canvas.getContext("webgl2") || canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+        if (!gl) return { supported: "no" };
+        const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+        const webgl2 = typeof WebGL2RenderingContext !== "undefined" && gl instanceof WebGL2RenderingContext;
+        return {
+          supported: webgl2 ? "webgl2" : "webgl1",
+          vendor: debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR),
+          renderer: debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER),
+          version: gl.getParameter(gl.VERSION),
+          shadingLanguage: gl.getParameter(gl.SHADING_LANGUAGE_VERSION),
+          maxTextureSize: gl.getParameter(gl.MAX_TEXTURE_SIZE)
+        };
+      } catch (err) {
+        return { supported: "error", error: diagnosticValue(err) };
+      }
+    }
+
+    function gameDiagnosticReport() {
+      const diag = eliteAudio.diagnostics();
+      const storageVolume = (() => {
+        try {
+          return localStorage.getItem(AUDIO_VOLUME_KEY);
+        } catch {
+          return "blocked";
+        }
+      })();
+      const saveState = (() => {
+        try {
+          return localStorage.getItem(SAVE_KEY) ? "present" : "none";
+        } catch {
+          return "blocked";
+        }
+      })();
+      const objectCounts = (game.objects || []).reduce((counts, o) => {
+        const key = o?.type || "unknown";
+        counts[key] = (counts[key] || 0) + 1;
+        return counts;
+      }, {});
+      const compact = (value) => String(value ?? "").replace(/\s+/g, " ").trim();
+      const fittedEquipment = EQUIPMENT
+        .filter((item) => game.equipment?.[item.id])
+        .map((item) => item.name);
+      const cargoState = Object.entries(game.cargo || {})
+        .filter(([, qty]) => Number(qty) > 0)
+        .map(([name, qty]) => `${name}:${qty}`)
+        .join(", ") || "empty";
+      const missionLines = (game.missions || []).map((mission, index) => {
+        const type = MISSION_TYPES[mission.type] || mission.type || "mission";
+        const destination = mission.destination?.name || "unknown";
+        const progress = compact(missionProgressText(mission));
+        const blockers = mission.status === "active" ? missionCompletionBlockers(mission).map(compact).join("; ") : "";
+        return `${index + 1}. ${mission.status || "unknown"} ${type} ${mission.id || "no-id"} -> ${destination} | ${mission.title || "untitled"} | ${progress}${blockers ? ` | blockers: ${blockers}` : ""}`;
+      });
+      const target = game.targetObject;
+      const perf = game.performance || {};
+      const memory = performance.memory || null;
+      const audioCtx = window.AudioContext || window.webkitAudioContext;
+      const uaData = navigator.userAgentData?.toJSON ? navigator.userAgentData.toJSON() : navigator.userAgentData;
+      const screenInfo = window.screen ? `${screen.width}x${screen.height} avail=${screen.availWidth}x${screen.availHeight} depth=${screen.colorDepth}` : "unknown";
+      const webgl = webglDiagnosticInfo();
+      const recentLogs = diagnosticEvents.slice(-24).map((entry) => `[${entry.at} +${entry.t}ms] ${entry.kind}: ${entry.message}`);
+      const lines = [
+        "Ultra Elite Diagnostics",
+        `generated: ${new Date().toISOString()}`,
+        `version: ${GAME_VERSION}`,
+        "",
+        "[Browser]",
+        `page: ${location.protocol}//${location.host}${location.pathname}`,
+        `userAgent: ${navigator.userAgent || "unknown"}`,
+        `appVersion: ${navigator.appVersion || "unknown"}`,
+        `appName: ${navigator.appName || "unknown"}`,
+        `product: ${navigator.product || "unknown"}`,
+        `productSub: ${navigator.productSub || "unknown"}`,
+        `platform: ${navigator.platform || "unknown"}`,
+        `vendor: ${navigator.vendor || "unknown"}`,
+        `language: ${navigator.language || "unknown"}`,
+        `languages: ${Array.from(navigator.languages || []).join(", ") || "unknown"}`,
+        `secureContext: ${window.isSecureContext ? "yes" : "no"}`,
+        `visibility: ${document.visibilityState || "unknown"}`,
+        `documentHasFocus: ${document.hasFocus() ? "yes" : "no"}`,
+        `online: ${navigator.onLine ? "yes" : "no"}`,
+        `cookieEnabled: ${navigator.cookieEnabled ? "yes" : "no"}`,
+        `doNotTrack: ${navigator.doNotTrack || window.doNotTrack || "unknown"}`,
+        `webdriver: ${navigator.webdriver ? "yes" : "no"}`,
+        `hardwareConcurrency: ${navigator.hardwareConcurrency || "unknown"}`,
+        `deviceMemory: ${navigator.deviceMemory || "unknown"}`,
+        `maxTouchPoints: ${navigator.maxTouchPoints || 0}`,
+        `devicePixelRatio: ${window.devicePixelRatio || 1}`,
+        `viewport: ${window.innerWidth}x${window.innerHeight}`,
+        `screen: ${screenInfo}`,
+        `timezone: ${Intl.DateTimeFormat().resolvedOptions().timeZone || "unknown"}`,
+        `referrer: ${document.referrer || "none"}`,
+        `localStorage: ${saveState === "blocked" || storageVolume === "blocked" ? "blocked-or-partial" : "available"}`,
+        `sessionStorage: ${(() => { try { sessionStorage.getItem("__ultraEliteDiagnosticProbe"); return "available"; } catch { return "blocked"; } })()}`,
+        `mediaDevices: ${navigator.mediaDevices ? "yes" : "no"}`,
+        `clipboard: ${navigator.clipboard ? "yes" : "no"}`,
+        `chromeUAData: ${uaData ? JSON.stringify(uaData) : "none"}`,
+        `webgl: ${JSON.stringify(webgl)}`,
+        `jsHeap: ${memory ? `${Math.round(memory.usedJSHeapSize / 1048576)}MB/${Math.round(memory.jsHeapSizeLimit / 1048576)}MB` : "unknown"}`,
+        "",
+        "[Game]",
+        `commander: ${normalizeCommanderName(game.commander)}`,
+        `developerMode: ${game.developerMode ? "yes" : "no"}`,
+        `poopyDiagnostics: ${normalizeCommanderName(game.commander) === "POOPY" ? "yes" : "no"}`,
+        `credits: ${fmt(game.credits)} CR`,
+        `legal: ${legalStatus()} (${game.legal || 0})`,
+        `kills: ${game.kills || 0}`,
+        `missionService: ${fmt(game.missionRankPoints || 0)}`,
+        `navalRep: ${fmt(navalReputationScore())}`,
+        `docked: ${game.docked ? "yes" : "no"}`,
+        `dockedAt: ${game.dockedAt || "not docked"}`,
+        `panel: ${game.panel || "unknown"} / open=${game.panelOpen ? "yes" : "no"}`,
+        `system: G${game.galaxy + 1} ${currentSystem().name} (#${game.current})`,
+        `target: ${targetSystem().name} (#${game.target})`,
+        `finalTarget: ${finalTargetSystem().name} (#${game.finalTarget})`,
+        `ship: ${shipName(playerShipModel())}`,
+        `shipModel: ${playerShipModel()}`,
+        `cargo: ${usedCargo()}/${game.cargoCap}t | ${cargoState}`,
+        `fuel: ${fmt(game.fuel)} LY`,
+        `reserveFuel: ${cargoFuelTons()}t`,
+        `missiles: ${game.missiles}`,
+        `equipment: ${fittedEquipment.join(", ") || "none"}`,
+        `graphicsMode: ${game.graphicsMode}`,
+        `fxLevel: ${game.fxLevel}`,
+        `paused: ${game.paused ? "yes" : "no"}`,
+        `transition: ${game.transition ? `${game.transition.kind} ${fmt(game.transition.t || 0)}/${fmt(game.transition.dur || 0)}` : "none"}`,
+        `jumpCountdown: ${game.jumpCountdown ? `${game.jumpCountdown.kind} ${fmt(game.jumpCountdown.t || 0)}/${fmt(game.jumpCountdown.dur || 0)}` : "none"}`,
+        `targetObject: ${target ? `${target.name || target.model || target.type} type=${target.type || "unknown"} model=${target.model || "none"} hostile=${target.hostile ? "yes" : "no"} police=${target.police ? "yes" : "no"} hp=${Number.isFinite(target.hp) ? Math.round(target.hp) : "unknown"}` : "none"}`,
+        `browserSave: ${saveState}`,
+        `missions: ${(game.missions || []).filter((m) => m.status === "active").length} active / ${(game.missions || []).length} total`,
+        `objects: ${JSON.stringify(objectCounts)}`,
+        `fps: ${Number.isFinite(perf.fps) ? Math.round(perf.fps) : "unknown"}`,
+        `frameMs: ${Number.isFinite(perf.frameMs) ? Math.round(perf.frameMs * 10) / 10 : "unknown"}`,
+        "",
+        "[Missions]",
+        ...(missionLines.length ? missionLines : ["none"]),
+        "",
+        "[Audio]",
+        `audioContextSupported: ${diag.supported ? "yes" : "no"}`,
+        `audioContextConstructor: ${diag.constructor}`,
+        `audioContextCreated: ${diag.created ? "yes" : "no"}`,
+        `audioContextState: ${diag.state}`,
+        `audioUnlocked: ${diag.unlocked ? "yes" : "no"}`,
+        `soundEnabled: ${diag.enabled ? "yes" : "no"}`,
+        `gameVolume: ${diag.volume}%`,
+        `savedVolumeRaw: ${storageVolume == null ? "unset" : storageVolume}`,
+        `masterOutputGain: ${diag.outputGain}`,
+        `sampleRate: ${diag.sampleRate ?? "not-created"}`,
+        `currentTime: ${diag.currentTime ?? "not-created"}`,
+        `baseLatency: ${diag.baseLatency ?? "unknown"}`,
+        `outputLatency: ${diag.outputLatency ?? "unknown"}`,
+        `destinationChannels: ${diag.destinationChannels ?? "unknown"}`,
+        `destinationMaxChannels: ${diag.destinationMaxChannels ?? "unknown"}`,
+        `destinationMode: ${diag.destinationMode || "unknown"}`,
+        `sinkId: ${diag.sinkId || "default/unknown"}`,
+        `audioWorklet: ${audioCtx?.prototype && "audioWorklet" in audioCtx.prototype ? "prototype" : "unknown"}`,
+        `masterCreated: ${diag.masterCreated ? "yes" : "no"}`,
+        `limiterCreated: ${diag.limiterCreated ? "yes" : "no"}`,
+        `busCount: ${diag.busCount}`,
+        `noiseBuffer: ${diag.noiseBuffer ? "yes" : "no"}`,
+        `engineBed: ${diag.engineBed ? "yes" : "no"}`,
+        `flybyBed: ${diag.flybyBed ? "yes" : "no"}`,
+        `transitionBed: ${diag.transitionBed ? "yes" : "no"}`,
+        `solarBed: ${diag.solarBed ? "yes" : "no"}`,
+        "",
+        "[Recent Console / JS Events]",
+        ...(recentLogs.length ? recentLogs : ["none"])
+      ];
+      return lines.join("\n");
+    }
+
+    function renderAudioDiagnosticPanel(surface = "status") {
       if (!commanderAudioDiagnosticsEnabled()) return "";
       const status = eliteAudio.status();
-      return `<div class="notice save-actions">
-        <strong class="about-heading">Audio Check</strong>
+      return `<div class="notice diagnostics-panel" data-diagnostics-surface="${escapeAttr(surface)}">
+        <strong class="about-heading">Diagnostics</strong>
         <div class="grid2">
           ${stat("Supported", status.supported ? "Yes" : "No")}
           ${stat("Enabled", status.enabled ? "Yes" : "No")}
           ${stat("Context", escapeHtml(status.state))}
           ${stat("Volume", `${status.volume}%`)}
         </div>
-        <button class="btn" data-audio-test>Play Audio Test</button>
-        <button class="btn" data-audio-refresh>Refresh Audio Status</button>
+        <textarea class="diagnostics-report" data-diagnostics-report readonly spellcheck="false">${escapeHtml(gameDiagnosticReport())}</textarea>
+        <div class="save-actions">
+          <button class="btn" data-audio-test>Play Audio Test</button>
+          <button class="btn" data-audio-refresh>Refresh Report</button>
+          <button class="btn primary" data-diagnostics-copy>Copy Report</button>
+        </div>
       </div>`;
     }
 
@@ -20908,13 +21159,38 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (!game.soundEnabled) game.soundEnabled = true;
       eliteAudio.unlock({ audible: true });
       eliteAudio.play("beep");
-      setMessage("Audio test played. Check the Audio Check status line.", true);
+      setMessage("Audio test played. Check the Diagnostics report.", true);
       updateVolumeHud();
       setTimeout(() => {
         renderPanel();
         const status = eliteAudio.status();
         setMessage(`Audio status: ${status.state}, volume ${status.volume}%.`, true);
       }, 180);
+    }
+
+    async function copyDiagnosticsReport() {
+      const report = panelBody.querySelector("[data-diagnostics-report]");
+      const text = report?.value || gameDiagnosticReport();
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else if (report) {
+          report.focus();
+          report.select();
+          document.execCommand("copy");
+          report.setSelectionRange(0, 0);
+        } else {
+          throw new Error("Clipboard API unavailable");
+        }
+        setMessage("Diagnostics report copied.", true);
+      } catch (err) {
+        console.warn("Diagnostics copy failed", err);
+        if (report) {
+          report.focus();
+          report.select();
+        }
+        setMessage("Copy blocked. Report selected for manual copy.", true);
+      }
     }
 
     function attachPanelEvents() {
@@ -21030,6 +21306,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const status = eliteAudio.status();
         setMessage(`Audio status: ${status.state}, volume ${status.volume}%.`, true);
       });
+      const diagnosticsCopy = panelBody.querySelector("[data-diagnostics-copy]");
+      if (diagnosticsCopy) diagnosticsCopy.addEventListener("click", copyDiagnosticsReport);
       const downloadSave = panelBody.querySelector("[data-download-save]");
       if (downloadSave) downloadSave.addEventListener("click", downloadCommanderFile);
       const uploadSave = panelBody.querySelector("[data-upload-save]");
@@ -21476,6 +21754,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     } else {
       window.addEventListener("resize", resizeCanvases);
       window.__ultraEliteAudioStatus = () => eliteAudio.status();
+      window.__ultraEliteDiagnosticsReport = () => gameDiagnosticReport();
       const unlockAudioFromGesture = () => eliteAudio.unlock({ audible: true });
       window.addEventListener("pointerdown", unlockAudioFromGesture, { capture: true });
       window.addEventListener("pointerup", unlockAudioFromGesture, { capture: true });
