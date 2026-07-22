@@ -3413,16 +3413,17 @@
       "BLACK ACRE", "MORNING KNIFE", "RED LEDGER", "NULL SAINT", "STATIC REEF",
       "BONE MARKET", "COLD VECTOR", "GRIEF ENGINE", "VANTA WAKE", "SILENT FEE"
     ];
+    const NAVAL_LOAN_SHIPS = ["naga", "umbra"];
     const DEV_MISSION_PRESETS = [
       { id: "starterCourier", label: "Starter Courier", type: "courier", opts: { starter: true, rewardCredits: 65, rankPoints: 1, titlePrefix: "Dev starter courier" } },
       { id: "starterFreight", label: "Starter Freight", type: "cargo", opts: { starter: true, cargoItem: "station mailbag", rewardCredits: 75, rankPoints: 1, titlePrefix: "Dev starter freight" } },
       { id: "privateBounty", label: "Private Bounty", type: "bounty", opts: { heat: 2, legalClass: "private", targetModel: "mamba", rewardCredits: 520, rankPoints: 2 } },
       { id: "pirateSuppression", label: "Pirate Sweep", type: "suppression", opts: { heat: 2, legalClass: "sanctioned", suppressionKills: 4, rewardCredits: 860, rankPoints: 2 } },
       { id: "sanctionedRecovery", label: "Recovery", type: "recovery", opts: { heat: 3, legalClass: "sanctioned", targetModel: "krait", recoveryName: "stolen prototype computer", rewardCredits: 790, rankPoints: 2 } },
-      { id: "thargoidNaval", label: "Thargoid Naval", type: "naval", opts: { heat: 4, legalClass: "military", targetModel: "thargoid", recoveryName: "alien alloy panel", loan: { id: "navalEcm", name: "Long-range Naval ECM", keepChance: 0 }, rewardCredits: 1250, rankPoints: 5, noRandomSpecialRewards: true } },
-      { id: "loanLaser", label: "Loan Laser", type: "naval", opts: { heat: 4, legalClass: "military", targetModel: "asp", loan: { id: "navalOverchargeLaser", name: "Overcharged Naval Laser", keepChance: 0 }, rewardCredits: 1100, rankPoints: 4, noRandomSpecialRewards: true } },
-      { id: "keepLaser", label: "Keep Laser", type: "naval", opts: { heat: 4, legalClass: "military", targetModel: "ferdelance", loan: { id: "navalOverchargeLaser", name: "Overcharged Naval Laser", keepChance: 1 }, rewardEquipment: "militaryLaser", rewardCredits: 1450, rankPoints: 5, noRandomSpecialRewards: true } },
-      { id: "shipReward", label: "Ship Reward", type: "naval", opts: { heat: 4, legalClass: "military", targetModel: "constrictor", loan: { id: "navalEcm", name: "Long-range Naval ECM", keepChance: 0 }, rewardShip: "diamondback", rewardCredits: 2200, rankPoints: 6, noRandomSpecialRewards: true } },
+      { id: "thargoidNaval", label: "Thargoid Naval", type: "naval", opts: { heat: 4, legalClass: "military", targetModel: "thargoid", recoveryName: "alien alloy panel", loanShip: "naga", loan: { id: "navalEcm", name: "Long-range Naval ECM", keepChance: 0 }, rewardCredits: 1250, rankPoints: 5, noRandomSpecialRewards: true } },
+      { id: "loanLaser", label: "Loan Laser", type: "naval", opts: { heat: 4, legalClass: "military", targetModel: "asp", loanShip: "naga", loan: { id: "navalOverchargeLaser", name: "Overcharged Naval Laser", keepChance: 0 }, rewardCredits: 1100, rankPoints: 4, noRandomSpecialRewards: true } },
+      { id: "keepLaser", label: "Keep Laser", type: "naval", opts: { heat: 4, legalClass: "military", targetModel: "ferdelance", loanShip: "umbra", loan: { id: "navalOverchargeLaser", name: "Overcharged Naval Laser", keepChance: 1 }, rewardEquipment: "militaryLaser", rewardCredits: 1450, rankPoints: 5, noRandomSpecialRewards: true } },
+      { id: "shipReward", label: "Keep Ship", type: "naval", opts: { heat: 4, legalClass: "military", targetModel: "constrictor", loan: { id: "navalEcm", name: "Long-range Naval ECM", keepChance: 0 }, rewardShip: "umbra", rewardCredits: 2200, rankPoints: 6, noRandomSpecialRewards: true } },
       { id: "specialCargo", label: "Special Cargo", type: "cargo", opts: { heat: 3, legalClass: "sanctioned", destinationBands: [[28, 44], [18, 36], [8, 24]], cargoItem: "experimental ship drive", cargoTons: 1, cargoSecret: true, rewardEquipment: "militaryLaser", rewardCredits: 1750, rankPoints: 3 } }
     ];
 
@@ -3544,6 +3545,16 @@
       return missionChoice(rng, ["sidewinder", "mamba", "krait", "gecko", "adder", "cobra"]);
     }
 
+    function navalLoanShipModel(rng, heat, opts = {}) {
+      if (opts.noLoanShip) return "";
+      if (opts.loanShip && isDockyardShipModel(opts.loanShip)) return opts.loanShip;
+      if (opts.rewardShip && isDockyardShipModel(opts.rewardShip)) return opts.rewardShip;
+      const candidates = NAVAL_LOAN_SHIPS.filter(isDockyardShipModel);
+      if (!candidates.length) return "";
+      if (heat >= 4 && candidates.includes("umbra") && rng() < .42) return "umbra";
+      return candidates.includes("naga") ? "naga" : candidates[0];
+    }
+
     function missionLegalClass(type, rng) {
       if (type === "naval") return "military";
       if (type === "suppression") return "sanctioned";
@@ -3627,9 +3638,10 @@
           mission.loan = opts.loan || (rng() < .55
             ? { id: "navalOverchargeLaser", name: "Overcharged Naval Laser", keepChance: .08 }
             : { id: "navalEcm", name: "Long-range Naval ECM", keepChance: .12 });
+          const loanShip = navalLoanShipModel(rng, heat, opts);
+          if (loanShip) mission.loanShip = { model: loanShip };
           if (!opts.noRandomSpecialRewards) {
             if (rng() < .16) mission.reward.equipment = "militaryLaser";
-            if (rng() < .035) mission.reward.ship = "diamondback";
           }
         }
         mission.title = type === "naval" ? `Naval action at ${to.name}` : `${legalClass === "private" ? "Private warrant" : "Warrant"}: ${targetName}`;
@@ -3684,6 +3696,68 @@
       return missionState().active.some((mission) => mission.status === "active" && mission.loan?.id === id);
     }
 
+    function activeMissionLoanShipFor(model) {
+      return missionState().active.find((mission) =>
+        mission.status === "active"
+        && mission.loanShip?.model === model
+        && !mission.loanShip.keep
+      ) || null;
+    }
+
+    function grantMissionLoanShip(mission) {
+      const model = mission?.loanShip?.model;
+      if (!isDockyardShipModel(model)) return true;
+      missionState();
+      const activeLoan = missionState().active.find((active) =>
+        active.status === "active"
+        && active.loanShip?.model
+        && !active.loanShip.keep
+      );
+      if (activeLoan) {
+        eliteAudio.play("boop");
+        setMessage(`Return ${shipName(activeLoan.loanShip.model)} before accepting another mission ship.`, true);
+        return false;
+      }
+      const cargoCap = shipCargoCap(model);
+      const pendingCargo = mission.cargo?.held ? Number(mission.cargo.tons) || 0 : 0;
+      const totalCargo = usedCargo() + pendingCargo;
+      if (totalCargo > cargoCap) {
+        eliteAudio.play("boop");
+        setMessage(`Mission ship ${shipName(model)} has only ${cargoCap}t cargo space. Sell cargo first.`, true);
+        return false;
+      }
+      const wasOwned = ownedShipList().includes(model);
+      mission.loanShip = {
+        ...mission.loanShip,
+        model,
+        previousShip: playerShipModel(),
+        wasOwned,
+        keep: false
+      };
+      if (!game.missionUnlocks.ships.includes(model)) game.missionUnlocks.ships.push(model);
+      if (!game.missionUnlocks.ownedShips.includes(model)) game.missionUnlocks.ownedShips.push(model);
+      game.playerShip = model;
+      applyPlayerShipStats({ trimCargo: false });
+      restoreShipSystems();
+      shipDiagramState.model = model;
+      return true;
+    }
+
+    function revokeMissionLoanShip(mission) {
+      const loan = mission?.loanShip;
+      if (!loan?.model || loan.keep || loan.wasOwned) return;
+      missionState();
+      const fallback = ownedShipList().find((model) => model !== loan.model)
+        || (isDockyardShipModel(loan.previousShip) ? loan.previousShip : "cobra");
+      if (playerShipModel() === loan.model) {
+        game.playerShip = fallback;
+        applyPlayerShipStats({ trimCargo: false });
+        restoreShipSystems();
+        shipDiagramState.model = fallback;
+      }
+      game.missionUnlocks.ownedShips = game.missionUnlocks.ownedShips.filter((model) => model !== loan.model);
+    }
+
     function acceptMission(id) {
       const state = missionState();
       if (!game.docked) return setMessage("Mission board is station-side only.", true);
@@ -3707,10 +3781,13 @@
       mission.status = "active";
       mission.acceptedAt = { galaxy: game.galaxy, system: game.current };
       if (mission.cargo) mission.cargo.held = true;
+      if (!grantMissionLoanShip(mission)) return;
       state.board.splice(idx, 1);
       state.active.push(mission);
       eliteAudio.play("beep");
-      setMessage(`${MISSION_TYPES[mission.type] || "Mission"} accepted: ${mission.title}.`, true);
+      setMessage(mission.loanShip
+        ? `${MISSION_TYPES[mission.type] || "Mission"} accepted: ${mission.title}. ${shipName(mission.loanShip.model)} readied for the contract.`
+        : `${MISSION_TYPES[mission.type] || "Mission"} accepted: ${mission.title}.`, true);
       renderPanel();
     }
 
@@ -3719,6 +3796,7 @@
       if (!mission) return;
       mission.status = "failed";
       mission.failedReason = "Abandoned by commander";
+      revokeMissionLoanShip(mission);
       eliteAudio.play("boop");
       setMessage(`Mission abandoned: ${mission.title}.`, true);
       renderPanel();
@@ -3746,7 +3824,8 @@
       if (reward.legalClearance === "clean") lines.push("Your legal record has been cleared under mission authority.");
       else if (reward.legalClearance) lines.push(`Your legal record has been reduced by ${reward.legalClearance} point${reward.legalClearance === 1 ? "" : "s"}.`);
       if (details.equipmentAward) lines.push(`The ${details.equipmentAward} is now yours to keep.`);
-      if (details.shipAward) lines.push(`Shipyard authorisation for a ${details.shipAward} has been added to your record.`);
+      if (details.shipAward) lines.push(`The loaned ${details.shipAward} has been released to your permanent shipyard inventory.`);
+      else if (details.shipLoanName) lines.push(`The loaned ${details.shipLoanName} has been returned to naval stores.`);
       if (details.loanName) {
         lines.push(details.loanKept
           ? `Command has decided to let you retain the loaned ${details.loanName}.`
@@ -3766,6 +3845,8 @@
         legalClearance: reward.legalClearance || 0,
         equipmentAward: "",
         shipAward: "",
+        shipLoanName: mission.loanShip?.model && !mission.loanShip.wasOwned ? shipName(mission.loanShip.model) : "",
+        shipLoanKept: false,
         loanName: mission.loan?.name || "",
         loanKept: false
       };
@@ -3783,6 +3864,13 @@
       if (reward.ship && SHIP_NAMES[reward.ship]) {
         details.shipAward = shipName(reward.ship);
         if (!game.missionUnlocks.ships.includes(reward.ship)) game.missionUnlocks.ships.push(reward.ship);
+        if (isDockyardShipModel(reward.ship) && !game.missionUnlocks.ownedShips.includes(reward.ship)) {
+          game.missionUnlocks.ownedShips.push(reward.ship);
+        }
+        if (mission.loanShip?.model === reward.ship) {
+          mission.loanShip.keep = true;
+          details.shipLoanKept = true;
+        }
       }
       if (mission.loan?.keepChance && Math.random() < mission.loan.keepChance) {
         details.loanKept = true;
@@ -3796,6 +3884,7 @@
           details.loanName = mission.rewardKeptLoan;
         }
       }
+      if (mission.loanShip?.model && !mission.loanShip.keep) revokeMissionLoanShip(mission);
       mission.completionDetails = details;
       mission.completionMessage = buildMissionCompletionDebrief(mission, details);
       missionState().completed++;
@@ -3833,6 +3922,7 @@
         if (mission.status !== "active") continue;
         mission.status = "failed";
         mission.failedReason = reason;
+        revokeMissionLoanShip(mission);
         failed++;
       }
       return failed;
@@ -9184,6 +9274,16 @@
       if (!ownedShipList().includes(model)) {
         eliteAudio.play("boop");
         setMessage("That hull is not in your dockyard inventory.");
+        return;
+      }
+      if (activeMissionLoanShipFor(model)) {
+        eliteAudio.play("boop");
+        setMessage("Mission loan ships cannot be sold.");
+        return;
+      }
+      if (shipHiddenUntilDiscovered(model)) {
+        eliteAudio.play("boop");
+        setMessage("Special reward hulls cannot be sold.");
         return;
       }
       const value = shipResaleValue(model);
@@ -18590,7 +18690,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (reward.legalClearance === "clean") parts.push("legal record cleared");
       else if (reward.legalClearance) parts.push(`-${reward.legalClearance} legal`);
       if (reward.equipment) parts.push(`${EQUIPMENT.find((e) => e.id === reward.equipment)?.name || reward.equipment}`);
-      if (reward.ship) parts.push(`${shipName(reward.ship)} authorisation`);
+      if (mission.loanShip?.model) {
+        parts.push(mission.loanShip.model === reward.ship
+          ? `keep ${shipName(mission.loanShip.model)} mission ship`
+          : `${shipName(mission.loanShip.model)} loan ship`);
+      } else if (reward.ship) {
+        parts.push(`${shipName(reward.ship)} ship award`);
+      }
       return parts.join(" · ");
     }
 
@@ -18610,6 +18716,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (mission.target) bits.push(mission.target.destroyed ? "target destroyed" : mission.target.spawned ? "target active" : "target not found");
       if (mission.recovery?.required) bits.push(mission.recovery.held ? `${mission.recovery.name} recovered` : `${mission.recovery.name} required`);
       if (mission.loan) bits.push(`${mission.loan.name} on loan`);
+      if (mission.loanShip?.model) bits.push(mission.loanShip.model === mission.reward?.ship
+        ? `${shipName(mission.loanShip.model)} mission ship - keep on completion`
+        : `${shipName(mission.loanShip.model)} mission ship - return on completion`);
       return bits.join(" · ");
     }
 
@@ -18983,6 +19092,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const card = (model, section) => {
         const currentHull = model === current;
         const ownedHull = owned.includes(model);
+        const missionLoan = activeMissionLoanShipFor(model);
+        const hiddenRewardHull = shipHiddenUntilDiscovered(model);
         const price = shipPurchasePrice(model);
         const resale = shipResaleValue(model);
         const requiredTech = shipTechLevel(model);
@@ -18992,13 +19103,17 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const techBlocked = section === "sale" && localTech < requiredTech;
         const affordable = ownedHull || game.credits >= price;
         const buyDisabled = currentHull || !docked || cargoBlocked || techBlocked || !affordable || (!ownedHull && !Number.isFinite(price));
-        const sellDisabled = currentHull || !docked || !ownedHull || !Number.isFinite(resale);
+        const sellDisabled = currentHull || !docked || !ownedHull || !!missionLoan || hiddenRewardHull || !Number.isFinite(resale);
         const action = currentHull ? "Current" : ownedHull ? "Ready Ship" : `Buy ${price.toLocaleString()} CR`;
-        const status = currentHull ? "Current hull" : ownedHull ? "Owned" : (game.missionUnlocks.ships || []).includes(model) && !PUBLIC_DOCKYARD_SHIP_MODEL_LIST.includes(model) ? "Authorised" : "For sale";
+        const status = missionLoan ? "Mission loan" : currentHull ? "Current hull" : ownedHull ? "Owned" : (game.missionUnlocks.ships || []).includes(model) && !PUBLIC_DOCKYARD_SHIP_MODEL_LIST.includes(model) ? "Authorised" : "For sale";
         const tradeNote = cargoBlocked
           ? `Cargo ${cargo}/${cap}t - sell cargo first`
           : techBlocked
             ? `Requires TL ${requiredTech}; local TL ${localTech}`
+            : missionLoan
+              ? "Released on mission completion"
+            : hiddenRewardHull
+              ? "Special hull - resale locked"
             : ownedHull
               ? "Equipment transfer included"
               : `Purchase ${price.toLocaleString()} CR`;
@@ -19020,7 +19135,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
             </div>
             <div class="dockyard-actions">
               <button class="btn mini primary" data-shipyard-buy="${model}" ${buyDisabled ? "disabled" : ""}>${action}</button>
-              ${ownedHull ? `<button class="btn mini danger" data-shipyard-sell="${model}" ${sellDisabled ? "disabled" : ""}>Sell ${Number.isFinite(resale) ? `${resale.toLocaleString()} CR` : ""}</button>` : ""}
+              ${ownedHull ? `<button class="btn mini danger" data-shipyard-sell="${model}" ${sellDisabled ? "disabled" : ""}>${missionLoan ? "Mission Locked" : hiddenRewardHull ? "Resale Locked" : `Sell ${Number.isFinite(resale) ? `${resale.toLocaleString()} CR` : ""}`}</button>` : ""}
             </div>
           </div>
         </div>`;
