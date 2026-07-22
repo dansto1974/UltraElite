@@ -8,6 +8,7 @@ const root = path.resolve(__dirname, "../..");
 const paths = {
   template: path.join(root, "src/index.template.html"),
   css: path.join(root, "src/game.css"),
+  missionNpcDefinitions: path.join(root, "src/mission-npc-definitions.js"),
   js: path.join(root, "src/main.js"),
   generatedModels: path.join(root, "src/generated/model-library.js"),
   generatedSkins: path.join(root, "src/generated/bitmap-skins.js"),
@@ -21,6 +22,7 @@ function read(file) {
 
 const template = fs.readFileSync(paths.template, "utf8");
 const css = read(paths.css);
+const missionNpcDefinitions = read(paths.missionNpcDefinitions);
 const js = read(paths.js);
 const generatedModels = fs.existsSync(paths.generatedModels) ? read(paths.generatedModels) : "globalThis.ULTRA_ELITE_MODEL_BLUEPRINTS = {}; globalThis.ULTRA_ELITE_MODEL_NAMES = {};";
 const generatedSkins = fs.existsSync(paths.generatedSkins) ? read(paths.generatedSkins) : "globalThis.ULTRA_ELITE_BITMAP_SKINS = {};";
@@ -31,8 +33,8 @@ if (!template.includes("__ULTRA_ELITE_CSS__") || !template.includes("__ULTRA_ELI
   throw new Error("Template is missing one or more build placeholders.");
 }
 
-if (js.toLowerCase().includes("</script>")) {
-  throw new Error("src/main.js contains </script>, which would break the single-file build.");
+if (`${missionNpcDefinitions}\n${js}`.toLowerCase().includes("</script>")) {
+  throw new Error("Runtime JS sources contain </script>, which would break the single-file build.");
 }
 
 if (css.toLowerCase().includes("</style>")) {
@@ -42,15 +44,19 @@ if (css.toLowerCase().includes("</style>")) {
 const html = template
   .replace("__ULTRA_ELITE_CSS__", css)
   .replace("__ULTRA_ELITE_GENERATED_ASSETS__", generatedAssets)
-  .replace("__ULTRA_ELITE_JS__", js);
+  .replace("__ULTRA_ELITE_JS__", `${missionNpcDefinitions}\n${js}`);
 
 const devHtml = template
+  .replace("<body>", '<body data-ultra-elite-mode="dev">')
   .replace("  <style>\n__ULTRA_ELITE_CSS__\n  </style>", `  <link rel="stylesheet" href="src/game.css?v=${devStamp}">`)
   .replace("  <script>\n__ULTRA_ELITE_GENERATED_ASSETS__\n  </script>", [
     `  <script src="src/generated/model-library.js?v=${devStamp}"></script>`,
     `  <script src="src/generated/bitmap-skins.js?v=${devStamp}"></script>`
   ].join("\n"))
-  .replace("  <script>\n__ULTRA_ELITE_JS__\n  </script>", `  <script src="src/main.js?v=${devStamp}"></script>`);
+  .replace("  <script>\n__ULTRA_ELITE_JS__\n  </script>", [
+    `  <script src="src/mission-npc-definitions.js?v=${devStamp}"></script>`,
+    `  <script src="src/main.js?v=${devStamp}"></script>`
+  ].join("\n"));
 
 fs.writeFileSync(paths.output, html);
 fs.writeFileSync(paths.devOutput, devHtml);

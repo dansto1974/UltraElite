@@ -15,6 +15,7 @@ const files = {
   devHtml: path.join(root, "dev.html"),
   template: path.join(root, "src/index.template.html"),
   css: path.join(root, "src/game.css"),
+  missionNpcDefinitions: path.join(root, "src/mission-npc-definitions.js"),
   js: path.join(root, "src/main.js"),
   builderJs: path.join(root, "tools/ship-builder/ship-builder.js"),
   builderModels: path.join(root, "tools/ship-builder/game-model-library.js"),
@@ -50,6 +51,7 @@ const devHtml = read(files.devHtml);
 const normalizedDevHtml = devHtml.replace(/\?v=[^"]+/g, "");
 const template = read(files.template);
 const css = read(files.css);
+const missionNpcDefinitions = read(files.missionNpcDefinitions);
 const js = read(files.js);
 const builderJs = read(files.builderJs);
 const localServer = read(files.localServer);
@@ -62,8 +64,11 @@ const builderRenderPreviewJs = read(files.builderRenderPreviewJs);
 const packageJson = JSON.parse(read(files.packageJson));
 const readme = read(files.readme);
 
-if (!normalizedDevHtml.includes('href="src/game.css"') || !normalizedDevHtml.includes('src="src/main.js"')) {
+if (!normalizedDevHtml.includes('href="src/game.css"') || !normalizedDevHtml.includes('src="src/mission-npc-definitions.js"') || !normalizedDevHtml.includes('src="src/main.js"')) {
   throw new Error("dev.html is not loading the modular CSS/JS sources.");
+}
+if (!normalizedDevHtml.includes('<body data-ultra-elite-mode="dev">')) {
+  throw new Error("dev.html must boot as the local dev shell.");
 }
 if (!normalizedDevHtml.includes('src="src/generated/model-library.js"')) {
   throw new Error("dev.html is not loading the generated model manifest.");
@@ -80,16 +85,17 @@ if (cssPlaceholders !== 1 || jsPlaceholders !== 1 || assetPlaceholders !== 1) {
 }
 
 const expectedDevHtml = template
+  .replace("<body>", '<body data-ultra-elite-mode="dev">')
   .replace("  <style>\n__ULTRA_ELITE_CSS__\n  </style>", '  <link rel="stylesheet" href="src/game.css">')
   .replace("  <script>\n__ULTRA_ELITE_GENERATED_ASSETS__\n  </script>", '  <script src="src/generated/model-library.js"></script>\n  <script src="src/generated/bitmap-skins.js"></script>')
-  .replace("  <script>\n__ULTRA_ELITE_JS__\n  </script>", '  <script src="src/main.js"></script>');
+  .replace("  <script>\n__ULTRA_ELITE_JS__\n  </script>", '  <script src="src/mission-npc-definitions.js"></script>\n  <script src="src/main.js"></script>');
 
 if (normalizedDevHtml !== expectedDevHtml) {
   throw new Error("dev.html is out of sync with src/index.template.html; run npm run build.");
 }
 
-if (js.toLowerCase().includes("</script>")) {
-  throw new Error("src/main.js contains </script>, which would break inline builds.");
+if (`${missionNpcDefinitions}\n${js}`.toLowerCase().includes("</script>")) {
+  throw new Error("Runtime JS sources contain </script>, which would break inline builds.");
 }
 
 if (css.toLowerCase().includes("</style>")) {
@@ -217,6 +223,38 @@ const modelRoleGuards = [
 for (const [label, marker] of modelRoleGuards) {
   if (!js.includes(marker)) {
     throw new Error(`Missing model role guard: ${label}. Built-in generated model metadata must not add stations, rocks, or cargo to NPC spawn lists.`);
+  }
+}
+
+const missionNpcCtx = { globalThis: {} };
+vm.runInNewContext(missionNpcDefinitions, missionNpcCtx, { filename: files.missionNpcDefinitions });
+const missionNpcDefinitionsObject = missionNpcCtx.globalThis.ULTRA_ELITE_MISSION_NPC_DEFINITIONS;
+if (!missionNpcDefinitionsObject?.missionTypes || !missionNpcDefinitionsObject?.npcBehaviours) {
+  throw new Error("Mission/NPC registry must expose missionTypes and npcBehaviours.");
+}
+for (const [id, def] of Object.entries(missionNpcDefinitionsObject.missionTypes)) {
+  if (!def?.label || !Array.isArray(def.hooks) || !def.hooks.length) {
+    throw new Error(`Mission registry entry ${id} must declare a label and behaviour hooks.`);
+  }
+  for (const hook of def.hooks) {
+    if (!js.includes(`function ${hook}`)) {
+      throw new Error(`Mission registry entry ${id} references missing hook ${hook}.`);
+    }
+  }
+}
+for (const [id, def] of Object.entries(missionNpcDefinitionsObject.npcBehaviours)) {
+  if (!def?.role || !Array.isArray(def.hooks) || !def.hooks.length) {
+    throw new Error(`NPC behaviour registry entry ${id} must declare a role and hooks.`);
+  }
+  for (const hook of def.hooks) {
+    if (!js.includes(`function ${hook}`)) {
+      throw new Error(`NPC behaviour registry entry ${id} references missing hook ${hook}.`);
+    }
+  }
+}
+for (const type of ["traderDefence", "navalBattle"]) {
+  if (!missionNpcDefinitionsObject.missionTypes[type]) {
+    throw new Error(`Mission registry must include ${type}.`);
   }
 }
 

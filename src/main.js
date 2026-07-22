@@ -5,6 +5,7 @@
     const DEV_FORCE_FULL_RENDER = DEV_RENDER_HACK.includes("full-render");
     const DEV_DISABLE_LASER_EFFECTS = DEV_RENDER_HACK.includes("no-lasers");
     const DEV_DISABLE_ENGINE_EFFECTS = DEV_RENDER_HACK.includes("no-engines");
+    const ULTRA_ELITE_DEV_SHELL = document.body?.dataset?.ultraEliteMode === "dev";
     const TAU = Math.PI * 2;
     const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
     const AUDIO_VOLUME_KEY = "ultraEliteAudioVolume";
@@ -2872,6 +2873,7 @@
       fuel: 7,
       kills: 0,
       missionRankPoints: 0,
+      navalReputation: 0,
       legal: 0,
       playerShip: "cobra",
       energy: 100,
@@ -2922,7 +2924,7 @@
       audioVolume: loadAudioVolumeSetting(),
       visualBrightness: loadVisualBrightnessSetting(),
       paused: false,
-      developerMode: false,
+      developerMode: ULTRA_ELITE_DEV_SHELL,
       godMode: false,
       devStarType: "auto",
       devPlanetType: "auto",
@@ -3261,13 +3263,17 @@
       const current = normalizeCommanderName(game.commander);
       game.commander = normalizeCommanderName(useCurrent ? current : (input?.value || current));
       const poopyBonus = game.commander === "POOPY" && !game.poopyBonusClaimed;
+      const danstoDevUnlock = game.commander === "DANSTO" && !game.developerMode;
       if (poopyBonus) {
         game.poopyBonusClaimed = true;
         game.credits += 1000;
       }
+      if (danstoDevUnlock) launchDevMode();
       setCommanderNameDialog(false);
       requestGameFullscreen(pointerGesture);
-      setMessage(poopyBonus ? "Commander POOPY registered. 1000 CR bonus awarded." : `Commander registered: ${game.commander}.`, true);
+      setMessage(danstoDevUnlock
+        ? "Commander DANSTO registered. Launch Dev Mode enabled."
+        : poopyBonus ? "Commander POOPY registered. 1000 CR bonus awarded." : `Commander registered: ${game.commander}.`, true);
       renderPanel();
       updateReadouts();
       return true;
@@ -3378,14 +3384,10 @@
     const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
     const MISSION_MAX_ACTIVE = 5;
-    const MISSION_TYPES = {
-      courier: "Courier",
-      cargo: "Freight",
-      bounty: "Bounty",
-      suppression: "Pirate Suppression",
-      recovery: "Recovery",
-      naval: "Naval"
-    };
+    const MISSION_NPC_DEFINITIONS = globalThis.ULTRA_ELITE_MISSION_NPC_DEFINITIONS || { missionTypes: {}, npcBehaviours: {} };
+    const MISSION_DEFINITIONS = MISSION_NPC_DEFINITIONS.missionTypes || {};
+    const MISSION_TYPES = Object.fromEntries(Object.entries(MISSION_DEFINITIONS).map(([id, def]) => [id, def.label || id]));
+    const NAVAL_BATTLE_REP_UNLOCK = 4;
     const MISSION_CONTRACT_ITEMS = [
       "prototype flight computer", "experimental ship drive", "military targeting core",
       "corporate data vault", "biotech sample pod", "classified survey recorder",
@@ -3407,7 +3409,9 @@
       bounty: ["GalCop Warrants", "Station Security", "Pilot's Protective Guild", "Local Justice Office"],
       suppression: ["Station Security", "GalCop Patrol Liaison", "Local Defence Office", "Trade Lane Authority"],
       recovery: ["Sirius Recovery Bureau", "Tionisla Data Factors", "Corporate Salvage Board", "Insurance Underwriters"],
-      naval: ["GalCop Naval Intelligence", "Sector Naval Command", "Federal Liaison Office", "Joint Xeno Desk"]
+      naval: ["GalCop Naval Intelligence", "Sector Naval Command", "Federal Liaison Office", "Joint Xeno Desk"],
+      traderDefence: ["Free Traders' Exchange", "Trade Lane Authority", "Pilot's Protective Guild", "Local Convoy Office"],
+      navalBattle: ["GalCop Naval Intelligence", "Sector Naval Command", "Federal Liaison Office", "Joint Xeno Desk"]
     };
     const MISSION_TARGET_NAMES = [
       "BLACK ACRE", "MORNING KNIFE", "RED LEDGER", "NULL SAINT", "STATIC REEF",
@@ -3421,6 +3425,8 @@
       { id: "pirateSuppression", label: "Pirate Sweep", type: "suppression", opts: { heat: 2, legalClass: "sanctioned", suppressionKills: 4, rewardCredits: 860, rankPoints: 2 } },
       { id: "sanctionedRecovery", label: "Recovery", type: "recovery", opts: { heat: 3, legalClass: "sanctioned", targetModel: "krait", recoveryName: "stolen prototype computer", rewardCredits: 790, rankPoints: 2 } },
       { id: "thargoidNaval", label: "Thargoid Naval", type: "naval", opts: { heat: 4, legalClass: "military", targetModel: "thargoid", recoveryName: "alien alloy panel", loanShip: "naga", loan: { id: "navalEcm", name: "Long-range Naval ECM", keepChance: 0 }, rewardCredits: 1250, rankPoints: 5, noRandomSpecialRewards: true } },
+      { id: "traderDefence", label: "Trader Defence", type: "traderDefence", opts: { heat: 3, legalClass: "sanctioned", encounterRequired: 3, rewardCredits: 980, rankPoints: 3 } },
+      { id: "navalBattle", label: "Naval Battle", type: "navalBattle", opts: { heat: 4, legalClass: "military", encounterRequired: 3, navalReputationRequired: 0, rewardCredits: 1650, rankPoints: 5, navalReputation: 4 } },
       { id: "loanLaser", label: "Loan Laser", type: "naval", opts: { heat: 4, legalClass: "military", targetModel: "asp", loanShip: "naga", loan: { id: "navalOverchargeLaser", name: "Overcharged Naval Laser", keepChance: 0 }, rewardCredits: 1100, rankPoints: 4, noRandomSpecialRewards: true } },
       { id: "keepLaser", label: "Keep Laser", type: "naval", opts: { heat: 4, legalClass: "military", targetModel: "ferdelance", loanShip: "umbra", loan: { id: "navalOverchargeLaser", name: "Overcharged Naval Laser", keepChance: 1 }, rewardEquipment: "militaryLaser", rewardCredits: 1450, rankPoints: 5, noRandomSpecialRewards: true } },
       { id: "shipReward", label: "Keep Ship", type: "naval", opts: { heat: 4, legalClass: "military", targetModel: "constrictor", loan: { id: "navalEcm", name: "Long-range Naval ECM", keepChance: 0 }, rewardShip: "umbra", rewardCredits: 2200, rankPoints: 6, noRandomSpecialRewards: true } },
@@ -3474,6 +3480,10 @@
       return (Number(game.kills) || 0) + (Number(game.missionRankPoints) || 0);
     }
 
+    function navalReputationScore() {
+      return Number(game.navalReputation) || 0;
+    }
+
     function systemsInRange(from, minLy, maxLy) {
       return galaxies[from.galaxy ?? game.galaxy]
         .filter((system) => system.index !== from.index)
@@ -3487,9 +3497,9 @@
         ? opts.destinationBands
         : opts.starter
         ? [[1, 7], [1, 10], [1, 14]]
-        : type === "naval"
+        : type === "naval" || type === "navalBattle"
         ? [[18, 64], [8, 42], [4, 28]]
-        : type === "suppression"
+        : type === "suppression" || type === "traderDefence"
           ? [[3, 18], [1, 12], [18, 34]]
         : type === "courier"
           ? [[4, 14], [14, 30], [1, 8]]
@@ -3509,30 +3519,40 @@
         bounty: 320,
         suppression: 300,
         recovery: 430,
-        naval: 620
+        naval: 620,
+        traderDefence: 380,
+        navalBattle: 760
       }[type] || 120;
-      return Math.round((base + dist * (type === "courier" ? 18 : type === "naval" ? 48 : 32) + heat * 120 + rng() * base) / 5) * 5;
+      return Math.round((base + dist * (type === "courier" ? 18 : type === "naval" || type === "navalBattle" ? 48 : 32) + heat * 120 + rng() * base) / 5) * 5;
     }
 
     function missionRequirementsFor(type, dist, heat, mission = null) {
       const requirements = [];
-      const addReq = (id, label) => {
-        if (!requirements.some((req) => req.id === id)) requirements.push({ id, label });
+      const addReq = (id, label, extra = {}) => {
+        if (!requirements.some((req) => req.id === id)) requirements.push({ id, label, ...extra });
       };
       if (dist > 18 || heat >= 3) addReq("fuelScoop", "Fuel Scoop");
-      if (type === "recovery" || type === "naval") addReq("fuelScoop", "Fuel Scoop");
-      if ((type === "bounty" || type === "recovery" || type === "suppression") && heat >= 2) addReq("upgradedLaser", "Beam, mining or military laser");
-      if (type === "naval" && mission?.loan?.id !== "navalOverchargeLaser") addReq("upgradedLaser", "Beam, mining or military laser");
-      if (type === "naval" || heat >= 4 || (type === "suppression" && heat >= 3)) addReq("extraEnergy", "Extra Energy Unit");
+      if (type === "recovery" || type === "naval" || type === "navalBattle") addReq("fuelScoop", "Fuel Scoop");
+      if ((type === "bounty" || type === "recovery" || type === "suppression" || type === "traderDefence") && heat >= 2) addReq("upgradedLaser", "Beam, mining or military laser");
+      if ((type === "naval" || type === "navalBattle") && mission?.loan?.id !== "navalOverchargeLaser") addReq("upgradedLaser", "Beam, mining or military laser");
+      if (type === "naval" || type === "navalBattle" || heat >= 4 || (type === "suppression" && heat >= 3)) addReq("extraEnergy", "Extra Energy Unit");
       if (heat >= 3 && type === "cargo") addReq("ecm", "E.C.M. System");
+      const navalRepRequired = Number(mission?.encounter?.navalReputationRequired) || 0;
+      if (type === "navalBattle" && navalRepRequired > 0) addReq("navalReputation", `Naval reputation ${navalRepRequired}+`, { min: navalRepRequired });
       return requirements;
     }
 
     function missionRequirementMet(req, mission = null) {
       if (!req) return true;
+      if (devBypassesMissionRequirements()) return true;
       if (req.id === "upgradedLaser") return !!(game.equipment.beamLaser || game.equipment.miningLaser || game.equipment.militaryLaser || mission?.loan?.id === "navalOverchargeLaser");
       if (req.id === "ecm") return !!(game.equipment.ecm || mission?.loan?.id === "navalEcm");
+      if (req.id === "navalReputation") return navalReputationScore() >= (Number(req.min) || NAVAL_BATTLE_REP_UNLOCK);
       return !!game.equipment[req.id];
+    }
+
+    function devBypassesMissionRequirements() {
+      return !!game.developerMode;
     }
 
     function missingMissionRequirements(mission) {
@@ -3540,7 +3560,7 @@
     }
 
     function missionTargetModel(rng, type) {
-      if (type === "naval") return rng() < .72 ? "thargoid" : missionChoice(rng, ["constrictor", "asp", "ferdelance"]);
+      if (type === "naval" || type === "navalBattle") return rng() < .72 ? "thargoid" : missionChoice(rng, ["constrictor", "asp", "ferdelance"]);
       if (type === "recovery") return missionChoice(rng, ["krait", "mamba", "asp", "ferdelance", "constrictor"]);
       return missionChoice(rng, ["sidewinder", "mamba", "krait", "gecko", "adder", "cobra"]);
     }
@@ -3556,8 +3576,8 @@
     }
 
     function missionLegalClass(type, rng) {
-      if (type === "naval") return "military";
-      if (type === "suppression") return "sanctioned";
+      if (type === "naval" || type === "navalBattle") return "military";
+      if (type === "suppression" || type === "traderDefence") return "sanctioned";
       const sys = currentSystem();
       const anarchyBias = clamp((3 - sys.government) / 4, 0, .45);
       if (type === "bounty" && rng() < .14 + anarchyBias) return "private";
@@ -3576,7 +3596,10 @@
       const suppressionRequired = type === "suppression"
         ? clamp(Math.trunc(Number.isFinite(opts.suppressionKills) ? opts.suppressionKills : 3 + Math.floor(rng() * 8) + Math.floor(heat / 2)), 2, 10)
         : 0;
-      const rewardCredits = Number.isFinite(opts.rewardCredits) ? opts.rewardCredits : missionRewardBase(type, dist, rng, heat, opts) + suppressionRequired * 85;
+      const encounterRequired = type === "traderDefence" || type === "navalBattle"
+        ? clamp(Math.trunc(Number.isFinite(opts.encounterRequired) ? opts.encounterRequired : (type === "navalBattle" ? 2 : 3) + Math.floor(rng() * 3) + Math.floor(heat / 3)), 2, type === "navalBattle" ? 5 : 7)
+        : 0;
+      const rewardCredits = Number.isFinite(opts.rewardCredits) ? opts.rewardCredits : missionRewardBase(type, dist, rng, heat, opts) + suppressionRequired * 85 + encounterRequired * (type === "navalBattle" ? 160 : 105);
       const legalClass = opts.legalClass || (starter ? "sanctioned" : missionLegalClass(type, rng));
       const mission = {
         id,
@@ -3591,11 +3614,14 @@
         heat,
         reward: {
           credits: rewardCredits,
-          rankPoints: Number.isFinite(opts.rankPoints) ? opts.rankPoints : starter ? 1 : type === "naval" ? 4 + Math.floor(dist / 14) : type === "suppression" ? Math.max(2, Math.ceil(suppressionRequired / 3)) : type === "bounty" || type === "recovery" ? 2 : 1,
-          legalClearance: opts.legalClearance !== undefined ? opts.legalClearance : legalClass === "private" ? 0 : type === "naval" ? "clean" : type === "suppression" ? 3 : type === "bounty" ? 4 : type === "cargo" ? 2 : 1
+          rankPoints: Number.isFinite(opts.rankPoints) ? opts.rankPoints : starter ? 1 : type === "naval" || type === "navalBattle" ? 4 + Math.floor(dist / 14) : type === "suppression" || type === "traderDefence" ? Math.max(2, Math.ceil((suppressionRequired || encounterRequired) / 3)) : type === "bounty" || type === "recovery" ? 2 : 1,
+          legalClearance: opts.legalClearance !== undefined ? opts.legalClearance : legalClass === "private" ? 0 : type === "naval" || type === "navalBattle" ? "clean" : type === "suppression" || type === "traderDefence" ? 3 : type === "bounty" ? 4 : type === "cargo" ? 2 : 1
         },
         status: "board"
       };
+      if (type === "naval" || type === "navalBattle") {
+        mission.reward.navalReputation = Number.isFinite(opts.navalReputation) ? opts.navalReputation : type === "navalBattle" ? 3 : 2;
+      }
       if (opts.rewardEquipment) mission.reward.equipment = opts.rewardEquipment;
       if (opts.rewardShip) mission.reward.ship = opts.rewardShip;
       if (type === "cargo" || type === "courier") {
@@ -3617,6 +3643,34 @@
         mission.suppression = { required: suppressionRequired, destroyed: 0 };
         mission.title = `Pirate suppression at ${to.name}`;
         mission.description = `${issuer} reports sustained pirate activity around ${to.name}. Destroy ${suppressionRequired} pirate vessel${suppressionRequired === 1 ? "" : "s"} in-system; station records will honour the contract across multiple sorties.`;
+      } else if (type === "traderDefence") {
+        mission.encounter = {
+          id: `${id}-encounter`,
+          kind: "traderDefence",
+          required: encounterRequired,
+          destroyed: 0,
+          spawned: false,
+          spawnDelay: Number.isFinite(opts.spawnDelay) ? opts.spawnDelay : 12 + Math.floor(rng() * 18),
+          allies: Number.isFinite(opts.allies) ? opts.allies : 2 + Math.floor(rng() * 2),
+          enemies: Number.isFinite(opts.enemies) ? opts.enemies : encounterRequired + (rng() < .45 ? 1 : 0)
+        };
+        mission.title = `Trader defence at ${to.name}`;
+        mission.description = `${issuer} is rallying a local trader band at ${to.name}. Join their defence wing and destroy ${encounterRequired} pirate raider${encounterRequired === 1 ? "" : "s"} before docking for payment.`;
+      } else if (type === "navalBattle") {
+        const repRequired = Number.isFinite(opts.navalReputationRequired) ? opts.navalReputationRequired : NAVAL_BATTLE_REP_UNLOCK;
+        mission.encounter = {
+          id: `${id}-encounter`,
+          kind: "navalBattle",
+          required: encounterRequired,
+          destroyed: 0,
+          spawned: false,
+          spawnDelay: Number.isFinite(opts.spawnDelay) ? opts.spawnDelay : 10 + Math.floor(rng() * 16),
+          allies: Number.isFinite(opts.allies) ? opts.allies : 1 + Math.floor(rng() * 2),
+          enemies: Number.isFinite(opts.enemies) ? opts.enemies : encounterRequired,
+          navalReputationRequired: repRequired
+        };
+        mission.title = `Naval battle at ${to.name}`;
+        mission.description = `${issuer} requests combat support against alien contacts near ${to.name}. Join the naval wing and destroy ${encounterRequired} alien vessel${encounterRequired === 1 ? "" : "s"}.`;
       } else {
         const model = opts.targetModel || missionTargetModel(rng, type);
         const targetName = opts.targetName || (model === "thargoid"
@@ -3675,10 +3729,11 @@
         if (roll < .24 - anarchyBias * .08) type = "courier";
         else if (roll < .52 + corporateBias * .16) type = "cargo";
         else if (roll < .76 + anarchyBias * .12) type = "bounty";
-        else if (roll < .86 + anarchyBias * .18) type = "suppression";
+        else if (roll < .86 + anarchyBias * .18) type = rng() < .38 ? "traderDefence" : "suppression";
         else if (roll < .975 + anarchyBias * .12 + corporateBias * .06) type = "recovery";
         else type = "naval";
-        if (rng() < navalBias * .22) type = "naval";
+        if (rng() < navalBias * .22) type = navalReputationScore() >= NAVAL_BATTLE_REP_UNLOCK && rng() < .35 ? "navalBattle" : "naval";
+        if (type === "naval" && navalReputationScore() >= NAVAL_BATTLE_REP_UNLOCK && rng() < .18) type = "navalBattle";
         board.push(makeMission(type, rng, i));
       }
       state.board = board;
@@ -3769,12 +3824,13 @@
       if (idx < 0) return;
       const mission = JSON.parse(JSON.stringify(state.board[idx]));
       const cargoTons = Number(mission.cargo?.tons) || 0;
+      const devBypass = devBypassesMissionRequirements();
       const missing = missingMissionRequirements(mission);
       if (missing.length) {
         eliteAudio.play("boop");
         return setMessage(`Ship specifications not up to contract: ${missing.map((req) => req.label).join(", ")} required.`, true);
       }
-      if (cargoTons && usedCargo() + cargoTons > game.cargoCap) {
+      if (!devBypass && cargoTons && usedCargo() + cargoTons > game.cargoCap) {
         eliteAudio.play("boop");
         return setMessage("Insufficient cargo space for sealed mission item.", true);
       }
@@ -3785,9 +3841,10 @@
       state.board.splice(idx, 1);
       state.active.push(mission);
       eliteAudio.play("beep");
-      setMessage(mission.loanShip
+      const devNote = devBypass ? " Dev mode bypassed contract requirements." : "";
+      setMessage((mission.loanShip
         ? `${MISSION_TYPES[mission.type] || "Mission"} accepted: ${mission.title}. ${shipName(mission.loanShip.model)} readied for the contract.`
-        : `${MISSION_TYPES[mission.type] || "Mission"} accepted: ${mission.title}.`, true);
+        : `${MISSION_TYPES[mission.type] || "Mission"} accepted: ${mission.title}.`) + devNote, true);
       renderPanel();
     }
 
@@ -3821,6 +3878,7 @@
       }
       lines.push(`We have credited your account with ${fmt(reward.credits || 0)} CR.`);
       if (reward.rankPoints) lines.push(`Your Elite service record has been increased by ${reward.rankPoints} point${reward.rankPoints === 1 ? "" : "s"}.`);
+      if (reward.navalReputation) lines.push(`Your naval reputation has increased by ${reward.navalReputation} point${reward.navalReputation === 1 ? "" : "s"}.`);
       if (reward.legalClearance === "clean") lines.push("Your legal record has been cleared under mission authority.");
       else if (reward.legalClearance) lines.push(`Your legal record has been reduced by ${reward.legalClearance} point${reward.legalClearance === 1 ? "" : "s"}.`);
       if (details.equipmentAward) lines.push(`The ${details.equipmentAward} is now yours to keep.`);
@@ -3845,6 +3903,7 @@
         legalClearance: reward.legalClearance || 0,
         equipmentAward: "",
         shipAward: "",
+        navalReputation: Number(reward.navalReputation) || 0,
         shipLoanName: mission.loanShip?.model && !mission.loanShip.wasOwned ? shipName(mission.loanShip.model) : "",
         shipLoanKept: false,
         loanName: mission.loan?.name || "",
@@ -3852,6 +3911,7 @@
       };
       game.credits += Number(reward.credits) || 0;
       game.missionRankPoints = (Number(game.missionRankPoints) || 0) + (Number(reward.rankPoints) || 0);
+      game.navalReputation = Math.max(0, (Number(game.navalReputation) || 0) + (Number(reward.navalReputation) || 0));
       if (reward.legalClearance === "clean") game.legal = 0;
       else game.legal = Math.max(0, game.legal - (Number(reward.legalClearance) || 0));
       if (reward.equipment) {
@@ -3891,14 +3951,50 @@
       return true;
     }
 
+    function missionCompletionBlockers(mission) {
+      if (!mission) return ["Mission record unavailable"];
+      if (mission.status !== "active") return [`Mission is ${String(mission.status || "inactive").toUpperCase()}`];
+      const blockers = [];
+      if (!sameSystemRef(mission.destination)) {
+        blockers.push(`Dock at ${mission.destination?.name || "the destination system"}`);
+        return blockers;
+      }
+      if (mission.type === "courier") return blockers;
+      if (mission.cargo && !mission.cargo.held) blockers.push(`${mission.cargo.name || "Sealed cargo"} is not aboard`);
+      if (mission.suppression) {
+        const required = Number(mission.suppression.required) || 1;
+        const destroyed = Number(mission.suppression.destroyed) || 0;
+        if (destroyed < required) blockers.push(`Destroy ${required - destroyed} more pirate vessel${required - destroyed === 1 ? "" : "s"}`);
+      }
+      if (mission.encounter) {
+        const required = Number(mission.encounter.required) || 1;
+        const destroyed = Number(mission.encounter.destroyed) || 0;
+        if (destroyed < required) {
+          const subject = mission.encounter.kind === "navalBattle" ? "alien contact" : "raider";
+          blockers.push(`Destroy or rout ${required - destroyed} more ${subject}${required - destroyed === 1 ? "" : "s"}`);
+        }
+      }
+      if (mission.target && !mission.target.destroyed) {
+        blockers.push(mission.target.spawned ? `Destroy ${mission.target.name || "the mission target"}` : `Locate ${mission.target.name || "the mission target"} in-system`);
+      }
+      if (mission.recovery?.required && !mission.recovery.held) {
+        blockers.push(`Recover ${mission.recovery.name}`);
+      }
+      return blockers;
+    }
+
     function missionReadyForDockCompletion(mission) {
-      if (!mission || mission.status !== "active" || !sameSystemRef(mission.destination)) return false;
-      if (mission.type === "courier") return true;
-      if (mission.cargo) return mission.cargo.held;
-      if (mission.suppression) return (Number(mission.suppression.destroyed) || 0) >= (Number(mission.suppression.required) || 1);
-      if (mission.target && !mission.target.destroyed) return false;
-      if (mission.recovery?.required && !mission.recovery.held) return false;
-      return true;
+      return missionCompletionBlockers(mission).length === 0;
+    }
+
+    function pendingDockedMissionMessages() {
+      return missionState().active
+        .filter((mission) => mission.status === "active" && sameSystemRef(mission.destination))
+        .map((mission) => {
+          const blockers = missionCompletionBlockers(mission);
+          return blockers.length ? `${mission.title}: ${blockers[0]}` : "";
+        })
+        .filter(Boolean);
     }
 
     function completeDockedMissions({ announce = true, queueDialogs = true, detailed = false } = {}) {
@@ -3907,13 +4003,13 @@
         if (!missionReadyForDockCompletion(mission)) continue;
         if (completeMission(mission)) completed.push(mission);
       }
-      if (!completed.length) return detailed ? { message: "", completed: [] } : "";
+      if (!completed.length) return detailed ? { message: "", completed: [], pending: pendingDockedMissionMessages() } : "";
       const total = completed.reduce((sum, mission) => sum + (Number(mission.reward?.credits) || 0), 0);
       const names = completed.map((mission) => mission.title).slice(0, 2).join("; ");
       if (announce) commsMessage(stationCommsName(), `Mission office confirms completion: ${names}.`, "station");
       if (queueDialogs) queueMissionCompleteDialogs(completed);
       const message = `${completed.length} mission${completed.length === 1 ? "" : "s"} completed. ${fmt(total)} CR paid.`;
-      return detailed ? { message, completed } : message;
+      return detailed ? { message, completed, pending: pendingDockedMissionMessages() } : message;
     }
 
     function failActiveMissions(reason) {
@@ -3931,8 +4027,21 @@
     function missionLegalDisposition(o) {
       const mission = o?.missionId ? activeMissionById(o.missionId) : null;
       if (!mission) return null;
+      if (o.missionEncounterSide === "ally") return null;
       if (mission.legalClass === "military" || mission.legalClass === "sanctioned") return "authorised";
       return "private";
+    }
+
+    function missionAuthorisesAttackOn(o) {
+      return missionLegalDisposition(o) === "authorised";
+    }
+
+    function playerMayEngageWithoutStationPenalty(o) {
+      if (!o || o.type !== "ship") return false;
+      if (missionAuthorisesAttackOn(o)) return true;
+      if (!o.hostile || o.police || o.role === "police" || o.role === "trader") return false;
+      const profile = SOURCE_BEHAVIOUR[o.model] || {};
+      return !(profile.innocent || profile.trader || profile.hauler || profile.timid);
     }
 
     function activeSuppressionMissionsHere() {
@@ -3989,6 +4098,16 @@
       mission.target.spawned = false;
       if (mission.recovery?.required) spawnMissionDrop(o, mission);
       return mission;
+    }
+
+    function liveMissionTarget(mission) {
+      if (!mission?.target?.id) return null;
+      return worldSnapshot().ships.find((ship) =>
+        ship.type === "ship"
+        && !ship._remove
+        && ship.missionId === mission.id
+        && ship.missionTargetId === mission.target.id
+      ) || null;
     }
 
     function scoopMissionCargo(o) {
@@ -4066,11 +4185,163 @@
       return o;
     }
 
+    function liveMissionEncounterShips(mission, side = "") {
+      if (!mission?.encounter?.id) return [];
+      return worldSnapshot().ships.filter((ship) =>
+        ship.type === "ship"
+        && !ship._remove
+        && ship.missionId === mission.id
+        && ship.missionEncounterId === mission.encounter.id
+        && (!side || ship.missionEncounterSide === side)
+      );
+    }
+
+    function missionEncounterProgressMessage(mission) {
+      const encounter = mission?.encounter;
+      if (!encounter) return "";
+      const required = Number(encounter.required) || 1;
+      const destroyed = Number(encounter.destroyed) || 0;
+      const subject = encounter.kind === "navalBattle" ? "alien contacts" : "raiders";
+      return destroyed >= required
+        ? `${MISSION_TYPES[mission.type] || "Mission"} complete (${destroyed}/${required} ${subject}). Dock for payment.`
+        : `${MISSION_TYPES[mission.type] || "Mission"} progress ${destroyed}/${required} ${subject}.`;
+    }
+
+    function recordMissionEncounterKill(o) {
+      if (!o || o._missionEncounterRecorded || o.missionEncounterSide !== "enemy" || !o.missionId || !o.missionEncounterId) return null;
+      const mission = activeMissionById(o.missionId);
+      const encounter = mission?.encounter;
+      if (!encounter || encounter.id !== o.missionEncounterId || !sameSystemRef(mission.destination)) return null;
+      o._missionEncounterRecorded = true;
+      const required = Number(encounter.required) || 1;
+      encounter.destroyed = clamp((Number(encounter.destroyed) || 0) + 1, 0, required);
+      return mission;
+    }
+
+    function missionEncounterModel(kind, side, rng) {
+      if (kind === "navalBattle") {
+        if (side === "ally") return missionChoice(rng, ["viper", "asp", "ferdelance"].filter((model) => MODELS[model]));
+        return rng() < .74 ? "thargoid" : "thargon";
+      }
+      return side === "ally"
+        ? missionChoice(rng, ["cobra", "cobra1", "python", "boa", "adder", "gecko"].filter((model) => MODELS[model]))
+        : missionChoice(rng, PIRATE_MODELS.filter((model) => MODELS[model]));
+    }
+
+    function spawnMissionEncounterShip(mission, side, index, center, rng) {
+      const encounter = mission.encounter;
+      const kind = encounter.kind;
+      const model = missionEncounterModel(kind, side, rng) || (side === "ally" ? "cobra" : "krait");
+      const stats = shipStats(model);
+      const angle = (index / Math.max(1, side === "ally" ? encounter.allies : encounter.enemies)) * TAU + (side === "enemy" ? Math.PI : 0) + rng() * .38;
+      const spread = side === "ally" ? 220 + rng() * 240 : 520 + rng() * 420;
+      const vertical = (rng() - .5) * (kind === "navalBattle" ? 260 : 180);
+      const pos = add(center, vec(Math.cos(angle) * spread, vertical, Math.sin(angle) * spread));
+      const drift = norm(add(sub(center, pos), vec((rng() - .5) * 120, (rng() - .5) * 80, (rng() - .5) * 120)));
+      const alien = ALIEN_MODELS.includes(model);
+      const navalAlly = kind === "navalBattle" && side === "ally";
+      const role = side === "ally" ? (navalAlly ? "naval" : "trader") : (alien ? "alien" : "pirate");
+      const hostile = side === "enemy";
+      const hpScale = side === "ally" ? (navalAlly ? 1.08 : .95) : alien ? 1.08 : 1.05;
+      const o = {
+        type: "ship",
+        model,
+        name: side === "ally"
+          ? `${navalAlly ? "NAVAL" : "TRADER"} ${shipName(model)}`
+          : `${alien ? "ALIEN" : "PIRATE"} ${shipName(model)}`,
+        pos,
+        vel: scale(drift, 55 + rng() * 38),
+        rot: rng() * TAU,
+        pitch: rng() * TAU,
+        roll: rng() * TAU,
+        r: stats.r,
+        color: alien ? "#d9f1c0" : shipColor(model, role === "police"),
+        hp: Math.round(stats.hp * hpScale),
+        maxHp: Math.round(stats.hp * hpScale),
+        hostile,
+        police: false,
+        role,
+        bounty: hostile && !alien ? 60 + Math.floor(rng() * 95) : alien ? 50 : 0,
+        thargoid: model === "thargoid",
+        thargon: model === "thargon",
+        missionId: mission.id,
+        missionEncounterId: encounter.id,
+        missionEncounterSide: side,
+        missionAlly: side === "ally",
+        aiMode: "attack",
+        target: undefined,
+        orbitCenter: center,
+        orbitRadius: spread,
+        orbitAngle: angle,
+        orbitSpeed: (rng() > .5 ? 1 : -1) * (.2 + rng() * .24),
+        attackClock: .45 + rng() * 1.2,
+        wobble: rng() * TAU,
+        npcMissiles: npcMissileStock(model, role, false),
+        decalSeed: hash32(`mission-encounter:${mission.id}:${side}:${index}:${model}`)
+      };
+      setNoseDirection(o, side === "enemy" ? sub(game.camera.pos, o.pos) : o.vel, o.roll);
+      startNpcHyperspaceIn(o, { dur: 1.22 + rng() * .32, revealAt: .62 + rng() * .12 });
+      game.objects.push(o);
+      return o;
+    }
+
+    function spawnMissionEncounter(mission) {
+      const encounter = mission?.encounter;
+      if (!encounter || encounter.spawned || (Number(encounter.destroyed) || 0) >= (Number(encounter.required) || 1)) return [];
+      const rng = mulberry(hash32(`mission-encounter:${mission.id}:${game.galaxy}:${game.current}:${Math.floor(performance.now() / 1000)}`));
+      const center = missionSpawnPoint(rng, encounter.kind === "navalBattle" ? 2450 : 1850);
+      const allies = [];
+      const enemies = [];
+      for (let i = 0; i < (Number(encounter.allies) || 1); i++) allies.push(spawnMissionEncounterShip(mission, "ally", i, center, rng));
+      for (let i = 0; i < (Number(encounter.enemies) || Number(encounter.required) || 1); i++) enemies.push(spawnMissionEncounterShip(mission, "enemy", i, center, rng));
+      for (let i = 0; i < allies.length; i++) allies[i].target = enemies[i % Math.max(1, enemies.length)] || null;
+      for (let i = 0; i < enemies.length; i++) enemies[i].target = allies.length && rng() < .76 ? allies[i % allies.length] : null;
+      encounter.spawned = true;
+      encounter.spawnSystem = { galaxy: game.galaxy, system: game.current };
+      const message = encounter.kind === "navalBattle"
+        ? "Naval wing and alien contacts arriving. Engage under military warrant."
+        : "Trader band and pirate raiders arriving. Protect the convoy.";
+      commsMessage(mission.issuer, message, encounter.kind === "navalBattle" ? "warning" : "station");
+      setMessage(`Mission encounter detected: ${mission.title}.`, true);
+      if (game.panelOpen && game.panel === "missions") renderPanel();
+      return [...allies, ...enemies];
+    }
+
     function updateMissionSpawns(dt) {
       if (game.docked || game.transition || game.jumpCountdown) return;
       for (const mission of missionState().active) {
-        if (mission.status !== "active" || !mission.target || mission.target.destroyed || mission.target.spawned) continue;
+        if (mission.status !== "active") continue;
         if (!sameSystemRef(mission.destination)) continue;
+        if (mission.encounter && (Number(mission.encounter.destroyed) || 0) < (Number(mission.encounter.required) || 1)) {
+          if (mission.encounter.spawned && !liveMissionEncounterShips(mission, "enemy").length) {
+            const required = Number(mission.encounter.required) || 1;
+            const remaining = Math.max(1, required - (Number(mission.encounter.destroyed) || 0));
+            mission.encounter.spawned = false;
+            mission.encounter.enemies = Math.max(remaining, Number(mission.encounter.enemies) || remaining);
+            mission.encounter.spawnDelay = Math.min(Number(mission.encounter.spawnDelay) || 8, 8);
+            setMessage("Mission contacts lost. Reacquiring hostile group.", true);
+          }
+          if (mission.encounter.spawned) continue;
+          mission.encounter.spawnDelay = Math.max(0, (Number(mission.encounter.spawnDelay) || 0) - dt);
+          if (mission.encounter.spawnDelay <= 0) {
+            try {
+              spawnMissionEncounter(mission);
+            } catch (err) {
+              console.error("Mission encounter spawn failed", err);
+              mission.encounter.spawned = false;
+              mission.encounter.spawnDelay = 8;
+              setMessage("Mission encounter signal unstable. Reacquiring contacts.", true);
+            }
+          }
+          continue;
+        }
+        if (!mission.target || mission.target.destroyed) continue;
+        if (mission.target.spawned && !liveMissionTarget(mission)) {
+          mission.target.spawned = false;
+          mission.target.spawnDelay = Math.min(Number(mission.target.spawnDelay) || 8, 8);
+          setMessage("Mission contact lost. Reacquiring target signal.", true);
+        }
+        if (mission.target.spawned) continue;
         mission.target.spawnDelay = Math.max(0, (Number(mission.target.spawnDelay) || 0) - dt);
         const world = worldSnapshot();
         const bodies = Array.isArray(world?.bodies)
@@ -4456,6 +4727,13 @@
 
     function reactToPlayerAttack(o) {
       if (!o || o.type !== "ship" || o.role === "pod" || o.hp <= 0) return;
+      if (playerMayEngageWithoutStationPenalty(o)) {
+        o.hostile = true;
+        o.target = null;
+        o.aiMode = "attack";
+        o.attackClock = Math.min(o.attackClock || .35, .28 + Math.random() * .55);
+        return;
+      }
       const profile = SOURCE_BEHAVIOUR[o.model] || {};
       const innocent = profile.innocent || (!o.hostile && (o.role === "trader" || profile.trader || profile.hauler || profile.timid));
       if (innocent && !o._reportedAssault) {
@@ -4930,9 +5208,10 @@
 
       function unlock(opts = {}) {
         const audible = opts.audible !== false;
+        const forceTick = !!opts.forceTick;
         const c = ensure();
         if (!c) return false;
-        if (!audioUnlocked || c.state !== "running" || audible) playUnlockTick(c, audible);
+        if (forceTick || !audioUnlocked || c.state !== "running") playUnlockTick(c, audible);
         resumeContext(true);
         audioUnlocked = audioUnlocked || c.state === "running";
         return true;
@@ -5988,12 +6267,14 @@
       ]);
     }
 
-    function makeDockScene(stationName, hullRepaired, repairLine, marks = []) {
+    function makeDockScene(stationName, hullRepaired, repairLine, marks = [], opts = {}) {
       const sys = currentSystem();
+      const shipModel = opts.shipModel || playerShipModel();
       return {
         stationName,
         systemName: sys.name,
-        shipModel: playerShipModel(),
+        shipModel,
+        lockShipModel: !!opts.lockShipModel,
         hullRepaired,
         repairLine,
         preRepairMarks: marks.map((m) => ({ ...m })),
@@ -6004,6 +6285,7 @@
 
     function syncDockSceneShip() {
       if (!game?.dockScene || !game.docked) return;
+      if (game.dockScene.lockShipModel) return;
       const model = playerShipModel();
       if (game.dockScene.shipModel === model) return;
       const sys = currentSystem();
@@ -7907,6 +8189,7 @@
         game.autoDock = false;
         commsMessage(`${st.name.toUpperCase()} CONTROL`, stationControllerLine("dockClear"), "station");
         const finishDockArrival = () => {
+          const landingShipModel = playerShipModel();
           const hullRepaired = playerHullRepairNeeded();
           const repairLine = hullRepaired ? stationHullRepairLine() : "";
           const preRepairMarks = game.playerDamageMarks ? game.playerDamageMarks.map((m) => ({ ...m })) : [];
@@ -7916,17 +8199,21 @@
           restoreShipSystems();
           game.fuel = clamp(game.fuel + 0.2, 0, 7);
           game.legal = Math.max(0, game.legal - 2);
-          game.dockScene = makeDockScene(st.name, hullRepaired, repairLine, preRepairMarks);
+          game.dockScene = makeDockScene(st.name, hullRepaired, repairLine, preRepairMarks, { shipModel: landingShipModel, lockShipModel: true });
           const missionDockResult = completeDockedMissions({ detailed: true, queueDialogs: false });
           const missionDockLine = missionDockResult.message;
+          const missionPendingLine = !missionDockLine && missionDockResult.pending?.length
+            ? `Mission pending: ${missionDockResult.pending[0]}.`
+            : "";
           refreshMissionBoardOnDock();
           const completeDock = () => {
+            if (game.dockScene) game.dockScene.lockShipModel = false;
             if (!game.dockScene?._sequenceServiceComms) {
               commsMessage(`${st.name.toUpperCase()} CONTROL`, stationControllerLine("dockComplete"), "station");
               if (hullRepaired) commsMessage(`${st.name.toUpperCase()} SERVICE`, repairLine, "station");
             }
             const welcome = hullRepaired ? `Welcome to ${st.name}. Free hull repair complete.` : `Welcome to ${st.name}.`;
-            setMessage(missionDockLine ? `${welcome} ${missionDockLine}` : welcome, true);
+            setMessage(missionDockLine ? `${welcome} ${missionDockLine}` : missionPendingLine ? `${welcome} ${missionPendingLine}` : welcome, true);
             renderPanel();
             queueMissionCompleteDialogs(missionDockResult.completed);
           };
@@ -8156,6 +8443,7 @@
 
     function stationProtectedTarget(o) {
       if (!o) return false;
+      if (playerMayEngageWithoutStationPenalty(o)) return false;
       if (o.type === "ship") return o.police || !o.hostile;
       return o.type === "canister" || o.type === "plate";
     }
@@ -8857,7 +9145,7 @@
         // Original Elite treats escape pods as a ship-blueprint capability
         // rather than a universal bailout chance.
         const behaviour = SOURCE_BEHAVIOUR[o.model] || {};
-        const canEject = byPlayer && !o.missionTargetId && behaviour.escapePod && !isAlienShip(o) && o.role !== "police" && o.role !== "pod";
+        const canEject = byPlayer && !o.missionTargetId && !o.missionEncounterId && behaviour.escapePod && !isAlienShip(o) && o.role !== "police" && o.role !== "pod";
         if (canEject && Math.random() < .28) {
           const mag = shipExplosionMagnitude(o);
           spawnEscapePod(o.pos);
@@ -8890,7 +9178,9 @@
             : protectFreshDropFromLaser({ type: "canister", model: "canister", name: "CARGO CANISTER", pos: add(o.pos, vec(0, 0, 30)), vel: vec(0, 0, -12), rot: 0, pitch: 0, r: stats.r, color: "#ffd33d", hp: stats.hp, hostile: false }));
         }
         if (!byPlayer) {
-          setMessage(`${o.name} destroyed.`, true);
+          const encounterUpdate = recordMissionEncounterKill(o);
+          setMessage(`${o.name} destroyed.${encounterUpdate ? ` ${missionEncounterProgressMessage(encounterUpdate)}` : ""}`, true);
+          if (encounterUpdate && game.panelOpen && game.panel === "missions") renderPanel();
           return;
         }
         const mission = markMissionTargetDestroyed(o);
@@ -8906,8 +9196,10 @@
         } else if (o.police || !o.hostile) game.legal += o.police ? 24 : 8;
         else game.legal = Math.max(0, game.legal - 1);
         const suppressionUpdates = recordPirateSuppressionKill(o);
+        const encounterUpdate = recordMissionEncounterKill(o);
         const missionBits = [];
         if (mission) missionBits.push(mission.recovery?.required ? `Mission target destroyed. Recover ${mission.recovery.name}.` : "Mission target destroyed. Dock for payment.");
+        if (encounterUpdate) missionBits.push(missionEncounterProgressMessage(encounterUpdate));
         for (const update of suppressionUpdates) {
           const required = Number(update.suppression.required) || 1;
           const destroyed = Number(update.suppression.destroyed) || 0;
@@ -8917,7 +9209,7 @@
         }
         const missionText = missionBits.length ? ` ${missionBits.join(" ")}` : "";
         setMessage(`${o.name} destroyed. ${o.bounty ? `Bounty ${o.bounty} CR.` : "Debris detected."}${missionText}`, true);
-        if ((mission || suppressionUpdates.length) && game.panelOpen && game.panel === "missions") renderPanel();
+        if ((mission || suppressionUpdates.length || encounterUpdate) && game.panelOpen && game.panel === "missions") renderPanel();
       } else if (o.type === "canister" || o.type === "plate") {
         scoopCargo(o);
       } else if (o.type === "asteroid") {
@@ -9416,9 +9708,31 @@
       renderPanel();
     }
 
-    function cheatInjectMission(presetId) {
-      const preset = DEV_MISSION_PRESETS.find((item) => item.id === presetId);
-      if (!preset) return;
+    function devMissionOptions() {
+      const typeOptions = Object.entries(MISSION_TYPES).map(([type, label]) => ({
+        id: `type:${type}`,
+        label: `Type: ${label}`,
+        type,
+        opts: {}
+      }));
+      const presetOptions = DEV_MISSION_PRESETS.map((preset) => ({
+        id: `preset:${preset.id}`,
+        label: `Preset: ${preset.label}`,
+        type: preset.type,
+        opts: preset.opts || {}
+      }));
+      return [...typeOptions, ...presetOptions];
+    }
+
+    function devMissionChoice(choiceId) {
+      return devMissionOptions().find((item) => item.id === choiceId)
+        || devMissionOptions().find((item) => item.id === `preset:${choiceId}`)
+        || null;
+    }
+
+    function cheatInjectMission(choiceId) {
+      const choice = devMissionChoice(choiceId);
+      if (!choice) return;
       if (!game.docked) {
         eliteAudio.play("boop");
         setMessage("Dev mission injection needs a station bulletin board. Dock first.", true);
@@ -9427,13 +9741,13 @@
       const state = missionState();
       generateMissionBoard(false);
       const ordinal = state.board.length + state.active.length + 50;
-      const rng = mulberry(hash32(`dev-mission:${game.commander}:${game.galaxy}:${game.current}:${state.dockSerial}:${preset.id}:${Date.now()}`));
-      const mission = makeMission(preset.type, rng, ordinal, preset.opts || {});
-      mission.id = `dev-${preset.id}-${Date.now().toString(36)}-${Math.floor(rng() * 0xffffff).toString(36)}`;
+      const rng = mulberry(hash32(`dev-mission:${game.commander}:${game.galaxy}:${game.current}:${state.dockSerial}:${choice.id}:${Date.now()}`));
+      const mission = makeMission(choice.type, rng, ordinal, choice.opts || {});
+      mission.id = `dev-${choice.id.replace(/[^a-z0-9]+/gi, "-")}-${Date.now().toString(36)}-${Math.floor(rng() * 0xffffff).toString(36)}`;
       mission.devInjected = true;
       mission.title = `[DEV] ${mission.title}`;
       state.board.unshift(mission);
-      setMessage(`Dev mission posted: ${preset.label}.`, true);
+      setMessage(`Dev mission posted: ${choice.label}.`, true);
       renderPanel();
     }
 
@@ -9730,7 +10044,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     const SAVE_FORMAT = "ultra-elite-commander";
     const SAVE_FILE_MAGIC = "UEC2";
     const SAVE_FILE_SECRET = "ultra-elite-save-file-v2";
-    const SAVE_FIELDS = ["commander", "galaxy", "current", "target", "credits", "poopyBonusClaimed", "fuel", "kills", "missionRankPoints", "legal", "playerShip", "cargoCap", "missiles", "graphicsMode", "fxLevel", "marketStock", "missions", "missionUnlocks"];
+    const SAVE_FIELDS = ["commander", "galaxy", "current", "target", "credits", "poopyBonusClaimed", "fuel", "kills", "missionRankPoints", "navalReputation", "legal", "playerShip", "cargoCap", "missiles", "graphicsMode", "fxLevel", "marketStock", "missions", "missionUnlocks"];
 
     function bytesToBase64(bytes) {
       let bin = "";
@@ -9800,7 +10114,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         format: SAVE_FORMAT,
         galaxySeedVersion: 2,
         commander: game.commander, galaxy: game.galaxy, current: game.current, target: game.target,
-        credits: game.credits, poopyBonusClaimed: !!game.poopyBonusClaimed, fuel: game.fuel, kills: game.kills, missionRankPoints: game.missionRankPoints || 0, legal: game.legal, playerShip: playerShipModel(), cargoCap: game.cargoCap,
+        credits: game.credits, poopyBonusClaimed: !!game.poopyBonusClaimed, fuel: game.fuel, kills: game.kills, missionRankPoints: game.missionRankPoints || 0, navalReputation: navalReputationScore(), legal: game.legal, playerShip: playerShipModel(), cargoCap: game.cargoCap,
         cargo: game.cargo, equipment: game.equipment, missiles: game.missiles, graphicsMode: game.graphicsMode, fxLevel: game.fxLevel,
         marketStock: game.marketStock || {},
         missions: {
@@ -9825,6 +10139,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         fuel: 7,
         kills: 0,
         missionRankPoints: 0,
+        navalReputation: 0,
         legal: 0,
         playerShip: "cobra",
         cargoCap: PLAYER_CARGO_CAPACITY.cobra || 20,
@@ -9862,6 +10177,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       game.cargo = { ...Object.fromEntries(GOODS.map((g) => [g[0], 0])), ...(data.cargo || {}) };
       game.marketStock = data.marketStock && typeof data.marketStock === "object" ? data.marketStock : {};
       game.missionRankPoints = Number(game.missionRankPoints) || 0;
+      game.navalReputation = Number(game.navalReputation) || 0;
       game.missions = data.missions && typeof data.missions === "object" ? data.missions : { active: [], board: [], boardKey: "", dockSerial: 0, completed: 0 };
       game.missions.board = [];
       game.missions.boardKey = "";
@@ -10560,7 +10876,30 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return best;
     }
 
+    function shipUsesCombatAi(o) {
+      return !!(o?.hostile || (o?.missionAlly && o.target));
+    }
+
+    function pickMissionEncounterTarget(o) {
+      if (!o?.missionId || !o.missionEncounterId || !o.missionEncounterSide) return null;
+      const opposite = o.missionEncounterSide === "ally" ? "enemy" : "ally";
+      let best = null, bestD = Infinity;
+      for (const x of worldSnapshot().ships) {
+        if (x.type !== "ship" || x === o || x._remove || shipHyperspaceHidden(x)) continue;
+        if (x.missionId !== o.missionId || x.missionEncounterId !== o.missionEncounterId || x.missionEncounterSide !== opposite) continue;
+        const d = len(sub(x.pos, o.pos));
+        if (d < bestD) { best = x; bestD = d; }
+      }
+      return best;
+    }
+
     function assignHostileTarget(o) {
+      const encounterTarget = pickMissionEncounterTarget(o);
+      if (encounterTarget || o.missionEncounterSide === "ally") {
+        o.target = encounterTarget;
+        if (encounterTarget && o.missionEncounterSide === "enemy") encounterTarget.huntedBy = o;
+        return;
+      }
       if (o.role === "police") {
         o.target = pickHostileFor(o);
         return;
@@ -10967,11 +11306,12 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         }
         return;
       }
-      if (o.hostile && objectIntervalDue(o, "_senseClock", dt, .18, .16)) {
+      if ((o.hostile || o.missionAlly) && objectIntervalDue(o, "_senseClock", dt, .18, .16)) {
         const stale = o.target && (o.target.hp <= 0 || !isWorldObjectLive(o.target) || len(sub(o.target.pos, o.pos)) > 2200);
         if (o.target === undefined || stale) assignHostileTarget(o);
       }
-      const targetPos = o.hostile ? hostileTargetPos(o) : game.camera.pos;
+      const combatActive = shipUsesCombatAi(o);
+      const targetPos = combatActive ? hostileTargetPos(o) : game.camera.pos;
       const d = len(sub(targetPos, o.pos));
 
       if (o.hostile && o.role !== "police" && !alienNeverFlees(o) && o.maxHp && o.hp < o.maxHp * .32 && o.aiMode !== "flee" && !o._fleeCommitted) {
@@ -10999,7 +11339,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         return;
       }
 
-      if (o.hostile) {
+      if (combatActive) {
         const profile = npcCombatProfile(o);
         // Distance-banded tactics, echoing the source's tactics routine ("ships that are
         // too close turn away" / appropriately-ranged aggressive ships close in): without
@@ -11037,7 +11377,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           o.attackClock = profile.cooldownMin + Math.random() * profile.cooldownJitter;
           if (isAlienShip(o) && Math.random() < .42) hail(o, hostileThreatLine(o));
           if (o.target) fireAtShip(o, o.target);
-          else fireAtPlayer(o);
+          else if (o.hostile) fireAtPlayer(o);
         }
       } else if (!alienNeverFlees(o) && o.huntedBy && isWorldObjectLive(o.huntedBy) && o.huntedBy.target === o) {
         o.aiMode = "flee";
@@ -14785,39 +15125,41 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
       const cutAt = 7.35;
       const cut = t >= cutAt;
-      const gateAt = 2.65;
-      const stopAt = 3.55;
-      const rotateAt = 3.75;
-      const approach = Math.pow(clamp(t / gateAt, 0, 1), 1.65);
-      const insideEntry = 1 - Math.pow(1 - clamp((t - gateAt) / (stopAt - gateAt), 0, 1), 3);
+      const entryAt = 4.45;
+      const rotateAt = 4.45;
+      const descentAt = 4.15;
+      const entry = 1 - Math.pow(1 - clamp(t / entryAt, 0, 1), 2.35);
       const landAt = 7.35;
-      const parkSettle = smootherstep(0, 1, smootherstep(rotateAt, landAt, t));
+      const parkSettle = smootherstep(0, 1, smoothstep(rotateAt, landAt, t));
+      const descentSettle = smootherstep(0, 1, smoothstep(descentAt, landAt, t));
       const fadeIn = smoothstep(0, 1, t);
       const fadeOut = smoothstep(8.2, 9.2, t);
       const repaired = t > 7.2;
       const settle = cut ? 1 : parkSettle;
-      const descent = cut ? 1 : parkSettle;
-      const bounce = 0;
-      const engineGlow = cut ? 0 : clamp((1 - smoothstep(6.05, 7.2, t)) + (1 - smoothstep(2.65, 3.55, t)) * .85, 0, 1.75);
+      const descent = cut ? 1 : descentSettle;
+      const flare = cut ? 1 : smootherstep(0, 1, smoothstep(3.2, 5.8, t));
+      const touchdown = cut ? 1 : smoothstep(6.55, 7.35, t);
+      const bounce = cut ? 0 : Math.sin(touchdown * Math.PI) * -5 * (1 - touchdown);
+      const engineGlow = cut ? 0 : clamp((1 - smoothstep(6.05, 7.2, t)) + (1 - smoothstep(2.7, 4.45, t)) * .85, 0, 1.75);
       const approachCam = vec(235 - Math.sin(p * TAU * .5) * 14, -132, 170);
       const view = makeHangarCamera(approachCam, vec(0, -108, 492));
       drawHangarRoom(w, h, scene, view);
       const parked = hangarShipParkPos();
-      const gateInsideZ = HANGAR_GATE_Z - 20;
       const stagingZ = 640;
-      const shipZ = cut
-        ? parked.z
-        : t < gateAt
-          ? lerp(4200, gateInsideZ, approach)
-          : t < rotateAt
-            ? lerp(gateInsideZ, stagingZ, insideEntry)
-            : lerp(stagingZ, parked.z, parkSettle);
+      const entryZ = lerp(4200, stagingZ, entry);
+      const parkZ = lerp(stagingZ, parked.z, settle);
+      const shipZ = cut ? parked.z : t < rotateAt ? entryZ : parkZ;
+      const incomingYaw = Math.PI;
+      const parkedYaw = 0;
+      const yaw = cut ? parkedYaw : lerpAngle(incomingYaw, parkedYaw, settle);
+      const pitch = cut ? .04 : lerp(.02, .04, flare);
+      const roll = cut ? 0 : Math.sin(t * 2.2) * .008 * (1 - settle);
       const shipOpts = {
         pos: vec(0, lerp(HANGAR_FLIGHT_Y, parked.y, descent) + bounce, shipZ),
-        scaleFactor: hangarShipScale(modelName, t < gateAt ? lerp(.24, .86, approach) : lerp(.86, 1.12, Math.max(insideEntry, parkSettle))),
-        yaw: lerp(Math.PI + .24, 0, settle),
-        pitch: lerp(.16, .04, settle),
-        roll: (1 - settle) * -.12,
+        scaleFactor: hangarShipScale(modelName, t < rotateAt ? lerp(.24, .96, entry) : lerp(.96, 1.12, parkSettle)),
+        yaw,
+        pitch,
+        roll,
         alpha: clamp(fadeIn, .08, 1),
         engineGlow,
         damageMarks: []
@@ -18628,6 +18970,15 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return keys.has("KeyD") && keys.has("KeyE") && keys.has("KeyV");
     }
 
+    function devShortcutAllowed() {
+      const host = String(location.hostname || "").toLowerCase();
+      return ULTRA_ELITE_DEV_SHELL
+        || location.protocol === "file:"
+        || host === "localhost"
+        || host === "127.0.0.1"
+        || host === "::1";
+    }
+
     function updatePanelDrawer() {
       if (lastPanelOpenRendered === game.panelOpen) return;
       lastPanelOpenRendered = game.panelOpen;
@@ -18687,6 +19038,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const reward = mission.reward || {};
       const parts = [`${fmt(reward.credits || 0)} CR`];
       if (reward.rankPoints) parts.push(`+${reward.rankPoints} rating`);
+      if (reward.navalReputation) parts.push(`+${reward.navalReputation} naval rep`);
       if (reward.legalClearance === "clean") parts.push("legal record cleared");
       else if (reward.legalClearance) parts.push(`-${reward.legalClearance} legal`);
       if (reward.equipment) parts.push(`${EQUIPMENT.find((e) => e.id === reward.equipment)?.name || reward.equipment}`);
@@ -18713,12 +19065,16 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       bits.push(atDestination ? `In ${mission.destination.name}` : `Destination ${mission.destination.name} (${fmt(mission.distanceLy)} LY)`);
       if (mission.cargo?.held) bits.push(`${mission.cargo.tons}t sealed cargo aboard`);
       if (mission.suppression) bits.push(`${Number(mission.suppression.destroyed) || 0}/${Number(mission.suppression.required) || 1} pirates destroyed`);
+      if (mission.encounter) bits.push(`${Number(mission.encounter.destroyed) || 0}/${Number(mission.encounter.required) || 1} ${mission.encounter.kind === "navalBattle" ? "alien contacts" : "raiders"} destroyed`);
       if (mission.target) bits.push(mission.target.destroyed ? "target destroyed" : mission.target.spawned ? "target active" : "target not found");
       if (mission.recovery?.required) bits.push(mission.recovery.held ? `${mission.recovery.name} recovered` : `${mission.recovery.name} required`);
       if (mission.loan) bits.push(`${mission.loan.name} on loan`);
       if (mission.loanShip?.model) bits.push(mission.loanShip.model === mission.reward?.ship
         ? `${shipName(mission.loanShip.model)} mission ship - keep on completion`
         : `${shipName(mission.loanShip.model)} mission ship - return on completion`);
+      const blockers = missionCompletionBlockers(mission);
+      if (blockers.length) bits.push(`Next: ${blockers[0]}`);
+      else if (atDestination) bits.push("ready to hand in");
       return bits.join(" · ");
     }
 
@@ -18789,12 +19145,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function renderMissionCard(mission, active = false) {
       const type = MISSION_TYPES[mission.type] || mission.type;
       const heat = mission.heat ? "●".repeat(Math.min(4, mission.heat)) : "none";
-      const cargo = mission.cargo ? `${mission.cargo.tons}t ${mission.cargo.name}` : mission.suppression ? `destroy ${mission.suppression.required} pirates` : mission.recovery ? `recover ${mission.recovery.name}` : "none";
+      const cargo = mission.cargo ? `${mission.cargo.tons}t ${mission.cargo.name}` : mission.suppression ? `destroy ${mission.suppression.required} pirates` : mission.encounter ? `destroy ${mission.encounter.required} ${mission.encounter.kind === "navalBattle" ? "alien contacts" : "raiders"}` : mission.recovery ? `recover ${mission.recovery.name}` : "none";
+      const devBypass = devBypassesMissionRequirements();
       const missing = missingMissionRequirements(mission);
       const requirements = mission.requirements?.length
-        ? mission.requirements.map((req) => missing.some((m) => m.id === req.id) ? `${req.label} required` : `${req.label} fitted`).join(" · ")
+        ? mission.requirements.map((req) => devBypass ? `${req.label} bypassed` : missing.some((m) => m.id === req.id) ? `${req.label} required` : `${req.label} fitted`).join(" · ")
         : "None";
-      const canAccept = game.docked && !active && !missing.length && (!mission.cargo || usedCargo() + (Number(mission.cargo.tons) || 0) <= game.cargoCap);
+      const canAccept = game.docked && !active && !missing.length && (devBypass || !mission.cargo || usedCargo() + (Number(mission.cargo.tons) || 0) <= game.cargoCap);
       const requirementWarning = active && missing.length
         ? `<div class="mission-requirement-warning">Current ship does not meet mission requirements: ${escapeHtml(missing.map((req) => req.label).join(", "))}</div>`
         : "";
@@ -19159,6 +19516,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ${stat("Cash", `${fmt(game.credits)} CR`)}
         ${stat("Kills", game.kills)}
         ${stat("Mission Service", fmt(game.missionRankPoints || 0))}
+        ${stat("Naval Rep", fmt(navalReputationScore()))}
         ${stat("Legal", legalStatus())}
         ${stat("Galaxy", game.galaxy + 1)}
         ${stat("Ship", shipName(playerShipModel()))}
@@ -19535,8 +19893,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           </span>
         </div>`;
       }).join("");
-      const missionButtons = DEV_MISSION_PRESETS.map((preset) =>
-        `<button class="btn mini" data-dev-mission="${preset.id}" ${game.docked ? "" : "disabled"}>${preset.label}</button>`
+      const missionOptions = devMissionOptions().map((choice) =>
+        `<option value="${choice.id}">${escapeHtml(choice.label)}</option>`
       ).join("");
       return `<div class="notice">Testing helpers only — free, no legal or economic side effects. Mission board tests require docking.</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0">
@@ -19589,7 +19947,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       </div>
       <div class="notice">
         Mission test rig
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">${missionButtons}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
+          <select class="btn mini" data-dev-mission-select ${game.docked ? "" : "disabled"}>${missionOptions}</select>
+          <button class="btn mini primary" data-dev-mission-create ${game.docked ? "" : "disabled"}>Post Mission</button>
+        </div>
       </div>
       <div class="notice">
         Equipment
@@ -19766,9 +20127,11 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       panelBody.querySelectorAll("[data-dev-world]").forEach((select) => {
         select.addEventListener("change", () => cheatSetWorldOverride(select.dataset.devWorld, select.value));
       });
-      panelBody.querySelectorAll("[data-dev-mission]").forEach((b) => {
-        b.addEventListener("click", () => cheatInjectMission(b.dataset.devMission));
-      });
+      const devMissionSelect = panelBody.querySelector("[data-dev-mission-select]");
+      const devMissionCreate = panelBody.querySelector("[data-dev-mission-create]");
+      if (devMissionSelect && devMissionCreate) {
+        devMissionCreate.addEventListener("click", () => cheatInjectMission(devMissionSelect.value));
+      }
       const fuel = panelBody.querySelector("[data-fuel]");
       if (fuel) fuel.addEventListener("click", buyFuel);
       panelBody.querySelectorAll("[data-mission-accept]").forEach((b) => b.addEventListener("click", () => acceptMission(b.dataset.missionAccept)));
@@ -20204,12 +20567,22 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       toggleClass(el, "hot", critical);
     }
 
-    function toggleDeveloperMode() {
-      game.developerMode = !game.developerMode;
+    function setDeveloperMode(enabled) {
+      game.developerMode = !!enabled;
       if (!game.developerMode && game.panel === "cheats") game.panel = "status";
       if (!game.developerMode && !SHIP_MODEL_LIST.includes(shipDiagramState.model)) shipDiagramState.model = "cobra";
       setMessage(`Developer mode: ${game.developerMode ? "enabled" : "disabled"}.`);
       renderPanel();
+    }
+
+    function launchDevMode() {
+      setDeveloperMode(true);
+      return true;
+    }
+    globalThis.launchDevMode = launchDevMode;
+
+    function toggleDeveloperMode() {
+      setDeveloperMode(!game.developerMode);
     }
 
     function setGamePaused(value) {
@@ -20317,9 +20690,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           return;
         }
         keys.add(e.code);
-        if (devChordActive() && !devChordLatched) {
+        if (devShortcutAllowed() && devChordActive() && !devChordLatched) {
           devChordLatched = true;
-          toggleDeveloperMode();
+          launchDevMode();
           e.preventDefault();
           return;
         }
