@@ -634,8 +634,11 @@
       ["Gold", 97, -1, 66, 0x07, "kg", false],
       ["Platinum", 171, -2, 55, 0x1F, "kg", false],
       ["Gem-Stones", 45, -1, 250, 0x0F, "g", false],
+      ["Fuel Cells", 35, 0, 22, 0x07, "t", false],
       ["Alien Items", 53, 15, 192, 0x07, "t", true]
     ];
+    const CARGO_FUEL_GOOD = "Fuel Cells";
+    const CARGO_FUEL_LY_PER_TON = 7;
 
     const EQUIPMENT = [
       { id: "fuelScoop", name: "Fuel Scoop", cost: 525, tech: 5, desc: "Collect solar fuel and loose cargo canisters." },
@@ -644,7 +647,9 @@
       { id: "cargoBay", name: "Large Cargo Bay", cost: 400, tech: 1, desc: "Expands capacity to 35 tonnes." },
       { id: "extraEnergy", name: "Extra Energy Unit", cost: 1500, tech: 8, desc: "Improves energy recharge and survivability." },
       { id: "dockingComputer", name: "Docking Computer", cost: 1500, tech: 9, desc: "Automates final station approach." },
+      { id: "cargoRefuel", name: "Cargo Refueler", cost: 4000, tech: 9, desc: "Transfers Fuel Cells cargo into the main fuel tank." },
       { id: "militaryLaser", name: "Military Laser", cost: 6000, tech: 10, desc: "High-power, long-range combat laser with serious heat." },
+      { id: "marketComparator", name: "Market Comparator", cost: 6500, tech: 11, desc: "Shows plotted-destination market prices beside local prices." },
       { id: "galacticHyperdrive", name: "Galactic Hyperdrive", cost: 5000, tech: 10, desc: "One-use jump to the next galaxy." },
       { id: "miningLaser", name: "Mining Laser", cost: 800, tech: 3, desc: "Slow thermal cutter that tears through asteroids." },
       { id: "escapeCapsule", name: "Escape Capsule", cost: 1000, tech: 6, desc: "Auto-ejects you to safety if your ship is destroyed." },
@@ -2866,6 +2871,7 @@
       galaxy: 0,
       current: LAVE_INDEX,
       target: DISO_INDEX,
+      finalTarget: DISO_INDEX,
       docked: true,
       dockedAt: null,
       credits: 100,
@@ -2903,7 +2909,9 @@
         cargoBay: false,
         extraEnergy: false,
         dockingComputer: false,
+        cargoRefuel: false,
         militaryLaser: false,
+        marketComparator: false,
         galacticHyperdrive: false,
         miningLaser: false,
         escapeCapsule: false,
@@ -2918,6 +2926,11 @@
       localMapZoom: 4,
       localMapPanX: 0,
       localMapPanY: 0,
+      chartOverlays: {
+        missionRoutes: true,
+        plottedCourse: true,
+        suggestedRoute: true
+      },
       graphicsMode: "solid",
       showShipLabels: true,
       soundEnabled: true,
@@ -2965,6 +2978,10 @@
       },
       fxLevel: "ultra",
       comms: [],
+      commsHistory: [],
+      commsReviewOpen: false,
+      commsReviewFilter: "important",
+      commsReviewOffset: 0,
       commsClock: 10,
       trafficClock: 6,
       extraVesselDelay: 0,
@@ -3027,6 +3044,7 @@
       brightnessControl: byId("brightnessControl"),
       brightnessSlider: byId("brightnessSlider"),
       brightnessValue: byId("brightnessValue"),
+      commsToggle: byId("commsToggle"),
       modeSwitchBtn: byId("modeSwitchBtn"),
       launchBtn: byId("launchBtn"),
       jumpBtn: byId("jumpBtn"),
@@ -3136,12 +3154,70 @@
       return galaxies[game.galaxy][game.target];
     }
 
+    function finalTargetSystem() {
+      const maxSystem = galaxies[game.galaxy].length - 1;
+      if (!Number.isInteger(game.finalTarget)) game.finalTarget = game.target;
+      const raw = Number.isFinite(Number(game.finalTarget))
+        ? Number(game.finalTarget)
+        : Number.isFinite(Number(game.target)) ? Number(game.target) : DISO_INDEX;
+      game.finalTarget = clamp(Math.trunc(raw), 0, maxSystem);
+      return galaxies[game.galaxy][game.finalTarget];
+    }
+
     function distance(a, b) {
       return Math.hypot(a.x - b.x, a.y - b.y) / 4;
     }
 
+    function currentHyperdriveRangeLy() {
+      return 7;
+    }
+
+    function fuelTankCapacityLy() {
+      return 7;
+    }
+
     function usedCargo() {
-      return Object.values(game.cargo).reduce((a, b) => a + b, 0) + missionCargoUsed();
+      return Object.values(game.cargo || {}).reduce((a, b) => a + Math.max(0, Math.trunc(Number(b) || 0)), 0) + missionCargoUsed();
+    }
+
+    function cargoFuelTons() {
+      return Math.max(0, Math.trunc(Number(game.cargo?.[CARGO_FUEL_GOOD]) || 0));
+    }
+
+    function loadFuelFromCargo() {
+      const available = cargoFuelTons();
+      if (!available || game.fuel >= fuelTankCapacityLy() - .0001) return { loadedLy: 0, tons: 0 };
+      const neededLy = fuelTankCapacityLy() - game.fuel;
+      const tons = Math.min(available, Math.ceil(neededLy / CARGO_FUEL_LY_PER_TON));
+      const loadedLy = Math.min(neededLy, tons * CARGO_FUEL_LY_PER_TON);
+      game.cargo[CARGO_FUEL_GOOD] = available - tons;
+      game.fuel = clamp(game.fuel + loadedLy, 0, fuelTankCapacityLy());
+      return { loadedLy, tons };
+    }
+
+    function refuelFromCargoStatus() {
+      if (!game.equipment.cargoRefuel) {
+        eliteAudio.play("boop");
+        setMessage("Cargo Refueler not fitted.");
+        renderPanel();
+        return;
+      }
+      if (game.fuel >= fuelTankCapacityLy() - .0001) {
+        eliteAudio.play("boop");
+        setMessage("Fuel tanks already full.");
+        renderPanel();
+        return;
+      }
+      if (!cargoFuelTons()) {
+        eliteAudio.play("boop");
+        setMessage("No Fuel Cells in cargo.");
+        renderPanel();
+        return;
+      }
+      const loaded = loadFuelFromCargo();
+      eliteAudio.play("scoop");
+      setMessage(`Cargo fuel loaded ${fmt(loaded.loadedLy)} LY from ${loaded.tons}t Fuel Cells.`, true);
+      renderPanel();
     }
 
     function rankName() {
@@ -3262,18 +3338,25 @@
       const input = byId("commanderNameInput");
       const current = normalizeCommanderName(game.commander);
       game.commander = normalizeCommanderName(useCurrent ? current : (input?.value || current));
-      const poopyBonus = game.commander === "POOPY" && !game.poopyBonusClaimed;
+      const poopyCommander = game.commander === "POOPY";
+      const poopyBonus = poopyCommander && !game.poopyBonusClaimed;
+      const poopyComparatorGift = poopyCommander && !game.equipment.marketComparator;
+      const poopyCargoRefuelGift = poopyCommander && !game.equipment.cargoRefuel;
       const danstoDevUnlock = game.commander === "DANSTO" && !game.developerMode;
       if (poopyBonus) {
         game.poopyBonusClaimed = true;
         game.credits += 1000;
       }
+      if (poopyComparatorGift) game.equipment.marketComparator = true;
+      if (poopyCargoRefuelGift) game.equipment.cargoRefuel = true;
       if (danstoDevUnlock) launchDevMode();
       setCommanderNameDialog(false);
       requestGameFullscreen(pointerGesture);
       setMessage(danstoDevUnlock
         ? "Commander DANSTO registered. Launch Dev Mode enabled."
-        : poopyBonus ? "Commander POOPY registered. 1000 CR bonus awarded." : `Commander registered: ${game.commander}.`, true);
+        : poopyBonus || poopyComparatorGift || poopyCargoRefuelGift
+          ? `Commander POOPY registered.${poopyBonus ? " 1000 CR bonus awarded." : ""}${poopyComparatorGift ? " Market Comparator fitted." : ""}${poopyCargoRefuelGift ? " Cargo Refueler fitted." : ""}`
+          : `Commander registered: ${game.commander}.`, true);
       renderPanel();
       updateReadouts();
       return true;
@@ -3371,6 +3454,15 @@
       }));
     }
 
+    function marketComparatorForDestination() {
+      if (!game.equipment.marketComparator) return null;
+      const current = currentSystem();
+      const dest = finalTargetSystem();
+      if (!dest || dest.index === current.index) return { system: dest || current, prices: new Map(), active: false };
+      const prices = new Map(baseMarketFor(dest).map((item) => [item.name, item.price]));
+      return { system: dest, prices, active: true };
+    }
+
     function canUseMarket() {
       return !!game.docked && !game.transition && !game.jumpCountdown && !game.playerDestroyed;
     }
@@ -3383,7 +3475,9 @@
     const escapeAttr = (s) => escapeHtml(s).replace(/"/g, "&quot;");
     const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-    const MISSION_MAX_ACTIVE = 5;
+    const MISSION_MAX_ACTIVE = 8;
+    const MISSION_BOARD_MIN = 2;
+    const MISSION_BOARD_MAX = 10;
     const MISSION_NPC_DEFINITIONS = globalThis.ULTRA_ELITE_MISSION_NPC_DEFINITIONS || { missionTypes: {}, npcBehaviours: {} };
     const MISSION_DEFINITIONS = MISSION_NPC_DEFINITIONS.missionTypes || {};
     const MISSION_TYPES = Object.fromEntries(Object.entries(MISSION_DEFINITIONS).map(([id, def]) => [id, def.label || id]));
@@ -3470,6 +3564,55 @@
 
     function activeMissionById(id) {
       return missionState().active.find((mission) => mission.id === id && mission.status === "active") || null;
+    }
+
+    function missionHasLoanerShip(mission) {
+      return !!mission?.loanShip?.model && !mission.loanShip.keep;
+    }
+
+    function activeImmediateDispatchMission() {
+      return missionState().active.find((mission) =>
+        mission.status === "active"
+        && missionHasLoanerShip(mission)
+      ) || null;
+    }
+
+    function immediateDispatchMissionForCourse() {
+      const mission = activeImmediateDispatchMission();
+      return mission?.destination?.galaxy === game.galaxy && Number.isInteger(mission.destination.system)
+        ? mission
+        : null;
+    }
+
+    function syncImmediateDispatchCourse({ announce = false } = {}) {
+      const mission = immediateDispatchMissionForCourse();
+      if (!mission) return null;
+      if (game.finalTarget !== mission.destination.system) {
+        const routeState = setFinalDestination(mission.destination.system);
+        if (announce) {
+          const hop = routeState.next && routeState.next.index !== game.finalTarget ? ` Next jump: ${routeState.next.name}.` : "";
+          setMessage(`Immediate dispatch course locked: ${mission.destination.name}.${hop}`, true);
+        }
+      } else {
+        updateNextDestinationForFinalTarget();
+      }
+      return mission;
+    }
+
+    function clearImmediateDispatchCourse(mission) {
+      if (!mission?.destination || mission.destination.galaxy !== game.galaxy) return;
+      if (game.finalTarget === mission.destination.system) setFinalDestination(game.current);
+    }
+
+    function missionLockedOutOnChart(mission) {
+      const dispatch = activeImmediateDispatchMission();
+      return !!dispatch && !!mission && mission.id !== dispatch.id;
+    }
+
+    function missionProgressUnlocked(mission) {
+      if (!mission || mission.status !== "active") return false;
+      const dispatch = activeImmediateDispatchMission();
+      return !dispatch || dispatch.id === mission.id;
     }
 
     function missionChoice(rng, list) {
@@ -3650,7 +3793,7 @@
           required: encounterRequired,
           destroyed: 0,
           spawned: false,
-          spawnDelay: Number.isFinite(opts.spawnDelay) ? opts.spawnDelay : 12 + Math.floor(rng() * 18),
+          spawnDelay: Number.isFinite(opts.spawnDelay) ? opts.spawnDelay : 2 + rng() * 4,
           allies: Number.isFinite(opts.allies) ? opts.allies : 2 + Math.floor(rng() * 2),
           enemies: Number.isFinite(opts.enemies) ? opts.enemies : encounterRequired + (rng() < .45 ? 1 : 0)
         };
@@ -3664,7 +3807,7 @@
           required: encounterRequired,
           destroyed: 0,
           spawned: false,
-          spawnDelay: Number.isFinite(opts.spawnDelay) ? opts.spawnDelay : 10 + Math.floor(rng() * 16),
+          spawnDelay: Number.isFinite(opts.spawnDelay) ? opts.spawnDelay : 2 + rng() * 4,
           allies: Number.isFinite(opts.allies) ? opts.allies : 1 + Math.floor(rng() * 2),
           enemies: Number.isFinite(opts.enemies) ? opts.enemies : encounterRequired,
           navalReputationRequired: repRequired
@@ -3703,6 +3846,10 @@
           ? `${issuer} reports alien or hostile military activity near ${to.name}. Destroy the assigned target${mission.recovery ? ` and recover the ${mission.recovery.name}` : ""}.`
           : `${issuer} authorises action against ${targetName} in ${to.name}. ${legalClass === "private" ? "Local police may not recognise this warrant." : "Warrant is registered with station authority."}`;
       }
+      if (missionHasLoanerShip(mission)) {
+        mission.immediateDispatch = true;
+        mission.description += ` Immediate dispatch: accepting this contract readies a loaned ${shipName(mission.loanShip.model)} and locks mission progress to this assignment until the ship is returned.`;
+      }
       mission.requirements = starter ? [] : missionRequirementsFor(type, dist, heat, mission);
       return mission;
     }
@@ -3713,7 +3860,7 @@
       const boardKey = `${game.galaxy}:${sys.index}:${state.dockSerial}`;
       if (!force && state.boardKey === boardKey) return state.board;
       const rng = mulberry(hash32(`mission-board:${game.commander}:${boardKey}:${game.kills}:${Math.floor(game.credits)}`));
-      const count = 4 + Math.floor(rng() * 3);
+      const count = MISSION_BOARD_MIN + Math.floor(rng() * (MISSION_BOARD_MAX - MISSION_BOARD_MIN + 1));
       const board = [];
       const starterSlots = missionRatingScore() < 8 ? 2 : missionRatingScore() < 16 ? 1 : 0;
       for (let i = 0; i < count; i++) {
@@ -3754,8 +3901,8 @@
     function activeMissionLoanShipFor(model) {
       return missionState().active.find((mission) =>
         mission.status === "active"
-        && mission.loanShip?.model === model
-        && !mission.loanShip.keep
+        && missionHasLoanerShip(mission)
+        && mission.loanShip.model === model
       ) || null;
     }
 
@@ -3763,11 +3910,7 @@
       const model = mission?.loanShip?.model;
       if (!isDockyardShipModel(model)) return true;
       missionState();
-      const activeLoan = missionState().active.find((active) =>
-        active.status === "active"
-        && active.loanShip?.model
-        && !active.loanShip.keep
-      );
+      const activeLoan = activeImmediateDispatchMission();
       if (activeLoan) {
         eliteAudio.play("boop");
         setMessage(`Return ${shipName(activeLoan.loanShip.model)} before accepting another mission ship.`, true);
@@ -3816,6 +3959,11 @@
     function acceptMission(id) {
       const state = missionState();
       if (!game.docked) return setMessage("Mission board is station-side only.", true);
+      const activeDispatch = activeImmediateDispatchMission();
+      if (activeDispatch) {
+        eliteAudio.play("boop");
+        return setMessage(`Immediate dispatch active: complete ${activeDispatch.title} before accepting another contract.`, true);
+      }
       if (state.active.filter((m) => m.status === "active").length >= MISSION_MAX_ACTIVE) {
         eliteAudio.play("boop");
         return setMessage("Mission ledger full.", true);
@@ -3823,6 +3971,10 @@
       const idx = state.board.findIndex((mission) => mission.id === id);
       if (idx < 0) return;
       const mission = JSON.parse(JSON.stringify(state.board[idx]));
+      if (missionHasLoanerShip(mission) && state.active.some((m) => m.status === "active")) {
+        eliteAudio.play("boop");
+        return setMessage("Immediate dispatch requires a clear mission ledger. Complete or abandon active contracts first.", true);
+      }
       const cargoTons = Number(mission.cargo?.tons) || 0;
       const devBypass = devBypassesMissionRequirements();
       const missing = missingMissionRequirements(mission);
@@ -3840,10 +3992,11 @@
       if (!grantMissionLoanShip(mission)) return;
       state.board.splice(idx, 1);
       state.active.push(mission);
+      if (missionHasLoanerShip(mission)) syncImmediateDispatchCourse();
       eliteAudio.play("beep");
       const devNote = devBypass ? " Dev mode bypassed contract requirements." : "";
       setMessage((mission.loanShip
-        ? `${MISSION_TYPES[mission.type] || "Mission"} accepted: ${mission.title}. ${shipName(mission.loanShip.model)} readied for the contract.`
+        ? `${MISSION_TYPES[mission.type] || "Mission"} accepted: ${mission.title}. Immediate dispatch: ${shipName(mission.loanShip.model)} readied; course locked to ${mission.destination?.name || "mission destination"}.`
         : `${MISSION_TYPES[mission.type] || "Mission"} accepted: ${mission.title}.`) + devNote, true);
       renderPanel();
     }
@@ -3853,7 +4006,9 @@
       if (!mission) return;
       mission.status = "failed";
       mission.failedReason = "Abandoned by commander";
+      clearImmediateDispatchCourse(mission);
       revokeMissionLoanShip(mission);
+      clearMissionCommsHistory(mission);
       eliteAudio.play("boop");
       setMessage(`Mission abandoned: ${mission.title}.`, true);
       renderPanel();
@@ -3945,15 +4100,21 @@
         }
       }
       if (mission.loanShip?.model && !mission.loanShip.keep) revokeMissionLoanShip(mission);
+      clearImmediateDispatchCourse(mission);
       mission.completionDetails = details;
       mission.completionMessage = buildMissionCompletionDebrief(mission, details);
       missionState().completed++;
+      clearMissionCommsHistory(mission);
       return true;
     }
 
     function missionCompletionBlockers(mission) {
       if (!mission) return ["Mission record unavailable"];
       if (mission.status !== "active") return [`Mission is ${String(mission.status || "inactive").toUpperCase()}`];
+      if (!missionProgressUnlocked(mission)) {
+        const dispatch = activeImmediateDispatchMission();
+        return [`Immediate dispatch active: complete ${dispatch?.title || "the loaned-ship assignment"} first`];
+      }
       const blockers = [];
       if (!sameSystemRef(mission.destination)) {
         blockers.push(`Dock at ${mission.destination?.name || "the destination system"}`);
@@ -3989,7 +4150,7 @@
 
     function pendingDockedMissionMessages() {
       return missionState().active
-        .filter((mission) => mission.status === "active" && sameSystemRef(mission.destination))
+        .filter((mission) => mission.status === "active" && missionProgressUnlocked(mission) && sameSystemRef(mission.destination))
         .map((mission) => {
           const blockers = missionCompletionBlockers(mission);
           return blockers.length ? `${mission.title}: ${blockers[0]}` : "";
@@ -3999,14 +4160,17 @@
 
     function completeDockedMissions({ announce = true, queueDialogs = true, detailed = false } = {}) {
       const completed = [];
+      const dispatch = activeImmediateDispatchMission();
       for (const mission of missionState().active) {
+        if (dispatch && mission.id !== dispatch.id) continue;
+        if (!missionProgressUnlocked(mission)) continue;
         if (!missionReadyForDockCompletion(mission)) continue;
         if (completeMission(mission)) completed.push(mission);
       }
       if (!completed.length) return detailed ? { message: "", completed: [], pending: pendingDockedMissionMessages() } : "";
       const total = completed.reduce((sum, mission) => sum + (Number(mission.reward?.credits) || 0), 0);
       const names = completed.map((mission) => mission.title).slice(0, 2).join("; ");
-      if (announce) commsMessage(stationCommsName(), `Mission office confirms completion: ${names}.`, "station");
+      if (announce) commsMessage("MISSION OFFICE", `Completion confirmed: ${names}. ${fmt(total)} CR authorised.`, "mission");
       if (queueDialogs) queueMissionCompleteDialogs(completed);
       const message = `${completed.length} mission${completed.length === 1 ? "" : "s"} completed. ${fmt(total)} CR paid.`;
       return detailed ? { message, completed, pending: pendingDockedMissionMessages() } : message;
@@ -4018,7 +4182,9 @@
         if (mission.status !== "active") continue;
         mission.status = "failed";
         mission.failedReason = reason;
+        clearImmediateDispatchCourse(mission);
         revokeMissionLoanShip(mission);
+        clearMissionCommsHistory(mission);
         failed++;
       }
       return failed;
@@ -4027,6 +4193,7 @@
     function missionLegalDisposition(o) {
       const mission = o?.missionId ? activeMissionById(o.missionId) : null;
       if (!mission) return null;
+      if (!missionProgressUnlocked(mission)) return null;
       if (o.missionEncounterSide === "ally") return null;
       if (mission.legalClass === "military" || mission.legalClass === "sanctioned") return "authorised";
       return "private";
@@ -4047,6 +4214,7 @@
     function activeSuppressionMissionsHere() {
       return missionState().active.filter((mission) =>
         mission.status === "active"
+        && missionProgressUnlocked(mission)
         && mission.type === "suppression"
         && mission.suppression
         && sameSystemRef(mission.destination)
@@ -4094,6 +4262,7 @@
     function markMissionTargetDestroyed(o) {
       const mission = o?.missionId ? activeMissionById(o.missionId) : null;
       if (!mission?.target || mission.target.id !== o.missionTargetId) return null;
+      if (!missionProgressUnlocked(mission)) return null;
       mission.target.destroyed = true;
       mission.target.spawned = false;
       if (mission.recovery?.required) spawnMissionDrop(o, mission);
@@ -4114,6 +4283,11 @@
       const cargo = o?.missionCargo;
       const mission = cargo?.missionId ? activeMissionById(cargo.missionId) : null;
       if (!mission?.recovery) return false;
+      if (!missionProgressUnlocked(mission)) {
+        const dispatch = activeImmediateDispatchMission();
+        setMessage(`Immediate dispatch active: complete ${dispatch?.title || "the loaned-ship assignment"} before recovering other mission cargo.`, true);
+        return true;
+      }
       const tons = Number(cargo.tons) || 1;
       if (usedCargo() + tons > game.cargoCap) {
         setMessage("Cargo bay full. Mission item not recovered.", true);
@@ -4123,6 +4297,7 @@
       mission.recovery.tons = tons;
       game.objects = game.objects.filter((x) => x !== o);
       eliteAudio.play("cargoScoop");
+      missionCommsMessage(mission, `${cargo.name} recovered. Return to ${mission.destination?.name || currentSystem().name} station for hand-in.`);
       setMessage(`Recovered mission item: ${cargo.name}.`, true);
       renderPanel();
       return true;
@@ -4179,7 +4354,7 @@
       game.objects.push(o);
       mission.target.spawned = true;
       mission.target.spawnSystem = { galaxy: game.galaxy, system: game.current };
-      commsMessage(mission.issuer, thargoid ? "Alien contact confirmed. Engage under naval warrant." : `${o.name} transponder spike detected.`, mission.type === "naval" ? "warning" : "pirate");
+      missionCommsMessage(mission, thargoid ? "Alien contact confirmed. Engage under naval warrant." : `${o.name} transponder spike detected. Contract authority active.`);
       setMessage(`Mission contact detected: ${o.name}.`, true);
       if (game.panelOpen && game.panel === "missions") renderPanel();
       return o;
@@ -4211,6 +4386,7 @@
       if (!o || o._missionEncounterRecorded || o.missionEncounterSide !== "enemy" || !o.missionId || !o.missionEncounterId) return null;
       const mission = activeMissionById(o.missionId);
       const encounter = mission?.encounter;
+      if (!missionProgressUnlocked(mission)) return null;
       if (!encounter || encounter.id !== o.missionEncounterId || !sameSystemRef(mission.destination)) return null;
       o._missionEncounterRecorded = true;
       const required = Number(encounter.required) || 1;
@@ -4228,12 +4404,36 @@
         : missionChoice(rng, PIRATE_MODELS.filter((model) => MODELS[model]));
     }
 
+    function missionEncounterArrivalPlan(kind, side, index, count, rng) {
+      if (kind === "navalBattle" && side === "enemy") return { hyperspaceIn: false, delay: 0 };
+      if (kind === "navalBattle" && side === "ally") {
+        return index === 0
+          ? { hyperspaceIn: false, delay: 0 }
+          : { hyperspaceIn: true, delay: 1.4 + index * (2.1 + rng() * 1.2) + rng() * 2.4 };
+      }
+      if (kind === "traderDefence" && side === "enemy") {
+        const present = Math.max(1, Math.ceil(count * .55));
+        return index < present
+          ? { hyperspaceIn: false, delay: 0 }
+          : { hyperspaceIn: true, delay: 1.2 + (index - present) * (3.1 + rng() * 1.6) + rng() * 3.2 };
+      }
+      if (side === "ally") {
+        return index === 0 || rng() < .35
+          ? { hyperspaceIn: false, delay: 0 }
+          : { hyperspaceIn: true, delay: 1.8 + index * (2.4 + rng() * 1.4) + rng() * 2.8 };
+      }
+      return rng() < .5
+        ? { hyperspaceIn: false, delay: 0 }
+        : { hyperspaceIn: true, delay: 1.5 + index * 2.7 + rng() * 3.5 };
+    }
+
     function spawnMissionEncounterShip(mission, side, index, center, rng) {
       const encounter = mission.encounter;
       const kind = encounter.kind;
       const model = missionEncounterModel(kind, side, rng) || (side === "ally" ? "cobra" : "krait");
       const stats = shipStats(model);
-      const angle = (index / Math.max(1, side === "ally" ? encounter.allies : encounter.enemies)) * TAU + (side === "enemy" ? Math.PI : 0) + rng() * .38;
+      const count = Math.max(1, side === "ally" ? Number(encounter.allies) || 1 : Number(encounter.enemies) || Number(encounter.required) || 1);
+      const angle = (index / count) * TAU + (side === "enemy" ? Math.PI : 0) + rng() * .38;
       const spread = side === "ally" ? 220 + rng() * 240 : 520 + rng() * 420;
       const vertical = (rng() - .5) * (kind === "navalBattle" ? 260 : 180);
       const pos = add(center, vec(Math.cos(angle) * spread, vertical, Math.sin(angle) * spread));
@@ -4280,7 +4480,10 @@
         decalSeed: hash32(`mission-encounter:${mission.id}:${side}:${index}:${model}`)
       };
       setNoseDirection(o, side === "enemy" ? sub(game.camera.pos, o.pos) : o.vel, o.roll);
-      startNpcHyperspaceIn(o, { dur: 1.22 + rng() * .32, revealAt: .62 + rng() * .12 });
+      const arrival = missionEncounterArrivalPlan(kind, side, index, count, rng);
+      if (arrival.hyperspaceIn) {
+        startNpcHyperspaceIn(o, { dur: 1.22 + rng() * .32, revealAt: .62 + rng() * .12, delay: arrival.delay });
+      }
       game.objects.push(o);
       return o;
     }
@@ -4299,9 +4502,9 @@
       encounter.spawned = true;
       encounter.spawnSystem = { galaxy: game.galaxy, system: game.current };
       const message = encounter.kind === "navalBattle"
-        ? "Naval wing and alien contacts arriving. Engage under military warrant."
-        : "Trader band and pirate raiders arriving. Protect the convoy.";
-      commsMessage(mission.issuer, message, encounter.kind === "navalBattle" ? "warning" : "station");
+        ? "Alien contacts already in-system. Naval wing is joining in staggered jumps."
+        : "Raider group already in-system. Trader defenders and pirate reinforcements are joining unevenly.";
+      missionCommsMessage(mission, message);
       setMessage(`Mission encounter detected: ${mission.title}.`, true);
       if (game.panelOpen && game.panel === "missions") renderPanel();
       return [...allies, ...enemies];
@@ -4311,7 +4514,21 @@
       if (game.docked || game.transition || game.jumpCountdown) return;
       for (const mission of missionState().active) {
         if (mission.status !== "active") continue;
+        if (!missionProgressUnlocked(mission)) continue;
         if (!sameSystemRef(mission.destination)) continue;
+        if (mission.suppression && (Number(mission.suppression.destroyed) || 0) < (Number(mission.suppression.required) || 1)) {
+          if (!mission.suppression.initialPresence && !stationSafeZoneActive()) {
+            const liveShipCount = worldSnapshot().ships.filter((ship) => ship.type === "ship" && !ship._remove && ship.role !== "pod").length;
+            const spawned = spawnSuppressionPirates(mulberry(hash32(`mission-suppression-initial:${mission.id}:${game.galaxy}:${game.current}`)), liveShipCount, { initial: true });
+            if (spawned) {
+              mission.suppression.initialPresence = true;
+              for (const active of activeSuppressionMissionsHere()) {
+                if (active.suppression && sameSystemRef(active.destination)) active.suppression.initialPresence = true;
+              }
+              missionCommsMessage(mission, "Pirate contacts already active in-system. Additional raiders may jump in.");
+            }
+          }
+        }
         if (mission.encounter && (Number(mission.encounter.destroyed) || 0) < (Number(mission.encounter.required) || 1)) {
           if (mission.encounter.spawned && !liveMissionEncounterShips(mission, "enemy").length) {
             const required = Number(mission.encounter.required) || 1;
@@ -4320,6 +4537,7 @@
             mission.encounter.enemies = Math.max(remaining, Number(mission.encounter.enemies) || remaining);
             mission.encounter.spawnDelay = Math.min(Number(mission.encounter.spawnDelay) || 8, 8);
             setMessage("Mission contacts lost. Reacquiring hostile group.", true);
+            missionCommsMessage(mission, "Mission contacts lost. Reacquiring hostile group.", { durationMs: 14000 });
           }
           if (mission.encounter.spawned) continue;
           mission.encounter.spawnDelay = Math.max(0, (Number(mission.encounter.spawnDelay) || 0) - dt);
@@ -4331,6 +4549,7 @@
               mission.encounter.spawned = false;
               mission.encounter.spawnDelay = 8;
               setMessage("Mission encounter signal unstable. Reacquiring contacts.", true);
+              missionCommsMessage(mission, "Mission encounter signal unstable. Reacquiring contacts.", { durationMs: 14000 });
             }
           }
           continue;
@@ -4340,6 +4559,7 @@
           mission.target.spawned = false;
           mission.target.spawnDelay = Math.min(Number(mission.target.spawnDelay) || 8, 8);
           setMessage("Mission contact lost. Reacquiring target signal.", true);
+          missionCommsMessage(mission, "Mission contact lost. Reacquiring target signal.", { durationMs: 14000 });
         }
         if (mission.target.spawned) continue;
         mission.target.spawnDelay = Math.max(0, (Number(mission.target.spawnDelay) || 0) - dt);
@@ -4364,6 +4584,7 @@
             mission.target.spawned = false;
             mission.target.spawnDelay = 8;
             setMessage("Mission contact signal unstable. Reacquiring target.", true);
+            missionCommsMessage(mission, "Mission contact signal unstable. Reacquiring target.", { durationMs: 14000 });
           }
         }
       }
@@ -4372,6 +4593,18 @@
     const alienGlyphCache = new Map();
     const commsSenderThrottle = new Map();
     let commsSeq = 0;
+    const COMMS_KIND_RULES = {
+      mission: { duration: 15500, protected: true },
+      station: { duration: 9500, protected: true },
+      warning: { duration: 11500, protected: true }
+    };
+    const COMMS_HISTORY_FILTERS = [
+      { id: "important", label: "IMPORTANT", match: (m) => ["mission", "warning", "police", "hostile", "alien"].includes(m.kind) || m.alien },
+      { id: "mission", label: "MISSION", match: (m) => m.kind === "mission" },
+      { id: "security", label: "SECURITY", match: (m) => ["warning", "police", "hostile", "alien"].includes(m.kind) || m.alien },
+      { id: "all", label: "ALL COMMS", match: () => true }
+    ];
+    const COMMS_HISTORY_LIMIT = 160;
 
     function inferCommsKind(from, alien = false) {
       const name = String(from || "").toUpperCase();
@@ -4383,22 +4616,261 @@
       return "trader";
     }
 
-    function commsMessage(from, text, alienOrKind = false) {
+    function commsMessage(from, text, alienOrKind = false, opts = {}) {
       if (HACK_DISABLE_CHATTER) return false;
       const alien = alienOrKind === true || alienOrKind === "alien";
       const kind = typeof alienOrKind === "string" ? alienOrKind : inferCommsKind(from, alien);
       const now = performance.now();
       const throttleKey = `${kind}:${from}`;
       const recent = commsSenderThrottle.get(throttleKey);
-      const protectedComms = kind === "station" || kind === "warning";
+      const rule = COMMS_KIND_RULES[kind] || {};
+      const protectedComms = !!(opts.protected || rule.protected);
       if (!protectedComms && recent && now - recent.at < 4200) {
         if (recent.text === text || now - recent.at < 1800) return false;
       }
       commsSenderThrottle.set(throttleKey, { text, at: now });
-      game.comms.push({ id: ++commsSeq, from, text, alien, kind, born: now, until: now + 9500 });
-      if (game.comms.length > 4) game.comms.splice(0, game.comms.length - 4);
+      const duration = Number.isFinite(opts.durationMs) ? opts.durationMs : rule.duration || 9500;
+      const msg = {
+        id: ++commsSeq,
+        from,
+        text,
+        alien,
+        kind,
+        born: now,
+        until: now + duration,
+        missionId: opts.missionId || ""
+      };
+      game.comms.push(msg);
+      if (game.comms.length > 5) game.comms.splice(0, game.comms.length - 5);
+      recordCommsHistory(msg, now);
       renderComms();
       return true;
+    }
+
+    function resetCommsHistoryForLaunch() {
+      const carryMissionHistory = (Array.isArray(game.commsHistory) ? game.commsHistory : [])
+        .filter((msg) => msg.missionId && activeMissionById(msg.missionId));
+      game.comms = [];
+      game.commsHistory = carryMissionHistory;
+      game.commsLaunchAt = performance.now();
+      game.commsReviewOpen = false;
+      game.commsReviewOffset = 0;
+      renderComms();
+      renderCommsReview();
+    }
+
+    function recordCommsHistory(msg, now = performance.now()) {
+      if (!Array.isArray(game.commsHistory)) game.commsHistory = [];
+      if (!game.commsLaunchAt) game.commsLaunchAt = now;
+      game.commsHistory.push({
+        id: msg.id,
+        from: msg.from,
+        text: msg.text,
+        alien: !!msg.alien,
+        kind: msg.kind || "trader",
+        missionId: msg.missionId || "",
+        born: msg.born || now,
+        system: currentSystem().name
+      });
+      if (game.commsHistory.length > COMMS_HISTORY_LIMIT) game.commsHistory.splice(0, game.commsHistory.length - COMMS_HISTORY_LIMIT);
+      renderCommsReview();
+    }
+
+    function commsHistoryFilter() {
+      return COMMS_HISTORY_FILTERS.find((filter) => filter.id === game.commsReviewFilter) || COMMS_HISTORY_FILTERS[0];
+    }
+
+    function filteredCommsHistory() {
+      const filter = commsHistoryFilter();
+      return (Array.isArray(game.commsHistory) ? game.commsHistory : []).filter(filter.match);
+    }
+
+    function formatCommsHistoryTime(msg) {
+      const base = game.commsLaunchAt || msg.born || performance.now();
+      const elapsed = Math.max(0, Math.floor(((msg.born || base) - base) / 1000));
+      const minutes = Math.floor(elapsed / 60);
+      const seconds = String(elapsed % 60).padStart(2, "0");
+      return `+${minutes}:${seconds}`;
+    }
+
+    function updateCommsToggle() {
+      const btn = hudEls.commsToggle;
+      if (!btn) return;
+      btn.classList.toggle("active", !!game.commsReviewOpen);
+      btn.setAttribute("aria-expanded", String(!!game.commsReviewOpen));
+      btn.title = game.commsReviewOpen ? "Close comms panel" : "Open comms panel";
+    }
+
+    function attachCommsReviewControls(el) {
+      el.querySelectorAll("[data-comms-scroll]").forEach((button) => {
+        button.addEventListener("click", (e) => {
+          scrollCommsHistory(Number(button.dataset.commsScroll) || 0);
+          e.stopPropagation();
+        });
+      });
+      el.querySelectorAll("[data-comms-filter]").forEach((button) => {
+        button.addEventListener("click", (e) => {
+          cycleCommsHistoryFilter(Number(button.dataset.commsFilter) || 1);
+          e.stopPropagation();
+        });
+      });
+      const close = el.querySelector("[data-comms-close]");
+      if (close) close.addEventListener("click", (e) => {
+        toggleCommsReview(false);
+        e.stopPropagation();
+      });
+    }
+
+    function renderCommsReview() {
+      const el = byId("commsReview");
+      if (!el) return;
+      if (!game.commsReviewOpen) {
+        el.hidden = true;
+        if (el.dataset.renderKey !== "closed") {
+          el.dataset.renderKey = "closed";
+          el.innerHTML = "";
+        }
+        updateCommsToggle();
+        return;
+      }
+      const filter = commsHistoryFilter();
+      const items = filteredCommsHistory();
+      const key = `${filter.id}:${items.map((m) => m.id).join(",")}`;
+      if (el.dataset.renderKey === key) return;
+      const oldLog = el.querySelector("[data-comms-log]");
+      const wasPinnedToLatest = !oldLog || oldLog.scrollTop + oldLog.clientHeight >= oldLog.scrollHeight - 6;
+      const filterChanged = !String(el.dataset.renderKey || "").startsWith(`${filter.id}:`);
+      el.hidden = false;
+      el.dataset.renderKey = key;
+      const count = `${items.length} ${items.length === 1 ? "MESSAGE" : "MESSAGES"}`;
+      const lines = items.length ? items.map((m) => {
+        const kindClass = m.alien ? "alien-comms" : `comms-${escapeAttr(m.kind || "trader")}`;
+        const body = m.alien ? alienGlyphMarkup(m.text) : escapeHtml(m.text);
+        return `<div class="comms-review-line ${kindClass}"><span class="comms-review-time">${formatCommsHistoryTime(m)}</span><span class="comms-review-kind">${escapeHtml(m.kind || "trader")}</span><span class="comms-review-text"><span class="comms-from">${escapeHtml(m.from)}:</span> ${body}</span></div>`;
+      }).join("") : `<div class="comms-review-line"><span class="comms-review-time">--</span><span class="comms-review-kind">${escapeHtml(filter.id)}</span><span class="comms-review-text">No matching comms since launch.</span></div>`;
+      el.innerHTML = `<div class="comms-review-head">
+        <span>COMMS / ${escapeHtml(filter.label)}</span>
+        <span class="comms-review-controls">
+          <button class="btn mini" type="button" data-comms-filter="1" title="Next comms filter">F</button>
+          <button class="btn mini" type="button" data-comms-close title="Close comms panel">×</button>
+          <span>${count}</span>
+        </span>
+      </div><div class="comms-review-log" data-comms-log>${lines}</div>`;
+      updateCommsToggle();
+      attachCommsReviewControls(el);
+      const log = el.querySelector("[data-comms-log]");
+      if (log && (wasPinnedToLatest || filterChanged)) log.scrollTop = log.scrollHeight;
+    }
+
+    function cycleCommsHistoryFilter(dir = 1) {
+      const current = COMMS_HISTORY_FILTERS.findIndex((filter) => filter.id === game.commsReviewFilter);
+      const next = (current + dir + COMMS_HISTORY_FILTERS.length) % COMMS_HISTORY_FILTERS.length;
+      game.commsReviewFilter = COMMS_HISTORY_FILTERS[next].id;
+      game.commsReviewOffset = 0;
+      renderCommsReview();
+      setMessage(`Comms filter: ${COMMS_HISTORY_FILTERS[next].label}.`);
+    }
+
+    function scrollCommsHistory(dir = 1) {
+      const log = byId("commsReview")?.querySelector("[data-comms-log]");
+      if (!log) {
+        renderCommsReview();
+        return;
+      }
+      const step = Math.max(90, log.clientHeight * 0.82);
+      log.scrollBy({ top: dir > 0 ? -step : step, behavior: "smooth" });
+    }
+
+    function toggleCommsReview(force = undefined) {
+      game.commsReviewOpen = force === undefined ? !game.commsReviewOpen : !!force;
+      game.commsReviewOffset = 0;
+      renderCommsReview();
+      setMessage(`Comms history: ${game.commsReviewOpen ? commsHistoryFilter().label.toLowerCase() : "closed"}.`);
+    }
+
+    function missionCommsMessage(mission, text, opts = {}) {
+      const from = mission?.issuer || "MISSION OFFICE";
+      return commsMessage(from, text, "mission", { durationMs: opts.durationMs ?? 15500, protected: true, missionId: mission?.id || "" });
+    }
+
+    function clearMissionCommsHistory(missionOrId) {
+      const missionId = typeof missionOrId === "string" ? missionOrId : missionOrId?.id;
+      if (!missionId || !Array.isArray(game.commsHistory)) return;
+      game.commsHistory = game.commsHistory.filter((msg) => msg.missionId !== missionId);
+      renderCommsReview();
+    }
+
+    function missionAmbientLine(mission) {
+      if (!mission) return "";
+      const type = MISSION_TYPES[mission.type] || "Mission";
+      const dest = mission.destination?.name || currentSystem().name;
+      const here = sameSystemRef(mission.destination);
+      if (!here) {
+        if (mission.cargo?.held) return pick([
+          `${type} packet remains sealed. Destination remains ${dest}.`,
+          `Contract beacon confirms cargo custody. Route to ${dest}.`,
+          `Mission traffic note: keep the manifest sealed until ${dest}.`
+        ]);
+        return pick([
+          `${type} contract still tagged for ${dest}.`,
+          `Mission office repeats destination: ${dest}.`,
+          `Contract beacon idle. Next useful report expected in ${dest} space.`
+        ]);
+      }
+      if (missionReadyForDockCompletion(mission)) return pick([
+        `${type} objective satisfied. Dock for payment.`,
+        `Mission office confirms completion state. Return to station services.`,
+        `Contract beacon green. Payment pending at dock.`
+      ]);
+      if (mission.encounter) {
+        const required = Number(mission.encounter.required) || 1;
+        const destroyed = Number(mission.encounter.destroyed) || 0;
+        const left = Math.max(0, required - destroyed);
+        return mission.encounter.kind === "navalBattle"
+          ? pick([
+            `Naval tactical: ${left} alien contact${left === 1 ? "" : "s"} remain on contract scope.`,
+            `Military channel holds your engagement warrant. Alien count ${destroyed}/${required}.`,
+            `Wing telemetry requests continued support. ${left} hostile contact${left === 1 ? "" : "s"} unresolved.`
+          ])
+          : pick([
+            `Convoy channel: ${left} raider${left === 1 ? "" : "s"} still threatening the traders.`,
+            `Trader band beacon shows ${destroyed}/${required} raiders cleared.`,
+            `Contract traffic asks you to keep the convoy covered. ${left} raider${left === 1 ? "" : "s"} remain.`
+          ]);
+      }
+      if (mission.suppression) {
+        const required = Number(mission.suppression.required) || 1;
+        const destroyed = Number(mission.suppression.destroyed) || 0;
+        return pick([
+          `Suppression warrant active. Pirate count ${destroyed}/${required}.`,
+          `Station security still wants ${Math.max(0, required - destroyed)} pirate contact${required - destroyed === 1 ? "" : "s"} cleared.`,
+          `Patrol net is crediting your pirate kills. Current tally ${destroyed}/${required}.`
+        ]);
+      }
+      if (mission.target && !mission.target.destroyed) return mission.target.spawned
+        ? pick([
+          `${mission.target.name || "Mission target"} transponder is live. Engage under contract authority.`,
+          `Target beacon remains hot. Bring down ${mission.target.name || "the contact"}.`,
+          `Mission office confirms target in-system. Weapons authority unchanged.`
+        ])
+        : pick([
+          `Mission signal search active. Stand by for ${mission.target.name || "target"} transponder spike.`,
+          `Contract scanner sweep continuing in ${dest} space.`,
+          `Mission office has no clean target lock yet. Keep scanners open.`
+        ]);
+      if (mission.recovery?.required && !mission.recovery.held) return pick([
+        `Recovery item still outstanding: ${mission.recovery.name}.`,
+        `Mission cargo beacon has not been recovered. Search debris carefully.`,
+        `${mission.recovery.name} must be recovered before payment clears.`
+      ]);
+      return `${type} contract active. Monitor mission board for blockers.`;
+    }
+
+    function pickMissionCommsCandidate() {
+      const active = missionState().active.filter((mission) => mission.status === "active");
+      if (!active.length) return null;
+      const here = active.filter((mission) => sameSystemRef(mission.destination));
+      return pick(here.length ? here : active);
     }
 
     function alienGlyphSvg(ch) {
@@ -4882,11 +5354,18 @@
           `Inbound freighters, declare ${good} tonnage before final approach.`,
           `${sys.name} control to all ships: maintain scanner separation.`,
           "Automated tug traffic crossing the mail slot.",
-          "Navigation buoy three reports minor debris drift."
+          "Navigation buoy three reports minor debris drift.",
+          "Outer beacon telemetry is clean. Approach lane remains open.",
+          "Fuel tenders are crossing the lower vector. Mind your descent.",
+          "Dock crew reports pressure cycle nominal.",
+          "Traffic advisory: keep boost clear until outside the marker."
         ],
         any: [
           `Registered departures for ${dest}, confirm jump fuel before launch.`,
-          `Commodity watch: ${good} traffic higher than usual.`
+          `Commodity watch: ${good} traffic higher than usual.`,
+          "Traffic note: escape pod corridor has priority over cargo traffic.",
+          "Control requests all ships keep laser capacitors safed near the slot.",
+          "Beacon net reports short-range scanner noise. Maintain visual spacing."
         ]
       }));
     }
@@ -5041,7 +5520,12 @@
         "Hold your lane and keep your heat signature tidy.",
         `Patrol notes pirate chatter on the ${dest} vector.`,
         "Civilian contact confirmed. No action.",
-        "Traffic control, patrol sweep entering outer marker."
+        "Traffic control, patrol sweep entering outer marker.",
+        "Patrol confirms no shots fired in the safe lane.",
+        "Viper unit checking wake signatures.",
+        "Scanner sweep complete. Holding enforcement orbit.",
+        "If you are clean, keep flying. If not, reconsider your plans.",
+        "Patrol channel logging unverified pirate pings."
       ]);
       if (o.hostile) return pick([
         "Any fat traders on this lane today?",
@@ -5052,7 +5536,13 @@
         "I count two escorts and one easy mark.",
         "Station patrol is looking sunward. Move now.",
         "Paint your beacon clean and they'll never know.",
-        "Leave the escape pods. They slow us down."
+        "Leave the escape pods. They slow us down.",
+        "Cut across the buoy shadow and wait for the convoy.",
+        "No heroics. Engines first, cargo second.",
+        "That hauler's running heavy. I can hear it from here.",
+        "Split the escort and the freight will panic.",
+        "Keep the chatter bored. Bored traffic never looks twice.",
+        "I want cargo, not attention from the station guns."
       ]);
       return pick([
         `Word is ${good} pays double at ${dest}.`,
@@ -5067,7 +5557,15 @@
         "Canister recovery crews are getting bold today.",
         `Running ${good} on a thin margin, same as always.`,
         "If you see a Python with red trim, turn the other way.",
-        "Docking computer sings better than my co-pilot."
+        "Docking computer sings better than my co-pilot.",
+        "I swear the station slot gets smaller when you're tired.",
+        `Taking ${good} out and bringing hope back, apparently.`,
+        "My manifest says routine. My insurance says optimism.",
+        "Fuel's cheap until you need it.",
+        "Anyone got a clean price on computers within two jumps?",
+        "I miss cargo that doesn't complain in the hold.",
+        "If this run pays, I'm finally fixing the port shield emitter.",
+        "Control, if my docking slot is next to the Python again, no it isn't."
       ]);
     }
 
@@ -6771,7 +7269,7 @@
 
     function updateSolarFuelScoop(o, dt) {
       if (!o || o.type !== "sun" || !game.equipment.fuelScoop || game.docked || game.transition) return;
-      if (game.fuel >= 7) return;
+      if (game.fuel >= fuelTankCapacityLy()) return;
       const dist = len(sub(o.pos, game.camera.pos));
       const visibleRadius = largeCollisionRadius(o);
       const clearance = dist - visibleRadius - playerCollisionRadius();
@@ -6780,7 +7278,7 @@
       if (clearance > scoopBand || clearance < -playerCollisionRadius() * 2) return;
       const strength = smoothstep(scoopBand, 0, Math.max(0, clearance));
       const before = game.fuel;
-      game.fuel = clamp(game.fuel + dt * lerp(.08, .32, strength), 0, 7);
+      game.fuel = clamp(game.fuel + dt * lerp(.08, .32, strength), 0, fuelTankCapacityLy());
       if (game.fuel <= before) return;
       const now = performance.now();
       if (!game._solarScoopAt || now - game._solarScoopAt > 1700) {
@@ -7764,22 +8262,24 @@
     function startNpcHyperspaceIn(o, opts = {}) {
       if (!o || o.type !== "ship") return o;
       const dir = len(o.vel || vec()) > .01 ? norm(o.vel) : shipForward(o);
+      const delay = Math.max(0, Number(opts.delay) || 0);
       o.hyperspaceIn = {
-        t: 0,
+        t: -delay,
         dur: opts.dur || 1.42,
         revealAt: opts.revealAt || .72,
         dir,
         aiMode: o.aiMode || "cruise",
         vel: { ...(o.vel || scale(dir, 70)) },
         speed: Number.isFinite(o.speed) ? o.speed : len(o.vel || vec()),
-        engineBoost: o.engineBoost || 0
+        engineBoost: o.engineBoost || 0,
+        effectPlayed: delay <= 0
       };
       o._hyperspaceHidden = true;
       o.aiMode = "hyperspaceIn";
       o.vel = vec();
       o.speed = 0;
       o.engineBoost = 0;
-      spawnNpcHyperspaceInEffect(o);
+      if (delay <= 0) spawnNpcHyperspaceInEffect(o);
       return o;
     }
 
@@ -7850,7 +8350,7 @@
       return count;
     }
 
-    function spawnSuppressionPirates(rng = Math.random, liveShipCount = 0) {
+    function spawnSuppressionPirates(rng = Math.random, liveShipCount = 0, opts = {}) {
       const missions = activeSuppressionMissionsHere();
       if (!missions.length) return 0;
       const remaining = Math.max(...missions.map((mission) => Math.max(0, (Number(mission.suppression.required) || 1) - (Number(mission.suppression.destroyed) || 0))));
@@ -7858,7 +8358,10 @@
       if (!room) return 0;
       const count = Math.min(room, 1 + (remaining > 2 && rng() < .38 ? 1 : 0));
       for (let i = 0; i < count; i++) {
-        const pirate = spawnShip(rng, true);
+        const pirate = spawnShip(rng, true, {
+          hyperspaceIn: opts.initial ? i !== 0 : true,
+          hyperspaceDelay: opts.initial && i > 0 ? 2.5 + rng() * 5.5 : 0
+        });
         pirate.suppressionContact = true;
       }
       game.missionPirateDelay = 16 + count * 7 + rng() * 16;
@@ -7889,7 +8392,7 @@
       spawnShip(Math.random, false);
     }
 
-    function spawnShip(rng = Math.random, hostile = false) {
+    function spawnShip(rng = Math.random, hostile = false, opts = {}) {
       const police = game.legal > 15 && rng() > .45;
       const types = police ? POLICE_MODELS : hostile ? PIRATE_MODELS : TRADER_MODELS;
       const model = types[Math.floor(rng() * types.length)];
@@ -7926,7 +8429,7 @@
         decalSeed: hash32(`${game.galaxy}:${game.current}:${model}:${role}`)
       };
       setNoseDirection(o, o.vel, o.roll);
-      if (!police) startNpcHyperspaceIn(o);
+      if (!police && opts.hyperspaceIn !== false) startNpcHyperspaceIn(o, { delay: Number(opts.hyperspaceDelay) || 0 });
       game.objects.push(o);
       return o;
     }
@@ -8120,6 +8623,7 @@
       }
       if (!game.docked || game.transition || game.jumpCountdown) return;
       writeBrowserSave(true);
+      resetCommsHistoryForLaunch();
       const finishLaunch = (startSpeed = 40) => {
         game.docked = false;
         resetFlightScene(false);
@@ -8275,9 +8779,10 @@
         setMessage(`Already in ${from.name}. Select another system.`, true);
         return;
       }
-      if (!game.developerMode && d > 7) {
+      const hyperdriveRange = currentHyperdriveRangeLy();
+      if (!game.developerMode && d > hyperdriveRange) {
         eliteAudio.play("boop");
-        setMessage("Target is outside the 7.0 light year jump range.", true);
+        setMessage(`Target is outside the ${fmt(hyperdriveRange)} light year jump range.`, true);
         return;
       }
       if (!game.developerMode && game.fuel + 0.0001 < d) {
@@ -8322,6 +8827,7 @@
             setMessage("Witch-space malfunction. Thargoids detected.", true);
           } else {
             game.current = game.target;
+            updateNextDestinationForFinalTarget();
             game.witchspace = false;
             resetFlightScene(true);
             setMessage(`Hyperspace complete. Arrived at ${currentSystem().name}.`, true);
@@ -8369,6 +8875,7 @@
           game.galaxy = (game.galaxy + 1) % 8;
           game.current = 0;
           game.target = 1;
+          game.finalTarget = 1;
           game.equipment.galacticHyperdrive = false;
           game.docked = false;
           game.witchspace = false;
@@ -9179,6 +9686,7 @@
         }
         if (!byPlayer) {
           const encounterUpdate = recordMissionEncounterKill(o);
+          if (encounterUpdate) missionCommsMessage(encounterUpdate, missionEncounterProgressMessage(encounterUpdate));
           setMessage(`${o.name} destroyed.${encounterUpdate ? ` ${missionEncounterProgressMessage(encounterUpdate)}` : ""}`, true);
           if (encounterUpdate && game.panelOpen && game.panel === "missions") renderPanel();
           return;
@@ -9198,14 +9706,24 @@
         const suppressionUpdates = recordPirateSuppressionKill(o);
         const encounterUpdate = recordMissionEncounterKill(o);
         const missionBits = [];
-        if (mission) missionBits.push(mission.recovery?.required ? `Mission target destroyed. Recover ${mission.recovery.name}.` : "Mission target destroyed. Dock for payment.");
-        if (encounterUpdate) missionBits.push(missionEncounterProgressMessage(encounterUpdate));
+        if (mission) {
+          const line = mission.recovery?.required ? `Mission target destroyed. Recover ${mission.recovery.name}.` : "Mission target destroyed. Dock for payment.";
+          missionBits.push(line);
+          missionCommsMessage(mission, line);
+        }
+        if (encounterUpdate) {
+          const line = missionEncounterProgressMessage(encounterUpdate);
+          missionBits.push(line);
+          missionCommsMessage(encounterUpdate, line);
+        }
         for (const update of suppressionUpdates) {
           const required = Number(update.suppression.required) || 1;
           const destroyed = Number(update.suppression.destroyed) || 0;
-          missionBits.push(destroyed >= required
+          const line = destroyed >= required
             ? `Pirate suppression complete (${destroyed}/${required}). Dock for payment.`
-            : `Pirate suppression progress ${destroyed}/${required}.`);
+            : `Pirate suppression progress ${destroyed}/${required}.`;
+          missionBits.push(line);
+          missionCommsMessage(update, line);
         }
         const missionText = missionBits.length ? ` ${missionBits.join(" ")}` : "";
         setMessage(`${o.name} destroyed. ${o.bounty ? `Bounty ${o.bounty} CR.` : "Debris detected."}${missionText}`, true);
@@ -9332,11 +9850,12 @@
           game.galaxy = 0;
           game.current = LAVE_INDEX;
           game.target = DISO_INDEX;
+          game.finalTarget = DISO_INDEX;
           game.docked = true;
           setViewMode("fwd");
           game.playerDestroyed = false;
           game.credits = Math.max(10, Math.floor(game.credits * .7));
-          game.fuel = 7;
+          game.fuel = fuelTankCapacityLy();
           restoreShipSystems();
           game.speed = 0;
           // BBC Elite's ESCAPE routine clears FIST, so the capsule wipes the
@@ -9428,30 +9947,33 @@
         return;
       }
       game.credits -= item.price;
-      game.cargo[name]++;
+      game.cargo[name] = Math.max(0, Math.trunc(Number(game.cargo[name]) || 0)) + 1;
       stock[name] = Math.max(0, (stock[name] ?? item.qty) - 1);
       eliteAudio.play("beep");
       if (item.illegal && Math.random() > .92) game.legal += 2;
+      if (name === CARGO_FUEL_GOOD) setMessage(`Loaded 1t cargo fuel reserve: ${fmt(CARGO_FUEL_LY_PER_TON)} LY available after jumps.`);
       renderPanel();
     }
 
     function sellGood(name) {
-      if (!canUseMarket() || game.cargo[name] <= 0) return;
+      const held = Math.max(0, Math.trunc(Number(game.cargo[name]) || 0));
+      if (!canUseMarket() || held <= 0) return;
       const sys = currentSystem();
       const stock = marketStockFor(sys);
       const item = marketFor(sys).find((g) => g.name === name);
       if (!item) return;
-      game.cargo[name]--;
+      game.cargo[name] = held - 1;
       game.credits += item.price;
       stock[name] = Math.max(0, Math.trunc(Number(stock[name] ?? item.qty) || 0) + 1);
       eliteAudio.play("beep");
       if (item.illegal && Math.random() > .8) game.legal += 1;
+      if (name === CARGO_FUEL_GOOD) setMessage("Sold 1t cargo fuel reserve.");
       renderPanel();
     }
 
     function buyFuel() {
       if (!canUseMarket()) return;
-      const needTenths = Math.max(0, Math.round((7 - game.fuel) * 10));
+      const needTenths = Math.max(0, Math.round((fuelTankCapacityLy() - game.fuel) * 10));
       if (needTenths <= 0) {
         eliteAudio.play("boop");
         setMessage("Fuel tanks already full.");
@@ -9467,7 +9989,7 @@
       const cost = affordableTenths * 0.2;
       const partial = affordableTenths < needTenths;
       game.credits -= cost;
-      game.fuel = clamp(game.fuel + amount, 0, 7);
+      game.fuel = clamp(game.fuel + amount, 0, fuelTankCapacityLy());
       eliteAudio.play("scoop");
       setMessage(partial ? `Insufficient credits for full refuel. Partial fill: ${fmt(amount)} LY.` : `Fuel tanks filled: ${fmt(amount)} LY loaded.`);
       renderPanel();
@@ -9638,7 +10160,7 @@
     }
 
     function cheatRefillShip() {
-      game.fuel = 7;
+      game.fuel = fuelTankCapacityLy();
       restoreShipSystems();
       game.missiles = 4;
       setMessage("Cheat: ship fully refuelled and repaired.");
@@ -9753,15 +10275,15 @@
 
     const GAME_VERSION = "1.0.21-beta";
     const UPDATE_LOG = [
-      ["1.0.21-beta", "Ship Builder overhaul: added a fullscreen-ready workshop with undo/redo, view-cube controls, better selection tools, surface/extrude workflows, and refreshed Boa and Canister asset rendering."],
+      ["1.0.21-beta", "Internal asset-authoring systems and model maintenance update.", true],
       ["1.0.20-beta", "Ship and station surface polish: optimized several model assets, refreshed Diamondback skin textures, and tightened station panel mapping for cleaner Ultra-mode rendering."],
       ["1.0.19-beta", "Mission and dockyard polish: active contracts now report ship requirements more clearly, mission completion debriefs wait until landing is complete, and transition cameras lock the cockpit view cleanly."],
       ["1.0.18-beta", "Launch loading now gates the cockpit until assets are ready, Safari planet shadows are safer, and station/police beacons have clearer sequenced strobe behaviour."],
       ["1.0.17-beta", "Station render polish: bitmap faces, entrance forcefields, beacons and hangar transitions now line up more cleanly."],
       ["1.0.16-beta", "Escape capsule fix: ejecting now clears your legal status properly when you are recovered at Lave."],
-      ["1.0.15-beta", "Ship and station surface polish: fixed missing bitmap faces on station models, including Dodo front/back panels, and improved workshop preview consistency."],
-      ["1.0.14-beta", "HUD and workshop polish: added an in-game pause control, increased global volume headroom and improved ship-builder preview tools for future Project X craft."],
-      ["1.0.13-beta", "Project structure refresh: Ultra Elite now builds from modular local source files into the single-file browser release, with a dedicated ship-builder workshop for future Project X craft."],
+      ["1.0.15-beta", "Ship and station surface polish: fixed missing bitmap faces on station models, including Dodo front/back panels, and improved Ultra-mode consistency."],
+      ["1.0.14-beta", "HUD polish: added an in-game pause control, increased global volume headroom and improved ship preview consistency."],
+      ["1.0.13-beta", "Internal build and asset pipeline refresh.", true],
       ["1.0.12-beta", "Audio mix polish: raised the global master level so Ultra mode engines, weapons, station ambience and cinematic transitions come through more clearly."],
       ["1.0.11-beta", "Old School renderer polish: hidden-line ships now use black inset hull fills to mask rear geometry, giving wireframes a sharper, more authentic retro edge while keeping armada performance high."],
       ["1.0.10-beta", "Station lane and trading fix: hyperspace arrivals now start farther from the station, pirate encounters have room to appear, Dodo docking cues are corrected, and market/save exploits are closed."],
@@ -9771,7 +10293,7 @@
       ["1.0.6-beta", "Chart usability polish: the local map now lets you select the current system to inspect its full system information."],
       ["1.0.5-beta", "Planet generation polish: larger varied gas giants, roughly half with wider ring systems, plus broader colour variation across gas, Venus-like and other world types."],
       ["1.0.4-beta", "Docking and sound polish: added automatic station slot capture with HUD alignment ticks, first-run getting-started guidance and a deeper tuned explosion sound."],
-      ["1.0.3-beta", "Ultra audio lab build: added a local procedural sound-design tool and tuned richer launch blast-off, hangar clamp release and docked station rumble effects."],
+      ["1.0.3-beta", "Audio polish: tuned richer launch blast-off, hangar clamp release and docked station rumble effects."],
       ["1.0.2-beta", "Visual polish build: refined star shading and lens flare, expanded procedural planet/weather styles, fixed rock object materials and darkened distant ship LOD hulls."],
       ["1.0.1-beta", "Performance polish build: tightened old-school mode visuals, added size-aware distant ship LOD/glints, culled far engine trails and reduced Safari HUD update churn."],
       ["1.0.0-beta", "Performance test build: added adaptive rendering LOD, scene-load scaling for busy armada battles, reduced particle/detail cost under load and a small FPS/LOD/object ticker for feedback."],
@@ -9785,7 +10307,7 @@
       ["0.1.8", "Improved combat hitboxes, laser range feedback, finite NPC missiles, target prioritisation and rear-facing damage/decals."],
       ["0.1.7", "Added procedural ship liveries: commercial hauler branding, pirate sigils, police strobes, damage and metal surface treatments."],
       ["0.1.6", "Reworked ship movement, scanner orientation, hidden-line wireframe behaviour, docking/launch transitions and galaxy jump visuals."],
-      ["0.1.5", "Added developer mode, ship swapping, expanded cheats, unlimited dev hyperspace range and local chart zoom/pan."],
+      ["0.1.5", "Internal test controls and navigation maintenance update.", true],
       ["0.1.4", "Added commander file download/upload saves, ship preview scaling and expanded source-derived ship catalogue."],
       ["0.1.0", "Initial browser experiment: deterministic galaxies, market trading, docking, hyperspace, combat, equipment, cargo scooping and classic wireframe presentation."]
     ];
@@ -10044,7 +10566,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     const SAVE_FORMAT = "ultra-elite-commander";
     const SAVE_FILE_MAGIC = "UEC2";
     const SAVE_FILE_SECRET = "ultra-elite-save-file-v2";
-    const SAVE_FIELDS = ["commander", "galaxy", "current", "target", "credits", "poopyBonusClaimed", "fuel", "kills", "missionRankPoints", "navalReputation", "legal", "playerShip", "cargoCap", "missiles", "graphicsMode", "fxLevel", "marketStock", "missions", "missionUnlocks"];
+    const SAVE_FIELDS = ["commander", "galaxy", "current", "target", "finalTarget", "credits", "poopyBonusClaimed", "fuel", "kills", "missionRankPoints", "navalReputation", "legal", "playerShip", "cargoCap", "missiles", "graphicsMode", "fxLevel", "marketStock", "missions", "missionUnlocks"];
 
     function bytesToBase64(bytes) {
       let bin = "";
@@ -10113,7 +10635,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return {
         format: SAVE_FORMAT,
         galaxySeedVersion: 2,
-        commander: game.commander, galaxy: game.galaxy, current: game.current, target: game.target,
+        commander: game.commander, galaxy: game.galaxy, current: game.current, target: game.target, finalTarget: game.finalTarget,
         credits: game.credits, poopyBonusClaimed: !!game.poopyBonusClaimed, fuel: game.fuel, kills: game.kills, missionRankPoints: game.missionRankPoints || 0, navalReputation: navalReputationScore(), legal: game.legal, playerShip: playerShipModel(), cargoCap: game.cargoCap,
         cargo: game.cargo, equipment: game.equipment, missiles: game.missiles, graphicsMode: game.graphicsMode, fxLevel: game.fxLevel,
         marketStock: game.marketStock || {},
@@ -10134,6 +10656,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         galaxy: 0,
         current: LAVE_INDEX,
         target: DISO_INDEX,
+        finalTarget: DISO_INDEX,
         credits: 100,
         poopyBonusClaimed: false,
         fuel: 7,
@@ -10172,8 +10695,11 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       game.poopyBonusClaimed = !!data.poopyBonusClaimed;
       game.galaxy = clamp(Math.trunc(Number(game.galaxy) || 0), 0, galaxies.length - 1);
       const maxSystem = galaxies[game.galaxy].length - 1;
-      game.current = clamp(Math.trunc(Number(game.current) || LAVE_INDEX), 0, maxSystem);
-      game.target = clamp(Math.trunc(Number(game.target) || DISO_INDEX), 0, maxSystem);
+      game.current = clamp(Math.trunc(Number.isFinite(Number(game.current)) ? Number(game.current) : LAVE_INDEX), 0, maxSystem);
+      game.target = clamp(Math.trunc(Number.isFinite(Number(game.target)) ? Number(game.target) : DISO_INDEX), 0, maxSystem);
+      const finalRaw = Number.isFinite(Number(game.finalTarget)) ? Number(game.finalTarget) : game.target;
+      game.finalTarget = clamp(Math.trunc(finalRaw), 0, maxSystem);
+      updateNextDestinationForFinalTarget();
       game.cargo = { ...Object.fromEntries(GOODS.map((g) => [g[0], 0])), ...(data.cargo || {}) };
       game.marketStock = data.marketStock && typeof data.marketStock === "object" ? data.marketStock : {};
       game.missionRankPoints = Number(game.missionRankPoints) || 0;
@@ -10431,7 +10957,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
             game.commsClock = 16 + Math.random() * 26;
             const talkers = worldSnapshot().ships.filter((s) => s.role && s.role !== "pod");
             const station = dockableTarget();
-            if (station && (Math.random() < .32 || !talkers.length)) {
+            const missionTalker = pickMissionCommsCandidate();
+            if (missionTalker && Math.random() < (sameSystemRef(missionTalker.destination) ? .42 : .22)) {
+              missionCommsMessage(missionTalker, missionAmbientLine(missionTalker));
+            } else if (station && (Math.random() < .32 || !talkers.length)) {
               commsMessage(`${station.name.toUpperCase()} CONTROL`, stationChatterLine(), "station");
             } else if (talkers.length) {
               const t = pick(talkers);
@@ -11258,6 +11787,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (o.aiMode === "hyperspaceIn") {
         const jump = o.hyperspaceIn || (o.hyperspaceIn = { t: 0, dur: 1.4, revealAt: .72, dir: shipForward(o), aiMode: "cruise", vel: vec(), speed: 0 });
         jump.t += dt;
+        if (!jump.effectPlayed && jump.t >= 0) {
+          jump.effectPlayed = true;
+          spawnNpcHyperspaceInEffect(o);
+        }
         const p = clamp(jump.t / Math.max(.1, jump.dur), 0, 1);
         if (shipHyperspaceHidden(o) && p >= (jump.revealAt ?? .72)) {
           o._hyperspaceHidden = false;
@@ -19010,16 +19543,24 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function renderMarket() {
       const marketOpen = canUseMarket();
       const disabled = marketOpen ? "" : "disabled";
-      const fuelNeedTenths = Math.max(0, Math.round((7 - game.fuel) * 10));
+      const fuelNeedTenths = Math.max(0, Math.round((fuelTankCapacityLy() - game.fuel) * 10));
       const fuelFullCost = fuelNeedTenths * 0.2;
       const fuelDisabled = !marketOpen || fuelNeedTenths <= 0 || game.credits < 0.2 ? "disabled" : "";
       const fuelLabel = fuelNeedTenths <= 0 ? "Fuel Tanks Full" : `Refuel to Full (${fmt(fuelFullCost)} CR)`;
+      const comparator = marketComparatorForDestination();
+      const comparatorHead = comparator?.active ? `<th>${escapeHtml(comparator.system.name)}</th><th>Diff</th>` : "";
       let rows = marketFor(currentSystem()).map((item) => {
         const cargo = game.cargo[item.name] || 0;
         const buyDisabled = disabled || item.qty <= 0 || usedCargo() >= game.cargoCap || game.credits < item.price ? "disabled" : "";
+        const destPrice = comparator?.prices.get(item.name);
+        const diff = Number.isFinite(destPrice) ? destPrice - item.price : null;
+        const comparatorCells = comparator?.active
+          ? `<td>${fmt(destPrice)}</td><td class="${diff > .004 ? "market-diff-good" : diff < -.004 ? "market-diff-bad" : "market-diff-flat"}">${diff > .004 ? "+" : ""}${fmt(diff)}</td>`
+          : "";
         return `<tr>
           <td class="${item.illegal ? "illegal" : ""}">${item.name}</td>
           <td>${fmt(item.price)}</td>
+          ${comparatorCells}
           <td>${item.qty}${item.unit}</td>
           <td>${cargo}</td>
           <td><button class="btn mini" data-buy="${item.name}" ${buyDisabled}>Buy</button></td>
@@ -19028,10 +19569,18 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }).join("");
       const sealedCargo = missionCargoUsed();
       const sealedNote = sealedCargo ? `<div class="notice">Sealed mission cargo: ${sealedCargo}t protected. It cannot be sold, jettisoned, or destroyed.</div>` : "";
-      return `<div class="notice">Credits ${fmt(game.credits)} CR &nbsp; Cargo ${usedCargo()}/${game.cargoCap}t &nbsp; Fuel ${fmt(game.fuel)} LY</div>
+      const reserveFuel = cargoFuelTons();
+      const reserveNote = reserveFuel ? ` &nbsp; Reserve Fuel ${reserveFuel}t/${fmt(reserveFuel * CARGO_FUEL_LY_PER_TON)} LY` : "";
+      const comparatorNote = comparator?.active
+        ? `<div class="notice">Market Comparator: comparing local prices against plotted destination ${escapeHtml(comparator.system.name)}.</div>`
+        : game.equipment.marketComparator
+          ? `<div class="notice">Market Comparator fitted. Plot a destination on the Chart to compare prices.</div>`
+          : "";
+      return `<div class="notice">Credits ${fmt(game.credits)} CR &nbsp; Cargo ${usedCargo()}/${game.cargoCap}t &nbsp; Fuel ${fmt(game.fuel)} LY${reserveNote}</div>
         ${sealedNote}
+        ${comparatorNote}
         <button class="btn primary" data-fuel ${fuelDisabled || disabled}>${fuelLabel}</button>
-        <table><thead><tr><th>Goods</th><th>Price</th><th>Avail</th><th>Cargo</th><th></th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+        <table><thead><tr><th>Goods</th><th>Local</th>${comparatorHead}<th>Avail</th><th>Cargo</th><th></th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
     }
 
     function missionRewardText(mission) {
@@ -19060,6 +19609,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function missionProgressText(mission) {
       if (mission.status !== "active") return mission.status.toUpperCase();
+      if (!missionProgressUnlocked(mission)) {
+        const dispatch = activeImmediateDispatchMission();
+        return `Locked by immediate dispatch: complete ${dispatch?.title || "the loaned-ship assignment"} first`;
+      }
       const atDestination = sameSystemRef(mission.destination);
       const bits = [];
       bits.push(atDestination ? `In ${mission.destination.name}` : `Destination ${mission.destination.name} (${fmt(mission.distanceLy)} LY)`);
@@ -19095,22 +19648,198 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       );
     }
 
+    function missionMapClass(mission) {
+      if (!mission) return "mission-ring-generic";
+      if (mission.type === "courier") return "mission-ring-courier";
+      if (mission.type === "cargo") return "mission-ring-cargo";
+      if (mission.type === "bounty" || mission.type === "suppression") return "mission-ring-combat";
+      if (mission.type === "recovery") return "mission-ring-recovery";
+      if (mission.type === "traderDefence") return "mission-ring-defence";
+      if (mission.type === "naval" || mission.type === "navalBattle") return "mission-ring-naval";
+      return "mission-ring-generic";
+    }
+
     function missionDestinationSystem(mission) {
       const ref = mission?.destination;
       if (!ref || ref.galaxy !== game.galaxy || !Number.isInteger(ref.system)) return null;
       return galaxies[game.galaxy]?.[ref.system] || null;
     }
 
-    function missionRouteLine(x1, y1, x2, y2) {
+    function mapRouteLine(x1, y1, x2, y2, className) {
       if (![x1, y1, x2, y2].every(Number.isFinite)) return "";
       if (Math.hypot(x2 - x1, y2 - y1) < .5) return "";
-      return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" class="mission-route-line" pointer-events="none"></line>`;
+      return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" class="${className}" pointer-events="none"></line>`;
     }
 
-    function missionMapHalo(x, y, radius, count = 1) {
-      if (!count) return "";
-      const label = `${count} active mission${count === 1 ? "" : "s"}`;
-      return `<circle cx="${x}" cy="${y}" r="${radius}" class="mission-destination-ring" pointer-events="none"><title>${escapeHtml(label)}</title></circle>`;
+    function missionChartClass(mission) {
+      return missionLockedOutOnChart(mission) ? "mission-chart-locked" : "mission-chart-active";
+    }
+
+    function missionRouteLine(x1, y1, x2, y2, mission = null) {
+      const lockClass = mission ? ` ${missionChartClass(mission)}` : "";
+      return mapRouteLine(x1, y1, x2, y2, `mission-route-line${lockClass}`);
+    }
+
+    function plottedCourseLine(x1, y1, x2, y2) {
+      return mapRouteLine(x1, y1, x2, y2, "plotted-course-line");
+    }
+
+    function plottedCourseRing(x, y, radius, systemName) {
+      return `<circle cx="${x}" cy="${y}" r="${radius}" class="plotted-course-ring" pointer-events="none"><title>${escapeHtml(`Plotted course: ${systemName}`)}</title></circle>`;
+    }
+
+    function chartOverlayEnabled(id) {
+      if (!game.chartOverlays || typeof game.chartOverlays !== "object") game.chartOverlays = {};
+      if (game.chartOverlays[id] === undefined) game.chartOverlays[id] = true;
+      return game.chartOverlays[id] !== false;
+    }
+
+    function setChartOverlay(id, enabled) {
+      if (!game.chartOverlays || typeof game.chartOverlays !== "object") game.chartOverlays = {};
+      game.chartOverlays[id] = !!enabled;
+      renderPanel();
+    }
+
+    function renderChartOverlayFilters() {
+      const option = (id, label) => `<label class="chart-filter"><input type="checkbox" data-chart-overlay="${id}" ${chartOverlayEnabled(id) ? "checked" : ""}> <span>${label}</span></label>`;
+      return `<div class="chart-filters" aria-label="Chart overlays">
+        ${option("missionRoutes", "Mission lines")}
+        ${option("plottedCourse", "Plotted course")}
+        ${option("suggestedRoute", "Suggested route")}
+      </div>`;
+    }
+
+    function suggestedRouteSafetyPenalty(system) {
+      if (!system) return 0;
+      const governmentPenalty = clamp((3 - (Number(system.government) || 0)) / 3, 0, 1) * .18;
+      const techPenalty = clamp((7 - (Number(system.tech) || 0)) / 7, 0, 1) * .05;
+      return governmentPenalty + techPenalty;
+    }
+
+    function suggestedRouteToTarget() {
+      const systems = galaxies[game.galaxy] || [];
+      const start = game.current;
+      const goal = Number.isInteger(game.finalTarget) ? game.finalTarget : game.target;
+      if (!systems[start] || !systems[goal]) return null;
+      if (start === goal) return { systems: [systems[start]], jumps: 0, totalLy: 0, next: null, direct: true };
+      const maxLegLy = currentHyperdriveRangeLy() + .0001;
+      const dist = Array(systems.length).fill(Infinity);
+      const hops = Array(systems.length).fill(Infinity);
+      const prev = Array(systems.length).fill(-1);
+      const seen = Array(systems.length).fill(false);
+      dist[start] = 0;
+      hops[start] = 0;
+      for (let step = 0; step < systems.length; step++) {
+        let best = -1;
+        for (let i = 0; i < systems.length; i++) {
+          if (seen[i]) continue;
+          if (best < 0 || dist[i] < dist[best]) best = i;
+        }
+        if (best < 0 || !Number.isFinite(dist[best])) break;
+        if (best === goal) break;
+        seen[best] = true;
+        for (let i = 0; i < systems.length; i++) {
+          if (i === best || seen[i]) continue;
+          const legLy = distance(systems[best], systems[i]);
+          if (legLy > maxLegLy) continue;
+          const candidateHops = hops[best] + 1;
+          const candidate = candidateHops * 1000 + (dist[best] - hops[best] * 1000) + legLy + suggestedRouteSafetyPenalty(systems[i]);
+          if (candidate + .000001 < dist[i]) {
+            dist[i] = candidate;
+            hops[i] = candidateHops;
+            prev[i] = best;
+          }
+        }
+      }
+      if (prev[goal] < 0) return null;
+      const route = [];
+      for (let at = goal; at >= 0; at = prev[at]) {
+        route.push(systems[at]);
+        if (at === start) break;
+      }
+      route.reverse();
+      if (route[0]?.index !== start) return null;
+      let totalLy = 0;
+      for (let i = 1; i < route.length; i++) totalLy += distance(route[i - 1], route[i]);
+      return {
+        systems: route,
+        jumps: route.length - 1,
+        totalLy,
+        next: route[1] || null,
+        direct: route.length === 2
+      };
+    }
+
+    function updateNextDestinationForFinalTarget() {
+      const maxSystem = galaxies[game.galaxy].length - 1;
+      if (!Number.isInteger(game.finalTarget)) game.finalTarget = game.target;
+      const rawFinal = Number.isFinite(Number(game.finalTarget)) ? Number(game.finalTarget) : Number(game.current);
+      game.finalTarget = clamp(Math.trunc(rawFinal), 0, maxSystem);
+      if (game.finalTarget === game.current) {
+        game.target = game.current;
+        return { route: { systems: [currentSystem()], jumps: 0, totalLy: 0, next: null, direct: true }, next: currentSystem() };
+      }
+      const route = suggestedRouteToTarget();
+      const next = route?.next || galaxies[game.galaxy][game.finalTarget];
+      const rawNext = Number.isFinite(Number(next?.index)) ? Number(next.index) : Number(game.finalTarget);
+      game.target = clamp(Math.trunc(rawNext), 0, maxSystem);
+      return { route, next: targetSystem() };
+    }
+
+    function setFinalDestination(systemIndex) {
+      const maxSystem = galaxies[game.galaxy].length - 1;
+      const raw = Number.isFinite(Number(systemIndex)) ? Number(systemIndex) : 0;
+      game.finalTarget = clamp(Math.trunc(raw), 0, maxSystem);
+      return updateNextDestinationForFinalTarget();
+    }
+
+    function suggestedRouteLines(route, project) {
+      const systems = route?.systems || [];
+      if (systems.length < 3) return "";
+      return systems.slice(1).map((system, i) => {
+        const from = project(systems[i]);
+        const to = project(system);
+        return mapRouteLine(from.x, from.y, to.x, to.y, "suggested-route-line");
+      }).join("");
+    }
+
+    function suggestedRouteWaypoints(route, project) {
+      const systems = route?.systems || [];
+      if (systems.length < 3) return "";
+      return systems.slice(1, -1).map((system, i) => {
+        const pos = project(system);
+        return `<circle cx="${pos.x.toFixed(1)}" cy="${pos.y.toFixed(1)}" r="3.2" class="suggested-route-waypoint" pointer-events="none"><title>${escapeHtml(`Route hop ${i + 1}: ${system.name}`)}</title></circle>`;
+      }).join("");
+    }
+
+    function renderSuggestedRouteSummary(route, target) {
+      if (game.current === game.finalTarget) return "";
+      if (!route) return `<div class="notice route-summary route-summary-missing">No suggested ${fmt(currentHyperdriveRangeLy())} LY route to ${escapeHtml(target.name)} in this galaxy.</div>`;
+      const next = route.next ? `${escapeHtml(route.next.name)} · ${fmt(distance(currentSystem(), route.next))} LY` : "already here";
+      const label = route.direct ? "Direct plotted jump" : `Suggested route · ${route.jumps} jumps`;
+      return `<div class="notice route-summary">
+        <strong class="about-heading">${label}</strong>
+        <div class="grid2">
+          ${stat("Next Hop", next)}
+          ${stat("Total", `${fmt(route.totalLy)} LY`)}
+        </div>
+      </div>`;
+    }
+
+    function missionMapHalos(x, y, radius, missions = []) {
+      if (!missions.length) return "";
+      const typeOrder = [];
+      const typeNames = new Map();
+      for (const mission of missions) {
+        const className = `${missionMapClass(mission)} ${missionChartClass(mission)}`;
+        if (!typeNames.has(className)) typeOrder.push(className);
+        typeNames.set(className, MISSION_TYPES[mission.type] || "Mission");
+      }
+      return typeOrder.slice(0, 4).map((className, i) => {
+        const typeName = typeNames.get(className) || "Mission";
+        const label = `${typeName}: ${missions.filter((mission) => `${missionMapClass(mission)} ${missionChartClass(mission)}` === className).map((mission) => mission.title).join(", ")}`;
+        return `<circle cx="${x}" cy="${y}" r="${(radius + i * 2.8).toFixed(1)}" class="mission-destination-ring ${className}" pointer-events="none"><title>${escapeHtml(label)}</title></circle>`;
+      }).join("");
     }
 
     function centerLocalMapOnSystem(system) {
@@ -19121,6 +19850,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function plotMissionCourse(id) {
       const mission = activeMissionById(id);
+      const dispatch = activeImmediateDispatchMission();
+      if (dispatch && mission?.id !== dispatch.id) {
+        eliteAudio.play("boop");
+        syncImmediateDispatchCourse({ announce: true });
+        renderPanel();
+        return;
+      }
       if (!mission?.destination || mission.destination.galaxy !== game.galaxy) {
         eliteAudio.play("boop");
         setMessage("Mission destination is not on this galaxy chart.", true);
@@ -19133,13 +19869,40 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         return;
       }
       const currentDistance = destination ? distance(currentSystem(), destination) : mission.distanceLy;
-      game.target = mission.destination.system;
+      const routeState = setFinalDestination(mission.destination.system);
       game.panel = "chart";
       game.panelOpen = true;
       game.mapMode = currentDistance <= 24 ? "local" : "galaxy";
       if (game.mapMode === "local" && destination) centerLocalMapOnSystem(destination);
-      setMessage(`Course plotted for ${mission.destination.name}: ${mission.title}.`, true);
+      const hop = routeState.next && routeState.next.index !== game.finalTarget ? ` Next jump: ${routeState.next.name}.` : "";
+      setMessage(`Course plotted for ${mission.destination.name}: ${mission.title}.${hop}`, true);
       renderPanel();
+    }
+
+    function openMissionFromChart(id) {
+      const mission = activeMissionById(id);
+      const dispatch = activeImmediateDispatchMission();
+      if (dispatch && mission?.id !== dispatch.id) {
+        eliteAudio.play("boop");
+        syncImmediateDispatchCourse({ announce: true });
+        renderPanel();
+        return;
+      }
+      if (!mission) {
+        eliteAudio.play("boop");
+        setMessage("Mission is no longer active.", true);
+        renderPanel();
+        return;
+      }
+      game.focusMissionId = mission.id;
+      game.panel = "missions";
+      game.panelOpen = true;
+      setMessage(`Mission channel: ${mission.title}.`, true);
+      renderPanel();
+      requestAnimationFrame(() => {
+        const card = Array.from(panelBody.querySelectorAll("[data-mission-card]")).find((el) => el.dataset.missionCard === mission.id);
+        if (card) card.scrollIntoView({ block: "nearest" });
+      });
     }
 
     function renderMissionCard(mission, active = false) {
@@ -19148,19 +19911,34 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const cargo = mission.cargo ? `${mission.cargo.tons}t ${mission.cargo.name}` : mission.suppression ? `destroy ${mission.suppression.required} pirates` : mission.encounter ? `destroy ${mission.encounter.required} ${mission.encounter.kind === "navalBattle" ? "alien contacts" : "raiders"}` : mission.recovery ? `recover ${mission.recovery.name}` : "none";
       const devBypass = devBypassesMissionRequirements();
       const missing = missingMissionRequirements(mission);
+      const activeDispatch = activeImmediateDispatchMission();
+      const immediateDispatch = missionHasLoanerShip(mission);
+      const activeCount = missionState().active.filter((m) => m.status === "active").length;
       const requirements = mission.requirements?.length
         ? mission.requirements.map((req) => devBypass ? `${req.label} bypassed` : missing.some((m) => m.id === req.id) ? `${req.label} required` : `${req.label} fitted`).join(" · ")
         : "None";
-      const canAccept = game.docked && !active && !missing.length && (devBypass || !mission.cargo || usedCargo() + (Number(mission.cargo.tons) || 0) <= game.cargoCap);
+      const dispatchBlocked = !active && (!!activeDispatch || (immediateDispatch && activeCount > 0));
+      const canAccept = game.docked && !active && !dispatchBlocked && !missing.length && (devBypass || !mission.cargo || usedCargo() + (Number(mission.cargo.tons) || 0) <= game.cargoCap);
       const requirementWarning = active && missing.length
         ? `<div class="mission-requirement-warning">Current ship does not meet mission requirements: ${escapeHtml(missing.map((req) => req.label).join(", "))}</div>`
         : "";
-      return `<div class="notice mission-card${requirementWarning ? " mission-card-warning" : ""}">
+      const dispatchWarning = !active && dispatchBlocked
+        ? `<div class="mission-requirement-warning">Immediate dispatch lockout: ${activeDispatch ? `complete ${escapeHtml(activeDispatch.title)} first` : "clear active contracts before accepting this loaned-ship assignment"}.</div>`
+        : active && activeDispatch && activeDispatch.id !== mission.id
+          ? `<div class="mission-requirement-warning">Progress locked by immediate dispatch: ${escapeHtml(activeDispatch.title)}.</div>`
+          : "";
+      const dispatchBadge = immediateDispatch
+        ? `<div class="mission-dispatch-tag">Immediate dispatch · loaned ${escapeHtml(shipName(mission.loanShip.model))}</div>`
+        : "";
+      const focusClass = game.focusMissionId === mission.id ? " mission-card-focused" : "";
+      return `<div class="notice mission-card${requirementWarning || dispatchWarning ? " mission-card-warning" : ""}${focusClass}" data-mission-card="${escapeAttr(mission.id)}">
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
           <strong class="about-heading">${escapeHtml(type)} · ${escapeHtml(mission.title)}</strong>
           <span style="color:var(--amber);white-space:nowrap">${escapeHtml(heat)}</span>
         </div>
         ${requirementWarning}
+        ${dispatchWarning}
+        ${dispatchBadge}
         <p>${escapeHtml(mission.description)}</p>
         <div class="grid2">
           ${stat("Issuer", escapeHtml(mission.issuer))}
@@ -19208,7 +19986,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ${boardHtml}`;
     }
 
-    function renderGalaxyMap() {
+    function renderGalaxyMap(route = null) {
       const w = 480, h = 300, pad = 16;
       const sys = galaxies[game.galaxy];
       const xs = sys.map((s) => s.x), ys = sys.map((s) => s.y);
@@ -19217,32 +19995,42 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const sx = (x) => pad + (x - minX) / (maxX - minX || 1) * (w - pad * 2);
       const sy = (y) => pad + (y - minY) / (maxY - minY || 1) * (h - pad * 2);
       const cur = currentSystem();
-      const curX = sx(cur.x).toFixed(1), curY = sy(cur.y).toFixed(1);
-      const missionRoutes = activeMissionsInCurrentGalaxy().map((mission) => {
+      const tgt = finalTargetSystem();
+      const curXn = sx(cur.x), curYn = sy(cur.y);
+      const curX = curXn.toFixed(1), curY = curYn.toFixed(1);
+      const missionRoutes = chartOverlayEnabled("missionRoutes") ? activeMissionsInCurrentGalaxy().map((mission) => {
         const dest = missionDestinationSystem(mission);
         if (!dest) return "";
-        return missionRouteLine(Number(curX), Number(curY), sx(dest.x), sy(dest.y));
-      }).join("");
+        return missionRouteLine(curXn, curYn, sx(dest.x), sy(dest.y), mission);
+      }).join("") : "";
+      const plottedCourseVisible = chartOverlayEnabled("plottedCourse");
+      const plottedRoute = plottedCourseVisible && tgt.index !== cur.index ? plottedCourseLine(curXn, curYn, sx(tgt.x), sy(tgt.y)) : "";
+      const project = (system) => ({ x: sx(system.x), y: sy(system.y) });
+      const suggestedRouteVisible = chartOverlayEnabled("suggestedRoute");
+      const suggestedRoutes = suggestedRouteVisible ? suggestedRouteLines(route, project) : "";
+      const suggestedWaypoints = suggestedRouteVisible ? suggestedRouteWaypoints(route, project) : "";
       const dots = sys.map((s) => {
         const isCur = s.index === game.current;
-        const isTgt = s.index === game.target;
-        const missionCount = activeMissionsForSystem(s).length;
+        const isTgt = s.index === game.finalTarget;
+        const missions = activeMissionsForSystem(s);
         const r = isCur || isTgt ? 4.2 : 2.1;
         const fill = isCur ? "var(--cyan)" : isTgt ? "var(--amber)" : "var(--green-dim)";
         const x = sx(s.x).toFixed(1), y = sy(s.y).toFixed(1);
         return `<g class="map-dot" data-sys="${s.index}">
-          ${missionMapHalo(x, y, isCur || isTgt ? 9.5 : 7.5, missionCount)}
+          ${plottedCourseVisible && isTgt && !isCur ? plottedCourseRing(x, y, 12.4, s.name) : ""}
+          ${missionMapHalos(x, y, isCur || isTgt ? 9.5 : 7.5, missions)}
           <circle cx="${x}" cy="${y}" r="8" class="map-hit"><title>${s.name}</title></circle>
           <circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" pointer-events="none"></circle>
         </g>`;
       }).join("");
-      return `<svg viewBox="0 0 ${w} ${h}" class="star-map" data-map="galaxy">${missionRoutes}${dots}</svg>`;
+      return `<svg viewBox="0 0 ${w} ${h}" class="star-map" data-map="galaxy">${missionRoutes}${plottedRoute}${suggestedRoutes}${suggestedWaypoints}${dots}</svg>`;
     }
 
-    function renderLocalMap() {
+    function renderLocalMap(route = null) {
       const w = 480, h = 300, cx = w / 2, cy = h / 2;
       const cur = currentSystem();
-      const zoom = 4;
+      const zoom = clamp(Number(game.localMapZoom) || 4, 1.5, 10);
+      game.localMapZoom = zoom;
       const maxLy = 24 / zoom;
       const scalePx = (Math.min(w, h) / 2 - 10) / maxLy;
       const originX = cx - (game.localMapPanX || 0) * scalePx;
@@ -19252,29 +20040,42 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const dyLy = (s.y - cur.y) / 4;
         return { s, d: distance(cur, s), x: originX + dxLy * scalePx, y: originY + dyLy * scalePx };
       }).filter((x) => x.x >= -20 && x.x <= w + 20 && x.y >= -20 && x.y <= h + 20);
-      const maxRangeLy = 7;
+      const maxRangeLy = currentHyperdriveRangeLy();
       const currentRangeLy = clamp(game.fuel || 0, 0, maxRangeLy);
       const rings = [4, 8, 12, 16, 20, 24].map((ly) =>
         `<circle cx="${originX.toFixed(1)}" cy="${originY.toFixed(1)}" r="${(ly * scalePx).toFixed(1)}" class="range-ring"></circle>`
       ).join("")
         + (currentRangeLy > .05 ? `<circle cx="${originX.toFixed(1)}" cy="${originY.toFixed(1)}" r="${(currentRangeLy * scalePx).toFixed(1)}" class="range-ring current-range"></circle>` : "")
         + `<circle cx="${originX.toFixed(1)}" cy="${originY.toFixed(1)}" r="${(maxRangeLy * scalePx).toFixed(1)}" class="range-ring max-range"></circle>`;
-      const missionRoutes = activeMissionsInCurrentGalaxy().map((mission) => {
+      const missionRoutes = chartOverlayEnabled("missionRoutes") ? activeMissionsInCurrentGalaxy().map((mission) => {
         const dest = missionDestinationSystem(mission);
         if (!dest) return "";
         const dxLy = (dest.x - cur.x) / 4;
         const dyLy = (dest.y - cur.y) / 4;
         const x = originX + dxLy * scalePx;
         const y = originY + dyLy * scalePx;
-        return missionRouteLine(originX, originY, x, y);
-      }).join("");
+        return missionRouteLine(originX, originY, x, y, mission);
+      }).join("") : "";
+      const tgt = finalTargetSystem();
+      const targetX = originX + ((tgt.x - cur.x) / 4) * scalePx;
+      const targetY = originY + ((tgt.y - cur.y) / 4) * scalePx;
+      const plottedCourseVisible = chartOverlayEnabled("plottedCourse");
+      const plottedRoute = plottedCourseVisible && tgt.index !== cur.index ? plottedCourseLine(originX, originY, targetX, targetY) : "";
+      const project = (system) => ({
+        x: originX + ((system.x - cur.x) / 4) * scalePx,
+        y: originY + ((system.y - cur.y) / 4) * scalePx
+      });
+      const suggestedRouteVisible = chartOverlayEnabled("suggestedRoute");
+      const suggestedRoutes = suggestedRouteVisible ? suggestedRouteLines(route, project) : "";
+      const suggestedWaypoints = suggestedRouteVisible ? suggestedRouteWaypoints(route, project) : "";
       const dots = nearby.map(({ s, d, x, y }) => {
         const isCur = s.index === game.current;
-        const isTgt = s.index === game.target;
-        const missionCount = activeMissionsForSystem(s).length;
+        const isTgt = s.index === game.finalTarget;
+        const missions = activeMissionsForSystem(s);
         const label = isCur || d <= maxRangeLy ? `<text x="${(x + 7).toFixed(1)}" y="${(y + 4).toFixed(1)}" class="map-label">${s.name}</text>` : "";
         return `<g class="map-dot" data-sys="${s.index}">
-          ${missionMapHalo(x.toFixed(1), y.toFixed(1), isCur ? 15 : isTgt ? 10 : 8.5, missionCount)}
+          ${plottedCourseVisible && isTgt && !isCur ? plottedCourseRing(x.toFixed(1), y.toFixed(1), 13, s.name) : ""}
+          ${missionMapHalos(x.toFixed(1), y.toFixed(1), isCur ? 15 : isTgt ? 10 : 8.5, missions)}
           <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${isCur ? 12 : 10}" class="map-hit"><title>${s.name}</title></circle>
           <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${isCur || isTgt ? 4.4 : 3}" fill="${isCur ? "var(--cyan)" : isTgt ? "var(--amber)" : "var(--green)"}" pointer-events="none"></circle>
           ${label}
@@ -19283,6 +20084,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       return `<svg viewBox="0 0 ${w} ${h}" class="star-map" data-map="local">
         ${rings}
         ${missionRoutes}
+        ${plottedRoute}
+        ${suggestedRoutes}
+        ${suggestedWaypoints}
         ${dots}
       </svg>`;
     }
@@ -19378,8 +20182,23 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const star = stellarProfileForSystem(s);
       const distanceLine = s.index === from.index ? "Current system" : `${fmt(distance(from, s))} LY from ${from.name}`;
       const briefing = deterministicSystemBriefing(s);
+      const missions = activeMissionsForSystem(s);
+      const missionLinks = missions.length
+        ? `<div class="system-mission-list">
+            <strong class="about-heading">Mission Channel</strong>
+            ${missions.map((mission) => {
+              const type = MISSION_TYPES[mission.type] || "Mission";
+              const lockedOut = missionLockedOutOnChart(mission);
+              return `<div class="system-mission-row ${lockedOut ? "mission-chart-locked" : "mission-chart-active"}">
+                <span>${escapeHtml(type)} · ${escapeHtml(mission.title)}</span>
+                <button class="btn mini ${lockedOut ? "" : "primary"}" type="button" data-chart-mission="${escapeAttr(mission.id)}" ${lockedOut ? "disabled" : ""}>${lockedOut ? "Locked" : "Open"}</button>
+              </div>`;
+            }).join("")}
+          </div>`
+        : "";
       return `<div class="notice" style="margin-top:10px">
         <strong class="about-heading">Selected System</strong>
+        ${missionLinks}
         <div class="grid2">
           ${stat("System", s.name)}
           ${stat("Distance", distanceLine)}
@@ -19401,15 +20220,22 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function renderChart() {
+      const lockedMission = syncImmediateDispatchCourse();
       const from = currentSystem();
-      const tgt = targetSystem();
+      const tgt = finalTargetSystem();
       const mode = game.mapMode === "local" ? "local" : "galaxy";
-      const rangeText = game.developerMode ? `max unlimited. fuel ${fmt(game.fuel)} LY` : `max 7.0 LY. fuel ${fmt(game.fuel)} LY`;
+      const hyperdriveRange = currentHyperdriveRangeLy();
+      const route = suggestedRouteToTarget();
+      const rangeText = game.developerMode ? `max unlimited. route legs ${fmt(hyperdriveRange)} LY. fuel ${fmt(game.fuel)} LY` : `max ${fmt(hyperdriveRange)} LY. fuel ${fmt(game.fuel)} LY`;
       const mapHtml = mode === "galaxy"
-        ? renderGalaxyMap()
+        ? renderGalaxyMap(route)
         : `<div class="chart-map-wrap">
-            <button class="btn mini map-home" data-mapreset aria-label="Reset local chart view" title="Reset local chart view"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8L8 3l6 5"/><path d="M4.5 7.5v5h7v-5"/><path d="M6.5 12.5v-3h3v3"/></svg></button>
-            ${renderLocalMap()}
+            <div class="map-tools">
+              <button class="btn mini map-tool" data-mapreset aria-label="Reset local chart view" title="Reset local chart view"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8L8 3l6 5"/><path d="M4.5 7.5v5h7v-5"/><path d="M6.5 12.5v-3h3v3"/></svg></button>
+              <button class="btn mini map-tool" data-mapzoom="1" aria-label="Zoom local chart in" title="Zoom local chart in">+</button>
+              <button class="btn mini map-tool" data-mapzoom="-1" aria-label="Zoom local chart out" title="Zoom local chart out">-</button>
+            </div>
+            ${renderLocalMap(route)}
             <span class="drag-hint">Click system · drag to move</span>
           </div>`;
       return `<div class="notice" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
@@ -19418,8 +20244,11 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
             <button class="btn mini ${mode === "local" ? "primary" : ""}" data-mapmode="local">Local Map</button>
           </span>
           <span style="font-size:11px;color:var(--muted)">Galaxy ${game.galaxy + 1}. Range ${rangeText}.</span>
+          ${renderChartOverlayFilters()}
         </div>
+        ${lockedMission ? `<div class="notice route-summary route-summary-locked"><strong class="about-heading">Immediate Dispatch Route</strong><div>${escapeHtml(lockedMission.title)} · ${escapeHtml(lockedMission.destination.name)}</div></div>` : ""}
         ${mapHtml}
+        ${chartOverlayEnabled("suggestedRoute") ? renderSuggestedRouteSummary(route, tgt) : ""}
         ${renderSystemInfo(tgt, from)}`;
     }
 
@@ -19510,6 +20339,9 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function renderStatus() {
       const saveDisabled = canSaveCommander() ? "" : "disabled";
+      const reserveFuel = cargoFuelTons();
+      const cargoRefuelDisabled = game.equipment.cargoRefuel && reserveFuel && game.fuel < fuelTankCapacityLy() - .0001 ? "" : "disabled";
+      const cargoRefuelLabel = game.equipment.cargoRefuel ? "Load Fuel Cells to Tank" : "Cargo Refueler Not Fitted";
       return `<div class="grid2">
         ${stat("Commander", game.commander)}
         ${stat("Rating", rankName())}
@@ -19522,9 +20354,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ${stat("Ship", shipName(playerShipModel()))}
         ${stat("Cargo", `${usedCargo()}/${game.cargoCap}t`)}
         ${stat("Fuel", `${fmt(game.fuel)} LY`)}
+        ${stat("Reserve Fuel", reserveFuel ? `${reserveFuel}t / ${fmt(reserveFuel * CARGO_FUEL_LY_PER_TON)} LY` : "None")}
         ${stat("Laser", laserPower().name)}
         ${stat("Missiles", game.missiles)}
         ${stat("Docked", game.docked ? "Yes" : "No")}
+      </div>
+      <div class="notice save-actions">
+        <button class="btn primary" data-cargo-refuel ${cargoRefuelDisabled}>${cargoRefuelLabel}</button>
       </div>
       <div class="notice save-actions">
         <button class="btn" data-rename-commander>Rename Commander</button>
@@ -19823,6 +20659,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function renderShip() {
       const currentShip = playerShipModel();
       shipDiagramState.renderModel = currentShip;
+      const fittedEquipment = EQUIPMENT
+        .filter((item) => game.equipment[item.id] && !LASER_EQUIPMENT_IDS.includes(item.id))
+        .map((item) => `<span class="equipment-fit-item">${escapeHtml(item.name)}</span>`)
+        .join("");
+      const equipmentFit = fittedEquipment
+        ? `<div class="notice equipment-fit"><strong class="about-heading">Equipment Fit</strong><div class="equipment-fit-list">${fittedEquipment}</div></div>`
+        : `<div class="notice equipment-fit"><strong class="about-heading">Equipment Fit</strong><div class="equipment-fit-list"><span class="equipment-fit-empty">No optional equipment fitted.</span></div></div>`;
       return `<div class="ship-panel">
       <div class="preview-wrap">
         <canvas class="ship-diagram library-diagram" id="shipDiagram" width="640" height="260" data-starry-preview="true"></canvas>
@@ -19832,12 +20675,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       <div class="grid2">
         ${stat("Laser", laserPower().name)}
         ${stat("Missiles", game.missiles)}
-        ${stat("Fuel Scoop", game.equipment.fuelScoop ? "Yes" : "No")}
-        ${stat("Docking Computer", game.equipment.dockingComputer ? "Yes" : "No")}
-        ${stat("ECM", game.equipment.ecm ? "Yes" : "No")}
-        ${stat("Extra Energy", game.equipment.extraEnergy ? "Yes" : "No")}
-        ${stat("Escape Capsule", game.equipment.escapeCapsule ? "Yes" : "No")}
       </div>
+      ${equipmentFit}
       <div class="notice ship-lore">
         <strong class="about-heading">Ship Notes</strong>
         <p>${escapeHtml(shipLore(currentShip, true))}</p>
@@ -19959,8 +20798,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function renderHelp() {
-      const updates = UPDATE_LOG.map(([version, text]) =>
-        `<li><strong>v${version}</strong> ${text}</li>`
+      const updates = UPDATE_LOG.map(([version, text, redacted]) =>
+        `<li class="${redacted ? "redacted-entry" : ""}"><strong>v${version}</strong> ${redacted ? `<span class="redacted-update">REDACTED</span> ` : ""}${text}</li>`
       ).join("");
       return `<div class="help-heading">Keyboard</div>
       <div class="help-table">
@@ -19981,9 +20820,15 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         <div class="help-row"><div class="help-keys"><span class="kbd">N</span></div><div class="help-desc">Toggle sound</div></div>
         <div class="help-row"><div class="help-keys"><span class="kbd">J</span></div><div class="help-desc">Hyperspace countdown</div></div>
         <div class="help-row"><div class="help-keys"><span class="kbd">C</span></div><div class="help-desc">Docking computer</div></div>
+        <div class="help-row"><div class="help-keys"><span class="kbd">H</span></div><div class="help-desc">Open comms review. Mission and police messages stay highlighted for review.</div></div>
+        <div class="help-row"><div class="help-keys"><span class="kbd">PgUp</span><span class="kbd">PgDn</span><span class="kbd">[</span><span class="kbd">]</span></div><div class="help-desc">Scroll comms history and cycle comms filters</div></div>
         <div class="help-row"><div class="help-keys"><span class="kbd">1</span><span class="kbd">2</span><span class="kbd">3</span><span class="kbd">4</span></div><div class="help-desc">Open Market / Chart / Equip / Status</div></div>
       </div>
-      <div class="help-note">Dock manually by flying slowly through an aligned station slot. On the local chart, click a system to target it and drag to move the map. Ship previews can also be clicked and dragged.</div>
+      <div class="help-heading">Flight Notes</div>
+      <div class="help-note">Dock manually by flying slowly through an aligned station slot. On the local chart, click a system to plot a final destination; the next reachable jump is selected automatically. Use chart filters to hide mission lines, plotted-course overlays or suggested routes, and +/- or home to adjust local chart zoom.</div>
+      <div class="help-note">The Market sells standard tank fuel and Fuel Cells cargo. With a Cargo Refueler fitted, each Fuel Cells ton can be consumed whole from Status to top the tank by up to ${fmt(CARGO_FUEL_LY_PER_TON)} LY, capped at full tanks. A fitted Market Comparator adds plotted-destination prices to the Market table.</div>
+      <div class="help-note">Loaned-ship contracts are immediate dispatch: they lock out other mission work until the loaner is returned or awarded. Mission comms stay available in the comms review until that mission completes, fails or is abandoned.</div>
+      <div class="help-note">Ship previews can be clicked and dragged.</div>
       <div class="notice">
         <strong>Update Log</strong>
         <ul class="update-log">${updates}</ul>
@@ -20077,13 +20922,26 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       panelBody.querySelectorAll("[data-sell]").forEach((b) => b.addEventListener("click", () => sellGood(b.dataset.sell)));
       panelBody.querySelectorAll(".map-dot").forEach((b) => b.addEventListener("click", () => {
         if (performance.now() < (game.localMapSuppressClickUntil || 0)) return;
-        game.target = Number(b.dataset.sys);
-        setMessage(game.target === game.current ? `Selected current system: ${targetSystem().name}.` : `Target system: ${targetSystem().name}.`);
+        const dispatch = immediateDispatchMissionForCourse();
+        const selected = Number(b.dataset.sys);
+        if (dispatch && selected !== dispatch.destination.system) {
+          eliteAudio.play("boop");
+          syncImmediateDispatchCourse({ announce: true });
+          renderPanel();
+          return;
+        }
+        const routeState = setFinalDestination(selected);
+        const final = finalTargetSystem();
+        const hop = routeState.next && routeState.next.index !== final.index ? ` Next jump: ${routeState.next.name}.` : "";
+        setMessage(final.index === game.current ? `Selected current system: ${final.name}.` : `Course plotted: ${final.name}.${hop}`);
         renderPanel();
       }));
       panelBody.querySelectorAll("[data-mapmode]").forEach((b) => b.addEventListener("click", () => {
         game.mapMode = b.dataset.mapmode;
         renderPanel();
+      }));
+      panelBody.querySelectorAll("[data-chart-overlay]").forEach((input) => input.addEventListener("change", () => {
+        setChartOverlay(input.dataset.chartOverlay, input.checked);
       }));
       const mapReset = panelBody.querySelector("[data-mapreset]");
       if (mapReset) mapReset.addEventListener("click", () => {
@@ -20092,6 +20950,11 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         game.localMapPanY = 0;
         renderPanel();
       });
+      panelBody.querySelectorAll("[data-mapzoom]").forEach((button) => button.addEventListener("click", () => {
+        const dir = Number(button.dataset.mapzoom) || 0;
+        game.localMapZoom = clamp((Number(game.localMapZoom) || 4) + dir * .75, 1.5, 10);
+        renderPanel();
+      }));
       attachLocalMapDrag();
       panelBody.querySelectorAll("[data-equip]").forEach((b) => b.addEventListener("click", () => buyEquipment(b.dataset.equip)));
       panelBody.querySelectorAll("[data-shipyard-buy]").forEach((b) => b.addEventListener("click", () => buyShip(b.dataset.shipyardBuy)));
@@ -20134,9 +20997,12 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
       const fuel = panelBody.querySelector("[data-fuel]");
       if (fuel) fuel.addEventListener("click", buyFuel);
+      const cargoRefuel = panelBody.querySelector("[data-cargo-refuel]");
+      if (cargoRefuel) cargoRefuel.addEventListener("click", refuelFromCargoStatus);
       panelBody.querySelectorAll("[data-mission-accept]").forEach((b) => b.addEventListener("click", () => acceptMission(b.dataset.missionAccept)));
       panelBody.querySelectorAll("[data-mission-plot]").forEach((b) => b.addEventListener("click", () => plotMissionCourse(b.dataset.missionPlot)));
       panelBody.querySelectorAll("[data-mission-abandon]").forEach((b) => b.addEventListener("click", () => abandonMission(b.dataset.missionAbandon)));
+      panelBody.querySelectorAll("[data-chart-mission]").forEach((b) => b.addEventListener("click", () => openMissionFromChart(b.dataset.chartMission)));
       const missile = panelBody.querySelector("[data-missile]");
       if (missile) missile.addEventListener("click", () => {
         if (game.credits >= 30 && game.missiles < 4) {
@@ -20204,7 +21070,8 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         const dx = (e.clientX - lastX) * scaleX;
         const dy = (e.clientY - lastY) * scaleY;
         if (Math.abs(dx) + Math.abs(dy) > .2) moved = true;
-        const mapScale = (Math.min(viewBox.width, viewBox.height) / 2 - 10) / (24 / 4);
+        const mapZoom = clamp(Number(game.localMapZoom) || 4, 1.5, 10);
+        const mapScale = (Math.min(viewBox.width, viewBox.height) / 2 - 10) / (24 / mapZoom);
         game.localMapPanX -= dx / mapScale;
         game.localMapPanY -= dy / mapScale;
         lastX = e.clientX;
@@ -20471,7 +21338,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         : "LOCK --");
       setLevelMeter(hudEls.barForeShield, game.foreShield, { lowWarn: 42, lowCritical: 18 });
       setLevelMeter(hudEls.barAftShield, game.aftShield, { lowWarn: 42, lowCritical: 18 });
-      setLevelMeter(hudEls.barFuel, game.fuel / 7 * 100, { lowWarn: 28, lowCritical: 12 });
+      setLevelMeter(hudEls.barFuel, game.fuel / fuelTankCapacityLy() * 100, { lowWarn: 28, lowCritical: 12 });
       setLevelMeter(hudEls.barSpeed, clamp(game.speed / game.maxSpeed, 0, 1) * 100);
       const altitude = playerAltitude();
       const altitudePct = altitude == null ? 0 : clamp(altitude / 4200 * 100, 0, 100);
@@ -20689,6 +21556,24 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           e.preventDefault();
           return;
         }
+        if (e.code === "KeyH") {
+          toggleCommsReview();
+          e.preventDefault();
+          return;
+        }
+        if (["PageUp", "PageDown"].includes(e.code)) {
+          if (!game.commsReviewOpen) toggleCommsReview(true);
+          scrollCommsHistory(e.code === "PageUp" ? 1 : -1);
+          e.preventDefault();
+          return;
+        }
+        if (game.commsReviewOpen && ["PageUp", "PageDown", "BracketLeft", "BracketRight", "Escape"].includes(e.code)) {
+          if (e.code === "BracketLeft") cycleCommsHistoryFilter(-1);
+          else if (e.code === "BracketRight") cycleCommsHistoryFilter(1);
+          else if (e.code === "Escape") toggleCommsReview(false);
+          e.preventDefault();
+          return;
+        }
         keys.add(e.code);
         if (devShortcutAllowed() && devChordActive() && !devChordLatched) {
           devChordLatched = true;
@@ -20757,6 +21642,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       byId("modeSwitchBtn").addEventListener("click", () => applyPresetMode(game.fxLevel === "ultra" ? "classic" : "ultra"));
       byId("autoDockBtn").addEventListener("click", startAutoDock);
       byId("galJumpBtn").addEventListener("click", galacticJump);
+      if (hudEls.commsToggle) hudEls.commsToggle.addEventListener("click", () => toggleCommsReview());
       if (hudEls.pauseBtn) {
         hudEls.pauseBtn.addEventListener("click", () => setGamePaused(!game.paused));
         updatePauseHud();

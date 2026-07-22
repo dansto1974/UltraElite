@@ -105,6 +105,11 @@ __ULTRA_ELITE_CSS__
         </div>
         <div class="crosshair" aria-hidden="true"></div>
         <div class="comms-log" id="commsLog" aria-live="polite"></div>
+        <button class="comms-toggle" id="commsToggle" type="button" aria-expanded="false" aria-controls="commsReview" title="Open comms panel">
+          <span>COMMS</span>
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"></path></svg>
+        </button>
+        <div class="comms-review" id="commsReview" aria-live="polite" hidden></div>
         <div class="hud-actions" aria-label="Flight actions">
           <button class="btn mini primary" id="launchBtn">Launch</button>
           <button class="btn mini" id="jumpBtn">Jump</button>
