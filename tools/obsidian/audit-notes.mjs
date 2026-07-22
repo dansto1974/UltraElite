@@ -8,6 +8,8 @@ const maxLines = 24;
 const maxWords = 220;
 const markdownFiles = [];
 const generatedMarkdown = new Set(["Knowledge/Index.md"]);
+const indexPath = path.join(root, ".codex-index", "knowledge-index.json");
+const indexedNotes = new Set();
 
 function walk(dir) {
   for (const name of fs.readdirSync(dir)) {
@@ -23,19 +25,14 @@ function wordCount(text) {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
-function tagsFor(text) {
-  const tags = new Set();
-  for (const match of text.matchAll(/(^|[\s(])#([A-Za-z][A-Za-z0-9_-]*)\b/g)) {
-    tags.add(match[2].toLowerCase());
-  }
-  return tags;
-}
-
-function headingCount(text) {
-  return [...text.matchAll(/^#{1,6}\s+/gm)].length;
-}
-
 walk(root);
+
+if (fs.existsSync(indexPath)) {
+  const index = JSON.parse(fs.readFileSync(indexPath, "utf8"));
+  for (const record of index.records || []) {
+    if (record?.path) indexedNotes.add(record.path);
+  }
+}
 
 const failures = [];
 const noteTargets = new Set();
@@ -54,17 +51,15 @@ for (const file of markdownFiles.sort((a, b) => a.localeCompare(b))) {
   const lines = text.trimEnd().split(/\r?\n/).length;
   const words = wordCount(text);
   const hasBacklink = /\[\[[^\]]+\]\]/.test(text);
-  const tags = tagsFor(text);
   const isStrictNote = posixRel === "project.md" || posixRel.startsWith("Knowledge/Maps/") || posixRel.startsWith("Skills/");
-  const isLongReference =
-    tags.has("reference") && !isStrictNote && headingCount(text) > 1 && hasBacklink;
+  const isLinkedIndexedInfo = !isStrictNote && hasBacklink && indexedNotes.has(posixRel);
   const brokenLinks = [...text.matchAll(/\[\[([^\]|#]+)(?:[#|][^\]]*)?\]\]/g)]
     .map((match) => match[1].trim())
     .filter((target) => !noteTargets.has(target));
   const tooLarge = lines > maxLines || words > maxWords;
 
-  if ((tooLarge && !isLongReference) || !hasBacklink || brokenLinks.length) {
-    failures.push({ rel, lines, words, hasBacklink, brokenLinks });
+  if ((tooLarge && !isLinkedIndexedInfo) || !hasBacklink || brokenLinks.length) {
+    failures.push({ rel, lines, words, hasBacklink, indexed: indexedNotes.has(posixRel), strict: isStrictNote, brokenLinks });
   }
 }
 
@@ -73,6 +68,7 @@ if (failures.length) {
   for (const item of failures) {
     console.error(
       `${item.rel}: ${item.lines} lines, ${item.words} words, links=${item.hasBacklink}` +
+        `, indexed=${item.indexed}, strict=${item.strict}` +
         (item.brokenLinks.length ? `, broken=${item.brokenLinks.join(", ")}` : "")
     );
   }

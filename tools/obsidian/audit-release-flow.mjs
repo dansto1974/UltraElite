@@ -26,7 +26,7 @@ mustContain("Knowledge/Maps/Task Router.md", /\[\[Knowledge\/Maps\/Release Route
 mustContain("Knowledge/Maps/Task Router.md", /\[\[Knowledge\/Index\|Knowledge Index\]\]/, "Knowledge Index route");
 mustContain("Knowledge/Maps/Fresh Task Contract.md", /Announce the route with `considering: `/, "considering route announcement");
 mustContain("Knowledge/Maps/Fresh Task Contract.md", /npm run index:obsidian -- --search/, "index search route");
-mustContain("Knowledge/Maps/Linking Rules.md", /Reference notes may be longer when tagged `#reference`/, "reference note rule");
+mustContain("Knowledge/Maps/Linking Rules.md", /Information notes may be longer when they are linked, indexed, and subcategorised through hubs\./, "information note rule");
 mustContain("Knowledge/Maps/Fresh Task Contract.md", /\[\[Skills\/ultra-elite-build\/SKILL\|ultra-elite-build\]\]/, "build skill route");
 mustContain("Knowledge/Maps/Fresh Task Contract.md", /\[\[Skills\/ultra-elite-release\/SKILL\|ultra-elite-release\]\]/, "release skill route");
 mustContain("Knowledge/Maps/Release Router.md", /Build before every website publish\./, "build-before-publish rule");
