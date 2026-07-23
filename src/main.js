@@ -8977,11 +8977,15 @@
 
     function cloneNavFrame(frame) {
       if (!frame) return null;
+      const outward = norm(frame.outward);
+      const up = norm(frame.up);
+      const fallbackRight = len(cross(up, outward)) > .001 ? norm(cross(up, outward)) : vec(1, 0, 0);
       return {
         center: { ...frame.center },
-        outward: norm(frame.outward),
-        right: norm(frame.right),
-        up: norm(frame.up)
+        outward,
+        inward: frame.inward ? norm(frame.inward) : scale(outward, -1),
+        right: frame.right ? norm(frame.right) : fallbackRight,
+        up
       };
     }
 
@@ -9540,7 +9544,9 @@
     }
 
     function tryManualDockingCapture() {
-      if (game.docked || game.transition || game.jumpCountdown || game.autoDock) return false;
+      if (game.docked || game.transition || game.jumpCountdown) return false;
+      const autoDocking = game.autoDock && typeof game.autoDock === "object";
+      if (game.autoDock && (!autoDocking || game.autoDock.stage !== "final")) return false;
       const st = dockableTarget();
       if (!st) return false;
       if (!manualDockingStatus(st, true).ok) return false;
@@ -12103,6 +12109,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
 
       const state = typeof game.autoDock === "object" ? game.autoDock : (game.autoDock = { stage: "marshal" });
+      if (state.stage !== "final" && state.finalFrame) state.finalFrame = null;
       const liveSlot = stationAutoDockFrame(st);
       const slot = cachedAutoDockFrame(st, state);
       const inward = scale(slot.outward, -1);
@@ -12114,9 +12121,10 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const laneRight = norm(state.laneRight);
       const laneUp = norm(state.laneUp);
       const frontness = dot(sub(game.camera.pos, slot.center), slot.outward);
-      const entry = add(slot.center, scale(slot.outward, 1180));
       const goSide = state.goSide || (state.goSide = Math.random() < .5 ? -1 : 1);
       const holdSide = state.holdSide || (state.holdSide = goSide);
+      const entry = add(slot.center, scale(slot.outward, 1640));
+      const marshalEntry = add(slot.center, add(scale(slot.outward, 2820), add(scale(laneRight, goSide * 2200), scale(laneUp, 820))));
       const makeTrafficHold = () => stationTrafficHoldPoint(st, {
         sideSign: holdSide,
         along: 2120,
@@ -12130,17 +12138,42 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const approach = add(slot.center, scale(slot.outward, 760));
       const relToAxis = sub(game.camera.pos, slot.center);
       const lateral = len(sub(relToAxis, scale(slot.outward, dot(relToAxis, slot.outward))));
-      const frameForStage = (stage) => {
-        const blend = stage === "final" ? .78 : stage === "align" ? .34 : 0;
-        if (blend <= 0) return { center: slot.center, outward: slot.outward, inward, up: slot.up };
-        const outward = norm(add(scale(slot.outward, 1 - blend), scale(liveSlot.outward, blend)));
+      const upForForward = (upHint, forwardHint, fallback = slot.up) => {
+        const f = norm(forwardHint);
+        let up = sub(upHint, scale(f, dot(upHint, f)));
+        if (len(up) < .001) up = sub(fallback, scale(f, dot(fallback, f)));
+        if (len(up) < .001) up = Math.abs(f.y) < .92 ? vec(0, 1, 0) : vec(1, 0, 0);
+        return norm(up);
+      };
+      const buildFrameForStage = (stage) => {
+        const laneBlend = stage === "final" ? .78 : stage === "align" ? .34 : 0;
+        const rollBlend = stage === "final" ? .98 : stage === "align" ? .88 : 0;
+        if (laneBlend <= 0 && rollBlend <= 0) return { center: slot.center, outward: slot.outward, inward, up: slot.up };
+        const outward = norm(add(scale(slot.outward, 1 - laneBlend), scale(liveSlot.outward, laneBlend)));
+        const rollHint = norm(add(scale(slot.up, 1 - rollBlend), scale(liveSlot.up, rollBlend)));
+        const up = upForForward(rollHint, outward, slot.up);
         return {
-          center: add(scale(slot.center, 1 - blend), scale(liveSlot.center, blend)),
+          center: add(scale(slot.center, 1 - laneBlend), scale(liveSlot.center, laneBlend)),
           outward,
           inward: scale(outward, -1),
-          up: norm(add(scale(slot.up, 1 - blend), scale(liveSlot.up, blend)))
+          right: norm(cross(up, outward)),
+          up
         };
       };
+      const smoothNavFrame = (current, target, amount) => {
+        const base = current || target;
+        const outward = norm(add(scale(base.outward, 1 - amount), scale(target.outward, amount)));
+        const rollHint = norm(add(scale(base.up, 1 - amount), scale(target.up, amount)));
+        const up = upForForward(rollHint, outward, base.up);
+        return {
+          center: add(scale(base.center, 1 - amount), scale(target.center, amount)),
+          outward,
+          inward: scale(outward, -1),
+          right: norm(cross(up, outward)),
+          up
+        };
+      };
+      const frameForStage = (stage) => stage === "final" && state.finalFrame ? state.finalFrame : buildFrameForStage(stage);
       const dockingDenial = stationDockingDenial(st);
       if (dockingDenial) {
         announceStationDockingDenied(st, dockingDenial);
@@ -12154,10 +12187,12 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const stationControlHold = !!trafficOccupant;
       if (stationControlHold && state.stage !== "hold") {
         state.stage = "hold";
-        state.trafficHoldPoint = makeTrafficHold();
+        state.trafficHoldPoint = { ...game.camera.pos };
         trafficHold = state.trafficHoldPoint;
         state.offTrackTime = 0;
-        state.announced = "";
+        state.announced = "hold";
+        game.speed = 0;
+        setMessage("Docking computer: holding for station traffic.", true);
         stationTrafficPlayerInstruction(st, trafficOccupant);
         commsMessage(stationTrafficName(st), `${game.commander}, docking computer holding. Proceed after ${trafficOccupant.name || "station traffic"}.`, "station", { protected: true });
       } else if (!stationControlHold && state.stage === "hold") {
@@ -12166,13 +12201,25 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         state.offTrackTime = 0;
         state.announced = "";
       }
+      if (stationControlHold) {
+        const holdDir = norm(sub(liveSlot.center, game.camera.pos));
+        game.camera.q = quatSlerp(ensureCameraQuat(game.camera), quatLookRotation(holdDir, laneUp), 1 - Math.exp(-1.75 * dt));
+        game.rollRate = 0;
+        game.pitchRate = 0;
+        game.yawRate = 0;
+        game.speed = 0;
+        state.hud = { stage: "hold", range: 0, slotRange: 0, lateral: 0, alignment: 1, avoidance: null };
+        return;
+      }
       const targetForStage = (stage) => {
-        if (stage === "marshal" || stage === "turnIn") return entry;
+        if (stage === "marshal") return marshalEntry;
+        if (stage === "turnIn") return entry;
         if (stage === "hold") return trafficHold;
         if (stage === "goAround") return goAround;
         if (stage === "approach") return approach;
+        if (stage === "final") return liveSlot.center;
         const frame = frameForStage(stage === "align" ? "align" : "final");
-        return stage === "align" ? add(frame.center, scale(frame.outward, 128)) : frame.center;
+        return add(frame.center, scale(frame.outward, 128));
       };
       let stageTarget = targetForStage(state.stage);
       let toTarget = sub(stageTarget, game.camera.pos);
@@ -12180,40 +12227,44 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       const avoidance = dockingComputerAvoidance();
       let trafficClose = Number.isFinite(avoidance.nearest) && avoidance.nearest < (state.stage === "final" ? 34 : 72);
       const forward = forwardVector(game.camera);
+      const cameraUp = quatRotate(ensureCameraQuat(game.camera), vec(0, 1, 0));
       const alignment = dot(forward, inward);
       const liveInward = scale(liveSlot.outward, -1);
       const liveRel = sub(game.camera.pos, liveSlot.center);
       const liveFrontness = dot(liveRel, liveSlot.outward);
       const liveLateral = len(sub(liveRel, scale(liveSlot.outward, liveFrontness)));
       const liveAlignment = dot(forward, liveInward);
+      const liveRollAlignment = dot(cameraUp, liveSlot.up);
       const liveSlotPhase = Math.abs(Math.sin(st.rot || 0));
-      const liveSlotReady = liveSlotPhase < .34 && liveFrontness > 95 && liveFrontness < 380 && liveLateral < 245 && liveAlignment > .72;
+      const liveSlotReady = liveSlotPhase < .32 && liveFrontness > 110 && liveFrontness < 300 && liveLateral < 150 && liveAlignment > .82 && liveRollAlignment > .76;
+      const finalCaptureMouth = state.stage === "final" && liveFrontness > -120 && liveFrontness < 180 && liveLateral < 165;
+      if (state.stage === "final" && manualDockingStatus(st, true).ok) {
+        dock(true);
+        return;
+      }
 
-      const entryAligned = frontness > 1080 && frontness < 1280 && lateral < 90;
-      const entryCaptured = d < 110 && lateral < 95;
-      if (state.stage === "marshal" && !stationControlHold && (entryCaptured || entryAligned)) {
+      const entryCaptured = d < 170;
+      if (state.stage === "marshal" && !stationControlHold && entryCaptured) {
         state.stage = "turnIn";
-        game.speed = Math.min(game.speed, 36);
       }
       if (state.stage === "turnIn" && !stationControlHold) {
-        const outsideEntry = frontness < 1000 || frontness > 1400 || lateral > 170;
-        if (outsideEntry) {
-          state.stage = "marshal";
-          state.announced = "";
-        } else if (game.speed < 34 && alignment > .94) {
+        const entryOnAxis = frontness > 1380 && frontness < 1880 && lateral < 300;
+        if (d < 260 && entryOnAxis && alignment > .76) {
           state.stage = "approach";
         }
       }
       if (state.stage === "approach" && !stationControlHold && frontness < 840 && lateral < 360) state.stage = "align";
-      if (state.stage === "align" && !stationControlHold && frontness < 260 && lateral < 210 && alignment > .78 && liveSlotReady) {
+      if (state.stage === "align" && !stationControlHold && frontness < 260 && lateral < 170 && alignment > .82 && liveSlotReady) {
         state.stage = "final";
+        state.finalFrame = cloneNavFrame(buildFrameForStage("final"));
         if (!state.finalClearedAt || performance.now() - state.finalClearedAt > 12000) {
           state.finalClearedAt = performance.now();
           commsMessage(stationTrafficName(st), `${game.commander}, docking computer final approach cleared. Hold the lane.`, "station", { protected: true });
         }
       }
-      if (state.stage === "final" && (liveSlotPhase > .62 || liveLateral > 340 || liveFrontness < -140)) {
+      if (state.stage === "final" && !finalCaptureMouth && (liveSlotPhase > .48 || liveLateral > 190 || liveAlignment < .76 || liveRollAlignment < .64 || liveFrontness < -140)) {
         state.stage = "align";
+        state.finalFrame = null;
         state.announced = "";
         if (!state.finalHoldLineAt || performance.now() - state.finalHoldLineAt > 9000) {
           state.finalHoldLineAt = performance.now();
@@ -12236,14 +12287,20 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
       if (state.stage === "goAround" && d < 190 && frontness > 980) {
         state.stage = "marshal";
+        state.finalFrame = null;
         state.offTrackTime = 0;
         state.announced = "";
+      }
+      if (state.stage === "final") {
+        const targetFinalFrame = buildFrameForStage("final");
+        state.finalFrame = smoothNavFrame(state.finalFrame || targetFinalFrame, targetFinalFrame, 1 - Math.exp(-5.2 * dt));
       }
       stageTarget = targetForStage(state.stage);
       toTarget = sub(stageTarget, game.camera.pos);
       d = len(toTarget);
       trafficClose = Number.isFinite(avoidance.nearest) && avoidance.nearest < (state.stage === "final" ? 34 : 72);
-      const activeFrame = frameForStage(state.stage);
+      const stageFrame = frameForStage(state.stage);
+      const activeFrame = state.stage === "final" ? { ...stageFrame, center: liveSlot.center } : stageFrame;
       const activeRel = sub(game.camera.pos, activeFrame.center);
       const activeFrontness = dot(activeRel, activeFrame.outward);
       const activeLateral = len(sub(activeRel, scale(activeFrame.outward, activeFrontness)));
@@ -12269,16 +12326,18 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         setMessage(line, true);
       }
 
-      const holdSettled = state.stage === "hold" && d < 260;
-      if (holdSettled) {
-        game.camera.pos = add(game.camera.pos, scale(toTarget, clamp(dt * .9, 0, .055)));
-      }
+      const holdSettled = state.stage === "hold" && d < 520;
       const corridorStage = state.stage === "approach" || state.stage === "align" || state.stage === "final";
+      const finalStable = state.stage === "final" && activeLateral < 84 && liveAlignment > .84 && liveRollAlignment > .78;
       const desiredDir = state.stage === "final"
-        ? norm(add(scale(activeFrame.inward, 1.45), scale(norm(sub(activeFinalAim, game.camera.pos)), 2.45)))
+        ? finalStable
+          ? activeFrame.inward
+          : norm(add(scale(activeFrame.inward, 3.15), scale(norm(sub(activeFinalAim, game.camera.pos)), 1.05)))
         : state.stage === "align"
           ? norm(add(scale(activeFrame.inward, 2.2), scale(norm(sub(activeFinal, game.camera.pos)), 1.25)))
-          : corridorStage || state.stage === "turnIn"
+          : state.stage === "turnIn"
+            ? norm(add(scale(norm(toTarget), 2.6), scale(inward, .55)))
+          : corridorStage
             ? inward
             : state.stage === "hold"
             ? holdSettled
@@ -12289,28 +12348,30 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         ? (trafficClose ? .16 : 0)
         : state.stage === "align" ? (trafficClose ? .22 : 0) : state.stage === "approach" ? (trafficClose ? .24 : 0) : state.stage === "turnIn" ? .18 : state.stage === "hold" ? .72 : state.stage === "goAround" ? .72 : .66;
       const steeredDir = avoidance.dir && avoidWeight > 0 ? norm(add(desiredDir, scale(avoidance.dir, avoidWeight))) : desiredDir;
-      const upHint = state.stage === "align" || state.stage === "final" ? activeFrame.up : laneUp;
+      const upHint = state.stage === "align" || state.stage === "final" ? upForForward(activeFrame.up, steeredDir, liveSlot.up) : laneUp;
       const desiredQ = quatLookRotation(steeredDir, upHint);
-      const turnRate = state.stage === "final" ? 5.6 : state.stage === "align" ? 3.35 : state.stage === "turnIn" ? 2.85 : state.stage === "hold" ? 1.55 : state.stage === "goAround" ? 2.45 : 2.05;
+      const turnRate = state.stage === "final" ? 6.15 : state.stage === "align" ? 4.25 : state.stage === "turnIn" ? 2.85 : state.stage === "hold" ? 1.55 : state.stage === "goAround" ? 2.45 : 2.05;
       game.camera.q = quatSlerp(ensureCameraQuat(game.camera), desiredQ, 1 - Math.exp(-turnRate * dt));
       game.rollRate = 0;
       game.pitchRate = 0;
       game.yawRate = 0;
 
-      if (state.stage !== "marshal" && state.stage !== "turnIn" && state.stage !== "goAround" && activeFrontness > -150 && activeFrontness < 980 && activeLateral > 20) {
+      if (state.stage !== "marshal" && state.stage !== "turnIn" && state.stage !== "hold" && state.stage !== "goAround" && activeFrontness > -150 && activeFrontness < 980 && activeLateral > 20) {
         const axisPoint = add(activeFrame.center, scale(activeFrame.outward, activeFrontness));
         const lateralVec = sub(game.camera.pos, axisPoint);
-        const correctionRate = state.stage === "final" ? .9 : state.stage === "align" ? .68 : .52;
-        game.camera.pos = sub(game.camera.pos, scale(lateralVec, clamp(correctionRate * dt, 0, state.stage === "final" ? .042 : .052)));
+        const correctionRate = state.stage === "final" ? (finalStable ? .38 : .68) : state.stage === "align" ? .68 : .52;
+        game.camera.pos = sub(game.camera.pos, scale(lateralVec, clamp(correctionRate * dt, 0, state.stage === "final" ? (finalStable ? .018 : .032) : .052)));
       }
 
+      const fastMarshalSpeed = clamp((game.maxSpeed || 220) * .74, 150, 230);
       let targetSpeed = slotDist > 230 ? 46 : 34;
-      if (state.stage === "marshal") targetSpeed = d > 500 ? 118 : 72;
-      else if (state.stage === "turnIn") targetSpeed = alignment > .82 ? 32 : 10;
-      else if (state.stage === "hold") targetSpeed = d > 620 ? 72 : d > 340 ? 38 : d > 240 ? 12 : 0;
+      if (state.stage === "marshal") targetSpeed = d > 1180 ? fastMarshalSpeed : d > 620 ? 142 : 76;
+      else if (state.stage === "turnIn") targetSpeed = d > 900 ? 112 : d > 420 ? 76 : 44;
+      else if (state.stage === "hold") targetSpeed = 0;
       else if (state.stage === "goAround") targetSpeed = d > 520 ? 108 : 76;
       else if (state.stage === "approach") targetSpeed = d > 260 ? 92 : 64;
       else if (state.stage === "align") targetSpeed = liveSlotReady ? 52 : 30;
+      else if (state.stage === "final") targetSpeed = finalCaptureMouth && liveSlotPhase > .46 ? 8 : liveFrontness > 170 ? 42 : liveFrontness > 55 ? 30 : 20;
       const headingAlign = clamp(dot(forwardVector(game.camera), steeredDir), 0, 1);
       const steeringSpeedMul = lerp(.38, 1, headingAlign * headingAlign);
       const avoidSlow = avoidance.nearest < 115 ? .42 : avoidance.nearest < 240 ? .66 : avoidance.nearest < 380 ? .84 : 1;
@@ -12319,15 +12380,15 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         : state.stage === "align"
           ? lerp(.42, 1, clamp(1 - activeLateral / 430, 0, 1))
           : state.stage === "final"
-            ? lerp(.32, 1, clamp(1 - activeLateral / 210, 0, 1))
+            ? lerp(.4, 1, clamp(1 - activeLateral / 210, 0, 1))
             : 1;
       const desiredSpeed = targetSpeed * avoidSlow * steeringSpeedMul * lateralSpeedMul;
       if (state.stage === "hold" || state.stage === "turnIn") {
-        const brakeRate = d < 380 ? 290 : 175;
+        const brakeRate = state.stage === "hold" ? 420 : d < 380 ? 290 : 175;
         game.speed = game.speed > desiredSpeed
           ? Math.max(desiredSpeed, game.speed - brakeRate * dt)
           : lerp(game.speed, desiredSpeed, dt * 1.15);
-        if ((state.stage === "hold" && d < 240) || game.speed < 1.2) game.speed = 0;
+        if ((state.stage === "hold" && d < 520) || game.speed < 1.2) game.speed = 0;
       } else {
         game.speed = lerp(game.speed, desiredSpeed, dt * (state.stage === "final" ? 1.8 : 1.25));
       }
@@ -12337,7 +12398,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         range: d,
         slotRange: slotDist,
         lateral: activeLateral,
-        alignment: clamp(state.stage === "align" || state.stage === "final" ? liveAlignment : alignment, 0, 1),
+        alignment: clamp(state.stage === "align" || state.stage === "final" ? Math.min(liveAlignment, liveRollAlignment) : alignment, 0, 1),
         avoidance: Number.isFinite(avoidance.nearest) ? avoidance.nearest : null
       };
       if (state.stage === "final" && manualDockingStatus(st, true).ok) dock(true);
@@ -16641,23 +16702,48 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         "#6e8b91",
         "#9a873d"
       ];
+      const props = [];
+      const pushStack = (x, z, count, yaw, colorOffset = 0) => {
+        const scaleBase = 1.08 + rng() * .12;
+        const lean = (rng() - .5) * .045;
+        for (let j = 0; j < count; j++) {
+          const scale = scaleBase + rng() * .08;
+          const height = 48 * scale;
+          props.push({
+            model: "canister",
+            pos: vec(x + (rng() - .5) * 10, floor + height * .5 + j * height * .94, z + (rng() - .5) * 12),
+            scale,
+            yaw: yaw + (rng() - .5) * .12,
+            pitch: lean,
+            roll: Math.PI / 2 + (rng() - .5) * .055,
+            color: colors[(props.length + colorOffset) % colors.length],
+            alpha: .98,
+            order: props.length
+          });
+        }
+      };
       for (const side of [-1, 1]) {
-        for (let i = 0; i < 5; i++) {
-          const stack = 1 + (rng() > .48 ? 1 : 0) + (rng() > .86 ? 1 : 0);
-          const x = side * (330 + rng() * 72);
-          const z = 245 + i * 108 + rng() * 34;
-          for (let j = 0; j < stack; j++) {
-            drawHangarModel("canister", vec(x + side * rng() * 16, floor + 19 + j * 33, z + rng() * 14), view, w, h, {
-              scale: 1.08 + rng() * .18,
-              yaw: side * Math.PI / 2 + (rng() - .5) * .18,
-              pitch: (rng() - .5) * .06,
-              roll: (rng() - .5) * .08,
-              color: colors[(i + j + (side > 0 ? 1 : 0)) % colors.length],
-              alpha: .96
-            });
-          }
+        for (let i = 0; i < 6; i++) {
+          const stack = 1 + (rng() > .42 ? 1 : 0) + (rng() > .82 ? 1 : 0);
+          const x = side * (386 + rng() * 34);
+          const z = 190 + i * 102 + rng() * 26;
+          pushStack(x, z, stack, side > 0 ? Math.PI : 0, side > 0 ? 1 : 0);
         }
       }
+      for (const side of [-1, 1]) {
+        for (let i = 0; i < 3; i++) {
+          const stack = 2 + (rng() > .58 ? 1 : 0);
+          const x = side * (300 + i * 47 + rng() * 12);
+          const z = 790 + rng() * 36;
+          pushStack(x, z, stack, side > 0 ? Math.PI * .82 : Math.PI * .18, 2 + i);
+        }
+      }
+      props
+        .map((prop) => ({ ...prop, depth: cameraTransform(prop.pos, view).z }))
+        .sort((a, b) => (b.depth - a.depth) || (a.order - b.order))
+        .forEach((prop) => {
+          drawHangarModel(prop.model, prop.pos, view, w, h, prop);
+        });
     }
 
     function drawHangarOutsideThroughGate(view, w, h, gatePr, seed) {

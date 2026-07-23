@@ -118,6 +118,63 @@ if (readmeLatestChange !== gameVersion) {
   throw new Error(`README latest changelog entry ${readmeLatestChange || "(missing)"} does not match GAME_VERSION ${gameVersion}.`);
 }
 
+const autoDockHoldGuards = [
+  ["auto-dock hold freezes at current position", "state.trafficHoldPoint = { ...game.camera.pos };"],
+  ["auto-dock hold immediately zeroes speed", "game.speed = 0;\n        setMessage(\"Docking computer: holding for station traffic.\", true);"],
+  ["auto-dock hold looks at the station", "const holdDir = norm(sub(liveSlot.center, game.camera.pos));"],
+  ["auto-dock hold exits before normal target routing", "state.hud = { stage: \"hold\", range: 0, slotRange: 0, lateral: 0, alignment: 1, avoidance: null };\n        return;\n      }\n      const targetForStage"],
+  ["auto-dock lateral correction excludes hold", 'state.stage !== "hold" && state.stage !== "goAround" && activeFrontness'],
+  ["auto-dock hold target speed remains zero", 'else if (state.stage === "hold") targetSpeed = 0;'],
+];
+for (const [label, marker] of autoDockHoldGuards) {
+  if (!js.includes(marker)) {
+    throw new Error(`Missing auto-dock hold guard: ${label}. Player auto-dock hold must stop, look at the station, and wait for STC release without movement/correction.`);
+  }
+}
+
+const autoDockReleaseGuards = [
+  ["auto-dock marshal reacquires the front staging point", 'if (stage === "marshal") return marshalEntry;'],
+  ["auto-dock turn-in flies to the entry point", 'if (stage === "turnIn") return entry;'],
+  ["auto-dock marshal does not skip staging by loose lane alignment", 'if (state.stage === "marshal" && !stationControlHold && entryCaptured)'],
+  ["auto-dock turn-in steers by target vector before corridor vector", "norm(add(scale(norm(toTarget), 2.6), scale(inward, .55)))"],
+  ["auto-dock turn-in keeps transit speed instead of crawl speed", 'else if (state.stage === "turnIn") targetSpeed = d > 900 ? 112 : d > 420 ? 76 : 44;'],
+];
+for (const [label, marker] of autoDockReleaseGuards) {
+  if (!js.includes(marker)) {
+    throw new Error(`Missing auto-dock release guard: ${label}. Post-hold release must reacquire staging, fly to entry, then align with the corridor.`);
+  }
+}
+
+const autoDockFinalGuards = [
+  ["auto-dock final capture can run after movement before collision", 'if (game.autoDock && (!autoDocking || game.autoDock.stage !== "final")) return false;'],
+  ["auto-dock final checks capture before steering away", 'if (state.stage === "final" && manualDockingStatus(st, true).ok) {\n        dock(true);\n        return;\n      }'],
+  ["auto-dock final treats the slot mouth as a commitment zone", 'const finalCaptureMouth = state.stage === "final" && liveFrontness > -120 && liveFrontness < 180 && liveLateral < 165;'],
+  ["auto-dock final targets the live slot center", 'if (stage === "final") return liveSlot.center;'],
+  ["auto-dock final control frame uses the live slot center", 'const activeFrame = state.stage === "final" ? { ...stageFrame, center: liveSlot.center } : stageFrame;'],
+  ["auto-dock final only commits from a tight live-slot cone", "const liveSlotReady = liveSlotPhase < .32 && liveFrontness > 110 && liveFrontness < 300 && liveLateral < 150 && liveAlignment > .82 && liveRollAlignment > .76;"],
+  ["auto-dock final requires tight cached-lane alignment before handoff", 'if (state.stage === "align" && !stationControlHold && frontness < 260 && lateral < 170 && alignment > .82 && liveSlotReady)'],
+  ["auto-dock final never aborts sideways inside the capture mouth", 'if (state.stage === "final" && !finalCaptureMouth && (liveSlotPhase > .48 || liveLateral > 190 || liveAlignment < .76 || liveRollAlignment < .64 || liveFrontness < -140))'],
+  ["auto-dock final crawls inside the slot mouth while waiting for capture", 'else if (state.stage === "final") targetSpeed = finalCaptureMouth && liveSlotPhase > .46 ? 8 : liveFrontness > 170 ? 42 : liveFrontness > 55 ? 30 : 20;'],
+];
+for (const [label, marker] of autoDockFinalGuards) {
+  if (!js.includes(marker)) {
+    throw new Error(`Missing auto-dock final guard: ${label}. Final approach must enter through a tight cone, slow near the mouth, and return to align before clipping the station.`);
+  }
+}
+
+const hangarCargoGuards = [
+  ["hangar cargo is built as sortable props", "const props = [];"],
+  ["hangar cargo canisters stand upright on their long axis", "roll: Math.PI / 2 + (rng() - .5) * .055,"],
+  ["hangar cargo includes perimeter wall stacks", "const x = side * (386 + rng() * 34);"],
+  ["hangar cargo includes stacked back-edge canisters", "const z = 790 + rng() * 36;"],
+  ["hangar cargo sorts far-to-near for the active camera", ".sort((a, b) => (b.depth - a.depth) || (a.order - b.order))"],
+];
+for (const [label, marker] of hangarCargoGuards) {
+  if (!js.includes(marker)) {
+    throw new Error(`Missing hangar cargo guard: ${label}. Hangar cargo set dressing must stay upright, perimeter/stacked, and camera-depth sorted.`);
+  }
+}
+
 const protrudingEdgeGuards = [
   ["protruding-edge hull occlusion helper", "function protrudingEdgeTouchesCloserHull"],
   ["protruding-edge front pass occluder option", "frontOccluders"],
