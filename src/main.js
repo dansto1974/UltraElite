@@ -16709,11 +16709,12 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
         for (let j = 0; j < count; j++) {
           const scale = scaleBase + rng() * .08;
           const height = 48 * scale;
+          const uprightSpin = rng() * TAU;
           props.push({
             model: "canister",
             pos: vec(x + (rng() - .5) * 10, floor + height * .5 + j * height * .94, z + (rng() - .5) * 12),
             scale,
-            yaw: yaw + (rng() - .5) * .12,
+            yaw: yaw + uprightSpin + (rng() - .5) * .12,
             pitch: lean,
             roll: Math.PI / 2 + (rng() - .5) * .055,
             color: colors[(props.length + colorOffset) % colors.length],

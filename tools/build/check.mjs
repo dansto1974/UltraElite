@@ -164,6 +164,7 @@ for (const [label, marker] of autoDockFinalGuards) {
 
 const hangarCargoGuards = [
   ["hangar cargo is built as sortable props", "const props = [];"],
+  ["hangar cargo gets random upright-axis spin", "const uprightSpin = rng() * TAU;"],
   ["hangar cargo canisters stand upright on their long axis", "roll: Math.PI / 2 + (rng() - .5) * .055,"],
   ["hangar cargo includes perimeter wall stacks", "const x = side * (386 + rng() * 34);"],
   ["hangar cargo includes stacked back-edge canisters", "const z = 790 + rng() * 36;"],
