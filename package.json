@@ -1,7 +1,7 @@
 {
   "name": "ultra-elite",
   "private": true,
-  "version": "1.0.23-beta",
+  "version": "1.0.24-beta",
   "scripts": {
     "check": "node tools/build/check.mjs",
     "check:fix": "node tools/build/check.mjs --fix",

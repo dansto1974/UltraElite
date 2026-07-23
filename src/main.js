@@ -691,7 +691,7 @@
     const CARGO_FUEL_LY_PER_TON = 7;
 
     const EQUIPMENT = [
-      { id: "fuelScoop", name: "Fuel Scoop", cost: 525, tech: 5, desc: "Collect solar fuel and loose cargo canisters." },
+      { id: "fuelScoop", name: "Fuel Scoop", cost: 525, tech: 5, desc: "Collect solar fuel, loose cargo and inert Thargon drones." },
       { id: "ecm", name: "E.C.M. System", cost: 600, tech: 2, desc: "Disrupt incoming missiles." },
       { id: "beamLaser", name: "Beam Laser", cost: 1000, tech: 4, desc: "Rapid sustained fire with moderate heat." },
       { id: "cargoBay", name: "Large Cargo Bay", cost: 400, tech: 1, desc: "Expands capacity to 35 tonnes." },
@@ -2147,6 +2147,7 @@
     function npcLaserSpec(o) {
       const power = npcLaserPower(o);
       const alien = isAlienShip(o);
+      const thargon = o?.model === "thargon" || o?.thargon;
       const source = [
         { cls: "none", damage: 0, range: 0, cooldownMul: 1.25, width: 1.4, dur: .14, glow: 8, forks: 0, soundClass: "light" },
         { cls: "light", damage: 7, range: 1180, cooldownMul: 1.12, width: 1.7, dur: .16, glow: 10, forks: 1, soundClass: "light" },
@@ -2160,8 +2161,8 @@
       return {
         ...source,
         power,
-        damage: alien ? Math.max(source.damage, 12) : source.damage,
-        range: alien ? Math.max(source.range, 1800) : source.range,
+        damage: thargon ? Math.min(source.damage, 4) : alien ? Math.max(source.damage, 12) : source.damage,
+        range: thargon ? Math.min(source.range, 950) : alien ? Math.max(source.range, 1800) : source.range,
         soundClass: alien ? "alien" : source.soundClass
       };
     }
@@ -2178,7 +2179,7 @@
       const laser = npcLaserSpec(o);
       let base;
       if (o.thargoid) base = { damage: 16, range: 1700, minRange: 95, cooldownMin: .62, cooldownJitter: .86, accel: 178, maxSpeed: 176, thargonChance: .42 };
-      else if (o.model === "thargon") base = { damage: 9, range: 1100, minRange: 70, cooldownMin: .72, cooldownJitter: .95, accel: 165, maxSpeed: 168 };
+      else if (o.model === "thargon") base = { damage: 4, range: 900, minRange: 70, cooldownMin: 1.15, cooldownJitter: 1.25, accel: 165, maxSpeed: 168 };
       else if (o.role === "police") base = { damage: 13, range: 1350, minRange: 105, cooldownMin: .82, cooldownJitter: .9, accel: 156, maxSpeed: 166 };
       else if (SOURCE_BEHAVIOUR[o.model]?.bountyHunter) base = { damage: 12, range: 1250, minRange: 110, cooldownMin: .92, cooldownJitter: 1.0, accel: 146, maxSpeed: 156 };
       else if (o.role === "pirate") base = { damage: 10, range: 1050, minRange: 120, cooldownMin: 1.05, cooldownJitter: 1.15, accel: 122, maxSpeed: 136 };
@@ -4667,7 +4668,9 @@
     function spawnMissionEncounterShip(mission, side, index, center, rng) {
       const encounter = mission.encounter;
       const kind = encounter.kind;
-      const model = missionEncounterModel(kind, side, rng) || (side === "ally" ? "cobra" : "krait");
+      const model = kind === "navalBattle" && side === "enemy" && index === 0
+        ? "thargoid"
+        : missionEncounterModel(kind, side, rng) || (side === "ally" ? "cobra" : "krait");
       const stats = shipStats(model);
       const count = Math.max(1, side === "ally" ? Number(encounter.allies) || 1 : Number(encounter.enemies) || Number(encounter.required) || 1);
       const angle = (index / count) * TAU + (side === "enemy" ? Math.PI : 0) + rng() * .38;
@@ -5238,6 +5241,14 @@
 
     function isAlienShip(o) {
       return !!o && (o.thargoid || ALIEN_MODELS.includes(o.model));
+    }
+
+    function isDeadThargon(o) {
+      return !!o && (o.model === "thargon" || o.thargon) && o.deadThargon === true;
+    }
+
+    function isScoopableCargo(o) {
+      return !!o && (o.type === "canister" || o.type === "plate" || isDeadThargon(o));
     }
 
     function alienNeverFlees(o) {
@@ -7217,6 +7228,7 @@
     }
 
     function collisionBody(o) {
+      if (isDeadThargon(o)) return !game.equipment.fuelScoop;
       return o && !o._remove && (
         o.type === "ship" ||
         o.type === "asteroid" ||
@@ -10027,6 +10039,7 @@
     function missileTargetable(o) {
       if (!isWorldObjectLive(o) || !finiteVec3(o.pos)) return false;
       if (shipHyperspaceHidden(o)) return false;
+      if (isDeadThargon(o)) return false;
       if (!Number.isFinite(o.hp) || o.hp <= 0) return false;
       return o.type === "ship";
     }
@@ -10391,6 +10404,7 @@
 
     function updateEngineTrails(o, dt) {
       if (DEV_DISABLE_ENGINE_EFFECTS) return;
+      if (isDeadThargon(o)) return;
       if (!ultraFxEnabled() || o.type !== "ship" || shipHyperspaceHidden(o) || !MODELS[o.model]?.details) return;
       const speed = o.speed ?? len(o.vel || vec());
       if (speed < 16) return;
@@ -10633,19 +10647,24 @@
 
     function scoopCargo(o) {
       if (o?.missionCargo && scoopMissionCargo(o)) return;
+      if (o?.type === "ship" && !isDeadThargon(o)) return;
       if (usedCargo() >= game.cargoCap) {
         setMessage("Cargo bay full.");
         return;
       }
-      const good = o.forcedGood || (o.type === "plate" ? "Alloys" : GOODS[Math.floor(Math.random() * (GOODS.length - 1))][0]);
+      const good = isDeadThargon(o)
+        ? "Alien Items"
+        : o.forcedGood || (o.type === "plate" ? "Alloys" : GOODS[Math.floor(Math.random() * (GOODS.length - 1))][0]);
       game.cargo[good]++;
       game.objects = game.objects.filter((x) => x !== o);
       eliteAudio.play("cargoScoop");
-      setMessage(`Scooped ${o.type === "plate" ? "alloy plate" : "cargo canister"}: ${good}.`);
+      const cargoName = isDeadThargon(o) ? "dead Thargon drone" : o.type === "plate" ? "alloy plate" : "cargo canister";
+      setMessage(`Scooped ${cargoName}: ${good}.`);
     }
 
     function targetBaseRank(o, shipsOnly = false) {
       if (o.type === "missile") return o.hostile ? 0 : 9;
+      if (isDeadThargon(o)) return shipsOnly ? 99 : 8;
       if (o.type === "ship") {
         if (o.missionId) return 0;
         if (o.hostile && (o.target == null || o.target === undefined)) return o.police ? 1 : 0;
@@ -11179,8 +11198,9 @@
       renderPanel();
     }
 
-    const GAME_VERSION = "1.0.23-beta";
+    const GAME_VERSION = "1.0.24-beta";
     const UPDATE_LOG = [
+      ["1.0.24-beta", "Thargon balance: drone lasers now hit much less heavily, and surviving drones shut down when the final Thargoid is destroyed so Fuel Scoop-equipped ships can recover them as Alien Items."],
       ["1.0.23-beta", "Auto-dock safety polish: station approaches now hold for STC final clearance, track the live slot only on the last aligned run-in, and no longer phase through the station outside the docking corridor."],
       ["1.0.22-beta", "Docking computer polish: final approach now aims through the station slot more cleanly and keeps a brisker capture speed."],
       ["1.0.21-beta", "Internal asset-authoring systems and model maintenance update.", true],
@@ -11980,6 +12000,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
           }
         });
         timeSimPhase("objects", () => {
+          disableOrphanedThargons();
           for (const o of game.objects) {
             if (o.type === "station") updateStation(o, dt);
             else if (o.type === "ship") {
@@ -11995,7 +12016,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
               if (o.vel) o.pos = add(o.pos, scale(o.vel, dt));
             }
             else if (o.vel) o.pos = add(o.pos, scale(o.vel, dt));
-            if ((o.type === "canister" || o.type === "plate") && game.equipment.fuelScoop && len(sub(o.pos, game.camera.pos)) < 38) scoopCargo(o);
+            if (isScoopableCargo(o) && game.equipment.fuelScoop && len(sub(o.pos, game.camera.pos)) < 38) scoopCargo(o);
             if (!o._remove && !shipHyperspaceHidden(o)) handlePlayerCollision(o);
             if (!o._remove && !shipHyperspaceHidden(o)) handlePlayerLargeCollision(o);
             if (!o._remove) updateSolarFuelScoop(o, dt);
@@ -12554,7 +12575,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     function pickPreyFor(o) {
       let best = null, bestD = Infinity;
       for (const x of worldSnapshot().ships) {
-        if (x.type !== "ship" || x === o || x.hostile || x.aiMode === "flee" || shipHyperspaceHidden(x)) continue;
+        if (x.type !== "ship" || x === o || x.hostile || x.aiMode === "flee" || isDeadThargon(x) || shipHyperspaceHidden(x)) continue;
         const d = len(sub(x.pos, o.pos));
         if (d < 1400 && d < bestD) { best = x; bestD = d; }
       }
@@ -12587,7 +12608,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       }
       let best = null, bestD = Infinity;
       for (const x of worldSnapshot().ships) {
-        if (x.type !== "ship" || x === o || x._remove || shipHyperspaceHidden(x)) continue;
+        if (x.type !== "ship" || x === o || x._remove || isDeadThargon(x) || shipHyperspaceHidden(x)) continue;
         if (x.missionId !== o.missionId || x.missionEncounterId !== o.missionEncounterId || x.missionEncounterSide !== opposite) continue;
         const reference = o.missionEncounterSide === "ally" && order === "cover" ? game.camera.pos : o.pos;
         const d = len(sub(x.pos, reference));
@@ -12728,6 +12749,53 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       eliteAudio.play("missile");
       setMessage("THARGOID launches Thargon drone!", true);
       if (Math.random() < .65) hail(mothership, hostileThreatLine(mothership));
+    }
+
+    function deactivateThargon(o) {
+      if (!o || isDeadThargon(o)) return null;
+      o.deadThargon = true;
+      o.name = "DEAD THARGON";
+      o.hostile = false;
+      o.target = null;
+      o.huntedBy = null;
+      o.aiMode = "dead";
+      o.vel = vec();
+      o.speed = 0;
+      o.engineBoost = 0;
+      o.engineGlow = 0;
+      o.attackClock = Infinity;
+      o.npcMissiles = 0;
+      o.bounty = 0;
+      o.forcedGood = "Alien Items";
+      for (const ship of game.objects) {
+        if (ship?.target === o) ship.target = undefined;
+        if (ship?.huntedBy === o) ship.huntedBy = null;
+      }
+      if (game.missileLockObject === o) game.missileLockObject = null;
+      return recordMissionEncounterKill(o);
+    }
+
+    function disableOrphanedThargons() {
+      const liveThargoid = game.objects.some((o) =>
+        o && !o._remove && o.type === "ship" && (o.model === "thargoid" || o.thargoid) &&
+        Number.isFinite(o.hp) && o.hp > 0
+      );
+      if (liveThargoid) return;
+      const thargons = game.objects.filter((o) =>
+        o && !o._remove && o.type === "ship" && (o.model === "thargon" || o.thargon) && !isDeadThargon(o)
+      );
+      if (!thargons.length) return;
+      const missionUpdates = new Set();
+      for (const thargon of thargons) {
+        const mission = deactivateThargon(thargon);
+        if (mission) missionUpdates.add(mission);
+      }
+      game.world = null;
+      for (const mission of missionUpdates) {
+        const line = missionEncounterProgressMessage(mission);
+        missionCommsMessage(mission, line);
+      }
+      setMessage(`${thargons.length === 1 ? "Thargon drone" : `${thargons.length} Thargon drones`} disabled. Fuel scoop recovery available.`, true);
     }
 
     function fireAtShip(attacker, target) {
@@ -13123,6 +13191,13 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
     }
 
     function updateShipAI(o, dt) {
+      if (isDeadThargon(o)) {
+        o.vel = vec();
+        o.speed = 0;
+        o.engineBoost = 0;
+        o.engineGlow = 0;
+        return;
+      }
       const avoidStation = stationAvoidance(o.pos, o.r || 60);
       if (o.aiMode === "hyperspaceIn") {
         const jump = o.hyperspaceIn || (o.hyperspaceIn = { t: 0, dur: 1.4, revealAt: .72, dir: shipForward(o), aiMode: "cruise", vel: vec(), speed: 0 });
@@ -13182,7 +13257,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       if (applyNpcCollisionBreakaway(o, dt, avoidStation)) return;
       const commanderWingman = isCommanderWingmanShip(o);
       if ((o.hostile || o.missionAlly || commanderWingman) && objectIntervalDue(o, "_senseClock", dt, .18, .16)) {
-        const stale = o.target && (o.target.hp <= 0 || !isWorldObjectLive(o.target) || len(sub(o.target.pos, o.pos)) > 2200);
+        const stale = o.target && (o.target.hp <= 0 || isDeadThargon(o.target) || !isWorldObjectLive(o.target) || len(sub(o.target.pos, o.pos)) > 2200);
         if (o.target === undefined || stale) assignHostileTarget(o);
       }
       if (o.aiMode === "regroup" && (o.missionAlly || commanderWingman)) {
@@ -15327,6 +15402,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
 
     function shipStatus(o) {
       if (o.missionTargetId) return { text: "MISSION TARGET", color: "#ffd33d" };
+      if (isDeadThargon(o)) return { text: "INERT · SCOOPABLE", color: "#c46bff" };
       if (o.aiMode === "flee") return { text: "FLEEING", color: "#91a78d" };
       if (o.hostile) return o.police ? { text: "PURSUING", color: "#46dfff" } : { text: "HOSTILE", color: "#ff6a55" };
       if (o.police) return { text: "PATROL", color: "#46dfff" };
@@ -22579,6 +22655,7 @@ Source code and change history: https://github.com/dansto1974/UltraElite`;
       <div class="help-note">Dock manually by flying slowly through an aligned station slot. On the local chart, click a system to plot a final destination; the next reachable jump is selected automatically. Use chart filters to hide mission lines, plotted-course overlays or suggested routes, and +/- or home to adjust local chart zoom.</div>
       <div class="help-note">Station Traffic Control sequences launches and approaches. Hold when instructed, give way to escape pods, police launches, damaged ships and naval priority traffic, and expect enforcement warnings if you approach after attacking local authority. Docking computers hold for traffic, wait for final STC clearance, fly a through-slot final approach only when the live slot is aligned, and refuse Fugitive clearance; manual docking settles fines on touchdown.</div>
       <div class="help-note">The Market sells standard tank fuel and Fuel Cells cargo. With a Cargo Refueler fitted, each Fuel Cells ton can be consumed whole from Status to top the tank by up to ${fmt(CARGO_FUEL_LY_PER_TON)} LY, capped at full tanks. A fitted Market Comparator adds plotted-destination prices to the Market table.</div>
+      <div class="help-note">Thargons depend on an active Thargoid warship. When the last Thargoid is gone, its surviving drones become inert: their engines and weapons shut down, and a fitted Fuel Scoop can recover each dead drone as one ton of Alien Items.</div>
       <div class="help-note">Loaned-ship contracts are immediate dispatch: they lock out other mission work until the loaner is returned or awarded. Mission comms stay available in the comms review until that mission completes, fails or is abandoned.</div>
       <div class="help-note">Ship previews can be clicked and dragged.</div>
       <div class="notice">
